@@ -1,0 +1,9 @@
+{
+  "projects": {
+    "default": "culturepass-4f264",
+    "legacy": "culturepass-b5f96",
+    "CulturePass": "culturepass-4f264"
+  },
+  "targets": {},
+  "etags": {}
+}

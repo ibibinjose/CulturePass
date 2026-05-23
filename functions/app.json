@@ -1,0 +1,18 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "7ee897cb-2f13-4157-a111-44504d411862"
+      }
+    },
+    "android": {
+      "package": "com.airpizza.functions"
+    },
+    "ios": {
+      "bundleIdentifier": "com.airpizza.functions",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    }
+  }
+}

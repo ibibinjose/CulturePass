@@ -1,0 +1,8 @@
+{
+  "android": {
+    "package": "com.culturestudios.culturepassserver"
+  },
+  "ios": {
+    "bundleIdentifier": "com.culturestudios.culturepassserver"
+  }
+}

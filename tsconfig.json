@@ -1,0 +1,57 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "ignoreDeprecations": "5.0",
+    "baseUrl": ".",
+    "types": ["node", "jest"],
+    "strict": true,
+    "paths": {
+      "@/constants/theme": ["src/design-system/tokens/theme"],
+      "@/lib/*": ["src/lib/*"],
+      "@/hooks/*": ["src/hooks/*"],
+      "@/contexts/*": ["src/contexts/*"],
+      "@/constants/*": ["src/constants/*"],
+      "@/components/*": ["src/components/*"],
+      "@/features/*": ["src/features/*"],
+      "@/widgets/*": ["src/widgets/*"],
+      "@/repositories/*": ["src/repositories/*"],
+      "@/use-cases/*": ["src/use-cases/*"],
+      "@/modules/*": ["src/modules/*"],
+      "@/design-system/ui": ["src/design-system/ui/index"],
+      "@/design-system/ui/Button": ["src/design-system/ui/Button"],
+      "@/design-system/ui/Input": ["src/design-system/ui/Input"],
+      "@/design-system/ui/Card": ["src/design-system/ui/Card"],
+      "@/design-system/ui/Skeleton": ["src/design-system/ui/Skeleton"],
+      "@/design-system/ui/BackButton": ["src/design-system/ui/BackButton"],
+      "@/design-system/ui/CreatorActions": ["src/design-system/ui/CreatorActions"],
+      "@/design-system/ui/CardSurface": ["src/design-system/ui/CardSurface"],
+      "@/design-system/ui/CultureImage": ["src/design-system/ui/CultureImage"],
+      "@/design-system/ui/CultureTag": ["src/design-system/ui/CultureTag"],
+      "@/design-system/ui/Badge": ["src/design-system/ui/Badge"],
+      "@/design-system/ui/Checkbox": ["src/design-system/ui/Checkbox"],
+      "@/design-system/ui/DatePickerInput": ["src/design-system/ui/DatePickerInput"],
+      "@/design-system/ui/ScreenState": ["src/design-system/ui/ScreenState"],
+      "@/design-system/*": ["src/design-system/*"],
+      "@/assets/*": ["assets/*"],
+      "@/shared/*": ["shared/*"],
+      "@shared/*": ["shared/*"],
+      "@/app/*": ["src/app/*"],
+      "@/*": ["src/*"]
+    }
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx"
+  ],
+  "exclude": [
+    "functions",
+    "scripts",
+    "node_modules",
+    "dist",
+    "web",
+    "server",
+    "CulturePass",
+    "host-app",
+    "tmp.auth-ui.spec.ts"
+  ]
+}

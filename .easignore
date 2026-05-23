@@ -1,0 +1,95 @@
+# EAS Build Upload Ignore — Bare Workflow
+# ios/ and android/ source folders are intentionally included.
+# Only their generated/cached subdirectories are excluded.
+
+# ── iOS ──────────────────────────────────────────────────────────────────────
+# EAS runs `pod install` on its own — no need to upload 1 GB of Pods
+ios/Pods
+ios/build
+ios/DerivedData
+
+# ── Android ──────────────────────────────────────────────────────────────────
+# EAS runs Gradle itself — these are local build caches.
+android/.gradle
+android/build
+android/.cxx
+android/app/build
+android/app/.cxx
+
+# ── Cloud Functions ───────────────────────────────────────────────────────────
+# Not used by the native build; EAS doesn't need this
+functions/node_modules
+functions/lib
+
+# ── Supplementary server (Docker image service) ──────────────────────────────
+server
+server/node_modules
+host-app
+host-app/node_modules
+
+# ── Web build outputs ─────────────────────────────────────────────────────────
+.expo
+.firebase
+dist
+dist-consumer
+web-build
+static-build
+# Only ignore web export folder at repo root — a bare `public` pattern matches
+# every `**/public` path (e.g. src/modules/profile/components/public/) and breaks EAS Metro.
+/public
+
+# ── Dev / CI tooling ──────────────────────────────────────────────────────────
+node_modules
+.claude
+.cursor
+.gstack
+.idea
+.jules
+.run
+.git
+.github
+coverage
+codecov
+__tests__
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+jest.config.js
+eslint.config.js
+
+# ── DataConnect (exploratory, not deployed) ───────────────────────────────────
+dataconnect
+
+# ── Scripts, docs, local dev files ───────────────────────────────────────────
+# Note: scripts/ is intentionally NOT ignored — postinstall and other npm hooks
+# (e.g. scripts/ensure-functions-deps-installed.mjs) reference it.
+docs
+*.md
+!README.md
+.env
+.env.*
+!.env.example
+.env.local
+*.local.*
+*.log
+tmp
+lint_results.txt
+pr_description.md
+profile_full.txt
+get_sections.py
+read_file_full.py
+split_components.py
+test_review.js
+tmp.auth-ui.spec.ts
+store.config.json
+firebase.json.bak
+firebase/firestore.indexes.json
+*.jks
+*.keystore
+google-play-service-account.json
+
+# ── Editor / OS ───────────────────────────────────────────────────────────────
+.DS_Store
+.vscode
+*.swp

@@ -1,0 +1,122 @@
+import { View, Text, StyleSheet, Pressable, Platform } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useLocalSearchParams, router } from 'expo-router';
+import { useColors } from '@/hooks/useColors';
+import { TextStyles } from '@/design-system/tokens/theme';
+import * as Haptics from 'expo-haptics';
+import { useEffect } from 'react';
+import { goBackOrReplace } from '@/lib/navigation';
+import { useAuth } from '@/lib/auth';
+import { routeWithRedirect } from '@/lib/routes';
+
+export default function PaymentCancelScreen() {
+  const { isAuthenticated } = useAuth();
+  const colors = useColors();
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.replace(routeWithRedirect('/(onboarding)/login', '/payment/cancel'));
+    }
+  }, [isAuthenticated]);
+  const styles = getStyles(colors);
+  const insets = useSafeAreaInsets();
+  useLocalSearchParams<{ ticketId: string }>();
+
+  useEffect(() => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+  }, []);
+
+  return (
+    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: (Platform.OS === 'web' ? 0 : insets.top) + 16, paddingBottom: insets.bottom + 24 }]}>
+      <View style={[styles.iconCircle, { backgroundColor: colors.error + '15' }]}>
+        <Ionicons name="close-circle" size={80} color={colors.error} />
+      </View>
+
+      <View style={styles.textBlock}>
+        <Text style={[styles.title, { color: colors.text }]}>Payment Cancelled</Text>
+        <Text style={[styles.subtitle, { color: colors.text }]}> 
+          No charge was made. You can try again whenever you&apos;re ready.
+        </Text>
+      </View>
+
+      <View style={styles.actions}>
+        <Pressable
+          style={[styles.primaryBtn, { backgroundColor: colors.primary }]}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            goBackOrReplace('/(tabs)');
+          }}
+        >
+          <Ionicons name="chevron-back" size={20} color={colors.textInverse} />
+          <Text style={[styles.primaryBtnText, { color: colors.textInverse }]}>Go Back</Text>
+        </Pressable>
+
+        <Pressable
+          style={[styles.secondaryBtn, { borderColor: colors.border }]}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            router.replace('/(tabs)');
+          }}
+        >
+          <Text style={[styles.secondaryBtnText, { color: colors.text }]}>Back to Home</Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
+const getStyles = (colors: ReturnType<typeof useColors>) => StyleSheet.create({
+  container: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 32,
+    gap: 32,
+  },
+  iconCircle: {
+    width: 128,
+    height: 128,
+    borderRadius: 64,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  textBlock: {
+    alignItems: 'center',
+    gap: 10,
+  },
+  title: {
+    ...TextStyles.hero,
+    textAlign: 'center',
+  },
+  subtitle: {
+    ...TextStyles.callout,
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  actions: {
+    width: '100%',
+    gap: 12,
+  },
+  primaryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    height: 52,
+    borderRadius: 14,
+  },
+  primaryBtnText: {
+    ...TextStyles.headline,
+  },
+  secondaryBtn: {
+    height: 52,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  secondaryBtnText: {
+    ...TextStyles.headline,
+  },
+});

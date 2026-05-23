@@ -1,0 +1,58 @@
+/**
+ * useRole — Role and permission hook for CulturePass.
+ *
+ * Returns role flags and loading state for the current user.
+ *
+ * @returns {
+ *   isOrganizer: boolean,
+ *   isLoading: boolean,
+ *   hasMinRole: (role: string) => boolean,
+ * }
+ */
+import { useAuth } from '@/lib/auth';
+import type { UserRole } from '@/shared/schema';
+
+const ROLE_RANK: Record<UserRole, number> = {
+  user: 0,
+  organizer: 1,
+  business: 1,
+  sponsor: 1,
+  cityAdmin: 2,
+  moderator: 3,
+  admin: 4,
+  platformAdmin: 4,
+  superAdmin: 5,
+};
+
+/**
+ * Role-aware hook.
+ *
+ * Usage:
+ *   const { isOrganizer, role } = useRole();
+ *   if (!isOrganizer) return <AccessDenied />;
+ */
+export function useRole() {
+  const { user, isAuthenticated, isLoading, isRestoring } = useAuth();
+  
+  const role: UserRole = (user?.role as UserRole) ?? 'user';
+
+  return {
+    role,
+    isAuthenticated,
+    isLoading: isLoading || isRestoring,
+    /** rank >= organizer */
+    isOrganizer: isAuthenticated && ROLE_RANK[role] >= ROLE_RANK['organizer'],
+    /** rank >= admin */
+    isAdmin: isAuthenticated && ROLE_RANK[role] >= ROLE_RANK['admin'],
+    /** rank >= moderator */
+    isModerator: isAuthenticated && ROLE_RANK[role] >= ROLE_RANK['moderator'],
+    /** rank >= cityAdmin */
+    isCityAdmin: isAuthenticated && ROLE_RANK[role] >= ROLE_RANK['cityAdmin'],
+    /** rank == superAdmin */
+    isSuperAdmin: isAuthenticated && role === 'superAdmin',
+    /** exact role match — use for specific roles like 'business' */
+    hasRole: (...roles: UserRole[]) => isAuthenticated && roles.includes(role),
+    /** rank comparison — use for "at least" checks */
+    hasMinRole: (min: UserRole) => isAuthenticated && ROLE_RANK[role] >= ROLE_RANK[min],
+  };
+}

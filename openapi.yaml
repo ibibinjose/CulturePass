@@ -1,0 +1,724 @@
+openapi: 3.0.3
+info:
+  title: Culture Platform API
+  version: 0.1.0
+  description: Starter OpenAPI spec for user/creator/admin workflows.
+servers:
+  - url: https://api.example.com
+security:
+  - bearerAuth: []
+tags:
+  - name: Auth
+  - name: Users
+  - name: Discover
+  - name: Cultures
+  - name: Taxonomy
+  - name: Communities
+  - name: Businesses
+  - name: Events
+  - name: Offers
+  - name: Indigenous
+  - name: Subscriptions
+  - name: Saved
+  - name: Admin
+paths:
+  /api/auth/signup:
+    post:
+      tags: [Auth]
+      security: []
+      summary: Sign up
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignupRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+  /api/auth/login:
+    post:
+      tags: [Auth]
+      security: []
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+  /api/users/me:
+    get:
+      tags: [Users]
+      summary: Get current user
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+    patch:
+      tags: [Users]
+      summary: Update current user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserPatch'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+  /api/discover:
+    get:
+      tags: [Discover]
+      security: []
+      summary: Discover feed
+      parameters:
+        - in: query
+          name: city
+          schema:
+            type: string
+        - in: query
+          name: country
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+  /api/search:
+    get:
+      tags: [Discover]
+      security: []
+      summary: Global search
+      parameters:
+        - in: query
+          name: q
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+  /api/cultures:
+    get:
+      tags: [Cultures]
+      security: []
+      summary: List cultures
+      responses:
+        '200':
+          description: OK
+    post:
+      tags: [Cultures]
+      summary: Create culture (admin)
+      x-roles: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CultureCreate'
+      responses:
+        '201':
+          description: Created
+  /api/cultures/{slug}:
+    get:
+      tags: [Cultures]
+      security: []
+      summary: Get culture by slug
+      parameters:
+        - in: path
+          name: slug
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+  /api/taxonomy/categories:
+    get:
+      tags: [Taxonomy]
+      security: []
+      summary: List categories
+      responses:
+        '200':
+          description: OK
+    post:
+      tags: [Taxonomy]
+      summary: Create category (admin)
+      x-roles: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryCreate'
+      responses:
+        '201':
+          description: Created
+  /api/taxonomy/countries:
+    get:
+      tags: [Taxonomy]
+      security: []
+      summary: List countries
+      responses:
+        '200':
+          description: OK
+    post:
+      tags: [Taxonomy]
+      summary: Create country (admin)
+      x-roles: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CountryCreate'
+      responses:
+        '201':
+          description: Created
+  /api/taxonomy/states:
+    get:
+      tags: [Taxonomy]
+      security: []
+      summary: List states
+      responses:
+        '200':
+          description: OK
+    post:
+      tags: [Taxonomy]
+      summary: Create state (admin)
+      x-roles: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StateCreate'
+      responses:
+        '201':
+          description: Created
+  /api/taxonomy/cities:
+    get:
+      tags: [Taxonomy]
+      security: []
+      summary: List cities
+      responses:
+        '200':
+          description: OK
+    post:
+      tags: [Taxonomy]
+      summary: Create city (admin)
+      x-roles: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CityCreate'
+      responses:
+        '201':
+          description: Created
+  /api/communities:
+    get:
+      tags: [Communities]
+      security: []
+      summary: List communities
+      responses:
+        '200':
+          description: OK
+  /api/communities/{id}:
+    get:
+      tags: [Communities]
+      security: []
+      summary: Get community
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+    patch:
+      tags: [Communities]
+      summary: Update community (owner/admin)
+      x-roles: [creator, admin]
+      responses:
+        '200':
+          description: Updated
+    delete:
+      tags: [Communities]
+      summary: Delete community (owner/admin)
+      x-roles: [creator, admin]
+      responses:
+        '204':
+          description: Deleted
+  /api/communities/create:
+    post:
+      tags: [Communities]
+      summary: Create community
+      x-roles: [creator, admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommunityCreate'
+      responses:
+        '201':
+          description: Created
+  /api/businesses:
+    get:
+      tags: [Businesses]
+      security: []
+      summary: List businesses
+      responses:
+        '200':
+          description: OK
+  /api/businesses/{id}:
+    get:
+      tags: [Businesses]
+      security: []
+      summary: Get business
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+  /api/businesses/create:
+    post:
+      tags: [Businesses]
+      summary: Create business
+      x-roles: [creator, admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BusinessCreate'
+      responses:
+        '201':
+          description: Created
+  /api/events:
+    get:
+      tags: [Events]
+      security: []
+      summary: List events
+      responses:
+        '200':
+          description: OK
+  /api/events/{id}:
+    get:
+      tags: [Events]
+      security: []
+      summary: Get event
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+    patch:
+      tags: [Events]
+      summary: Update event (owner/admin)
+      x-roles: [creator, admin]
+      responses:
+        '200':
+          description: Updated
+  /api/events/create:
+    post:
+      tags: [Events]
+      summary: Create event
+      x-roles: [creator, admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventCreate'
+      responses:
+        '201':
+          description: Created
+  /api/events/{id}/link-entity:
+    post:
+      tags: [Events]
+      summary: Link entity to event
+      x-roles: [creator, admin]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventLinkEntity'
+      responses:
+        '200':
+          description: Linked
+  /api/offers:
+    get:
+      tags: [Offers]
+      security: []
+      summary: List offers
+      responses:
+        '200':
+          description: OK
+  /api/offers/create:
+    post:
+      tags: [Offers]
+      summary: Create offer
+      x-roles: [creator, admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OfferCreate'
+      responses:
+        '201':
+          description: Created
+  /api/indigenous/spotlights:
+    get:
+      tags: [Indigenous]
+      security: []
+      summary: List Indigenous spotlights
+      responses:
+        '200':
+          description: OK
+    post:
+      tags: [Indigenous]
+      summary: Create spotlight
+      x-roles: [admin]
+      responses:
+        '201':
+          description: Created
+  /api/indigenous/businesses:
+    get:
+      tags: [Indigenous]
+      security: []
+      summary: List Indigenous businesses
+      responses:
+        '200':
+          description: OK
+    post:
+      tags: [Indigenous]
+      summary: Create Indigenous business
+      x-roles: [admin, creator]
+      responses:
+        '201':
+          description: Created
+  /api/indigenous/traditional-lands:
+    get:
+      tags: [Indigenous]
+      security: []
+      summary: List traditional lands
+      responses:
+        '200':
+          description: OK
+  /api/subscriptions:
+    get:
+      tags: [Subscriptions]
+      summary: List subscriptions
+      responses:
+        '200':
+          description: OK
+    post:
+      tags: [Subscriptions]
+      summary: Add subscription
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubscriptionCreate'
+      responses:
+        '201':
+          description: Created
+  /api/subscriptions/{id}:
+    delete:
+      tags: [Subscriptions]
+      summary: Remove subscription
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Deleted
+  /api/saved:
+    get:
+      tags: [Saved]
+      summary: List saved items
+      responses:
+        '200':
+          description: OK
+    post:
+      tags: [Saved]
+      summary: Save an item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SavedCreate'
+      responses:
+        '201':
+          description: Created
+  /api/admin/moderation/queue:
+    get:
+      tags: [Admin]
+      summary: Moderation queue
+      x-roles: [admin]
+      responses:
+        '200':
+          description: OK
+  /api/admin/moderation/{id}/approve:
+    post:
+      tags: [Admin]
+      summary: Approve moderation item
+      x-roles: [admin]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Approved
+  /api/admin/moderation/{id}/reject:
+    post:
+      tags: [Admin]
+      summary: Reject moderation item
+      x-roles: [admin]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Rejected
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    SignupRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        displayName:
+          type: string
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+    AuthResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+        user:
+          $ref: '#/components/schemas/User'
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        displayName:
+          type: string
+        roles:
+          type: array
+          items:
+            type: string
+            enum: [user, creator, admin]
+    UserPatch:
+      type: object
+      properties:
+        displayName:
+          type: string
+        cityId:
+          type: string
+        stateId:
+          type: string
+        countryId:
+          type: string
+    CultureCreate:
+      type: object
+      required: [slug, name]
+      properties:
+        slug:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+    CategoryCreate:
+      type: object
+      required: [slug, name]
+      properties:
+        slug:
+          type: string
+        name:
+          type: string
+        parentCategoryId:
+          type: string
+    CountryCreate:
+      type: object
+      required: [code, name]
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+    StateCreate:
+      type: object
+      required: [countryId, name]
+      properties:
+        countryId:
+          type: string
+        code:
+          type: string
+        name:
+          type: string
+    CityCreate:
+      type: object
+      required: [countryId, name]
+      properties:
+        countryId:
+          type: string
+        stateId:
+          type: string
+        name:
+          type: string
+    CommunityCreate:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        cultureIds:
+          type: array
+          items:
+            type: string
+    BusinessCreate:
+      type: object
+      required: [name, businessType]
+      properties:
+        name:
+          type: string
+        businessType:
+          type: string
+        description:
+          type: string
+    EventCreate:
+      type: object
+      required: [title, startAt, timezone]
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        startAt:
+          type: string
+          format: date-time
+        endAt:
+          type: string
+          format: date-time
+        timezone:
+          type: string
+        isFree:
+          type: boolean
+        priceFrom:
+          type: number
+          format: float
+    EventLinkEntity:
+      type: object
+      required: [entityType, entityId]
+      properties:
+        entityType:
+          type: string
+          enum: [artist, movie, dining, activity, shopping]
+        entityId:
+          type: string
+    OfferCreate:
+      type: object
+      required: [title, sourceType]
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        sourceType:
+          type: string
+        sourceId:
+          type: string
+    SubscriptionCreate:
+      type: object
+      required: [subscriptionType, targetId]
+      properties:
+        subscriptionType:
+          type: string
+          enum: [city, culture, community, business]
+        targetId:
+          type: string
+    SavedCreate:
+      type: object
+      required: [itemType, itemId]
+      properties:
+        itemType:
+          type: string
+        itemId:
+          type: string

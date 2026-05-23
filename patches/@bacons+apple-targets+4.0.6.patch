@@ -1,0 +1,13 @@
+diff --git a/node_modules/@bacons/apple-targets/build/config-plugin.js b/node_modules/@bacons/apple-targets/build/config-plugin.js
+index 3a7a1c1..de7c1b7 100644
+--- a/node_modules/@bacons/apple-targets/build/config-plugin.js
++++ b/node_modules/@bacons/apple-targets/build/config-plugin.js
+@@ -46,7 +46,7 @@ const withTargetsDir = (config, _props) => {
+         if (!evaluatedTargetConfigObject.type) {
+             throw new Error(`Expected target config to have a 'type' property denoting the type of target it is, e.g. 'widget'`);
+         }
+-        config = (0, with_widget_1.default)(config, {
++        config = (0, (with_widget_1.default || with_widget_1))(config, {
+             appleTeamId,
+             ...evaluatedTargetConfigObject,
+             directory: path_1.default.relative(projectRoot, path_1.default.dirname(configPath)),

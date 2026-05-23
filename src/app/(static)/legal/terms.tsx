@@ -1,0 +1,188 @@
+import { View, Text, StyleSheet, ScrollView, Platform } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useColors } from '@/hooks/useColors';
+import { CultureTokens, gradients, TextStyles } from '@/design-system/tokens/theme';
+import { goBackOrReplace } from '@/lib/navigation';
+import { M3TopAppBar } from '@/design-system/ui';
+import { EMAIL_LEGAL } from '@/lib/app-meta';
+
+const SECTIONS = [
+  {
+    title: '1. Acceptance of Terms',
+    body: 'By downloading, installing, accessing, or using the CulturePass application, website, or any related services (collectively, the "Platform"), you acknowledge that you have read, understood, and agree to be legally bound by these Terms of Service ("Terms") and our Privacy Policy, which is incorporated herein by reference.\n\nIf you are accessing the Platform on behalf of an organisation, you represent and warrant that you have authority to bind that organisation to these Terms, and "you" and "your" shall refer to that organisation.\n\nIf you do not agree to any part of these Terms, you must immediately cease using the Platform. Your continued use constitutes ongoing acceptance of any amendments made in accordance with clause 22.',
+  },
+  {
+    title: '2. Definitions',
+    body: 'In these Terms:\n\n• "CulturePass", "we", "us", or "our" means CulturePass Pty Ltd (ACN pending), a company incorporated in New South Wales, Australia.\n• "Platform" means the CulturePass mobile application, web application, APIs, and all associated software, content, and services.\n• "User" or "you" means any person or entity who accesses or uses the Platform.\n• "Organiser" means a third-party event organiser, business, venue, artist, or organisation that lists content on the Platform.\n• "Event" means any cultural, social, entertainment, or community event listed on the Platform by an Organiser.\n• "Ticket" means a digital or physical token granting admission to, or participation in, an Event.\n• "Content" means any text, images, audio, video, data, or other material uploaded, submitted, or transmitted through the Platform.\n• "CulturePass+" means the premium membership subscription offered by CulturePass.\n• "ACL" means the Australian Consumer Law as set out in Schedule 2 of the Competition and Consumer Act 2010 (Cth).\n• "Privacy Act" means the Privacy Act 1988 (Cth) and the Australian Privacy Principles (APPs).\n• "Applicable Law" means any law, regulation, rule, or order applicable to a party or the subject matter of these Terms in any jurisdiction in which the Platform operates, including Australia, New Zealand, the United Arab Emirates, the United Kingdom, and Canada.',
+  },
+  {
+    title: '3. Eligibility and Account Registration',
+    body: 'You must be at least 16 years of age to create an account or use the Platform. If you are under 18, you represent that your parent or legal guardian has reviewed and consented to these Terms.\n\nOrganisers who list ticketed events, process payments, or enter into commercial arrangements through the Platform must be at least 18 years of age or, if an entity, must be duly incorporated or registered under Applicable Law.\n\nWhen creating an account, you must:\n\n• Provide accurate, complete, and current information as prompted by the registration form.\n• Maintain and promptly update your account information to keep it accurate, complete, and current.\n• Create only one personal account (duplicate accounts may be suspended without notice).\n• Keep your password confidential and not share account credentials with any third party.\n• Immediately notify us at support@culturepass.app if you suspect any unauthorised access to or use of your account.\n\nYou are solely responsible for all activity that occurs under your account. CulturePass is not liable for any loss or damage arising from your failure to comply with these obligations.\n\nWe reserve the right to refuse registration, suspend, or terminate any account at our sole discretion, including where we have reasonable grounds to believe provided information is false, misleading, or in violation of these Terms.',
+  },
+  {
+    title: '4. Platform Services and Licence',
+    body: 'CulturePass operates as a technology platform and cultural discovery marketplace. We do not organise, produce, control, or endorse any Event listed on the Platform. Our role is limited to providing the technical infrastructure and marketplace through which Organisers and Users interact.\n\nSubject to your compliance with these Terms, we grant you a limited, personal, non-exclusive, non-transferable, revocable licence to access and use the Platform solely for your personal, non-commercial use (or, in the case of Organisers, for the purpose of listing and managing Events).\n\nThis licence does not include the right to:\n\n• Sublicence, sell, resell, transfer, assign, or otherwise exploit for commercial purposes any part of the Platform or its content without our prior written consent.\n• Copy, reproduce, modify, create derivative works of, distribute, publicly display, or reverse engineer any part of the Platform.\n• Use automated systems, bots, scrapers, or similar tools to access, index, or extract data from the Platform without written authorisation.\n• Use the Platform in any manner that could damage, disable, overburden, or impair it, or interfere with any other party\'s use.\n\nAll rights not expressly granted are reserved by CulturePass.',
+  },
+  {
+    title: '5. Marketplace: Organisers, Businesses, and Venues',
+    body: 'CulturePass facilitates connections between Users and Organisers. We do not act as an agent, co-organiser, partner, or guarantor of any Event, and we do not assume any liability for the acts or omissions of Organisers.\n\nOrganisers who create listings on the Platform agree that:\n\n• All Event information (dates, times, venues, pricing, capacity, descriptions, and images) is accurate, complete, and not misleading at the time of submission, and will be kept current.\n• Events comply with all Applicable Laws, including public health, safety, liquor licensing, permits, noise regulations, and consumer protection laws.\n• They hold all necessary licences, permits, and insurance required to hold the Event.\n• They will honour all Tickets issued through the Platform, including those purchased at promotional prices.\n• They will not list Events that promote, incite, or are likely to incite violence, unlawful activity, discrimination, or antisocial behaviour.\n• They are responsible for managing capacity, venue arrangements, and the safety and welfare of attendees at their Events.\n\nCulturePass reserves the right to remove or reject any Event listing at its sole discretion, including where a listing breaches these Terms, applicable community guidelines, or may expose CulturePass to legal or reputational risk.\n\nOrganisers acknowledge that CulturePass retains a platform service fee from each transaction processed through the Platform. Fee schedules are disclosed separately in the Organiser Agreement and may be updated with 30 days\' notice.',
+  },
+  {
+    title: '6. Ticketing, Payments, and Refunds',
+    body: 'All payments processed through the Platform are handled by Stripe, Inc. (and its affiliates, including Stripe Australia Pty Ltd), a third-party payment processor. By making a purchase, you agree to Stripe\'s terms of service and privacy policy, available at stripe.com. CulturePass does not store your full payment card details.\n\nWhen you purchase a Ticket:\n\n• The contract for the sale of the Ticket is formed between you and the Organiser. CulturePass acts as the Organiser\'s limited payment collection agent for the purpose of processing that transaction.\n• Unless otherwise stated by the Organiser, all sales are final. Refunds, exchanges, and cancellations are subject to the Organiser\'s stated refund policy, which will be displayed prior to purchase.\n• If an Event is cancelled by the Organiser, CulturePass will use commercially reasonable efforts to facilitate a full refund of the face value of the Ticket to the original payment method, but is not liable for the Organiser\'s failure to honour such obligations.\n• Convenience fees, booking fees, and platform service fees are non-refundable unless the Event is cancelled by the Organiser.\n\nNothing in these Terms limits or excludes any rights you may have under the ACL, including any guarantee that services will be provided with due care and skill, or any rights to a remedy where those guarantees are not met.\n\nFor payment disputes, contact us at support@culturepass.app with your order reference number within 30 days of the transaction. We will engage with your dispute in good faith and in accordance with Applicable Law.',
+  },
+  {
+    title: '7. Memberships, Subscriptions, and CulturePass+',
+    body: 'CulturePass may offer premium subscription tiers, including CulturePass+, which provide enhanced features, exclusive perks, discounts, and benefits ("Membership").\n\nWhen you subscribe to a Membership:\n\n• You authorise CulturePass (via Stripe) to charge the applicable recurring subscription fee to your nominated payment method at the start of each billing cycle (monthly or annual, as selected).\n• Subscriptions auto-renew at the end of each billing cycle unless cancelled before the renewal date. You can manage and cancel your subscription at any time through the Platform\'s account settings or by contacting us.\n• If you cancel, your Membership benefits remain active until the end of the current paid billing period. No partial-period refunds are provided except as required by Applicable Law.\n• CulturePass reserves the right to modify, suspend, or discontinue specific Membership perks or benefits with 30 days\' prior notice via the Platform or registered email.\n• Membership benefits are personal and non-transferable, and may not be resold, gifted, or shared unless explicitly permitted in writing by CulturePass.\n\nWhere Applicable Law (including the ACL) entitles you to a remedy in connection with a Membership, these Terms do not limit those rights.',
+  },
+  {
+    title: '8. Rewards, Cashback, and Wallet',
+    body: 'The Platform may offer a loyalty rewards programme, including points accumulation, cashback credits, and digital wallet functionality ("Rewards"). Rewards are subject to the following:\n\n• Rewards have no cash value, are non-transferable, and cannot be redeemed for cash unless expressly stated.\n• CulturePass reserves the right to adjust, suspend, or terminate the Rewards programme at any time with reasonable notice, and any accrued but unredeemed Rewards may be forfeited in the event of account termination for breach of these Terms.\n• Wallet top-ups are subject to anti-money-laundering obligations under the Anti-Money Laundering and Counter-Terrorism Financing Act 2006 (Cth) and equivalent Applicable Laws.\n• CulturePass does not hold an Australian Financial Services Licence (AFSL) and the Rewards programme does not constitute a financial product or financial service under the Corporations Act 2001 (Cth).',
+  },
+  {
+    title: '9. User Content',
+    body: 'The Platform may allow you to submit, post, or transmit Content including reviews, ratings, photographs, community posts, and event listings.\n\nBy submitting Content, you:\n\n• Represent and warrant that you own or have all necessary licences, rights, consents, and permissions to submit the Content, and that it does not infringe any third-party intellectual property rights, privacy rights, or any Applicable Law.\n• Grant CulturePass a worldwide, non-exclusive, royalty-free, sublicensable, perpetual licence to use, copy, reproduce, modify, adapt, publish, translate, create derivative works from, distribute, and display the Content in connection with operating, promoting, and improving the Platform.\n• Acknowledge that CulturePass may remove any Content at its discretion, without notice, where it breaches these Terms or our Community Guidelines.\n\nYou are solely responsible for all Content you submit. CulturePass does not pre-screen Content but reserves the right (and has no obligation) to review, edit, refuse, or remove Content at any time.\n\nYou must not submit Content that is defamatory, obscene, offensive, threatening, harassing, discriminatory, fraudulent, or otherwise unlawful.',
+  },
+  {
+    title: '10. Intellectual Property',
+    body: 'All intellectual property rights in and to the Platform, including its design, software, source code, trademarks, logos, branding (including the "CulturePass" and "Belong anywhere." marks), and all original content created by CulturePass, are owned by or licensed to CulturePass Pty Ltd and are protected under the Copyright Act 1968 (Cth), the Trade Marks Act 1995 (Cth), and equivalent international laws.\n\nNothing in these Terms transfers to you any ownership right, title, or interest in CulturePass\'s intellectual property.\n\nIf you believe any content on the Platform infringes your copyright, please send a written notice to legal@culturepass.app including: identification of the work claimed to be infringed; identification of the allegedly infringing material on the Platform; your contact information; a statement of good-faith belief that use is not authorised by the rights holder; and a declaration that the information is accurate and, under penalty of perjury, that you are authorised to act on behalf of the rights holder.',
+  },
+  {
+    title: '11. Prohibited Conduct',
+    body: 'You must not use the Platform to:\n\n• Violate any Applicable Law or regulation, including export control laws, anti-bribery laws, or consumer protection laws.\n• Infringe the intellectual property, privacy, or other rights of any person.\n• Transmit unsolicited commercial communications (spam), phishing messages, or malware.\n• Impersonate any person or entity, or misrepresent your affiliation with any person or entity.\n• Manipulate or circumvent any pricing, fee, or payment mechanism on the Platform.\n• List, sell, or promote fraudulent Tickets or counterfeit goods.\n• Engage in price gouging, scalping, or resale of Tickets in violation of any Applicable Law (including the Major Events Act 2009 (NSW) and equivalent laws).\n• Introduce malicious code, viruses, or conduct denial-of-service attacks.\n• Attempt to gain unauthorised access to any system, database, or account.\n• Use the Platform for any purpose that is harmful, deceptive, abusive, or discriminatory on the basis of race, ethnicity, national origin, gender, sexual orientation, religion, disability, or any other protected characteristic under Applicable Law.\n• Circumvent, disable, or interfere with security features of the Platform.\n\nViolation of these prohibitions may result in immediate suspension or termination of your account and, where appropriate, referral to law enforcement authorities.',
+  },
+  {
+    title: '12. Privacy and Data Protection',
+    body: 'CulturePass is bound by the Privacy Act 1988 (Cth) and the Australian Privacy Principles. Where users are located in the European Economic Area or the United Kingdom, CulturePass also undertakes to meet applicable requirements of the General Data Protection Regulation (EU) 2016/679 and the UK GDPR.\n\nYour use of the Platform is also governed by our Privacy Policy, which is incorporated into these Terms by reference and available at culturepass.app/legal/privacy. By using the Platform, you consent to the collection, use, and disclosure of your personal information as described in the Privacy Policy.\n\nCulturePass uses Firebase (Google LLC) for authentication, cloud data storage, and hosting; and Stripe for payment processing. Data may be stored and processed on servers outside Australia. International data transfers are made subject to appropriate safeguards in accordance with the Privacy Act and applicable data protection laws.',
+  },
+  {
+    title: '13. Third-Party Services and Links',
+    body: 'The Platform may contain links to, or integrate with, third-party websites, applications, payment processors, mapping services, or social media platforms ("Third-Party Services"). These Third-Party Services are governed by their own terms and privacy policies, which we encourage you to review.\n\nCulturePass does not endorse, and is not responsible or liable for, any Third-Party Services or any content, products, or services available through them. Your use of Third-Party Services is entirely at your own risk.\n\nIn particular, event safety, venue conditions, catering, and accessibility are the sole responsibility of the relevant Organiser or venue operator.',
+  },
+  {
+    title: '14. Disclaimers',
+    body: 'To the maximum extent permitted by Applicable Law:\n\n• The Platform is provided on an "as is" and "as available" basis without any warranty of any kind, whether express, implied, statutory, or otherwise.\n• CulturePass does not warrant that the Platform will be uninterrupted, error-free, secure, or free of viruses or other harmful components.\n• CulturePass does not warrant the accuracy, completeness, or reliability of any Event listings, user reviews, or third-party content on the Platform.\n• CulturePass is not responsible for the actions, omissions, safety, or conduct of any Organiser, third party, or other User.\n\nNothing in this clause is intended to exclude, restrict, or modify any right or remedy, or any guarantee, warranty, or other term or condition, implied or imposed by the ACL that cannot lawfully be excluded or limited.',
+  },
+  {
+    title: '15. Limitation of Liability',
+    body: 'To the maximum extent permitted by Applicable Law, the total aggregate liability of CulturePass (and its officers, directors, employees, agents, licensors, and service providers) to you for any and all claims arising out of or in connection with your use of the Platform shall not exceed the greater of: (a) the total amount paid by you to CulturePass in the 12 months preceding the claim; or (b) AUD $100.\n\nIn no event shall CulturePass be liable for any indirect, incidental, special, punitive, exemplary, or consequential damages, including loss of profits, loss of data, loss of goodwill, business interruption, personal injury, or property damage, even if CulturePass has been advised of the possibility of such damages.\n\nThis limitation applies regardless of the legal theory on which a claim is based, including contract, tort (including negligence), strict liability, or statute.\n\nIf Applicable Law (including the ACL) implies a guarantee or warranty that cannot be excluded, CulturePass\'s liability for breach of such guarantee or warranty is limited, to the extent permitted by law, to: (a) in the case of goods, replacing or repairing the goods or supplying equivalent goods; and (b) in the case of services, re-supplying the services.',
+  },
+  {
+    title: '16. Indemnification',
+    body: 'To the maximum extent permitted by Applicable Law, you agree to indemnify, defend, and hold harmless CulturePass and its officers, directors, employees, contractors, agents, licensors, and service providers from and against any and all claims, damages, losses, liabilities, costs, and expenses (including reasonable legal fees) arising out of or relating to:\n\n• Your use of the Platform or any activity conducted through your account.\n• Your Content or any material you submit, post, or transmit through the Platform.\n• Your breach of these Terms, any Applicable Law, or any third-party rights (including intellectual property, privacy, or contractual rights).\n• Any Event you organise or attend through the Platform.\n\nCulturePass reserves the right, at its own expense, to assume exclusive defence and control of any matter subject to indemnification by you, in which case you agree to cooperate with CulturePass in asserting any available defences.',
+  },
+  {
+    title: '17. Suspension and Termination',
+    body: 'CulturePass reserves the right, in its sole discretion and without liability, to suspend, restrict, or terminate your access to the Platform at any time and for any reason, including:\n\n• Breach or suspected breach of these Terms or any Applicable Law.\n• Conduct that we determine, in our sole discretion, is harmful to CulturePass, other Users, Organisers, or third parties.\n• Extended inactivity.\n• Request by law enforcement or other government agencies.\n\nYou may terminate your account at any time by following the in-app deletion flow under Settings > Account > Delete Account, or by contacting us at support@culturepass.app.\n\nUpon termination: your licence to use the Platform ceases immediately; clauses that by their nature survive termination (including IP, indemnification, limitation of liability, and governing law) shall continue to apply; and CulturePass will handle your personal data in accordance with the Privacy Policy.',
+  },
+  {
+    title: '18. Force Majeure',
+    body: 'Neither party shall be liable for any failure or delay in performing its obligations under these Terms to the extent such failure or delay is caused by circumstances beyond its reasonable control, including but not limited to: acts of God, natural disasters, pandemic, epidemic, acts of government, war, civil unrest, terrorism, fire, flood, labour disputes, power outages, internet or telecommunications failures, or failure of third-party service providers.\n\nThe affected party must promptly notify the other party of the force majeure event and take reasonable steps to mitigate its effects. If the force majeure event continues for more than 60 days, either party may terminate the affected obligations upon written notice.',
+  },
+  {
+    title: '19. Dispute Resolution',
+    body: 'We encourage you to contact us first at support@culturepass.app. Many concerns can be resolved quickly and informally.\n\nIf a dispute is not resolved informally within 30 days of your written notice, either party may refer the dispute to mediation administered by the Australian Disputes Centre (ADC) or a mutually agreed mediator, before commencing any court proceedings (except where injunctive or emergency relief is required).\n\nNothing in this clause prevents either party from seeking urgent injunctive or other equitable relief from a court of competent jurisdiction.\n\nIf you are an Australian consumer, you may also refer disputes to the Australian Competition and Consumer Commission (ACCC), your state or territory consumer protection agency, or the Australian Financial Complaints Authority (AFCA) for payment-related matters, as applicable.',
+  },
+  {
+    title: '20. Governing Law and Jurisdiction',
+    body: 'These Terms are governed by and construed in accordance with the laws of New South Wales, Australia, without regard to its conflict of laws principles.\n\nYou irrevocably submit to the non-exclusive jurisdiction of the courts of New South Wales, Australia, and any courts that may hear appeals from those courts, in connection with any dispute relating to these Terms.\n\nFor Users in the United Kingdom, CulturePass is subject to the supervision of the Information Commissioner\'s Office (ICO) with respect to data protection obligations. For Users in the UAE, services are provided in compliance with UAE Federal Law No. 45 of 2021 on Personal Data Protection.',
+  },
+  {
+    title: '21. Severability, Waiver, and Entire Agreement',
+    body: 'If any provision of these Terms is held by a court of competent jurisdiction to be invalid, illegal, or unenforceable, that provision shall be modified to the minimum extent necessary to make it enforceable, or if modification is not possible, severed from these Terms, without affecting the validity and enforceability of the remaining provisions.\n\nNo failure or delay by CulturePass in exercising any right under these Terms shall constitute a waiver of that right.\n\nThese Terms, together with the Privacy Policy, Community Guidelines, and any additional terms disclosed at the point of purchase or enrolment in a specific service, constitute the entire agreement between you and CulturePass with respect to the Platform and supersede all prior or contemporaneous negotiations, representations, or agreements.',
+  },
+  {
+    title: '22. Modifications to These Terms',
+    body: 'We reserve the right to modify these Terms at any time. Where we make material changes, we will provide you with at least 14 days\' advance notice by posting the updated Terms on the Platform and, where reasonably practicable, by sending a notification to your registered email address.\n\nChanges that are required by Applicable Law may take effect immediately. Your continued use of the Platform after the effective date of any change constitutes acceptance of the updated Terms. If you do not agree to the updated Terms, you must cease using the Platform and may close your account.\n\nThe current version of these Terms, including the date they were last updated, will always be accessible within the Platform.',
+  },
+  {
+    title: '23. Contact and Notices',
+    body: `For any questions, concerns, or legal notices relating to these Terms, please contact:\n\nCulturePass Pty Ltd\nEmail: ${EMAIL_LEGAL}\nPostal: Legal Department, CulturePass Pty Ltd, Sydney NSW 2000, Australia\n\nNotices will be deemed received: (a) upon delivery if sent by hand; (b) one business day after sending if sent by email (with no bounce or error notification received); or (c) three business days after posting if sent by prepaid post within Australia.`,
+  },
+];
+
+export default function TermsScreen() {
+  const colors = useColors();
+  const styles = getStyles(colors);
+  const insets = useSafeAreaInsets();
+  const topInset = Platform.OS === 'web' ? 0 : insets.top;
+
+  return (
+    <View style={[styles.container, { paddingTop: topInset, backgroundColor: colors.background }]}>
+      <LinearGradient
+        colors={gradients.culturepassBrand}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={legalAmbient.mesh}
+        pointerEvents="none"
+      />
+      <M3TopAppBar title="Terms of Service" onBack={() => goBackOrReplace('/settings')} denseWeb webChromeless />
+
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingBottom: 40 + (Platform.OS === 'web' ? 34 : insets.bottom), paddingTop: 10 }}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.intro}>
+          <View style={styles.iconWrap}>
+            <Ionicons name="document-text" size={28} color={CultureTokens.indigo} />
+          </View>
+          <Text style={styles.introTitle}>Terms of Service</Text>
+          <Text style={styles.introDate}>Last updated: 7 May 2026</Text>
+          <Text style={styles.introPara}>
+            These Terms govern your access to and use of the CulturePass platform. Please read them carefully.
+            They contain important information about your rights and obligations, including limitations of liability
+            and a dispute resolution clause. By using CulturePass you agree to these Terms in full.
+          </Text>
+        </View>
+
+        <View style={[styles.legalNotice, { backgroundColor: CultureTokens.indigo + '12', borderColor: CultureTokens.indigo + '30' }]}>
+          <Ionicons name="information-circle-outline" size={18} color={CultureTokens.indigo} style={{ marginTop: 2 }} />
+          <Text style={[styles.legalNoticeText, { color: colors.textSecondary }]}>
+            Nothing in these Terms limits or excludes any rights you may have under the Australian Consumer Law
+            (Competition and Consumer Act 2010 (Cth), Schedule 2) or equivalent consumer protection legislation
+            in your jurisdiction that cannot lawfully be excluded.
+          </Text>
+        </View>
+
+        {SECTIONS.map((sec, i) => (
+          <View key={i} style={styles.section}>
+            <Text style={styles.sectionTitle}>{sec.title}</Text>
+            <Text style={styles.sectionBody}>{sec.body}</Text>
+          </View>
+        ))}
+
+        <View style={[styles.footer, { borderTopColor: colors.borderLight }]}>
+          <Text style={[styles.footerText, { color: colors.textTertiary }]}>
+            CulturePass Pty Ltd · Sydney NSW 2000, Australia
+          </Text>
+          <Text style={[styles.footerText, { color: colors.textTertiary }]}>
+            {EMAIL_LEGAL}
+          </Text>
+        </View>
+      </ScrollView>
+    </View>
+  );
+}
+
+const legalAmbient = StyleSheet.create({
+  mesh: { ...StyleSheet.absoluteFillObject, opacity: 0.07 },
+});
+
+const getStyles = (colors: ReturnType<typeof useColors>) => StyleSheet.create({
+  container:    { flex: 1 },
+  intro:        { marginHorizontal: 20, marginBottom: 16, borderRadius: 20, padding: 24, borderWidth: 1, borderColor: colors.borderLight, backgroundColor: colors.surface, alignItems: 'center' },
+  iconWrap:     { width: 60, height: 60, borderRadius: 20, alignItems: 'center', justifyContent: 'center', marginBottom: 16, backgroundColor: CultureTokens.indigo + '15' },
+  introTitle:   { ...TextStyles.title2, marginBottom: 4, color: colors.text },
+  introDate:    { ...TextStyles.caption, marginBottom: 14, color: CultureTokens.indigo },
+  introPara:    { ...TextStyles.cardBody, textAlign: 'center', lineHeight: 22, color: colors.textSecondary },
+  legalNotice:  { marginHorizontal: 20, marginBottom: 20, borderRadius: 14, padding: 16, borderWidth: 1, flexDirection: 'row', gap: 10 },
+  legalNoticeText: { ...TextStyles.caption, lineHeight: 20, flex: 1 },
+  section:      { marginHorizontal: 20, marginBottom: 28 },
+  sectionTitle: { ...TextStyles.headline, marginBottom: 10, color: colors.text, letterSpacing: 0.3 },
+  sectionBody:  { ...TextStyles.cardBody, lineHeight: 26, color: colors.textSecondary },
+  footer:       { marginHorizontal: 20, marginTop: 12, paddingTop: 20, borderTopWidth: StyleSheet.hairlineWidth, alignItems: 'center', gap: 4 },
+  footerText:   { ...TextStyles.caption, textAlign: 'center' },
+});

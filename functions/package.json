@@ -1,0 +1,66 @@
+{
+  "name": "functions",
+  "scripts": {
+    "build": "tsc && mkdir -p lib/functions/src/data && cp src/data/AllCouncilsList.csv lib/functions/src/data/",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint \"src/**/*.ts\"",
+    "build:watch": "tsc --watch",
+    "serve": "npm run build && firebase emulators:start --only functions",
+    "shell": "npm run build && firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log",
+    "seed:councils:dry": "node scripts/uploadCouncils.js --dry-run",
+    "seed:councils:dry:dev": "node scripts/uploadCouncils.js --dry-run --allow-limited-states",
+    "seed:councils": "node scripts/uploadCouncils.js",
+    "seed:indigenous:dry": "node scripts/seedIndigenousCulture.js --dry-run",
+    "seed:indigenous": "node scripts/seedIndigenousCulture.js",
+    "seed:emulator:cap": "npx --yes tsx scripts/seed-emulator-cap-org.ts",
+    "seed:quests": "npx --yes tsx scripts/seedCultureQuests.ts",
+    "cleanup:third-party-events:dry": "npx ts-node scripts/deleteThirdPartySyncedEvents.ts",
+    "cleanup:third-party-events": "npx ts-node scripts/deleteThirdPartySyncedEvents.ts --execute"
+  },
+  "engines": {
+    "node": "22"
+  },
+  "main": "lib/functions/src/index.js",
+  "dependencies": {
+    "@google-cloud/functions-framework": "^5.0.2",
+    "@tootallnate/once": "3.0.1",
+    "@types/helmet": "^4.0.0",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.5.1",
+    "firebase": "^12.13.0",
+    "firebase-admin": "^13.9.0",
+    "firebase-functions": "^7.2.5",
+    "geofire-common": "^6.0.0",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.3",
+    "multer": "^2.1.1",
+    "passkit-generator": "^3.5.7",
+    "resend": "^6.12.3",
+    "sharp": "^0.34.5",
+    "stripe": "^20.4.1",
+    "thumbhash": "^0.1.1",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/jest": "^30.0.0",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/multer": "^2.1.0",
+    "@types/node": "^25.6.2",
+    "@types/supertest": "^7.2.0",
+    "firebase-functions-test": "^3.4.1",
+    "jest": "~30.4.0",
+    "supertest": "^7.2.2",
+    "ts-jest": "^29.4.9",
+    "typescript": "^5.9.2"
+  },
+  "private": true,
+  "overrides": {
+    "@tootallnate/once@<=3.0.1": "3.0.1",
+    "protobufjs": "^7.5.5"
+  }
+}

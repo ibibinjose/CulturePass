@@ -1,0 +1,792 @@
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  TextInput,
+  useWindowDimensions,
+  View,
+} from 'react-native';
+import { Stack, router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useMutation, useQuery } from '@tanstack/react-query';
+
+import { useAuth } from '@/lib/auth';
+import { api, ApiError } from '@/lib/api';
+import { queryClient } from '@/lib/query-client';
+import { goBackOrReplace } from '@/lib/navigation';
+import { useImageUpload } from '@/hooks/useImageUpload';
+import { useColors } from '@/hooks/useColors';
+import { Button } from '@/design-system/ui/Button';
+import CultureImage from '@/design-system/ui/CultureImage';
+import { ImageGalleryPicker } from '@/design-system/ui';
+import { DatePickerInput, type ISODateString } from '@/design-system/ui/DatePickerInput';
+import { Skeleton } from '@/design-system/ui/Skeleton';
+import { CultureTokens, FontFamily, Radius, ScreenTokens, SignatureGradient, Spacing, gradients } from '@/design-system/tokens/theme';
+import type { User } from '@/shared/schema';
+
+type SocialKey = 'instagram' | 'twitter' | 'youtube' | 'tiktok' | 'linkedin' | 'facebook' | 'website';
+
+type FormState = {
+  displayName: string;
+  email: string;
+  phone: string;
+  bio: string;
+  city: string;
+  state: string;
+  postcode: string;
+  country: string;
+  languages: string;
+  ethnicityText: string;
+  dateOfBirth: string;
+  instagram: string;
+  twitter: string;
+  youtube: string;
+  tiktok: string;
+  linkedin: string;
+  facebook: string;
+  website: string;
+  isPublicProfile: boolean;
+  showLocation: boolean;
+  showSocialLinks: boolean;
+  showCommunities: boolean;
+  showInterests: boolean;
+  showCulturalIdentity: boolean;
+  privateViewingMode: boolean;
+};
+
+const SOCIAL_ROWS: {
+  key: SocialKey;
+  label: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  color: string;
+  placeholder: string;
+}[] = [
+  { key: 'instagram', label: 'Instagram', icon: 'logo-instagram', color: CultureTokens.coral, placeholder: 'username' },
+  { key: 'twitter', label: 'X', icon: 'logo-twitter', color: CultureTokens.indigo, placeholder: 'username' },
+  { key: 'youtube', label: 'YouTube', icon: 'logo-youtube', color: CultureTokens.coral, placeholder: '@username' },
+  { key: 'tiktok', label: 'TikTok', icon: 'logo-tiktok', color: CultureTokens.teal, placeholder: '@username' },
+  { key: 'linkedin', label: 'LinkedIn', icon: 'logo-linkedin', color: CultureTokens.indigo, placeholder: '/in/username' },
+  { key: 'facebook', label: 'Facebook', icon: 'logo-facebook', color: CultureTokens.violet, placeholder: 'username' },
+  { key: 'website', label: 'Website', icon: 'globe-outline', color: CultureTokens.teal, placeholder: 'www.your-site.com' },
+];
+
+const AVATAR_SIZE = 110;
+
+function softColor(hex: string, alpha = '20') {
+  return `${hex}${alpha}`;
+}
+
+function cleanHandle(value: string) {
+  return value.trim().replace(/^@/, '');
+}
+
+function toPlatformUrl(value: string, key: SocialKey): string | undefined {
+  const clean = value.trim();
+  if (!clean) return undefined;
+  if (/^https?:\/\//i.test(clean)) return clean;
+  if (key === 'website') return `https://${clean}`;
+  if (key === 'twitter') return `https://x.com/${cleanHandle(clean)}`;
+  if (key === 'tiktok') return `https://tiktok.com/@${cleanHandle(clean)}`;
+  if (key === 'youtube') return `https://youtube.com/${clean.startsWith('@') ? clean : `@${clean}`}`;
+  if (key === 'linkedin') return `https://linkedin.com/${clean.replace(/^\/+/, '')}`;
+  if (key === 'facebook') return `https://facebook.com/${cleanHandle(clean)}`;
+  return `https://instagram.com/${cleanHandle(clean)}`;
+}
+
+function socialDisplay(value?: string | null, key?: SocialKey) {
+  if (!value) return '';
+  const stripped = value
+    .replace(/^https?:\/\/(www\.)?/i, '')
+    .replace(/^instagram\.com\//i, '')
+    .replace(/^x\.com\//i, '')
+    .replace(/^twitter\.com\//i, '')
+    .replace(/^tiktok\.com\/@?/i, '')
+    .replace(/^youtube\.com\//i, '')
+    .replace(/^linkedin\.com\//i, '')
+    .replace(/^facebook\.com\//i, '');
+  if (key === 'youtube' || key === 'tiktok') return stripped.startsWith('@') ? stripped : `@${stripped}`;
+  if (key === 'linkedin') return stripped.startsWith('in/') ? `/${stripped}` : stripped;
+  return stripped;
+}
+
+function firstDefinedString(...values: unknown[]): string {
+  for (const value of values) {
+    if (typeof value === 'string' && value.trim()) return value;
+    if (typeof value === 'number') return String(value);
+  }
+  return '';
+}
+
+function Field({
+  label,
+  value,
+  onChangeText,
+  placeholder,
+  multiline,
+  keyboardType,
+  maxLength,
+}: {
+  label: string;
+  value: string;
+  onChangeText: (value: string) => void;
+  placeholder: string;
+  multiline?: boolean;
+  keyboardType?: 'default' | 'email-address' | 'phone-pad' | 'number-pad' | 'url';
+  maxLength?: number;
+}) {
+  const colors = useColors();
+  return (
+    <View style={[styles.field, multiline && styles.fieldMultiline, { backgroundColor: colors.surfaceElevated, borderColor: colors.cardBorder }]}>
+      <Text style={[styles.fieldLabel, { color: colors.textTertiary }]}>{label}</Text>
+      <TextInput
+        value={value}
+        onChangeText={onChangeText}
+        placeholder={placeholder}
+        placeholderTextColor={colors.textTertiary}
+        style={[styles.input, multiline && styles.inputMultiline, { color: colors.text }]}
+        selectionColor={colors.primary}
+        multiline={multiline}
+        maxLength={maxLength}
+        keyboardType={keyboardType}
+        autoCapitalize={keyboardType === 'email-address' || keyboardType === 'url' ? 'none' : undefined}
+        accessibilityLabel={label}
+      />
+    </View>
+  );
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  const colors = useColors();
+  return (
+    <View style={styles.section}>
+      <Text style={[styles.sectionTitle, { color: colors.textTertiary }]}>{title}</Text>
+      <View style={styles.sectionBody}>{children}</View>
+    </View>
+  );
+}
+
+function LoadingScreen({ isWide, bottomInset }: { isWide: boolean; bottomInset: number }) {
+  const colors = useColors();
+  return (
+    <View style={[styles.root, { backgroundColor: colors.background }]}>
+      <Stack.Screen options={{ headerShown: false }} />
+      <ScrollView
+        contentInsetAdjustmentBehavior="automatic"
+        contentContainerStyle={[
+          styles.scroll,
+          {
+            paddingTop: ScreenTokens.topOffset,
+            paddingBottom: bottomInset + 80,
+            paddingHorizontal: isWide ? Spacing.xl : Spacing.md,
+          },
+        ]}
+      >
+        <View style={[styles.shell, { maxWidth: isWide ? 920 : 720 }]}>
+          <View style={styles.header}>
+            <Skeleton width={44} height={44} borderRadius={22} />
+            <View style={{ flex: 1, gap: 8 }}>
+              <Skeleton width={88} height={14} borderRadius={7} />
+              <Skeleton width={260} height={30} borderRadius={10} />
+            </View>
+          </View>
+          <View style={[styles.profileHero, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+            <Skeleton width={AVATAR_SIZE + 8} height={AVATAR_SIZE + 8} borderRadius={(AVATAR_SIZE + 8) / 2} />
+            <Skeleton width={180} height={26} borderRadius={8} />
+            <Skeleton width={220} height={16} borderRadius={8} />
+          </View>
+          <View style={[styles.grid, isWide && styles.gridWide]}>
+            {[0, 1].map((column) => (
+              <View key={column} style={styles.column}>
+                {[0, 1, 2].map((row) => (
+                  <View key={row} style={styles.section}>
+                    <Skeleton width={120} height={14} borderRadius={7} />
+                    <Skeleton width="100%" height={68} borderRadius={Radius.md} />
+                    <Skeleton width="100%" height={68} borderRadius={Radius.md} />
+                  </View>
+                ))}
+              </View>
+            ))}
+          </View>
+        </View>
+      </ScrollView>
+    </View>
+  );
+}
+
+function ToggleRow({
+  label,
+  sub,
+  value,
+  onValueChange,
+}: {
+  label: string;
+  sub?: string;
+  value: boolean;
+  onValueChange: (value: boolean) => void;
+}) {
+  const colors = useColors();
+  return (
+    <View style={[styles.toggleRow, { backgroundColor: colors.surfaceElevated, borderColor: colors.cardBorder }]}>
+      <View style={styles.toggleCopy}>
+        <Text style={[styles.toggleLabel, { color: colors.text }]}>{label}</Text>
+        {sub ? <Text style={[styles.toggleSub, { color: colors.textTertiary }]}>{sub}</Text> : null}
+      </View>
+      <Switch
+        value={value}
+        onValueChange={onValueChange}
+        trackColor={{ true: colors.primary, false: colors.border }}
+        thumbColor={colors.textInverse}
+        accessibilityLabel={label}
+      />
+    </View>
+  );
+}
+
+export default function EditProfileScreen() {
+  const colors = useColors();
+  const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const { user: authUser, userId, isRestoring } = useAuth();
+  const { uploading } = useImageUpload();
+  const bottomInset = Platform.OS === 'web' ? 24 : insets.bottom;
+  const isWide = width >= 900;
+  const topInset = Platform.OS === 'web' ? 0 : insets.top;
+
+  const {
+    data: serverUser,
+    isPending,
+    isError,
+    error,
+    refetch,
+  } = useQuery<User>({
+    queryKey: ['/api/auth/me', 'profile-edit', userId],
+    enabled: Boolean(userId) && !isRestoring,
+    queryFn: () => api.auth.me(),
+  });
+
+  const user = serverUser ?? authUser;
+
+  const [avatarUri, setAvatarUri] = useState<string | null>(user?.avatarUrl ?? null);
+  const [avatarPickerVisible, setAvatarPickerVisible] = useState(false);
+  const [form, setForm] = useState<FormState>({
+    displayName: user?.displayName ?? '',
+    email: user?.email ?? '',
+    phone: user?.phone ?? '',
+    bio: user?.bio ?? '',
+    city: user?.city ?? '',
+    state: firstDefinedString(user?.state),
+    postcode: firstDefinedString(user?.postcode),
+    country: user?.country ?? 'Australia',
+    languages: (user?.languages ?? []).join(', '),
+    ethnicityText: firstDefinedString(user?.ethnicityText),
+    dateOfBirth: firstDefinedString((user as Record<string, unknown> | null | undefined)?.dateOfBirth),
+    instagram: socialDisplay(user?.socialLinks?.instagram, 'instagram'),
+    twitter: socialDisplay(user?.socialLinks?.twitter, 'twitter'),
+    youtube: socialDisplay(user?.socialLinks?.youtube, 'youtube'),
+    tiktok: socialDisplay(user?.socialLinks?.tiktok, 'tiktok'),
+    linkedin: socialDisplay(user?.socialLinks?.linkedin, 'linkedin'),
+    facebook: socialDisplay(user?.socialLinks?.facebook, 'facebook'),
+    website: socialDisplay(user?.website, 'website'),
+    isPublicProfile: user?.privacySettings?.profileVisible ?? true,
+    showLocation: user?.privacySettings?.locationVisible ?? true,
+    showSocialLinks: user?.privacySettings?.showSocialLinks ?? true,
+    showCommunities: user?.privacySettings?.showCommunities ?? true,
+    showInterests: user?.privacySettings?.showInterests ?? true,
+    showCulturalIdentity: user?.privacySettings?.showCulturalIdentity ?? true,
+    privateViewingMode: user?.privacySettings?.privateViewingMode ?? false,
+  });
+  const [dirty, setDirty] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    setAvatarUri(user.avatarUrl ?? null);
+    setForm({
+      displayName: user.displayName ?? '',
+      email: user.email ?? '',
+      phone: user.phone ?? '',
+      bio: user.bio ?? '',
+      city: user.city ?? '',
+      state: firstDefinedString(user.state),
+      postcode: firstDefinedString(user.postcode),
+      country: user.country ?? 'Australia',
+      languages: (user.languages ?? []).join(', '),
+      ethnicityText: firstDefinedString(user.ethnicityText),
+      dateOfBirth: firstDefinedString((user as unknown as Record<string, unknown>).dateOfBirth),
+      instagram: socialDisplay(user.socialLinks?.instagram, 'instagram'),
+      twitter: socialDisplay(user.socialLinks?.twitter, 'twitter'),
+      youtube: socialDisplay(user.socialLinks?.youtube, 'youtube'),
+      tiktok: socialDisplay(user.socialLinks?.tiktok, 'tiktok'),
+      linkedin: socialDisplay(user.socialLinks?.linkedin, 'linkedin'),
+      facebook: socialDisplay(user.socialLinks?.facebook, 'facebook'),
+      website: socialDisplay(user.website, 'website'),
+      isPublicProfile: user.privacySettings?.profileVisible ?? true,
+      showLocation: user.privacySettings?.locationVisible ?? true,
+      showSocialLinks: user.privacySettings?.showSocialLinks ?? true,
+      showCommunities: user.privacySettings?.showCommunities ?? true,
+      showInterests: user.privacySettings?.showInterests ?? true,
+      showCulturalIdentity: user.privacySettings?.showCulturalIdentity ?? true,
+      privateViewingMode: user.privacySettings?.privateViewingMode ?? false,
+    });
+    setDirty(false);
+  }, [user]);
+
+  const initials = useMemo(() => {
+    const source = form.displayName || user?.email || 'C';
+    return source
+      .split(/\s+/)
+      .map((part) => part[0])
+      .join('')
+      .slice(0, 2)
+      .toUpperCase();
+  }, [form.displayName, user?.email]);
+
+  const updateField = (field: keyof FormState) => (value: string) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+    setDirty(true);
+  };
+  const updateToggle = (field: keyof FormState) => (value: boolean) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+    setDirty(true);
+  };
+
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      if (!userId) throw new Error('Not authenticated');
+      const socialLinks: Record<string, string> = {};
+      SOCIAL_ROWS.forEach((row) => {
+        if (row.key === 'website') return;
+        const url = toPlatformUrl(form[row.key], row.key);
+        if (url) socialLinks[row.key] = url;
+      });
+      const payload = {
+        displayName: form.displayName.trim(),
+        email: form.email.trim() || undefined,
+        phone: form.phone.trim() || undefined,
+        bio: form.bio.trim() || undefined,
+        city: form.city.trim() || undefined,
+        state: form.state.trim().toUpperCase() || undefined,
+        postcode: form.postcode.trim() ? Number(form.postcode.trim()) : undefined,
+        country: form.country.trim() || undefined,
+        location: form.city.trim() && form.country.trim() ? `${form.city.trim()}, ${form.country.trim()}` : undefined,
+        avatarUrl: avatarUri ?? undefined,
+        website: toPlatformUrl(form.website, 'website'),
+        socialLinks,
+        languages: form.languages.trim() ? form.languages.split(',').map((item) => item.trim()).filter(Boolean) : [],
+        ethnicityText: form.ethnicityText.trim() || undefined,
+        dateOfBirth: form.dateOfBirth.trim() || undefined,
+        privacySettings: {
+          profileVisible: form.isPublicProfile,
+          locationVisible: form.showLocation,
+          showSocialLinks: form.showSocialLinks,
+          showCommunities: form.showCommunities,
+          showInterests: form.showInterests,
+          showCulturalIdentity: form.showCulturalIdentity,
+          privateViewingMode: form.privateViewingMode,
+        },
+      };
+      await api.users.update(userId, payload as Partial<User>);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/users/me'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+      setDirty(false);
+      if (Platform.OS !== 'web') void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      goBackOrReplace('/settings');
+    },
+    onError: (error: Error) => Alert.alert('Could not save profile', error.message),
+  });
+
+  const choosePhoto = () => {
+    if (!userId) return;
+    setAvatarPickerVisible(true);
+  };
+
+  const handleAvatarSelected = (uri: string) => {
+    setAvatarUri(uri);
+    setDirty(true);
+  };
+
+  const canSave = Boolean(form.displayName.trim()) && dirty && !saveMutation.isPending;
+  const saveDetail = form.displayName.trim()
+    ? 'Changes sync to your profile after saving.'
+    : 'Name is required before saving.';
+
+  if (isRestoring || (Boolean(userId) && isPending && !user)) {
+    return <LoadingScreen isWide={isWide} bottomInset={bottomInset} />;
+  }
+
+  if (!userId && !isRestoring) {
+    return null;
+  }
+
+  return (
+    <>
+    <KeyboardAvoidingView
+      style={[styles.root, { backgroundColor: colors.background }]}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      enabled={Platform.OS !== 'web'}
+    >
+      <Stack.Screen options={{ headerShown: false }} />
+      <ScrollView
+        contentInsetAdjustmentBehavior="automatic"
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={[
+          styles.scroll,
+          {
+            paddingTop: topInset + ScreenTokens.topOffset,
+            paddingBottom: bottomInset + 120,
+            paddingHorizontal: isWide ? Spacing.xl : Spacing.md,
+          },
+        ]}
+      >
+        <View style={[styles.shell, { maxWidth: isWide ? 920 : 720 }]}>
+          <View style={styles.header}>
+            <Pressable
+              onPress={() => goBackOrReplace('/settings')}
+              style={({ pressed }) => [
+                styles.backButton,
+                { backgroundColor: colors.card, borderColor: colors.cardBorder, opacity: pressed ? 0.72 : 1 },
+                Platform.OS === 'web' && { cursor: 'pointer' as never },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel="Go back"
+            >
+              <Ionicons name="chevron-back" size={22} color={colors.text} />
+            </Pressable>
+            <View style={styles.headerCopy}>
+              <Text style={[styles.eyebrow, { color: colors.textTertiary }]}>Profile</Text>
+              <Text style={[styles.title, { color: colors.text }]}>Edit your CulturePass</Text>
+              <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Keep your public profile accurate across iOS, Android, and web.</Text>
+            </View>
+            <Pressable
+              onPress={() => router.push(`/profile/${userId}` as never)}
+              style={({ pressed }) => [
+                styles.previewButton,
+                { backgroundColor: colors.card, borderColor: colors.cardBorder, opacity: pressed ? 0.72 : 1 },
+                Platform.OS === 'web' && { cursor: 'pointer' as never },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel="Preview profile"
+            >
+              <Ionicons name="eye-outline" size={20} color={colors.primary} />
+            </Pressable>
+          </View>
+
+          {isError ? (
+            <View style={[styles.errorCard, { backgroundColor: `${colors.error}14`, borderColor: `${colors.error}44` }]} accessibilityRole="alert">
+              <View style={styles.errorCopy}>
+                <Ionicons name="warning-outline" size={20} color={colors.error} />
+                <Text style={[styles.errorText, { color: colors.text }]}>
+                  {error instanceof ApiError ? error.message : 'Could not load your profile from the server.'}
+                </Text>
+              </View>
+              <Button variant="outline" size="sm" onPress={() => void refetch()} accessibilityLabel="Retry loading profile">
+                Retry
+              </Button>
+            </View>
+          ) : null}
+
+          <View style={[styles.profileHero, { borderColor: colors.cardBorder }]}>
+            <LinearGradient
+              colors={gradients.midnight as unknown as [string, string, string]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={StyleSheet.absoluteFill}
+            />
+            <View style={styles.heroOrb} pointerEvents="none" />
+            <Pressable
+              onPress={choosePhoto}
+              style={({ pressed }) => [styles.avatarButton, { opacity: pressed ? 0.8 : 1 }, Platform.OS === 'web' && { cursor: 'pointer' as never }]}
+              accessibilityRole="button"
+              accessibilityLabel="Change profile photo"
+            >
+              <View style={[styles.avatar, { borderColor: `${CultureTokens.indigo}55` }]}>
+                {avatarUri ? (
+                  <CultureImage uri={avatarUri} style={styles.avatarImage} contentFit="cover" />
+                ) : (
+                  <LinearGradient colors={SignatureGradient as unknown as [string, string]} style={StyleSheet.absoluteFill}>
+                    <View style={styles.avatarFallback}>
+                      <Text style={styles.avatarInitial}>{initials}</Text>
+                    </View>
+                  </LinearGradient>
+                )}
+              </View>
+              <View style={[styles.cameraBubble, { backgroundColor: colors.primarySoft, borderColor: colors.primary }]}>
+                {uploading ? <ActivityIndicator color={colors.primary} size="small" /> : <Ionicons name="camera" size={16} color={colors.primary} />}
+              </View>
+            </Pressable>
+            <Text style={styles.heroName} numberOfLines={1}>{form.displayName || user?.username || 'Your name'}</Text>
+            <Text style={styles.heroHint}>Tap to crop and reposition your profile photo</Text>
+          </View>
+
+          <View style={[styles.grid, isWide && styles.gridWide]}>
+            <View style={styles.column}>
+              <Section title="Identity">
+                <Field label="Display name" value={form.displayName} onChangeText={updateField('displayName')} placeholder="Your name" />
+                <Field
+                  label="Bio"
+                  value={form.bio}
+                  onChangeText={updateField('bio')}
+                  placeholder="Share a little about your background and interests."
+                  multiline
+                  maxLength={280}
+                />
+                <Text style={[styles.charCount, { color: colors.textTertiary }]}>{form.bio.length}/280</Text>
+                <Field label="Languages" value={form.languages} onChangeText={updateField('languages')} placeholder="English, Hindi, Malayalam" />
+                <Field label="Cultural background" value={form.ethnicityText} onChangeText={updateField('ethnicityText')} placeholder="How you describe your heritage" />
+                <DatePickerInput
+                  label="Birthday"
+                  value={form.dateOfBirth}
+                  onChangeDate={(iso: ISODateString) => updateField('dateOfBirth')(iso)}
+                  placeholder="YYYY-MM-DD"
+                  maxDate={new Date().toISOString().slice(0, 10)}
+                  containerStyle={styles.dateField}
+                  accessibilityLabel="Birthday"
+                />
+              </Section>
+
+              <Section title="Contact">
+                <Field label="Email" value={form.email} onChangeText={updateField('email')} placeholder="your@email.com" keyboardType="email-address" />
+                <Field label="Phone" value={form.phone} onChangeText={updateField('phone')} placeholder="+61 400 000 000" keyboardType="phone-pad" />
+              </Section>
+            </View>
+
+            <View style={styles.column}>
+              <Section title="Location">
+                <Field label="City" value={form.city} onChangeText={updateField('city')} placeholder="Sydney" />
+                <Field label="State" value={form.state} onChangeText={updateField('state')} placeholder="NSW" />
+                <Field label="Postcode" value={form.postcode} onChangeText={updateField('postcode')} placeholder="2000" keyboardType="number-pad" />
+                <Field label="Country" value={form.country} onChangeText={updateField('country')} placeholder="Australia" />
+              </Section>
+
+              <Section title="Social Links">
+                {SOCIAL_ROWS.map((row) => (
+                  <View key={row.key} style={[styles.socialField, { backgroundColor: colors.surfaceElevated, borderColor: colors.cardBorder }]}>
+                    <View style={[styles.socialIcon, { backgroundColor: softColor(row.color) }]}>
+                      <Ionicons name={row.icon} size={18} color={row.color} />
+                    </View>
+                    <Text style={[styles.socialLabel, { color: colors.textSecondary }]}>{row.label}</Text>
+                    <TextInput
+                      value={form[row.key]}
+                      onChangeText={updateField(row.key)}
+                      placeholder={row.placeholder}
+                      placeholderTextColor={colors.textTertiary}
+                      autoCapitalize="none"
+                      keyboardType={row.key === 'website' ? 'url' : 'default'}
+                      style={[styles.socialInput, { color: colors.text }]}
+                      selectionColor={colors.primary}
+                      accessibilityLabel={row.label}
+                    />
+                  </View>
+                ))}
+              </Section>
+
+              <Section title="Privacy">
+                <ToggleRow label="Public profile" sub="Allow people to find your public profile." value={form.isPublicProfile} onValueChange={updateToggle('isPublicProfile')} />
+                <ToggleRow label="Show city" value={form.showLocation} onValueChange={updateToggle('showLocation')} />
+                <ToggleRow label="Show social links" value={form.showSocialLinks} onValueChange={updateToggle('showSocialLinks')} />
+                <ToggleRow label="Show communities" value={form.showCommunities} onValueChange={updateToggle('showCommunities')} />
+                <ToggleRow label="Show interests" value={form.showInterests} onValueChange={updateToggle('showInterests')} />
+                <ToggleRow label="Show cultural identity" value={form.showCulturalIdentity} onValueChange={updateToggle('showCulturalIdentity')} />
+                <ToggleRow label="Private viewing" sub="Browse profiles without showing activity status." value={form.privateViewingMode} onValueChange={updateToggle('privateViewingMode')} />
+              </Section>
+            </View>
+          </View>
+        </View>
+      </ScrollView>
+
+      <View
+        style={[
+          styles.saveBar,
+          {
+            paddingBottom: bottomInset,
+            backgroundColor: colors.tabBar,
+            borderColor: colors.tabBarBorder,
+          },
+        ]}
+      >
+        <View style={styles.saveBarInner}>
+          <View style={styles.saveCopy}>
+            <Text style={[styles.saveTitle, { color: colors.text }]}>{dirty ? 'Unsaved changes' : 'Profile up to date'}</Text>
+            <Text style={[styles.saveSub, { color: colors.textTertiary }]}>{saveDetail}</Text>
+          </View>
+          <Button
+            leftIcon="checkmark"
+            disabled={!canSave}
+            loading={saveMutation.isPending}
+            onPress={() => saveMutation.mutate()}
+            accessibilityLabel="Save profile"
+          >
+            Save
+          </Button>
+        </View>
+      </View>
+    </KeyboardAvoidingView>
+
+    {userId ? (
+      <ImageGalleryPicker
+        visible={avatarPickerVisible}
+        onClose={() => setAvatarPickerVisible(false)}
+        currentUri={avatarUri}
+        onSelect={handleAvatarSelected}
+        collectionName="users"
+        docId={userId}
+        fieldName="avatarUrl"
+        skipDbUpdate={false}
+        preservePrevious
+        historyFieldName="avatarUrlHistory"
+        resizeWidth={900}
+      />
+    ) : null}
+    </>
+  );
+}
+
+const styles = StyleSheet.create({
+  root: { flex: 1 },
+  scroll: { flexGrow: 1 },
+  shell: { width: '100%', alignSelf: 'center', gap: Spacing.md },
+  header: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.md },
+  backButton: {
+    width: 44,
+    height: 44,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerCopy: { flex: 1, minWidth: 0, gap: 3 },
+  eyebrow: { fontSize: 12, fontFamily: FontFamily.bold, textTransform: 'uppercase', letterSpacing: 0.8 },
+  title: { fontSize: 24, lineHeight: 30, fontFamily: FontFamily.bold, letterSpacing: 0 },
+  subtitle: { fontSize: 14, lineHeight: 20, fontFamily: FontFamily.regular },
+  previewButton: {
+    width: 44,
+    height: 44,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  errorCard: {
+    borderWidth: 1,
+    borderRadius: Radius.md,
+    padding: Spacing.md,
+    gap: Spacing.sm,
+  },
+  errorCopy: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.sm },
+  errorText: { flex: 1, minWidth: 0, fontSize: 14, lineHeight: 20, fontFamily: FontFamily.medium },
+  profileHero: {
+    borderWidth: 1,
+    borderRadius: Radius.lg,
+    minHeight: 224,
+    padding: Spacing.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.sm,
+    overflow: 'hidden',
+  },
+  heroOrb: {
+    position: 'absolute',
+    top: -62,
+    right: -48,
+    width: 190,
+    height: 190,
+    borderRadius: 95,
+    backgroundColor: 'rgba(13,148,136,0.16)',
+  },
+  avatarButton: { width: AVATAR_SIZE + 8, height: AVATAR_SIZE + 8, marginBottom: 6 },
+  avatar: {
+    width: AVATAR_SIZE + 8,
+    height: AVATAR_SIZE + 8,
+    borderRadius: Radius.full,
+    borderWidth: 3,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  avatarImage: { width: AVATAR_SIZE + 2, height: AVATAR_SIZE + 2, borderRadius: Radius.full },
+  avatarFallback: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  avatarInitial: { fontSize: 36, fontFamily: FontFamily.bold, color: '#FFFFFF' },
+  cameraBubble: {
+    position: 'absolute',
+    right: 5,
+    bottom: 5,
+    width: 34,
+    height: 34,
+    borderRadius: Radius.full,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroName: { maxWidth: '100%', fontSize: 20, lineHeight: 26, fontFamily: FontFamily.bold, color: '#FFFFFF', letterSpacing: 0, textAlign: 'center' },
+  heroHint: { fontSize: 12, lineHeight: 17, fontFamily: FontFamily.medium, color: 'rgba(255,255,255,0.68)', textAlign: 'center' },
+  grid: { gap: Spacing.md },
+  gridWide: { flexDirection: 'row', alignItems: 'flex-start' },
+  column: { flex: 1, minWidth: 0, gap: Spacing.md },
+  section: { gap: Spacing.sm },
+  sectionTitle: {
+    fontSize: 12,
+    fontFamily: FontFamily.bold,
+    textTransform: 'uppercase',
+    letterSpacing: 0.9,
+    paddingHorizontal: Spacing.xs,
+  },
+  sectionBody: { gap: Spacing.sm },
+  field: { minHeight: 68, borderWidth: 1, borderRadius: Radius.md, paddingHorizontal: Spacing.md, paddingVertical: 10, gap: 2 },
+  fieldMultiline: { minHeight: 132 },
+  fieldLabel: { fontSize: 12, lineHeight: 16, fontFamily: FontFamily.bold, textTransform: 'uppercase', letterSpacing: 0.7 },
+  input: { minHeight: 32, paddingVertical: 0, fontSize: 15, lineHeight: 21, fontFamily: FontFamily.medium },
+  inputMultiline: { minHeight: 84, textAlignVertical: 'top', paddingTop: 6 },
+  charCount: { marginTop: -4, textAlign: 'right', fontSize: 11, lineHeight: 15, fontFamily: FontFamily.regular },
+  dateField: { minHeight: 68 },
+  socialField: {
+    minHeight: 58,
+    borderWidth: 1,
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  socialIcon: { width: 34, height: 34, borderRadius: Radius.sm, alignItems: 'center', justifyContent: 'center' },
+  socialLabel: { width: 82, fontSize: 13, lineHeight: 18, fontFamily: FontFamily.semibold },
+  socialInput: { flex: 1, minWidth: 0, fontSize: 15, lineHeight: 21, fontFamily: FontFamily.medium },
+  toggleRow: {
+    minHeight: 66,
+    borderWidth: 1,
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+  },
+  toggleCopy: { flex: 1, minWidth: 0, gap: 2 },
+  toggleLabel: { fontSize: 15, lineHeight: 21, fontFamily: FontFamily.semibold },
+  toggleSub: { fontSize: 12, lineHeight: 17, fontFamily: FontFamily.regular },
+  saveBar: { borderTopWidth: 1, paddingHorizontal: Spacing.md, paddingTop: Spacing.sm },
+  saveBarInner: {
+    width: '100%',
+    maxWidth: 920,
+    alignSelf: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.md,
+  },
+  saveCopy: { flex: 1, minWidth: 0 },
+  saveTitle: { fontSize: 14, lineHeight: 20, fontFamily: FontFamily.bold },
+  saveSub: { fontSize: 12, lineHeight: 17, fontFamily: FontFamily.regular },
+});

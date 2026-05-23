@@ -1,0 +1,55 @@
+import React, { useCallback } from 'react';
+import { Pressable, StyleSheet, Platform } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+import { useM3Colors } from '@/hooks/useM3Colors';
+import { useAppAppearance } from '@/hooks/useAppAppearance';
+
+type Props = {
+  compact?: boolean;
+};
+
+/**
+ * Single control: tap toggles explicit **dark ↔ light** (sets preference; leaves Settings → Appearance for system).
+ */
+export function AppearanceModeToggle({ compact }: Props) {
+  const m3 = useM3Colors();
+  const { resolvedScheme, setPreference } = useAppAppearance();
+  const iconSize = compact ? 20 : 22;
+  const isDark = resolvedScheme === 'dark';
+
+  const onToggle = useCallback(() => {
+    if (Platform.OS !== 'web') void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    void setPreference(isDark ? 'light' : 'dark');
+  }, [isDark, setPreference]);
+
+  return (
+    <Pressable
+      onPress={onToggle}
+      style={({ pressed }) => [
+        styles.hit,
+        { backgroundColor: m3.surfaceContainerHighest },
+        pressed && { opacity: 0.75 },
+      ]}
+      accessibilityRole="button"
+      accessibilityLabel={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
+    >
+      <Ionicons
+        name={isDark ? 'moon' : 'sunny'}
+        size={iconSize}
+        color={m3.onSurfaceVariant}
+      />
+    </Pressable>
+  );
+}
+
+const styles = StyleSheet.create({
+  hit: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 4,
+  },
+});

@@ -1,0 +1,156 @@
+{
+  "expo": {
+    "name": "CultureHost",
+    "slug": "culturehost",
+    "version": "1.0.0",
+    "description": "Creator hub for event organisers, venue managers, and cultural community leaders on CulturePass.",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "culturehost",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/images/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0B0B14"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "au.culturepass.host",
+      "buildNumber": "1",
+      "appleTeamId": "26WGXSNG58",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "CultureHost uses your location to set event venues.",
+        "NSCameraUsageDescription": "CultureHost uses the camera to scan attendee tickets at the gate.",
+        "NSPhotoLibraryUsageDescription": "CultureHost accesses your photo library to upload event images.",
+        "NSPhotoLibraryAddUsageDescription": "CultureHost saves images to your photo library.",
+        "NSFaceIDUsageDescription": "CultureHost uses Face ID for quick and secure sign-in.",
+        "ITSAppUsesNonExemptEncryption": false,
+        "UIBackgroundModes": [
+          "fetch",
+          "remote-notification"
+        ]
+      },
+      "associatedDomains": [
+        "applinks:host.culturepass.app",
+        "webcredentials:culturepass.app"
+      ]
+    },
+    "android": {
+      "package": "au.culturepass.host",
+      "splash": {
+        "image": "./assets/images/splash-icon.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#0B0B14"
+      },
+      "adaptiveIcon": {
+        "backgroundColor": "#0B0B14",
+        "foregroundImage": "./assets/images/android-icon-foreground.png"
+      },
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "host.culturepass.app",
+              "pathPrefix": "/"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        },
+        {
+          "action": "VIEW",
+          "data": [{ "scheme": "culturehost" }],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ],
+      "permissions": [
+        "CAMERA",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "READ_EXTERNAL_STORAGE",
+        "VIBRATE",
+        "android.permission.CAMERA",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/images/favicon.png",
+      "name": "CultureHost",
+      "shortName": "Host",
+      "description": "Creator hub for event organisers and cultural community leaders.",
+      "lang": "en-AU",
+      "themeColor": "#0B0B14",
+      "backgroundColor": "#0B0B14",
+      "display": "standalone",
+      "bundler": "metro",
+      "output": "static"
+    },
+    "plugins": [
+      [
+        "expo-router",
+        {
+          "origin": "https://host.culturepass.app"
+        }
+      ],
+      "expo-font",
+      "expo-web-browser",
+      "expo-apple-authentication",
+      [
+        "@react-native-google-signin/google-signin/app.plugin.js",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.$(EXPO_PUBLIC_GOOGLE_REVERSED_CLIENT_ID)"
+        }
+      ],
+      "expo-secure-store",
+      "expo-local-authentication",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "CultureHost uses the camera to scan attendee tickets at the gate."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "CultureHost accesses your photo library to upload event images.",
+          "cameraPermission": "CultureHost uses the camera to upload event images."
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "deploymentTarget": "16.0"
+          },
+          "android": {
+            "minSdkVersion": 26,
+            "targetSdkVersion": 35,
+            "enableProguardInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true
+          }
+        }
+      ],
+      "expo-image"
+    ],
+    "experiments": {
+      "typedRoutes": false
+    },
+    "extra": {
+      "router": {
+        "origin": "https://host.culturepass.app"
+      },
+      "eas": {
+        "projectId": "FILL_ME_IN"
+      }
+    },
+    "owner": "cultureos",
+    "runtimeVersion": "1.0.0",
+    "updates": {
+      "url": "https://u.expo.dev/FILL_ME_IN"
+    }
+  }
+}

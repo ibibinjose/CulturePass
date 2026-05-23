@@ -1,0 +1,268 @@
+import { useState, useCallback, useMemo } from 'react';
+import { Platform } from 'react-native';
+import * as Haptics from 'expo-haptics';
+import { router } from 'expo-router';
+import { auth as firebaseAuth, FIREBASE_CLIENT_DISABLED_MESSAGE } from '@/lib/firebase';
+import { FirebaseError } from 'firebase/app';
+import {
+  signInWithEmailAndPassword,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signInWithCredential,
+  OAuthProvider,
+  setPersistence,
+  browserLocalPersistence,
+  browserSessionPersistence,
+} from 'firebase/auth';
+import * as AppleAuthentication from 'expo-apple-authentication';
+import { useOnboarding } from '@/contexts/OnboardingContext';
+import { routeWithRedirect } from '@/lib/routes';
+import { deepLinkResolver } from '@/lib/deep-link-resolver';
+import { captureEvent, identifyUser } from '@/lib/analytics';
+import { useBiometricAuth } from '@/hooks/useBiometricAuth';
+
+export function handleFirebaseError(e: unknown, defaultMessage: string): string {
+  if (e instanceof FirebaseError) {
+    switch (e.code) {
+      case 'auth/user-not-found':
+      case 'auth/wrong-password':
+      case 'auth/invalid-credential':
+        return 'Invalid email or password. Please try again.';
+      case 'auth/too-many-requests':
+        return 'Too many attempts. Please try again later.';
+      case 'auth/network-request-failed':
+        return 'Unable to connect. Please check your internet connection and try again.';
+      case 'auth/popup-closed-by-user':
+      case 'auth/cancelled-popup-request':
+        return '';
+      default:
+        return e.message;
+    }
+  }
+  return defaultMessage;
+}
+
+export function useLogin(redirectTo: string | null) {
+  const { waitForHydration, getSnapshot } = useOnboarding();
+  const biometric = useBiometricAuth();
+
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [globalError, setGlobalError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
+
+  const isValid = useMemo(() => email.trim().length > 0 && password.length >= 6, [email, password]);
+
+  const validate = useCallback(() => {
+    let valid = true;
+    if (!email.match(/^[^@]+@[^@]+\.[^@]+$/)) {
+      setEmailError('Please enter a valid email address.');
+      valid = false;
+    } else {
+      setEmailError('');
+    }
+    if (password.length > 0 && password.length < 6) {
+      setPasswordError('Password must be at least 6 characters.');
+      valid = false;
+    } else {
+      setPasswordError('');
+    }
+    return valid;
+  }, [email, password]);
+
+  const clearErrors = useCallback(() => {
+    if (emailError) setEmailError('');
+    if (passwordError) setPasswordError('');
+    if (globalError) setGlobalError('');
+  }, [emailError, passwordError, globalError]);
+
+  /** Uses `getSnapshot()` after hydration so we do not read stale `isComplete` before the first re-render. */
+  const postAuthRouteAfterHydration = useCallback(async () => {
+    await waitForHydration();
+    const snap = getSnapshot();
+
+    // 1. Restore persisted deep-link destination (from tap-before-login, Req 10.4)
+    const persisted = await deepLinkResolver.getPersistedDestination();
+    if (persisted) {
+      await deepLinkResolver.clearPersistedDestination();
+      router.replace(persisted as never);
+      return;
+    }
+
+    // 2. Incomplete onboarding → continue setup
+    if (!snap.isComplete) {
+      router.replace(routeWithRedirect('/(onboarding)/location', redirectTo) as string);
+      return;
+    }
+
+    // 3. Explicit redirectTo from the invoking screen
+    if (redirectTo) {
+      router.replace(redirectTo);
+      return;
+    }
+
+    // 4. Default: return to previous screen or Discover
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/(tabs)');
+    }
+  }, [waitForHydration, getSnapshot, redirectTo]);
+
+  const trackLogin = useCallback((method: string) => {
+    const u = firebaseAuth?.currentUser;
+    if (u) {
+      identifyUser(u.uid, { email: u.email, name: u.displayName });
+      captureEvent('Login Success', { method });
+    }
+  }, []);
+
+  const handleGoogleSignIn = async () => {
+    setLoading(true);
+    clearErrors();
+    if (!firebaseAuth) {
+      setGlobalError(FIREBASE_CLIENT_DISABLED_MESSAGE);
+      setLoading(false);
+      return;
+    }
+    try {
+      if (Platform.OS === 'web') {
+        const provider = new GoogleAuthProvider();
+        await signInWithPopup(firebaseAuth, provider);
+      } else {
+        const { GoogleSignin } = await import('@react-native-google-signin/google-signin');
+        GoogleSignin.configure({
+          webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+        });
+        await GoogleSignin.hasPlayServices();
+        await GoogleSignin.signIn();
+        const tokens = await GoogleSignin.getTokens();
+        const credential = GoogleAuthProvider.credential(tokens.idToken);
+        await signInWithCredential(firebaseAuth, credential);
+      }
+      trackLogin('google');
+      if (Platform.OS !== 'web') await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      await postAuthRouteAfterHydration();
+    } catch (e: unknown) {
+      const errorMsg = handleFirebaseError(e, 'Google sign-in failed. Please try again.');
+      if (errorMsg) setGlobalError(errorMsg);
+      if (Platform.OS !== 'web' && errorMsg) await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAppleSignIn = async () => {
+    if (Platform.OS !== 'ios' && Platform.OS !== 'web') return;
+    setLoading(true);
+    clearErrors();
+    if (!firebaseAuth) {
+      setGlobalError(FIREBASE_CLIENT_DISABLED_MESSAGE);
+      setLoading(false);
+      return;
+    }
+    try {
+      if (Platform.OS === 'web') {
+        const provider = new OAuthProvider('apple.com');
+        await signInWithPopup(firebaseAuth, provider);
+      } else {
+        const credential = await AppleAuthentication.signInAsync({
+          requestedScopes: [
+            AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+            AppleAuthentication.AppleAuthenticationScope.EMAIL,
+          ],
+        });
+        const provider = new OAuthProvider('apple.com');
+        const firebaseCredential = provider.credential({
+          idToken: credential.identityToken ?? '',
+          rawNonce: credential.authorizationCode ?? '',
+        });
+        await signInWithCredential(firebaseAuth, firebaseCredential);
+      }
+      trackLogin('apple');
+      if (Platform.OS !== 'web') await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      await postAuthRouteAfterHydration();
+    } catch (e: unknown) {
+      const err = e as Record<string, unknown>;
+      if (err?.code !== 'ERR_REQUEST_CANCELED') {
+        const errorMsg = handleFirebaseError(e, 'Apple sign-in failed. Please try again.');
+        if (errorMsg) setGlobalError(errorMsg);
+        if (Platform.OS !== 'web') await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogin = async () => {
+    clearErrors();
+    if (!validate()) {
+      if (Platform.OS !== 'web') await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      return;
+    }
+    setLoading(true);
+    try {
+      if (!firebaseAuth) {
+        setGlobalError(FIREBASE_CLIENT_DISABLED_MESSAGE);
+        return;
+      }
+      if (Platform.OS === 'web') {
+        await setPersistence(firebaseAuth, rememberMe ? browserLocalPersistence : browserSessionPersistence);
+      }
+      await signInWithEmailAndPassword(firebaseAuth, email, password);
+      trackLogin('email');
+      if (Platform.OS !== 'web') await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      if (biometric.isAvailable && !biometric.biometricEnabled) {
+        await biometric.promptToEnable(email, password);
+      }
+      await postAuthRouteAfterHydration();
+    } catch (e: unknown) {
+      const errorMsg = handleFirebaseError(e, 'Sign in failed. Please try again.');
+      if (errorMsg) setGlobalError(errorMsg);
+      if (Platform.OS !== 'web' && errorMsg) await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleBiometricLogin = useCallback(async () => {
+    setLoading(true);
+    clearErrors();
+    try {
+      if (!firebaseAuth) {
+        setGlobalError(FIREBASE_CLIENT_DISABLED_MESSAGE);
+        return;
+      }
+      const creds = await biometric.authenticate();
+      if (!creds) return; // user cancelled
+      await signInWithEmailAndPassword(firebaseAuth, creds.email, creds.password);
+      trackLogin('biometric');
+      if (Platform.OS !== 'web') await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      await postAuthRouteAfterHydration();
+    } catch (e: unknown) {
+      const errorMsg = handleFirebaseError(e, 'Biometric sign-in failed. Please use your password.');
+      if (errorMsg) setGlobalError(errorMsg);
+      if (Platform.OS !== 'web') await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    } finally {
+      setLoading(false);
+    }
+  }, [biometric, clearErrors, trackLogin, postAuthRouteAfterHydration]);
+
+  return {
+    email, setEmail,
+    password, setPassword,
+    emailError, passwordError, globalError,
+    loading, rememberMe, setRememberMe,
+    isValid,
+    clearErrors,
+    handleGoogleSignIn, handleAppleSignIn, handleLogin,
+    handleBiometricLogin,
+    biometricAvailable: biometric.isAvailable,
+    biometricEnabled: biometric.biometricEnabled,
+    biometricType: biometric.biometricType,
+    disableBiometric: biometric.disableBiometric,
+  };
+}

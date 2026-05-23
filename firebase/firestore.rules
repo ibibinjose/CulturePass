@@ -1,0 +1,499 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Auth helpers ──────────────────────────────────────────────────────────
+    // Use custom claims (from Firebase Auth token) instead of a Firestore read.
+    // This eliminates an extra db.get() on every rule evaluation.
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function uid() {
+      return request.auth.uid;
+    }
+
+    // Role comes from custom claims set by the backend (setCustomUserClaims).
+    // No Firestore read needed — claims are embedded in the ID token.
+    function userRole() {
+      return signedIn() ? request.auth.token.get('role', 'user') : 'anonymous';
+    }
+
+    function isAdminLike() {
+      return userRole() in ['admin', 'platformAdmin', 'cityAdmin', 'moderator', 'superAdmin'];
+    }
+
+    function isOrganizerLike() {
+      return userRole() in ['organizer', 'business', 'sponsor', 'creator'];
+    }
+
+    function isCreatorLike() {
+      return isOrganizerLike() || isAdminLike();
+    }
+
+    function isOwner(ownerId) {
+      return signedIn() && ownerId == uid();
+    }
+
+    // Validates that a write's owner field matches the authenticated user.
+    // Prevents users from setting another UID as the owner.
+    function ownerMatchesAuth(field) {
+      return signedIn()
+             && request.resource.data[field] is string
+             && request.resource.data[field] == uid();
+    }
+
+    // Validates that a new document is not excessively large (basic DoS guard).
+    function isReasonableSize() {
+      return request.resource.data.size() < 200;
+    }
+
+    function unchanged(field) {
+      return request.resource.data[field] == resource.data[field];
+    }
+
+    function doesNotChangeAny(fields) {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(fields);
+    }
+
+    function isSafeUserSelfUpdate() {
+      return doesNotChangeAny([
+        'role',
+        'roles',
+        'membership',
+        'subscriptionTier',
+        'stripeCustomerId',
+        'stripeSubscriptionId',
+        'stripeConnectAccountId',
+        'wallet',
+        'balanceCents',
+        'points',
+        'culturePassId',
+        'createdAt',
+        'lastAdminActionAt',
+        'disabled',
+        'status'
+      ]);
+    }
+
+    function optionalString(field, maxLength) {
+      return !request.resource.data.keys().hasAny([field])
+             || (request.resource.data[field] is string
+                 && request.resource.data[field].size() <= maxLength);
+    }
+
+    function optionalHttpUrl(field) {
+      return !request.resource.data.keys().hasAny([field])
+             || (request.resource.data[field] is string
+                 && request.resource.data[field].size() <= 2048
+                 && request.resource.data[field].matches('https?://[^\\s]+'));
+    }
+
+    function safePublicLinkFields() {
+      return optionalHttpUrl('website')
+             && optionalHttpUrl('websiteUrl')
+             && optionalHttpUrl('externalUrl')
+             && optionalHttpUrl('externalTicketUrl')
+             && optionalHttpUrl('imageUrl')
+             && optionalHttpUrl('thumbnailUrl');
+    }
+
+    // ── Users ─────────────────────────────────────────────────────────────────
+    match /users/{userId} {
+      allow get:    if (signedIn() && userId == uid()) || isAdminLike();
+      allow list:   if isAdminLike();
+      allow create: if signedIn() && userId == uid() && isReasonableSize();
+      allow update: if isAdminLike()
+                    || (signedIn()
+                        && userId == uid()
+                        && isSafeUserSelfUpdate()
+                        && safePublicLinkFields());
+      allow delete: if false; // Soft-delete only via Cloud Functions
+    }
+
+    // ── Events ────────────────────────────────────────────────────────────────
+    match /events/{eventId} {
+      allow read: if true;
+      allow create: if signedIn() && isCreatorLike()
+                    && ownerMatchesAuth('organizerId')
+                    && optionalString('title', 200)
+                    && safePublicLinkFields()
+                    && isReasonableSize();
+      allow update: if isAdminLike()
+                    || (isOwner(resource.data.organizerId)
+                        && unchanged('organizerId')
+                        && optionalString('title', 200)
+                        && safePublicLinkFields());
+      allow delete: if isAdminLike() || isOwner(resource.data.organizerId);
+    }
+
+    // ── Tickets ───────────────────────────────────────────────────────────────
+    // Only Cloud Functions (Admin SDK) write tickets; clients can only read their own.
+    match /tickets/{ticketId} {
+      allow get:    if signedIn() && resource.data.userId == uid();
+      allow list:   if isAdminLike();
+      allow create: if false; // Admin SDK only
+      allow update: if false; // Admin SDK only
+      allow delete: if false;
+    }
+
+    // ── Profiles (venues, businesses, artists, communities) ───────────────────
+    match /profiles/{profileId} {
+      allow read: if true;
+      allow create: if signedIn() && isCreatorLike()
+                    && ownerMatchesAuth('ownerId')
+                    && safePublicLinkFields()
+                    && isReasonableSize();
+      allow update: if isAdminLike()
+                    || (isOwner(resource.data.ownerId)
+                        && unchanged('ownerId')
+                        && safePublicLinkFields());
+      allow delete: if isAdminLike() || isOwner(resource.data.ownerId);
+    }
+
+    // ── Communities ───────────────────────────────────────────────────────────
+    match /communities/{communityId} {
+      allow read: if true;
+      allow create: if signedIn() && isCreatorLike()
+                    && ownerMatchesAuth('ownerId')
+                    && safePublicLinkFields()
+                    && isReasonableSize();
+      allow update: if isAdminLike()
+                    || (isOwner(resource.data.ownerId)
+                        && unchanged('ownerId')
+                        && safePublicLinkFields());
+      allow delete: if isAdminLike() || isOwner(resource.data.ownerId);
+    }
+
+    match /communities/{communityId}/members/{memberId} {
+      allow read:   if signedIn();
+      allow create: if signedIn() && memberId == uid();
+      allow delete: if isAdminLike() || isOwner(memberId);
+    }
+
+    // ── Businesses ────────────────────────────────────────────────────────────
+    match /businesses/{businessId} {
+      allow read: if true;
+      allow create: if signedIn() && isCreatorLike()
+                    && ownerMatchesAuth('ownerId')
+                    && safePublicLinkFields()
+                    && isReasonableSize();
+      allow update: if isAdminLike()
+                    || (isOwner(resource.data.ownerId)
+                        && unchanged('ownerId')
+                        && safePublicLinkFields());
+      allow delete: if isAdminLike() || isOwner(resource.data.ownerId);
+    }
+
+    // ── Perks / Offers ────────────────────────────────────────────────────────
+    match /perks/{perkId} {
+      allow read: if true;
+      allow write: if isAdminLike();
+    }
+
+    match /offers/{offerId} {
+      allow read: if true;
+      allow create: if signedIn() && isCreatorLike() && ownerMatchesAuth('ownerId') && safePublicLinkFields();
+      allow update: if isAdminLike()
+                    || (isOwner(resource.data.ownerId) && unchanged('ownerId') && safePublicLinkFields());
+      allow delete: if isAdminLike() || isOwner(resource.data.ownerId);
+    }
+
+    // ── Daily Deals (CultureMarket promos) ────────────────────────────────────
+    match /dailyDeals/{dealId} {
+      allow read: if true;
+      // Write requires organizer approval flag — enforced by Cloud Functions;
+      // direct client writes require moderator+.
+      allow write: if isAdminLike();
+    }
+
+    // ── CultureMarket Listings ─────────────────────────────────────────────────
+    match /cultureShopListings/{listingId} {
+      allow read: if true;
+      // Owner must match auth UID; enforced both here and in Cloud Functions.
+      allow create: if signedIn()
+                    && isCreatorLike()
+                    && ownerMatchesAuth('sellerUserId')
+                    && safePublicLinkFields()
+                    && isReasonableSize();
+      allow update: if isAdminLike()
+                    || (isOwner(resource.data.sellerUserId)
+                        && unchanged('sellerUserId')
+                        && safePublicLinkFields());
+      allow delete: if isAdminLike() || isOwner(resource.data.sellerUserId);
+    }
+
+    // ── Host Applications ─────────────────────────────────────────────────────
+    match /hostApplications/{appId} {
+      // Applicant can read their own; admins can read all.
+      allow get:    if signedIn() && (resource.data.userId == uid() || isAdminLike());
+      allow list:   if isAdminLike();
+      // Applicant submits their own only.
+      allow create: if signedIn() && ownerMatchesAuth('userId') && isReasonableSize();
+      // Only admins update (for review).
+      allow update: if isAdminLike();
+      allow delete: if false;
+    }
+
+    // ── Notifications ─────────────────────────────────────────────────────────
+    match /notifications/{notifId} {
+      allow get:    if signedIn() && resource.data.userId == uid();
+      allow list:   if signedIn() && resource.data.userId == uid();
+      allow create: if false;        // Cloud Functions only
+      allow update: if signedIn()
+                    && resource.data.userId == uid()
+                    && unchanged('userId'); // mark read
+      allow delete: if isAdminLike();
+    }
+
+    // ── Wallet ────────────────────────────────────────────────────────────────
+    match /wallets/{walletId} {
+      allow get:    if signedIn() && resource.data.userId == uid();
+      allow list:   if isAdminLike();
+      allow write:  if false; // Cloud Functions only — Stripe webhook handler
+    }
+
+    // ── Subscriptions / Memberships ───────────────────────────────────────────
+    match /subscriptions/{subId} {
+      allow get:    if signedIn() && resource.data.userId == uid();
+      allow list:   if isAdminLike();
+      allow write:  if false; // Cloud Functions only — Stripe webhook handler
+    }
+
+    // ── Saved items ───────────────────────────────────────────────────────────
+    match /savedItems/{savedId} {
+      allow read:   if signedIn() && resource.data.userId == uid();
+      allow create: if signedIn() && ownerMatchesAuth('userId');
+      allow update: if signedIn()
+                    && resource.data.userId == uid()
+                    && unchanged('userId');
+      allow delete: if signedIn() && resource.data.userId == uid();
+    }
+
+    // ── Councils ──────────────────────────────────────────────────────────────
+    match /councils/{councilId} {
+      allow read: if true;
+      allow write: if isAdminLike();
+    }
+
+    // ── Static / reference data (public read, admin write) ────────────────────
+    match /cultures/{id}    { allow read: if true; allow write: if isAdminLike(); }
+    match /categories/{id}  { allow read: if true; allow write: if isAdminLike(); }
+    match /countries/{id}   { allow read: if true; allow write: if isAdminLike(); }
+    match /states/{id}      { allow read: if true; allow write: if isAdminLike(); }
+    match /cities/{id}      { allow read: if true; allow write: if isAdminLike(); }
+    match /languages/{id}   { allow read: if true; allow write: if isAdminLike(); }
+
+    // ── Indigenous data ───────────────────────────────────────────────────────
+    match /indigenousSpotlights/{id}  { allow read: if true; allow write: if isAdminLike(); }
+    match /traditionalLands/{id}      { allow read: if true; allow write: if isAdminLike(); }
+    match /indigenousBusinesses/{id} {
+      allow read: if true;
+      allow create: if signedIn() && isCreatorLike() && ownerMatchesAuth('ownerId') && safePublicLinkFields();
+      allow update: if isAdminLike()
+                    || (isOwner(resource.data.ownerId) && unchanged('ownerId') && safePublicLinkFields());
+      allow delete: if isAdminLike() || isOwner(resource.data.ownerId);
+    }
+
+    // ── Client-owned app state / server-backed collections ────────────────────
+    match /privacySettings/{userId} {
+      allow get: if signedIn() && (userId == uid() || isAdminLike());
+      allow list: if isAdminLike();
+      allow create, update: if signedIn()
+                            && userId == uid()
+                            && isReasonableSize()
+                            && ownerMatchesAuth('userId');
+      allow delete: if false;
+    }
+
+    match /paymentMethods/{methodId} {
+      allow get, list: if signedIn() && (resource.data.userId == uid() || isAdminLike());
+      allow write: if false; // Cloud Functions / Stripe only
+    }
+
+    match /eventFeedback/{feedbackId} {
+      allow read: if isAdminLike()
+                  || (signedIn() && resource.data.userId == uid());
+      allow create: if signedIn()
+                    && ownerMatchesAuth('userId')
+                    && optionalString('comment', 2000)
+                    && isReasonableSize();
+      allow update, delete: if false;
+    }
+
+    match /media/{mediaId} {
+      allow read: if true;
+      allow create: if signedIn()
+                    && ownerMatchesAuth('userId')
+                    && safePublicLinkFields()
+                    && isReasonableSize();
+      allow update, delete: if isAdminLike()
+                            || (signedIn()
+                                && resource.data.userId == uid()
+                                && unchanged('userId')
+                                && safePublicLinkFields());
+    }
+
+    match /rsvps/{rsvpId} {
+      allow read: if signedIn() && (resource.data.userId == uid() || isAdminLike());
+      allow write: if false; // Cloud Functions only
+    }
+
+    match /eventFavorites/{favoriteId} {
+      allow read: if signedIn() && resource.data.userId == uid();
+      allow create: if signedIn() && ownerMatchesAuth('userId') && isReasonableSize();
+      allow delete: if signedIn() && resource.data.userId == uid();
+      allow update: if false;
+    }
+
+    match /follows/{followId} {
+      allow read: if signedIn() && (resource.data.userId == uid() || isAdminLike());
+      allow create: if signedIn() && ownerMatchesAuth('userId') && isReasonableSize();
+      allow delete: if signedIn() && resource.data.userId == uid();
+      allow update: if false;
+    }
+
+    match /contactSaves/{saveId} {
+      allow read: if signedIn() && (resource.data.userId == uid() || isAdminLike());
+      allow create: if signedIn() && ownerMatchesAuth('userId') && isReasonableSize();
+      allow update: if signedIn() && resource.data.userId == uid() && unchanged('userId');
+      allow delete: if signedIn() && resource.data.userId == uid();
+    }
+
+    match /communityPosts/{postId} {
+      allow read: if true;
+      allow create: if signedIn()
+                    && ownerMatchesAuth('userId')
+                    && optionalString('body', 5000)
+                    && safePublicLinkFields()
+                    && isReasonableSize();
+      allow update, delete: if isAdminLike()
+                            || (signedIn()
+                                && resource.data.userId == uid()
+                                && unchanged('userId')
+                                && safePublicLinkFields());
+      match /likes/{likeId} {
+        allow read: if true;
+        allow create, delete: if signedIn() && likeId == uid();
+        allow update: if false;
+      }
+      match /comments/{commentId} {
+        allow read: if true;
+        allow create: if signedIn()
+                      && ownerMatchesAuth('userId')
+                      && optionalString('body', 2000)
+                      && isReasonableSize();
+        allow update, delete: if isAdminLike()
+                              || (signedIn()
+                                  && resource.data.userId == uid()
+                                  && unchanged('userId')
+                                  && optionalString('body', 2000));
+      }
+      match /reactions/{reactionId} {
+        allow read: if true;
+        allow create, delete: if signedIn() && reactionId == uid();
+        allow update: if false;
+      }
+    }
+
+    match /pushTokens/{tokenId} {
+      allow read, write: if false; // Cloud Functions only
+    }
+
+    match /redemptions/{redemptionId} {
+      allow read: if signedIn() && (resource.data.userId == uid() || isAdminLike());
+      allow write: if false; // Cloud Functions only
+    }
+
+    match /shops/{shopId} {
+      allow read: if true;
+      allow write: if isAdminLike();
+    }
+
+    match /restaurants/{restaurantId} {
+      allow read: if true;
+      allow write: if isAdminLike();
+    }
+
+    match /movies/{movieId} {
+      allow read: if true;
+      allow write: if isAdminLike();
+    }
+
+    match /featuredCities/{cityId} {
+      allow read: if true;
+      allow write: if isAdminLike();
+    }
+
+    match /heroCarousel/{slideId} {
+      allow read: if true;
+      allow write: if isAdminLike();
+    }
+
+    match /systemConfig/{configId} {
+      allow read, write: if isAdminLike();
+    }
+
+    match /system/{configId} {
+      allow read, write: if isAdminLike();
+    }
+
+    match /taxonomy/{id} {
+      allow read: if true;
+      allow write: if isAdminLike();
+    }
+
+    match /cultureQuests/{questId} {
+      allow read: if signedIn();
+      allow write: if isAdminLike();
+    }
+
+    match /users/{userId}/wallet/{walletId} {
+      allow get, list: if signedIn() && (userId == uid() || isAdminLike());
+      allow write: if false;
+    }
+
+    match /users/{userId}/membership/{membershipId} {
+      allow get, list: if signedIn() && (userId == uid() || isAdminLike());
+      allow write: if false;
+    }
+
+    match /users/{userId}/cultureExplorerProgress/{progressId} {
+      allow get, list: if signedIn() && (userId == uid() || isAdminLike());
+      allow write: if false;
+    }
+
+    match /users/{userId}/questProgress/{progressId} {
+      allow get, list: if signedIn() && (userId == uid() || isAdminLike());
+      allow write: if false;
+    }
+
+    // ── Moderation & audit ────────────────────────────────────────────────────
+    match /moderationQueue/{id} {
+      allow read, write: if isAdminLike();
+    }
+    match /auditLogs/{id} {
+      allow read:  if isAdminLike();
+      allow write: if false; // Cloud Functions only
+    }
+
+    // ── Activities feed ───────────────────────────────────────────────────────
+    match /activities/{id} {
+      allow get:    if signedIn() && resource.data.userId == uid();
+      allow list:   if signedIn() && resource.data.userId == uid();
+      allow write:  if false; // Cloud Functions only
+    }
+
+    // ── Reports ───────────────────────────────────────────────────────────────
+    match /reports/{id} {
+      allow create: if signedIn() && ownerMatchesAuth('reporterId');
+      allow read, update, delete: if isAdminLike();
+    }
+
+    // ── Catch-all deny ────────────────────────────────────────────────────────
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,0 +1,68 @@
+{
+  "cli": {
+    "version": ">= 16.0.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "base": {
+      "node": "22.14.0",
+      "env": {
+        "NPM_CONFIG_PRODUCTION": "false"
+      }
+    },
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "channel": "dev",
+      "cache": { "disabled": true },
+      "ios": { "simulator": true },
+      "android": { "buildType": "apk" }
+    },
+    "preview": {
+      "distribution": "internal",
+      "channel": "preview",
+      "ios": { "simulator": false },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://us-central1-culturepass-4f264.cloudfunctions.net/api/",
+        "EXPO_PUBLIC_FIREBASE_API_KEY": "AIzaSyDjAJFTdTfkP63pjuQd7j41DNEKYAYYupw",
+        "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "culturepass-4f264.firebaseapp.com",
+        "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "culturepass-4f264",
+        "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET": "culturepass-4f264.firebasestorage.app",
+        "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "476251116440",
+        "EXPO_PUBLIC_FIREBASE_APP_ID": "1:476251116440:web:5295433d935ddf325151ed",
+        "EXPO_PUBLIC_GOOGLE_REVERSED_CLIENT_ID": "FILL_ME_IN",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "FILL_ME_IN"
+      }
+    },
+    "production": {
+      "autoIncrement": true,
+      "channel": "production",
+      "ios": { "simulator": false },
+      "android": { "buildType": "app-bundle" },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://us-central1-culturepass-4f264.cloudfunctions.net/api/",
+        "EXPO_PUBLIC_FIREBASE_API_KEY": "AIzaSyDjAJFTdTfkP63pjuQd7j41DNEKYAYYupw",
+        "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "culturepass-4f264.firebaseapp.com",
+        "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "culturepass-4f264",
+        "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET": "culturepass-4f264.firebasestorage.app",
+        "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "476251116440",
+        "EXPO_PUBLIC_FIREBASE_APP_ID": "1:476251116440:web:5295433d935ddf325151ed",
+        "EXPO_PUBLIC_GOOGLE_REVERSED_CLIENT_ID": "FILL_ME_IN",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "FILL_ME_IN"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "appleId": "AirPizza@icloud.com",
+        "ascAppId": "FILL_ME_IN",
+        "appleTeamId": "26WGXSNG58"
+      },
+      "android": {
+        "serviceAccountKeyPath": "../google-play-service-account.json",
+        "track": "production"
+      }
+    }
+  }
+}

@@ -1,0 +1,25 @@
+# robots.txt for CulturePass
+# Keep public/marketing content indexable while blocking private app surfaces.
+
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /dashboard/
+Disallow: /api/
+Disallow: /login
+Disallow: /signup
+Disallow: /forgot-password
+Disallow: /my-space
+Disallow: /saved
+Disallow: /scanner
+Disallow: /notifications/
+Disallow: /contacts/
+Disallow: /network/
+Disallow: /checkout/
+Disallow: /payment/
+Disallow: /tickets/
+Disallow: /settings/
+Disallow: /private/
+
+Sitemap: https://culturepass.app/sitemap.xml
+Host: https://culturepass.app

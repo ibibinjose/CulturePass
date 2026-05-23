@@ -1,0 +1,140 @@
+rules_version = '2';
+
+/**
+ * CulturePass AU — Firebase Storage Security Rules
+ *
+ * Security posture:
+ *  - Writes use folder semantics + Firestore ownership where paths use entity IDs.
+ *  - Staging paths that use auth uid as the folder name remain uid-scoped (isOwner).
+ *  - ONLY safe raster image formats (JPEG, PNG, WebP, GIF). SVG blocked.
+ *  - Admin SDK / Cloud Functions bypass these rules.
+ *
+ * Bucket layout:
+ *   users/{userId}/, avatars/{userId}/, events/{uploaderId}/,
+ *   profiles/{profileId}/, listings/{userId}/, perks/{perkId}/,
+ *   offers/{userId}/, communities/{communityId}/, uploads/{userId}/
+ */
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isSafeImage() {
+      return request.resource.contentType in [
+        'image/jpeg',
+        'image/jpg',
+        'image/png',
+        'image/webp',
+        'image/gif'
+      ];
+    }
+
+    function isBlockedImageName(filename) {
+      return filename.matches('.*\\.[sS][vV][gG]([zZ])?$');
+    }
+
+    function isUnderMb(mb) {
+      return request.resource.size < mb * 1024 * 1024;
+    }
+
+    function imageWriteConstraints(filename, mb) {
+      return isSafeImage()
+             && !isBlockedImageName(filename)
+             && isUnderMb(mb);
+    }
+
+    function canWriteProfileMedia(profileId) {
+      return isSignedIn() && (
+        profileId == request.auth.uid ||
+        (
+          firestore.exists(/databases/(default)/documents/profiles/$(profileId)) &&
+          firestore.get(/databases/(default)/documents/profiles/$(profileId)).data.ownerId == request.auth.uid
+        )
+      );
+    }
+
+    function canWriteCommunityMedia(communityId) {
+      return isSignedIn() && (
+        communityId == request.auth.uid ||
+        (
+          firestore.exists(/databases/(default)/documents/communities/$(communityId)) &&
+          firestore.get(/databases/(default)/documents/communities/$(communityId)).data.ownerId == request.auth.uid
+        )
+      );
+    }
+
+    function canWritePerkMedia(perkId) {
+      return isSignedIn()
+             && firestore.exists(/databases/(default)/documents/perks/$(perkId))
+             && (
+               firestore.get(/databases/(default)/documents/perks/$(perkId)).data.createdBy == request.auth.uid ||
+               firestore.get(/databases/(default)/documents/perks/$(perkId)).data.providerId == request.auth.uid
+             );
+    }
+
+    match /events/{uploaderId}/{filename} {
+      allow read:  if true;
+      allow write: if isOwner(uploaderId)
+                   && imageWriteConstraints(filename, 10);
+    }
+
+    match /profiles/{profileId}/{filename} {
+      allow read: if true;
+      allow create, update: if canWriteProfileMedia(profileId)
+                             && imageWriteConstraints(filename, 10);
+      allow delete: if canWriteProfileMedia(profileId);
+    }
+
+    match /users/{userId}/{filename} {
+      allow read:  if true;
+      allow write: if isOwner(userId)
+                   && imageWriteConstraints(filename, 5);
+    }
+
+    match /avatars/{userId}/{filename} {
+      allow read:  if true;
+      allow write: if isOwner(userId)
+                   && imageWriteConstraints(filename, 5);
+    }
+
+    match /listings/{userId}/{filename} {
+      allow read:  if true;
+      allow write: if isOwner(userId)
+                   && imageWriteConstraints(filename, 10);
+    }
+
+    match /perks/{perkId}/{filename} {
+      allow read:  if true;
+      allow write: if canWritePerkMedia(perkId)
+                   && imageWriteConstraints(filename, 10);
+    }
+
+    match /offers/{userId}/{filename} {
+      allow read:  if true;
+      allow write: if isOwner(userId)
+                   && imageWriteConstraints(filename, 10);
+    }
+
+    match /communities/{communityId}/{filename} {
+      allow read:  if true;
+      allow write: if canWriteCommunityMedia(communityId)
+                   && imageWriteConstraints(filename, 10);
+    }
+
+    match /uploads/{userId}/{filename} {
+      allow read:  if true;
+      allow write: if false;
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,0 +1,13 @@
+diff --git a/node_modules/@expo/config-plugins/build/ios/Maps.js b/node_modules/@expo/config-plugins/build/ios/Maps.js
+index 9edec2b..af0f8be 100644
+--- a/node_modules/@expo/config-plugins/build/ios/Maps.js
++++ b/node_modules/@expo/config-plugins/build/ios/Maps.js
+@@ -121,7 +121,7 @@ function addMapsCocoaPods(src) {
+   return (0, _generateCode().mergeContents)({
+     tag: 'react-native-maps',
+     src,
+-    newSrc: `  pod 'react-native-google-maps', path: File.dirname(\`node --print "require.resolve('react-native-maps/package.json')"\`)`,
++    newSrc: `  pod 'react-native-maps', path: File.dirname(\`node --print "require.resolve('react-native-maps/package.json')"\`)`,
+     anchor: /use_native_modules/,
+     offset: 0,
+     comment: '#'

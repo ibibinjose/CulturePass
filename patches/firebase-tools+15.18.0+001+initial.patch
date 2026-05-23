@@ -1,0 +1,17 @@
+diff --git a/node_modules/firebase-tools/lib/fsAsync.js b/node_modules/firebase-tools/lib/fsAsync.js
+index a474978..9e30c8e 100644
+--- a/node_modules/firebase-tools/lib/fsAsync.js
++++ b/node_modules/firebase-tools/lib/fsAsync.js
+@@ -4,7 +4,11 @@ exports.readdirRecursive = readdirRecursive;
+ const fs_extra_1 = require("fs-extra");
+ const ignore_1 = require("ignore");
+ const _ = require("lodash");
+-const minimatch = require("minimatch");
++const minimatchMod = require("minimatch");
++const minimatch =
++    typeof minimatchMod === "function"
++        ? minimatchMod
++        : minimatchMod.minimatch || minimatchMod.default || minimatchMod;
+ const path_1 = require("path");
+ const logger_1 = require("./logger");
+ async function readdirRecursiveHelper(options) {

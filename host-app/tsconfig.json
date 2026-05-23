@@ -1,0 +1,17 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*", "../src/*"],
+      "@/shared/*": ["../shared/*"],
+      "@shared/*": ["../shared/*"],
+      "@consumer/*": ["../src/*"],
+      "@tanstack/react-query": ["../node_modules/@tanstack/react-query"],
+      "@tanstack/query-core": ["../node_modules/@tanstack/query-core"]
+    }
+  },
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules", "dist"]
+}

@@ -1,0 +1,11 @@
+export { default as BrowsePage } from '@/components/BrowsePage';
+export { CulturalHubPage } from '@/components/hubs/CulturalHubPage';
+export { DiscoverHeader } from '@/components/Discover/DiscoverHeader';
+export { HeroCarousel } from '@/components/Discover/HeroCarousel';
+export { EventRail } from '@/components/Discover/EventRail';
+export { CommunityRail } from '@/components/Discover/CommunityRail';
+export { CategoryRail } from '@/components/Discover/CategoryRail';
+export { CityRail } from '@/components/Discover/CityRail';
+export { ActivityRail } from '@/components/Discover/ActivityRail';
+export { ScannerQuickNavBar } from '@/components/scanner/ScannerQuickNavBar';
+export { ProfileScanner } from '@/components/scanner/ProfileScanner';

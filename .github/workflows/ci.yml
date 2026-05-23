@@ -1,0 +1,41 @@
+name: CulturePass CI
+
+on:
+  push:
+    branches: [main, preview, dev]
+  pull_request:
+    branches: [main, preview, dev]
+
+jobs:
+  qa_solid:
+    name: qa:solid — lint, typecheck, scripts, Functions build, web export
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          # Root lockfile only; Functions uses its own `npm ci` (small tree).
+          cache-dependency-path: package-lock.json
+
+      - name: Configure git identity
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install Functions dependencies
+        working-directory: functions
+        run: npm ci
+
+      # Single gate aligned with package.json → matches local `npm run qa:solid`.
+      # No EXPO_TOKEN — web export uses mock Firebase env vars from the script.
+      - name: Run qa:solid
+        run: npm run qa:solid

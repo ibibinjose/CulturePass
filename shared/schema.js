@@ -49,4 +49,10 @@ __exportStar(require("./schema/dailyDeal"), exports);
 __exportStar(require("./schema/marketplaceFeed"), exports);
 __exportStar(require("./schema/cultureShopListing"), exports);
 __exportStar(require("./schema/hostApplication"), exports);
+__exportStar(require("./schema/hostProfile"), exports);
+__exportStar(require("./schema/hostProfileDraft"), exports);
+__exportStar(require("./schema/hostProfileVersion"), exports);
+__exportStar(require("./schema/hostVerificationTask"), exports);
+__exportStar(require("./schema/hostProfileAnalytics"), exports);
+__exportStar(require("./schema/communityHomeBanner"), exports);
 //# sourceMappingURL=schema.js.map

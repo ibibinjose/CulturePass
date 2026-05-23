@@ -39,6 +39,12 @@ import {
   PromoCodeError,
 } from '../services/ticketPricing';
 
+import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
+import { Event } from '../../shared/schema/event';
+import { eventService } from '../services/events';
+import { councilService } from '../services/council';
+import { profileService } from '../services/profiles';
+
 // ---------------------------------------------------------------------------
 // Shared types (inlined to avoid circular import with app.ts)
 // ---------------------------------------------------------------------------
@@ -1015,4 +1021,259 @@ export function createEventsRouter() {
   });
 
   return router;
+}
+
+export async function getEvents(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
+  try {
+    const { limit, offset, councilId, category } = event.queryStringParameters || {};
+    
+    const filters = {
+      councilId: councilId || undefined,
+      category: category || undefined,
+    };
+
+    const events = await eventService.getAll({
+      limit: limit ? parseInt(limit, 10) : undefined,
+      offset: offset ? parseInt(offset, 10) : undefined,
+      filters,
+    });
+
+    return {
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+      body: JSON.stringify(events),
+    };
+  } catch (error) {
+    console.error('Error fetching events:', error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Failed to fetch events' }),
+    };
+  }
+}
+
+export async function getEventById(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
+  try {
+    const id = event.pathParameters?.id;
+    if (!id) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Event ID is required' }),
+      };
+    }
+
+    const eventData = await eventService.getById(id);
+    if (!eventData) {
+      return {
+        statusCode: 404,
+        body: JSON.stringify({ error: 'Event not found' }),
+      };
+    }
+
+    return {
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+      body: JSON.stringify(eventData),
+    };
+  } catch (error) {
+    console.error('Error fetching event:', error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Failed to fetch event' }),
+    };
+  }
+}
+
+export async function createEvent(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
+  try {
+    const requestData = typeof event.body === 'string' ? JSON.parse(event.body) : event.body;
+    const eventData = Event.parse(requestData);
+
+    // Validate that the council exists
+    const council = await councilService.getById(eventData.councilId);
+    if (!council) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Council does not exist' }),
+      };
+    }
+
+    // Validate that the host profile exists
+    const profile = await profileService.getById(eventData.hostId);
+    if (!profile) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Host profile does not exist' }),
+      };
+    }
+
+    const newEvent = await eventService.create(eventData);
+
+    return {
+      statusCode: 201,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+      body: JSON.stringify(newEvent),
+    };
+  } catch (error) {
+    console.error('Error creating event:', error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Failed to create event' }),
+    };
+  }
+}
+
+export async function updateEvent(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
+  try {
+    const id = event.pathParameters?.id;
+    if (!id) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Event ID is required' }),
+      };
+    }
+
+    const requestData = typeof event.body === 'string' ? JSON.parse(event.body) : event.body;
+    const eventData = Event.parse(requestData);
+
+    // Check if event exists
+    const existingEvent = await eventService.getById(id);
+    if (!existingEvent) {
+      return {
+        statusCode: 404,
+        body: JSON.stringify({ error: 'Event not found' }),
+      };
+    }
+
+    const updatedEvent = await eventService.update(id, eventData);
+
+    return {
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+      body: JSON.stringify(updatedEvent),
+    };
+  } catch (error) {
+    console.error('Error updating event:', error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Failed to update event' }),
+    };
+  }
+}
+
+export async function deleteEvent(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
+  try {
+    const id = event.pathParameters?.id;
+    if (!id) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Event ID is required' }),
+      };
+    }
+
+    // Check if event exists
+    const existingEvent = await eventService.getById(id);
+    if (!existingEvent) {
+      return {
+        statusCode: 404,
+        body: JSON.stringify({ error: 'Event not found' }),
+      };
+    }
+
+    await eventService.delete(id);
+
+    return {
+      statusCode: 204,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+      },
+      body: '',
+    };
+  } catch (error) {
+    console.error('Error deleting event:', error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Failed to delete event' }),
+    };
+  }
+}
+
+export async function getEventsByCouncil(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
+  try {
+    const councilId = event.pathParameters?.councilId;
+    if (!councilId) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Council ID is required' }),
+      };
+    }
+
+    const { limit, offset } = event.queryStringParameters || {};
+
+    const events = await eventService.getByCouncil(councilId, {
+      limit: limit ? parseInt(limit, 10) : undefined,
+      offset: offset ? parseInt(offset, 10) : undefined,
+    });
+
+    return {
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+      body: JSON.stringify(events),
+    };
+  } catch (error) {
+    console.error('Error fetching events by council:', error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Failed to fetch events by council' }),
+    };
+  }
+}
+
+export async function getEventsByHost(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
+  try {
+    const hostId = event.pathParameters?.hostId;
+    if (!hostId) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Host ID is required' }),
+      };
+    }
+
+    const { limit, offset } = event.queryStringParameters || {};
+
+    const events = await eventService.getByHost(hostId, {
+      limit: limit ? parseInt(limit, 10) : undefined,
+      offset: offset ? parseInt(offset, 10) : undefined,
+    });
+
+    return {
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+      body: JSON.stringify(events),
+    };
+  } catch (error) {
+    console.error('Error fetching events by host:', error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Failed to fetch events by host' }),
+    };
+  }
 }

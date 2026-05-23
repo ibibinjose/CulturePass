@@ -72,7 +72,7 @@ export interface ProfileAnalytics {
     social: number;
     referral: number;
   };
-  topKeywords: Array<{ keyword: string; count: number }>;
+  topKeywords: { keyword: string; count: number }[];
   engagementScore: number;
   categoryRank?: number;
   updatedAt: string;

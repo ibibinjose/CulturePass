@@ -318,6 +318,11 @@ export function SavedProvider({ children }: { children: ReactNode }) {
       ? subscribedCities.filter((c) => cityKey(c.city, c.country) !== key)
       : [...subscribedCities, { city: city.trim(), country: country.trim(), subscribedAt: new Date().toISOString() }];
 
+    captureEvent(exists ? 'city_unsubscribed' : 'city_subscribed', {
+      city: city.trim(),
+      country: country.trim(),
+    });
+
     setSubscribedCities(next);
     AsyncStorage.setItem(SUBSCRIBED_CITIES_KEY, JSON.stringify(next));
 

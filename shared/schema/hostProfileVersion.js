@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ProfileVersionDiffSchema = exports.CreateProfileVersionSchema = exports.ProfileVersionSchema = void 0;
-var zod_1 = require("zod");
-var hostProfile_1 = require("./hostProfile");
+const zod_1 = require("zod");
+const hostProfile_1 = require("./hostProfile");
 // ============================================================================
 // HostSpace Enterprise-Grade Form System - Profile Version Schema
 // ============================================================================
@@ -38,3 +38,4 @@ exports.ProfileVersionDiffSchema = zod_1.z.object({
     changedBy: zod_1.z.string(),
     changedAt: zod_1.z.string(), // ISO 8601 timestamp
 });
+//# sourceMappingURL=hostProfileVersion.js.map

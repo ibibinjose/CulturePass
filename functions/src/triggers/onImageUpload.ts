@@ -1,15 +1,13 @@
-import * as functions from 'firebase-functions/v1';
-import * as admin from 'firebase-admin';
-import sharp from 'sharp';
-import { rgbaToThumbHash } from 'thumbhash';
-import * as os from 'os';
-import * as path from 'path';
-import * as fs from 'fs';
+import { logger } from 'firebase-functions';
+import { defineSecret } from 'firebase-functions/params';
+import { onObjectFinalized } from 'firebase-functions/v2/storage';
+import { Storage } from '@google-cloud/storage';
+import { getFirebaseProjectId } from '../handlers/utils';
+import { db } from '../admin';
+import { generateThumbHash } from '../thumbhash';
 
-// Initialize admin if not already initialized
-if (admin.apps.length === 0) {
-  admin.initializeApp();
-}
+const projectId = getFirebaseProjectId();
+const storage = new Storage({ projectId });
 
 /**
  * Triggered automatically when ANY file is uploaded to Firebase Storage.
@@ -17,13 +15,20 @@ if (admin.apps.length === 0) {
  * (to keep it fast and secure), and automatically updates the corresponding 
  * Firestore document.
  */
-export const onImageUploadGenerateThumbhash = functions
-  .runWith({ memory: '1GB', timeoutSeconds: 120 }) // Sharp needs a higher heap allocation
-  .storage.object().onFinalize(async (object) => {
+export const onImageUploadGenerateThumbhash = onObjectFinalized(
+  {
+    retry: false,
+    cpu: 1,
+    concurrency: 5,
+    memory: '1GB',
+    timeoutSeconds: 120
+  }, 
+  async (event) => {
+    const object = event.data;
     try {
       // 1. Validate payload
       if (!object.name || !object.contentType?.startsWith('image/')) {
-        return null;
+        return;
       }
       
       const filePath = object.name;
@@ -37,12 +42,12 @@ export const onImageUploadGenerateThumbhash = functions
       const collectionName = pathParts[0];
       const docId = pathParts[1];
 
-      // Prevent processing avatars/covers that were just created to loop? 
+      // Prevent processing avatars/covers that were just created to loop?
       // Storage triggers only fire on new Object uploads anyway.
 
       // 2. Download into temporary environment
       const tempFilePath = path.join(os.tmpdir(), path.basename(filePath));
-      const bucket = admin.storage().bucket(object.bucket);
+      const bucket = storage.bucket(object.bucket);
       await bucket.file(filePath).download({ destination: tempFilePath });
 
       // 3. Process via Sharp for ThumbHash extraction
@@ -74,7 +79,7 @@ export const onImageUploadGenerateThumbhash = functions
       return null;
       
     } catch (error) {
-      console.error('[ThumbHash] Critical Error processing image:', error);
-      return null;
+      logger.error('[ThumbHash] Critical Error processing image:', error);
+      return;
     }
 });

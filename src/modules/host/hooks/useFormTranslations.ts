@@ -86,10 +86,10 @@ export interface UseFormTranslationsReturn {
 
 // ─── Relative Time Helpers ───────────────────────────────────────────────────
 
-const RELATIVE_TIME_UNITS: Array<{
+const RELATIVE_TIME_UNITS: {
   unit: Intl.RelativeTimeFormatUnit;
   ms: number;
-}> = [
+}[] = [
   { unit: 'year', ms: 365.25 * 24 * 60 * 60 * 1000 },
   { unit: 'month', ms: 30.44 * 24 * 60 * 60 * 1000 },
   { unit: 'week', ms: 7 * 24 * 60 * 60 * 1000 },

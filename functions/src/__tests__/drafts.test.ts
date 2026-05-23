@@ -8,6 +8,7 @@
 
 import request from 'supertest';
 import { app } from '../app';
+import { draftService } from '../services/draftService';
 
 // ---------------------------------------------------------------------------
 // Mocks
@@ -200,12 +201,6 @@ jest.mock('../../../shared/schema/hostProfileVersion', () => ({
   },
 }));
 
-// ---------------------------------------------------------------------------
-// Get references to mocked services
-// ---------------------------------------------------------------------------
-
-import { draftService } from '../services/profileService';
-
 const mockDraftService = draftService as any;
 
 // ---------------------------------------------------------------------------
@@ -231,31 +226,6 @@ const sampleDraft = {
     userAgent: 'Mozilla/5.0 Chrome/120',
   },
 };
-
-const sampleDrafts = [
-  {
-    ...sampleDraft,
-    id: 'draft-1',
-    updatedAt: '2024-01-15T10:30:00.000Z',
-    deviceInfo: { platform: 'web', userAgent: 'Chrome/120' },
-  },
-  {
-    ...sampleDraft,
-    id: 'draft-2',
-    entityType: 'artist',
-    formData: { officialName: 'My Art Studio' },
-    updatedAt: '2024-01-10T08:00:00.000Z',
-    deviceInfo: { platform: 'ios', userAgent: 'CulturePass/1.0' },
-  },
-  {
-    ...sampleDraft,
-    id: 'draft-3',
-    entityType: 'venue',
-    formData: { officialName: 'My Venue' },
-    updatedAt: '2024-01-05T14:00:00.000Z',
-    deviceInfo: { platform: 'android', userAgent: 'CulturePass/1.0' },
-  },
-];
 
 // ---------------------------------------------------------------------------
 // Tests

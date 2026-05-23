@@ -33,7 +33,7 @@ const actionSequenceArb = fc.array(actionArb, { minLength: 1, maxLength: 50 });
  * Replays a sequence of actions on a fresh manager and returns the final state.
  */
 function replaySequence(
-  actions: ReadonlyArray<'success' | 'failure'>,
+  actions: readonly ('success' | 'failure')[],
   sectionKey: string = 'test-section'
 ): { manager: InlineRetryManagerInterface; isCollapsed: boolean; consecutiveFailures: number } {
   const manager = createInlineRetryManager();
@@ -57,7 +57,7 @@ function replaySequence(
 /**
  * Counts the number of trailing consecutive failures in a sequence.
  */
-function trailingConsecutiveFailures(actions: ReadonlyArray<'success' | 'failure'>): number {
+function trailingConsecutiveFailures(actions: readonly ('success' | 'failure')[]): number {
   let count = 0;
   for (let i = actions.length - 1; i >= 0; i--) {
     if (actions[i] === 'failure') {
@@ -94,7 +94,7 @@ describe('InlineRetryManager — Property 25: Inline Retry Collapse Logic', () =
         fc.array(actionArb, { minLength: 0, maxLength: 10 }),
         (failurePrefix, suffix) => {
           // Start with some failures, then inject a success, then apply suffix
-          const actions: Array<'success' | 'failure'> = [
+          const actions: ('success' | 'failure')[] = [
             ...failurePrefix,
             'success',
             ...suffix,

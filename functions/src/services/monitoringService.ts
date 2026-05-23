@@ -139,8 +139,8 @@ export interface DashboardMetrics {
   averageCompletionTimeMs: number;
   stepCompletionRates: Record<number, number>;
   averageTimePerStep: Record<number, number>;
-  topAbandonmentSteps: Array<{ step: number; count: number }>;
-  validationErrorsByField: Array<{ field: string; count: number }>;
+  topAbandonmentSteps: { step: number; count: number }[];
+  validationErrorsByField: { field: string; count: number }[];
   autoSaveSuccessRate: number;
   apiAverageResponseMs: number;
   uploadSuccessRate: number;

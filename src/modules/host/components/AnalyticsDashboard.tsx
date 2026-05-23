@@ -60,7 +60,7 @@ export interface AnalyticsDashboardProps {
 // Period Config
 // ---------------------------------------------------------------------------
 
-const PERIOD_OPTIONS: Array<{ value: AnalyticsPeriod; label: string }> = [
+const PERIOD_OPTIONS: { value: AnalyticsPeriod; label: string }[] = [
   { value: 'daily', label: '24h' },
   { value: 'weekly', label: '7 days' },
   { value: 'monthly', label: '30 days' },
@@ -423,12 +423,12 @@ interface TrafficSourcesCardProps {
   colors: ReturnType<typeof useColors>;
 }
 
-const TRAFFIC_SOURCE_CONFIG: Array<{
+const TRAFFIC_SOURCE_CONFIG: {
   key: 'direct' | 'search' | 'social' | 'referral';
   label: string;
   icon: keyof typeof Ionicons.glyphMap;
   color: string;
-}> = [
+}[] = [
   { key: 'direct', label: 'Direct', icon: 'link-outline', color: CultureTokens.indigo },
   { key: 'search', label: 'Search', icon: 'search-outline', color: CultureTokens.teal },
   { key: 'social', label: 'Social', icon: 'share-social-outline', color: CultureTokens.violet },
@@ -489,7 +489,7 @@ function TrafficSourcesCard({ sources, total, colors }: TrafficSourcesCardProps)
 // ---------------------------------------------------------------------------
 
 interface TopKeywordsCardProps {
-  keywords: Array<{ keyword: string; impressions?: number; clicks?: number; ctr?: number; count?: number }>;
+  keywords: { keyword: string; impressions?: number; clicks?: number; ctr?: number; count?: number }[];
   colors: ReturnType<typeof useColors>;
 }
 

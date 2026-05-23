@@ -10,6 +10,12 @@ import request from 'supertest';
 import { app } from '../app';
 
 // ---------------------------------------------------------------------------
+// Get references to mocked services
+// ---------------------------------------------------------------------------
+
+import { validationService } from '../services/profileService';
+
+// ---------------------------------------------------------------------------
 // Mocks
 // ---------------------------------------------------------------------------
 
@@ -183,12 +189,6 @@ jest.mock('../../../shared/schema/hostProfileVersion', () => ({
     parse: jest.fn((data: any) => data),
   },
 }));
-
-// ---------------------------------------------------------------------------
-// Get references to mocked services
-// ---------------------------------------------------------------------------
-
-import { validationService } from '../services/profileService';
 
 const mockValidationService = validationService as any;
 
@@ -378,5 +378,95 @@ describe('Validation API Endpoints', () => {
       expect(res.status).toBe(500);
       expect(res.body.error).toContain('Failed to validate ABN');
     });
+  });
+});
+
+describe('Validation Utility Tests', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should validate a valid event', () => {
+    const validEvent = {
+      id: 'event-123',
+      title: 'Cultural Festival',
+      description: 'A celebration of cultural diversity',
+      date: new Date().toISOString(),
+      locationId: 'location-123',
+      hostId: 'host-123',
+      councilId: 'council-123',
+      category: 'festival',
+      maxAttendees: 100,
+      status: 'active',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    expect(() => validateEvent(validEvent)).not.toThrow();
+  });
+
+  it('should throw error for invalid event', () => {
+    const invalidEvent = {
+      title: 123, // Invalid type
+      date: 'invalid-date', // Invalid format
+    };
+
+    expect(() => validateEvent(invalidEvent)).toThrow(z.ZodError);
+  });
+
+  it('should validate a valid profile', () => {
+    const validProfile = {
+      id: 'profile-123',
+      userId: 'user-123',
+      displayName: 'John Doe',
+      bio: 'Software Developer',
+      avatarUrl: 'https://example.com/avatar.jpg',
+      socialLinks: [{ platform: 'twitter', url: 'https://twitter.com/johndoe' }],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    expect(() => validateProfile(validProfile)).not.toThrow();
+  });
+
+  it('should throw error for invalid profile', () => {
+    const invalidProfile = {
+      displayName: 123, // Invalid type
+      socialLinks: [{ platform: 'invalid', url: 'not-a-url' }], // Invalid values
+    };
+
+    expect(() => validateProfile(invalidProfile)).toThrow(z.ZodError);
+  });
+
+  it('should validate a valid location', () => {
+    const validLocation = {
+      id: 'location-123',
+      name: 'Central Park',
+      address: 'New York, NY',
+      latitude: 40.785091,
+      longitude: -73.968285,
+      city: 'New York',
+      country: 'USA',
+      postalCode: '10024',
+      capacity: 5000,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    expect(() => validateLocation(validLocation)).not.toThrow();
+  });
+
+  it('should throw error for invalid location', () => {
+    const invalidLocation = {
+      name: '', // Empty string
+      latitude: 'not-a-number', // Invalid type
+      longitude: 200, // Out of range
+    };
+
+    expect(() => validateLocation(invalidLocation)).toThrow(z.ZodError);
   });
 });

@@ -1,19 +1,23 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
+import { db } from '../admin';
+import { requireAuth, requireRole } from '../middleware/auth';
+import { captureRouteError, nowIso, parseBody, respondIfValidationError } from './utils';
+import { profileService } from '../services/profiles';
 import { adminService } from '../services/admin';
-import { requireRole } from '../middleware/auth';
-import { logger } from 'firebase-functions';
-import { runGeohashBackfill } from '../jobs/geohashBackfill';
-import { db, isFirestoreConfigured } from '../admin';
-import { nowIso } from './utils';
-import {
-  createCommunityHomeBanner,
-  deleteCommunityHomeBanner,
-  listCommunityHomeBanners,
-  publishCommunityHomeBanner,
-  triggerCommunityHomeBanner,
-  updateCommunityHomeBanner,
-} from '../services/communityHomeBanner';
+import { communityHomeBannerService } from '../services/communityHomeBanner';
+
+// Define request body types for better type safety
+interface AdminRequest extends Request {
+  user?: {
+    id: string;
+    username?: string;
+    displayName?: string;
+    email?: string;
+    role?: 'user' | 'organizer' | 'business' | 'sponsor' | 'cityAdmin' | 'platformAdmin' | 'moderator' | 'admin' | 'superAdmin';
+    issuedAt?: number;
+  };
+}
 
 export const adminRouter = Router();
 
@@ -86,25 +90,56 @@ adminRouter.get('/admin/reports/:id/context', async (req: Request, res: Response
  * POST /api/admin/reports/:id/resolve
  * Resolve a moderation report with an action.
  */
-adminRouter.post('/admin/reports/:id/resolve', async (req: Request, res: Response) => {
+adminRouter.post('/admin/reports/:id/resolve', async (req: AdminRequest, res: Response) => {
   try {
     const id = req.params.id as string;
     const { action } = req.body;
-    const adminUser = (req as any).user;
+    const adminUser = req.user;
+
+    if (!adminUser) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
 
     await adminService.resolveReport(id, adminUser.id, action);
 
     await adminService.logAction({
       action: 'resolve_report',
       userId: adminUser.id,
-      userName: adminUser.displayName || adminUser.email,
+      userName: adminUser.displayName ?? adminUser.email ?? adminUser.username ?? adminUser.id,
       targetId: id,
       metadata: { action }
     });
 
     res.json({ ok: true, status: 'resolved' });
   } catch (error) {
+    logger.error('Report resolution error:', error);
     res.status(500).json({ error: 'Failed to resolve report' });
+  }
+});
+
+/**
+ * POST /api/admin/reports/:id/escalate
+ * Escalate a moderation report to a higher level.
+ */
+adminRouter.post('/admin/reports/:id/escalate', async (req: AdminRequest, res: Response) => {
+  try {
+    const reportId = req.params.id as string;
+    const { escalationLevel } = req.body;
+    const adminUser = req.user!;
+    const auditEntry = {
+      action: 'escalate_report',
+      targetId: reportId,
+      targetCollection: 'reports',
+      userId: adminUser.id,
+      userName: adminUser.displayName || adminUser.email || adminUser.username || adminUser.id,
+      timestamp: nowIso(),
+      metadata: { escalatedTo: escalationLevel },
+    };
+    await adminService.logAction(auditEntry);
+    res.json({ ok: true, status: 'escalated' });
+  } catch (error) {
+    logger.error('Report escalation error:', error);
+    res.status(500).json({ error: 'Failed to escalate report' });
   }
 });
 
@@ -147,7 +182,7 @@ adminRouter.put('/admin/platform/config', async (req: Request, res: Response) =>
     await adminService.logAction({
       action: 'update_platform_config',
       userId: adminUser.id,
-      userName: adminUser.displayName || adminUser.email,
+      userName: adminUser.displayName ?? adminUser.email ?? adminUser.username ?? adminUser.id,
       metadata: req.body
     });
 
@@ -161,18 +196,20 @@ adminRouter.put('/admin/platform/config', async (req: Request, res: Response) =>
  * POST /api/admin/jobs/geohash-backfill
  * Backfill event geo coordinates and geohashes (admin-only operation).
  */
-adminRouter.post('/admin/jobs/geohash-backfill', async (req: Request, res: Response) => {
+adminRouter.post('/admin/jobs/geohash-backfill', async (req: AdminRequest, res: Response) => {
   try {
-    const body = (req.body ?? {}) as {
+    const body = req.body as {
       forceGeoHash?: boolean;
       overwriteCoordinates?: boolean;
       limit?: number;
     };
+    
     const result = await runGeohashBackfill({
-      forceGeoHash: body.forceGeoHash === true,
-      overwriteCoordinates: body.overwriteCoordinates === true,
-      limit: typeof body.limit === 'number' ? body.limit : undefined,
+      forceGeoHash: Boolean(body.forceGeoHash),
+      overwriteCoordinates: Boolean(body.overwriteCoordinates),
+      limit: body.limit
     });
+    
     return res.json({ ok: true, result });
   } catch (error) {
     logger.error('Geohash Backfill Error:', error);
@@ -184,7 +221,7 @@ adminRouter.post('/admin/jobs/geohash-backfill', async (req: Request, res: Respo
  * GET /api/admin/analytics/events/:eventId
  * Organizer/admin event analytics snapshot (v1).
  */
-adminRouter.get('/admin/analytics/events/:eventId', async (req: Request, res: Response) => {
+adminRouter.get('/admin/analytics/events/:eventId', async (req: AdminRequest, res: Response) => {
   const eventId = String(req.params.eventId ?? '').trim();
   if (!eventId) return res.status(400).json({ error: 'eventId is required' });
   if (!isFirestoreConfigured) {
@@ -204,14 +241,21 @@ adminRouter.get('/admin/analytics/events/:eventId', async (req: Request, res: Re
       db.collection('activities').where('eventId', '==', eventId).limit(5000).get(),
     ]);
 
-    const tickets = ticketsSnap.docs.map((d) => d.data() as { paymentStatus?: string; status?: string; totalPriceCents?: number; priceCents?: number; createdAt?: string });
+    const tickets = ticketsSnap.docs.map((d) => d.data() as { 
+      paymentStatus?: string; 
+      status?: string; 
+      totalPriceCents?: number; 
+      priceCents?: number; 
+      createdAt?: string 
+    });
+    
     const paidTickets = tickets.filter((t) => t.paymentStatus === 'paid' || t.status === 'paid');
     const grossRevenueCents = paidTickets.reduce((sum, t) => sum + Number(t.totalPriceCents ?? t.priceCents ?? 0), 0);
 
     const byDay = new Map<string, { tickets: number; revenueCents: number; views: number }>();
-    const dayKey = (isoLike: string | undefined) => String(isoLike ?? '').slice(0, 10);
+    
     for (const t of paidTickets) {
-      const day = dayKey(t.createdAt);
+      const day = t.createdAt?.slice(0, 10);
       if (!day) continue;
       const row = byDay.get(day) ?? { tickets: 0, revenueCents: 0, views: 0 };
       row.tickets += 1;
@@ -220,13 +264,14 @@ adminRouter.get('/admin/analytics/events/:eventId', async (req: Request, res: Re
     }
 
     for (const a of activitySnap.docs.map((d) => d.data() as { action?: string; createdAt?: string })) {
-      const isView = a.action === 'event_view' || a.action === 'view_event';
-      if (!isView) continue;
-      const day = dayKey(a.createdAt);
-      if (!day) continue;
-      const row = byDay.get(day) ?? { tickets: 0, revenueCents: 0, views: 0 };
-      row.views += 1;
-      byDay.set(day, row);
+      if (a.action === 'event_view' || a.action === 'view_event') {
+        const day = a.createdAt?.slice(0, 10);
+        if (day) {
+          const row = byDay.get(day) ?? { tickets: 0, revenueCents: 0, views: 0 };
+          row.views += 1;
+          byDay.set(day, row);
+        }
+      }
     }
 
     const trend = [...byDay.entries()]

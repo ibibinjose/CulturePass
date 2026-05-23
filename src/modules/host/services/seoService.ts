@@ -163,7 +163,7 @@ export interface SEOProfileData {
   email?: string;
   publicEmail?: string;
   website?: string;
-  socialLinks?: Array<{ platform: string; url: string }>;
+  socialLinks?: { platform: string; url: string }[];
   categoryTags?: string[];
   tags?: string[];
   status?: 'draft' | 'published' | 'suspended';

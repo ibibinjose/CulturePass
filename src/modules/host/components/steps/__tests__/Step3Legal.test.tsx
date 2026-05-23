@@ -169,7 +169,7 @@ describe('Step3Legal', () => {
   });
 
   it('displays entity-specific descriptions', () => {
-    const testCases: Array<{ entityType: EntityType; expectedText: RegExp }> = [
+    const testCases: { entityType: EntityType; expectedText: RegExp }[] = [
       {
         entityType: 'business',
         expectedText: /business registration details/i,

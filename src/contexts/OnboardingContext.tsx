@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useMemo, useCallback, useRef, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { captureEvent } from '@/lib/analytics';
 
 interface OnboardingState {
   isComplete: boolean;
@@ -23,7 +24,7 @@ interface OnboardingState {
   interests: string[];
   subscriptionTier: 'free' | 'plus' | 'elite' | 'sydney-local';
   /** Steps skipped during onboarding — drives the incomplete-step banner (Req 2.3). */
-  skippedSteps: Array<'cultures' | 'location' | 'communities'>;
+  skippedSteps: ('cultures' | 'location' | 'communities')[];
 }
 
 interface OnboardingContextValue {
@@ -171,7 +172,17 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const setLanguages = useCallback((languages: string[]) => persistUpdate({ languages }), []);
   const setInterests = useCallback((interests: string[]) => persistUpdate({ interests }), []);
   const setSubscriptionTier = useCallback((subscriptionTier: OnboardingState['subscriptionTier']) => persistUpdate({ subscriptionTier }), []);
-  const completeOnboarding = useCallback(async () => { await persistUpdateAsync({ isComplete: true }); }, [persistUpdateAsync]);
+  const completeOnboarding = useCallback(async () => {
+    await persistUpdateAsync({ isComplete: true });
+    const snap = stateSnapshotRef.current;
+    captureEvent('onboarding_completed', {
+      city: snap.city || null,
+      country: snap.country || null,
+      interest_count: snap.interests.length,
+      community_count: snap.communities.length,
+      skipped_steps: snap.skippedSteps,
+    });
+  }, [persistUpdateAsync]);
   const restartOnboarding = useCallback(async () => { await persistUpdateAsync({ isComplete: false }); }, [persistUpdateAsync]);
   const resetOnboarding = useCallback(async () => {
     stateSnapshotRef.current = defaultState;

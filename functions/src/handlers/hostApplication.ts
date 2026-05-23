@@ -9,8 +9,7 @@
 
 import { Router } from 'express';
 import { z } from 'zod';
-import { db, isFirestoreConfigured } from '../admin';
-import { authAdmin } from '../admin';
+import { db, isFirestoreConfigured, authAdmin } from '../admin';
 import { requireAuth, ROLE_RANK, userRank } from '../middleware/auth';
 import { captureRouteError, nowIso, parseBody, qparam, qstr } from './utils';
 import type {
@@ -18,6 +17,7 @@ import type {
   HostApplicationStatus,
   HostType,
 } from '../../../shared/schema/hostApplication';
+import type { Request, Response } from 'express'; // Added for better type safety
 
 export const hostApplicationRouter = Router();
 
@@ -41,9 +41,12 @@ const ReviewSchema = z.object({
 
 // ─── POST /host-applications — submit application ─────────────────────────────
 
-hostApplicationRouter.post('/host-applications', requireAuth, async (req, res) => {
+hostApplicationRouter.post('/host-applications', requireAuth, async (req: Request, res: Response) => {
   const userId = req.user!.id;
   try {
+    // Log the incoming request for better debugging
+    console.log(`Received host application submission request from user: ${userId}`);
+    
     const payload = parseBody(SubmitSchema, req.body);
 
     if (isFirestoreConfigured) {
@@ -164,12 +167,21 @@ hostApplicationRouter.get('/host-applications', requireAuth, async (req, res) =>
 
 // ─── PUT /host-applications/:id/approve ──────────────────────────────────────
 
-hostApplicationRouter.put('/host-applications/:id/approve', requireAuth, async (req, res) => {
+hostApplicationRouter.put('/host-applications/:id/approve', requireAuth, async (req: Request, res: Response) => {
   if (userRank(req.user!) < ROLE_RANK['moderator']) {
-    return res.status(403).json({ error: 'Forbidden' });
+    return res.status(403).json({ error: 'Forbidden', message: 'User not authorized to approve applications' });
   }
+  
   const id = qparam(req.params.id);
-  if (!id) return res.status(400).json({ error: 'Invalid id' });
+  if (!id) {
+    return res.status(400).json({ 
+      error: 'Invalid id', 
+      message: 'Application ID is required in the URL parameters' 
+    });
+  }
+  
+  // Log the approval request
+  console.log(`Approval request for application ID: ${id}, requested by user: ${req.user!.id}`);
 
   try {
     if (!isFirestoreConfigured) return res.status(503).json({ error: 'Firestore not configured' });
@@ -209,12 +221,24 @@ hostApplicationRouter.put('/host-applications/:id/approve', requireAuth, async (
 
 // ─── PUT /host-applications/:id/reject ───────────────────────────────────────
 
-hostApplicationRouter.put('/host-applications/:id/reject', requireAuth, async (req, res) => {
+hostApplicationRouter.put('/host-applications/:id/reject', requireAuth, async (req: Request, res: Response) => {
   if (userRank(req.user!) < ROLE_RANK['moderator']) {
-    return res.status(403).json({ error: 'Forbidden' });
+    return res.status(403).json({ 
+      error: 'Forbidden', 
+      message: 'User not authorized to reject applications' 
+    });
   }
+  
   const id = qparam(req.params.id);
-  if (!id) return res.status(400).json({ error: 'Invalid id' });
+  if (!id) {
+    return res.status(400).json({ 
+      error: 'Invalid id', 
+      message: 'Application ID is required in the URL parameters' 
+    });
+  }
+  
+  // Log the rejection request
+  console.log(`Rejection request for application ID: ${id}, requested by user: ${req.user!.id}`);
 
   try {
     if (!isFirestoreConfigured) return res.status(503).json({ error: 'Firestore not configured' });

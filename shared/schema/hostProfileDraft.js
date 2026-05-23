@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UpdateProfileDraftSchema = exports.CreateProfileDraftSchema = exports.ProfileDraftSchema = void 0;
-var zod_1 = require("zod");
-var hostProfile_1 = require("./hostProfile");
+const zod_1 = require("zod");
+const hostProfile_1 = require("./hostProfile");
 // ============================================================================
 // HostSpace Enterprise-Grade Form System - Profile Draft Schema
 // ============================================================================
@@ -44,3 +44,4 @@ exports.UpdateProfileDraftSchema = exports.ProfileDraftSchema.partial()
     .omit({
     createdAt: true,
 });
+//# sourceMappingURL=hostProfileDraft.js.map

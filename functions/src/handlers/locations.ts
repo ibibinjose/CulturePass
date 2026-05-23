@@ -1,105 +1,222 @@
+import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
+import { Location } from '../../shared/schema/location';
+import { locationService } from '../services/locations';
 
-import { Router, type Request, type Response } from 'express';
-import { captureRouteError } from './utils';
-import { locationsService } from '../services/locations';
-import { authenticate, requireRole } from '../middleware/auth';
-import { isFirestoreConfigured } from '../admin';
-
-export const locationsRouter = Router();
-
-/** GET /api/locations — public, cache-first */
-locationsRouter.get('/locations', async (_req: Request, res: Response) => {
+export async function getLocations(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
   try {
-    const doc = await locationsService.get('AU');
-    if (!doc) await locationsService.seedIfEmpty();
-    const fresh = doc ?? (await locationsService.get('AU'));
-    if (fresh) {
-      const allCities = fresh.states.flatMap((s) => s.cities);
-      return res.json({
-        locations: [{
-          country: fresh.name,
-          countryCode: fresh.countryCode,
-          states: fresh.states,
-          cities: allCities,
-        }],
-        acknowledgementOfCountry: fresh.acknowledgement,
-      });
+    const { limit, offset, city, country, search } = event.queryStringParameters || {};
+    
+    const filters = {
+      city: city || undefined,
+      country: country || undefined,
+      search: search || undefined,
+    };
+
+    const locations = await locationService.getAll({
+      limit: limit ? parseInt(limit, 10) : undefined,
+      offset: offset ? parseInt(offset, 10) : undefined,
+      filters,
+    });
+
+    return {
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+      body: JSON.stringify(locations),
+    };
+  } catch (error) {
+    console.error('Error fetching locations:', error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Failed to fetch locations' }),
+    };
+  }
+}
+
+export async function getLocationById(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
+  try {
+    const id = event.pathParameters?.id;
+    if (!id) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Location ID is required' }),
+      };
     }
-    return res.status(404).json({ error: 'Location data not found' });
-  } catch (err) {
-    captureRouteError(err, 'GET /api/locations');
-    return res.status(500).json({ error: 'Failed to load locations' });
-  }
-});
 
-/** POST /api/locations/:countryCode/seed — admin: seed/reset location data */
-locationsRouter.post('/locations/:countryCode/seed', [authenticate, requireRole('admin')], async (req: Request<{ countryCode: string }>, res: Response) => {
-  try {
-    const { countryCode } = req.params;
-    if (countryCode !== 'AU') return res.status(400).json({ error: 'Only AU is supported' });
-    await locationsService.forceSeed();
-    return res.json({ ok: true, countryCode });
-  } catch (err) {
-    captureRouteError(err, 'POST /api/locations/:cc/seed');
-    return res.status(500).json({ error: 'Force seed failed' });
-  }
-});
+    const location = await locationService.getById(id);
+    if (!location) {
+      return {
+        statusCode: 404,
+        body: JSON.stringify({ error: 'Location not found' }),
+      };
+    }
 
-/** POST /api/locations/:countryCode/states — admin: add new state */
-locationsRouter.post('/locations/:countryCode/states', [authenticate, requireRole('admin')], async (req: Request<{ countryCode: string }>, res: Response) => {
-  try {
-    const { countryCode } = req.params;
-    const { name, code, emoji, cities } = req.body;
-    if (!name || !code) return res.status(400).json({ error: 'name and code are required' });
-    await locationsService.addState(countryCode, { name, code, emoji: emoji ?? '📍', cities: cities ?? [] });
-    return res.json({ ok: true });
-  } catch (err) {
-    return res.status(500).json({ error: 'Failed to add state' });
+    return {
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+      body: JSON.stringify(location),
+    };
+  } catch (error) {
+    console.error('Error fetching location:', error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Failed to fetch location' }),
+    };
   }
-});
+}
 
-/** PATCH /api/locations/:countryCode/states/:stateCode — admin: update state */
-locationsRouter.patch('/locations/:countryCode/states/:stateCode', [authenticate, requireRole('admin')], async (req: Request<{ countryCode: string; stateCode: string }>, res: Response) => {
+export async function createLocation(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
   try {
-    const { countryCode, stateCode } = req.params;
-    await locationsService.updateState(countryCode, stateCode, req.body);
-    return res.json({ ok: true });
-  } catch (err) {
-    return res.status(500).json({ error: 'Failed to update state' });
-  }
-});
+    const requestData = typeof event.body === 'string' ? JSON.parse(event.body) : event.body;
+    const locationData = Location.parse(requestData);
 
-/** DELETE /api/locations/:countryCode/states/:stateCode — admin: remove state */
-locationsRouter.delete('/locations/:countryCode/states/:stateCode', [authenticate, requireRole('admin')], async (req: Request<{ countryCode: string; stateCode: string }>, res: Response) => {
-  try {
-    const { countryCode, stateCode } = req.params;
-    await locationsService.removeState(countryCode, stateCode);
-    return res.json({ ok: true });
-  } catch (err) {
-    return res.status(500).json({ error: 'Failed to remove state' });
-  }
-});
+    const newLocation = await locationService.create(locationData);
 
-/** POST /api/locations/:countryCode/states/:stateCode/cities — admin: add city */
-locationsRouter.post('/locations/:countryCode/states/:stateCode/cities', [authenticate, requireRole('admin')], async (req: Request<{ countryCode: string; stateCode: string }>, res: Response) => {
-  try {
-    const { countryCode, stateCode } = req.params;
-    const { name } = req.body;
-    if (!name) return res.status(400).json({ error: 'city name is required' });
-    await locationsService.addCity(countryCode, stateCode, name);
-    return res.json({ ok: true });
-  } catch (err) {
-    return res.status(500).json({ error: 'Failed to add city' });
+    return {
+      statusCode: 201,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+      body: JSON.stringify(newLocation),
+    };
+  } catch (error) {
+    console.error('Error creating location:', error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Failed to create location' }),
+    };
   }
-});
+}
 
-/** DELETE /api/locations/:countryCode/states/:stateCode/cities/:city — admin: remove city */
-locationsRouter.delete('/locations/:countryCode/states/:stateCode/cities/:city', [authenticate, requireRole('admin')], async (req: Request<{ countryCode: string; stateCode: string; city: string }>, res: Response) => {
+export async function updateLocation(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
   try {
-    const { countryCode, stateCode, city } = req.params;
-    await locationsService.removeCity(countryCode, stateCode, city);
-    return res.json({ ok: true });
-  } catch (err) {
-    return res.status(500).json({ error: 'Failed to remove city' });
+    const id = event.pathParameters?.id;
+    if (!id) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Location ID is required' }),
+      };
+    }
+
+    const requestData = typeof event.body === 'string' ? JSON.parse(event.body) : event.body;
+    const locationData = Location.parse(requestData);
+
+    const updatedLocation = await locationService.update(id, locationData);
+
+    return {
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+      body: JSON.stringify(updatedLocation),
+    };
+  } catch (error) {
+    console.error('Error updating location:', error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Failed to update location' }),
+    };
   }
-});
+}
+
+export async function deleteLocation(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
+  try {
+    const id = event.pathParameters?.id;
+    if (!id) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Location ID is required' }),
+      };
+    }
+
+    await locationService.delete(id);
+
+    return {
+      statusCode: 204,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+      },
+      body: '',
+    };
+  } catch (error) {
+    console.error('Error deleting location:', error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Failed to delete location' }),
+    };
+  }
+}
+
+export async function getLocationsByCity(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
+  try {
+    const city = event.pathParameters?.city;
+    if (!city) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'City is required' }),
+      };
+    }
+
+    const { limit, offset } = event.queryStringParameters || {};
+
+    const locations = await locationService.getByCity(city, {
+      limit: limit ? parseInt(limit, 10) : undefined,
+      offset: offset ? parseInt(offset, 10) : undefined,
+    });
+
+    return {
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+      body: JSON.stringify(locations),
+    };
+  } catch (error) {
+    console.error('Error fetching locations by city:', error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Failed to fetch locations by city' }),
+    };
+  }
+}
+
+export async function searchLocations(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
+  try {
+    const { q, limit, offset } = event.queryStringParameters || {};
+    
+    if (!q) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Search query is required' }),
+      };
+    }
+
+    const locations = await locationService.search(q, {
+      limit: limit ? parseInt(limit, 10) : undefined,
+      offset: offset ? parseInt(offset, 10) : undefined,
+    });
+
+    return {
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+      body: JSON.stringify(locations),
+    };
+  } catch (error) {
+    console.error('Error searching locations:', error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Failed to search locations' }),
+    };
+  }
+}

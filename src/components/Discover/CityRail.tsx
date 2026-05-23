@@ -26,14 +26,22 @@ const goCitiesHub = () => {
 };
 
 // ---------------------------------------------------------------------------
+// Improved Color Palette
+// ---------------------------------------------------------------------------
+
+const CITY_RAIL_TITLE_COLOR = '#6B4EFF';        // Vibrant premium violet
+const CITY_RAIL_SUBTITLE_COLOR = '#22E6C9';     // Bright saturated teal
+const CITY_CARD_NAME_COLOR = '#E0D4FF';         // Soft glowing lavender
+const CITY_CARD_COUNTRY_COLOR = '#A3F0E0';      // Fresh light teal
+
+const CARD_OVERLAY = 'rgba(15, 10, 35, 0.72)';  // Richer, deeper overlay
+const CARD_FALLBACK_BG = '#1A0F2E';
+
+// ---------------------------------------------------------------------------
 // City card — shared between native grid and web rail
 // ---------------------------------------------------------------------------
 
 const CARD_HEIGHT = 120;
-const CITY_RAIL_TITLE_COLOR = CultureTokens.teal;
-const CITY_RAIL_SUBTITLE_COLOR = CultureTokens.coral;
-const CITY_CARD_NAME_COLOR = CultureTokens.teal;
-const CITY_CARD_COUNTRY_COLOR = CultureTokens.coral;
 
 function CityCard({
   city,
@@ -61,11 +69,11 @@ function CityCard({
   return (
     <Pressable
       onPress={handlePress}
-      style={({ pressed }) => [s.card, { width, height: CARD_HEIGHT, opacity: pressed ? 0.85 : 1 }]}
+      style={({ pressed }) => [s.card, { width, height: CARD_HEIGHT, opacity: pressed ? 0.9 : 1 }]}
       accessibilityRole="button"
       accessibilityLabel={`Explore ${city.name}, ${city.countryName}`}
     >
-      {/* Background: image if available, else gradient; gradient on load error */}
+      {/* Background: image if available, else gradient */}
       {city.imageUrl && !imageFailed ? (
         <Image
           key={city.imageUrl}
@@ -84,14 +92,23 @@ function CityCard({
         />
       )}
 
-      {/* Dark overlay for text legibility */}
-      <View style={s.overlay} />
+      {/* Improved vertical gradient overlay for better text readability */}
+      <LinearGradient
+        colors={['transparent', CARD_OVERLAY]}
+        style={StyleSheet.absoluteFill}
+        start={{ x: 0.5, y: 0.55 }}
+        end={{ x: 0.5, y: 1 }}
+      />
 
-      {/* Text */}
+      {/* Text Content */}
       <View style={s.textWrap}>
         <Text style={s.emoji}>{city.countryEmoji}</Text>
-        <Text style={[s.cityName, { color: CITY_CARD_NAME_COLOR }]} numberOfLines={1}>{city.name}</Text>
-        <Text style={[s.countryName, { color: CITY_CARD_COUNTRY_COLOR }]} numberOfLines={1}>{city.countryName}</Text>
+        <Text style={[s.cityName, { color: CITY_CARD_NAME_COLOR }]} numberOfLines={1}>
+          {city.name}
+        </Text>
+        <Text style={[s.countryName, { color: CITY_CARD_COUNTRY_COLOR }]} numberOfLines={1}>
+          {city.countryName}
+        </Text>
       </View>
     </Pressable>
   );
@@ -117,9 +134,7 @@ function CityRailComponent() {
 
   const isNative = Platform.OS !== 'web';
 
-  // Card width:
-  //   Native 2-col: (screenWidth - 2*hPad - gap) / 2
-  //   Web horizontal: fixed 160px (matching original design)
+  // Card width calculation
   const cardWidth = useMemo(() => {
     if (!isNative) return 160;
     const gap = 12;
@@ -130,7 +145,7 @@ function CityRailComponent() {
   const skeletonData = ['s1', 's2', 's3', 's4', 's5', 's6'] as const;
 
   if (isNative) {
-    // ── Native: 2-column grid (FlatList with numColumns) ──────────────────
+    // Native: 2-column grid
     return (
       <View style={[s.container, { marginBottom: vPad }]}>
         <View style={headerPadStyle}>
@@ -170,7 +185,7 @@ function CityRailComponent() {
     );
   }
 
-  // ── Web: horizontal scroll rail (original behaviour, already good) ────────
+  // Web: horizontal scroll rail
   return (
     <View style={[s.container, { marginBottom: vPad }]}>
       <View style={headerPadStyle}>
@@ -214,39 +229,49 @@ function CityRailComponent() {
 // ---------------------------------------------------------------------------
 
 const s = StyleSheet.create({
-  container:     {},
+  container: {},
+  
   // Native grid
-  grid:          { gap: 12 },
-  row:           { gap: 12, marginBottom: 12 },
+  grid: { gap: 12 },
+  row: { gap: 12, marginBottom: 12 },
+  
   // Web rail
-  webSkeletonRow:{ flexDirection: 'row', gap: 12 },
+  webSkeletonRow: { flexDirection: 'row', gap: 12 },
+
   // Card
   card: {
     borderRadius: 16,
     overflow: 'hidden',
     justifyContent: 'flex-end',
-    backgroundColor: '#1B0F2E',
+    backgroundColor: CARD_FALLBACK_BG,
   },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(11, 11, 20, 0.35)',
-  },
+
   textWrap: {
-    padding: 10,
+    padding: 12,
     gap: 2,
   },
+
   emoji: {
-    fontSize: 18,
-    lineHeight: 22,
+    fontSize: 20,
+    lineHeight: 24,
+    marginBottom: 2,
   },
+
   cityName: {
     ...TextStyles.title3,
-    fontSize: 14,
+    fontSize: 15,
     fontFamily: 'Poppins_700Bold',
+    textShadowColor: 'rgba(0,0,0,0.75)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
+
   countryName: {
-    fontSize: 11,
-    fontFamily: 'Poppins_400Regular',
+    fontSize: 12,
+    fontFamily: 'Poppins_500Medium',
+    textShadowColor: 'rgba(0,0,0,0.65)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
 });
 

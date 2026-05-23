@@ -378,7 +378,7 @@ export const profileService = {
     // In production, you'd want to use a more sophisticated analytics system
     // with time-series data, aggregations, etc.
 
-    const periods: Array<'daily' | 'weekly' | 'monthly' | 'all-time'> = ['daily', 'weekly', 'monthly', 'all-time'];
+    const periods: ('daily' | 'weekly' | 'monthly' | 'all-time')[] = ['daily', 'weekly', 'monthly', 'all-time'];
 
     for (const period of periods) {
       const analyticsRef = analyticsCol().doc(`${profileId}_${period}`);

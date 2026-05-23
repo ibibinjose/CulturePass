@@ -9,8 +9,7 @@ import {
   StyleSheet,
   TextInput,
 } from 'react-native';
-import { Stack } from 'expo-router';
-import { router } from 'expo-router';
+import { Stack , router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import * as Haptics from 'expo-haptics';
@@ -22,6 +21,7 @@ import { useRole } from '@/hooks/useRole';
 import { useContacts } from '@/contexts/ContactsContext';
 import { modulesApi } from '@/modules/api';
 import { captureAttend } from '@/lib/analytics-funnel';
+import { captureEvent } from '@/lib/analytics';
 import { useCameraPermissions } from 'expo-camera';
 import { AuthGuard } from '@/modules/core/auth/AuthGuard';
 import { M3TopAppBar } from '@/design-system/ui/M3TopAppBar';
@@ -134,9 +134,19 @@ export default function ScannerScreen() {
         }));
         if (valid) {
           captureAttend(undefined, undefined, 'ticket_scanner');
+          captureEvent('ticket_scan_success', {
+            ticket_code: trimmed,
+            outcome: result.outcome ?? 'accepted',
+            ticket_id: result.ticket?.id ?? null,
+          });
           if (!isWeb) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        } else if (!isWeb) {
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        } else {
+          captureEvent('ticket_scan_failed', {
+            ticket_code: trimmed,
+            outcome: result.outcome ?? 'rejected',
+            message: result.message ?? null,
+          });
+          if (!isWeb) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         }
         setTicketCode('');
         setCameraActive(false);
@@ -223,6 +233,11 @@ export default function ScannerScreen() {
       setCpContact(full ?? contact);
       setCpInput('');
       setIsLookingUp(false);
+      captureEvent('contact_scanned', {
+        cpid: contact.cpid,
+        resolved: Boolean(full),
+        tier: full?.tier ?? null,
+      });
       if (!isWeb) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     },
     [lookupCpid, isWeb, isOnCooldown, startCooldown],
@@ -238,6 +253,11 @@ export default function ScannerScreen() {
   const handleSaveContact = useCallback(() => {
     if (!cpContact) return;
     addContact({ ...cpContact });
+    captureEvent('contact_saved', {
+      cpid: cpContact.cpid,
+      tier: cpContact.tier ?? null,
+      source: 'scanner',
+    });
     Alert.alert('Saved', `${contactDisplayName({ ...cpContact, cpid: cpContact.cpid })} added to contacts.`);
   }, [cpContact, addContact]);
 

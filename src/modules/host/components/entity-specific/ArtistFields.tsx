@@ -371,7 +371,7 @@ export function ArtistFields({
   const calendarGrid = useMemo(() => {
     const daysInMonth = getDaysInMonth(calendarYear, calendarMonth);
     const firstDay = getFirstDayOfMonth(calendarYear, calendarMonth);
-    const cells: Array<{ day: number; dateStr: string } | null> = [];
+    const cells: ({ day: number; dateStr: string } | null)[] = [];
 
     for (let i = 0; i < firstDay; i++) {
       cells.push(null);

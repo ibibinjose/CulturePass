@@ -13,6 +13,16 @@
 // Field Length Constraints
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Reserved Handles (canonical list in shared/constants/reservedHandles.ts)
+// ---------------------------------------------------------------------------
+
+import {
+  RESERVED_HANDLES,
+  RESERVED_HANDLES_LIST,
+  isReservedHandle,
+} from '@shared/constants/reservedHandles';
+
 export const FIELD_LIMITS = {
   /** Official name: 2-120 characters */
   officialName: { min: 2, max: 120 },
@@ -60,16 +70,6 @@ export const VALIDATION_TIMING = {
   /** Error indicator display duration (ms) */
   errorIndicatorDuration: 3000,
 } as const;
-
-// ---------------------------------------------------------------------------
-// Reserved Handles (canonical list in shared/constants/reservedHandles.ts)
-// ---------------------------------------------------------------------------
-
-import {
-  RESERVED_HANDLES,
-  RESERVED_HANDLES_LIST,
-  isReservedHandle,
-} from '@shared/constants/reservedHandles';
 
 export { RESERVED_HANDLES, RESERVED_HANDLES_LIST, isReservedHandle };
 

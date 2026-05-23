@@ -84,7 +84,7 @@ export function evaluateBadgeTier(eventsCount: number): CultureBadgeTier {
 export function nextBadgeMilestone(
   eventsCount: number,
 ): { at: number; label: Exclude<CultureBadgeTier, 'none'> } | null {
-  const ladder: Array<[number, Exclude<CultureBadgeTier, 'none'>]> = [
+  const ladder: [number, Exclude<CultureBadgeTier, 'none'>][] = [
     [BADGE_TIER_THRESHOLDS.explorer, 'explorer'],
     [BADGE_TIER_THRESHOLDS.insider, 'insider'],
     [BADGE_TIER_THRESHOLDS.local, 'local'],

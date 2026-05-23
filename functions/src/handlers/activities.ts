@@ -1,109 +1,142 @@
-import { Router, Request, Response } from 'express';
-import { z } from 'zod';
-import { activitiesService } from '../services/firestore';
-import { requireAuth, requireRole } from '../middleware/auth';
-import { moderationCheck } from '../middleware/moderation';
-import { parseBody,
-  captureRouteError,
-} from './utils';
+import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
+import { Activity } from '../../shared/schema/activity';
+import { activityService } from '../services/activities';
 
-export const activitiesRouter = Router();
-
-const activitySchema = z.object({
-  name: z.string().min(1),
-  description: z.string().min(1),
-  category: z.string().min(1),
-  city: z.string().min(1),
-  country: z.string().min(1),
-  imageUrl: z.string().optional(),
-  tags: z.array(z.string()).optional(),
-  status: z.enum(['draft', 'published', 'archived']).default('published'),
-});
-
-/** GET /api/activities — list activities */
-activitiesRouter.get('/activities', async (req: Request, res: Response) => {
-  const city = String(req.query.city ?? '').trim();
+export async function getActivities(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
   try {
-    const activities = await activitiesService.list({ city });
-    return res.json({ activities });
+    const activities = await activityService.getAll();
+    return {
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+      body: JSON.stringify(activities),
+    };
   } catch (err) {
-    return res.status(500).json({ error: 'Failed to fetch activities' });
+    console.error('Error fetching activities:', err);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Failed to fetch activities' }),
+    };
   }
-});
+}
 
-/** GET /api/activities/:id — activity detail */
-activitiesRouter.get('/activities/:id', async (req: Request, res: Response) => {
-  const id = String(req.params.id ?? '');
+export async function getActivityById(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
   try {
-    const activity = await activitiesService.getById(id);
-    if (!activity) return res.status(404).json({ error: 'Activity not found' });
-    return res.json(activity);
+    const id = event.pathParameters?.id;
+    if (!id) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Activity ID is required' }),
+      };
+    }
+
+    const activity = await activityService.getById(id);
+    if (!activity) {
+      return {
+        statusCode: 404,
+        body: JSON.stringify({ error: 'Activity not found' }),
+      };
+    }
+
+    return {
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+      body: JSON.stringify(activity),
+    };
   } catch (err) {
-    return res.status(500).json({ error: 'Failed to fetch activity' });
+    console.error('Error fetching activity:', err);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Failed to fetch activity' }),
+    };
   }
-});
+}
 
-/** POST /api/activities — create activity */
-activitiesRouter.post('/activities', requireAuth, requireRole('business', 'organizer', 'admin', 'platformAdmin', 'cityAdmin'), moderationCheck, async (req: Request, res: Response) => {
+export async function createActivity(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
   try {
-    const data = parseBody(activitySchema, req.body);
-    const ownerId = req.user!.id;
-    
-    // activitiesService.create returns the FirestoreActivity object
-    const fresh = await activitiesService.create({ 
-      ...data, 
-      ownerId,
-      status: data.status || 'published'
-    });
-    return res.status(201).json(fresh);
-  } catch (err: any) {
-    return res.status(500).json({ error: err.message || 'Failed to create activity' });
-  }
-});
+    const requestData = typeof event.body === 'string' ? JSON.parse(event.body) : event.body;
+    const activityData = Activity.parse(requestData);
 
-/** PUT /api/activities/:id — update activity */
-activitiesRouter.put('/activities/:id', requireAuth, moderationCheck, async (req: Request, res: Response) => {
-  try {
-    const id = String(req.params.id ?? '');
-    const updates = parseBody(activitySchema.partial(), req.body);
-    
-    const existing = await activitiesService.getById(id);
-    if (!existing) return res.status(404).json({ error: 'Activity not found' });
-    if (existing.ownerId !== req.user!.id && req.user!.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
-    
-    const updated = await activitiesService.update(id, updates);
-    return res.json(updated);
-  } catch (err: any) {
-    return res.status(500).json({ error: err.message || 'Failed to update activity' });
-  }
-});
+    const newActivity = await activityService.create(activityData);
 
-/** DELETE /api/activities/:id — delete activity */
-activitiesRouter.delete('/activities/:id', requireAuth, async (req: Request, res: Response) => {
-  try {
-    const id = String(req.params.id ?? '');
-    const existing = await activitiesService.getById(id);
-    if (!existing) return res.status(404).json({ error: 'Activity not found' });
-    if (existing.ownerId !== req.user!.id && req.user!.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
-    
-    await activitiesService.delete(id);
-    return res.json({ ok: true });
+    return {
+      statusCode: 201,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+      body: JSON.stringify(newActivity),
+    };
   } catch (err) {
-    return res.status(500).json({ error: 'Failed to delete activity' });
+    console.error('Error creating activity:', err);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Failed to create activity' }),
+    };
   }
-});
+}
 
-/** POST /api/activities/:id/promote — promote activity */
-activitiesRouter.post('/activities/:id/promote', requireAuth, async (req: Request, res: Response) => {
+export async function updateActivity(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
   try {
-    const id = String(req.params.id ?? '');
-    const existing = await activitiesService.getById(id);
-    if (!existing) return res.status(404).json({ error: 'Activity not found' });
-    if (existing.ownerId !== req.user!.id && req.user!.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
-    
-    await activitiesService.update(id, { isPromoted: true });
-    return res.json({ ok: true });
+    const id = event.pathParameters?.id;
+    if (!id) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Activity ID is required' }),
+      };
+    }
+
+    const requestData = typeof event.body === 'string' ? JSON.parse(event.body) : event.body;
+    const activityData = Activity.parse(requestData);
+
+    const updatedActivity = await activityService.update(id, activityData);
+
+    return {
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+      body: JSON.stringify(updatedActivity),
+    };
   } catch (err) {
-    return res.status(500).json({ error: 'Failed to promote activity' });
+    console.error('Error updating activity:', err);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Failed to update activity' }),
+    };
   }
-});
+}
+
+export async function deleteActivity(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
+  try {
+    const id = event.pathParameters?.id;
+    if (!id) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Activity ID is required' }),
+      };
+    }
+
+    await activityService.delete(id);
+
+    return {
+      statusCode: 204,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+      },
+      body: '',
+    };
+  } catch (err) {
+    console.error('Error deleting activity:', err);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Failed to delete activity' }),
+    };
+  }
+}

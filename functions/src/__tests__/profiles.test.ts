@@ -8,6 +8,100 @@
 
 import request from 'supertest';
 import { app } from '../app';
+import { jest, describe, expect /* , test */ } from '@jest/globals';
+import { profileService } from '../services/profile';
+
+// Mock the profile service
+jest.mock('../services/profile');
+
+describe('Profile Service Tests', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should create a profile', async () => {
+    const mockProfileData = {
+      id: 'profile-123',
+      userId: 'user-123',
+      displayName: 'John Doe',
+      bio: 'Software Developer',
+      avatarUrl: 'https://example.com/avatar.jpg',
+      socialLinks: [],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    (profileService.create as jest.MockedFunction<typeof profileService.create>)
+      .mockResolvedValue(mockProfileData);
+
+    const result = await profileService.create(mockProfileData);
+
+    expect(profileService.create).toHaveBeenCalledWith(mockProfileData);
+    expect(result).toEqual(mockProfileData);
+  });
+
+  it('should get a profile by ID', async () => {
+    const mockProfile = {
+      id: 'profile-123',
+      userId: 'user-123',
+      displayName: 'John Doe',
+      bio: 'Software Developer',
+      avatarUrl: 'https://example.com/avatar.jpg',
+      socialLinks: [],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    (profileService.getById as jest.MockedFunction<typeof profileService.getById>)
+      .mockResolvedValue(mockProfile);
+
+    const result = await profileService.getById('profile-123');
+
+    expect(profileService.getById).toHaveBeenCalledWith('profile-123');
+    expect(result).toEqual(mockProfile);
+  });
+
+  it('should update a profile', async () => {
+    const profileId = 'profile-123';
+    const updatedData = {
+      displayName: 'Jane Doe',
+      bio: 'Senior Software Developer',
+    };
+    const mockUpdatedProfile = {
+      id: 'profile-123',
+      userId: 'user-123',
+      displayName: 'Jane Doe',
+      bio: 'Senior Software Developer',
+      avatarUrl: 'https://example.com/avatar.jpg',
+      socialLinks: [],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    (profileService.update as jest.MockedFunction<typeof profileService.update>)
+      .mockResolvedValue(mockUpdatedProfile);
+
+    const result = await profileService.update(profileId, updatedData);
+
+    expect(profileService.update).toHaveBeenCalledWith(profileId, updatedData);
+    expect(result).toEqual(mockUpdatedProfile);
+  });
+
+  it('should delete a profile', async () => {
+    const profileId = 'profile-123';
+
+    (profileService.delete as jest.MockedFunction<typeof profileService.delete>)
+      .mockResolvedValue(undefined);
+
+    await profileService.delete(profileId);
+
+    expect(profileService.delete).toHaveBeenCalledWith(profileId);
+  });
+});
 
 // ---------------------------------------------------------------------------
 // Mocks
@@ -104,13 +198,6 @@ jest.mock('../services/verificationService', () => ({
 }));
 
 // Mock the authenticate middleware to inject a test user
-const mockUser = {
-  id: 'test-user-123',
-  username: 'testuser',
-  email: 'test@example.com',
-  role: 'user' as const,
-  issuedAt: Math.floor(Date.now() / 1000),
-};
 
 jest.mock('../middleware/auth', () => {
   const original = jest.requireActual('../middleware/auth');
@@ -221,20 +308,8 @@ jest.mock('../../../shared/schema/hostProfileVersion', () => ({
   },
 }));
 
-// ---------------------------------------------------------------------------
-// Get references to mocked services
-// ---------------------------------------------------------------------------
-
-import {
-  profileService,
-  validationService,
-  verificationService,
-} from '../services/profileService';
-
 // Cast as any to avoid strict type checking on mock data
 const mockProfileService = profileService as any;
-const mockValidationService = validationService as any;
-const mockVerificationService = verificationService as any;
 
 // ---------------------------------------------------------------------------
 // Test Data

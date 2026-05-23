@@ -398,7 +398,7 @@ export class RequestValidationError extends Error {
 
 export function formatValidationErrorPayload(error: z.ZodError): {
   error: string;
-  details: Array<{ path: string; message: string }>;
+  details: { path: string; message: string }[];
 } {
   return {
     error:

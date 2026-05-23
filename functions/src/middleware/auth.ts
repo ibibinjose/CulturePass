@@ -18,8 +18,10 @@
  */
 
 import type { Request, Response, NextFunction } from 'express';
-import { authAdmin } from '../admin';
-import type { UserRole } from '../../../shared/schema';
+import { getFirebaseAuth } from '../admin';
+import { captureRouteError } from '../handlers/utils';
+import { logger } from 'firebase-functions';
+import { UserRole } from '../../shared/schema/common'; // Fixed import path
 
 // ---------------------------------------------------------------------------
 // Types

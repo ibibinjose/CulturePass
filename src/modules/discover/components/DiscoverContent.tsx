@@ -57,7 +57,7 @@ interface DiscoverContentProps {
   recommendedFromFeature: EventData[];
   keralaDomain: boolean;
   /** Steps the user skipped during onboarding (for the banner). */
-  skippedOnboardingSteps?: Array<'cultures' | 'location' | 'communities'>;
+  skippedOnboardingSteps?: ('cultures' | 'location' | 'communities')[];
 }
 
 export function DiscoverContent({

@@ -31,6 +31,8 @@ export function AuthGuard() {
       'notifications',
       'contacts',
       'admin',
+      'network',
+      'create',
     ];
 
     const membershipGuestMarketing =
@@ -45,7 +47,8 @@ export function AuthGuard() {
           segments[1] === 'my-space' ||
           segments[1] === 'perks' ||
           segments[1] === 'calendar')) ||
-      (segments[0] === 'event' && segments[1] === 'create');
+      (segments[0] === 'event' && segments[1] === 'create') ||
+      (segments[0] === 'hostspace' && segments[1] === 'apply');
 
     const inOnboardingGroup = segments[0] === '(onboarding)';
     const currentOnboardingScreen = segments[1] ?? 'index';

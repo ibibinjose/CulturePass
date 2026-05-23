@@ -16,6 +16,36 @@ import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { AccessibilityInfo, Platform } from 'react-native';
 
 // ---------------------------------------------------------------------------
+// Imports (after mocks)
+// ---------------------------------------------------------------------------
+
+import { WizardProgress } from '../components/FormWizard/WizardProgress';
+import { WizardNavigation } from '../components/FormWizard/WizardNavigation';
+import { HandleField } from '../components/fields/HandleField';
+import { NameField } from '../components/fields/NameField';
+import { DateField } from '../components/fields/DateField';
+import {
+  fieldAccessibilityLabel,
+  stepIndicatorLabel,
+  navigationButtonLabel,
+  validationStatusLabel,
+  mediaUploadLabel,
+  announceForScreenReader,
+  announceStepChange,
+  announceValidationError,
+  announceAutoSaveStatus,
+  progressAccessibilityProps,
+  formFieldProps,
+  buttonAccessibilityProps,
+  liveRegionProps,
+  createKeyboardHandler,
+  isActivationKey,
+  isEscapeKey,
+  isNavigationKey,
+  KeyCodes,
+} from '../utils/accessibility';
+
+// ---------------------------------------------------------------------------
 // Mocks (must be before component imports)
 // ---------------------------------------------------------------------------
 
@@ -193,36 +223,6 @@ const mockAnnounceForAccessibility = jest.fn();
 jest.spyOn(AccessibilityInfo, 'announceForAccessibility').mockImplementation(
   mockAnnounceForAccessibility
 );
-
-// ---------------------------------------------------------------------------
-// Imports (after mocks)
-// ---------------------------------------------------------------------------
-
-import { WizardProgress } from '../components/FormWizard/WizardProgress';
-import { WizardNavigation } from '../components/FormWizard/WizardNavigation';
-import { HandleField } from '../components/fields/HandleField';
-import { NameField } from '../components/fields/NameField';
-import { DateField } from '../components/fields/DateField';
-import {
-  fieldAccessibilityLabel,
-  stepIndicatorLabel,
-  navigationButtonLabel,
-  validationStatusLabel,
-  mediaUploadLabel,
-  announceForScreenReader,
-  announceStepChange,
-  announceValidationError,
-  announceAutoSaveStatus,
-  progressAccessibilityProps,
-  formFieldProps,
-  buttonAccessibilityProps,
-  liveRegionProps,
-  createKeyboardHandler,
-  isActivationKey,
-  isEscapeKey,
-  isNavigationKey,
-  KeyCodes,
-} from '../utils/accessibility';
 
 
 // ---------------------------------------------------------------------------

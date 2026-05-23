@@ -127,7 +127,7 @@ interface ResolveApiResponse {
     description?: string;
     status?: string;
   };
-  fallbackEntities?: Array<{
+  fallbackEntities?: {
     id: string;
     title?: string;
     name?: string;
@@ -136,7 +136,7 @@ interface ResolveApiResponse {
     heroImage?: string;
     city?: string;
     createdAt?: string;
-  }>;
+  }[];
   authRequired?: boolean;
 }
 

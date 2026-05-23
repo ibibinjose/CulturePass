@@ -388,10 +388,10 @@ export function checkMilestoneReached(
  * Check if any licences are expiring soon and return those that need reminders.
  */
 export function checkLicenceExpiry(
-  licences: Array<{ type: string; expiryDate?: string; reminderSent?: boolean }>
-): Array<{ type: string; daysUntilExpiry: number }> {
+  licences: { type: string; expiryDate?: string; reminderSent?: boolean }[]
+): { type: string; daysUntilExpiry: number }[] {
   const now = new Date();
-  const expiringLicences: Array<{ type: string; daysUntilExpiry: number }> = [];
+  const expiringLicences: { type: string; daysUntilExpiry: number }[] = [];
 
   for (const licence of licences) {
     if (!licence.expiryDate || licence.reminderSent) continue;

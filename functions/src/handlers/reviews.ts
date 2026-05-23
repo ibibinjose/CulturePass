@@ -4,7 +4,8 @@ import { randomUUID } from 'node:crypto';
 import { db, isFirestoreConfigured } from '../admin';
 import { requireAuth, isAdminUser } from '../middleware/auth';
 import { captureRouteError, nowIso } from './utils';
-import type { Review } from '../../../shared/schema/review';
+import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
+import { Review } from '../../shared/schema/review';
 
 export const reviewsRouter = Router();
 

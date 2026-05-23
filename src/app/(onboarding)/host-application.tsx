@@ -7,7 +7,7 @@ import {
   Platform,
   Pressable,
 } from 'react-native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -20,9 +20,11 @@ import {
   FontFamily,
   M3Typography,
 } from '@/design-system/tokens/theme';
+import { sanitizeInternalRedirect } from '@/lib/routes';
 import { HOST_TYPE_OPTIONS, type HostType } from '@/shared/schema';
 import { M3Button, M3TopAppBar } from '@/design-system/ui';
 import { useOnboarding } from '@/contexts/OnboardingContext';
+import { captureEvent } from '@/lib/analytics';
 
 const TYPE_ACCENT: Record<HostType, string> = {
   creator:   CultureTokens.coral,
@@ -36,6 +38,10 @@ export default function OnboardingHostApplicationScreen() {
   const m3Colors = useM3Colors();
   const { isDesktop, windowSizeClass } = useLayout();
   const insets = useSafeAreaInsets();
+  
+  // Get redirectTo from search params
+  const searchParams = useLocalSearchParams();
+  const redirectTo = sanitizeInternalRedirect(searchParams.redirectTo ?? searchParams.redirect);
   const bottomInset = Platform.OS === 'web' ? 34 : insets.bottom;
   const isExpanded = windowSizeClass === 'expanded';
   const { completeOnboarding } = useOnboarding();
@@ -60,6 +66,10 @@ export default function OnboardingHostApplicationScreen() {
     if (selectedTypes.length > 0) {
       // If they selected types, they want to be a host.
       // We'll redirect them to the full application form after onboarding.
+      captureEvent('host_application_started', {
+        selected_types: selectedTypes,
+        type_count: selectedTypes.length,
+      });
       await completeOnboarding();
       router.replace({
           pathname: '/hostspace/apply',
@@ -67,13 +77,18 @@ export default function OnboardingHostApplicationScreen() {
       } as any);
     } else {
       await completeOnboarding();
-      router.replace('/(tabs)');
+      // Use redirectTo if available, otherwise default to tabs
+      router.replace((redirectTo ?? '/(tabs)') as any);
     }
   };
 
   const handleSkip = async () => {
+    captureEvent('host_application_skipped', {
+      had_selections: selectedTypes.length > 0,
+    });
     await completeOnboarding();
-    router.replace('/(tabs)');
+    // Use redirectTo if available, otherwise default to tabs
+    router.replace((redirectTo ?? '/(tabs)') as any);
   };
 
   return (

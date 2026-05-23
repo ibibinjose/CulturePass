@@ -26,7 +26,7 @@ discoveryRouter.get('/discover', requireAuth, async (req: Request, res: Response
   try {
     if (!isFirestoreConfigured) return res.json({ trendingEvents: [], rankedEvents: [], suggestedCommunities: [] });
     const dateFrom = String(req.query.dateFrom || new Date().toISOString().split('T')[0]);
-    const result = await searchService.getTrending(20) as Array<{ date?: string; [k: string]: unknown }>;
+    const result = await searchService.getTrending(20) as { date?: string; [k: string]: unknown }[];
     const filtered = result.filter(e => (e.date ?? '') >= dateFrom);
     return res.json({
       trendingEvents: filtered,

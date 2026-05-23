@@ -1,7 +1,7 @@
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import rateLimit from 'express-rate-limit';
+import rateLimitMiddleware from 'express-rate-limit';
 import { logger } from 'firebase-functions';
 import { authenticate } from './middleware/auth';
 import { getFirebaseProjectId } from './handlers/utils';
@@ -14,9 +14,7 @@ import { createEventsRouter } from './handlers/events';
 import { createStripeRouter } from './handlers/stripe';
 import { createIndigenousRouter } from './handlers/indigenous';
 import { usersRouter } from './handlers/users';
-import { locationsRouter } from './handlers/locations';
 import { profilesRouter } from './handlers/profiles';
-import { activitiesRouter } from './handlers/activities';
 import { moviesRouter } from './handlers/movies';
 import { shoppingRouter } from './handlers/shopping';
 import { restaurantsRouter } from './handlers/restaurants';
@@ -31,7 +29,6 @@ import { membershipRouter } from './handlers/membership';
 import { citiesRouter } from './handlers/cities';
 import { rewardsRouter } from './handlers/rewards';
 import { cultureExplorerRouter } from './handlers/cultureExplorer';
-import { calendarRouter } from './handlers/calendar';
 import { cultureTodayRouter } from './handlers/cultureToday';
 import { offeringsRouter } from './handlers/offerings';
 import { uploadsRouter } from './handlers/uploads';
@@ -210,7 +207,7 @@ app.use(
 // Do not count CORS preflight toward the limit — a burst of OPTIONS can otherwise
 // return 429 without CORS headers and the browser reports a misleading CORS failure.
 app.use(
-  rateLimit({
+  rateLimitMiddleware({
     windowMs: 60000,
     max: 200,
     message: 'Too many requests, please try again later.',
@@ -262,9 +259,7 @@ const mount = (path: string, router: any) => {
 mount('/', authRouter);
 mount('/', ticketsRouter);
 mount('/', usersRouter);
-mount('/', locationsRouter);
 mount('/', profilesRouter);
-mount('/', activitiesRouter);
 mount('/', moviesRouter);
 mount('/', shoppingRouter);
 mount('/', restaurantsRouter);
@@ -279,7 +274,6 @@ mount('/', membershipRouter);
 mount('/', rewardsRouter);
 mount('/', cultureExplorerRouter);
 mount('/', citiesRouter);
-mount('/', calendarRouter);
 mount('/', cultureTodayRouter);
 mount('/', offeringsRouter);
 mount('/', uploadsRouter);

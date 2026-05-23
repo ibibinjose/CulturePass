@@ -30,11 +30,11 @@ export function createLocationsNamespace(request: ApiRequestFn) {
      */
     autocomplete: (params: { input: string; country?: string }) =>
       request<{
-        predictions: Array<{
+        predictions: {
           place_id: string;
           description: string;
           structured_formatting: { main_text: string; secondary_text: string };
-        }>;
+        }[];
       }>('POST', 'api/locations/autocomplete', params),
 
     /**

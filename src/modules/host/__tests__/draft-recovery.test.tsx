@@ -9,7 +9,7 @@
  */
 
 import React from 'react';
-import { render, fireEvent, waitFor, act } from '@testing-library/react-native';
+import { render, fireEvent, waitFor, act , renderHook } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DraftRecoveryModal } from '../components/DraftRecoveryModal';
 import {
@@ -18,7 +18,6 @@ import {
   calculateDraftCompletion,
   getDraftStepLabel,
 } from '../hooks/useDraftRecovery';
-import { renderHook } from '@testing-library/react-native';
 import type { ProfileDraft } from '@/platform/api/endpoints/createProfilesNamespace';
 
 // ---------------------------------------------------------------------------

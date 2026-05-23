@@ -4,7 +4,6 @@ import { shoppingService } from '../services/shopping';
 import { wrap, captureRouteError } from './utils';
 import { ShopInputSchema } from './validation';
 import type { ShopInput } from '../../../shared/schema';
-import { z } from 'zod';
 
 export const shoppingRouter = Router();
 

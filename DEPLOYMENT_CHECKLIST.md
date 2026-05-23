@@ -173,7 +173,7 @@ curl -i https://culturepass.app/.well-known/assetlinks.json
 
 ### Step 1: Verify .env Configuration
 ```bash
-cd /Users/cultureos/Documents/CultureOS/CulturePass
+cd /Users/cultureos/Dev230526/CulturePass
 
 # Check that .env has all required Firebase credentials:
 rg "^EXPO_PUBLIC_FIREBASE_" .env
@@ -195,7 +195,7 @@ firebase whoami
 
 ### Step 3: Verify Certificate & Public Config Readiness
 ```bash
-cd /Users/cultureos/Documents/CultureOS/CulturePass
+cd /Users/cultureos/Dev230526/CulturePass
 
 # Deep link config in app.json
 npx tsx scripts/tests/test-deeplinks.ts

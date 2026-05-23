@@ -5,7 +5,8 @@ import { db, isFirestoreConfigured } from '../admin';
 import { requireAuth, isAdminUser } from '../middleware/auth';
 import { captureRouteError, nowIso } from './utils';
 import { sendToUsers } from '../services/fcmService';
-import type { Waitlist } from '../../../shared/schema/waitlist';
+import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
+import { Waitlist } from '../../shared/schema/waitlist';
 
 export const waitlistRouter = Router();
 

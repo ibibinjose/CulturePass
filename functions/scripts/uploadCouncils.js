@@ -1,9 +1,14 @@
- 
- 
-const admin = require('firebase-admin');
+/* eslint-disable */
 const fs = require('fs');
 const path = require('path');
+const { readFileSync } = require('fs');
+const { parse } = require('csv-parse/sync');
+const { program } = require('commander');
+
+const admin = require('firebase-admin');
 const crypto = require('crypto');
+const { URL } = require('url');
+
 const VALID_STATES = new Set(['NSW', 'VIC', 'QLD', 'WA', 'SA', 'TAS', 'ACT', 'NT']);
 
 function parseCsvLine(line) {
@@ -125,7 +130,7 @@ async function run() {
 
   const csvPath = process.env.COUNCILS_CSV_PATH
     ? path.resolve(process.cwd(), process.env.COUNCILS_CSV_PATH)
-    : path.resolve(__dirname, '../src/data/AllCouncilsList.csv');
+    : path.resolve(__dirname, '../src/data/AllCouncilsList.csv');  // Using __dirname should work in CommonJS
 
   const { councils, skipped } = loadCouncilsFromCsv(csvPath);
   if (councils.length === 0) {

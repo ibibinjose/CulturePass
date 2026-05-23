@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ProfileAnalyticsComparisonSchema = exports.ProfileAnalyticsQuerySchema = exports.ProfileAnalyticsSchema = exports.KeywordMetricSchema = void 0;
-var zod_1 = require("zod");
+const zod_1 = require("zod");
 // ============================================================================
 // HostSpace Enterprise-Grade Form System - Profile Analytics Schema
 // ============================================================================
@@ -60,3 +60,4 @@ exports.ProfileAnalyticsComparisonSchema = zod_1.z.object({
     }),
     percentile: zod_1.z.number().min(0).max(100), // Where this profile ranks (0-100)
 });
+//# sourceMappingURL=hostProfileAnalytics.js.map

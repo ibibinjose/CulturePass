@@ -37,7 +37,7 @@ export const scheduleWeeklyDigest = functions.pubsub
         continue;
       }
 
-      const feedItems = (feedSnap.data()?.items ?? []) as Array<{ eventId: string; score: number }>;
+      const feedItems = (feedSnap.data()?.items ?? []) as { eventId: string; score: number }[];
       const topIds = feedItems.slice(0, 5).map((i) => i.eventId).filter(Boolean);
       if (!topIds.length) {
         skipped++;

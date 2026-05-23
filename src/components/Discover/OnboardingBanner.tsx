@@ -22,7 +22,7 @@ import { FontFamily, Radius, Spacing, CultureTokens } from '@/design-system/toke
 const BANNER_KEY = '@cp_onboarding_banner';
 
 interface BannerState {
-  skippedSteps: Array<'cultures' | 'location' | 'communities'>;
+  skippedSteps: ('cultures' | 'location' | 'communities')[];
   dismissedThisSession: boolean;
   sessionDismissalCount: number;
 }
@@ -35,7 +35,7 @@ const MAX_SESSIONS = 3;
 
 interface OnboardingBannerProps {
   /** Steps the user has skipped — empty array = banner hidden. */
-  skippedSteps: Array<'cultures' | 'location' | 'communities'>;
+  skippedSteps: ('cultures' | 'location' | 'communities')[];
 }
 
 const STEP_ROUTES: Record<'cultures' | 'location' | 'communities', string> = {

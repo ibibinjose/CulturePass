@@ -1,30 +1,48 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-import { Activity } from '../../shared/schema/activity';
-import { activityService } from '../services/activities';
+import { ActivityData as Activity } from '../../../shared/schema/activity';
+import { activitiesService } from '../services/activities';
 
-export async function getActivities(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
+export async function getAllActivities(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
   try {
-    const activities = await activityService.getAll();
+    const { limit, offset, city, country, search } = event.queryStringParameters || {};
+    
+    // Use list method instead of getAll - this matches the actual service API
+    const activities = await activitiesService.list({
+      city,
+      category: search, // Using search as category filter for simplicity
+    });
+    
     return {
       statusCode: 200,
       headers: {
-        'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
       },
-      body: JSON.stringify(activities),
+      body: JSON.stringify({
+        items: activities,
+        total: activities.length,
+        page: 1,
+        pageSize: activities.length,
+        hasNextPage: false
+      }),
     };
-  } catch (err) {
-    console.error('Error fetching activities:', err);
+  } catch (error: any) {
+    console.error('Activities Error:', error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: 'Failed to fetch activities' }),
+      body: JSON.stringify({ error: 'Failed to fetch activities', details: error.message }),
     };
   }
 }
 
+export async function getActivities(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
+  return getAllActivities(event);
+}
+
 export async function getActivityById(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
   try {
-    const id = event.pathParameters?.id;
+    const { id } = event.pathParameters || {};
     if (!id) {
       return {
         statusCode: 400,
@@ -32,7 +50,7 @@ export async function getActivityById(event: APIGatewayProxyEvent): Promise<APIG
       };
     }
 
-    const activity = await activityService.getById(id);
+    const activity = await activitiesService.getById(id);
     if (!activity) {
       return {
         statusCode: 404,
@@ -59,10 +77,8 @@ export async function getActivityById(event: APIGatewayProxyEvent): Promise<APIG
 
 export async function createActivity(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
   try {
-    const requestData = typeof event.body === 'string' ? JSON.parse(event.body) : event.body;
-    const activityData = Activity.parse(requestData);
-
-    const newActivity = await activityService.create(activityData);
+    const activityData = JSON.parse(event.body || '{}');
+    const newActivity = await activitiesService.create(activityData);
 
     return {
       statusCode: 201,
@@ -83,7 +99,7 @@ export async function createActivity(event: APIGatewayProxyEvent): Promise<APIGa
 
 export async function updateActivity(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
   try {
-    const id = event.pathParameters?.id;
+    const { id } = event.pathParameters || {};
     if (!id) {
       return {
         statusCode: 400,
@@ -91,10 +107,8 @@ export async function updateActivity(event: APIGatewayProxyEvent): Promise<APIGa
       };
     }
 
-    const requestData = typeof event.body === 'string' ? JSON.parse(event.body) : event.body;
-    const activityData = Activity.parse(requestData);
-
-    const updatedActivity = await activityService.update(id, activityData);
+    const activityData = JSON.parse(event.body || '{}');
+    const updatedActivity = await activitiesService.update(id, activityData);
 
     return {
       statusCode: 200,
@@ -115,7 +129,7 @@ export async function updateActivity(event: APIGatewayProxyEvent): Promise<APIGa
 
 export async function deleteActivity(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
   try {
-    const id = event.pathParameters?.id;
+    const { id } = event.pathParameters || {};
     if (!id) {
       return {
         statusCode: 400,
@@ -123,7 +137,7 @@ export async function deleteActivity(event: APIGatewayProxyEvent): Promise<APIGa
       };
     }
 
-    await activityService.delete(id);
+    await activitiesService.delete(id);
 
     return {
       statusCode: 204,

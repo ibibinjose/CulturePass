@@ -452,4 +452,73 @@ export const eventsService = {
   async publish(id: string): Promise<FirestoreEvent | null> {
     return this.update(id, { status: 'published' });
   },
+
+  /**
+   * Get events by council ID
+   */
+  async getByCouncil(
+    councilId: string, 
+    options: { limit?: number; offset?: number } = {}
+  ): Promise<PaginatedResult<FirestoreEvent>> {
+    const { limit = 20, offset = 0 } = options;
+    
+    let query = db.collection('events')
+      .where('councilId', '==', councilId)
+      .where('status', '==', 'published')
+      .orderBy('date')
+      .offset(offset);
+    
+    if (limit) {
+      query = query.limit(limit);
+    }
+    
+    const snapshot = await query.get();
+    const items = snapshot.docs.map(doc => ({
+      ...doc.data() as FirestoreEvent,
+      id: doc.id
+    }));
+    
+    // Note: This is a simplified count - for production you'd want a more efficient count query
+    return {
+      items,
+      total: items.length, // This is approximate
+      page: Math.floor(offset / limit) + 1,
+      pageSize: limit,
+      hasNextPage: items.length === limit // Simplified check
+    };
+  },
+
+  /**
+   * Get events by host (organizer) ID
+   */
+  async getByHost(
+    hostId: string, 
+    options: { limit?: number; offset?: number } = {}
+  ): Promise<PaginatedResult<FirestoreEvent>> {
+    const { limit = 20, offset = 0 } = options;
+    
+    let query = db.collection('events')
+      .where('organizerId', '==', hostId)
+      .orderBy('date')
+      .offset(offset);
+    
+    if (limit) {
+      query = query.limit(limit);
+    }
+    
+    const snapshot = await query.get();
+    const items = snapshot.docs.map(doc => ({
+      ...doc.data() as FirestoreEvent,
+      id: doc.id
+    }));
+    
+    // Note: This is a simplified count - for production you'd want a more efficient count query
+    return {
+      items,
+      total: items.length, // This is approximate
+      page: Math.floor(offset / limit) + 1,
+      pageSize: limit,
+      hasNextPage: items.length === limit // Simplified check
+    };
+  },
 };

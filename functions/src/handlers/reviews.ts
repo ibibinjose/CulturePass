@@ -5,7 +5,7 @@ import { db, isFirestoreConfigured } from '../admin';
 import { requireAuth, isAdminUser } from '../middleware/auth';
 import { captureRouteError, nowIso } from './utils';
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-import { Review } from '../../shared/schema/review';
+import { Review } from '../../../shared/schema/review';
 
 export const reviewsRouter = Router();
 

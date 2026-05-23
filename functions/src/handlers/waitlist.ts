@@ -6,7 +6,7 @@ import { requireAuth, isAdminUser } from '../middleware/auth';
 import { captureRouteError, nowIso } from './utils';
 import { sendToUsers } from '../services/fcmService';
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-import { Waitlist } from '../../shared/schema/waitlist';
+import { Waitlist } from '../../../shared/schema/waitlist';
 
 export const waitlistRouter = Router();
 

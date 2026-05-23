@@ -11,6 +11,9 @@ if (!admin.apps.length) {
   admin.initializeApp(explicitBucket ? { storageBucket: explicitBucket } : undefined);
 }
 
+/** Firebase Admin SDK instance */
+export { admin };
+
 /** Firestore database instance */
 export const db = admin.firestore();
 db.settings({ ignoreUndefinedProperties: true });

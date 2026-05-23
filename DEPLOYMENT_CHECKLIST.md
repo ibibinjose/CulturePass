@@ -289,7 +289,7 @@ firebase deploy --only hosting
 
 ### Step 1: Verify Functions Build
 ```bash
-cd /Users/cultureos/Documents/CultureOS/CulturePass/functions
+cd /Users/cultureos/Dev230526/CulturePass/functions
 
 # Check compiled output exists
 ls -la lib/functions/src/

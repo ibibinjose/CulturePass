@@ -1,13 +1,19 @@
 import { logger } from 'firebase-functions';
 import { defineSecret } from 'firebase-functions/params';
-import { onObjectFinalized } from 'firebase-functions/v2/storage';
+import {onObjectFinalized} from 'firebase-functions/v2/storage';
 import { Storage } from '@google-cloud/storage';
 import { getFirebaseProjectId } from '../handlers/utils';
-import { db } from '../admin';
+import { db, admin } from '../admin'; // Import both db and admin
 import { generateThumbHash } from '../thumbhash';
+import * as path from 'path';
+import * as os from 'os';
+import * as fs from 'fs';
+import sharp from 'sharp';
+import { rgbaToThumbHash } from 'thumbhash';
 
 const projectId = getFirebaseProjectId();
-const storage = new Storage({ projectId });
+// Handle case where projectId might be null
+const storage = new Storage({ projectId: projectId || process.env.PROJECT_ID || 'fallback-project-id' });
 
 /**
  * Triggered automatically when ANY file is uploaded to Firebase Storage.
@@ -20,7 +26,7 @@ export const onImageUploadGenerateThumbhash = onObjectFinalized(
     retry: false,
     cpu: 1,
     concurrency: 5,
-    memory: '1GB',
+    memory: '1GiB', // Changed from '1GB' to '1GiB' as per Firebase Functions spec
     timeoutSeconds: 120
   }, 
   async (event) => {

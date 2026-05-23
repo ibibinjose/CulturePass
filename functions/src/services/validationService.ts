@@ -8,7 +8,7 @@
  */
 
 import { db } from '../admin';
-import { isReservedHandle } from '../../shared/constants/reservedHandles';
+import { isReservedHandle } from '../../../shared/constants/reservedHandles';
 
 // ---------------------------------------------------------------------------
 // Collections

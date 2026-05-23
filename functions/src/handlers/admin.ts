@@ -1,21 +1,33 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
-import { db } from '../admin';
+import { db, isFirestoreConfigured } from '../admin';
 import { requireAuth, requireRole } from '../middleware/auth';
 import { captureRouteError, nowIso, parseBody, respondIfValidationError } from './utils';
-import { profileService } from '../services/profiles';
+import { profilesService as profileService } from '../services/profiles';
 import { adminService } from '../services/admin';
-import { communityHomeBannerService } from '../services/communityHomeBanner';
+import { 
+  listCommunityHomeBanners, 
+  createCommunityHomeBanner, 
+  updateCommunityHomeBanner, 
+  publishCommunityHomeBanner, 
+  triggerCommunityHomeBanner, 
+  deleteCommunityHomeBanner 
+} from '../services/communityHomeBanner';
+import { logger } from 'firebase-functions';
+import { runGeohashBackfill } from '../jobs/geohashBackfill';
 
 // Define request body types for better type safety
 interface AdminRequest extends Request {
   user?: {
     id: string;
-    username?: string;
+    username: string;
     displayName?: string;
     email?: string;
-    role?: 'user' | 'organizer' | 'business' | 'sponsor' | 'cityAdmin' | 'platformAdmin' | 'moderator' | 'admin' | 'superAdmin';
-    issuedAt?: number;
+    role: 'user' | 'organizer' | 'business' | 'sponsor' | 'cityAdmin' | 'platformAdmin' | 'moderator' | 'admin' | 'superAdmin';
+    tier?: string;
+    city?: string;
+    country?: string;
+    issuedAt: number;
   };
 }
 

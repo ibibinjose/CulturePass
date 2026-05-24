@@ -129,6 +129,13 @@ ticketsRouter.post(
     const qrCode = String(req.body?.ticketCode ?? '').trim();
     if (!qrCode) return res.status(400).json({ valid: false, error: 'ticketCode is required' });
 
+    if (!isFirestoreConfigured) {
+      if (qrCode.startsWith('mock-')) {
+        return res.json({ valid: true, message: 'Mock ticket scanned successfully' });
+      }
+      return res.status(404).json({ valid: false, error: 'Invalid ticket code' });
+    }
+
     try {
       const ticket = await ticketsService.getByQrCode(qrCode);
       if (!ticket) {

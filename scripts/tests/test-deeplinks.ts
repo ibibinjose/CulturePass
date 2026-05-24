@@ -15,21 +15,23 @@ console.log('🧪 Starting Deep Link configuration check...');
 
 
 function verifyAppJson() {
-  console.log('\n--- 2. App.json Verification ---');
-  const appJson = require('../../app.json');
+  console.log('\n--- 2. App.config.js Verification ---');
+  const getAppConfig = require('../../app.config.js').default;
+  const appConfig = getAppConfig({ config: { expo: {} } });
+  const expoConfig = appConfig.expo;
   
-  if (appJson.expo.scheme !== 'culturepass') {
-    throw new Error('❌ Missing scheme "culturepass" in app.json');
+  if (expoConfig.scheme !== 'culturepass') {
+    throw new Error('❌ Missing scheme "culturepass" in app.config.js');
   }
   console.log('✅ Custom Scheme verified (culturepass://)');
 
-  const iosDomains = appJson.expo.ios.associatedDomains || [];
+  const iosDomains = expoConfig.ios.associatedDomains || [];
   if (!iosDomains.includes('applinks:culturepass.app')) {
     throw new Error('❌ Missing applinks:culturepass.app in iOS associatedDomains');
   }
   console.log('✅ iOS Universal Links verified (associatedDomains)');
 
-  const androidIntents = appJson.expo.android.intentFilters || [];
+  const androidIntents = expoConfig.android.intentFilters || [];
   const hasAppLinks = androidIntents.some((intent: any) => {
     return intent.data?.some((data: any) => data.host === 'culturepass.app' && data.scheme === 'https');
   });

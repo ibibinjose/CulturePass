@@ -76,6 +76,7 @@ searchRouter.get('/search', async (req: Request, res: Response) => {
 /** GET /api/discover/trending */
 searchRouter.get('/discover/trending', async (_req: Request, res: Response) => {
   try {
+    if (!isFirestoreConfigured) return res.json([]);
     const trending = await searchService.getTrending(10);
     return res.json(trending);
   } catch (err) {

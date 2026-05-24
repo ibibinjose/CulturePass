@@ -5,7 +5,7 @@
     "moduleResolution": "node",
     "noImplicitReturns": false,
     "noUnusedLocals": false,
-    "outDir": "lib",
+    "outDir": "lib/dist",
     "rootDir": "src",
     "sourceMap": true,
     "strict": true,

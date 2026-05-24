@@ -150,6 +150,20 @@ export function isTokenFresh(user: RequestUser, maxAgeSeconds = 3600): boolean {
  * Never throws; use requireAuth / requireRole on individual routes.
  */
 export async function authenticate(req: Request, _res: Response, next: NextFunction): Promise<void> {
+  // --- Integration Test Bypass (Local/Dev only) ---
+  const integrationRole = req.headers['x-integration-test'];
+  if (integrationRole && process.env.NODE_ENV !== 'production') {
+    const role = (integrationRole as UserRole) || 'user';
+    req.user = {
+      id: `test-${role}-id`,
+      username: `test-${role}`,
+      email: `test-${role}@example.com`,
+      role: role,
+      issuedAt: Math.floor(Date.now() / 1000),
+    };
+    return next();
+  }
+
   const authHeader = req.headers.authorization;
 
   if (!authHeader?.startsWith('Bearer ')) {

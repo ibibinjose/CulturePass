@@ -130,7 +130,6 @@ const stripeRefundSchema = z.object({
 // ---------------------------------------------------------------------------
 
 export function createStripeRouter() {
-
   const router = Router();
   registerStripeConnectRoutes(router);
 

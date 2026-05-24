@@ -7,6 +7,15 @@ CulturePass is a **B2B2C cultural lifestyle marketplace** connecting diaspora co
 
 ---
 
+## Project identity (2026)
+
+- **Primary Tagline**: 'Belong anywhere.'
+- **Secondary Tagline**: 'Discover. Connect. Belong.'
+- **Platform Tagline**: 'Your one-stop lifestyle platform for cultural diaspora communities'
+- **Web Tagline**: 'Belong anywhere.'
+
+---
+
 ## What it is
 
 | Surface | Description |
@@ -49,6 +58,7 @@ cd functions && npm install && cd ..
 
 # 2. Start dev servers
 npx expo start                    # iOS + Android + Web
+npx expo start --web              # Web only
 firebase emulators:start --only functions,firestore,auth,storage
 
 # 3. Seed local test org (optional — needs emulators running)
@@ -99,17 +109,28 @@ Mirror all `EXPO_PUBLIC_*` vars in `eas.json` for EAS builds.
 ```
 src/
   app/              Expo Router — tabs, domain, onboarding, admin, shortlinks
+    (tabs)/         index (Discover), calendar, community, city, my-space (visible)
+                    CultureX, host (hidden from bar, reached via in-app links)
+                    profile, directory, dashboard, menu (hidden, href=null)
+    (domain)/       artist, business, event, movies, restaurants, shopping, venue...
+    (onboarding)/   cultures, location, signup, login flows
+    (shortlinks)/   b, c, e, o, t, u, v (single-letter URL prefixes)
+    (static)/       about, contact, get2know, landing, legal/, logo, help/
+    admin/          14+ routes: users, audit-logs, moderation, finance, discover...
+    hostspace/      Creator hub: index, /create, /create/[category], /dashboard
+    network/        /network — followers/following/suggestions/added segments
+    contacts/       Contacts CRM: /contacts (list) and /contacts/[cpid] (detail)
   modules/          Feature modules: discover, events, profile, host, contacts, network…
   components/       Shared UI — Discover rails, calendar, perks, widgets, browse
   design-system/    Single source of truth for tokens + M3 atomic UI
-    tokens/         theme.ts (master export), colors, typography, spacing, elevation, animations
-    ui/             Button, Card, Badge, Input, M3Button, M3Card, GlassView, …
-  hooks/            useLayout, useColors, useRole, useCouncil, useLocations, …
-  lib/              api.ts (typed client), auth.tsx, feature-flags, analytics, ical, …
+    tokens/         theme.ts (master export), colors, typography, spacing, animations...
+    ui/             Button, Card, Badge, Input, M3Button, GlassView, LikeToggle...
+  hooks/            useLayout, useColors, useRole, useCouncil, useLocations...
+  lib/              api.ts (typed client), auth.tsx, feature-flags, analytics, storage...
   platform/api/     Namespace-factory layer composed into lib/api.ts
   repositories/     ContactsRepository (AsyncStorage), MembershipRepository
-  contexts/         OnboardingContext, SavedContext, ContactsContext
-  constants/        Data constants (NOT tokens): cities, cultures, categories, …
+  contexts/         OnboardingContext, SavedContext, ContactsContext, LikesContext
+  constants/        Data constants (NOT tokens): cities, cultures, categories…
 
 shared/             TypeScript types shared with Cloud Functions
 functions/src/
@@ -140,6 +161,19 @@ For the full directory map see [`AGENTS.md`](AGENTS.md). For architecture decisi
 const topInset = Platform.OS === 'web' ? 0 : insets.top;
 // WRONG — never hardcode the old 67px top bar value
 ```
+
+---
+
+## State management
+
+| Concern | Solution |
+|---------|----------|
+| **Server data** | TanStack React Query (`useQuery`, `useMutation`) |
+| **Auth state** | `AuthProvider` + `useAuth()` (Firebase Auth) |
+| **Onboarding** | `OnboardingContext` (city, country, interests) |
+| **Social / Saved** | `SavedContext` (events, communities), `LikesContext` |
+| **Contacts** | `ContactsContext` (CRM state) |
+| **UI state** | `useState` / `useReducer` local to component |
 
 ---
 
@@ -209,6 +243,8 @@ Use `TextStyles.eventCardTitle` / `TextStyles.eventCardDate` with `useColors().e
 - Call the backend through `api.*` from `src/lib/api.ts` — the only HTTP entry point
 - Import images via `expo-image` for caching and glass-aware skeletons
 - Wrap async-data screens with `<ErrorBoundary>`
+- Use **sentence case** for buttons, nav, and headers — `"Get tickets"`, not `"Get Tickets"`
+- Use `useLayout()` for all responsive values (padding, columns, sidebarWidth)
 - Handle 401s with `ApiError.isUnauthorized()`
 - Add `accessibilityLabel` to every interactive element
 - Test on iOS, Android, and Web before opening a PR
@@ -229,6 +265,18 @@ api.membership.get()
 ### Feature flags
 
 EventCard rendering is flag-gated via `useFlagOverride('eventcard-v2')` in `src/modules/events/components/EventCard.tsx`. Defaults to `EventCardV1`; flipping the flag enables `EventCardV2` (Mode-C visual layer, same props). Flag plumbing: `src/lib/feature-flags.ts`.
+
+---
+
+## UI Patterns
+
+### Gold-standard listing screen
+Apply the `app/events.tsx` structure to every listing screen (perks, community, directory, etc.):
+1. **Header**: Logo mark + page title + glass action buttons.
+2. **Filter Row**: Inline animated `FilterChip` (Reanimated spring).
+3. **Content Grid**: `FlatList` with `numColumns` from `useLayout()`.
+4. **Animation**: `FadeInDown.delay(index * 60)` per item.
+5. **Loading**: Skeleton grid matching the card grid.
 
 ---
 
@@ -296,6 +344,16 @@ profiles/{profileId}  entityType (community|business|venue|artist|organisation),
                       ownerId, isVerified, lgaCode?
 councils/{councilId}  name, suburb, state, lgaCode — seeded from AllCouncilsList.csv
 ```
+
+---
+
+## Recently shipped (May 2026)
+
+- **Council (LGA)** area functionality for Australian users (proximity filtering).
+- **M3 design system layer**: `M3TopAppBar`, `M3Button`, `M3FilterChip`, `M3SectionHeader`, `M3Card`, `M3FAB`.
+- **Tab bar v2**: Gradient pill active indicator (violet → coral) + Reanimated spring press.
+- **GlassView** platform component (`expo-blur` on iOS, CSS backdrop-filter on web).
+- **LikeToggle** component + `LikesContext` across EventCard and community cards.
 
 ---
 

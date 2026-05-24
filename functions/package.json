@@ -1,7 +1,7 @@
 {
   "name": "functions",
   "scripts": {
-    "build": "tsc && mkdir -p lib/functions/src/data && cp src/data/AllCouncilsList.csv lib/functions/src/data/",
+    "build": "rm -rf lib && tsc && mkdir -p lib/data && cp src/data/AllCouncilsList.csv lib/data/",
     "typecheck": "tsc --noEmit",
     "lint": "eslint \"src/**/*.ts\"",
     "build:watch": "tsc --watch",
@@ -23,7 +23,7 @@
   "engines": {
     "node": "22"
   },
-  "main": "lib/functions/src/index.js",
+  "main": "lib/dist/index.js",
   "dependencies": {
     "@google-cloud/functions-framework": "^5.0.2",
     "@tootallnate/once": "3.0.1",

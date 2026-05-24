@@ -66,7 +66,7 @@ const firebaseHostingOrigins: RegExp[] = firebaseProjectId
       new RegExp(`^https://[\\w-]+--${escapeRegExp(firebaseProjectId)}\\.web\\.app$`), // Firebase preview channels
     ]
   : [
-      /^https:\/\/[\w-]+\.web\.app$/,
+      /^https:\/\/[\w-]+\.web\\.app$/,
       /^https:\/\/[\w-]+\.firebaseapp\.com$/,
     ];
 
@@ -241,20 +241,22 @@ app.get('/health', (_req, res) => res.json({ status: 'ok', timestamp: new Date()
 app.use((_req, res, next) => { res.setHeader('X-Api-Version', '1'); next(); });
 
 // --- Routes ---
-// Routes are mounted at:
-//   /             — direct Cloud Function invocation (legacy)
-//   /api/         — Firebase Hosting rewrite (current standard)
-//   /v1/          — versioned alias (forward-compatible)
-//   /api/v1/      — versioned alias via Hosting rewrite
-//
-// New clients should target /api/v1/*. Old clients at /api/* keep working.
-// When a breaking change is needed, mount the new router at /v2/ only.
 const mount = (path: string, router: any) => {
   app.use(path, router);
   app.use(`/api${path}`, router);
   app.use(`/v1${path}`, router);
   app.use(`/api/v1${path}`, router);
 };
+
+// Special handling for factory routers — mount early to avoid greedy matches
+const eventsRouter = createEventsRouter();
+app.use('/', eventsRouter);
+app.use('/api', eventsRouter);
+app.use('/v1', eventsRouter);
+app.use('/api/v1', eventsRouter);
+
+const stripeRouter = createStripeRouter();
+mount('/', stripeRouter);
 
 mount('/', authRouter);
 mount('/', ticketsRouter);
@@ -283,62 +285,12 @@ mount('/', cultureShopRouter);
 mount('/', hostApplicationRouter);
 mount('/', waitlistRouter);
 mount('/', reviewsRouter);
-mount('/', profilesRouter);
-
-// Special handling for factory routers
-const eventsRouter = createEventsRouter();
-app.use('/', eventsRouter);
-app.use('/api', eventsRouter);
-app.use('/v1', eventsRouter);
-app.use('/api/v1', eventsRouter);
 
 const indigenousRouter = createIndigenousRouter();
 app.use('/', indigenousRouter);
 app.use('/api', indigenousRouter);
 app.use('/v1', indigenousRouter);
 app.use('/api/v1', indigenousRouter);
-
-app.use(createStripeRouter());
-
-// OPTIONS that did not match an earlier handler (should be rare) — respond 204 + CORS
-app.use((req, res, next) => {
-  if (req.method !== 'OPTIONS') {
-    next();
-    return;
-  }
-  const origin = req.headers.origin;
-  if (typeof origin === 'string' && isAllowedOrigin(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-    const requestedHeaders = req.headers['access-control-request-headers'];
-    if (typeof requestedHeaders === 'string' && requestedHeaders.length > 0) {
-      res.setHeader('Access-Control-Allow-Headers', requestedHeaders);
-    } else {
-      res.setHeader(
-        'Access-Control-Allow-Headers',
-        'Content-Type, Authorization, X-Requested-With, Accept, Accept-Language, If-None-Match',
-      );
-    }
-    res.setHeader('Access-Control-Max-Age', '86400');
-    res.setHeader('Vary', 'Origin');
-    res.status(204).end();
-    return;
-  }
-  next();
-});
-
-// Default 404 — include CORS when Origin is allowlisted so the browser does not
-// report a misleading "No Access-Control-Allow-Origin" (e.g. stray OPTIONS).
-app.use((req, res) => {
-  const origin = req.headers.origin;
-  if (typeof origin === 'string' && isAllowedOrigin(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    res.setHeader('Vary', 'Origin');
-  }
-  res.status(404).json({ error: 'Not Found' });
-});
 
 // Error handler — never exposes internal details in production
 app.use((err: Error & { status?: number }, req: Request, res: Response, _next: NextFunction) => {

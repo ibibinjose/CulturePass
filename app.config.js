@@ -185,7 +185,7 @@ export default function(appConfig) {
       plugins: basePlugins,
       name: "CulturePass",
       slug: "culturepass",
-      version: "1.2.0",
+      version: "1.2.1",
       description: "Discover cultural events and communities built for diaspora cities. Organizers reach the right audience; attendees find festivals, tickets, and belonging in one place.",
       orientation: "portrait",
       icon: "./assets/images/icon.png",
@@ -199,7 +199,7 @@ export default function(appConfig) {
       ios: {
         supportsTablet: true,
         bundleIdentifier: "au.culturepass.app",
-        buildNumber: "24",
+        buildNumber: "25",
         appleTeamId: "26WGXSNG58",
         infoPlist: {
           NSSupportsLiveActivities: true,
@@ -292,7 +292,7 @@ export default function(appConfig) {
           "android.permission.USE_FINGERPRINT",
           "android.permission.READ_MEDIA_IMAGES"
         ],
-        versionCode: 3
+        versionCode: 4
       },
       web: {
         favicon: "./assets/images/favicon.png",
@@ -316,6 +316,7 @@ export default function(appConfig) {
           origin: "https://culturepass.app"
         },
         eas: {
+          projectId: "9dc511ee-ee3e-4798-ae29-30efc8f5343e",
           build: {
             experimental: {
               ios: {
@@ -348,9 +349,6 @@ export default function(appConfig) {
               }
             }
           }
-        },
-        eas: {
-          projectId: "9dc511ee-ee3e-4798-ae29-30efc8f5343e"
         }
       },
       owner: "cultureos",

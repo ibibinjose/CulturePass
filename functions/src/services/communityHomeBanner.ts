@@ -21,10 +21,10 @@ export interface CommunityHomeBannerRecord {
 
 const DEFAULT_BANNER: CommunityHomeBannerRecord = {
   id: 'default',
-  title: 'Your community needs a home',
-  subtitle: 'A gathering place for culture and connection—not just another feed.',
-  ctaLabel: 'Explore',
-  ctaRoute: '/(tabs)/community',
+  title: 'Join the CulturePass Waitlist',
+  subtitle: 'Build anticipation and get early access. Secure your spot and get updates before our official launch.',
+  ctaLabel: 'Join Now',
+  ctaRoute: '/landing',
   revision: 1,
   isActive: true,
   publishedAt: nowIso(),

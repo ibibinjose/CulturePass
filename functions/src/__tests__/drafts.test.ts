@@ -8,7 +8,7 @@
 
 import request from 'supertest';
 import { app } from '../app';
-import { draftService } from '../services/draftService';
+import { draftService } from '../services/profileService';
 
 // ---------------------------------------------------------------------------
 // Mocks
@@ -76,30 +76,9 @@ jest.mock('../services/profileService', () => ({
   },
 }));
 
-jest.mock('../services/draftService', () => ({
-  draftService: {
-    saveDraft: jest.fn(),
-    getUserDrafts: jest.fn(),
-    getDraft: jest.fn(),
-    deleteDraft: jest.fn(),
-  },
-}));
-
-jest.mock('../services/validationService', () => ({
-  validationService: {
-    checkHandleExists: jest.fn(),
-    validateABN: jest.fn(),
-    validateABNFormat: jest.fn(),
-  },
-}));
-
-jest.mock('../services/verificationService', () => ({
-  verificationService: {
-    requiresVerification: jest.fn(),
-    createVerificationTask: jest.fn(),
-    getChecklistForEntityType: jest.fn(),
-  },
-}));
+jest.mock('../services/draftService', () => jest.requireMock('../services/profileService').draftService);
+jest.mock('../services/validationService', () => jest.requireMock('../services/profileService').validationService);
+jest.mock('../services/verificationService', () => jest.requireMock('../services/profileService').verificationService);
 
 jest.mock('../middleware/auth', () => {
   const original = jest.requireActual('../middleware/auth');

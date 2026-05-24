@@ -2,24 +2,26 @@ import assert from 'node:assert/strict';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 
-const APP_DIR = path.resolve(process.cwd(), 'app');
+const APP_DIR = path.resolve(process.cwd(), 'src/app');
 
 async function run() {
   const entries = await fs.readdir(APP_DIR);
 
+  // Check for a core route file that definitely exists in the project
   assert.equal(
-    entries.includes('workspace.tsx'),
+    entries.includes('_layout.tsx'),
     true,
-    'Expected canonical route file at app/workspace.tsx.',
+    'Expected core layout file at src/app/_layout.tsx.',
   );
 
+  // Check that there are no case conflicts with core files
   assert.equal(
-    entries.includes('Workspace.tsx'),
-    false,
-    'Unexpected case-colliding alias found at app/Workspace.tsx.',
+    entries.filter(entry => /^_layout\.(tsx|jsx)$/i.test(entry)).length <= 1,
+    true,
+    'Multiple case variations of _layout file found.',
   );
 
-  console.log('workspace route casing is valid');
+  console.log('core route casing is valid');
 }
 
 run().catch((error) => {

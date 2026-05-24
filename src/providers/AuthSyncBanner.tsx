@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text as RNText, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useColors } from '@/hooks/useColors';
@@ -20,9 +20,9 @@ export function AuthSyncBanner() {
       ]}
     >
       <Ionicons name="warning-outline" size={16} color={CultureTokens.coral} />
-      <Text style={[styles.text, { color: colors.text }]} numberOfLines={2}>
+      <RNText style={[styles.text, { color: colors.text }]} numberOfLines={2}>
         {profileSyncMessage}
-      </Text>
+      </RNText>
       <Pressable
         style={[styles.retryButton, { borderColor: `${CultureTokens.coral}AA` }]}
         onPress={() => {
@@ -31,7 +31,7 @@ export function AuthSyncBanner() {
         accessibilityRole="button"
         accessibilityLabel="Retry profile sync"
       >
-        <Text style={styles.retryText}>Retry</Text>
+        <RNText style={styles.retryText}>Retry</RNText>
       </Pressable>
     </View>
   );

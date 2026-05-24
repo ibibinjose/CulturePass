@@ -13,13 +13,14 @@ import {
 import { Stack, router } from 'expo-router';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useColors } from '@/hooks/useColors';
+import { useColors, useIsDark } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
 import { CultureTokens, FontFamily } from '@/design-system/tokens/theme';
 import { useFeaturedCities, type FeaturedCityData } from '@/hooks/useFeaturedCities';
-import { M3Button } from '@/design-system/ui';
+import { M3Button, M3TopAppBar, AppearanceModeToggle } from '@/design-system/ui';
 
 const WEB_DESKTOP_MAX_W = 920;
 const INTRO_MAX_W = 640;
@@ -33,6 +34,7 @@ type CityRowChunk = FeaturedCityData[];
  */
 export default function CitiesHubScreen() {
   const colors = useColors();
+  const isDark = useIsDark();
   const insets = useSafeAreaInsets();
   const { hPad, isWeb, isDesktop } = useLayout();
   const { cities, isLoading, isError, isRefetching, refetch } = useFeaturedCities();
@@ -155,23 +157,47 @@ export default function CitiesHubScreen() {
     <>
       <Stack.Screen
         options={{
-          title: 'Explore cities',
-          headerBackTitle: 'Back',
+          headerShown: false,
         }}
       />
       <View style={[styles.screen, { backgroundColor: colors.background, paddingBottom: insets.bottom }]}>
+        <M3TopAppBar
+          title="Explore cities"
+          onBack={() => {
+            if (router.canGoBack()) {
+              router.back();
+            } else {
+              router.replace('/(tabs)');
+            }
+          }}
+          trailingStart={<AppearanceModeToggle compact />}
+          denseWeb={Platform.OS === 'web'}
+          webBackgroundColor={isWeb ? (isDark ? '#151525' : '#F8FAFC') : undefined}
+        />
+
+        {isWeb && (
+          <LinearGradient
+            colors={[isDark ? '#151525' : '#F8FAFC', colors.background]}
+            style={styles.webHeaderGradient}
+          />
+        )}
+
         <View style={[webShellStyle, { paddingHorizontal: hPad, flex: 1 }]}>
-          <Text
-            style={[
-              styles.intro,
-              isWeb && isDesktop && styles.introDesktop,
-              { color: colors.textSecondary },
-              isWeb && isDesktop && { maxWidth: INTRO_MAX_W },
-            ]}
-            maxFontSizeMultiplier={1.45}
-          >
-            Discover culture nationwide — festivals, communities, and events in each city we support.
-          </Text>
+          <View style={[styles.headerHero, isWeb && styles.headerHeroWeb]}>
+            <Text
+              style={[
+                styles.intro,
+                isWeb && isDesktop && styles.introDesktop,
+                { color: colors.text },
+              ]}
+              maxFontSizeMultiplier={1.45}
+            >
+              Discover culture nationwide
+            </Text>
+            <Text style={[styles.introSub, { color: colors.textSecondary }]}>
+              Festivals, communities, and events in each city we support.
+            </Text>
+          </View>
 
           {isError && cities.length === 0 ? (
             <View style={[styles.errorPanel, { borderColor: colors.borderLight, backgroundColor: colors.surface }]}>
@@ -221,17 +247,37 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   shell: { flex: 1 },
   intro: {
-    fontSize: 14,
-    fontFamily: FontFamily.regular,
-    lineHeight: 22,
-    marginTop: 12,
-    marginBottom: 14,
+    fontSize: 22,
+    fontFamily: FontFamily.bold,
+    lineHeight: 28,
+    marginTop: 20,
+    marginBottom: 4,
   },
   introDesktop: {
-    fontSize: 16,
-    lineHeight: 24,
-    marginTop: 16,
-    marginBottom: 20,
+    fontSize: 28,
+    lineHeight: 36,
+    marginTop: 32,
+    marginBottom: 8,
+  },
+  introSub: {
+    fontSize: 15,
+    fontFamily: FontFamily.regular,
+    lineHeight: 22,
+    marginBottom: 24,
+    maxWidth: INTRO_MAX_W,
+  },
+  headerHero: {
+    marginBottom: 8,
+  },
+  headerHeroWeb: {
+    paddingTop: 24,
+  },
+  webHeaderGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 300,
   },
   listContent: { paddingTop: 4, flexGrow: 1 },
   chunkSingle: { marginBottom: 12 },

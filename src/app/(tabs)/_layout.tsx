@@ -16,6 +16,7 @@ const RAIL_DESTINATIONS: RailDestination[] = [
   { name: 'community', label: 'Community', icon: 'people-outline', activeIcon: 'people' },
   { name: 'city', label: 'My City', icon: 'location-outline', activeIcon: 'location' },
   { name: 'my-space', label: 'Profile', icon: 'person-circle-outline', activeIcon: 'person-circle' },
+  { name: 'perks', label: 'Perks', icon: 'pricetag-outline', activeIcon: 'pricetag' },
 ];
 
 /**
@@ -29,6 +30,7 @@ const TAB_NAMES: Record<string, string> = {
   community: 'Community',
   city: 'My City',
   'my-space': 'Profile',
+  perks: 'Perks',
 };
 
 export default function TabsLayout() {
@@ -129,6 +131,16 @@ export default function TabsLayout() {
           title: 'Profile',
           tabBarIcon: ({ color, focused, size }) => (
             <Ionicons name={focused ? 'person-circle' : 'person-circle-outline'} size={size} color={color} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="perks"
+        options={{
+          title: 'Perks',
+          tabBarIcon: ({ color, focused, size }) => (
+            <Ionicons name={focused ? 'pricetag' : 'pricetag-outline'} size={size} color={color} />
           ),
         }}
       />

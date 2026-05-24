@@ -27,7 +27,7 @@ import { M3TopAppBar, M3FAB } from '@/design-system/ui';
 import { useSafeBack } from '@/lib/navigation';
 import { useContacts } from '@/contexts/ContactsContext';
 import type { SavedContact } from '@/repositories/ContactsRepository';
-import { modulesApi, ApiError } from '@/modules/api';
+import { ApiError } from '@/modules/api';
 import { ContactsSegmentTabs, type ContactsSegment } from '../components/ContactsSegmentTabs';
 import { ContactListRow } from '../components/ContactListRow';
 import { ContactsEmptyState } from '../components/ContactsEmptyState';

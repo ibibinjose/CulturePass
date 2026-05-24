@@ -4,15 +4,16 @@ import { Buffer } from "buffer";
 
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import Head from "expo-router/head";
-import { Stack, usePathname, useGlobalSearchParams } from "expo-router";
+import { Stack, usePathname } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { PostHogProvider } from 'posthog-react-native';
 import posthogClient from '@/lib/analytics';
-import React, { useCallback, useEffect, useRef } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Ionicons } from '@expo/vector-icons';
 import {
   Platform,
   View,
+  Text as RNText,
   StyleSheet,
 } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -35,6 +36,7 @@ import { initializeWidgets } from "@/lib/widgets/register";
 import { WidgetSync } from "@/components/WidgetSync";
 import { WebSidebar } from "@/modules/core/layout/web/WebSidebar";
 import { isCultureKeralaHost } from "@/lib/domainHost";
+import { M3Button } from "@/design-system/ui";
 import {
   APP_NAME,
   APP_WEB_DESCRIPTION,
@@ -69,95 +71,215 @@ if (typeof console !== 'undefined') {
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
 // ---------------------------------------------------------------------------
+// Global Metadata Component
+// ---------------------------------------------------------------------------
+function GlobalMetadata() {
+  const pathname = usePathname();
+  const isKeralaDomain = isCultureKeralaHost();
+  const colors = useColors();
+  const isDark = useIsDark();
+  const isWeb = Platform.OS === 'web';
+
+  const siteOrigin = isKeralaDomain ? 'https://culturekerala.com' : SITE_ORIGIN;
+  const siteTitle = isKeralaDomain
+    ? 'CultureKerala — Kerala & Malayalee Communities Worldwide'
+    : APP_WEB_TITLE;
+  const siteDescription = isKeralaDomain
+    ? 'Discover Kerala and Malayalee communities, events, businesses, and culture around the world.'
+    : APP_WEB_DESCRIPTION;
+  const siteKeywords = isKeralaDomain
+    ? 'CultureKerala, Kerala Communities, Malayalee, Malayalam, Kerala Events, Malayali Diaspora'
+    : APP_WEB_KEYWORDS;
+
+  const currentPath = pathname || '/';
+  const canonicalUrl = `${siteOrigin}${currentPath === '/' ? '' : currentPath}`;
+  const socialPreviewUrl = `${siteOrigin}/assets/images/social-preview.png`;
+
+  const keralaJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'CultureKerala',
+    url: 'https://culturekerala.com/',
+    description: 'Discover Kerala and Malayalee communities, events, businesses, and culture around the world.',
+    inLanguage: ['en', 'ml'],
+    keywords: ['Kerala', 'Malayalee', 'Malayalam', 'Kerala events', 'Kerala communities'],
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: 'https://culturekerala.com/search?query={search_term_string}',
+      'query-input': 'required name=search_term_string',
+    },
+  };
+
+  const culturepassJsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'WebSite',
+        '@id': `${siteOrigin}/#website`,
+        name: APP_NAME,
+        alternateName: APP_WEB_TAGLINE,
+        url: siteOrigin + '/',
+        description: siteDescription,
+        inLanguage: 'en-AU',
+        publisher: { '@id': `${siteOrigin}/#organization` },
+        potentialAction: {
+          '@type': 'SearchAction',
+          target: `${siteOrigin}/search?q={search_term_string}`,
+          'query-input': 'required name=search_term_string',
+        },
+      },
+      {
+        '@type': 'Organization',
+        '@id': `${siteOrigin}/#organization`,
+        name: APP_NAME,
+        url: siteOrigin + '/',
+        description: siteDescription,
+        slogan: APP_WEB_TAGLINE,
+      },
+    ],
+  };
+
+  return (
+    <Head>
+      <title>{siteTitle}</title>
+      <meta name="description" content={siteDescription} />
+      <meta name="keywords" content={siteKeywords} />
+      <link rel="canonical" href={canonicalUrl} />
+      {isKeralaDomain && <meta name="robots" content="index,follow,max-image-preview:large" />}
+
+      {/* Open Graph / Facebook */}
+      <meta property="og:type" content="website" />
+      <meta property="og:url" content={canonicalUrl} />
+      <meta property="og:title" content={siteTitle} />
+      <meta property="og:description" content={siteDescription} />
+      <meta property="og:image" content={socialPreviewUrl} />
+      <meta property="og:site_name" content={isKeralaDomain ? 'CultureKerala' : APP_NAME} />
+      <meta property="og:locale" content={isKeralaDomain ? 'ml_IN' : 'en_AU'} />
+
+      {/* Twitter */}
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:url" content={canonicalUrl} />
+      <meta name="twitter:title" content={siteTitle} />
+      <meta name="twitter:description" content={siteDescription} />
+      <meta name="twitter:image" content={socialPreviewUrl} />
+      <meta name="application-name" content={isKeralaDomain ? 'CultureKerala' : APP_NAME} />
+      <meta name="apple-mobile-web-app-title" content={isKeralaDomain ? 'CultureKerala' : APP_NAME} />
+
+      {isWeb && (
+        isKeralaDomain ? (
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(keralaJsonLd) }}
+          />
+        ) : (
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(culturepassJsonLd) }}
+          />
+        )
+      )}
+
+      <meta name="theme-color" content={colors.background} />
+      <meta name="apple-mobile-web-app-capable" content="yes" />
+      <meta
+        name="apple-mobile-web-app-status-bar-style"
+        content={isDark ? "black-translucent" : "default"}
+      />
+    </Head>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Stack navigator — all screens registered here so Expo Router can deep-link
 // ---------------------------------------------------------------------------
 function RootLayoutNav() {
   return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-        headerShadowVisible: false,
-        // Empty string removes the "Back" label next to the iOS chevron
-        headerBackTitle: "",
-        animation: Platform.OS === "web" ? "fade" : Platform.OS === "ios" ? "default" : "slide_from_right",
-        // Web: scene must flex inside WebShell so Discover (and other tabs) scroll correctly
-        ...(Platform.OS === "web"
-          ? { contentStyle: { flex: 1, minHeight: 0 } }
-          : {}),
-      }}
-    >
-      <Stack.Screen name="(static)/landing" />
-      <Stack.Screen name="kerala" />
-      <Stack.Screen name="finder" />
-      <Stack.Screen name="onboarding-canvas" />
-      <Stack.Screen name="(onboarding)" />
-      <Stack.Screen name="(tabs)" />
-      <Stack.Screen name="(domain)" />
-      <Stack.Screen name="user/[id]" />
+    <>
+      <GlobalMetadata />
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          headerShadowVisible: false,
+          // Empty string removes the "Back" label next to the iOS chevron
+          headerBackTitle: "",
+          animation: Platform.OS === "web" ? "fade" : Platform.OS === "ios" ? "default" : "slide_from_right",
+          // Web: scene must flex inside WebShell so Discover (and other tabs) scroll correctly
+          ...(Platform.OS === "web"
+            ? { contentStyle: { flex: 1, minHeight: 0 } }
+            : {}),
+        }}
+      >
+        <Stack.Screen name="(static)/landing" />
+        <Stack.Screen name="kerala" />
+        <Stack.Screen name="finder" />
+        <Stack.Screen name="onboarding-canvas" />
+        <Stack.Screen name="(onboarding)" />
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="(domain)" />
+        <Stack.Screen name="user/[id]" />
 
-      <Stack.Screen name="profile/[id]" />
-      <Stack.Screen name="profile/edit" />
-      <Stack.Screen name="profile/public" />
-      <Stack.Screen name="profile/qr" />
+        <Stack.Screen name="profile/[id]" />
+        <Stack.Screen name="profile/edit" />
+        <Stack.Screen name="profile/public" />
+        <Stack.Screen name="profile/qr" />
 
+        <Stack.Screen name="payment/methods" />
+        <Stack.Screen name="payment/transactions" />
+        <Stack.Screen name="payment/wallet" />
+        <Stack.Screen name="payment/success" />
+        <Stack.Screen name="payment/cancel" />
 
+        <Stack.Screen name="tickets/index" />
+        <Stack.Screen name="tickets/[id]" />
+        <Stack.Screen name="tickets/print/[id]" />
+        <Stack.Screen name="saved/index" />
+        <Stack.Screen name="perks/index" />
+        <Stack.Screen name="perks/[id]" />
 
-      <Stack.Screen name="payment/methods" />
-      <Stack.Screen name="payment/transactions" />
-      <Stack.Screen name="payment/wallet" />
-      <Stack.Screen name="payment/success" />
-      <Stack.Screen name="payment/cancel" />
+        <Stack.Screen name="scanner" />
+        <Stack.Screen name="contacts/index" />
+        <Stack.Screen name="contacts/[cpid]" />
+        <Stack.Screen name="network/index" />
+        <Stack.Screen name="CultureMarket" />
+        <Stack.Screen name="CultureShop" />
+        <Stack.Screen name="admin" />
 
-      <Stack.Screen name="tickets/index" />
-      <Stack.Screen name="tickets/[id]" />
-      <Stack.Screen name="tickets/print/[id]" />
-      <Stack.Screen name="saved/index" />
-      <Stack.Screen name="perks/index" />
-      <Stack.Screen name="perks/[id]" />
+        <Stack.Screen name="search/index" />
+        <Stack.Screen name="notifications/index" />
+        <Stack.Screen name="my-council" />
+        <Stack.Screen name="map" />
+        <Stack.Screen name="membership" />
 
-      <Stack.Screen name="scanner" />
-      <Stack.Screen name="contacts/index" />
-      <Stack.Screen name="contacts/[cpid]" />
-      <Stack.Screen name="network/index" />
-      <Stack.Screen name="CultureMarket" />
-      <Stack.Screen name="CultureShop" />
-      <Stack.Screen name="admin" />
+        <Stack.Screen name="settings/index" />
+        <Stack.Screen name="settings/account" />
+        <Stack.Screen name="settings/location" />
+        <Stack.Screen name="settings/appearance" />
+        <Stack.Screen name="settings/about" />
+        <Stack.Screen name="settings/help" />
+        <Stack.Screen name="settings/notifications" />
+        <Stack.Screen name="settings/privacy" />
+        <Stack.Screen name="settings/calendar-sync" />
 
-      <Stack.Screen name="search/index" />
-      <Stack.Screen name="notifications/index" />
-      <Stack.Screen name="my-council" />
-      <Stack.Screen name="map" />
-      <Stack.Screen name="membership" />
+        <Stack.Screen name="(static)/help/index" />
+        <Stack.Screen name="(static)/contact" />
+        <Stack.Screen name="(static)/legal/terms" />
+        <Stack.Screen name="(static)/legal/privacy" />
+        <Stack.Screen name="(static)/legal/cookies" />
+        <Stack.Screen name="(static)/legal/guidelines" />
 
-      <Stack.Screen name="settings/index" />
-      <Stack.Screen name="settings/account" />
-      <Stack.Screen name="settings/location" />
-      <Stack.Screen name="settings/appearance" />
-      <Stack.Screen name="settings/about" />
-      <Stack.Screen name="settings/help" />
-      <Stack.Screen name="settings/notifications" />
-      <Stack.Screen name="settings/privacy" />
-      <Stack.Screen name="settings/calendar-sync" />
+        {/* <Stack.Screen name="updates/index" /> */}
+        <Stack.Screen name="updates/[id]" />
 
-      <Stack.Screen name="(static)/help/index" />
-      <Stack.Screen name="(static)/contact" />
-      <Stack.Screen name="(static)/legal/terms" />
-      <Stack.Screen name="(static)/legal/privacy" />
-      <Stack.Screen name="(static)/legal/cookies" />
-      <Stack.Screen name="(static)/legal/guidelines" />
+        <Stack.Screen name="[handle]" />
 
-      {/* <Stack.Screen name="updates/index" /> */}
-      <Stack.Screen name="updates/[id]" />
-
-      <Stack.Screen name="[handle]" />
-
-      {/* Legacy shortlinks — redirect to canonical paths above */}
-      <Stack.Screen name="(shortlinks)/c/[id]" options={{ animation: 'none' }} />
-      <Stack.Screen name="(shortlinks)/c/[id]/members" options={{ animation: 'none' }} />
-      <Stack.Screen name="(shortlinks)/e/[id]" options={{ animation: 'none' }} />
-      <Stack.Screen name="(shortlinks)/b/[id]" options={{ animation: 'none' }} />
-      <Stack.Screen name="(shortlinks)/u/[id]" options={{ animation: 'none' }} />
-    </Stack>
+        {/* Legacy shortlinks — redirect to canonical paths above */}
+        <Stack.Screen name="(shortlinks)/c/[id]" options={{ animation: 'none' }} />
+        <Stack.Screen name="(shortlinks)/c/[id]/members" options={{ animation: 'none' }} />
+        <Stack.Screen name="(shortlinks)/e/[id]" options={{ animation: 'none' }} />
+        <Stack.Screen name="(shortlinks)/b/[id]" options={{ animation: 'none' }} />
+        <Stack.Screen name="(shortlinks)/u/[id]" options={{ animation: 'none' }} />
+      </Stack>
+    </>
   );
 }
 
@@ -211,56 +333,93 @@ function WebShell({ children }: { children: React.ReactNode }) {
 // ---------------------------------------------------------------------------
 
 function RootLayoutContent() {
-  const colors = useColors();
   const isDark = useIsDark();
-  const pathname = usePathname();
-  const params = useGlobalSearchParams();
-  const previousPathname = useRef<string | undefined>(undefined);
   const [fontsLoaded, fontError] = useFonts({
     Poppins_400Regular,
     Poppins_500Medium,
     Poppins_600SemiBold,
     Poppins_700Bold,
     Poppins_800ExtraBold,
-    ...Ionicons.font,
   });
 
+  // Add a timeout state to prevent indefinite loading
+  const [fontTimeout, setFontTimeout] = React.useState(false);
+  
+  // Set a timeout after 3 seconds to allow the app to render with system fonts
+  React.useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setFontTimeout(true);
+    }, 3000); // 3 seconds timeout
+    
+    return () => clearTimeout(timeoutId);
+  }, []);
+
+  // Log font loading errors for debugging
+  useEffect(() => {
+    if (fontError) {
+      console.error('[RootLayout] Font loading error:', fontError);
+    }
+  }, [fontError]);
+
+  // On web, icons might be loaded separately or via CDN in some configs.
+  // We separate them to see if they block the main fonts.
+  useEffect(() => {
+    if (Platform.OS !== 'web') {
+      // Load Ionicons font specifically if not web, as web often handles it via CSS
+    }
+  }, []);
+
   const onLayoutRootView = useCallback(async () => {
-    if (fontsLoaded || fontError) {
+    if (fontsLoaded || fontError || fontTimeout) {
       await SplashScreen.hideAsync().catch(() => {});
     }
-  }, [fontsLoaded, fontError]);
+  }, [fontsLoaded, fontError, fontTimeout]);
 
   useEffect(() => {
-    if (fontsLoaded || fontError) {
+    if (fontsLoaded || fontError || fontTimeout) {
       SplashScreen.hideAsync().catch(() => {});
     }
-  }, [fontsLoaded, fontError]);
+  }, [fontsLoaded, fontError, fontTimeout]);
 
   useEffect(() => {
     initializeWidgets();
   }, []);
 
-  useEffect(() => {
-    if (posthogClient && previousPathname.current !== pathname) {
-      posthogClient.screen(pathname, {
-        previous_screen: previousPathname.current ?? null,
-      });
-      previousPathname.current = pathname;
-    }
-  }, [pathname, params]);
-
   const isWeb = Platform.OS === "web";
-  const isKeralaDomain = isCultureKeralaHost();
 
-  if (!fontsLoaded && !fontError) {
-    return null;
+  // If fonts fail to load OR timeout occurs, we still want to show the app instead of hanging on loading screen
+  if (!fontsLoaded && !fontError && !fontTimeout) {
+    if (__DEV__) {
+      console.log('[RootLayout] Waiting for fonts to load...', { fontsLoaded, fontError, fontTimeout });
+    }
+    return (
+      <View style={{ flex: 1, backgroundColor: isDark ? '#0B0B14' : '#FFFFFF', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+        <RNText style={{ color: isDark ? '#FFFFFF' : '#000000', fontSize: 16, marginBottom: 20 }}>
+          Loading CulturePass...
+        </RNText>
+        {__DEV__ && (
+          <M3Button variant="text" onPress={() => SplashScreen.hideAsync()}>
+            Skip Font Wait (Dev Only)
+          </M3Button>
+        )}
+      </View>
+    );
+  }
+
+  // If fonts failed to load or timed out, log the issue but still render the app
+  if (fontError || fontTimeout) {
+    if (fontError) {
+      console.warn('[RootLayout] Fonts failed to load, using system fonts as fallback:', fontError);
+    } else if (fontTimeout) {
+      console.warn('[RootLayout] Font loading timed out, using system fonts as fallback');
+      SplashScreen.hideAsync().catch(() => {});
+    }
   }
 
   const appShell = (
     <GestureHandlerRootView
       style={[
-        { flex: 1, backgroundColor: colors.background },
+        { flex: 1 },
         Platform.OS === "web" && ({ minHeight: "100%", height: "100%" } as const),
       ]}
       onLayout={onLayoutRootView}
@@ -305,116 +464,12 @@ function RootLayoutContent() {
     </PersistQueryClientProvider>
   );
 
-  const siteOrigin = isKeralaDomain ? 'https://culturekerala.com' : SITE_ORIGIN;
-  const siteUrl = `${siteOrigin}/`;
-  const siteTitle = isKeralaDomain
-    ? 'CultureKerala — Kerala & Malayalee Communities Worldwide'
-    : APP_WEB_TITLE;
-  const siteDescription = isKeralaDomain
-    ? 'Discover Kerala and Malayalee communities, events, businesses, and culture around the world.'
-    : APP_WEB_DESCRIPTION;
-  const siteKeywords = isKeralaDomain
-    ? 'CultureKerala, Kerala Communities, Malayalee, Malayalam, Kerala Events, Malayali Diaspora'
-    : APP_WEB_KEYWORDS;
-  const currentPath =
-    isWeb && typeof window !== 'undefined' && window.location.pathname
-      ? window.location.pathname
-      : '/';
-  const canonicalUrl = `${siteOrigin}${currentPath === '/' ? '' : currentPath}`;
-  const socialPreviewUrl = `${siteOrigin}/assets/images/social-preview.png`;
-  const keralaJsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'WebSite',
-    name: 'CultureKerala',
-    url: 'https://culturekerala.com/',
-    description: 'Discover Kerala and Malayalee communities, events, businesses, and culture around the world.',
-    inLanguage: ['en', 'ml'],
-    keywords: ['Kerala', 'Malayalee', 'Malayalam', 'Kerala events', 'Kerala communities'],
-    potentialAction: {
-      '@type': 'SearchAction',
-      target: 'https://culturekerala.com/search?query={search_term_string}',
-      'query-input': 'required name=search_term_string',
-    },
-  };
-
-  const culturepassJsonLd = {
-    '@context': 'https://schema.org',
-    '@graph': [
-      {
-        '@type': 'WebSite',
-        '@id': `${siteOrigin}/#website`,
-        name: APP_NAME,
-        alternateName: APP_WEB_TAGLINE,
-        url: siteUrl,
-        description: siteDescription,
-        inLanguage: 'en-AU',
-        publisher: { '@id': `${siteOrigin}/#organization` },
-        potentialAction: {
-          '@type': 'SearchAction',
-          target: `${siteOrigin}/search?q={search_term_string}`,
-          'query-input': 'required name=search_term_string',
-        },
-      },
-      {
-        '@type': 'Organization',
-        '@id': `${siteOrigin}/#organization`,
-        name: APP_NAME,
-        url: siteUrl,
-        description: siteDescription,
-        slogan: APP_WEB_TAGLINE,
-      },
-    ],
-  };
-
   return (
-    <ErrorBoundary>
-      <Head>
-        <title>{siteTitle}</title>
-        <meta name="description" content={siteDescription} />
-        <meta name="keywords" content={siteKeywords} />
-        <link rel="canonical" href={canonicalUrl} />
-        {isKeralaDomain && <meta name="robots" content="index,follow,max-image-preview:large" />}
-
-        {/* Open Graph / Facebook */}
-        <meta property="og:type" content="website" />
-        <meta property="og:url" content={canonicalUrl} />
-        <meta property="og:title" content={siteTitle} />
-        <meta property="og:description" content={siteDescription} />
-        <meta property="og:image" content={socialPreviewUrl} />
-        <meta property="og:site_name" content={isKeralaDomain ? 'CultureKerala' : APP_NAME} />
-        <meta property="og:locale" content={isKeralaDomain ? 'ml_IN' : 'en_AU'} />
-
-        {/* Twitter */}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:url" content={canonicalUrl} />
-        <meta name="twitter:title" content={siteTitle} />
-        <meta name="twitter:description" content={siteDescription} />
-        <meta name="twitter:image" content={socialPreviewUrl} />
-        <meta name="application-name" content={isKeralaDomain ? 'CultureKerala' : APP_NAME} />
-        <meta name="apple-mobile-web-app-title" content={isKeralaDomain ? 'CultureKerala' : APP_NAME} />
-        {isKeralaDomain ? (
-          <script
-            type="application/ld+json"
-            dangerouslySetInnerHTML={{ __html: JSON.stringify(keralaJsonLd) }}
-          />
-        ) : (
-          <script
-            type="application/ld+json"
-            dangerouslySetInnerHTML={{ __html: JSON.stringify(culturepassJsonLd) }}
-          />
-        )}
-
-        <meta name="theme-color" content={colors.background} />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta
-          name="apple-mobile-web-app-status-bar-style"
-          content={isDark ? "black-translucent" : "default"}
-        />
-      </Head>
-      <SafeAreaProvider style={Platform.OS === "web" ? ({ flex: 1, minHeight: 0 } as const) : undefined}>
+    <SafeAreaProvider style={Platform.OS === "web" ? ({ flex: 1, minHeight: 0 } as const) : undefined}>
+      <ErrorBoundary>
         {queryAppTree}
-      </SafeAreaProvider>
-    </ErrorBoundary>
+      </ErrorBoundary>
+    </SafeAreaProvider>
   );
 }
 

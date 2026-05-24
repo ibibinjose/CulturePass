@@ -1,16 +1,13 @@
 import { describe, it, expect } from '@jest/globals';
 import {
   HostProfileSchema,
-  HostEntityTypeSchema,
   CommunityDataSchema,
-  OrganiserDataSchema,
   VenueDataSchema,
-  BusinessDataSchema,
   ArtistDataSchema,
   ProfessionalDataSchema,
   type HostProfile,
-  type HostEntityType,
 } from '../hostProfile';
+import { HostEntityTypeSchema, type HostEntityType } from '../hostTypes';
 
 describe('HostProfile Schema', () => {
   describe('HostEntityTypeSchema', () => {

@@ -63,7 +63,11 @@ export class ErrorBoundary extends Component<
     const { FallbackComponent } = this.props;
     const maxRetries = this.props.maxAutoRetries ?? 2;
 
-    if (this.state.error && this.state.retryCount >= maxRetries && FallbackComponent) {
+    // If there is an error, show the fallback component.
+    // We only retry automatically if maxAutoRetries > 0.
+    if (this.state.error && FallbackComponent) {
+      // During automatic retries, we might want to show a simpler loading state
+      // but showing the full FallbackComponent is safer to avoid blank screens.
       return (
         <FallbackComponent
           error={this.state.error}

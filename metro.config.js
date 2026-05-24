@@ -86,6 +86,6 @@ config.transformer.getTransformOptions = async () => ({
 });
 
 // ── Performance: enable package exports for tree-shaking (date-fns, Firebase, etc.) ──
-config.resolver.unstable_enablePackageExports = true;
+config.resolver.unstable_enablePackageExports = false;
 
 module.exports = config;

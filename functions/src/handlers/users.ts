@@ -1,6 +1,5 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
-import { db, isFirestoreConfigured } from '../admin';
 import { usersService } from '../services/firestore';
 import { requireAuth } from '../middleware/auth';
 import { sanitizeUserResponse, parseBody,

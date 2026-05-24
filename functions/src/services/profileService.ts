@@ -439,4 +439,11 @@ export const profileService = {
       }
     }
   },
+
+  /**
+   * Delete a profile
+   */
+  async delete(id: string): Promise<void> {
+    await profilesCol().doc(id).delete();
+  },
 };

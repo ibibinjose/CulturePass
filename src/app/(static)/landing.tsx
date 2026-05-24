@@ -1,6 +1,6 @@
-import { Redirect } from 'expo-router';
+import React from 'react';
+import { WaitlistLanding } from '@/components/WaitlistLanding';
 
-// Legacy /landing route — sends users directly to Discovery.
-export default function LandingRedirect() {
-  return <Redirect href="/(tabs)" />;
+export default function LandingPage() {
+  return <WaitlistLanding />;
 }

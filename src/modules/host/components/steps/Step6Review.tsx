@@ -35,7 +35,7 @@ import { Button } from '@/design-system/ui/Button';
 import { CultureTokens, Spacing, Radius, FontFamily } from '@/design-system/tokens/theme';
 import { ProfilePreviewModal } from '../ProfilePreviewModal';
 import type { WizardStepProps } from '../FormWizard/WizardStep';
-import type { HostEntityType } from '@/shared/schema/hostProfile';
+import type { HostEntityType } from '@/shared/schema/hostTypes';
 
 // ---------------------------------------------------------------------------
 // Types

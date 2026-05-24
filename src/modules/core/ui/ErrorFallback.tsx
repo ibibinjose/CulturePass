@@ -5,7 +5,7 @@ import {
   View,
   Pressable,
   ScrollView,
-  Text,
+  Text as RNText,
   Modal,
   Platform,
 } from "react-native";
@@ -78,13 +78,13 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
       ) : null}
 
       <View style={styles.content}>
-        <Text style={[styles.title, { color: theme.text }]}>
+        <RNText style={[styles.title, { color: theme.text }]}>
           Something went wrong
-        </Text>
+        </RNText>
 
-        <Text style={[styles.message, { color: theme.textSecondary }]}>
+        <RNText style={[styles.message, { color: theme.textSecondary }]}>
           Please reload the app to continue.
-        </Text>
+        </RNText>
 
         <Pressable
           onPress={handleRestart}
@@ -97,9 +97,9 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
             },
           ]}
         >
-          <Text style={[styles.buttonText, { color: theme.buttonText }]}>
+          <RNText style={[styles.buttonText, { color: theme.buttonText }]}>
             Try Again
-          </Text>
+          </RNText>
         </Pressable>
       </View>
 
@@ -125,9 +125,9 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
                   },
                 ]}
               >
-                <Text style={[styles.modalTitle, { color: theme.text }]}>
+                <RNText style={[styles.modalTitle, { color: theme.text }]}>
                   Error Details
-                </Text>
+                </RNText>
                 <Pressable
                   onPress={() => setIsModalVisible(false)}
                   accessibilityLabel="Close error details"
@@ -155,7 +155,7 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
                     { backgroundColor: theme.backgroundSecondary },
                   ]}
                 >
-                  <Text
+                  <RNText
                     style={[
                       styles.errorText,
                       {
@@ -166,7 +166,7 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
                     selectable
                   >
                     {formatErrorDetails()}
-                  </Text>
+                  </RNText>
                 </View>
               </ScrollView>
             </View>

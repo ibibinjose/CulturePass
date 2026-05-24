@@ -90,6 +90,15 @@ target 'CulturePass' do
             end
           end
       end
+
+      widget_target = project.targets.find { |target| target.name == 'ExpoWidgetsTarget' }
+      widget_group = project.groups.find { |group| group.display_name == 'ExpoWidgetsTarget' }
+      index_file = widget_group&.files&.find { |file| file.path == 'index.swift' }
+      sources_phase = widget_target&.source_build_phase
+
+      if index_file && sources_phase && !sources_phase.files_references.include?(index_file)
+        sources_phase.add_file_reference(index_file)
+      end
     end
 
     react_native_post_install(

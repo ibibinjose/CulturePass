@@ -1,11 +1,9 @@
 import { Router, type Request, type Response } from 'express';
-import { FieldValue } from 'firebase-admin/firestore';
 import { randomUUID } from 'node:crypto';
 import { db, isFirestoreConfigured } from '../admin';
 import { requireAuth, isAdminUser } from '../middleware/auth';
 import { captureRouteError, nowIso } from './utils';
 import { sendToUsers } from '../services/fcmService';
-import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { Waitlist } from '../../../shared/schema/waitlist';
 
 export const waitlistRouter = Router();

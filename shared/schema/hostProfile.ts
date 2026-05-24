@@ -1,26 +1,5 @@
 import { z } from 'zod';
-
-// ============================================================================
-// HostSpace Enterprise-Grade Form System - Profile Schema
-// ============================================================================
-// This schema defines the data models for the unified host profile creation
-// system supporting six entity types: community, organiser, venue, business,
-// artist, and professional.
-//
-// Related: requirements.md (Requirements 6-17), design.md (Data Models)
-// ============================================================================
-
-// Entity Types
-export const HostEntityTypeSchema = z.enum([
-  'community',
-  'organiser',
-  'venue',
-  'business',
-  'artist',
-  'professional',
-]);
-
-export type HostEntityType = z.infer<typeof HostEntityTypeSchema>;
+import { HostEntityTypeSchema } from './hostTypes';
 
 // Social Link
 export const SocialLinkSchema = z.object({

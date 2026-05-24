@@ -33,6 +33,7 @@ export * from './schema/dailyDeal';
 export * from './schema/marketplaceFeed';
 export * from './schema/cultureShopListing';
 export * from './schema/hostApplication';
+export * from './schema/hostTypes';
 export * from './schema/hostProfile';
 export * from './schema/hostProfileDraft';
 export * from './schema/hostProfileVersion';

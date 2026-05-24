@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { HostEntityTypeSchema } from './hostProfile';
+import { HostEntityTypeSchema } from './hostTypes';
 
 // ============================================================================
 // HostSpace Enterprise-Grade Form System - Verification Task Schema
@@ -21,7 +21,7 @@ export type VerificationChecklistItem = z.infer<typeof VerificationChecklistItem
 export const VerificationTaskSchema = z.object({
   id: z.string(),
   profileId: z.string(),
-  entityType: HostEntityTypeSchema,
+  entityType: z.lazy(() => HostEntityTypeSchema),
   submittedBy: z.string(), // Firebase Auth UID
   submittedAt: z.string(), // ISO 8601 timestamp
   status: z.enum(['pending', 'in-review', 'approved', 'rejected', 'more-info-needed']).default('pending'),
@@ -62,7 +62,7 @@ export type UpdateVerificationTask = z.infer<typeof UpdateVerificationTaskSchema
 // Schema for verification task filters (admin dashboard)
 export const VerificationTaskFiltersSchema = z.object({
   status: z.enum(['pending', 'in-review', 'approved', 'rejected', 'more-info-needed']).optional(),
-  entityType: HostEntityTypeSchema.optional(),
+  entityType: z.lazy(() => HostEntityTypeSchema).optional(),
   assignedTo: z.string().optional(),
   overdueSla: z.boolean().optional(),
 });

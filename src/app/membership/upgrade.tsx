@@ -292,7 +292,7 @@ function PromoCodeWidget({ userId, onFreeActivation }: { userId: string | null; 
 
           <Text style={pc.hint}>
             Gift codes activate Plus instantly.{' '}
-            Stripe discount codes can be entered after clicking "Unlock CulturePass+".
+            Stripe discount codes can be entered after clicking &quot;Unlock CulturePass+&quot;.
           </Text>
         </View>
       )}

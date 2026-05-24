@@ -7,7 +7,7 @@
  * Related: Requirement 8 (Legal and Compliance Fields)
  */
 import React, { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, Pressable, Platform } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Pressable } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useColors } from '@/hooks/useColors';
@@ -15,7 +15,7 @@ import { useLayout } from '@/hooks/useLayout';
 import { HeaderTokens, CultureTokens, FontFamily } from '@/design-system/tokens/theme';
 import { Radius } from '@/design-system/tokens/spacing';
 import { GlassView } from '@/design-system/ui/GlassView';
-import { M3Button, Skeleton } from '@/design-system/ui';
+import { Skeleton } from '@/design-system/ui';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';

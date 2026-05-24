@@ -4,8 +4,7 @@ import React, {
 import {
   View, Text, Pressable, StyleSheet, ScrollView,
   Platform, ActivityIndicator, Modal,
-  TextInput, KeyboardAvoidingView, Keyboard, Share, Animated,
-  type ViewStyle,
+  TextInput, KeyboardAvoidingView,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,20 +14,16 @@ import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useAuth } from '@/lib/auth';
 import { useColors, useIsDark } from '@/hooks/useColors';
-import { CultureTokens, CardTokens, gradients } from '@/design-system/tokens/theme';
-import { getCommunityHeadline, getCommunityProfilePathId } from '@/lib/community';
-import { canonicalCommunityPath, canonicalEventPath, siteUrl } from '@/lib/publicPaths';
+import { CultureTokens, InputTokens } from '@/design-system/tokens/theme';
 import { Button } from '@/design-system/ui/Button';
-import * as ImagePicker from 'expo-image-picker';
 import { timeAgo } from '@/lib/dateUtils';
+import { HapticManager } from '@/lib/haptics';
 import {
-  subscribeComments, subscribeCommentCount,
-  addComment, toggleLike, subscribeLiked, subscribeLikeCount, reportPost,
+  subscribeComments,
+  addComment,
   type FeedComment,
 } from '@/lib/feedService';
-import type { Community } from '@/shared/schema';
-import { ACCENT, COUNTRY_FLAG, USE_NATIVE_DRIVER } from './feedConstants';
-import { getDateLabel, getInitials, postCollection, postId } from './feedHelpers';
+import { postCollection, postId } from './feedHelpers';
 import type { FeedPost } from './types';
 
 import { UserAvatar } from './feedAvatars';
@@ -58,16 +53,13 @@ export function CommentsSheet({ visible, onClose, post, colors }: {
   const handleSubmit = useCallback(async () => {
     if (!body.trim() || !user || submitting) return;
     setError('');
-    if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    await HapticManager.success();
     setSubmitting(true);
     try {
       await addComment(pid, pcol, {
         authorId: user.id,
         authorName: user.username || user.email || 'User',
-        authorAvatar: (user as unknown as Record<string, unknown>).avatar as string | undefined
-          || (user as unknown as Record<string, unknown>).image as string | undefined
-          || (user as unknown as Record<string, unknown>).photo as string | undefined
-          || undefined,
+        authorAvatar: user.avatarUrl,
         body: body.trim(),
       });
       setBody('');
@@ -80,7 +72,7 @@ export function CommentsSheet({ visible, onClose, post, colors }: {
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <View style={csh.overlay}>
+      <View style={[csh.overlay, { backgroundColor: colors.overlay }]}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -132,11 +124,11 @@ export function CommentsSheet({ visible, onClose, post, colors }: {
               </ScrollView>
             )}
 
-            {!!error && <Text style={[csh.error, { color: CultureTokens.coral }]}>{error}</Text>}
+            {!!error && <Text style={[csh.error, { color: colors.error }]}>{error}</Text>}
 
             {isAuthenticated ? (
               <View style={[csh.inputRow, { borderTopColor: colors.borderLight }]}>
-                <UserAvatar name={user?.username} size={32} colorIdx={0} />
+                <UserAvatar name={user?.username} avatarUrl={user?.avatarUrl} size={32} colorIdx={0} />
                 <TextInput
                   style={[csh.input, { color: colors.text, backgroundColor: colors.surfaceElevated, borderColor: colors.borderLight }]}
                   placeholder="Add a comment…"
@@ -177,7 +169,7 @@ export function CommentsSheet({ visible, onClose, post, colors }: {
 }
 
 const csh = StyleSheet.create({
-  overlay:    { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.6)' },
+  overlay:    { flex: 1, justifyContent: 'flex-end' },
   kav:        { maxHeight: '90%' },
   sheet:      { borderTopLeftRadius: 22, borderTopRightRadius: 22, borderWidth: 1, borderBottomWidth: 0, minHeight: 320 },
   handle:     { width: 36, height: 4, borderRadius: 2, alignSelf: 'center', marginTop: 10, marginBottom: 4 },
@@ -189,7 +181,7 @@ const csh = StyleSheet.create({
   emptyIcon:  { width: 56, height: 56, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
   emptyTitle: { fontSize: 15, fontFamily: 'Poppins_700Bold', lineHeight: 20 },
   emptySub:   { fontSize: 13, fontFamily: 'Poppins_400Regular', lineHeight: 18 },
-  list:       { maxHeight: 320 },
+  list:       { maxHeight: 400 },
   listContent:{ padding: 14, gap: 10 },
   commentRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
   bubble:     { flex: 1, borderRadius: 14, padding: 10, gap: 3 },
@@ -199,6 +191,6 @@ const csh = StyleSheet.create({
   commTime:   { fontSize: 10, fontFamily: 'Poppins_400Regular', lineHeight: 14 },
   error:      { fontSize: 12, fontFamily: 'Poppins_500Medium', paddingHorizontal: 18, paddingTop: 4, lineHeight: 17 },
   inputRow:   { flexDirection: 'row', alignItems: 'flex-end', gap: 8, padding: 12, borderTopWidth: StyleSheet.hairlineWidth },
-  input:      { flex: 1, minHeight: 40, maxHeight: 80, borderRadius: 20, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 8, fontSize: 13, fontFamily: 'Poppins_400Regular', lineHeight: 18 },
+  input:      { flex: 1, minHeight: 40, maxHeight: 100, borderRadius: 20, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 8, fontSize: 13, fontFamily: 'Poppins_400Regular', lineHeight: 18 },
   sendBtn:    { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
 });

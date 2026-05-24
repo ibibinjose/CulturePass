@@ -31,7 +31,8 @@ import { useColors } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
 import { M3Card } from '@/design-system/ui/M3Card';
 import { CultureTokens, Spacing, Radius, FontFamily } from '@/design-system/tokens/theme';
-import type { HostProfileFormData, HostEntityType } from '@/shared/schema/hostProfile';
+import type { HostProfileFormData } from '@/shared/schema/hostProfile';
+import type { HostEntityType } from '@/shared/schema/hostTypes';
 
 // ---------------------------------------------------------------------------
 // Types

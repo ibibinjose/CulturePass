@@ -308,7 +308,6 @@ function EmptyState({ title, action, onPress }: { title: string; action: string;
 // ---------------------------------------------------------------------------
 
 function CreateProfileCTA() {
-  const colors = useColors();
   const { isDesktop } = useLayout();
 
   return (
@@ -385,8 +384,8 @@ function HostspaceWorkspace() {
     staleTime: 30_000,
   });
 
-  const profiles = data?.profiles ?? [];
-  const events = data?.events ?? [];
+  const profiles = useMemo(() => data?.profiles ?? [], [data?.profiles]);
+  const events = useMemo(() => data?.events ?? [], [data?.events]);
   const communities = useMemo(
     () => profiles.filter((profile) => profile.entityType === 'community'),
     [profiles],

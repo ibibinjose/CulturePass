@@ -27,7 +27,7 @@ import { goBackOrReplace } from '@/lib/navigation';
 import { useImageUpload } from '@/hooks/useImageUpload';
 import { useColors } from '@/hooks/useColors';
 import { Button } from '@/design-system/ui/Button';
-import CultureImage from '@/design-system/ui/CultureImage';
+import { CultureImage } from '@/design-system/ui/CultureImage';
 import { ImageGalleryPicker } from '@/design-system/ui';
 import { DatePickerInput, type ISODateString } from '@/design-system/ui/DatePickerInput';
 import { Skeleton } from '@/design-system/ui/Skeleton';

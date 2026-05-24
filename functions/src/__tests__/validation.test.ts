@@ -8,12 +8,66 @@
 
 import request from 'supertest';
 import { app } from '../app';
+import { z } from 'zod';
 
 // ---------------------------------------------------------------------------
 // Get references to mocked services
 // ---------------------------------------------------------------------------
 
 import { validationService } from '../services/profileService';
+
+// ---------------------------------------------------------------------------
+// Validation helpers for tests
+// ---------------------------------------------------------------------------
+
+const validateEvent = (data: any) => {
+  return z.object({
+    id: z.string(),
+    title: z.string().min(1),
+    description: z.string(),
+    date: z.string().datetime(),
+    locationId: z.string(),
+    hostId: z.string(),
+    councilId: z.string(),
+    category: z.string(),
+    maxAttendees: z.number().int().positive(),
+    status: z.enum(['active', 'draft', 'archived', 'suspended']),
+    createdAt: z.string().datetime(),
+    updatedAt: z.string().datetime(),
+  }).parse(data);
+};
+
+const validateProfile = (data: any) => {
+  return z.object({
+    id: z.string(),
+    userId: z.string(),
+    displayName: z.string().min(1),
+    bio: z.string(),
+    avatarUrl: z.string().url(),
+    socialLinks: z.array(z.object({
+      platform: z.string(),
+      url: z.string().url(),
+    })),
+    createdAt: z.string().datetime(),
+    updatedAt: z.string().datetime(),
+  }).parse(data);
+};
+
+const validateLocation = (data: any) => {
+  return z.object({
+    id: z.string(),
+    name: z.string().min(1),
+    address: z.string().min(1),
+    latitude: z.number().min(-90).max(90),
+    longitude: z.number().min(-180).max(180),
+    city: z.string(),
+    country: z.string(),
+    postalCode: z.string(),
+    capacity: z.number().int().positive(),
+    createdAt: z.string().datetime(),
+    updatedAt: z.string().datetime(),
+  }).parse(data);
+};
 
 // ---------------------------------------------------------------------------
 // Mocks

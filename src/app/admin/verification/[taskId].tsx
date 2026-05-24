@@ -15,7 +15,6 @@ import {
   Pressable,
   TextInput,
   Alert,
-  Platform,
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -117,7 +116,7 @@ export default function VerificationTaskDetailScreen() {
     onError: (e: Error) => Alert.alert('Error', e.message ?? 'Failed to request info'),
   });
 
-  const assignMutation = useMutation({
+  const _assignMutation = useMutation({
     mutationFn: (adminId: string) => api.admin.assignVerification(taskId!, adminId),
     onSuccess: () => invalidateAll(),
     onError: (e: Error) => Alert.alert('Error', e.message ?? 'Failed to assign'),

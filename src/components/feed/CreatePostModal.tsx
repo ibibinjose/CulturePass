@@ -3,9 +3,8 @@ import React, {
 } from 'react';
 import {
   View, Text, Pressable, StyleSheet, ScrollView,
-  Platform, ActivityIndicator, Modal,
-  TextInput, KeyboardAvoidingView, Keyboard, Share, Animated,
-  type ViewStyle,
+  Platform, Modal,
+  TextInput, KeyboardAvoidingView, Keyboard,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,20 +14,10 @@ import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useAuth } from '@/lib/auth';
 import { useColors, useIsDark } from '@/hooks/useColors';
-import { CultureTokens, CardTokens, gradients } from '@/design-system/tokens/theme';
-import { getCommunityHeadline, getCommunityProfilePathId } from '@/lib/community';
-import { canonicalCommunityPath, canonicalEventPath, siteUrl } from '@/lib/publicPaths';
+import { CultureTokens } from '@/design-system/tokens/theme';
 import { Button } from '@/design-system/ui/Button';
 import * as ImagePicker from 'expo-image-picker';
-import { timeAgo } from '@/lib/dateUtils';
-import {
-  subscribeComments, subscribeCommentCount,
-  addComment, toggleLike, subscribeLiked, subscribeLikeCount, reportPost,
-} from '@/lib/feedService';
 import type { Community } from '@/shared/schema';
-import { ACCENT, COUNTRY_FLAG, USE_NATIVE_DRIVER } from './feedConstants';
-import { getDateLabel, getInitials, postCollection, postId } from './feedHelpers';
-import type { FeedPost } from './types';
 
 // ── Create post modal ─────────────────────────────────────────────────────────
 

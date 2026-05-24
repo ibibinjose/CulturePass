@@ -45,12 +45,12 @@ function BannerForm({
   onCancel: () => void;
 }) {
   const m3 = useM3Colors();
-  const [title, setTitle] = useState(initial?.title ?? 'Your community needs a home');
+  const [title, setTitle] = useState(initial?.title ?? 'Join the CulturePass Waitlist');
   const [subtitle, setSubtitle] = useState(
-    initial?.subtitle ?? 'A gathering place for culture and connection—not just another feed.',
+    initial?.subtitle ?? 'Build anticipation and get early access. Secure your spot before our official launch.',
   );
-  const [ctaLabel, setCtaLabel] = useState(initial?.ctaLabel ?? 'Explore');
-  const [ctaRoute, setCtaRoute] = useState(initial?.ctaRoute ?? '/(tabs)/community');
+  const [ctaLabel, setCtaLabel] = useState(initial?.ctaLabel ?? 'Join Waitlist');
+  const [ctaRoute, setCtaRoute] = useState(initial?.ctaRoute ?? '/landing');
   const [imageUrl, setImageUrl] = useState(initial?.imageUrl ?? '');
 
   const saveMutation = useMutation({
@@ -224,7 +224,7 @@ export default function AdminCommunityBannerScreen() {
     queryFn: () => api.admin.communityHomeBanners(),
   });
 
-  const banners = data?.banners ?? [];
+  const banners = useMemo(() => data?.banners ?? [], [data?.banners]);
   const editing = useMemo(
     () => banners.find((b) => b.id === editingId),
     [banners, editingId],

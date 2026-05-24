@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { HostEntityTypeSchema, HostProfileFormDataSchema } from './hostProfile';
+import { HostEntityTypeSchema } from './hostTypes';
+import { HostProfileFormDataSchema } from './hostProfile';
 
 // ============================================================================
 // HostSpace Enterprise-Grade Form System - Profile Draft Schema

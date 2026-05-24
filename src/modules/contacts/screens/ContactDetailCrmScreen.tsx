@@ -117,7 +117,7 @@ export default function ContactDetailCrmScreen() {
     return () => {
       cancelled = true;
     };
-  }, [cpid, c?.name, c?.cpid, updateContact]);
+  }, [cpid, c, updateContact]);
 
   const persistNotes = useCallback(
     (value: string) => {

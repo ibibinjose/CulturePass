@@ -43,11 +43,7 @@ export const app = express();
 
 // ─── CORS ─────────────────────────────────────────────────────────────────────
 // Explicit allowlist — credentials mode requires an origin function (not `true`)
-const LOCAL_DEV_PORTS = [8081, 8082, 8083, 8084, 8085, 19006, 19000, 3000, 5000, 5173, 4173];
 const LOCAL_DEV_HOSTS = ['localhost', '127.0.0.1'] as const;
-const LOCAL_DEV_ORIGINS = LOCAL_DEV_HOSTS.flatMap((host) =>
-  LOCAL_DEV_PORTS.flatMap((port) => [`http://${host}:${port}`, `https://${host}:${port}`]),
-);
 
 const CORS_EXTRA = (process.env.CORS_EXTRA_ORIGINS ?? '')
   .split(',')
@@ -85,10 +81,11 @@ const ALLOWED_ORIGINS: (string | RegExp)[] = [
   /^https:\/\/[\w-]+\.netlify\.app$/,
   /^https:\/\/[\w-]+\.ngrok(-free)?\.app$/,
   ...firebaseHostingOrigins,
-  // Local development (http + https — Expo / Vite may use TLS locally)
-  ...LOCAL_DEV_ORIGINS,
+  // Local development (allow any port on localhost/127.0.0.1 for E2E/dev)
+  /^https?:\/\/localhost(:\d+)?$/,
+  /^https?:\/\/127\.0\.0\.1(:\d+)?$/,
   // IPv6 loopback on explicitly allowed development ports only.
-  /^https?:\/\/\[::1\]:\d+$/,
+  /^https?:\/\/\[::1\](:\d+)?$/,
   // Local network development (Expo on LAN; optional https tunnels)
   /^https?:\/\/192\.168\.\d{1,3}\.\d{1,3}:\d+$/,
   /^https?:\/\/10\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d+$/,
@@ -298,6 +295,7 @@ app.use((err: Error & { status?: number }, req: Request, res: Response, _next: N
   if (typeof origin === 'string' && isAllowedOrigin(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Vary', 'Origin');
   }
   const status = err.status ?? 500;
   logger.error('[App Error]', err);

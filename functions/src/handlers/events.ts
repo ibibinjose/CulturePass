@@ -6,7 +6,6 @@
  * circular import.
  */
 
-import { randomUUID } from 'node:crypto';
 import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
 import { requireAuth, requireRole, isOwnerOrAdmin } from '../middleware/auth';
@@ -14,7 +13,6 @@ import { slidingWindowRateLimit } from '../middleware/rateLimit';
 import { moderationCheck } from '../middleware/moderation';
 import {
   eventFeedbackService,
-  type FirestoreEvent,
 } from '../services/firestore';
 import {
   nowIso,
@@ -39,9 +37,7 @@ import {
 } from '../services/ticketPricing';
 
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-import { EventData as Event } from '../../../shared/schema/event';
 import { eventsService } from '../services/events';
-import { profilesService as profileService } from '../services/profiles';
 
 // ---------------------------------------------------------------------------
 // Shared types (inlined to avoid circular import with app.ts)

@@ -1,9 +1,8 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { db, isFirestoreConfigured } from '../admin';
-import { requireAuth, requireRole } from '../middleware/auth';
-import { captureRouteError, nowIso, parseBody, respondIfValidationError } from './utils';
-import { profilesService as profileService } from '../services/profiles';
+import { requireRole } from '../middleware/auth';
+import { nowIso } from './utils';
 import { adminService } from '../services/admin';
 import { 
   listCommunityHomeBanners, 
@@ -59,7 +58,7 @@ adminRouter.get('/admin/audit-logs', async (req: Request, res: Response) => {
     const limit = parseInt(req.query.limit as string) || 50;
     const logs = await adminService.getAuditLogs(limit);
     res.json({ logs });
-  } catch (error) {
+  } catch (_error) {
     res.status(500).json({ error: 'Failed to fetch audit logs' });
   }
 });
@@ -74,7 +73,7 @@ adminRouter.get('/admin/reports', async (req: Request, res: Response) => {
     const limit = parseInt(req.query.limit as string) || 50;
     const reports = await adminService.getReports(status, limit);
     res.json({ reports });
-  } catch (error) {
+  } catch (_error) {
     res.status(500).json({ error: 'Failed to fetch reports' });
   }
 });
@@ -164,7 +163,7 @@ adminRouter.get('/admin/finance/transactions', async (req: Request, res: Respons
     const limit = parseInt(req.query.limit as string) || 50;
     const transactions = await adminService.getRecentTransactions(limit);
     res.json({ transactions });
-  } catch (error) {
+  } catch (_error) {
     res.status(500).json({ error: 'Failed to fetch transactions' });
   }
 });
@@ -177,7 +176,7 @@ adminRouter.get('/admin/platform/config', async (req: Request, res: Response) =>
   try {
     const config = await adminService.getPlatformConfig();
     res.json(config);
-  } catch (error) {
+  } catch (_error) {
     res.status(500).json({ error: 'Failed to fetch platform config' });
   }
 });
@@ -199,7 +198,7 @@ adminRouter.put('/admin/platform/config', async (req: Request, res: Response) =>
     });
 
     res.json({ ok: true });
-  } catch (error) {
+  } catch (_error) {
     res.status(500).json({ error: 'Failed to update platform config' });
   }
 });

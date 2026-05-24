@@ -1163,7 +1163,7 @@ export default function CommunityTabScreen() {
     [
       maxWidth, hPad, joinedCommunities, goSearch, communitiesLoading,
       followingNotMember, cityName, exploreCommunities, savedCommunities,
-      orbitEvents, orbitEventsLoading, goCalendar,
+      orbitEvents, orbitEventsLoading, goCalendar, recommendedCommunities,
     ],
   );
 

@@ -42,7 +42,6 @@ import type { EventData, Ticket } from '@/shared/schema';
 import { GlassView } from '@/design-system/ui/GlassView';
 import { APP_NAME, SITE_ORIGIN } from '@/lib/app-meta';
 import { shouldShowDiscoverThisWeek, generateWebcalUrl, buildCityCalendarHttpsUrl } from '@/lib/calendar-utils';
-import { downloadICS } from '@/lib/ical';
 
 const IS_WEB = Platform.OS === 'web';
 
@@ -82,6 +81,19 @@ export default function CalendarScreen() {
     return shouldShowDiscoverThisWeek(savedEventObjects, today);
   }, [savedEvents, today]);
 
+  const offerIcsDownload = useCallback((httpsUrl: string) => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      // On web, navigate to the HTTPS endpoint — browser handles .ics download
+      window.open(httpsUrl, '_blank', 'noopener');
+    } else {
+      Alert.alert(
+        'Subscribe to City Calendar',
+        `Your device doesn’t support direct calendar subscriptions. Copy the link below to add it manually in your calendar app:\n\n${httpsUrl}`,
+        [{ text: 'OK' }],
+      );
+    }
+  }, []);
+
   const handleWebcalSubscribe = useCallback(async () => {
     const targetCity    = city    || 'Sydney';
     const targetCountry = country || 'Australia';
@@ -98,20 +110,7 @@ export default function CalendarScreen() {
       // Web or devices without webcal support: offer HTTPS .ics download
       offerIcsDownload(httpsUrl);
     }
-  }, [city, country]);
-
-  const offerIcsDownload = useCallback((httpsUrl: string) => {
-    if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      // On web, navigate to the HTTPS endpoint — browser handles .ics download
-      window.open(httpsUrl, '_blank', 'noopener');
-    } else {
-      Alert.alert(
-        'Subscribe to City Calendar',
-        `Your device doesn’t support direct calendar subscriptions. Copy the link below to add it manually in your calendar app:\n\n${httpsUrl}`,
-        [{ text: 'OK' }],
-      );
-    }
-  }, []);
+  }, [city, country, offerIcsDownload]);
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
   const [selectedDate, setSelectedDate] = useState<string | null>(formatDateKey(today.getFullYear(), today.getMonth(), today.getDate()));

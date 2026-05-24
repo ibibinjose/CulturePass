@@ -1,5 +1,9 @@
 {
     "java.compile.nullAnalysis.mode": "automatic",
     "java.configuration.updateBuildConfiguration": "interactive",
-    "typescript.autoClosingTags": false
+    "typescript.autoClosingTags": false,
+    "sonarlint.connectedMode.project": {
+        "connectionId": "culturepass",
+        "projectKey": "culturepass-app"
+    }
 }

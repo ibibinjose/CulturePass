@@ -1,10 +1,9 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-import { ActivityData as Activity } from '../../../shared/schema/activity';
 import { activitiesService } from '../services/activities';
 
 export async function getAllActivities(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
   try {
-    const { limit, offset, city, country, search } = event.queryStringParameters || {};
+    const { city, search } = event.queryStringParameters || {};
     
     // Use list method instead of getAll - this matches the actual service API
     const activities = await activitiesService.list({

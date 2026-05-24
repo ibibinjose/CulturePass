@@ -1,13 +1,11 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-import { EventData as CalendarEvent } from '../../../shared/schema/event'; // Using EventData as CalendarEvent
-import { type FirestoreEvent } from '../services/events';
 
 // Simple calendar service implementation for user events
 const calendarService = {
   getUserEvents: async (userId: string, options?: { limit?: number; offset?: number; filters?: any }) => {
     // This is a simplified implementation - in a real app you'd have proper calendar service
     // For now, we'll return events related to the user (attending, created, etc.)
-    const { limit, offset, filters } = options || {};
+    const { _limit, _offset, _filters } = options || {} as any;
     
     // In a real implementation, this would query user's calendar events
     // For now, we'll return an empty list to allow compilation

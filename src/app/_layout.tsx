@@ -6,9 +6,10 @@ import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client
 import Head from "expo-router/head";
 import { Stack, usePathname } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { PostHogProvider } from 'posthog-react-native';
+import { PostHogProvider, usePostHog } from 'posthog-react-native';
 import posthogClient from '@/lib/analytics';
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState, useContext } from 'react';
+import { NavigationContext } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import {
   Platform,
@@ -190,12 +191,38 @@ function GlobalMetadata() {
 }
 
 // ---------------------------------------------------------------------------
+// Manual Navigation Tracking for PostHog (since auto screen capture is disabled)
+// ---------------------------------------------------------------------------
+function NavigationTracker() {
+  const pathname = usePathname();
+  const posthog = usePostHog();
+
+  useEffect(() => {
+    if (pathname && posthog) {
+      posthog.screen(pathname);
+    }
+  }, [pathname, posthog]);
+
+  return null;
+}
+
+// ---------------------------------------------------------------------------
 // Stack navigator — all screens registered here so Expo Router can deep-link
 // ---------------------------------------------------------------------------
+const mockNavigation = {
+  addListener: () => () => {},
+  removeListener: () => {},
+  dispatch: () => {},
+  isFocused: () => true,
+};
+
 function RootLayoutNav() {
   return (
     <>
-      <GlobalMetadata />
+      <NavigationContext.Provider value={mockNavigation as any}>
+        <GlobalMetadata />
+      </NavigationContext.Provider>
+      {posthogClient && <NavigationTracker />}
       <Stack
         screenOptions={{
           headerShown: false,
@@ -452,7 +479,7 @@ function RootLayoutContent() {
             <LikesProvider>
               <ContactsProvider>
                 {posthogClient ? (
-                  <PostHogProvider client={posthogClient}>{appShell}</PostHogProvider>
+                  <PostHogProvider client={posthogClient} autocapture={{ captureScreens: false }}>{appShell}</PostHogProvider>
                 ) : (
                   appShell
                 )}

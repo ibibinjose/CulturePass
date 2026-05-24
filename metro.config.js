@@ -62,6 +62,12 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
         type: "sourceFile",
       };
     }
+    if (moduleName === "@posthog/core/surveys") {
+      return {
+        filePath: path.resolve(__dirname, "node_modules/@posthog/core/dist/surveys/index.js"),
+        type: "sourceFile",
+      };
+    }
   }
 
   // Prevent crashes on web dev server requests

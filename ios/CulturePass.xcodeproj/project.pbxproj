@@ -7,12 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		6713228F55314D1BBAAC3B80 /* index.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6713228E55314D1BBAAC3B80 /* index.swift */; };
 		0A5A9213DA076082D233BA79 /* libPods-ExpoWidgetsTarget.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BB071027491F4B70EDF1A103 /* libPods-ExpoWidgetsTarget.a */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		1CDFEFC57A7ECCF7C0C42565 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9F198861B220E37E78C1CA7 /* ExpoModulesProvider.swift */; };
 		21550CB39FCA4D51B7AC9283 /* CultureUpcomingTicketWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 403EAB201D814FF3B623BC7D /* CultureUpcomingTicketWidget.swift */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
+		6713228F55314D1BBAAC3B80 /* index.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6713228E55314D1BBAAC3B80 /* index.swift */; };
 		6B3D8C21A5F94E32C1B4D5E6 /* CulturePassWatchWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C4E9A12F3B84756B9D1E2F3 /* CulturePassWatchWidget.swift */; };
 		7B9F2979EC7F4A8385438AA4 /* ExpoWidgetsTarget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 4D29D8108A0C4BB99913C3A9 /* ExpoWidgetsTarget.appex */; };
 		86DE058FF7FD469595D75CD8 /* CultureSpotlightWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 814561775FCE4944A5905858 /* CultureSpotlightWidget.swift */; };
@@ -702,6 +702,7 @@
 				"${PODS_CONFIGURATION_BUILD_DIR}/React-Core/React-Core_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/React-cxxreact/React-cxxreact_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/SDWebImage/SDWebImage.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/Sentry/Sentry.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/boost/boost_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/expo-dev-launcher/EXDevLauncher.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/expo-dev-menu/EXDevMenu.bundle",
@@ -732,6 +733,7 @@
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-Core_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-cxxreact_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/SDWebImage.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/Sentry.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/boost_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXDevLauncher.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXDevMenu.bundle",

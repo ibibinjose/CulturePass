@@ -93,10 +93,10 @@ export default function NationBuildersProgramScreen() {
             Program Overview
           </Text>
           <Text style={[styles.description, { color: m3Colors.onSurfaceVariant }]}>
-            Nation Builders is CulturePass.App's initiative to recognise and reward the essential people who keep Sydney running — hospitality staff, retail teams, customer service, cleaners, security, transport workers, and more.
+            Nation Builders is CulturePass.App&apos;s initiative to recognise and reward the essential people who keep Sydney running — hospitality staff, retail teams, customer service, cleaners, security, transport workers, and more.
           </Text>
           <Text style={[styles.description, { color: m3Colors.onSurfaceVariant, marginTop: 8 }]}>
-            You serve our city every day. Now it's time for the city to give back.
+            You serve our city every day. Now it&apos;s time for the city to give back.
           </Text>
         </M3Card>
 
@@ -161,7 +161,7 @@ export default function NationBuildersProgramScreen() {
             If you work in a venue, café, gym, barbershop, restaurant, hotel or service business in Sydney:
           </Text>
           <Text style={[styles.description, { color: m3Colors.onSurfaceVariant, marginTop: 8 }]}>
-            Ask your manager or owner if they've partnered with CulturePass.
+            Ask your manager or owner if they&apos;ve partnered with CulturePass.
           </Text>
           <Text style={[styles.description, { color: m3Colors.onSurfaceVariant, marginTop: 16 }]}>
             If you run a business or cultural venue:

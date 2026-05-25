@@ -9,7 +9,7 @@
     "server:dev": "tsx functions/src/index.ts",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:unit": "jest \"scripts/tests/unit-.*\\.ts$\"",
+    "test:unit": "jest",
     "test:integration": "jest \"scripts/tests/integration-.*\\.ts$\"",
     "test:e2e": "playwright test",
     "test:property": "tsx scripts/tests/property-tests.ts",

@@ -53,7 +53,7 @@ export default function CalendarSyncScreen() {
   } = useCalendarSync();
 
   const {
-    data: tickets = [],
+    data: tickets = [] as Ticket[],
     isLoading: isTicketsLoading,
     refetch: refetchTickets,
   } = useQuery<Ticket[]>({
@@ -64,7 +64,7 @@ export default function CalendarSyncScreen() {
   });
 
   const activeTicketCount = useMemo(
-    () => tickets.filter((t) => t.status === 'confirmed' || t.status === 'reserved' || t.status === 'used').length,
+    () => (tickets as Ticket[]).filter((t) => t.status === 'confirmed' || t.status === 'reserved' || t.status === 'used').length,
     [tickets],
   );
 
@@ -99,14 +99,14 @@ export default function CalendarSyncScreen() {
       return;
     }
 
-    const active = tickets.filter((t) => t.status === 'confirmed' || t.status === 'reserved' || t.status === 'used');
+    const active = (tickets as Ticket[]).filter((t) => t.status === 'confirmed' || t.status === 'reserved' || t.status === 'used');
     if (!active.length) {
       Alert.alert('No active tickets', 'You do not have active tickets to export.');
       return;
     }
 
     try {
-      const ids = [...new Set(active.map((t) => t.eventId).filter(Boolean))];
+      const ids = [...new Set(active.map((t) => t.eventId))] as string[];
       const settled = await Promise.allSettled(ids.map((id) => modulesApi.events.get(id)));
       const events = settled
         .filter((r): r is PromiseFulfilledResult<EventData> => r.status === 'fulfilled')

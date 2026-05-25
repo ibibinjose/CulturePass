@@ -80,7 +80,7 @@ function UpdateDetailContent() {
     );
   }
 
-  const cat = CATEGORY_CONFIG[update.category] ?? CATEGORY_CONFIG.announcement;
+  const cat = CATEGORY_CONFIG[update.category as UpdateCategory] ?? CATEGORY_CONFIG.announcement;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>

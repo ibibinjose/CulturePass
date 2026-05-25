@@ -67,10 +67,17 @@ export function SuperAppLinks() {
                   {
                     backgroundColor: colors.surface + (pressed ? 'B3' : '80'),
                     borderColor: colors.borderLight,
-                    shadowColor: link.color,
-                    shadowOffset: { width: 0, height: 2 },
-                    shadowOpacity: pressed ? 0.2 : 0.05,
-                    shadowRadius: 4,
+                    ...Platform.select({
+                      web: { 
+                        boxShadow: `0 2px 4px ${link.color}${pressed ? '33' : '0D'}` // 33 for 0.2 opacity, 0D for 0.05 opacity 
+                      },
+                      default: {
+                        shadowColor: link.color,
+                        shadowOffset: { width: 0, height: 2 },
+                        shadowOpacity: pressed ? 0.2 : 0.05,
+                        shadowRadius: 4,
+                      },
+                    }),
                   },
                 ]}
               >

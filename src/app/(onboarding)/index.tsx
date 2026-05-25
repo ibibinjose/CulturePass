@@ -338,11 +338,16 @@ const s = StyleSheet.create({
     gap: 0,
     borderTopLeftRadius: Radius.xl,
     borderTopRightRadius: Radius.xl,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    elevation: 8,
+    ...Platform.select({
+      web: { boxShadow: '0 -4px 16px rgba(0,0,0,0.08)' },
+      default: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: -4 },
+        shadowOpacity: 0.08,
+        shadowRadius: 16,
+        elevation: 8,
+      },
+    }),
   },
 
   // Dots

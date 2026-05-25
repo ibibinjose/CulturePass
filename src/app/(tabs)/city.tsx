@@ -480,5 +480,21 @@ const s = StyleSheet.create({
   emptyOrbitIcon: { width: 56, height: 56, borderRadius: Radius.lg, alignItems: 'center', justifyContent: 'center' },
 
   fab: { position: 'absolute', right: 16, zIndex: 1000 },
-  fabBtn: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, height: 56, borderRadius: 28, elevation: 6, shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.3, shadowRadius: 4.5 },
+  fabBtn: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    paddingHorizontal: 20, 
+    height: 56, 
+    borderRadius: 28, 
+    ...Platform.select({
+      web: { boxShadow: '0 3px 4.5px rgba(0,0,0,0.3)' },
+      default: {
+        elevation: 6, 
+        shadowColor: '#000', 
+        shadowOffset: { width: 0, height: 3 }, 
+        shadowOpacity: 0.3, 
+        shadowRadius: 4.5 
+      }
+    })
+  },
 });

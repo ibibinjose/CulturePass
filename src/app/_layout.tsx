@@ -8,8 +8,7 @@ import { Stack, usePathname } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { PostHogProvider, usePostHog } from 'posthog-react-native';
 import posthogClient from '@/lib/analytics';
-import React, { useCallback, useEffect, useState, useContext } from 'react';
-import { NavigationContext } from '@react-navigation/native';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import {
   Platform,
@@ -209,19 +208,10 @@ function NavigationTracker() {
 // ---------------------------------------------------------------------------
 // Stack navigator — all screens registered here so Expo Router can deep-link
 // ---------------------------------------------------------------------------
-const mockNavigation = {
-  addListener: () => () => {},
-  removeListener: () => {},
-  dispatch: () => {},
-  isFocused: () => true,
-};
-
 function RootLayoutNav() {
   return (
     <>
-      <NavigationContext.Provider value={mockNavigation as any}>
-        <GlobalMetadata />
-      </NavigationContext.Provider>
+      <GlobalMetadata />
       {posthogClient && <NavigationTracker />}
       <Stack
         screenOptions={{

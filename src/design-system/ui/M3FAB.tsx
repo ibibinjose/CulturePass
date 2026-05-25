@@ -68,11 +68,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     ...Platform.select({
+      web: { 
+        boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+      },
       ios: {
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.2,
         shadowRadius: 8,
+      },
+      android: { 
+        elevation: 8 
+      },
+      default: { 
+        elevation: 8 
       },
     }),
   },

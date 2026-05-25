@@ -3,7 +3,7 @@
   "compilerOptions": {
     "module": "esnext",
     "moduleResolution": "bundler",
-    // 'baseUrl' is deprecated in TS 7.0; removing ignoreDeprecations as it's invalid
+    "ignoreDeprecations": "6.0",
     "baseUrl": ".",
     "types": ["node", "jest"],
     "strict": true,

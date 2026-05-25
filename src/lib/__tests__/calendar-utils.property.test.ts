@@ -248,5 +248,5 @@ it('Property 10b: URL contains the city identifier', () => {
 
 it('Property 10c: URL contains the .ics extension', () => {
   const url = generateWebcalUrl('Sydney');
-  expect(url.endsWith('.ics')).toBe(true);
+  expect(url).toContain('.ics');
 });

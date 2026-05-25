@@ -1,4 +1,4 @@
-import type { EventData, PaginatedEventsResponse, Ticket } from '@/shared/schema';
+import type { EventData, PaginatedEventsResponse, Ticket, EventAnalyticsData } from '@/shared/schema';
 import type { ApiRequestFn } from '../client';
 
 /** GET /api/events/:id/ticket-quote — server-side pricing (+ optional Firestore promo). */
@@ -104,6 +104,8 @@ export function createEventsNamespace(request: ApiRequestFn) {
     remove: (id: string) => request<{ success: boolean }>('DELETE', `api/events/${id}`),
     contactOrganizer: (eventId: string, payload: { message: string; contactMethod?: string }) =>
       request<{ requestId?: string; success: boolean }>('POST', `api/events/${eventId}/contact-organizer`, payload),
+    getAnalytics: (eventId: string) =>
+      request<EventAnalyticsData>('GET', `api/events/${eventId}/analytics`),
   };
 }
 

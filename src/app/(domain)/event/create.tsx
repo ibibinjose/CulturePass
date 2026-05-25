@@ -322,6 +322,8 @@ export default function CreateEventScreen() {
     [form.entryType, stepIndex],
   );
 
+  const uploadDocId = useMemo(() => userId ?? `anon-${Date.now()}`, [userId]);
+
   const existingEventQuery = useQuery({
     queryKey: ['/api/events', editId],
     queryFn: () => eventsApi.events.get(editId!),
@@ -895,7 +897,7 @@ export default function CreateEventScreen() {
         currentUri={form.heroImageUrl || null}
         onSelect={handleImageSelected}
         collectionName="events"
-        docId={userId ?? `anon-${Date.now()}`}
+        docId={uploadDocId}
         fieldName="heroImageUrl"
         skipDbUpdate
       />

@@ -41,6 +41,10 @@ const ADMIN_NAV = [
   { label: 'Compliance', icon: 'lock-closed', route: '/admin/data-compliance' },
 ];
 
+import { NavigationMetadata } from '@/components/NavigationMetadata';
+
+// ...
+
 export default function AdminLayout() {
   const colors = useColors();
   const { role, hasMinRole, isLoading: roleLoading } = useRole();
@@ -123,6 +127,7 @@ export default function AdminLayout() {
 
   return (
     <ErrorBoundary>
+      <NavigationMetadata />
       <View style={[styles.root, { backgroundColor: colors.background }]}>
         <LinearGradient
           colors={[`${colors.primary}05`, 'transparent']}

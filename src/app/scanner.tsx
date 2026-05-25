@@ -27,6 +27,7 @@ import { AuthGuard } from '@/modules/core/auth/AuthGuard';
 import { M3TopAppBar } from '@/design-system/ui/M3TopAppBar';
 import { FontFamily, Radius } from '@/design-system/tokens/theme';
 import { ScannerQuickNavBar, scannerScrollBottomPad } from '@/components/scanner/ScannerQuickNavBar';
+import { NavigationMetadata } from '@/components/NavigationMetadata';
 
 import {
   ScanMode,
@@ -283,6 +284,7 @@ export default function ScannerScreen() {
     return (
       <AuthGuard icon="scan-outline" title="Scanner" message="Sign in to scan CulturePass cards.">
         <View style={styles.fullscreenRoot}>
+          <NavigationMetadata />
           <Stack.Screen options={{ headerShown: false }} />
           <ScannerCameraPanel
             fullscreen
@@ -298,6 +300,7 @@ export default function ScannerScreen() {
 
   return (
     <AuthGuard icon="scan-outline" title="Scanner" message="Sign in to scan CulturePass cards.">
+      <NavigationMetadata />
       <KeyboardAvoidingView
         style={[styles.root, { backgroundColor: colors.background }]}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}

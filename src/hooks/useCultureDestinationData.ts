@@ -125,13 +125,13 @@ export function useCultureDestinationData(def: CultureDestinationDefinition, opt
 
   const isLoading = eventsPending || venuesPending;
 
+  const countriesKey = countries.join(',');
   const refetch = useCallback(() => {
     void Promise.all([
       ...eventQueries.map((q) => q.refetch()),
       ...venueQueries.map((q) => q.refetch()),
     ]);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [countries.join(','), def.slug]);
+  }, [countriesKey, def.slug]);
 
   return { allEvents, venues, isLoading, refetch, countriesQueried: countries };
 }

@@ -339,12 +339,12 @@ describe('DateField', () => {
     // renders correctly with a valid date value
     const validDate = '2020-01-15';
 
-    const { queryByText } = render(
+    const { queryByDisplayValue } = render(
       <DateField value={validDate} onChange={mockOnChange} />
     );
 
     // Component should render the formatted date value ("January 15, 2020")
-    expect(queryByText(/January 15, 2020/)).toBeTruthy();
+    expect(queryByDisplayValue(/January 15, 2020/)).toBeTruthy();
   });
 
   it('displays placeholder text', () => {

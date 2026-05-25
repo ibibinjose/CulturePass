@@ -99,7 +99,8 @@ const FAQ_ITEMS = [
 
 function RotatingWord() {
   const [idx, setIdx] = useState(0);
-  const anim = useRef(new Animated.Value(0)).current;
+  const animRef = useRef(new Animated.Value(0));
+  const anim = animRef.current;
 
   useEffect(() => {
     const id = setInterval(() => {

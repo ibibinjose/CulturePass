@@ -47,7 +47,9 @@ import {
   DiscoverContent,
 } from '@/modules/discover/components';
 import { useKeralaScoping } from '@/modules/discover/hooks/useKeralaScoping';
-import type { EventData } from '@/shared/schema';
+import { useReminderPopup } from '@/hooks/useReminderPopup';
+import { ReminderPopupModal } from '@/components/ReminderPopupModal';
+import { NationBuildersPromo } from '@/components/NationBuilders/NationBuildersPromo';
 
 // ─── Filter chip definitions ───────────────────────────────────────────────────
 
@@ -102,7 +104,12 @@ export default function DiscoverScreen() {
   const searchInputRef = useRef<import('react-native').TextInput>(null);
   useSearchShortcut(searchInputRef as React.RefObject<HTMLInputElement | null>);
 
-  useEffect(() => { setKeralaDomain(isCultureKeralaHost()); }, []);
+  // Reminder popup logic
+  const { shouldShowPopup, markAsSeen } = useReminderPopup();
+  
+  useEffect(() => {
+    setKeralaDomain(isCultureKeralaHost());
+  }, []);
 
   const d = useDiscoverData();
   const s = useKeralaScoping(keralaDomain, d);
@@ -117,7 +124,7 @@ export default function DiscoverScreen() {
     staleTime: 5 * 60 * 1000,
   });
   const recommendedFromFeature = useMemo(
-    () => discoverFeatureFeed?.rankedEvents.map((entry: { event: EventData; score: number }) => entry.event).slice(0, 8) ?? [],
+    () => discoverFeatureFeed?.rankedEvents.map((entry: any) => entry.event).slice(0, 8) ?? [],
     [discoverFeatureFeed],
   );
   const topBarTitle = useMemo(() => {
@@ -133,17 +140,18 @@ export default function DiscoverScreen() {
     if (id !== 'search') setSearchQuery('');
   }, []);
 
+  const handleJoinReminders = () => {
+    markAsSeen();
+    // Navigate to notifications settings or perform the join action
+    router.push('/settings/notifications');
+  };
+
+  const handleClosePopup = () => {
+    markAsSeen();
+  };
+
   return (
     <DiscoverVitrineProvider>
-      <Head>
-        <title>{DISCOVER_HEAD_TITLE}</title>
-        <meta name="description" content={DISCOVER_HEAD_DESC} />
-        <meta property="og:title" content={DISCOVER_HEAD_TITLE} />
-        <meta property="og:description" content={DISCOVER_HEAD_DESC} />
-        <meta property="og:url" content={DISCOVER_HEAD_URL} />
-        <meta name="twitter:card" content="summary_large_image" />
-        <link rel="canonical" href={DISCOVER_HEAD_URL} />
-      </Head>
       <View style={{ flex: 1, backgroundColor: colors.background }}>
         <View
           style={[
@@ -186,6 +194,9 @@ export default function DiscoverScreen() {
           }
         >
           <CommunityHomeBanner />
+
+          {/* Nation Builders Promo Banner */}
+          <NationBuildersPromo variant="full" />
 
           <DiscoverHeader
             currentTime={d.currentTime}
@@ -271,6 +282,13 @@ export default function DiscoverScreen() {
           </View>
 
         </DiscoverScrollShell>
+        
+        {/* Reminder Popup Modal */}
+        <ReminderPopupModal
+          visible={shouldShowPopup}
+          onClose={handleClosePopup}
+          onJoinReminders={handleJoinReminders}
+        />
       </View>
     </DiscoverVitrineProvider>
   );

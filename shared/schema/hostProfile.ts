@@ -301,6 +301,7 @@ export const HostProfileSchema = z.object({
   tagline: z.string().max(120),
   description: z.string().min(1), // Rich text HTML
   categoryTags: z.array(z.string()).min(3).max(10),
+  indigenousTags: z.array(z.string().max(50)).max(10).optional(),
   metaDescription: z.string().max(160), // Auto-generated
 
   // Legal & Compliance

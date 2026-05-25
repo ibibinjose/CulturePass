@@ -11,7 +11,6 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams, Stack } from 'expo-router';
-import Head from 'expo-router/head';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -30,6 +29,7 @@ import { CultureTokens, FontFamily, Radius, ChipTokens, M3Typography } from '@/d
 import { useSafeBack } from '@/lib/navigation';
 import { APP_NAME, SITE_ORIGIN } from '@/lib/app-meta';
 import { captureEvent } from '@/lib/analytics';
+import { NavigationMetadata } from '@/components/NavigationMetadata';
 
 type ResultType = 'event' | 'movie' | 'restaurant' | 'activity' | 'shopping' | 'community' | 'person';
 
@@ -323,15 +323,7 @@ export default function SearchScreen() {
 
   return (
     <ErrorBoundary>
-      <Head>
-        <title>{SEARCH_HEAD_TITLE}</title>
-        <meta name="description" content={SEARCH_HEAD_DESC} />
-        <meta property="og:title" content={SEARCH_HEAD_TITLE} />
-        <meta property="og:description" content={SEARCH_HEAD_DESC} />
-        <meta property="og:url" content={SEARCH_HEAD_URL} />
-        <meta name="twitter:card" content="summary_large_image" />
-        <link rel="canonical" href={SEARCH_HEAD_URL} />
-      </Head>
+      <NavigationMetadata />
       <View style={[styles.root, { backgroundColor: colors.background }]}>
         <Stack.Screen options={{ headerShown: false }} />
 

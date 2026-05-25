@@ -39,6 +39,8 @@ import {
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { eventsService } from '../services/events';
 
+import { eventAnalyticsService } from '../services/eventAnalyticsService';
+
 // ---------------------------------------------------------------------------
 // Shared types (inlined to avoid circular import with app.ts)
 // ---------------------------------------------------------------------------
@@ -837,7 +839,27 @@ export function createEventsRouter() {
     },
   );
 
-  // ── GET /api/events/:id/feedback ───────────────────────────────────────────
+  // ── GET /api/events/:id/analytics ──────────────────────────────────────────
+  router.get('/events/:id/analytics', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const eventId = qparam(req.params.id);
+      const event = await eventsService.getById(eventId);
+      if (!event) return res.status(404).json({ error: 'Event not found' });
+
+      // Only owner or admin can see full analytics
+      if (!isOwnerOrAdmin(req.user!, event.organizerId)) {
+        return res.status(403).json({ error: 'Forbidden' });
+      }
+
+      const analytics = await eventAnalyticsService.getAnalytics(eventId);
+      return res.json(analytics);
+    } catch (err) {
+      captureRouteError(err, 'GET /api/events/:id/analytics');
+      return res.status(500).json({ error: 'Failed to fetch event analytics' });
+    }
+  });
+
+  // ── GET /api/events/feedback ───────────────────────────────────────────
   router.get('/events/:id/feedback', async (req: Request, res: Response) => {
     const eventId = qparam(req.params.id);
     try {

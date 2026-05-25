@@ -33,6 +33,10 @@ const TAB_NAMES: Record<string, string> = {
   perks: 'Perks',
 };
 
+import { NavigationMetadata } from '@/components/NavigationMetadata';
+
+// ...
+
 export default function TabsLayout() {
   const { isCompact } = useLayout();
   const router = useRouter();
@@ -61,6 +65,7 @@ export default function TabsLayout() {
   return (
     <NavigationStateProvider>
     <CultureTodayProvider>
+      <NavigationMetadata />
       <View style={styles.tabShell}>
         {showRail && (
           <M3NavigationRail

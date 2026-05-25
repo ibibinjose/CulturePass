@@ -8,7 +8,7 @@
 
 import request from 'supertest';
 import { app } from '../app';
-import { jest, describe, expect /* , test */ } from '@jest/globals';
+import { describe, expect, it, beforeEach, afterEach } from '@jest/globals';
 import { profileService, validationService, verificationService } from '../services/profileService';
 
 // Mock the profile service

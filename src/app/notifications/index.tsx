@@ -29,6 +29,7 @@ import {
   markNotificationRead,
 } from '@/services/notificationsService';
 import { useSafeBack } from '@/lib/navigation';
+import { NavigationMetadata } from '@/components/NavigationMetadata';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -242,6 +243,7 @@ export default function NotificationsScreen() {
 
   return (
     <View style={[s.root, { backgroundColor: colors.background }]}>
+      <NavigationMetadata />
       <Stack.Screen options={{ headerShown: false }} />
 
       {/* Subtle brand glow background */}

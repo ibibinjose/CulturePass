@@ -29,6 +29,7 @@ import type { EventData, MovieData, PerkData, Profile, User } from '@/shared/sch
 import { LocationPicker } from '@/modules/core/components';
 import { GlassView } from '@/design-system/ui/GlassView';
 import Animated, { FadeInDown, useReducedMotion } from 'react-native-reanimated';
+import { NavigationMetadata } from '@/components/NavigationMetadata';
 
 const isWeb = Platform.OS === 'web';
 
@@ -158,6 +159,7 @@ export default function FinderScreen() {
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
+      <NavigationMetadata />
       <Stack.Screen options={{ headerShown: false }} />
       <LinearGradient
         colors={isDark ? ['#0C0A09', '#1C1917'] : ['#FFFBF7', '#F5F5F4']}

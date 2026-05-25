@@ -27,6 +27,7 @@ import {
   settingsMyContentItems,
   settingsOrganizerHostHubItems,
 } from '@/constants/navigation/experienceNav';
+import { NavigationMetadata } from '@/components/NavigationMetadata';
 
 type IconName = keyof typeof Ionicons.glyphMap;
 
@@ -78,15 +79,17 @@ function Row({ row, isLast }: { row: SettingsRow; isLast: boolean }) {
     else row.action?.();
   };
 
+  const getPressableStyle = ({ pressed }: { pressed: boolean }) => [
+    styles.row,
+    { backgroundColor: pressed && isActionable ? colors.primarySoft : 'transparent' },
+    Platform.OS === 'web' && isActionable && { cursor: 'pointer' as never },
+  ];
+
   return (
     <Pressable
       onPress={handlePress}
       disabled={!isActionable}
-      style={({ pressed }) => [
-        styles.row,
-        { backgroundColor: pressed && isActionable ? colors.primarySoft : 'transparent' },
-        Platform.OS === 'web' && isActionable && { cursor: 'pointer' as never },
-      ]}
+      style={getPressableStyle}
       accessibilityRole={isActionable ? 'button' : undefined}
       accessibilityLabel={row.label}
     >
@@ -159,16 +162,24 @@ export default function SettingsScreen() {
   const memberMeta = [user?.city, user?.country].filter(Boolean).join(', ') || user?.email || 'Manage your CulturePass profile';
   const tier = String(user?.subscriptionTier ?? 'free');
   const tierLabel = tier.charAt(0).toUpperCase() + tier.slice(1);
-  const tierColor =
-    tier === 'plus'
-      ? CultureTokens.indigo
-      : tier === 'premium' || tier === 'vip' || tier === 'elite'
-        ? CultureTokens.gold
-        : tier === 'pro'
-          ? CultureTokens.teal
-          : tier === 'sydney-local'
-            ? colors.success
-            : colors.textTertiary;
+  const getTierColor = (tier: string): string => {
+    switch (tier) {
+      case 'plus':
+        return CultureTokens.indigo;
+      case 'premium':
+      case 'vip':
+      case 'elite':
+        return CultureTokens.gold;
+      case 'pro':
+        return CultureTokens.teal;
+      case 'sydney-local':
+        return colors.success;
+      default:
+        return colors.textTertiary;
+    }
+  };
+
+  const tierColor = getTierColor(tier);
   const canTargetCampaigns = hasMinRole('cityAdmin');
 
   const redoOnboarding = useCallback(async () => {
@@ -214,6 +225,7 @@ export default function SettingsScreen() {
     { label: 'Wallet & Balance', sub: 'Top up and view cashback', icon: 'wallet-outline', iconColor: CultureTokens.teal, route: '/payment/wallet' },
     { label: 'Payment Methods', sub: 'Cards and saved payment options', icon: 'card-outline', iconColor: CultureTokens.indigo, route: '/payment/methods' },
     { label: 'Transaction History', sub: 'Purchases, refunds, and payments', icon: 'receipt-outline', iconColor: colors.textSecondary, route: '/payment/transactions' },
+    { label: 'Nation Builders Program', sub: '50% off CulturePass+ for essential workers', icon: 'shield-checkmark-outline', iconColor: CultureTokens.gold, route: '/NationBuildersProgram' },
   ], [colors.textSecondary, tierColor, tierLabel]);
 
   const preferenceRows = useMemo<SettingsRow[]>(() => [
@@ -234,26 +246,35 @@ export default function SettingsScreen() {
   ], [colors.primary, colors.warning]);
 
   const adminRows = useMemo<SettingsRow[]>(() => {
-    if (!isAdmin && !canTargetCampaigns) return [];
-    return [
-      ...(isAdmin ? [
+    const rows: SettingsRow[] = [];
+
+    if (isAdmin) {
+      rows.push(
         { label: 'Admin Users', sub: 'Manage users and roles', icon: 'people-outline' as IconName, iconColor: ICON_COLORS.admin, route: '/admin/users' },
-        { label: 'Platform Console', sub: 'Configuration and operations', icon: 'settings-outline' as IconName, iconColor: CultureTokens.indigo, route: '/admin/platform' },
-      ] : []),
-      ...(canTargetCampaigns ? [
+        { label: 'Platform Console', sub: 'Configuration and operations', icon: 'settings-outline' as IconName, iconColor: CultureTokens.indigo, route: '/admin/platform' }
+      );
+    }
+
+    if (canTargetCampaigns) {
+      rows.push(
         { label: 'Campaign Targeting', sub: 'Dry-run and send targeted push', icon: 'megaphone-outline' as IconName, iconColor: CultureTokens.gold, route: '/admin/notifications' },
-        { label: 'Campaign Audit Logs', sub: 'Review admin send history', icon: 'document-text-outline' as IconName, iconColor: colors.warning, route: '/admin/audit-logs' },
-      ] : []),
-    ];
+        { label: 'Campaign Audit Logs', sub: 'Review admin send history', icon: 'document-text-outline' as IconName, iconColor: colors.warning, route: '/admin/audit-logs' }
+      );
+    }
+
+    return rows;
   }, [canTargetCampaigns, colors.warning, isAdmin]);
 
-  const guestRows = useMemo<SettingsRow[]>(() => [
-    { label: 'Sign In', sub: 'Access tickets, wallet, and your CulturePass profile', icon: 'log-in-outline', iconColor: colors.primary, route: '/(onboarding)/login' },
-    { label: 'Create Account', sub: 'Join CulturePass for free', icon: 'person-add-outline', iconColor: CultureTokens.teal, route: '/(onboarding)/signup' },
-  ], [colors.primary]);
+  const guestRows = useMemo<SettingsRow[]>(() => {
+    return [
+      { label: 'Sign In', sub: 'Access tickets, wallet, and your CulturePass profile', icon: 'log-in-outline', iconColor: colors.primary, route: '/(onboarding)/login' },
+      { label: 'Create Account', sub: 'Join CulturePass for free', icon: 'person-add-outline', iconColor: CultureTokens.teal, route: '/(onboarding)/signup' },
+    ];
+  }, [colors.primary]);
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
+      <NavigationMetadata />
       <Stack.Screen options={{ headerShown: false }} />
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"

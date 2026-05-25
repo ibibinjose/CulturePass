@@ -89,6 +89,7 @@ export interface Profile {
   category?: string;
   subCategory?: string;
   tags?: string[];
+  indigenousTags?: string[];
   /** Legacy free-text culture tags */
   cultureTags?: string[];
   /** Legacy free-text language list */

@@ -302,17 +302,22 @@ function DraftCard({ draft, onSelect, colors }: DraftCardProps) {
       </View>
 
       {/* Profile Name (if available) */}
-      {(draft.formData as Record<string, unknown>).officialName && (
-        <Text
-          style={[
-            TextStyles.callout,
-            { color: colors.text, marginTop: Spacing.xs },
-          ]}
-          numberOfLines={1}
-        >
-          {(draft.formData as Record<string, unknown>).officialName as string}
-        </Text>
-      )}
+      {(() => {
+        const data = draft.formData as Record<string, unknown>;
+        const name = (data.officialName || data.name || data.displayName || data.title) as string | undefined;
+        if (!name) return null;
+        return (
+          <Text
+            style={[
+              TextStyles.callout,
+              { color: colors.text, marginTop: Spacing.xs },
+            ]}
+            numberOfLines={1}
+          >
+            {name}
+          </Text>
+        );
+      })()}
 
       {/* Current Step */}
       <Text

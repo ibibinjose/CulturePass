@@ -79,6 +79,10 @@ function EventCardV2Inner({ event, isLive, canEdit, onEdit, onDelete }: EventCar
     onEdit?.(event);
   }, [event, onEdit]);
 
+  const handleAnalytics = useCallback(() => {
+    router.push(`/dashboard/event-analytics/${event.id}`);
+  }, [event.id]);
+
   const handleDelete = useCallback(() => {
     if (deleteTimerRef.current) {
       clearTimeout(deleteTimerRef.current);
@@ -275,6 +279,18 @@ function EventCardV2Inner({ event, isLive, canEdit, onEdit, onDelete }: EventCar
 
       {canEdit ? (
         <View style={styles.crudActionsRow}>
+          <Pressable
+            onPress={handleAnalytics}
+            style={({ pressed }) => [
+              styles.crudBtn,
+              { backgroundColor: colors.surface, borderColor: colors.borderLight },
+              pressed && { opacity: 0.7 },
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel={`View analytics for event ${event.title}`}
+          >
+            <Ionicons name="bar-chart-outline" size={18} color={CultureTokens.violet} />
+          </Pressable>
           <Pressable
             onPress={handleEdit}
             style={({ pressed }) => [

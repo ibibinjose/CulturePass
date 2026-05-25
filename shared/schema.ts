@@ -3,6 +3,7 @@ export * from './schema/user';
 export * from './schema/profile';
 export * from './schema/ticket';
 export * from './schema/event';
+export * from './schema/eventAnalytics';
 export * from './schema/entities';
 export * from './schema/perk';
 export * from './schema/wallet';

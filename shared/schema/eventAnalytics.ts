@@ -1,8 +1,26 @@
-export interface EventAnalytics {
-  eventId: string;
+export interface EventDailyMetric {
+  day: string;
   views: number;
   saves: number;
-  shares: number;
   ticketSales: number;
-  revenue: number;
+  revenueCents: number;
+}
+
+export interface EventAnalyticsData {
+  eventId: string;
+  totals: {
+    views: number;
+    saves: number;
+    shares: number;
+    ticketSales: number;
+    revenueCents: number;
+    attending: number;
+  };
+  trend: EventDailyMetric[];
+  trafficSources: {
+    direct: number;
+    search: number;
+    social: number;
+    referral: number;
+  };
 }

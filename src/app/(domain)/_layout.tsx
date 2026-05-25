@@ -74,19 +74,26 @@ function DomainHeader({ navigation, route }: NativeStackHeaderProps) {
   );
 }
 
+import { NavigationMetadata } from '@/components/NavigationMetadata';
+
+// ...
+
 export default function DomainLayout() {
   return (
-    <Stack
-      screenOptions={({ route }) => ({
-        headerShown: shouldShowDomainHeader(route?.name),
-        header: (props) => <DomainHeader {...props} />,
-      })}
-    >
-      {/* Fade for canonical detail pages — avoids jarring slide when navigating from a shortlink redirect */}
-      <Stack.Screen name="community/[id]" options={{ animation: 'fade' }} />
-      <Stack.Screen name="community/[id]/members" options={{ animation: 'fade' }} />
-      <Stack.Screen name="event/[id]" options={{ animation: 'fade' }} />
-    </Stack>
+    <>
+      <NavigationMetadata />
+      <Stack
+        screenOptions={({ route }) => ({
+          headerShown: shouldShowDomainHeader(route?.name),
+          header: (props) => <DomainHeader {...props} />,
+        })}
+      >
+        {/* Fade for canonical detail pages — avoids jarring slide when navigating from a shortlink redirect */}
+        <Stack.Screen name="community/[id]" options={{ animation: 'fade' }} />
+        <Stack.Screen name="community/[id]/members" options={{ animation: 'fade' }} />
+        <Stack.Screen name="event/[id]" options={{ animation: 'fade' }} />
+      </Stack>
+    </>
   );
 }
 

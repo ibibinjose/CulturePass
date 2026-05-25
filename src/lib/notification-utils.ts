@@ -50,7 +50,7 @@ const FALLBACK_TAB: Record<NotificationEntityType, string> = {
   community: '/(tabs)/community',
   profile: '/(tabs)/my-space',
   tickets: '/(tabs)/my-space',
-  perks: '/(tabs)/perks',
+  perks: '/(tabs)/my-space',
 };
 
 const DELETED_MESSAGE = 'This content is no longer available.';

@@ -20,6 +20,7 @@ import { GlassView } from '@/design-system/ui/GlassView';
 import { Button } from '@/design-system/ui/Button';
 import { M3TopAppBar } from '@/design-system/ui/M3TopAppBar';
 import { useSafeBack } from '@/lib/navigation';
+import { NavigationMetadata } from '@/components/NavigationMetadata';
 
 type MapGroup = {
   label: string;
@@ -238,6 +239,7 @@ export default function MapScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <NavigationMetadata />
       <Stack.Screen options={{ headerShown: false }} />
       <LinearGradient
         colors={[`${colors.primary}08`, 'transparent']}

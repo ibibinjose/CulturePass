@@ -401,6 +401,29 @@ export function useFormWizard({
     [canNavigateToStep]
   );
 
+  // ---------------------------------------------------------------------------
+  // Validation Methods
+  // ---------------------------------------------------------------------------
+
+  const validateCurrentStep = useCallback(async (): Promise<boolean> => {
+    setIsValidating(true);
+    setValidationErrors({});
+
+    try {
+      const schema = getStepSchema(currentStep, entityType);
+      await schema.parseAsync(formData);
+      return true;
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const errors = error.flatten().fieldErrors;
+        setValidationErrors(errors as Record<string, string[]>);
+      }
+      return false;
+    } finally {
+      setIsValidating(false);
+    }
+  }, [currentStep, entityType, formData]);
+
   const goToNextStep = useCallback(async () => {
     const isValid = await validateCurrentStep();
     if (isValid) {
@@ -408,7 +431,7 @@ export function useFormWizard({
       setCurrentStep((prev) => Math.min(prev + 1, TOTAL_STEPS));
       setValidationErrors({});
     }
-  }, [currentStep]);
+  }, [currentStep, validateCurrentStep]);
 
   const goToPreviousStep = useCallback(() => {
     if (currentStep > 1) {
@@ -452,29 +475,6 @@ export function useFormWizard({
     },
     [updateFormData]
   );
-
-  // ---------------------------------------------------------------------------
-  // Validation Methods
-  // ---------------------------------------------------------------------------
-
-  const validateCurrentStep = useCallback(async (): Promise<boolean> => {
-    setIsValidating(true);
-    setValidationErrors({});
-
-    try {
-      const schema = getStepSchema(currentStep, entityType);
-      await schema.parseAsync(formData);
-      return true;
-    } catch (error) {
-      if (error instanceof ZodError) {
-        const errors = error.flatten().fieldErrors;
-        setValidationErrors(errors as Record<string, string[]>);
-      }
-      return false;
-    } finally {
-      setIsValidating(false);
-    }
-  }, [currentStep, entityType, formData]);
 
   const validateField = useCallback(
     async (field: string, value: unknown): Promise<string | null> => {

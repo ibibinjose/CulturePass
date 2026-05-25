@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Platform, Text as RNText, StyleSheet } from 'react-native';
-import { usePathname } from 'expo-router';
+import { usePathname, useRootNavigationState } from 'expo-router';
 import Head from 'expo-router/head';
 import { PostHogProvider, usePostHog } from 'posthog-react-native';
 import { useColors, useIsDark } from '@/hooks/useColors';
@@ -150,6 +150,12 @@ export function NavigationTracker() {
 }
 
 export function NavigationMetadata() {
+  const navState = useRootNavigationState();
+
+  if (!navState?.key) {
+    return null;
+  }
+
   return (
     <>
       <GlobalMetadata />

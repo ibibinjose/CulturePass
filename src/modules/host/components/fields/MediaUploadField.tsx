@@ -210,6 +210,26 @@ function MediaUploadField({
   // Native Handlers
   // ---------------------------------------------------------------------------
 
+  const handleUploadComplete = useCallback(
+    (url: string) => {
+      if (isGallery) {
+        onChange([...currentValues, url]);
+      } else {
+        onChange(url);
+      }
+
+      // Trigger AI tagging asynchronously (Requirement 7.10)
+      if (!isVideo) {
+        requestAITags(url).then((tags) => {
+          if (tags.length > 0) {
+            setAiTags((prev) => [...new Set([...prev, ...tags])]);
+          }
+        });
+      }
+    },
+    [isGallery, isVideo, currentValues, onChange, requestAITags],
+  );
+
   const handlePickImage = useCallback(async () => {
     try {
       clearError();
@@ -227,7 +247,7 @@ function MediaUploadField({
     } catch (err) {
       if (__DEV__) console.error('Pick image failed:', err);
     }
-  }, [pickImage, uploadImage, storagePath, uploadOptions, showCropTool, type, isVideo, clearError]);
+  }, [pickImage, uploadImage, storagePath, uploadOptions, showCropTool, type, isVideo, clearError, handleUploadComplete]);
 
   const handleTakePhoto = useCallback(async () => {
     try {
@@ -246,7 +266,7 @@ function MediaUploadField({
     } catch (err) {
       if (__DEV__) console.error('Take photo failed:', err);
     }
-  }, [takePhoto, uploadImage, storagePath, uploadOptions, showCropTool, type, clearError]);
+  }, [takePhoto, uploadImage, storagePath, uploadOptions, showCropTool, type, clearError, handleUploadComplete]);
 
   // Handle cropped image
   const handleCropComplete = useCallback(
@@ -280,27 +300,7 @@ function MediaUploadField({
         if (__DEV__) console.error('Upload cropped image failed:', err);
       }
     },
-    [uploadImage, storagePath, uploadOptions],
-  );
-
-  const handleUploadComplete = useCallback(
-    (url: string) => {
-      if (isGallery) {
-        onChange([...currentValues, url]);
-      } else {
-        onChange(url);
-      }
-
-      // Trigger AI tagging asynchronously (Requirement 7.10)
-      if (!isVideo) {
-        requestAITags(url).then((tags) => {
-          if (tags.length > 0) {
-            setAiTags((prev) => [...new Set([...prev, ...tags])]);
-          }
-        });
-      }
-    },
-    [isGallery, isVideo, currentValues, onChange, requestAITags],
+    [uploadImage, storagePath, uploadOptions, handleUploadComplete],
   );
 
   /**

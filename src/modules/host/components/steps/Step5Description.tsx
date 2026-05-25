@@ -42,6 +42,16 @@ const DESCRIPTION_MAX_LENGTH = 5000;
 const MIN_TAGS = 3;
 const MAX_TAGS = 10;
 
+const INDIGENOUS_TAGS = [
+  'Aboriginal Owned',
+  'Torres Strait Islander Owned',
+  'Traditional Lands',
+  'First Nations Led',
+  'Indigenous Design',
+  'Indigenous Language',
+  'Native Ingredients',
+];
+
 /**
  * Predefined category tags organized by entity type
  */
@@ -200,6 +210,7 @@ export function Step5Description({
   const tagline = formData.tagline || '';
   const description = formData.description || '';
   const selectedTags = formData.categoryTags || [];
+  const indigenousTags = formData.indigenousTags || [];
 
   // Get available tags for this entity type
   const availableTags = useMemo(() => {
@@ -250,6 +261,14 @@ export function Step5Description({
 
     updateFormData({ categoryTags: newTags });
   }, [selectedTags, updateFormData]);
+
+  const handleIndigenousTagToggle = useCallback((tag: string) => {
+    const newTags = indigenousTags.includes(tag)
+      ? indigenousTags.filter((t: string) => t !== tag)
+      : [...indigenousTags, tag];
+
+    updateFormData({ indigenousTags: newTags });
+  }, [indigenousTags, updateFormData]);
 
   // ---------------------------------------------------------------------------
   // Render Helpers
@@ -460,6 +479,61 @@ export function Step5Description({
             </Text>
           </View>
         )}
+      </View>
+
+      {/* Indigenous Recognition Section */}
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <View style={styles.sectionTitleRow}>
+            <Ionicons
+              name="heart"
+              size={20}
+              color={CultureTokens.coral}
+            />
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+              First Nations Recognition
+            </Text>
+          </View>
+          <Text style={[styles.sectionDescription, { color: colors.textSecondary }]}>
+            Select relevant tags to highlight First Nations ownership or cultural relevance.
+          </Text>
+        </View>
+
+        <View style={styles.tagsGrid}>
+          {INDIGENOUS_TAGS.map((tag) => {
+            const isSelected = indigenousTags.includes(tag);
+
+            return (
+              <Pressable
+                key={tag}
+                onPress={() => handleIndigenousTagToggle(tag)}
+                style={[
+                  styles.tagChip,
+                  {
+                    backgroundColor: isSelected
+                      ? CultureTokens.coral
+                      : colors.surface,
+                    borderColor: isSelected
+                      ? CultureTokens.coral
+                      : colors.borderLight,
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.tagChipText,
+                    { color: isSelected ? '#FFFFFF' : colors.text },
+                  ]}
+                >
+                  {tag}
+                </Text>
+                {isSelected && (
+                  <Ionicons name="checkmark-circle" size={16} color="#FFFFFF" />
+                )}
+              </Pressable>
+            );
+          })}
+        </View>
       </View>
 
       {/* SEO Preview Section */}

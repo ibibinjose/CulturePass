@@ -97,7 +97,7 @@ export function normalizeSystemPath(path: string, initial = false): string {
 
 export function sanitizeInternalRedirect(value: RedirectValue): string | null {
   const candidate = Array.isArray(value) ? value[0] : value;
-  if (!candidate) return null;
+  if (typeof candidate !== 'string' || !candidate) return null;
   if (!candidate.startsWith('/') || candidate.startsWith('//') || candidate.includes('://')) {
     return null;
   }

@@ -5,6 +5,8 @@ import { useColors } from '@/hooks/useColors';
 import { useAuth } from '@/lib/auth';
 import { CultureTokens } from '@/design-system/tokens/theme';
 
+import { NavigationMetadata } from '@/components/NavigationMetadata';
+
 export default function OnboardingLayout() {
   const colors = useColors();
   const { state, isLoading } = useOnboarding();
@@ -25,16 +27,19 @@ export default function OnboardingLayout() {
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false, animation: Platform.OS === 'ios' ? 'default' : 'slide_from_right' }}>
-      <Stack.Screen name="index" />
-      <Stack.Screen name="signup" />
-      <Stack.Screen name="login" />
-      <Stack.Screen name="forgot-password" />
-      <Stack.Screen name="location" />
-      <Stack.Screen name="communities" />
-      <Stack.Screen name="culture-match" />
-      <Stack.Screen name="interests" />
-    </Stack>
+    <>
+      <NavigationMetadata />
+      <Stack screenOptions={{ headerShown: false, animation: Platform.OS === 'ios' ? 'default' : 'slide_from_right' }}>
+        <Stack.Screen name="index" />
+        <Stack.Screen name="signup" />
+        <Stack.Screen name="login" />
+        <Stack.Screen name="forgot-password" />
+        <Stack.Screen name="location" />
+        <Stack.Screen name="communities" />
+        <Stack.Screen name="culture-match" />
+        <Stack.Screen name="interests" />
+      </Stack>
+    </>
   );
 }
 

@@ -4,7 +4,7 @@ import { Buffer } from "buffer";
 
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import Head from "expo-router/head";
-import { Stack, usePathname } from "expo-router";
+import { router, Stack, usePathname, useRootNavigationState } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { PostHogProvider, usePostHog } from 'posthog-react-native';
 import posthogClient from '@/lib/analytics';
@@ -15,6 +15,7 @@ import {
   View,
   Text as RNText,
   StyleSheet,
+  Pressable,
 } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
@@ -28,10 +29,11 @@ import { SavedProvider } from "@/contexts/SavedContext";
 import { LikesProvider } from "@/contexts/LikesContext";
 import { ContactsProvider } from "@/contexts/ContactsContext";
 import { LinearGradient } from "expo-linear-gradient";
-import { gradients } from "@/design-system/tokens/theme";
+import { gradients, CultureTokens } from "@/design-system/tokens/theme";
 import { useColors, useIsDark } from "@/hooks/useColors";
 import { useLayout } from "@/hooks/useLayout";
 import { AuthGuard, AuthSyncBanner, DataSync } from "@/providers";
+import { withAlpha } from "@/lib/withAlpha";
 import { initializeWidgets } from "@/lib/widgets/register";
 import { WidgetSync } from "@/components/WidgetSync";
 import { WebSidebar } from "@/modules/core/layout/web/WebSidebar";
@@ -85,8 +87,7 @@ SplashScreen.preventAutoHideAsync().catch(() => {});
 // ---------------------------------------------------------------------------
 // Global Metadata Component
 // ---------------------------------------------------------------------------
-function GlobalMetadata() {
-  const pathname = usePathname();
+function GlobalMetadata({ pathname = '/' }: { pathname?: string }) {
   const isKeralaDomain = isCultureKeralaHost();
   const colors = useColors();
   const isDark = useIsDark();
@@ -220,95 +221,91 @@ function NavigationTracker() {
 // ---------------------------------------------------------------------------
 // Stack navigator — all screens registered here so Expo Router can deep-link
 // ---------------------------------------------------------------------------
+import { NavigationMetadata } from "@/components/NavigationMetadata";
+
+// ...
+
 function RootLayoutNav() {
   return (
-    <>
-      <GlobalMetadata />
-      {posthogClient && <NavigationTracker />}
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          headerShadowVisible: false,
-          // Empty string removes the "Back" label next to the iOS chevron
-          headerBackTitle: "",
-          animation: Platform.OS === "web" ? "fade" : Platform.OS === "ios" ? "default" : "slide_from_right",
-          // Web: scene must flex inside WebShell so Discover (and other tabs) scroll correctly
-          ...(Platform.OS === "web"
-            ? { contentStyle: { flex: 1, minHeight: 0 } }
-            : {}),
-        }}
-      >
-        <Stack.Screen name="(static)/landing" />
-        <Stack.Screen name="kerala" />
-        <Stack.Screen name="finder" />
-        <Stack.Screen name="onboarding-canvas" />
-        <Stack.Screen name="(onboarding)" />
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="(domain)" />
-        <Stack.Screen name="user/[id]" />
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        headerShadowVisible: false,
+        headerBackTitle: "",
+        animation: Platform.OS === "web" ? "fade" : Platform.OS === "ios" ? "default" : "slide_from_right",
+        ...(Platform.OS === "web"
+          ? { contentStyle: { flex: 1, minHeight: 0 } }
+          : {}),
+      }}
+    >
+      <Stack.Screen name="(static)/landing" />
+      <Stack.Screen name="kerala" />
+      <Stack.Screen name="finder" />
+      <Stack.Screen name="onboarding-canvas" />
+      <Stack.Screen name="(onboarding)" />
+      <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="(domain)" />
+      <Stack.Screen name="user/[id]" />
 
-        <Stack.Screen name="profile/[id]" />
-        <Stack.Screen name="profile/edit" />
-        <Stack.Screen name="profile/public" />
-        <Stack.Screen name="profile/qr" />
+      <Stack.Screen name="profile/[id]" />
+      <Stack.Screen name="profile/edit" />
+      <Stack.Screen name="profile/public" />
+      <Stack.Screen name="profile/qr" />
 
-        <Stack.Screen name="payment/methods" />
-        <Stack.Screen name="payment/transactions" />
-        <Stack.Screen name="payment/wallet" />
-        <Stack.Screen name="payment/success" />
-        <Stack.Screen name="payment/cancel" />
+      <Stack.Screen name="payment/methods" />
+      <Stack.Screen name="payment/transactions" />
+      <Stack.Screen name="payment/wallet" />
+      <Stack.Screen name="payment/success" />
+      <Stack.Screen name="payment/cancel" />
 
-        <Stack.Screen name="tickets/index" />
-        <Stack.Screen name="tickets/[id]" />
-        <Stack.Screen name="tickets/print/[id]" />
-        <Stack.Screen name="saved/index" />
-        <Stack.Screen name="perks/index" />
-        <Stack.Screen name="perks/[id]" />
+      <Stack.Screen name="tickets/index" />
+      <Stack.Screen name="tickets/[id]" />
+      <Stack.Screen name="tickets/print/[id]" />
+      <Stack.Screen name="saved/index" />
+      <Stack.Screen name="perks/index" />
+      <Stack.Screen name="perks/[id]" />
 
-        <Stack.Screen name="scanner" />
-        <Stack.Screen name="contacts/index" />
-        <Stack.Screen name="contacts/[cpid]" />
-        <Stack.Screen name="network/index" />
-        <Stack.Screen name="CultureMarket" />
-        <Stack.Screen name="CultureShop" />
-        <Stack.Screen name="admin" />
+      <Stack.Screen name="scanner" />
+      <Stack.Screen name="contacts/index" />
+      <Stack.Screen name="contacts/[cpid]" />
+      <Stack.Screen name="network/index" />
+      <Stack.Screen name="CultureMarket" />
+      <Stack.Screen name="CultureShop" />
+      <Stack.Screen name="admin" />
 
-        <Stack.Screen name="search/index" />
-        <Stack.Screen name="notifications/index" />
-        <Stack.Screen name="my-council" />
-        <Stack.Screen name="map" />
-        <Stack.Screen name="membership" />
+      <Stack.Screen name="search/index" />
+      <Stack.Screen name="notifications/index" />
+      <Stack.Screen name="my-council" />
+      <Stack.Screen name="map" />
+      <Stack.Screen name="membership" />
 
-        <Stack.Screen name="settings/index" />
-        <Stack.Screen name="settings/account" />
-        <Stack.Screen name="settings/location" />
-        <Stack.Screen name="settings/appearance" />
-        <Stack.Screen name="settings/about" />
-        <Stack.Screen name="settings/help" />
-        <Stack.Screen name="settings/notifications" />
-        <Stack.Screen name="settings/privacy" />
-        <Stack.Screen name="settings/calendar-sync" />
+      <Stack.Screen name="settings/index" />
+      <Stack.Screen name="settings/account" />
+      <Stack.Screen name="settings/location" />
+      <Stack.Screen name="settings/appearance" />
+      <Stack.Screen name="settings/about" />
+      <Stack.Screen name="settings/help" />
+      <Stack.Screen name="settings/notifications" />
+      <Stack.Screen name="settings/privacy" />
+      <Stack.Screen name="settings/calendar-sync" />
 
-        <Stack.Screen name="(static)/help/index" />
-        <Stack.Screen name="(static)/contact" />
-        <Stack.Screen name="(static)/legal/terms" />
-        <Stack.Screen name="(static)/legal/privacy" />
-        <Stack.Screen name="(static)/legal/cookies" />
-        <Stack.Screen name="(static)/legal/guidelines" />
+      <Stack.Screen name="(static)/help/index" />
+      <Stack.Screen name="(static)/contact" />
+      <Stack.Screen name="(static)/legal/terms" />
+      <Stack.Screen name="(static)/legal/privacy" />
+      <Stack.Screen name="(static)/legal/cookies" />
+      <Stack.Screen name="(static)/legal/guidelines" />
 
-        {/* <Stack.Screen name="updates/index" /> */}
-        <Stack.Screen name="updates/[id]" />
+      <Stack.Screen name="updates/[id]" />
 
-        <Stack.Screen name="[handle]" />
+      <Stack.Screen name="[handle]" />
 
-        {/* Legacy shortlinks — redirect to canonical paths above */}
-        <Stack.Screen name="(shortlinks)/c/[id]" options={{ animation: 'none' }} />
-        <Stack.Screen name="(shortlinks)/c/[id]/members" options={{ animation: 'none' }} />
-        <Stack.Screen name="(shortlinks)/e/[id]" options={{ animation: 'none' }} />
-        <Stack.Screen name="(shortlinks)/b/[id]" options={{ animation: 'none' }} />
-        <Stack.Screen name="(shortlinks)/u/[id]" options={{ animation: 'none' }} />
-      </Stack>
-    </>
+      <Stack.Screen name="(shortlinks)/c/[id]" options={{ animation: 'none' }} />
+      <Stack.Screen name="(shortlinks)/c/[id]/members" options={{ animation: 'none' }} />
+      <Stack.Screen name="(shortlinks)/e/[id]" options={{ animation: 'none' }} />
+      <Stack.Screen name="(shortlinks)/b/[id]" options={{ animation: 'none' }} />
+      <Stack.Screen name="(shortlinks)/u/[id]" options={{ animation: 'none' }} />
+    </Stack>
   );
 }
 
@@ -318,10 +315,31 @@ function RootLayoutNav() {
 function WebShell({ children }: { children: React.ReactNode }) {
   const colors = useColors();
   const { isDesktop } = useLayout();
+  const navState = useRootNavigationState();
+  const pathname = usePathname();
+
+  const isReady = !!navState?.key;
+  const isHome = isReady && (pathname === '/' || pathname === '/index');
 
   const mainColumn = (
     <View style={webStyles.contentContainer}>
-      <View style={webStyles.mainFlex}>{children}</View>
+      {isReady && !isHome && isDesktop && (
+        <View style={[webStyles.topNav, { borderBottomColor: colors.borderLight }]}>
+          <Pressable
+            onPress={() => router.back()}
+            style={({ hovered }: any) => [
+              webStyles.backBtn,
+              hovered && { backgroundColor: colors.backgroundSecondary }
+            ]}
+          >
+            <Ionicons name="arrow-back" size={18} color={colors.textSecondary} />
+            <RNText style={[webStyles.backText, { color: colors.textSecondary }]}>Back</RNText>
+          </Pressable>
+        </View>
+      )}
+      <View style={[webStyles.mainFlex, isDesktop && webStyles.mainFlexDesktop]}>
+        {children}
+      </View>
     </View>
   );
 
@@ -335,7 +353,7 @@ function WebShell({ children }: { children: React.ReactNode }) {
       ]}
     >
       <LinearGradient
-        colors={gradients.culturepassBrand}
+        colors={[withAlpha(CultureTokens.indigo, 0.05), 'transparent']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={webStyles.ambientMesh}
@@ -543,7 +561,7 @@ const webStyles = StyleSheet.create({
   },
   ambientMesh: {
     ...StyleSheet.absoluteFillObject,
-    opacity: 0.038,
+    opacity: 0.1,
   },
   contentContainer: {
     flex: 1,
@@ -552,11 +570,34 @@ const webStyles = StyleSheet.create({
     flexDirection: "column",
     alignSelf: "stretch",
   },
+  topNav: {
+    height: 56,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    borderBottomWidth: 1,
+  },
+  backBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  backText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
   mainFlex: {
     flex: 1,
     minHeight: 0,
     width: "100%",
     alignSelf: "stretch",
+  },
+  mainFlexDesktop: {
+    maxWidth: 1200,
+    alignSelf: 'center',
   },
 });
 

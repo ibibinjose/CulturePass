@@ -71,7 +71,13 @@ const cityArb = fc.constantFrom('Sydney', 'Melbourne', 'Brisbane', 'Perth', 'Ade
 const dateStringArb = fc.date({
   min: new Date('2024-01-01'),
   max: new Date('2026-12-31'),
-}).map((d) => d.toISOString());
+}).map((d) => {
+  try {
+    return d.toISOString();
+  } catch {
+    return new Date('2025-01-01').toISOString();
+  }
+});
 
 /** Arbitrary fallback entity (as returned by the API). */
 const fallbackEntityArb = fc.record({

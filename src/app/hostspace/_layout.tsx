@@ -8,14 +8,18 @@
  *  - dashboard/index    → protected by HostspaceCreateWorkspace
  */
 import { Stack } from 'expo-router';
+import { NavigationMetadata } from '@/components/NavigationMetadata';
 
 export default function HostspaceLayout() {
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="index" />
-      <Stack.Screen name="apply" />
-      <Stack.Screen name="create" />
-      <Stack.Screen name="dashboard/index" />
-    </Stack>
+    <>
+      <NavigationMetadata />
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="index" />
+        <Stack.Screen name="apply" />
+        <Stack.Screen name="create" />
+        <Stack.Screen name="dashboard/index" />
+      </Stack>
+    </>
   );
 }

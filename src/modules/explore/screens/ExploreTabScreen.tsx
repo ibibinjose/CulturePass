@@ -41,6 +41,7 @@ import { MAIN_TAB_UI } from '@/modules/core/layout/tabs/mainTabTokens';
 import { type Community, type EventData, CULTUREX_EXPLORES_CULTURE_TAG } from '@/shared/schema';
 import { CulturePassportPanel } from '@/modules/explore/components/CulturePassportPanel';
 import { QuestRail } from '@/modules/explore/components/QuestRail';
+import { NavigationMetadata } from '@/components/NavigationMetadata';
 
 const EXPLORE_SELECTED_TAGS_KEY = '@culturepass_explore_culture_tags_v1';
 const EXPLORE_INVITE_SUBMITTED_EMAIL_KEY = '@culturepass_explore_invite_submitted_email_v1';
@@ -781,6 +782,7 @@ function ExploreTabScreenInner() {
 
   return (
     <View style={[styles.root, { backgroundColor: m3Colors.background }]}>
+      <NavigationMetadata />
       <M3TopAppBar
         title="CultureX"
         variant="small"

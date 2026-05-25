@@ -62,12 +62,6 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
         type: "sourceFile",
       };
     }
-    if (moduleName === "@posthog/core/surveys") {
-      return {
-        filePath: path.resolve(__dirname, "node_modules/@posthog/core/dist/surveys/index.js"),
-        type: "sourceFile",
-      };
-    }
   }
 
   // Prevent crashes on web dev server requests
@@ -92,6 +86,6 @@ config.transformer.getTransformOptions = async () => ({
 });
 
 // ── Performance: enable package exports for tree-shaking (date-fns, Firebase, etc.) ──
-config.resolver.unstable_enablePackageExports = false;
+config.resolver.unstable_enablePackageExports = true;
 
 module.exports = config;

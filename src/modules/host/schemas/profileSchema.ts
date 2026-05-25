@@ -255,6 +255,7 @@ export const step5DescriptionSchema = z.object({
     .array(z.string())
     .min(3, 'Select at least 3 category tags')
     .max(10, 'Maximum 10 category tags'),
+  indigenousTags: z.array(z.string().max(50)).max(10).optional(),
   metaDescription: z.string().max(160).optional(),
 });
 

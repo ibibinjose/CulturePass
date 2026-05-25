@@ -113,10 +113,11 @@ function saveScrollPosition(states: AllTabStates, tab: TabKey, position: number)
 
 const tabKeyArb: fc.Arbitrary<TabKey> = fc.constantFrom(...ALL_TABS);
 
-const routeArb: fc.Arbitrary<string> = fc.stringOf(
-  fc.constantFrom('a', 'b', 'c', '/', '-', '1', '2', '3'),
-  { minLength: 1, maxLength: 30 },
-);
+const routeArb: fc.Arbitrary<string> = fc.string({
+  unit: fc.constantFrom('a', 'b', 'c', '/', '-', '1', '2', '3'),
+  minLength: 1,
+  maxLength: 30,
+});
 
 const scrollPositionArb: fc.Arbitrary<number> = fc.integer({ min: 0, max: 10000 });
 

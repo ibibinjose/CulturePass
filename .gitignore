@@ -36,7 +36,9 @@ build-*.apk
 .env.local
 .env.*.local
 
-# Android keystore & signing credentials
+# Signing credentials & secrets — NEVER commit plaintext passwords/keys
+credentials.json
+credentials/
 *.jks
 *.keystore
 *.p8
@@ -54,12 +56,11 @@ ios/.xcode.env.local
 # Coverage output
 coverage/
 
+# Sentry wizard error logs (leftover from removed integration)
+sentry-wizard-installation-error-*.log
+
 # macOS — Finder metadata and AppleDouble resource forks
 .DS_Store
 ._*
 .AppleDouble
 .LSOverride
-
-.env.local
-
-.env.local

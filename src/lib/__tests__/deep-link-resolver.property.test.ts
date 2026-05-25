@@ -35,7 +35,8 @@ const validPrefixArb = fc.constantFrom(...VALID_PREFIXES);
 
 /** Arbitrary valid entity ID (alphanumeric, hyphens, underscores; 1–128 chars). */
 const validIdArb = fc
-  .stringOf(fc.constantFrom(...'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-'.split('')), {
+  .string({
+    unit: fc.constantFrom(...'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-'.split('')),
     minLength: 1,
     maxLength: 128,
   });
@@ -51,12 +52,13 @@ const malformedIdArb = fc.oneof(
   fc.constant(''),
   // Contains invalid characters (spaces, dots, slashes, @, etc.)
   fc.tuple(
-    fc.stringOf(fc.constantFrom(...'abcdefghijklmnopqrstuvwxyz'.split('')), { minLength: 1, maxLength: 5 }),
+    fc.string({ unit: fc.constantFrom(...'abcdefghijklmnopqrstuvwxyz'.split('')), minLength: 1, maxLength: 5 }),
     fc.constantFrom(' ', '.', '/', '@', '#', '!', '?', '&', '=', '+'),
-    fc.stringOf(fc.constantFrom(...'abcdefghijklmnopqrstuvwxyz'.split('')), { minLength: 1, maxLength: 5 }),
+    fc.string({ unit: fc.constantFrom(...'abcdefghijklmnopqrstuvwxyz'.split('')), minLength: 1, maxLength: 5 }),
   ).map(([a, sep, b]) => `${a}${sep}${b}`),
   // Exceeds maximum length (129+ chars)
-  fc.stringOf(fc.constantFrom(...'abcdefghijklmnopqrstuvwxyz0123456789'.split('')), {
+  fc.string({
+    unit: fc.constantFrom(...'abcdefghijklmnopqrstuvwxyz0123456789'.split('')),
     minLength: 129,
     maxLength: 200,
   })

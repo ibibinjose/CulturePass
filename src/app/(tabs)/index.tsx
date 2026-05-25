@@ -47,6 +47,7 @@ import {
   DiscoverContent,
 } from '@/modules/discover/components';
 import { useKeralaScoping } from '@/modules/discover/hooks/useKeralaScoping';
+import type { EventData } from '@/shared/schema';
 
 // ─── Filter chip definitions ───────────────────────────────────────────────────
 
@@ -116,7 +117,7 @@ export default function DiscoverScreen() {
     staleTime: 5 * 60 * 1000,
   });
   const recommendedFromFeature = useMemo(
-    () => discoverFeatureFeed?.rankedEvents.map((entry) => entry.event).slice(0, 8) ?? [],
+    () => discoverFeatureFeed?.rankedEvents.map((entry: { event: EventData; score: number }) => entry.event).slice(0, 8) ?? [],
     [discoverFeatureFeed],
   );
   const topBarTitle = useMemo(() => {

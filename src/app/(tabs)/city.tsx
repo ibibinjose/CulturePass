@@ -44,7 +44,7 @@ import { PopularEventsRail } from '@/components/city/PopularEventsRail';
 import { CultureTokens } from '@/design-system/tokens/colors';
 import { M3Typography, Radius } from '@/design-system/tokens/theme';
 import { useSaved } from '@/contexts/SavedContext';
-import type { Community } from '@/shared/schema';
+import type { Community, EventData } from '@/shared/schema';
 import { CULTUREX_EXPLORES_CULTURE_TAG } from '@/shared/schema';
 import { APP_NAME } from '@/lib/app-meta';
 import { withAlpha } from '@/lib/withAlpha';
@@ -163,7 +163,7 @@ export default function MyCityScreen() {
     const cn = normPlace(cityName);
     const cc = normPlace(cityCountry);
     return allCommunities
-      .filter((c) => normPlace(c.city) === cn && normPlace(c.country) === cc && !joinedSet.has(c.id))
+      .filter((c: Community) => normPlace(c.city) === cn && normPlace(c.country) === cc && !joinedSet.has(c.id))
       .slice(0, 12);
   }, [allCommunities, cityName, cityCountry, joinedSet]);
 
@@ -369,7 +369,7 @@ export default function MyCityScreen() {
                     <Text style={[M3Typography.bodySmall, { color: m3Colors.onSurfaceVariant, textAlign: 'center' }]}>No upcoming events found from your hubs today.</Text>
                   </M3Card>
                 ) : (
-                  orbitEvents.map((ev, i) => (
+                  orbitEvents.map((ev: EventData, i: number) => (
                     <View key={ev.id} style={{ width: ORBIT_CARD_W }}>
                       <M3EventCard event={ev} variant="elevated" />
                     </View>
@@ -422,7 +422,7 @@ export default function MyCityScreen() {
                 <M3SectionHeader title="Nearby Hubs" subtitle="Connect with local groups" onAction={() => router.push('/(tabs)/community')} />
               </View>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: hPad, gap: 16, paddingVertical: 8 }}>
-                {exploreNearby.map((c) => (
+                {exploreNearby.map((c: Community) => (
                   <View key={c.id} style={{ width: COMMUNITY_CARD_W }}>
                     <M3CommunityCard community={c} />
                   </View>

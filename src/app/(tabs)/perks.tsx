@@ -53,7 +53,7 @@ export default function PerksTabScreen() {
               </View>
             ) : perks && perks.length > 0 ? (
               <View style={styles.perksList}>
-                {perks.map((perk, index) => (
+                {perks.map((perk: { id?: string; title?: string; description?: string; discountPercent?: number; partnerName?: string }, index: number) => (
                   <GlassView key={perk.id || index} contentStyle={styles.perkCard}>
                     <View style={styles.perkHeader}>
                       <Text style={[styles.perkTitle, { color: colors.text }]}>{perk.title}</Text>

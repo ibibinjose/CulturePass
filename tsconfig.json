@@ -1,6 +1,8 @@
 {
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
+    "module": "esnext",
+    "moduleResolution": "bundler",
     // 'baseUrl' is deprecated in TS 7.0; removing ignoreDeprecations as it's invalid
     "baseUrl": ".",
     "types": ["node", "jest"],

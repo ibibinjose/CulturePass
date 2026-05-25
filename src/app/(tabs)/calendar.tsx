@@ -146,7 +146,7 @@ export default function CalendarScreen() {
 
   const allEvents = useMemo(() => eventsPage?.events ?? [], [eventsPage?.events]);
 
-  const ticketedEventIds = useMemo(() => new Set(tickets.map((t) => t.eventId)), [tickets]);
+  const ticketedEventIds = useMemo(() => new Set(tickets.map((t: Ticket) => t.eventId)), [tickets]);
 
   const filteredEvents = useMemo(() => {
     const now = new Date();
@@ -154,7 +154,7 @@ export default function CalendarScreen() {
     const weekEnd = new Date(now);
     weekEnd.setDate(now.getDate() + 7);
 
-    return allEvents.filter((event) => {
+    return allEvents.filter((event: EventData) => {
       const key = toSafeDateKey(event.date);
       if (!key) return false;
       const dateObj = toDateFromKey(key);
@@ -225,12 +225,12 @@ export default function CalendarScreen() {
   const upcomingEvents = useMemo(() => {
     const now = new Date();
     return filteredEvents
-      .filter((event) => {
+      .filter((event: EventData) => {
         const key = toSafeDateKey(event.date);
         if (!key) return false;
         return toDateFromKey(key).getTime() >= now.getTime();
       })
-      .sort((a, b) => {
+      .sort((a: EventData, b: EventData) => {
         const aKey = toSafeDateKey(a.date);
         const bKey = toSafeDateKey(b.date);
         if (!aKey || !bKey) return 0;
@@ -594,7 +594,7 @@ export default function CalendarScreen() {
                 onAction={() => router.push('/events')}
             />
             <View style={{ gap: 16 }}>
-                {upcomingEvents.slice(0, 4).map((event) => (
+                {upcomingEvents.slice(0, 4).map((event: EventData) => (
                     <M3EventCard
                         key={event.id}
                         event={event}

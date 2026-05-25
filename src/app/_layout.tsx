@@ -416,7 +416,7 @@ function RootLayoutContent() {
 
   // If fonts fail to load OR timeout occurs, we still want to show the app instead of hanging on loading screen
   if (!fontsLoaded && !fontError && !fontTimeout) {
-    if (__DEV__) {
+    if (__DEV__ && typeof window !== 'undefined') {
       console.log('[RootLayout] Waiting for fonts to load...', { fontsLoaded, fontError, fontTimeout });
     }
     return (
@@ -494,7 +494,9 @@ function RootLayoutContent() {
   return (
     <SafeAreaProvider style={Platform.OS === "web" ? ({ flex: 1, minHeight: 0 } as const) : undefined}>
       <ErrorBoundary>
-        {queryAppTree}
+        <Head.Provider>
+          {queryAppTree}
+        </Head.Provider>
       </ErrorBoundary>
     </SafeAreaProvider>
   );

@@ -49,6 +49,18 @@ import {
 import { useFonts, Poppins_400Regular, Poppins_500Medium, Poppins_600SemiBold, Poppins_700Bold, Poppins_800ExtraBold } from "@expo-google-fonts/poppins";
 // Web font loader for Expo web is automatically handled by @expo-google-fonts
 
+// Import LinkPreviewContextProvider if available
+let LinkPreviewContextProvider: React.ComponentType<{ children: React.ReactNode }> | null = null;
+try {
+  // Try importing from expo-router if available in your version
+  const linkPreviewModule = require('expo-router').LinkPreviewContextProvider;
+  if (linkPreviewModule) {
+    LinkPreviewContextProvider = linkPreviewModule;
+  }
+} catch (e) {
+  // LinkPreviewContextProvider might not be available in your version
+  console.warn('[RootLayout] LinkPreviewContextProvider not available:', (e as Error).message);
+}
 
 global.Buffer = Buffer;
 
@@ -343,10 +355,12 @@ function WebShell({ children }: { children: React.ReactNode }) {
 
 // ---------------------------------------------------------------------------
 // Root layout — provider order matters:
-//   OnboardingProvider  (outermost — no deps)
-//   └── AuthProvider    (can now use useOnboarding via DataSync child)
-//       └── DataSync    (syncs auth user → onboarding state)
-//       └── SavedProvider / ContactsProvider / ...
+//   PersistQueryClientProvider (outermost)
+//   └── LinkPreviewContextProvider (NEW - wraps Router)
+//   └── OnboardingProvider
+//   └── AuthProvider
+//   └── DataSync (syncs auth user → onboarding state)
+//   └── SavedProvider / ContactsProvider / ...
 // ---------------------------------------------------------------------------
 
 function RootLayoutContent() {
@@ -463,21 +477,41 @@ function RootLayoutContent() {
       client={queryClient}
       persistOptions={{ persister: queryPersister }}
     >
-      <OnboardingProvider>
-        <AuthProvider>
-          <SavedProvider>
-            <LikesProvider>
-              <ContactsProvider>
-                {posthogClient ? (
-                  <PostHogProvider client={posthogClient} autocapture={{ captureScreens: false }}>{appShell}</PostHogProvider>
-                ) : (
-                  appShell
-                )}
-              </ContactsProvider>
-            </LikesProvider>
-          </SavedProvider>
-        </AuthProvider>
-      </OnboardingProvider>
+      {LinkPreviewContextProvider ? (
+        <LinkPreviewContextProvider>
+          <OnboardingProvider>
+            <AuthProvider>
+              <SavedProvider>
+                <LikesProvider>
+                  <ContactsProvider>
+                    {posthogClient ? (
+                      <PostHogProvider client={posthogClient} autocapture={{ captureScreens: false }}>{appShell}</PostHogProvider>
+                    ) : (
+                      appShell
+                    )}
+                  </ContactsProvider>
+                </LikesProvider>
+              </SavedProvider>
+            </AuthProvider>
+          </OnboardingProvider>
+        </LinkPreviewContextProvider>
+      ) : (
+        <OnboardingProvider>
+          <AuthProvider>
+            <SavedProvider>
+              <LikesProvider>
+                <ContactsProvider>
+                  {posthogClient ? (
+                    <PostHogProvider client={posthogClient} autocapture={{ captureScreens: false }}>{appShell}</PostHogProvider>
+                  ) : (
+                    appShell
+                  )}
+                </ContactsProvider>
+              </LikesProvider>
+            </SavedProvider>
+          </AuthProvider>
+        </OnboardingProvider>
+      )}
     </PersistQueryClientProvider>
   );
 

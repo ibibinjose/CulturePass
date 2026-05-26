@@ -20,17 +20,18 @@ export const communityDetailStyles = StyleSheet.create({
   emptySub: { textAlign: 'center' },
   emptyBtn: { marginTop: 4 },
 
-  content: { paddingTop: 24, gap: 16 },
-  contentWeb: { paddingTop: 12, gap: 10 },
-  desktopGrid: { flexDirection: 'row', gap: 32, alignItems: 'flex-start' },
-  desktopLeft: { flex: 2, gap: 16 },
+  content: { paddingTop: 20, gap: 20 },
+  contentWeb: { paddingTop: 8, gap: 18 },
+  desktopGrid: { flexDirection: 'row', gap: 40, alignItems: 'flex-start' },
+  desktopLeft: { flex: 2, gap: 20 },
   desktopRight: { flex: 1, gap: 16 },
 
   tabBarWrap: {
-    borderRadius: 16,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 999,
+    borderWidth: 0,
     padding: 4,
-    marginVertical: 4,
+    marginVertical: 8,
+    alignSelf: 'flex-start',
   },
   tabBar: { flexDirection: 'row', gap: 4 },
 

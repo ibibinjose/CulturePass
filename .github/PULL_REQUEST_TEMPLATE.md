@@ -21,3 +21,10 @@
 - [ ] Design tokens used (no hardcoded hex or raw px values)
 - [ ] API calls go through `lib/api.ts` — no direct Firestore reads in components
 - [ ] No `console.log` left in production paths
+
+## Architecture / Significant Changes
+<!-- If this PR touches architecture, data models, major flows (HostSpace, payments, admin, auth, verification), or introduces new patterns: -->
+- [ ] This change is covered by an ADR in `docs/ADRs/`
+- ADR reference (if applicable): 
+
+<!-- Example: "See ADR-001: Host Creation Unification" -->

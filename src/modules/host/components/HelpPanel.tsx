@@ -177,7 +177,7 @@ const STEP_HELP_CONTENT: Record<number, StepHelpContent> = {
           'Yes! We offer automatic background removal for logos and AI tagging for searchability.',
       },
     ],
-    videoUrl: 'https://help.culturepass.com/tutorials/media-upload',
+    videoUrl: 'https://help.culturepass.co/tutorials/media-upload',
     videoTitle: 'How to upload and optimise your media',
   },
   3: {
@@ -215,7 +215,7 @@ const STEP_HELP_CONTENT: Record<number, StepHelpContent> = {
           'The government API may be temporarily unavailable. You can save as draft and try again later.',
       },
     ],
-    videoUrl: 'https://help.culturepass.com/tutorials/legal-compliance',
+    videoUrl: 'https://help.culturepass.co/tutorials/legal-compliance',
     videoTitle: 'Understanding legal requirements',
   },
   4: {
@@ -288,7 +288,7 @@ const STEP_HELP_CONTENT: Record<number, StepHelpContent> = {
           'We recommend 5-7 tags for optimal search visibility. The popularity indicator shows which tags are most searched.',
       },
     ],
-    videoUrl: 'https://help.culturepass.com/tutorials/writing-descriptions',
+    videoUrl: 'https://help.culturepass.co/tutorials/writing-descriptions',
     videoTitle: 'Writing descriptions that convert',
   },
   6: {

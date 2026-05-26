@@ -34,6 +34,7 @@ import { useColors } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
 import { CultureTokens } from '@/design-system/tokens/colors';
 import { Spacing, Radius, Elevation } from '@/design-system/tokens/theme';
+import { USE_NATIVE_DRIVER } from '@/design-system/tokens/animations';
 import type { SaveStatus } from '../hooks/useAutoSave';
 import { formatLastSaved } from '../hooks/useAutoSave';
 import { announceAutoSaveStatus, liveRegionProps } from '../utils/accessibility';
@@ -96,7 +97,7 @@ export const AutoSaveIndicator = memo(function AutoSaveIndicator({
       Animated.timing(opacity, {
         toValue: 1,
         duration: 200,
-        useNativeDriver: true,
+        useNativeDriver: USE_NATIVE_DRIVER,
       }).start();
 
       // Auto-hide after 2 seconds for 'saved' status
@@ -105,7 +106,7 @@ export const AutoSaveIndicator = memo(function AutoSaveIndicator({
           Animated.timing(opacity, {
             toValue: 0,
             duration: 200,
-            useNativeDriver: true,
+            useNativeDriver: USE_NATIVE_DRIVER,
           }).start();
         }, 2000);
 
@@ -116,7 +117,7 @@ export const AutoSaveIndicator = memo(function AutoSaveIndicator({
       Animated.timing(opacity, {
         toValue: 0,
         duration: 200,
-        useNativeDriver: true,
+        useNativeDriver: USE_NATIVE_DRIVER,
       }).start();
     }
   }, [status, opacity]);

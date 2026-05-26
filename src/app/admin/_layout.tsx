@@ -28,6 +28,7 @@ import { adminKeys } from '@/hooks/queries/keys';
 const ADMIN_NAV = [
   { label: 'Dashboard', icon: 'grid', route: '/admin' },
   { label: 'User Directory', icon: 'people', route: '/admin/users' },
+  { label: 'Host Applications', icon: 'person-add', route: '/admin/host-applications' },
   { label: 'Communities', icon: 'people-circle', route: '/admin/communities' },
   { label: 'Promo Codes', icon: 'pricetag', route: '/admin/promo-codes' },
   { label: 'Moderation', icon: 'shield-checkmark', route: '/admin/moderation' },
@@ -41,7 +42,7 @@ const ADMIN_NAV = [
   { label: 'Compliance', icon: 'lock-closed', route: '/admin/data-compliance' },
 ];
 
-import { NavigationMetadata } from '@/components/NavigationMetadata';
+
 
 // ...
 
@@ -79,17 +80,36 @@ export default function AdminLayout() {
   }
 
   const sidebar = (
-    <GlassView intensity={40} style={styles.sidebar}>
+    <GlassView intensity={55} style={styles.sidebar}>
+      {/* Header */}
       <View style={styles.sidebarHeader}>
-        <BrandWordmark size="md" color={colors.text} />
-        <View style={styles.adminBadge}>
-          <Text style={styles.adminBadgeText}>{isSuperAdmin ? 'SUPER ADMIN' : 'ADMIN'}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <BrandWordmark size="md" color={colors.text} />
+        </View>
+        <View style={[styles.adminBadge, { backgroundColor: isSuperAdmin ? '#EF4444' : CultureTokens.indigo }]}>
+          <Text style={styles.adminBadgeText}>
+            {isSuperAdmin ? 'SUPER ADMIN' : 'ADMIN'}
+          </Text>
         </View>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.navScroll}>
+      {/* Sidebar Search (client-side filter for now) */}
+      <View style={styles.searchContainer}>
+        <View style={[styles.searchBar, { backgroundColor: colors.surface, borderColor: colors.borderLight }]}>
+          <Ionicons name="search" size={16} color={colors.textTertiary} />
+          <Text style={[styles.searchPlaceholder, { color: colors.textTertiary }]}>Search admin...</Text>
+        </View>
+      </View>
+
+      {/* Navigation */}
+      <ScrollView 
+        showsVerticalScrollIndicator={false} 
+        contentContainerStyle={styles.navScroll}
+      >
         {ADMIN_NAV.map((item) => {
-          const active = pathname === item.route;
+          const active = pathname === item.route || (item.route === '/admin' && pathname === '/admin/index');
+          const showBadge = item.route === '/admin/moderation' && moderationBadge > 0;
+
           return (
             <Pressable
               key={item.route}
@@ -97,18 +117,27 @@ export default function AdminLayout() {
               style={({ pressed }) => [
                 styles.navItem,
                 active && styles.navItemActive,
-                pressed && { opacity: 0.7 },
+                pressed && { opacity: 0.85 },
               ]}
             >
               <Ionicons
                 name={item.icon as any}
-                size={18}
-                color={active ? colors.text : colors.textSecondary}
+                size={17}
+                color={active ? colors.primary : colors.textSecondary}
               />
-              <Text style={[styles.navLabel, active && styles.navLabelActive]}>{item.label}</Text>
-              {(item.route === '/admin/moderation' && moderationBadge > 0) && (
+              <Text style={[
+                styles.navLabel, 
+                active && styles.navLabelActive,
+                { color: active ? colors.text : colors.textSecondary }
+              ]}>
+                {item.label}
+              </Text>
+
+              {showBadge && (
                 <View style={styles.navBadge}>
-                  <Text style={styles.navBadgeText}>{moderationBadge > 99 ? '99+' : String(moderationBadge)}</Text>
+                  <Text style={styles.navBadgeText}>
+                    {moderationBadge > 99 ? '99+' : moderationBadge}
+                  </Text>
                 </View>
               )}
             </Pressable>
@@ -116,18 +145,34 @@ export default function AdminLayout() {
         })}
       </ScrollView>
 
-      <View style={styles.sidebarFooter}>
-         <Pressable onPress={() => router.replace('/(tabs)')} style={styles.footerLink}>
-            <Ionicons name="arrow-back" size={15} color={colors.textSecondary} />
-            <Text style={styles.footerLinkText}>Exit Terminal</Text>
-         </Pressable>
+      {/* Footer */}
+      <View style={[styles.sidebarFooter, { borderTopColor: colors.borderLight }]}>
+        <View style={[styles.userMini, { backgroundColor: colors.surface, borderColor: colors.borderLight }]}>
+          <View style={[styles.userAvatar, { backgroundColor: colors.surfaceElevated }]}>
+            <Ionicons name="person" size={16} color={colors.textSecondary} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.userName, { color: colors.text }]} numberOfLines={1}>
+              {isSuperAdmin ? 'Super Admin' : 'Admin'}
+            </Text>
+            <Text style={[styles.userRole, { color: colors.textTertiary }]}>Platform Operator</Text>
+          </View>
+        </View>
+
+        <Pressable 
+          onPress={() => router.replace('/(tabs)')} 
+          style={({ pressed }) => [styles.footerLink, pressed && { opacity: 0.7 }]}
+        >
+          <Ionicons name="exit-outline" size={16} color={colors.textSecondary} />
+          <Text style={[styles.footerLinkText, { color: colors.textSecondary }]}>Exit Admin</Text>
+        </Pressable>
       </View>
     </GlassView>
   );
 
   return (
     <ErrorBoundary>
-      <NavigationMetadata />
+
       <View style={[styles.root, { backgroundColor: colors.background }]}>
         <LinearGradient
           colors={[`${colors.primary}05`, 'transparent']}
@@ -150,6 +195,7 @@ export default function AdminLayout() {
           <Stack screenOptions={{ headerShown: false, animation: 'fade' }}>
             <Stack.Screen name="index" />
             <Stack.Screen name="users" />
+            <Stack.Screen name="host-applications" />
             <Stack.Screen name="communities" />
             <Stack.Screen name="promo-codes" />
             <Stack.Screen name="moderation" />
@@ -180,60 +226,115 @@ const styles = StyleSheet.create({
   },
   sidebarHeader: {
     paddingHorizontal: 16,
-    marginBottom: 18,
-    gap: 6,
+    marginBottom: 12,
+    gap: 8,
   },
   adminBadge: {
     alignSelf: 'flex-start',
-    backgroundColor: CultureTokens.indigo,
-    paddingHorizontal: 8,
+    paddingHorizontal: 9,
     paddingVertical: 3,
-    borderRadius: 6,
+    borderRadius: 5,
   },
   adminBadgeText: {
     color: '#FFFFFF',
     fontSize: 9,
     fontFamily: FontFamily.bold,
-    letterSpacing: 1,
+    letterSpacing: 1.2,
   },
-  navScroll: { paddingHorizontal: 8, gap: 2 },
+  searchContainer: {
+    paddingHorizontal: 16,
+    marginBottom: 12,
+  },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  searchPlaceholder: {
+    fontSize: 13,
+    fontFamily: FontFamily.regular,
+  },
+  navScroll: { paddingHorizontal: 8, gap: 1, paddingBottom: 12 },
   navItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    borderRadius: 10,
-    gap: 9,
+    paddingVertical: 9,
+    paddingHorizontal: 11,
+    borderRadius: 9,
+    gap: 10,
   },
   navItemActive: {
-    backgroundColor: 'rgba(15,23,42,0.08)',
+    backgroundColor: 'rgba(15,23,42,0.1)',
   },
   navLabel: {
     flex: 1,
-    fontSize: 13,
+    fontSize: 13.5,
     fontFamily: FontFamily.medium,
-    color: 'rgba(15,23,42,0.72)',
   },
   navLabelActive: {
-    color: '#0F172A',
-    fontFamily: FontFamily.bold,
+    fontFamily: FontFamily.semibold,
   },
   navBadge: {
     backgroundColor: CultureTokens.coral,
-    paddingHorizontal: 5,
+    paddingHorizontal: 6,
     paddingVertical: 1,
-    borderRadius: 8,
+    borderRadius: 10,
+    minWidth: 18,
+    alignItems: 'center',
   },
-  navBadgeText: { color: '#FFFFFF', fontSize: 9, fontFamily: FontFamily.bold },
+  navBadgeText: { 
+    color: '#FFFFFF', 
+    fontSize: 10, 
+    fontFamily: FontFamily.bold,
+    textAlign: 'center',
+  },
+  // Note: All theme colors (colors.xxx) must be applied at runtime via inline styles,
+  // never inside StyleSheet.create, because this file is evaluated by the
+  // Expo Router server renderer during web builds.
   sidebarFooter: {
     marginTop: 'auto',
     paddingHorizontal: 16,
-    paddingTop: 12,
+    paddingTop: 14,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(15,23,42,0.08)',
   },
-  footerLink: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  footerLinkText: { fontSize: 12, color: 'rgba(15,23,42,0.58)', fontFamily: FontFamily.medium },
+  userMini: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    padding: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    marginBottom: 12,
+  },
+  userAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  userName: {
+    fontSize: 13,
+    fontFamily: FontFamily.semibold,
+  },
+  userRole: {
+    fontSize: 11,
+    fontFamily: FontFamily.regular,
+  },
+  footerLink: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    gap: 8,
+    paddingVertical: 4,
+  },
+  footerLinkText: { 
+    fontSize: 12.5, 
+    fontFamily: FontFamily.medium 
+  },
 
   main: { flex: 1 },
   mobileHeader: {

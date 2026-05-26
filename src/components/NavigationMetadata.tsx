@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
-import { Platform, Text as RNText, StyleSheet } from 'react-native';
+import { Platform } from 'react-native';
 import { usePathname, useRootNavigationState } from 'expo-router';
 import Head from 'expo-router/head';
-import { PostHogProvider, usePostHog } from 'posthog-react-native';
+import { usePostHog } from 'posthog-react-native';
 import { useColors, useIsDark } from '@/hooks/useColors';
 import { isCultureKeralaHost } from '@/lib/domainHost';
 import {
@@ -18,7 +18,14 @@ import {
 // Global Metadata Component
 // ---------------------------------------------------------------------------
 export function GlobalMetadata() {
-  const pathname = usePathname();
+  // Also guard usePathname defensively
+  let pathname = '/';
+  try {
+    pathname = usePathname() || '/';
+  } catch {
+    pathname = '/';
+  }
+
   const isKeralaDomain = isCultureKeralaHost();
   const colors = useColors();
   const isDark = useIsDark();
@@ -150,7 +157,21 @@ export function NavigationTracker() {
 }
 
 export function NavigationMetadata() {
-  const navState = useRootNavigationState();
+  // Defensive guard: useRootNavigationState can throw during early web hydration
+  // or before Expo Router has mounted its internal NavigationContainer.
+  let navState: ReturnType<typeof useRootNavigationState> | null = null;
+
+  try {
+    navState = useRootNavigationState();
+  } catch (error) {
+    // Navigation context not ready yet — silently skip on first few renders.
+    // This is common on web during initial bundle/hydration.
+    if (__DEV__) {
+      // Only log in development to avoid noise
+      console.warn('[NavigationMetadata] Navigation context not ready yet');
+    }
+    return null;
+  }
 
   if (!navState?.key) {
     return null;

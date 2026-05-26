@@ -58,6 +58,10 @@ import {
 import type { EntityType } from '../../hooks/useFormWizard';
 import type { PartialFormData } from '../../services/formStateSerializer';
 
+// Creator Trust: Rich verification status banner (highest leverage trust surface in legal step)
+import { VerificationStatusBanner, type VerificationStatus } from '../VerificationStatusBanner';
+import { trackVerificationStatusViewed } from '../services/formAnalyticsService';
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -265,6 +269,16 @@ export function Step3Legal({
         <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
           {getStepDescription(entityType)}
         </Text>
+
+        {/* Phase 1 Business Migration: Enhanced verification context */}
+        {entityType === 'business' && (
+          <View style={[styles.verificationNote, { backgroundColor: colors.surfaceElevated, borderLeftColor: CultureTokens.indigo }]}>
+            <Ionicons name="information-circle-outline" size={16} color={CultureTokens.indigo} />
+            <Text style={[styles.verificationNoteText, { color: colors.textSecondary }]}>
+              Business profiles require verification (ABN + identity docs) to build trust with customers and enable paid features. Your main profile info has been pre-filled to speed things up.
+            </Text>
+          </View>
+        )}
       </View>
 
       {/* Form Fields */}
@@ -315,51 +329,50 @@ export function Step3Legal({
         )}
       </View>
 
-      {/* Info Banner */}
-      <View style={[styles.infoBanner, { backgroundColor: colors.surfaceElevated }]}>
-        <Ionicons
-          name="information-circle-outline"
-          size={20}
-          color={CultureTokens.indigo}
-          style={styles.infoIcon}
-        />
-        <View style={styles.infoContent}>
-          <Text style={[styles.infoTitle, { color: colors.text }]}>
-            Verification Process
-          </Text>
-          <Text style={[styles.infoText, { color: colors.textSecondary }]}>
-            {getVerificationInfo(entityType)}
-          </Text>
-        </View>
-      </View>
+      {/* Creator Trust: Prominent Verification Status Banner (replaces old info + status card) */}
+      {(() => {
+        // Derive realistic verification status for this wiring
+        const rawStatus = (formData as any).verificationStatus as string | undefined;
+        const derivedStatus: VerificationStatus =
+          rawStatus === 'approved' || rawStatus === 'verified' ? 'approved' :
+          rawStatus === 'in_review' || rawStatus === 'pending' ? 'in_review' :
+          rawStatus === 'needs_more_info' ? 'needs_more_info' :
+          (entityType === 'business' || entityType === 'venue' || entityType === 'organiser') ? 'not_started' : 'approved';
 
-      {/* Verification Status (if applicable) */}
-      {formData.verificationStatus && (
-        <View style={styles.verificationCard}>
-          <View
-            style={[
-              styles.verificationBadge,
-              {
-                backgroundColor: getVerificationColor(formData.verificationStatus),
-              },
-            ]}
-          >
-            <Ionicons
-              name={getVerificationIcon(formData.verificationStatus)}
-              size={16}
-              color="#FFFFFF"
-            />
-            <Text style={styles.verificationText}>
-              {getVerificationLabel(formData.verificationStatus)}
-            </Text>
-          </View>
-          {formData.verificationNotes && (
-            <Text style={[styles.verificationNotes, { color: colors.textSecondary }]}>
-              {formData.verificationNotes}
-            </Text>
-          )}
-        </View>
-      )}
+        // Entity-specific livelihood impact messaging (from Creator Trust Playbook)
+        const unlocksToday = getUnlocksToday(entityType, derivedStatus);
+        const unlocksAfter = getUnlocksAfter(entityType);
+
+        // Track the trust signal view (non-blocking)
+        try {
+          trackVerificationStatusViewed(
+            {
+              sessionId: `legal-step-${Date.now()}`,
+              userId: 'current',
+              entityType: entityType as any,
+              device: { platform: Platform.OS === 'ios' ? 'ios' : Platform.OS === 'android' ? 'android' : 'web' },
+            } as any,
+            derivedStatus,
+            3,
+            'wizard'
+          );
+        } catch {}
+
+        return (
+          <VerificationStatusBanner
+            status={derivedStatus}
+            entityType={entityType}
+            unlocksToday={unlocksToday}
+            unlocksAfter={unlocksAfter}
+            onAction={() => {
+              // Placeholder — in full unification this would open the verification flow / document upload
+              // For now it demonstrates the actionable pattern
+              console.log('[Trust] Verification action tapped for', entityType);
+            }}
+            location="wizard"
+          />
+        );
+      })()}
 
       {/* Bottom Padding */}
       <View style={styles.bottomPadding} />
@@ -407,6 +420,38 @@ function getVerificationInfo(entityType: EntityType): string {
   }
 
   return 'Your documents will be reviewed for authenticity. This helps build trust with the CulturePass community. You can publish your profile immediately and verification will happen in the background.';
+}
+
+/**
+ * Creator Trust helpers — entity-specific "what this unlocks" messaging.
+ * These directly implement the livelihood impact language from the Creator Trust Playbook.
+ */
+function getUnlocksToday(entityType: EntityType, status: VerificationStatus): string[] {
+  if (status === 'approved') {
+    return ['Accept payments', 'Appear in directory', 'Host ticketed events'];
+  }
+
+  const base = ['List in the directory', 'Create free events & activities'];
+  if (entityType === 'business' || entityType === 'venue') {
+    return [...base, 'Build customer trust with verified badge'];
+  }
+  if (entityType === 'organiser') {
+    return [...base, 'Publish free community events'];
+  }
+  return base;
+}
+
+function getUnlocksAfter(entityType: EntityType): string[] {
+  if (entityType === 'business' || entityType === 'venue') {
+    return ['Paid ticketing & ticket sales', 'CultureMarket product/service listings', 'Featured placement in search'];
+  }
+  if (entityType === 'organiser') {
+    return ['Paid ticketed events', 'Full analytics dashboard', 'Priority support for large events'];
+  }
+  if (entityType === 'artist' || entityType === 'professional') {
+    return ['Paid collaborations & bookings', 'Featured in creator directory', 'Direct booking inquiries'];
+  }
+  return ['Paid membership tiers', 'Event ticketing', 'Full community tools'];
 }
 
 /**
@@ -550,6 +595,21 @@ const styles = StyleSheet.create({
   },
   bottomPadding: {
     height: Spacing.xxl,
+  },
+  verificationNote: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: Spacing.sm,
+    padding: Spacing.md,
+    borderRadius: Radius.md,
+    borderLeftWidth: 4,
+    marginTop: Spacing.md,
+  },
+  verificationNoteText: {
+    flex: 1,
+    fontSize: 13,
+    fontFamily: FontFamily.medium,
+    lineHeight: 18,
   },
 });
 

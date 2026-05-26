@@ -20,6 +20,24 @@
  * Usage:
  *   import { useColors } from '@/hooks/useColors';
  *   const colors = useColors(); // Runtime theme access
+/**
+ * CulturePass Cultural Color System
+ * ================================
+ *
+ * A comprehensive, theme-aware cultural color system designed for global heritage experiences.
+ *
+ * Core Cultural Colors:
+ *   - Terracotta Glow (#E36A4E) — Primary action, cultural identity
+ *   - Deep Saffron (#F5A623) — Secondary action, warm highlights
+ *   - Rich Indigo (#4A5EBF) — Accent 1, cultural stories, links
+ *   - Emerald Harmony (#0A8C7F) — Accent 2, trust, community sections
+ *   - Heritage Gold (#D4A017) — Accent 3, premium elements
+ *
+ * Design Principles:
+ *   ✓ Cultural authenticity over generic palettes
+ *   ✓ Warm heritage tones for discovery and action
+ *   ✓ Accessible contrast ratios (WCAG AA minimum)
+ *   ✓ Platform-agnostic design with native performance
  */
 
 export interface ShadowStyle {
@@ -56,6 +74,16 @@ const BRAND_GOLD = "#FFC857";
 const BRAND_TEAL = "#0D9488";
 const BRAND_PURPLE = "#A855F7";
 
+/**
+ * Core Cultural Colors
+ * Primary cultural identity and action palette.
+ */
+const TERRACOTTA_GLOW = "#E36A4E";    // Primary - Main buttons, accents, hero highlights
+const DEEP_SAFFRON = "#F5A623";       // Secondary - CTAs, festival tags, warm highlights
+const RICH_INDIGO = "#4A5EBF";        // Accent 1 - Cultural stories, map pins, links
+const EMERALD_HARMONY = "#0A8C7F";    // Accent 2 - Trust, events, community sections
+const HERITAGE_GOLD = "#D4A017";      // Accent 3 - Badges, stamps, premium/passport elements
+
 /** Vivid CTA fill for high-emphasis actions. */
 export const CTA_VIVID_BLUE = BRAND_INDIGO;
 
@@ -88,6 +116,19 @@ export const CultureTokens = {
 
   /** Onboarding / auth primary button fill */
   ctaVivid: CTA_VIVID_BLUE,
+
+  // Cultural Accents
+  terracottaGlow: TERRACOTTA_GLOW,
+  deepSaffron: DEEP_SAFFRON,
+  richIndigo: RICH_INDIGO,
+  emeraldHarmony: EMERALD_HARMONY,
+  heritageGold: HERITAGE_GOLD,
+
+  // Theme surface tokens (referenced by light/dark ColorTheme; enables proper light mode)
+  backgroundLight: '#FAF9F6',
+  backgroundDark: '#000000',
+  surfaceLight: '#FFFFFF',
+  surfaceDark: '#121214',
 } as const;
 
 /** Olympics 5-ring colors for filter chips, buttons, and accents (mostly black/white base per request). */
@@ -104,48 +145,35 @@ export const OlympicsColors = {
  * across Discover, search, and filter screens.
  */
 export const CategoryColors = {
-  music:       OlympicsColors.red,
-  dance:       OlympicsColors.blue,
-  food:        CultureTokens.coral,
-  art:         OlympicsColors.blue,
-  wellness:    OlympicsColors.green,
-  movies:      OlympicsColors.red,
-  workshop:    OlympicsColors.black,
-  heritage:    CultureTokens.teal,
-  activities:  OlympicsColors.green,
-  nightlife:   OlympicsColors.red,
-  comedy:      CultureTokens.violet,
-  sports:      OlympicsColors.blue,
-  monuments:   OlympicsColors.black,
-  artists:     CultureTokens.indigo,
-  shopping:    OlympicsColors.red,
-  /** Browse / CategoryRail slugs (`id.toLowerCase().replace(/[^a-z]/g, '')`) */
-  kidsyouth:   CultureTokens.teal,
-  family:      CultureTokens.indigo,
-  communitycauses: CultureTokens.violet,
-  exhibitions: OlympicsColors.blue,
-  festival:    CultureTokens.coral,
-  fooddrink:   CultureTokens.coral,
-  shoppingmarketsfairs: CultureTokens.gold,
-  sportfitness: OlympicsColors.green,
-  talkscoursesworkshops: CultureTokens.indigo,
-  theatredancefilm: CultureTokens.violet,
-  toursexperiences: CultureTokens.teal,
+  events: CultureTokens.emeraldHarmony,
+  festivals: CultureTokens.deepSaffron,
+  food: "#F97316",              // Orange
+  art: "#EC4899",               // Pink
+  music: "#8B5CF6",             // Purple
+  language: CultureTokens.richIndigo,
+  community: CultureTokens.heritageGold,
+  indigenous: "#06B6D4",        // Cyan
+  movies: CultureTokens.movie,
 } as const;
 
 /**
  * Entity type colors — used in community/profile listings to
  * colour-code organisations, venues, artists, etc.
  */
-export const EntityTypeColors = {
-  community:    BRAND_INDIGO,
-  organisation: BRAND_INDIGO,
-  venue:        BRAND_TEAL,
-  council:      BRAND_GOLD,
-  government:   BRAND_INDIGO,
-  artist:       BRAND_CORAL,
-  business:     BRAND_VIOLET,
-  charity:      BRAND_CORAL,
+export type EntityType = 'event' | 'venue' | 'community' | 'organizer' | 'host' | 'festival' | 'tradition' | 'organisation' | 'council' | 'government' | 'charity' | 'business';
+export const EntityTypeColors: Record<EntityType, string> = {
+  event: CultureTokens.emeraldHarmony,
+  venue: CultureTokens.richIndigo,
+  community: CultureTokens.heritageGold,
+  organizer: CultureTokens.deepSaffron,
+  host: CultureTokens.terracottaGlow,
+  festival: CultureTokens.deepSaffron,
+  tradition: "#8B5CF6",
+  organisation: CultureTokens.indigo,
+  council: CultureTokens.teal,
+  government: CultureTokens.indigo,
+  charity: CultureTokens.coral,
+  business: CultureTokens.emeraldHarmony,
 } as const;
 
 export type ColorTheme = {
@@ -249,47 +277,54 @@ const sharedBase = {
 export const light: ColorTheme = {
   ...sharedBase,
 
-  primary: BRAND_INDIGO,
-  primaryLight: "#7C74FF",
-  primaryDark: "#3730A3",
-  primaryGlow: "rgba(79, 70, 229, 0.22)",
-  primarySoft: "rgba(79, 70, 229, 0.10)",
+  primary: CultureTokens.indigo,
+  primaryLight: "#E8DDFF",
+  primaryDark: "#1B0B4B",
+  primaryGlow: "rgba(79, 70, 229, 0.15)",
+  primarySoft: "rgba(79, 70, 229, 0.08)",
 
-  background: "#FFFBF7",
+  secondary: CultureTokens.deepSaffron,
+  secondaryLight: "#FFF0D9",
+  secondaryDark: "#524500",
+
+  accent: CultureTokens.terracottaGlow,
+  accentLight: "#FFDBCB",
+
+  background: CultureTokens.backgroundLight,
   backgroundSecondary: "#F5F1EE",
 
-  surface: "#FFFDFA",
-  surfaceElevated: "#FFFBF7",
+  surface: CultureTokens.surfaceLight,
+  surfaceElevated: "#FFFFFF",
   surfaceSecondary: "#F5F1EE",
 
-  border: "#E7E5E4",
-  borderLight: "#D6D3D1",
-  divider: "#E7E5E4",
+  border: "#D6D3D1",
+  borderLight: "#E7E5E4",
+  divider: "#F5F5F4",
 
   text: "#1C1917",
   textSecondary: "#44403C",
-  textTertiary: "#78716C",
+  textTertiary: "#71717A",
   textInverse: "#FFFFFF",
   textOnBrandGradient: "#FFFFFF",
 
   eventDate: "#DC2626",
   eventDateOnMedia: "#FECACA",
 
-  card: "#FFFDFA",
+  card: "#FFFFFF",
   cardBorder: "#E7E5E4",
 
-  tabBar: "rgba(255,255,255,0.96)",
-  tabBarBorder: "rgba(231,229,228,0.9)",
-  tabIconDefault: "#78716C",
-  tabIconSelected: BRAND_INDIGO,
+  tabBar: "rgba(255,255,255,0.92)",
+  tabBarBorder: "rgba(231,229,228,0.5)",
+  tabIconDefault: "#71717A",
+  tabIconSelected: CultureTokens.indigo,
 
-  tint: BRAND_INDIGO,
+  tint: CultureTokens.indigo,
 
-  cultureBrand: BRAND_INDIGO,
-  culturePrimary: BRAND_INDIGO,
-  cultureSecondary: BRAND_VIOLET,
-  cultureAccent: CultureTokens.coral,
-  cultureHighlight: OlympicsColors.green,
+  cultureBrand: CultureTokens.terracottaGlow,
+  culturePrimary: CultureTokens.terracottaGlow,
+  cultureSecondary: CultureTokens.deepSaffron,
+  cultureAccent: CultureTokens.heritageGold,
+  cultureHighlight: CultureTokens.emeraldHarmony,
 };
 
 /**
@@ -305,47 +340,54 @@ export const light: ColorTheme = {
 export const dark: ColorTheme = {
   ...sharedBase,
 
-  primary: "#C8C1FF",
-  primaryLight: "#E8DDFF",
-  primaryDark: BRAND_INDIGO,
-  primaryGlow: "rgba(200, 193, 255, 0.30)",
-  primarySoft: "rgba(200, 193, 255, 0.12)",
+  primary: CultureTokens.indigo,
+  primaryLight: "#C8C1FF",
+  primaryDark: "#23105E",
+  primaryGlow: "rgba(79, 70, 229, 0.35)",
+  primarySoft: "rgba(79, 70, 229, 0.15)",
 
-  background: "#0C0A09",
-  backgroundSecondary: "#0C0A09",
+  secondary: CultureTokens.deepSaffron,
+  secondaryLight: "#765D00",
+  secondaryDark: "#FFF0D9",
 
-  surface: "#1C1917",
-  surfaceElevated: "#292524",
-  surfaceSecondary: "#1C1917",
+  accent: CultureTokens.terracottaGlow,
+  accentLight: "#7D2900",
 
-  border: "#44403C",
-  borderLight: "#57534E",
-  divider: "#292524",
+  background: CultureTokens.backgroundDark,
+  backgroundSecondary: "#121214",
+
+  surface: CultureTokens.surfaceDark,
+  surfaceElevated: "#1E1E20",
+  surfaceSecondary: "#1E1E20",
+
+  border: "#27272A",
+  borderLight: "#3F3F46",
+  divider: "#18181B",
 
   text: "#FAF9F6",
-  textSecondary: "#A8A29E",
-  textTertiary: "#78716C",
+  textSecondary: "#A1A1AA",
+  textTertiary: "#71717A",
   textInverse: "#1C1917",
   textOnBrandGradient: "#FFFFFF",
 
   eventDate: "#F87171",
   eventDateOnMedia: "#FECACA",
 
-  card: "#1C1917",
-  cardBorder: "#44403C",
+  card: "#121214",
+  cardBorder: "#27272A",
 
-  tabBar: "rgba(12,10,9,0.94)",
-  tabBarBorder: "rgba(68,64,60,0.6)",
-  tabIconDefault: "#78716C",
-  tabIconSelected: "#C8C1FF",
+  tabBar: "rgba(0,0,0,0.92)",
+  tabBarBorder: "rgba(39,39,42,0.6)",
+  tabIconDefault: "#71717A",
+  tabIconSelected: CultureTokens.indigo,
 
-  tint: "#C8C1FF",
+  tint: CultureTokens.indigo,
 
-  cultureBrand: "#C8C1FF",
-  culturePrimary: "#C8C1FF",
-  cultureSecondary: "#E5B7FF",
-  cultureAccent: CultureTokens.coral,
-  cultureHighlight: OlympicsColors.green,
+  cultureBrand: CultureTokens.terracottaGlow,
+  culturePrimary: CultureTokens.terracottaGlow,
+  cultureSecondary: CultureTokens.deepSaffron,
+  cultureAccent: CultureTokens.heritageGold,
+  cultureHighlight: CultureTokens.emeraldHarmony,
 };
 
 export const shadows = {
@@ -391,18 +433,30 @@ export const glass = {
 export const gradients = {
   /**
    * CulturePass Signature Gradient (2026)
-   * Violet #9333EA → Coral #FF5E5B — sunset/festival vibe.
+   * Terracotta Glow #E36A4E → Deep Saffron #F5A623 — warm heritage vibe.
    * Max ONE per screen. Hero / onboarding / CulturePass+ only.
    */
   culturepassBrand: [
-    CultureTokens.violet,
-    CultureTokens.coral,
+    CultureTokens.terracottaGlow,
+    CultureTokens.deepSaffron,
   ] as [string, string],
 
-  /** CulturePass Signature Gradient (reversed: Emerald → Violet) */
-  culturepassBrandReversed: [
-    CultureTokens.teal,
-    CultureTokens.indigo,
+  /** Primary brand gradient alias */
+  primary: [
+    CultureTokens.terracottaGlow,
+    CultureTokens.deepSaffron,
+  ] as [string, string],
+
+  /** Midnight / dark depth gradient */
+  midnight: [
+    "#121214",
+    "#000000",
+  ] as [string, string],
+
+  /** Cultural Harmony Gradient — Emerald Harmony → Rich Indigo */
+  culturalHarmony: [
+    CultureTokens.emeraldHarmony,
+    CultureTokens.richIndigo,
   ] as [string, string],
 
   /** Coral pressed gradient — Movement Coral → deep coral. Used for live/age badges on event surfaces. */
@@ -411,47 +465,48 @@ export const gradients = {
     "#CC237F",
   ] as [string, string],
 
-  /** Primary brand gradient — saturated blue ramp */
-  primary: [BRAND_INDIGO, "#3730A3"] as [string, string],
-  /** Accent gradient — coral to gold */
-  accent: [BRAND_CORAL, BRAND_GOLD] as [string, string],
+  /** Warm Welcome Gradient — Deep Saffron → Heritage Gold */
+  warmWelcome: [
+    CultureTokens.deepSaffron,
+    CultureTokens.heritageGold,
+  ] as [string, string],
   /** Premium gold gradient for membership/pro badges */
   gold: [BRAND_GOLD, "#E6A900"] as [string, string],
-  /** Dark surface gradient for cards on dark mode */
-  darkSurface: ["#1C1C1E", "#2C2C2E"] as [string, string],
+  /** Terracotta Sunset Gradient — Terracotta Glow → Deep Saffron */
+  terracottaSunset: [
+    CultureTokens.terracottaGlow,
+    "#F59E0B",
+  ] as [string, string],
   /** Hero banner overlay (transparent → dark) */
-  heroOverlay: ["transparent", "rgba(0,0,0,0.6)"] as [string, string],
+  heroOverlay: ["transparent", "rgba(0,0,0,0.8)"] as [string, string],
   /** Success / positive action — Apple Green */
   success: ["#10B981", "#059669"] as [string, string],
-  /** Aurora — brand blue, green, pink */
-  aurora: [
-    CultureTokens.indigo,
-    BRAND_TEAL,
-    BRAND_CORAL,
+  /** Indigo Depth Gradient — Rich Indigo → Purple */
+  indigoDepth: [
+    CultureTokens.richIndigo,
+    "#7C3AED",
+  ] as [string, string],
+  /** Emerald Growth Gradient — Emerald Harmony → Bright Emerald */
+  emeraldGrowth: [
+    CultureTokens.emeraldHarmony,
+    "#10B981",
+  ] as [string, string],
+  /** Gold Accent Gradient — Heritage Gold → Warm Gold */
+  goldAccent: [
+    CultureTokens.heritageGold,
+    "#FBBF24",
+  ] as [string, string],
+  /** Cultural Blend Gradient — Terracotta Glow → Deep Saffron → Heritage Gold */
+  culturalBlend: [
+    CultureTokens.terracottaGlow,
+    CultureTokens.deepSaffron,
+    CultureTokens.heritageGold,
   ] as [string, string, string],
-  /** Sunset — Pink to Yellow */
-  sunset: [
-    BRAND_CORAL,
-    "#FF7DC3",
-    BRAND_GOLD,
-  ] as [string, string, string],
-  /** Midnight — deep dark */
-  midnight: [
-    "#000000",
-    "#1C1C1E",
-    "#2C2C2E",
-  ] as [string, string, string],
-  /** Festival / Apple brights */
-  festival: [
-    CultureTokens.indigo,
-    BRAND_TEAL,
-    BRAND_CORAL,
-  ] as [string, string, string],
-  /** Olympic — full rings (kept for compatibility) */
-  olympic: [
-    CultureTokens.indigo,
-    BRAND_GOLD,
-    BRAND_CORAL,
+  /** Passport Prestige Gradient — Heritage Gold → Deep Saffron → Rich Indigo */
+  passportPrestige: [
+    CultureTokens.heritageGold,
+    "#F59E0B",
+    CultureTokens.richIndigo,
   ] as [string, string, string],
 };
 
@@ -460,14 +515,14 @@ export const gradients = {
  * Use sparingly — only on focal points, not general UI.
  */
 export const neon = {
-  blue: { color: BRAND_INDIGO, glow: "rgba(79, 70, 229, 0.45)" },
-  purple: { color: BRAND_VIOLET, glow: "rgba(147, 51, 234, 0.45)" },
-  teal: { color: BRAND_TEAL, glow: "rgba(13, 148, 136, 0.45)" },
-  gold: { color: BRAND_GOLD, glow: "rgba(255, 200, 87, 0.50)" },
-  coral: { color: BRAND_CORAL, glow: "rgba(255, 94, 91, 0.45)" },
+  culturalHighlight: { color: CultureTokens.terracottaGlow, glow: "rgba(227, 106, 78, 0.3)" },      // Terracotta glow
+  festivalGlow: { color: CultureTokens.deepSaffron, glow: "rgba(245, 166, 35, 0.3)" },           // Saffron glow
+  storySpotlight: { color: CultureTokens.richIndigo, glow: "rgba(74, 94, 191, 0.3)" },          // Indigo glow
+  communityPulse: { color: CultureTokens.emeraldHarmony, glow: "rgba(10, 140, 127, 0.3)" },         // Emerald glow
+  achievementRadiance: { color: CultureTokens.heritageGold, glow: "rgba(212, 160, 23, 0.3)" },    // Gold glow
 } as const;
 
-const Colors = {
+export default {
   ...light, // Default export maps to light mode variables
   light,
   dark,
@@ -477,6 +532,7 @@ const Colors = {
   gradients,
   tokens: CultureTokens, // Cultural brand tokens
   cultureTokens: CultureTokens,
+  neon,
+  categoryColors: CategoryColors,
+  entityTypeColors: EntityTypeColors,
 } as const;
-
-export default Colors;

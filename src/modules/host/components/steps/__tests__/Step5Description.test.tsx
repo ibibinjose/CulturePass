@@ -168,7 +168,7 @@ describe('Step5Description', () => {
     const { getByText } = render(<Step5Description {...defaultProps} />);
     
     expect(getByText('Test Community')).toBeTruthy();
-    expect(getByText('culturepass.com/@testcommunity')).toBeTruthy();
+    expect(getByText(/@testcommunity$/)).toBeTruthy();
   });
 
   it('shows success badge when tagline is valid', () => {

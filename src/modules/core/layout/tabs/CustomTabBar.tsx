@@ -27,7 +27,13 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Pressable } from 'react-native';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import type { Route } from '@react-navigation/native';
+// import type { Route } from '@react-navigation/native';
+type Route<T extends string, P extends object | undefined = object | undefined> = {
+  key: string;
+  name: T;
+  params: P;
+  path?: string;
+};
 
 import { useColors, useIsDark } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';

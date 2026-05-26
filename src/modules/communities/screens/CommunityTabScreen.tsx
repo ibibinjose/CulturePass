@@ -237,7 +237,7 @@ function StatsBar({
   return (
     <View style={[styles.communityOverview, { paddingHorizontal: hPad }]}>
       <LinearGradient
-        colors={[withAlpha(CultureTokens.indigo, 0.98), withAlpha(CultureTokens.coral, 0.9)]}
+        colors={[withAlpha(CultureTokens.indigo, 0.95), withAlpha(CultureTokens.coral, 0.88)]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={[styles.communityHero, isDesktop && styles.communityHeroDesktop]}
@@ -248,7 +248,7 @@ function StatsBar({
             <Text style={[styles.heroKicker, { color: colors.textInverse }]}>Community orbit</Text>
           </View>
           <Text style={[styles.heroTitle, { color: colors.textInverse }]}>Find your people in {cityName}</Text>
-          <Text style={[styles.heroSubtitle, { color: withAlpha(colors.textInverse, 0.86) }]}>
+          <Text style={[styles.heroSubtitle, { color: withAlpha(colors.textInverse, 0.82) }]}>
             Follow cultural hubs, join communities, and keep upcoming events in one living feed.
           </Text>
         </View>
@@ -261,11 +261,11 @@ function StatsBar({
             accessibilityLabel="Discover communities"
             style={styles.heroActionButton}
           >
-            Discover
+            Browse hubs
           </M3Button>
           {isAuthenticated ? (
             <M3Button
-              variant="elevated"
+              variant="filled"
               leftIcon="add"
               onPress={onCreateHub}
               accessibilityLabel="Create community hub"
@@ -859,8 +859,8 @@ export default function CommunityTabScreen() {
           try {
             await Share.share({
               title:   event.title,
-              message: `${event.title}\nhttps://culturepass.app/e/${event.id}`,
-              url:     `https://culturepass.app/e/${event.id}`,
+              message: `${event.title}\nhttps://culturepass.co/e/${event.id}`,
+              url:     `https://culturepass.co/e/${event.id}`,
             });
           } catch {}
         },
@@ -897,7 +897,7 @@ export default function CommunityTabScreen() {
     const url =
       typeof window !== 'undefined' && window.location?.origin
         ? `${window.location.origin}/community`
-        : 'https://culturepass.app/community';
+        : 'https://culturepass.co/community';
     try {
       await Share.share({
         title:   'CulturePass Community',

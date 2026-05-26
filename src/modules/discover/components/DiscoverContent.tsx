@@ -1,5 +1,5 @@
 import React from 'react';
-import { View } from 'react-native';
+import { View, Platform } from 'react-native';
 import { router } from 'expo-router';
 
 import { useLayout } from '@/hooks/useLayout';
@@ -8,6 +8,17 @@ import { M3SectionHeader } from '@/design-system/ui';
 import { M3EventCard } from '@/modules/events/components/M3EventCard';
 import type { EventData } from '@/shared/schema';
 
+/* eslint-disable import/first -- lazy dynamic imports + barrel re-exports must appear before regular code */
+import { createLazyComponent } from '@/lib/lazy';
+
+const CityRail = createLazyComponent(() => import('@/components/Discover/CityRail'));
+const LazyCommunityRail = createLazyComponent(() => import('@/components/Discover/CommunityRail'));
+
+import ContinueBrowsingRail from '@/components/Discover/ContinueBrowsingRail';
+import CommunityEventsRail from '@/components/Discover/CommunityEventsRail';
+import UpcomingTicketCard from '@/components/Discover/UpcomingTicketCard';
+import OnboardingBanner from '@/components/Discover/OnboardingBanner';
+
 import {
   DiscoverCultureTodayCard,
   SuperAppLinks,
@@ -15,23 +26,17 @@ import {
   EventRail,
   M3EventRail,
   CultureCardRail,
-  CommunityRail,
   IndigenousSpotlight,
   CategoryRail,
-  CityRail,
   PreviewRail,
   CultureHubRail,
   InlineSearchResults,
   DiscoverShopRail,
 } from './index';
 
-import ContinueBrowsingRail from '@/components/Discover/ContinueBrowsingRail';
-import CommunityEventsRail from '@/components/Discover/CommunityEventsRail';
-import UpcomingTicketCard from '@/components/Discover/UpcomingTicketCard';
-import OnboardingBanner from '@/components/Discover/OnboardingBanner';
-
 import { useDiscoverData } from '../hooks/useDiscoverData';
 import { useKeralaScoping } from '../hooks/useKeralaScoping';
+/* eslint-enable import/first */
 
 type DiscoverFilter =
   | 'all'
@@ -70,7 +75,10 @@ export function DiscoverContent({
   keralaDomain,
   skippedOnboardingSteps = [],
 }: DiscoverContentProps) {
-  const { hPad, isExpanded, contentWidth } = useLayout();
+  const { hPad, isExpanded, contentWidth, isDesktop } = useLayout();
+
+  // Match the page-level side padding used on web desktop (modest gutter next to sticky sidebar)
+  const sidePad = isDesktop && Platform.OS === 'web' ? 16 : hPad;
 
   const show = (sections: DiscoverFilter[]) => {
     return activeFilter === 'all' || sections.includes(activeFilter);
@@ -160,7 +168,7 @@ export function DiscoverContent({
       {show(['events', 'art']) &&
         hasNearby &&
         (isExpanded ? (
-          <View style={{ paddingHorizontal: hPad, marginVertical: 24 }}>
+          <View style={{ paddingHorizontal: sidePad, marginVertical: 24 }}>
             <M3SectionHeader
               title="Popular Near You"
               subtitle="Trending in your area"
@@ -227,7 +235,7 @@ export function DiscoverContent({
       {show(['hubs']) && <CultureHubRail />}
 
       {show(['hubs']) && (
-        <CommunityRail
+        <LazyCommunityRail
           title="Communities"
           subtitle={
             keralaDomain ? 'Malayalee groups & cultural circles' : 'Connect with your culture'
@@ -245,7 +253,7 @@ export function DiscoverContent({
         <PreviewRail
           title="Movies"
           subtitle="Now screening near you"
-          accentColor={CultureTokens.gold}
+          accentColor={CultureTokens.heritageGold}
           icon="film-outline"
           items={
             d.moviesLoading ? (['skeleton', 'skeleton', 'skeleton'] as const) : d.moviePreviewItems
@@ -259,7 +267,7 @@ export function DiscoverContent({
         <PreviewRail
           title="Dining"
           subtitle="Cultural flavours near you"
-          accentColor={CultureTokens.coral}
+          accentColor={CultureTokens.deepSaffron}
           icon="restaurant-outline"
           items={
             d.restaurantsLoading
@@ -275,7 +283,7 @@ export function DiscoverContent({
         <PreviewRail
           title="Shopping Directory"
           subtitle="Cultural goods and specialty stores"
-          accentColor={CultureTokens.teal}
+          accentColor={CultureTokens.emeraldHarmony}
           icon="bag-handle-outline"
           items={
             d.shoppingLoading
@@ -307,7 +315,7 @@ export function DiscoverContent({
         <PreviewRail
           title="Offers & Perks"
           subtitle="Exclusive deals for members"
-          accentColor={CultureTokens.indigo}
+          accentColor={CultureTokens.richIndigo}
           icon="pricetag-outline"
           items={
             d.perksLoading ? (['skeleton', 'skeleton', 'skeleton'] as const) : d.perksPreviewItems

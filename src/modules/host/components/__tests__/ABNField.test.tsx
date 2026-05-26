@@ -14,6 +14,7 @@
 
 import React from 'react';
 import { render, fireEvent, waitFor, act } from '@testing-library/react-native';
+import { Alert } from 'react-native';
 import { ABNField } from '../fields/ABNField';
 
 // Mock dependencies
@@ -49,6 +50,10 @@ jest.mock('@expo/vector-icons', () => ({
   Ionicons: 'Ionicons',
 }));
 
+// Mock Alert to catch calls
+const alertMock = jest.fn();
+Alert.alert = alertMock;
+
 jest.mock('@/design-system/ui/Input', () => ({
   Input: ({ label, value, onChangeText, placeholder, error, hint, ...props }: any) => {
     const { View, Text, TextInput } = require('react-native');
@@ -83,7 +88,7 @@ describe('ABNField', () => {
     api.profiles.abnLookup.mockResolvedValue({
       ok: true,
       validated: true,
-      entityName: 'Test Business Pty Ltd',
+      entityName: 'Test Business CulturePass.App',
     });
   });
 
@@ -318,7 +323,7 @@ describe('ABNField', () => {
       api.profiles.abnLookup.mockResolvedValue({
         ok: true,
         validated: true,
-        entityName: 'Acme Corporation Pty Ltd',
+        entityName: 'Acme Corporation CulturePass.App',
       });
 
       const { getByTestId, findByText } = render(
@@ -332,7 +337,7 @@ describe('ABNField', () => {
         jest.advanceTimersByTime(300);
       });
 
-      const businessName = await findByText('Acme Corporation Pty Ltd');
+      const businessName = await findByText('Acme Corporation CulturePass.App');
       expect(businessName).toBeTruthy();
     });
 
@@ -503,9 +508,9 @@ describe('ABNField', () => {
         status: 'denied',
       });
 
-      // Define global.alert for the test environment
-      const alertMock = jest.fn();
-      (global as any).alert = alertMock;
+      // Mock Alert.alert
+      const alertSpy = jest.fn();
+      Alert.alert = alertSpy;
 
       const { getByText } = render(
         <ABNField value="" onChange={mockOnChange} />
@@ -518,12 +523,11 @@ describe('ABNField', () => {
       });
 
       await waitFor(() => {
-        expect(alertMock).toHaveBeenCalledWith(
+        expect(alertSpy).toHaveBeenCalledWith(
+          'Permission Required',
           'Camera roll permission is needed to scan documents.'
         );
       });
-
-      delete (global as any).alert;
     });
 
     it('handles cancelled image selection', async () => {

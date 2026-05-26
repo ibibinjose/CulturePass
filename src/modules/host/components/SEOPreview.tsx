@@ -111,7 +111,7 @@ export function SEOPreview({
             style={[styles.googleUrl, { color: CultureTokens.teal }]}
             numberOfLines={1}
           >
-            {seoMeta.canonicalUrl || 'culturepass.app/...'}
+            {seoMeta.canonicalUrl || 'culturepass.co/...'}
           </Text>
           <Text
             style={[styles.googleDescription, { color: colors.textSecondary }]}
@@ -154,7 +154,7 @@ export function SEOPreview({
               style={[styles.socialDomain, { color: colors.textTertiary }]}
               numberOfLines={1}
             >
-              culturepass.app
+              culturepass.co
             </Text>
             <Text
               style={[styles.socialTitle, { color: colors.text }]}

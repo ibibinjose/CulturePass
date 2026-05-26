@@ -26,7 +26,7 @@
  * ```
  */
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -46,6 +46,10 @@ import {
   calculateDraftCompletion,
   getDraftStepLabel,
 } from '../hooks/useDraftRecovery';
+import {
+  trackDraftRecoveryShown,
+  trackDraftRecoveryUsed,
+} from '../services/formAnalyticsService';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -130,6 +134,26 @@ export function DraftRecoveryModal({
   onDismiss,
 }: DraftRecoveryModalProps) {
   const colors = useColors();
+  const hasTrackedShown = useRef(false);
+
+  useEffect(() => {
+    if (visible && drafts.length > 0 && !hasTrackedShown.current) {
+      // Trust signal: we are proactively surfacing saved work
+      trackDraftRecoveryShown(
+        {
+          sessionId: `draft-${Date.now()}`,
+          userId: 'current',
+          entityType: drafts[0]?.entityType as any,
+          device: { platform: Platform.OS === 'ios' ? 'ios' : Platform.OS === 'android' ? 'android' : 'web' },
+        } as any,
+        drafts.length,
+      );
+      hasTrackedShown.current = true;
+    }
+    if (!visible) {
+      hasTrackedShown.current = false;
+    }
+  }, [visible, drafts.length]);
 
   if (!visible) return null;
 
@@ -166,9 +190,7 @@ export function DraftRecoveryModal({
               { color: colors.textSecondary, marginTop: Spacing.xs },
             ]}
           >
-            You have {drafts.length} incomplete profile
-            {drafts.length === 1 ? '' : 's'}. Pick up where you left off or
-            start fresh.
+            We saved your progress. Pick up exactly where you left off — nothing is lost.
           </Text>
         </View>
 
@@ -182,7 +204,21 @@ export function DraftRecoveryModal({
             <DraftCard
               key={draft.id}
               draft={draft}
-              onSelect={() => onSelectDraft(draft.id)}
+              onSelect={() => {
+                // Trust signal: creator chose to continue a draft
+                const completion = calculateDraftCompletion(draft);
+                trackDraftRecoveryUsed(
+                  {
+                    sessionId: `draft-${Date.now()}`,
+                    userId: 'current',
+                    entityType: draft.entityType as any,
+                    device: { platform: Platform.OS === 'ios' ? 'ios' : Platform.OS === 'android' ? 'android' : 'web' },
+                  } as any,
+                  draft.id,
+                  completion,
+                );
+                onSelectDraft(draft.id);
+              }}
               colors={colors}
             />
           ))}
@@ -204,8 +240,8 @@ export function DraftRecoveryModal({
             accessibilityRole="button"
             accessibilityLabel="Continue with most recent draft"
           >
-            <Text style={[TextStyles.callout, { color: '#FFFFFF' }]}>
-              Continue Most Recent
+            <Text style={[TextStyles.callout, { color: '#FFFFFF', fontWeight: '600' }]}>
+              Continue Editing
             </Text>
           </Pressable>
 
@@ -270,7 +306,7 @@ function DraftCard({ draft, onSelect, colors }: DraftCardProps) {
       ]}
       onPress={onSelect}
       accessibilityRole="button"
-      accessibilityLabel={`Continue ${entityConfig.label} draft, ${completion}% complete, last modified ${age}`}
+      accessibilityLabel={`Continue ${entityConfig.label} draft — ${completion}% complete. Last worked on ${age}. Tap to resume.`}
     >
       <>
       {/* Entity Type Badge */}
@@ -329,7 +365,7 @@ function DraftCard({ draft, onSelect, colors }: DraftCardProps) {
         On: {currentStepLabel}
       </Text>
 
-      {/* Progress Bar */}
+      {/* Progress Bar - Elevated Trust Visual */}
       <View style={styles.progressContainer}>
         <View
           style={[
@@ -347,6 +383,14 @@ function DraftCard({ draft, onSelect, colors }: DraftCardProps) {
             ]}
           />
         </View>
+        <Text
+          style={[
+            TextStyles.captionStrong,
+            { color: entityConfig.color, minWidth: 36, textAlign: 'right' },
+          ]}
+        >
+          {completion}%
+        </Text>
         <Text style={[TextStyles.caption, { color: colors.textTertiary }]}>
           {completion}%
         </Text>

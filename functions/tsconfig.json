@@ -1,41 +1,31 @@
 {
   "compilerOptions": {
     "module": "commonjs",
-    "esModuleInterop": true,
     "moduleResolution": "node",
-    "noImplicitReturns": false,
-    "noUnusedLocals": false,
-    "outDir": "lib/dist",
-    "rootDir": "src",
+    "target": "es2022",
+    "ignoreDeprecations": "5.0",
+    "outDir": "lib",
+    "rootDir": "..",
     "sourceMap": true,
     "strict": true,
-    "target": "es2017",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "noImplicitReturns": false,
+    "noUnusedLocals": false,
+    "resolveJsonModule": true,
     "baseUrl": ".",
     "paths": {
-      "@shared/*": [
-        "../shared/*"
-      ],
-      "@shared": [
-        "../shared/schema"
-      ]
-    },
-    "resolveJsonModule": true,
-    "skipLibCheck": true
-  },
-  "references": [
-    {
-      "path": "../shared"
+      "@shared/*": ["../shared/*"],
+      "@shared": ["../shared/schema"]
     }
-  ],
+  },
   "compileOnSave": true,
-  "include": [
-    "src/**/*"
-  ],
+  "include": ["src/**/*"],
   "exclude": [
     "node_modules",
     "lib",
     "src/__tests__/**/*",
     "src/**/*.test.ts"
-  ],
-  "extends": "expo/tsconfig.base"
+  ]
 }

@@ -18,5 +18,5 @@ module.exports = {
   /** Local agent worktrees under `.claude/` — exclude from haste map (duplicate names + occasional bad JSON). */
   modulePathIgnorePatterns: ['<rootDir>/.claude/'],
   /** Local agent worktrees live under .gitignored `.claude/`; skip so Jest does not scan duplicate package trees. */
-  testPathIgnorePatterns: ['/node_modules/', '\\.claude\\/'],
+  testPathIgnorePatterns: ['/node_modules/', '\\.claude\\/', '<rootDir>/functions/'],
 };

@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   ScrollView,
   TextInput,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -109,7 +110,11 @@ export function LicenceUploadField({
       // Request permissions
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        alert('Sorry, we need camera roll permissions to upload documents.');
+        if (Platform.OS === 'web') {
+          window.alert('Sorry, we need camera roll permissions to upload documents.');
+        } else {
+          Alert.alert('Permission Required', 'Sorry, we need camera roll permissions to upload documents.');
+        }
         setIsUploading(false);
         return;
       }

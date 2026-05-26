@@ -13,7 +13,7 @@ export function isCultureKeralaHost(): boolean {
   return KERALA_HOSTS.has(currentHostname());
 }
 
-/** Canonical share / SEO origin: CultureKerala domain when on that host, else culturepass.app */
+/** Canonical share / SEO origin: CultureKerala domain when on that host, else culturepass.co */
 export function getMarketingWebOrigin(): string {
   if (Platform.OS === 'web' && typeof window !== 'undefined') {
     const h = window.location.hostname.toLowerCase();

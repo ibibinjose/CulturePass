@@ -1,6 +1,7 @@
 import React, { useMemo, useCallback, useState } from 'react';
 import {
   Platform,
+  Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -19,8 +20,9 @@ import { useColors } from '@/hooks/useColors';
 import { useM3Colors } from '@/hooks/useM3Colors';
 import { useLayout } from '@/hooks/useLayout';
 import { useAuth } from '@/lib/auth';
-import { CultureTokens, TextStyles, M3Typography, Radius, Spacing } from '@/design-system/tokens/theme';
-import { M3TopAppBar, M3Card, Button, Skeleton } from '@/design-system/ui';
+import { api } from '@/lib/api';
+import { CultureTokens, TextStyles, M3Typography, Radius, Spacing, FontFamily } from '@/design-system/tokens/theme';
+import { M3TopAppBar, M3Card, M3Button, Skeleton, GlassView } from '@/design-system/ui';
 import { ErrorBoundary } from '@/modules/core/ui/ErrorBoundary';
 import { HostspaceAccessGate } from '@/modules/host/components/HostspaceAccessGate';
 import { DraftRecoveryModal } from '@/modules/host/components/DraftRecoveryModal';
@@ -28,13 +30,25 @@ import { hostApi } from '@/modules/host/api';
 import { canonicalEventPath, canonicalProfilePath } from '@/lib/publicPaths';
 import { formatCompactDate } from '@/lib/format';
 import { APP_NAME, SITE_ORIGIN } from '@/lib/app-meta';
-import type { EventData, Profile } from '@/shared/schema';
+import type { EventData, Profile, HostApplication } from '@/shared/schema';
 import type { ProfileDraft } from '@/platform/api/endpoints/createProfilesNamespace';
+
+// Creator Trust: Ongoing verification status visibility in HostSpace dashboard
+import { VerificationStatusBanner } from '@/modules/host/components/VerificationStatusBanner';
 
 type HostspaceSummary = {
   events: EventData[];
   profiles: Profile[];
 };
+
+// Personalized greeting for hosts
+function getHostGreeting(displayName?: string | null) {
+  const hour = new Date().getHours();
+  const name = displayName?.split(' ')[0] ?? 'Host';
+  if (hour < 12) return `Good morning, ${name}`;
+  if (hour < 17) return `Good afternoon, ${name}`;
+  return `Good evening, ${name}`;
+}
 
 const HOSTSPACE_HEAD_TITLE = `HostSpace · manage your culture · ${APP_NAME}`;
 const HOSTSPACE_HEAD_DESC =
@@ -181,6 +195,20 @@ function ProfileManageCard({ profile, index, isDesktop }: { profile: Profile; in
               <Text style={[styles.metricText, { color: colors.textTertiary }]}>{profile.eventsCount ?? 0}</Text>
             </View>
           </View>
+
+          {/* Creator Trust: Ongoing verification status for published rich profiles (dashboard visibility) */}
+          {status === 'published' && (
+            <View style={{ marginTop: Spacing.sm }}>
+              <VerificationStatusBanner
+                status={(profile as any).verificationStatus === 'approved' ? 'approved' : 'not_started'}
+                entityType={profile.entityType as any}
+                unlocksToday={['Directory visible', 'Free events live']}
+                unlocksAfter={['Paid features', 'Marketplace sales']}
+                compact
+                location="dashboard"
+              />
+            </View>
+          )}
         </View>
       </M3Card>
     </Animated.View>
@@ -296,10 +324,51 @@ function EmptyState({ title, action, onPress }: { title: string; action: string;
     <View style={[styles.emptyBox, { borderColor: colors.borderLight }]}>
       <Ionicons name="add-circle-outline" size={30} color={CultureTokens.indigo} />
       <Text style={[styles.emptyTitle, { color: colors.text }]}>{title}</Text>
-      <Button variant="primary" size="sm" leftIcon="add" onPress={onPress}>
+      <M3Button variant="primary" size="sm" leftIcon="add" onPress={onPress}>
         {action}
-      </Button>
+      </M3Button>
     </View>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Quick Action Card (beautiful, tappable, host-focused)
+// ---------------------------------------------------------------------------
+
+function QuickAction({
+  label,
+  icon,
+  color,
+  onPress,
+}: {
+  label: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  color: string;
+  onPress: () => void;
+}) {
+  const colors = useColors();
+  const m3 = useM3Colors();
+
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.quickActionCard,
+        {
+          backgroundColor: colors.surface,
+          borderColor: colors.border,
+          opacity: pressed ? 0.85 : 1,
+        },
+      ]}
+      android_ripple={{ color: 'rgba(0,0,0,0.05)' }}
+    >
+      <View style={[styles.quickActionIcon, { backgroundColor: color + '18' }]}>
+        <Ionicons name={icon} size={22} color={color} />
+      </View>
+      <Text style={[styles.quickActionLabel, { color: m3.onSurface }]} numberOfLines={2}>
+        {label}
+      </Text>
+    </Pressable>
   );
 }
 
@@ -329,7 +398,7 @@ function CreateProfileCTA() {
             </Text>
           </View>
           {isDesktop && (
-            <Button
+            <M3Button
               variant="primary"
               size="md"
               leftIcon="add"
@@ -338,11 +407,11 @@ function CreateProfileCTA() {
               accessibilityLabel="Create a new host profile"
             >
               Get Started
-            </Button>
+            </M3Button>
           )}
         </View>
         {!isDesktop && (
-          <Button
+          <M3Button
             variant="primary"
             size="md"
             leftIcon="add"
@@ -351,7 +420,7 @@ function CreateProfileCTA() {
             accessibilityLabel="Create a new host profile"
           >
             Get Started
-          </Button>
+          </M3Button>
         )}
       </LinearGradient>
     </Animated.View>
@@ -366,7 +435,7 @@ function HostspaceWorkspace() {
   const colors = useColors();
   const m3Colors = useM3Colors();
   const { hPad, isDesktop, windowSizeClass } = useLayout();
-  const { userId } = useAuth();
+  const { userId, user } = useAuth();
   const [showDraftModal, setShowDraftModal] = useState(false);
 
   // Fetch workspace summary (profiles + events)
@@ -384,6 +453,15 @@ function HostspaceWorkspace() {
     staleTime: 30_000,
   });
 
+  // Host application status (for aspiring + recently approved organizers)
+  const { data: myAppData } = useQuery({
+    queryKey: ['host-application', 'me'],
+    queryFn: () => api.hostApplications.myApplication(),
+    enabled: Boolean(userId),
+    staleTime: 60_000,
+  });
+  const myApplication: HostApplication | null = (myAppData as any)?.application ?? null;
+
   const profiles = useMemo(() => data?.profiles ?? [], [data?.profiles]);
   const events = useMemo(() => data?.events ?? [], [data?.events]);
   const communities = useMemo(
@@ -399,7 +477,13 @@ function HostspaceWorkspace() {
     setShowDraftModal(false);
     const draft = drafts.find((d) => d.id === draftId);
     if (draft) {
-      router.push(`/hostspace/create?category=${draft.entityType}&draftId=${draftId}` as never);
+      // Use profileType param for rich profiles (Phase 1 unification)
+      const richTypes = ['business', 'venue', 'artist', 'professional', 'organizer', 'community'];
+      if (richTypes.includes(draft.entityType)) {
+        router.push(`/hostspace/create?profileType=${draft.entityType}&draftId=${draftId}` as never);
+      } else {
+        router.push(`/hostspace/create?category=${draft.entityType}&draftId=${draftId}` as never);
+      }
     }
   }, [drafts]);
 
@@ -416,7 +500,12 @@ function HostspaceWorkspace() {
     if (drafts.length === 1) {
       // Single draft — navigate directly
       const draft = drafts[0];
-      router.push(`/hostspace/create?category=${draft.entityType}&draftId=${draft.id}` as never);
+      const richTypes = ['business', 'venue', 'artist', 'professional', 'organizer', 'community'];
+      if (richTypes.includes(draft.entityType)) {
+        router.push(`/hostspace/create?profileType=${draft.entityType}&draftId=${draft.id}` as never);
+      } else {
+        router.push(`/hostspace/create?category=${draft.entityType}&draftId=${draft.id}` as never);
+      }
     } else {
       // Multiple drafts — show selection modal
       setShowDraftModal(true);
@@ -467,28 +556,29 @@ function HostspaceWorkspace() {
         }
         showsVerticalScrollIndicator={false}
       >
-        {/* Hero Section */}
+        {/* Hero + Personalized Dashboard Header */}
         <Animated.View entering={FadeInUp.duration(500)} style={styles.hero}>
           <View style={[styles.badge, { backgroundColor: m3Colors.secondaryContainer }]}>
             <Text style={[styles.badgeText, { color: m3Colors.onSecondaryContainer }]}>HOST WORKSPACE</Text>
           </View>
           <View style={styles.heroRow}>
             <View style={styles.heroCopy}>
-              <Text style={[styles.title, { color: colors.text }]}>Manage your culture.</Text>
+              <Text style={[styles.greeting, { color: colors.textSecondary }]}>
+                {getHostGreeting(user?.displayName)}
+              </Text>
+              <Text style={[styles.title, { color: colors.text }]}>Your Host Command Center</Text>
               <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-                Your communities, events, listings, venues, businesses, and creator profiles live here.
+                Create events, manage communities, scan tickets, and grow your cultural impact.
               </Text>
             </View>
-            <Button
-              variant="primary"
-              size="md"
-              leftIcon="add"
+            <M3Button
+              variant="filled"
               onPress={() => router.push('/hostspace/create' as never)}
               style={styles.createButton}
               accessibilityLabel="Create in HostSpace"
             >
               Create
-            </Button>
+            </M3Button>
           </View>
         </Animated.View>
 
@@ -497,23 +587,134 @@ function HostspaceWorkspace() {
           <DraftRecoveryBanner drafts={drafts} onResume={handleResumeDraft} />
         )}
 
+        {/* Application Status + Celebration for newly approved hosts */}
+        {myApplication && (
+          <View style={{ marginBottom: 16 }}>
+            <GlassView
+              intensity={myApplication.status === 'approved' ? 35 : 20}
+              style={[
+                styles.statusBanner,
+                {
+                  borderColor: myApplication.status === 'approved' ? '#10B981' : myApplication.status === 'rejected' ? CultureTokens.coral : CultureTokens.gold,
+                  backgroundColor: myApplication.status === 'approved' ? 'rgba(16,185,129,0.08)' : 'rgba(15,23,42,0.03)',
+                },
+              ]}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                <Ionicons
+                  name={myApplication.status === 'approved' ? 'trophy' : myApplication.status === 'rejected' ? 'close-circle' : 'time'}
+                  size={24}
+                  color={myApplication.status === 'approved' ? '#10B981' : myApplication.status === 'rejected' ? CultureTokens.coral : CultureTokens.gold}
+                />
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.statusTitle, { color: colors.text }]}>
+                    {myApplication.status === 'approved' ? '🎉 You are now a Host!' : `Host Application: ${myApplication.status.toUpperCase()}`}
+                  </Text>
+                  <Text style={[styles.statusSub, { color: colors.textSecondary }]}>
+                    {myApplication.status === 'pending' && 'Your application is under review. We usually respond within 24–48 hours.'}
+                    {myApplication.status === 'approved' && 'Welcome to the Host community. Your full Host Studio, creation tools, and ticket scanner are unlocked.'}
+                    {myApplication.status === 'rejected' && (myApplication.reviewNote || 'You can re-apply after addressing the feedback.')}
+                  </Text>
+                </View>
+              </View>
+            </GlassView>
+          </View>
+        )}
+
+        {/* Quick Actions — the heart of the delightful Host experience */}
+        <View style={styles.quickActionsSection}>
+          <Text style={[styles.sectionTitleSmall, { color: colors.textSecondary }]}>QUICK ACTIONS</Text>
+          <View style={styles.quickActionsGrid}>
+            <QuickAction
+              label="New Event"
+              icon="calendar"
+              color={CultureTokens.indigo}
+              onPress={() => router.push('/hostspace/create/event' as never)}
+            />
+            <QuickAction
+              label="Scan Tickets"
+              icon="scan"
+              color={CultureTokens.coral}
+              onPress={() => router.push('/scanner' as never)}
+            />
+            <QuickAction
+              label="New Community"
+              icon="people"
+              color={CultureTokens.violet}
+              onPress={() => router.push('/hostspace/create/community' as never)}
+            />
+            <QuickAction
+              label="Create Listing"
+              icon="storefront"
+              color={CultureTokens.teal}
+              onPress={() => router.push('/hostspace/create/listing' as never)}
+            />
+          </View>
+        </View>
+
+        {/* Lightweight HostSpace navigation chips for power users */}
+        <View style={styles.hostNavChips}>
+          <Pressable onPress={() => { /* already on overview */ }} style={[styles.hostChip, styles.hostChipActive]}>
+            <Text style={styles.hostChipTextActive}>Overview</Text>
+          </Pressable>
+          <Pressable onPress={() => router.push('/hostspace/dashboard' as never)} style={styles.hostChip}>
+            <Text style={styles.hostChipText}>Analytics</Text>
+          </Pressable>
+          <Pressable onPress={() => router.push('/scanner' as never)} style={styles.hostChip}>
+            <Text style={styles.hostChipText}>Scanner</Text>
+          </Pressable>
+          <Pressable onPress={() => router.push('/hostspace/create' as never)} style={styles.hostChip}>
+            <Text style={styles.hostChipText}>Create Lab</Text>
+          </Pressable>
+        </View>
+
         {/* Create New Profile CTA */}
         <CreateProfileCTA />
 
-        {/* Stats Row */}
+        {/* Elevated Host Stats — at-a-glance command center metrics */}
         <View style={styles.statsRow}>
-          <StatCard label="Communities" value={communities.length} icon="people-outline" color={CultureTokens.violet} />
-          <StatCard label="Events" value={events.length} icon="calendar-outline" color={CultureTokens.coral} />
-          <StatCard label="Listings" value={otherProfiles.length} icon="storefront-outline" color={CultureTokens.teal} />
+          <StatCard
+            label="Published"
+            value={events.filter(e => e.status === 'published').length}
+            icon="radio-outline"
+            color={CultureTokens.indigo}
+          />
+          <StatCard
+            label="Upcoming"
+            value={events.filter(e => e.date && new Date(e.date) > new Date()).length}
+            icon="calendar-outline"
+            color={CultureTokens.teal}
+          />
+          <StatCard
+            label="Total Events"
+            value={events.length}
+            icon="calendar"
+            color={CultureTokens.coral}
+          />
+          <StatCard
+            label="Profiles"
+            value={profiles.length}
+            icon="grid-outline"
+            color={CultureTokens.violet}
+          />
+        </View>
+
+        <View style={{ alignItems: 'flex-end', marginBottom: 12 }}>
+          <M3Button
+            variant="ghost"
+            onPress={() => router.push('/hostspace/dashboard' as never)}
+          >
+            View detailed analytics →
+          </M3Button>
         </View>
 
         {/* Communities Section */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>Communities you manage</Text>
-            <Button variant="ghost" size="sm" leftIcon="add" onPress={() => router.push('/hostspace/create/community' as never)}>
+            <M3Button variant="ghost" size="sm" leftIcon="add" onPress={() => router.push('/hostspace/create/community' as never)}>
               Community
-            </Button>
+            </M3Button>
           </View>
           {isLoading ? (
             <View style={styles.grid}>
@@ -532,9 +733,9 @@ function HostspaceWorkspace() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>Events you manage</Text>
-            <Button variant="ghost" size="sm" leftIcon="add" onPress={() => router.push('/hostspace/create/event' as never)}>
+            <M3Button variant="ghost" size="sm" leftIcon="add" onPress={() => router.push('/hostspace/create/event' as never)}>
               Event
-            </Button>
+            </M3Button>
           </View>
           {isLoading ? (
             <View style={styles.grid}>
@@ -553,9 +754,9 @@ function HostspaceWorkspace() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>Listings and profiles</Text>
-            <Button variant="ghost" size="sm" leftIcon="add" onPress={() => router.push('/hostspace/create' as never)}>
+            <M3Button variant="ghost" size="sm" leftIcon="add" onPress={() => router.push('/hostspace/create' as never)}>
               Listing
-            </Button>
+            </M3Button>
           </View>
           {isLoading ? (
             <View style={styles.grid}>
@@ -846,5 +1047,95 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 14,
     fontFamily: 'Poppins_600SemiBold',
+  },
+
+  // Application Status Banner (unified host journey)
+  statusBanner: {
+    borderWidth: 1.5,
+    borderRadius: Radius.lg,
+    padding: 14,
+    backgroundColor: 'rgba(15,23,42,0.03)',
+  },
+  statusTitle: {
+    fontFamily: FontFamily.semibold,
+    fontSize: 15,
+  },
+  statusSub: {
+    fontFamily: FontFamily.regular,
+    fontSize: 13,
+    marginTop: 2,
+    lineHeight: 18,
+  },
+
+  // Greeting in hero
+  greeting: {
+    fontFamily: FontFamily.medium,
+    fontSize: 14,
+    marginBottom: 4,
+  },
+
+  // Quick Actions Dashboard Section
+  quickActionsSection: {
+    marginBottom: 20,
+  },
+  sectionTitleSmall: {
+    fontFamily: FontFamily.medium,
+    fontSize: 11,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    marginBottom: 10,
+  },
+  quickActionsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  quickActionCard: {
+    flex: 1,
+    minWidth: '47%',
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    padding: 16,
+    alignItems: 'flex-start',
+    gap: 12,
+  },
+  quickActionIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: Radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  quickActionLabel: {
+    fontFamily: FontFamily.semibold,
+    fontSize: 15,
+    lineHeight: 20,
+  },
+
+  // Lightweight internal navigation for HostSpace (best standard power-user feel)
+  hostNavChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 20,
+  },
+  hostChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: 'rgba(15,23,42,0.06)',
+  },
+  hostChipActive: {
+    backgroundColor: CultureTokens.indigo,
+  },
+  hostChipText: {
+    fontFamily: FontFamily.medium,
+    fontSize: 13,
+    color: 'rgba(15,23,42,0.75)',
+  },
+  hostChipTextActive: {
+    fontFamily: FontFamily.semibold,
+    fontSize: 13,
+    color: '#fff',
   },
 });

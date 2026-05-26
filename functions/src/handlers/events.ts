@@ -419,9 +419,23 @@ export function createEventsRouter() {
         total: result.total,
         radiusKm: radius,
       });
-    } catch (err) {
+    } catch (err: any) {
       captureRouteError(err, 'GET /api/events/nearby');
-      return res.status(500).json({ error: 'Failed to fetch nearby events' });
+      // Geo queries are best-effort. Return empty results instead of hard 500 so the UI
+      // (rails, discover tabs, city view) degrades gracefully. The real error is in logs.
+      console.error('[nearby] geo query failed, returning empty results', {
+        lat,
+        lng,
+        radius,
+        message: err?.message,
+        code: err?.code,
+      });
+      return res.json({
+        events: [],
+        total: 0,
+        radiusKm: radius,
+        warning: 'nearby query degraded',
+      });
     }
   });
 

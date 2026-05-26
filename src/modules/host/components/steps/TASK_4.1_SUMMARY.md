@@ -59,7 +59,7 @@ The component maps to the existing Profile schema:
 2. Enters official name → auto-generates suggested handle
 3. Can accept suggested handle or enter custom one
 4. Handle uniqueness is checked in real-time (300ms debounce)
-5. Preview shows final profile URL: `culturepass.com/@handle`
+5. Preview shows final profile URL: `culturepass.co/@handle`
 6. Selects founding date (no future dates allowed)
 7. Optionally enters trading name
 8. Info banner explains importance of handle permanence

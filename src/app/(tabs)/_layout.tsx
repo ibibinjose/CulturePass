@@ -10,6 +10,7 @@ import { useLayout } from '@/hooks/useLayout';
 import { M3NavigationRail, RailDestination } from '@/modules/core/layout/navigation/M3NavigationRail';
 import { buildScreenAnnouncement } from '@/lib/accessibility';
 
+
 const RAIL_DESTINATIONS: RailDestination[] = [
   { name: 'index', label: 'Discover', icon: 'compass-outline', activeIcon: 'compass' },
   { name: 'calendar', label: 'Calendar', icon: 'calendar-outline', activeIcon: 'calendar' },
@@ -32,10 +33,6 @@ const TAB_NAMES: Record<string, string> = {
   'my-space': 'Profile',
   perks: 'Perks',
 };
-
-import { NavigationMetadata } from '@/components/NavigationMetadata';
-
-// ...
 
 export default function TabsLayout() {
   const { isCompact } = useLayout();
@@ -65,7 +62,6 @@ export default function TabsLayout() {
   return (
     <NavigationStateProvider>
     <CultureTodayProvider>
-      <NavigationMetadata />
       <View style={styles.tabShell}>
         {showRail && (
           <M3NavigationRail

@@ -13,6 +13,8 @@ import { setAccessToken, setTokenRefresher, queryClient } from '@/lib/query-clie
 import { router } from 'expo-router';
 import { auth as firebaseAuth, FIREBASE_CLIENT_DISABLED_MESSAGE } from '@/lib/firebase';
 import { signOut, onAuthStateChanged, sendEmailVerification, type User as FirebaseUser } from 'firebase/auth';
+import { setSentryUser } from '@/lib/sentry';
+import { log } from '@/lib/logger';
 import { api, ApiError } from '@/lib/api';
 import type { User, UserRole, MembershipTier } from '@/shared/schema';
 import { logError } from '@/lib/reporting';
@@ -252,6 +254,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           accessToken: idToken,
           expiresAt: Date.now() + 60 * 60 * 1000,
         });
+
+        // Breadcrumb for observability (critical auth flow)
+        log.action('auth.session_restored', {
+          userId: firebaseUser.uid,
+          role: authUser.role,
+        });
+
+        // World-class observability: Set rich user context in Sentry
+        setSentryUser({
+          id: firebaseUser.uid,
+          username: authUser.username,
+          email: firebaseUser.email || undefined,
+          role: authUser.role,
+        });
+
         // NOTE: city/country sync to OnboardingContext is handled by
         // the DataSync component in _layout.tsx (avoids circular dep).
       } catch (error) {
@@ -388,6 +405,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       devErrorLog('logout failed', error);
     } finally {
       setIsLoading(false);
+
+      // Clear Sentry user context on logout (security + privacy best practice)
+      setSentryUser(null);
+
+      log.action('auth.logout', { redirectTo });
     }
   }, []);
 

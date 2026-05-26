@@ -62,7 +62,7 @@ export function CommunityPreviewDrawer({ profile, onClose }: CommunityPreviewDra
       },
       onError: (e: any) => {
         if (Platform.OS === 'web') {
-          alert('Failed to join community. Please try again.');
+          window.alert('Failed to join community. Please try again.');
         } else {
           Alert.alert('Join failed', 'Failed to join community. Please try again.');
         }

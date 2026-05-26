@@ -1,5 +1,5 @@
-import { Platform } from 'react-native';
 import { CultureTokens } from '@/design-system/tokens/theme';
+import { USE_NATIVE_DRIVER as _USE_NATIVE_DRIVER } from '@/design-system/tokens/animations';
 
 export const ACCENT = [
   CultureTokens.indigo,
@@ -11,7 +11,8 @@ export const ACCENT = [
   '#059669',
 ];
 
-export const USE_NATIVE_DRIVER = Platform.OS !== 'web';
+/** Re-exported for backward compatibility with existing feed module imports. */
+export const USE_NATIVE_DRIVER = _USE_NATIVE_DRIVER;
 
 export const COUNTRY_FLAG: Record<string, string> = {
   'United States': '🇺🇸',

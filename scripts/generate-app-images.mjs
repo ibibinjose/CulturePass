@@ -105,7 +105,7 @@ function androidBackgroundSvg(size) {
 }
 
 function socialPreviewSvg(w, h) {
-  const tag = "Belong anywhere.";
+  const tag = "Connecting cultures, building belonging.";
   return Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
 <svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg">
   <defs>

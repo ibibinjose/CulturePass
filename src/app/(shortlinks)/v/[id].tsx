@@ -402,7 +402,7 @@ const getStyles = (colors: ReturnType<typeof useColors>) => StyleSheet.create({
 
   heroContainer: { position: "relative" },
   heroImage: { width: "100%", height: "100%" },
-  heroGradient: { ...StyleSheet.absoluteFillObject },
+  heroGradient: { ...StyleSheet.absoluteFill },
   heroTopBar: {
     position: "absolute",
     left: 20,

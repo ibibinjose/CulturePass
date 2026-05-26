@@ -21,9 +21,9 @@ import { useSignup } from '@/hooks/useSignup';
 import { BrandWordmark } from '@/design-system/ui/BrandWordmark';
 
 import {
-  M3Button,
+  CulturalButton,
   M3Card,
-  M3TopAppBar,
+  CulturalTopAppBar,
   Input,
   Checkbox,
   SocialButton,
@@ -422,7 +422,7 @@ export default function SignUpScreen() {
 
       {/* CTA */}
       <Animated.View entering={enter(300)} style={s.ctaButtonContainer}>
-        <M3Button
+        <CulturalButton
           variant="filled"
           fullWidth
           haptic
@@ -433,7 +433,7 @@ export default function SignUpScreen() {
           style={s.submitButton}
         >
           Create Account
-        </M3Button>
+        </CulturalButton>
       </Animated.View>
 
       {/* Switch to sign in */}
@@ -468,7 +468,7 @@ export default function SignUpScreen() {
         <link rel="canonical" href={SIGNUP_CANONICAL} />
       </Head>
     <View style={[s.container, { backgroundColor: m3Colors.background }]}>
-      <M3TopAppBar
+      <CulturalTopAppBar
         title="Sign Up"
         onBack={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))}
         variant="medium"
@@ -622,14 +622,14 @@ const s = StyleSheet.create({
     fontSize: FontSize.body2,
     lineHeight: 20,
   },
-  linkText: { color: CultureTokens.indigo, fontFamily: FontFamily.semibold },
+  linkText: { color: CultureTokens.richIndigo, fontFamily: FontFamily.semibold },
   ctaButtonContainer: { marginTop: 12 },
   submitButton: { height: 52, borderRadius: CardTokens.radius }, // Removed hardcoded colors
 
   /* Switch */
   switchRow: { alignItems: 'center', paddingVertical: Spacing.md, marginTop: Spacing.sm },
   switchText: { fontFamily: FontFamily.regular, fontSize: FontSize.callout, textAlign: 'center' },
-  switchLink: { color: CultureTokens.indigo, fontFamily: FontFamily.bold },
+  switchLink: { color: CultureTokens.richIndigo, fontFamily: FontFamily.bold },
 
   /* Desktop two-column */
   webRow: {
@@ -645,7 +645,7 @@ const s = StyleSheet.create({
     flex: 1,
     minWidth: 360,
     maxWidth: 560,
-    backgroundColor: '#4A4AEB',
+    backgroundColor: CultureTokens.richIndigo,
     borderRadius: 24,
     borderWidth: 2,
     borderColor: '#1C1C1C',
@@ -653,7 +653,7 @@ const s = StyleSheet.create({
     paddingVertical: 20,
   },
   webKickerRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 14 },
-  webDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#FF2B9E' },
+  webDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: CultureTokens.heritageGold },
   webKickerText: { color: '#F8F8F8', letterSpacing: 1.5 },
   webKicker: {
     fontFamily: FontFamily.semibold,
@@ -685,7 +685,7 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
-    backgroundColor: '#3CC76E',
+    backgroundColor: CultureTokens.emeraldHarmony,
     borderColor: '#1C1C1C',
     borderWidth: 2,
     borderRadius: CardTokens.radius,
@@ -694,7 +694,7 @@ const s = StyleSheet.create({
     width: 6,
     alignSelf: 'stretch',
     borderRadius: 999,
-    backgroundColor: '#FF2B9E',
+    backgroundColor: CultureTokens.heritageGold,
   },
   webValueIcon: {
     width: 38,

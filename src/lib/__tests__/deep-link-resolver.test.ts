@@ -15,7 +15,7 @@ import { api } from '../api';
 jest.mock('../api', () => ({
   api: {
     raw: jest.fn(),
-    baseUrl: jest.fn(() => 'https://api.culturepass.app'),
+    baseUrl: jest.fn(() => 'https://api.culturepass.co'),
   },
 }));
 
@@ -355,7 +355,7 @@ describe('deepLinkResolver.generateOGMeta', () => {
   it('falls back to default OG image when no image available', () => {
     const entity = { title: 'No Image Event' };
     const meta = deepLinkResolver.generateOGMeta('e', entity);
-    expect(meta.image).toBe('https://culturepass.app/og-default.png');
+    expect(meta.image).toBe('https://culturepass.co/og-default.png');
   });
 
   it('falls back to default description when entity has none', () => {
@@ -374,7 +374,7 @@ describe('deepLinkResolver.generateOGMeta', () => {
   it('handles null entity gracefully', () => {
     const meta = deepLinkResolver.generateOGMeta('e', null);
     expect(meta.title).toBe('CulturePass');
-    expect(meta.image).toBe('https://culturepass.app/og-default.png');
+    expect(meta.image).toBe('https://culturepass.co/og-default.png');
   });
 
   it('generates correct meta for all valid prefixes', () => {

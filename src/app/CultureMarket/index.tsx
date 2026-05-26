@@ -36,10 +36,10 @@ import { GlassView } from '@/design-system/ui/GlassView';
 import {
   CultureTokens,
   FontFamily,
-  Radius,
-  Spacing,
   SignatureGradient,
 } from '@/design-system/tokens/theme';
+import { Radius, Spacing } from '@/design-system/tokens/spacing';
+import { USE_NATIVE_DRIVER } from '@/design-system/tokens/animations';
 import type { ShopListing } from '@/shared/schema';
 import { MARKET_CATEGORIES } from '@/shared/schema/cultureShopListing';
 import { ShopListingCard } from '@/modules/marketplace/ShopListingCard';
@@ -91,7 +91,7 @@ const FAQ_ITEMS = [
     id: 'q4',
     question: 'How do I share my listing?',
     answer:
-      'Every listing gets a unique shareable deep link at culturepass.app/CultureMarket/[id] and a short form at culturepass.app/s/[id]. Share on social media, in emails, or embed on your site.',
+      'Every listing gets a unique shareable deep link at culturepass.co/CultureMarket/[id] and a short form at culturepass.co/s/[id]. Share on social media, in emails, or embed on your site.',
   },
 ];
 
@@ -105,12 +105,12 @@ function RotatingWord() {
   useEffect(() => {
     const id = setInterval(() => {
       Animated.timing(anim, {
-        toValue: 1, duration: 240, easing: Easing.in(Easing.quad), useNativeDriver: true,
+        toValue: 1, duration: 240, easing: Easing.in(Easing.quad), useNativeDriver: USE_NATIVE_DRIVER,
       }).start(() => {
         setIdx((i) => (i + 1) % HERO_WORDS.length);
         anim.setValue(-1);
         Animated.timing(anim, {
-          toValue: 0, duration: 240, easing: Easing.out(Easing.quad), useNativeDriver: true,
+          toValue: 0, duration: 240, easing: Easing.out(Easing.quad), useNativeDriver: USE_NATIVE_DRIVER,
         }).start();
       });
     }, 2500);
@@ -197,10 +197,10 @@ function CarouselRow({ brands, reverse }: { brands: BrandRowData; reverse?: bool
       Animated.sequence([
         Animated.timing(anim, {
           toValue: reverse ? 0 : -SINGLE_SET_W,
-          duration: 22000, easing: Easing.linear, useNativeDriver: true,
+          duration: 22000, easing: Easing.linear, useNativeDriver: USE_NATIVE_DRIVER,
         }),
         Animated.timing(anim, {
-          toValue: reverse ? -SINGLE_SET_W : 0, duration: 0, useNativeDriver: true,
+          toValue: reverse ? -SINGLE_SET_W : 0, duration: 0, useNativeDriver: USE_NATIVE_DRIVER,
         }),
       ])
     );
@@ -713,6 +713,12 @@ function CultureMarketScreenInner() {
         {/* ── Hero ────────────────────────────────────────────────────── */}
         <View style={[styles.hero, { paddingHorizontal: hPad }]}>
           <LinearGradient
+            colors={[HERO_BG, '#1C162E', '#0A0812']}
+            style={styles.heroGradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          />
+          <LinearGradient
             colors={[CultureTokens.violet + '44', 'transparent']}
             start={{ x: 0.5, y: 0 }}
             end={{ x: 0.5, y: 1 }}
@@ -1117,7 +1123,9 @@ const styles = StyleSheet.create({
   root: { flex: 1 },
 
   // Hero
-  hero: { backgroundColor: HERO_BG, paddingBottom: 48 },
+  hero: { backgroundColor: HERO_BG, paddingBottom: 64 },
+  heroGradient: { ...StyleSheet.absoluteFillObject },
+  heroNoise: { ...StyleSheet.absoluteFillObject, opacity: 0.03 },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1143,17 +1151,19 @@ const styles = StyleSheet.create({
   heroContent: { paddingTop: Spacing.md },
   heroEyebrow: {
     fontFamily: FontFamily.semibold,
-    fontSize: 11,
-    letterSpacing: 1.5,
-    color: 'rgba(255,255,255,0.45)',
-    marginBottom: 10,
+    fontSize: 12,
+    letterSpacing: 1.8,
+    color: CultureTokens.coral,
+    textTransform: 'uppercase',
+    marginBottom: 12,
   },
-  heroTitleRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' },
+  heroTitleRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8 },
   heroStatic: {
     fontFamily: FontFamily.bold,
-    fontSize: Platform.OS === 'web' ? 46 : 36,
-    lineHeight: Platform.OS === 'web' ? 54 : 44,
+    fontSize: Platform.OS === 'web' ? 52 : 40,
+    lineHeight: Platform.OS === 'web' ? 60 : 48,
     color: '#fff',
+    letterSpacing: -1,
   },
   rotatingWrap: {
     height: Platform.OS === 'web' ? 54 : 44,
@@ -1162,17 +1172,18 @@ const styles = StyleSheet.create({
   },
   heroWord: {
     fontFamily: FontFamily.bold,
-    fontSize: Platform.OS === 'web' ? 46 : 36,
-    lineHeight: Platform.OS === 'web' ? 54 : 44,
+    fontSize: Platform.OS === 'web' ? 52 : 40,
+    lineHeight: Platform.OS === 'web' ? 60 : 48,
     color: CultureTokens.coral,
+    letterSpacing: -1,
   },
   heroSub: {
     fontFamily: FontFamily.regular,
-    fontSize: 15,
-    lineHeight: 23,
-    color: 'rgba(255,255,255,0.68)',
-    marginTop: 14,
-    maxWidth: 520,
+    fontSize: 16,
+    lineHeight: 25,
+    color: 'rgba(255,255,255,0.75)',
+    marginTop: 18,
+    maxWidth: 560,
   },
   heroCtas: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 22 },
   heroBtn: {
@@ -1238,26 +1249,30 @@ const styles = StyleSheet.create({
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: Radius.full,
-    borderWidth: 1,
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: Radius.lg,
+    borderWidth: 1.5,
     borderColor: 'transparent',
-    backgroundColor: 'rgba(0,0,0,0.04)',
+    backgroundColor: 'rgba(0,0,0,0.05)',
   },
   chipActiveViolet: {
-    borderWidth: 1.5,
     borderColor: CultureTokens.violet,
-    backgroundColor: CultureTokens.violet + '18',
+    backgroundColor: CultureTokens.violet + '12',
+    shadowColor: CultureTokens.violet,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 3,
   },
   chipLabel: { fontFamily: FontFamily.semibold, fontSize: 13 },
   subChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 11,
-    paddingVertical: 6,
-    borderRadius: Radius.full,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: Radius.md,
     borderWidth: 1,
     borderColor: 'transparent',
     backgroundColor: 'rgba(0,0,0,0.04)',

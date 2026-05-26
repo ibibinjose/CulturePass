@@ -99,7 +99,7 @@ export const createCheckoutSession = functions.https.onCall(async (data, context
 /** 2nd gen (Cloud Run). New name required until 1st gen `createCheckoutSession` is deleted. */
 export const createCheckoutSessionV2 = onCall(
   {
-    region: 'us-central1',
+    region: 'australia-southeast1',
   },
   async (request) => {
     if (!request.auth) {

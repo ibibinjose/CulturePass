@@ -339,6 +339,21 @@ export function useFormWizard({
             console.error('[useFormWizard] Failed to parse local draft:', error);
           }
         }
+        // Phase 1 Business Migration Enhancement: Smart pre-fill from authenticated user profile
+        else if (user && ['business', 'venue', 'artist', 'professional', 'organiser'].includes(entityType)) {
+          initialData = {
+            entityType,
+            // Pre-fill identity from main user profile (high value for Business flows)
+            fullName: user.displayName || user.username || '',
+            description: user.bio || '',
+            city: user.city || '',
+            country: user.country || '',
+            // Social links pre-fill (very useful for business/artist verification)
+            socialLinks: user.socialLinks || {},
+            // Store a reference that this was pre-filled
+            _preFilledFromUser: true,
+          } as PartialFormData;
+        }
       }
 
       setFormData(initialData);

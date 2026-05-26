@@ -15,12 +15,14 @@ import { Button } from '@/design-system/ui/Button';
 import { GlassView } from '@/design-system/ui/GlassView';
 import { M3Card } from '@/design-system/ui/M3Card';
 import { AppearanceModeToggle } from '@/design-system/ui/AppearanceModeToggle';
-import { APP_NAME, APP_WEB_TAGLINE, MADE_IN } from '@/lib/app-meta';
+import { APP_NAME, APP_WEB_TAGLINE } from '@/lib/app-meta';
 import {
   SIDEBAR_ATTENDEE_LINKS,
   SIDEBAR_BROWSE_LINKS,
   SIDEBAR_HOST_ASPIRING_LINKS,
   SIDEBAR_HOST_HUB_LINKS,
+  SIDEBAR_ADMIN_LINKS,
+  SIDEBAR_SUPERADMIN_LINKS,
   type SidebarNavLink,
 } from '@/constants/navigation/experienceNav';
 import { withAlpha } from '@/lib/withAlpha';
@@ -38,11 +40,17 @@ function SidebarLogoMark({ size, borderRadius }: { size: number; borderRadius: n
   const colors = useColors();
   return (
     <View style={{ width: size, height: size, borderRadius, overflow: 'hidden', flexShrink: 0, alignSelf: 'center' }}>
+      <LinearGradient
+        colors={gradients.culturepassBrand}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
       <View
         style={{
-          width: size,
-          height: size,
-          borderRadius,
+          margin: 1.5,
+          flex: 1,
+          borderRadius: borderRadius - 1,
           backgroundColor: colors.surface,
           alignItems: 'center',
           justifyContent: 'center',
@@ -52,7 +60,7 @@ function SidebarLogoMark({ size, borderRadius }: { size: number; borderRadius: n
         <Image
           source={require('@/assets/images/culturepass-logo.png')}
           style={[
-            { width: size - 6, height: size - 6 },
+            { width: size - 8, height: size - 8 },
             Platform.OS === 'web' ? ({ objectFit: 'contain' } as object) : null,
           ]}
           contentFit="contain"
@@ -89,23 +97,8 @@ const SPONSOR_NAV: NavItem[] = [
   { label: 'Sponsor Hub', icon: 'ribbon-outline', iconActive: 'ribbon', route: '/dashboard/sponsor', matchPrefix: true },
 ];
 
-const ADMIN_NAV: NavItem[] = [
-  { label: 'AdminSpace', icon: 'shield-half-outline', iconActive: 'shield-half', route: '/admin', matchPrefix: false },
-  { label: 'Discover Curation', icon: 'sparkles-outline', iconActive: 'sparkles', route: '/admin/discover', matchPrefix: true },
-  { label: 'Users', icon: 'people-outline', iconActive: 'people', route: '/admin/users', matchPrefix: true },
-  { label: 'Audit Logs', icon: 'list-outline', iconActive: 'list', route: '/admin/audit-logs', matchPrefix: true },
-  { label: 'Compliance', icon: 'shield-checkmark-outline', iconActive: 'shield-checkmark', route: '/admin/data-compliance', matchPrefix: true },
-  { label: 'Platform', icon: 'settings-outline', iconActive: 'settings', route: '/admin/platform', matchPrefix: true },
-  { label: 'Finance', icon: 'card-outline', iconActive: 'card', route: '/admin/finance', matchPrefix: true },
-  { label: 'Moderation', icon: 'eye-outline', iconActive: 'eye', route: '/admin/moderation', matchPrefix: true },
-];
-
-const SUPERADMIN_NAV: NavItem[] = [
-  { label: 'Cockpit (Root)', icon: 'rocket-outline', iconActive: 'rocket', route: '/admin', matchPrefix: true },
-  { label: 'Audit Logs', icon: 'list-outline', iconActive: 'list', route: '/admin/audit-logs', matchPrefix: true },
-  { label: 'Compliance', icon: 'shield-checkmark-outline', iconActive: 'shield-checkmark', route: '/admin/data-compliance', matchPrefix: true },
-  { label: 'Platform', icon: 'settings-outline', iconActive: 'settings', route: '/admin/platform', matchPrefix: true },
-];
+const ADMIN_NAV: NavItem[] = SIDEBAR_ADMIN_LINKS as NavItem[];
+const SUPERADMIN_NAV: NavItem[] = SIDEBAR_SUPERADMIN_LINKS as NavItem[];
 
 const BOTTOM_NAV: NavItem[] = [
   { label: 'About', icon: 'information-circle-outline', iconActive: 'information-circle', route: '/about' },
@@ -134,7 +127,11 @@ function AvatarWithRing({
   size?: number;
   ringWidth?: number;
 }) {
+  const colors = useColors();
+  const isDark = useIsDark();
   const innerSize = size - ringWidth * 2 - 2;
+  // Theme-aware cutout so ring contrasts in both light & dark
+  const cutoutBg = isDark ? '#1a1a2e' : colors.surfaceElevated || '#F8F1E9';
   return (
     <View style={{ width: size, height: size, borderRadius: size / 2, alignItems: 'center', justifyContent: 'center' }}>
       <LinearGradient
@@ -149,7 +146,7 @@ function AvatarWithRing({
           height: innerSize,
           borderRadius: innerSize / 2,
           overflow: 'hidden',
-          backgroundColor: '#1a1a2e',
+          backgroundColor: cutoutBg,
           alignItems: 'center',
           justifyContent: 'center',
         }}
@@ -186,8 +183,9 @@ function useWeatherSummary(city?: string): string {
   useEffect(() => {
     const trimmed = city?.trim();
     if (!trimmed) { setSummary(''); return; }
-    const place = getPostcodesByPlace(trimmed)[0];
-    if (!place) { setSummary(''); return; }
+    const postcodes = getPostcodesByPlace(trimmed);
+    if (!postcodes || postcodes.length === 0) { setSummary(''); return; }
+    const place = postcodes[0];
     const controller = new AbortController();
     const fetchWeather = async () => {
       try {
@@ -211,12 +209,67 @@ function useWeatherSummary(city?: string): string {
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function WebSidebar() {
-  const navState = useRootNavigationState();
-  const pathname = usePathname();
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Hydration fix: Don't use router hooks or localStorage until mounted on client
+  if (!isMounted) {
+    return (
+      <View style={[s.sidebar, { width: SIDEBAR_WIDTH, opacity: 0 }]} />
+    );
+  }
+
+  return <WebSidebarContent />;
+}
+
+/**
+ * Hook to safely access navigation state even if the context is missing
+ */
+function useSafeNavigation() {
+  const [pathname, setPathname] = useState('/');
+  const [isReady, setIsReady] = useState(false);
+
+  // We use the global router which is always available in expo-router
+  // but we fallback to window.location for the pathname if hooks fail.
+
+  const routerPathname = useOptionalPathname();
+  const navState = useOptionalRootNavigationState();
+
+  useEffect(() => {
+    if (navState?.key) {
+      setIsReady(true);
+    }
+    if (routerPathname) {
+      setPathname(routerPathname);
+    } else if (typeof window !== 'undefined') {
+      setPathname(window.location.pathname);
+    }
+  }, [navState?.key, routerPathname]);
+
+  return { pathname, isReady };
+}
+
+function useOptionalPathname() {
+  try {
+    return usePathname();
+  } catch (e) {
+    return null;
+  }
+}
+
+function useOptionalRootNavigationState() {
+  try {
+    return useRootNavigationState();
+  } catch (e) {
+    return null;
+  }
+}
+
+function WebSidebarContent() {
+  const { pathname, isReady } = useSafeNavigation();
   const colors = useColors();
-
-  const isReady = !!navState?.key;
-
   const isDark = useIsDark();
   const { user, logout, isAuthenticated } = useAuth();
   const { isOrganizer, isAdmin, isSuperAdmin, role } = useRole();
@@ -224,12 +277,28 @@ export function WebSidebar() {
   const isSponsor = role === 'sponsor';
   const { data: councilData } = useCouncil();
 
-  const [collapsed, setCollapsed] = useState(() => {
-    if (Platform.OS !== 'web' || typeof window === 'undefined') return false;
-    return window.localStorage?.getItem(SIDEBAR_COLLAPSED_STORAGE_KEY) === 'true';
-  });
+  const friendlyRole = useMemo(() => {
+    if (isSuperAdmin) return 'Platform Admin';
+    if (isAdmin) return 'Admin';
+    if (role === 'cityAdmin') return 'City Admin';
+    if (role === 'moderator') return 'Moderator';
+    if (role === 'business') return 'Venue';
+    if (role === 'sponsor') return 'Sponsor';
+    if (isOrganizer) return 'Host';
+    return 'Member';
+  }, [isSuperAdmin, isAdmin, role, isOrganizer]);
 
+  const [collapsed, setCollapsed] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = window.localStorage?.getItem(SIDEBAR_COLLAPSED_STORAGE_KEY);
+      if (saved === 'true') {
+        setCollapsed(true);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     if (Platform.OS !== 'web' || typeof window === 'undefined') return;
@@ -240,12 +309,28 @@ export function WebSidebar() {
   const collapseSidebar = useCallback(() => setCollapsed(true), []);
 
   const now = useLiveClock();
-  const weatherSummary = useWeatherSummary(user?.city);
 
   const hostHubNav = useMemo(
     () => (isOrganizer ? SIDEBAR_HOST_HUB_LINKS : SIDEBAR_HOST_ASPIRING_LINKS) as NavItem[],
     [isOrganizer],
   );
+  const hostHubLabel = isOrganizer ? 'Host Studio' : 'Host Hub';
+
+  // Role-aware full nav set for rail (and potential future use)
+  const visibleRailNav = useMemo(() => {
+    const base = [...MAIN_NAV, ...ATTENDEE_NAV, ...BROWSE_NAV, ...hostHubNav];
+    if (isVenue) base.push(...VENUE_NAV);
+    if (isSponsor) base.push(...SPONSOR_NAV);
+    if (isAdmin) base.push(...ADMIN_NAV);
+    if (isSuperAdmin) base.push(...SUPERADMIN_NAV);
+    // dedupe by route (last wins for overrides)
+    const seen = new Set<string>();
+    return base.filter((item) => {
+      if (seen.has(item.route)) return false;
+      seen.add(item.route);
+      return true;
+    });
+  }, [hostHubNav, isVenue, isSponsor, isAdmin, isSuperAdmin]);
 
   const normalizedRouteByItemRoute = useMemo(() => {
     const entries: [string, string][] = [
@@ -274,6 +359,8 @@ export function WebSidebar() {
   }, [isReady, normalizedRouteByItemRoute, pathname]);
 
   const navigate = (route: string) => {
+    // Clear search on navigation for better UX
+    if (searchQuery) setSearchQuery('');
     if (route.startsWith('/(tabs)')) {
       router.navigate(route as any);
     } else {
@@ -283,14 +370,13 @@ export function WebSidebar() {
 
   const bg = colors.surface;
   const border = colors.borderLight;
-  const mutedColor = isDark ? 'rgba(232,244,255,0.4)' : 'rgba(0,22,40,0.35)';
+  const mutedColor = withAlpha(colors.textSecondary, isDark ? 0.48 : 0.52);
   const myCouncil = councilData?.council;
 
   const dateLabel = useMemo(() =>
     now.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' }), [now]);
   const timeLabel = useMemo(() =>
     now.toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' }), [now]);
-  const appVersionLabel = useMemo(() => 'v1.2.1 · CulturePass', []);
 
   const filterNav = useCallback((items: NavItem[]) => {
     if (!searchQuery.trim()) return items;
@@ -315,7 +401,7 @@ export function WebSidebar() {
         <View style={[r.divider, { backgroundColor: border }]} />
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={r.railIcons}>
-          {[...MAIN_NAV, ...ATTENDEE_NAV, ...BROWSE_NAV, ...hostHubNav].map((item) => {
+          {visibleRailNav.map((item) => {
             const active = isActive(item);
             return (
               <Pressable
@@ -374,20 +460,24 @@ export function WebSidebar() {
         >
           <GlassView intensity={10} tone={isDark ? 'dark' : 'light'} style={s.brandCard}>
             <View style={s.brandCardInner}>
-              <SidebarLogoMark size={40} borderRadius={12} />
+              <SidebarLogoMark size={39
+              } borderRadius={10} />
               <View style={s.brandTextBlock}>
                 <Text style={[s.brandName, { color: colors.text }]}>{APP_NAME}</Text>
-                <Text style={[s.brandTagline, { color: colors.textSecondary }]} numberOfLines={1}>{APP_WEB_TAGLINE}</Text>
+                <Text style={[s.brandTagline, { color: colors.textSecondary }]} numberOfLines={1}>
+                  {APP_WEB_TAGLINE}
+                </Text>
               </View>
             </View>
           </GlassView>
         </Pressable>
 
         <View style={[s.metaStrip, { backgroundColor: colors.backgroundSecondary, borderColor: border }]}>
-          <View style={{ flex: 1, gap: 1 }}>
+          <View style={s.metaTimeBlock}>
             <Text style={[s.metaTime, { color: colors.text }]}>{timeLabel}</Text>
             <Text style={[s.metaSub, { color: colors.textSecondary }]}>{dateLabel}</Text>
           </View>
+
           <View style={s.headerActions}>
             <AppearanceModeToggle />
             <Pressable
@@ -431,7 +521,7 @@ export function WebSidebar() {
 
         <NavGroup label="Browse" items={filterNav(BROWSE_NAV)} isActive={isActive} navigate={navigate} colors={colors} isDark={isDark} />
 
-        <NavGroup label="Host Hub" items={filterNav(hostHubNav)} isActive={isActive} navigate={navigate} colors={colors} isDark={isDark} />
+        <NavGroup label={hostHubLabel} items={filterNav(hostHubNav)} isActive={isActive} navigate={navigate} colors={colors} isDark={isDark} />
 
         {isVenue && <NavGroup label="Venue" items={filterNav(VENUE_NAV)} isActive={isActive} navigate={navigate} colors={colors} isDark={isDark} />}
 
@@ -468,6 +558,7 @@ export function WebSidebar() {
             user={user}
             colors={colors}
             isDark={isDark}
+            friendlyRole={friendlyRole}
             onNavigate={navigate}
             onLogout={logout}
           />
@@ -481,7 +572,6 @@ export function WebSidebar() {
             Join CulturePass
           </Button>
         )}
-        <Text style={[s.versionLine, { color: colors.textTertiary }]}>{appVersionLabel}</Text>
       </View>
     </View>
   );
@@ -529,7 +619,7 @@ function SidebarItem({ item, active, isDark, onPress, colors }: { item: NavItem;
         size={18}
         color={active ? ACTIVE_COLOR : colors.textSecondary}
       />
-      <Text style={[ni.label, { color: active ? ACTIVE_COLOR : colors.textPrimary }, active && ni.labelActive]}>
+      <Text style={[ni.label, { color: active ? ACTIVE_COLOR : colors.text }, active && ni.labelActive]}>
         {item.label}
       </Text>
       {item.badge ? (
@@ -539,20 +629,36 @@ function SidebarItem({ item, active, isDark, onPress, colors }: { item: NavItem;
   );
 }
 
-function SidebarProfileBlock({ user, colors, isDark, onNavigate, onLogout }: any) {
+function SidebarProfileBlock({ user, colors, isDark, friendlyRole, onNavigate, onLogout }: any) {
   const [menuOpen, setMenuOpen] = useState(false);
   const displayName = user.displayName || user.username || 'User';
 
   return (
     <View>
       {menuOpen && (
-        <M3Card variant="elevated" style={[pb.menu, { backgroundColor: colors.surface }]}>
+        <M3Card
+          variant="elevated"
+          style={[
+            pb.menu,
+            {
+              backgroundColor: colors.surfaceElevated,
+              borderWidth: 1,
+              borderColor: colors.borderLight,
+              // stronger visual separation for the floating profile menu
+              ...(isDark
+                ? { boxShadow: '0 8px 24px rgba(0,0,0,0.45)' }
+                : { boxShadow: '0 8px 24px rgba(0,0,0,0.12)' }),
+            },
+          ]}
+        >
           {PROFILE_ACTIONS.map(action => (
             <Pressable key={action.key} style={pb.menuItem} onPress={() => { setMenuOpen(false); onNavigate(action.route); }}>
               <Ionicons name={action.icon} size={16} color={colors.textSecondary} />
               <Text style={[pb.menuLabel, { color: colors.text }]}>{action.label}</Text>
             </Pressable>
           ))}
+          {/* Sign out row has extra top separation for clarity */}
+          <View style={[pb.menuDivider, { backgroundColor: colors.divider }]} />
           <Pressable style={pb.menuItem} onPress={() => { setMenuOpen(false); onLogout(); }}>
             <Ionicons name="log-out-outline" size={16} color={CultureTokens.coral} />
             <Text style={[pb.menuLabel, { color: CultureTokens.coral, fontWeight: '600' }]}>Sign Out</Text>
@@ -566,7 +672,7 @@ function SidebarProfileBlock({ user, colors, isDark, onNavigate, onLogout }: any
         <AvatarWithRing avatarUrl={user.avatarUrl} initials={displayName[0]} size={32} />
         <View style={{ flex: 1 }}>
           <Text style={[pb.name, { color: colors.text }]} numberOfLines={1}>{displayName}</Text>
-          <Text style={[pb.sub, { color: colors.textSecondary }]} numberOfLines={1}>{user.role || 'Member'}</Text>
+          <Text style={[pb.sub, { color: colors.textSecondary }]} numberOfLines={1}>{friendlyRole}</Text>
         </View>
         <Ionicons name={menuOpen ? "chevron-down" : "chevron-up"} size={14} color={colors.textTertiary} />
       </Pressable>
@@ -581,16 +687,28 @@ const s = StyleSheet.create({
     borderRightWidth: 1,
     ...Platform.select({ web: { position: 'sticky', top: 0 } as any, default: {} }),
   },
-  brandHeader: { padding: Spacing.md, gap: Spacing.sm },
+  brandHeader: { paddingTop: Spacing.md + 4, paddingHorizontal: Spacing.md, paddingBottom: Spacing.sm, gap: Spacing.md },
   brandCardPress: { borderRadius: Radius.lg },
   brandCard: { borderRadius: Radius.lg, overflow: 'hidden' },
   brandCardInner: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, padding: Spacing.sm },
   brandTextBlock: { flex: 1, gap: 2 },
-  brandName: { ...TextStyles.title3, fontSize: 18 },
-  brandTagline: { ...TextStyles.caption, fontSize: 11 },
-  metaStrip: { flexDirection: 'row', alignItems: 'center', padding: Spacing.sm, borderRadius: Radius.md, borderWidth: 1 },
-  metaTime: { ...TextStyles.captionSemibold, fontSize: 12 },
-  metaSub: { ...TextStyles.caption, fontSize: 10 },
+  brandName: { ...TextStyles.title3, fontSize: 16, fontFamily: 'Poppins_700Bold', letterSpacing: -0.6 },
+  brandTagline: { ...TextStyles.caption, fontSize: 10, fontFamily: 'Poppins_500Medium', letterSpacing: -0.2, marginTop: -2 },
+  metaStrip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+  },
+  metaTimeBlock: {
+    gap: 3,
+    paddingRight: Spacing.sm,
+  },
+  metaTime: { ...TextStyles.captionSemibold, fontSize: 12, lineHeight: 15 },
+  metaSub: { ...TextStyles.caption, fontSize: 10, lineHeight: 13 },
   headerActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   collapseBtn: { width: 28, height: 28, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
   searchContainer: { paddingHorizontal: Spacing.md, marginBottom: Spacing.sm },
@@ -604,7 +722,6 @@ const s = StyleSheet.create({
   councilEyebrow: { ...TextStyles.captionSemibold, fontSize: 9 },
   councilName: { ...TextStyles.labelSemibold, fontSize: 12 },
   pinnedFooter: { padding: Spacing.md, borderTopWidth: 1, gap: Spacing.sm },
-  versionLine: { ...TextStyles.caption, fontSize: 9, textAlign: 'center', marginTop: 4 },
 });
 
 const r = StyleSheet.create({
@@ -629,7 +746,8 @@ const pb = StyleSheet.create({
   profileRow: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 8, borderRadius: Radius.md },
   name: { ...TextStyles.labelSemibold, fontSize: 13 },
   sub: { ...TextStyles.caption, fontSize: 11 },
-  menu: { position: 'absolute', bottom: 60, left: 0, right: 0, padding: 4, zIndex: 1000 },
-  menuItem: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 10, borderRadius: Radius.sm },
+  menu: { position: 'absolute', bottom: 60, left: 0, right: 0, padding: 6, borderRadius: Radius.md, zIndex: 1000, overflow: 'hidden' },
+  menuItem: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 9, paddingHorizontal: 10, borderRadius: Radius.sm },
   menuLabel: { ...TextStyles.body, fontSize: 13 },
+  menuDivider: { height: 1, marginVertical: 4, marginHorizontal: 6 },
 });

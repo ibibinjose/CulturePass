@@ -2,6 +2,7 @@ import {
   View, Text, Pressable, StyleSheet, ScrollView,
   Platform, Linking, TextInput,
 } from 'react-native';
+import helpData from '@/data/static/help.json';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -19,6 +20,8 @@ import {
   EMAIL_SUPPORT,
   PLATFORM_TAGLINE,
   MADE_IN,
+  CONTACT_PHONE,
+  WHATSAPP_LINK,
   getAppVersion,
 } from '@/lib/app-meta';
 import { M3TopAppBar } from '@/design-system/ui';
@@ -28,83 +31,17 @@ const isWeb = Platform.OS === 'web';
 interface FaqItem { q: string; a: string; }
 interface FaqCategory { id: string; label: string; icon: string; color: string; items: FaqItem[]; }
 
-const FAQ_CATEGORIES: FaqCategory[] = [
-  {
-    id: 'start',
-    label: 'Getting Started',
-    icon: 'rocket-outline',
-    color: CultureTokens.indigo,
-    items: [
-      { q: `What is ${APP_NAME}?`, a: `${APP_NAME} is a lifestyle and community platform for cultural diaspora communities across Australia, New Zealand, UAE, UK, and Canada. Use the app or ${APP_DOMAIN} to discover cultural events, join communities, access perks, and connect with people who share your heritage.` },
-      { q: 'How do I create an account?', a: 'Tap "Create Account" on the welcome screen. Enter your email and a password (min 6 characters), then follow the steps to set your location and interests. You can also sign in with Google on web.' },
-      { q: `Is ${APP_NAME} free to use?`, a: 'Yes! The Free tier gives you access to browse events, join communities, and use the basic features. Upgrade to Plus or Elite for exclusive perks, early ticket access, and premium benefits.' },
-      { q: 'Which countries are supported?', a: `${APP_NAME} is currently live in Australia, New Zealand, UAE, United Kingdom, and Canada. We're expanding to more countries soon — follow our social channels for updates.` },
-      { q: `Can I use ${APP_NAME} without an account?`, a: 'You can browse the app as a guest, but purchasing tickets, joining communities, saving events, and accessing perks all require a free account.' },
-    ],
-  },
-  {
-    id: 'account',
-    label: 'Account & Profile',
-    icon: 'person-circle-outline',
-    color: CultureTokens.gold,
-    items: [
-      { q: 'How do I edit my profile?', a: 'Go to Settings → Edit Profile (or tap your avatar on the Profile tab). You can update your display name, bio, profile photo, city, social links, and interests.' },
-      { q: 'How do I change my password?', a: 'Go to Settings → Privacy & Security → Change Password. You\'ll receive a reset link at your registered email address.' },
-      { q: 'How do I change my location / city?', a: 'Go to Settings → Location & City. You can select a new country and city, and your discover feed will update to show local events.' },
-      { q: 'How do I delete my account?', a: 'Go to Settings → Privacy & Security → scroll to the bottom → Delete Account. This action is permanent and removes all your data, tickets, and wallet balance.' },
-      { q: 'Can I use Google to sign in?', a: 'Google sign-in is available on the web app. Native mobile Google sign-in is coming soon. For now, use email and password on iOS and Android.' },
-      { q: `What is my ${APP_NAME} ID?`, a: `Your ${APP_NAME} ID (CP-XXXXX) is a unique identifier shown on your profile. Use it to share your profile, find friends, and check in at events via QR scan.` },
-    ],
-  },
-  {
-    id: 'events',
-    label: 'Events & Tickets',
-    icon: 'ticket-outline',
-    color: CultureTokens.coral,
-    items: [
-      { q: 'How do I buy tickets?', a: 'Browse events on the Discover or CultureX tab. Tap an event → select your ticket tier → choose your payment method (Wallet or saved card) → confirm. Your ticket QR code will appear in My Tickets.' },
-      { q: 'Where do I find my tickets?', a: 'Go to Settings → My Tickets, or tap the Tickets section on your Profile tab. Tickets show your QR code for event check-in.' },
-      { q: 'Can I get a refund?', a: `If an event is cancelled by the organiser, you receive a full refund to your ${APP_NAME} Wallet within 3–5 business days. For self-cancellations, the refund policy varies per event and is shown at checkout.` },
-      { q: 'How does QR check-in work?', a: 'Each ticket has a unique QR code. At the event venue, show your QR code to the organiser or scan it yourself at a self-service terminal. Tickets are validated instantly.' },
-      { q: 'Can I transfer tickets to a friend?', a: 'Ticket transfers are coming soon. Currently, you can share the QR code, but the ticket remains linked to your account.' },
-    ],
-  },
-  {
-    id: 'membership',
-    label: 'Membership & Perks',
-    icon: 'star-outline',
-    color: CultureTokens.gold,
-    items: [
-      { q: 'What membership tiers are available?', a: `${APP_NAME} offers Free, Plus (~$4.99/mo), and Elite (~$9.99/mo) tiers. Higher tiers unlock early ticket access, exclusive perks, VIP upgrades, and cashback on purchases.` },
-      { q: 'How do I upgrade my membership?', a: 'Go to Settings → My Membership → tap Upgrade. Choose your plan and complete payment. Your benefits activate immediately.' },
-      { q: 'How do I cancel my membership?', a: 'Go to Settings → My Membership → Cancel Subscription. Your benefits continue until the end of the current billing period.' },
-      { q: 'What are Perks?', a: `Perks are exclusive discounts, free tickets, early access, and VIP upgrades from ${APP_NAME} and partner brands. Visit the Perks tab to browse and redeem available offers for your tier.` },
-      { q: 'How does the Wallet work?', a: 'Your Wallet is a digital balance you can top up with any payment method. Use it to buy tickets fast with no extra steps. Cashback from eligible purchases is added to your Wallet automatically.' },
-      { q: 'Do perks expire?', a: 'Yes — each perk has an expiry date shown on the perk card. Redeem before the expiry date. Expired perks are removed from your account automatically.' },
-    ],
-  },
-  {
-    id: 'technical',
-    label: 'Technical Issues',
-    icon: 'build-outline',
-    color: CultureTokens.teal,
-    items: [
-      { q: 'The app is showing a white / blank screen', a: 'Try force-closing the app and reopening. On web, try clearing your browser cache (Ctrl+Shift+R / Cmd+Shift+R). If the issue persists, try logging out and back in.' },
-      { q: 'I can\'t sign in — what should I do?', a: `Check you're using the correct email and password. Try "Forgot Password" to reset. Make sure you have a stable internet connection. If issues continue, email ${EMAIL_SUPPORT}.` },
-      { q: 'My payment failed', a: 'Check your card details and that your card has sufficient funds. Some cards require 3D Secure verification — check for an SMS or bank app prompt. Try a different payment method or contact your bank.' },
-      { q: 'Notifications are not working', a: `Go to Settings → Notifications to check your preferences. On iOS/Android, also check your device notification permissions for ${APP_NAME} in your phone's Settings app.` },
-      { q: 'The app is slow or crashing', a: 'Ensure you have the latest version of the app. Try restarting your device. If issues persist, please report via "Report a Problem" with details of what you were doing.' },
-      { q: 'I found a bug — how do I report it?', a: `Use the "Report a Problem" option in Settings → Help & Support, or email ${EMAIL_BUGS} with a description, your device model, OS version, and screenshots if possible.` },
-    ],
-  },
-];
-
-const CONTACT_OPTIONS = [
-  { icon: 'mail', label: 'Email Support', sub: EMAIL_SUPPORT, color: CultureTokens.indigo, action: () => Linking.openURL(`mailto:${EMAIL_SUPPORT}`) },
-  { icon: 'call', label: 'Phone Support', sub: '1800 285 887 (Mon–Fri 9am–6pm AEST)', color: CultureTokens.success, action: () => Linking.openURL('tel:1800285887') },
-  { icon: 'chatbubbles', label: 'Live Chat', sub: 'Available 9am–6pm AEST on weekdays', color: CultureTokens.teal, action: () => Linking.openURL(`mailto:${EMAIL_SUPPORT}?subject=${encodeURIComponent('Live Chat Request')}&body=${encodeURIComponent(`Hi ${APP_NAME} team, I need help with…`)}`) },
-  { icon: 'logo-twitter', label: 'Twitter / X', sub: '@CulturePassApp', color: CategoryColors.movies, action: () => Linking.openURL('https://twitter.com/CulturePassApp') },
-];
+const FAQ_CATEGORIES = helpData.categories;
+const CONTACT_OPTIONS = helpData.contactOptions.map(opt => ({
+  ...opt,
+  action: () => {
+    if (opt.icon === 'mail') Linking.openURL(`mailto:${opt.sub}`);
+    else if (opt.icon === 'call') Linking.openURL(`tel:${CONTACT_PHONE.replace(/\s+/g, '')}`);
+    else if (opt.icon === 'logo-whatsapp') Linking.openURL(WHATSAPP_LINK);
+    else if (opt.icon === 'chatbubbles') Linking.openURL(`mailto:${EMAIL_SUPPORT}?subject=${encodeURIComponent('Live Chat Request')}&body=${encodeURIComponent(`Hi ${APP_NAME} team, I need help with…`)}`);
+    else if (opt.icon === 'logo-twitter') Linking.openURL('https://twitter.com/CulturePassApp');
+  }
+}));
 
 const QUICK_LINKS = [
   { icon: 'ticket-outline', label: 'My Tickets', route: '/tickets', color: CultureTokens.coral },

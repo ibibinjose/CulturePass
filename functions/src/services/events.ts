@@ -190,7 +190,7 @@ export const eventsService = {
       const center: [number, number] = [filters.centerLat!, filters.centerLng!];
       const radiusInM = filters.radiusInKm! * 1000;
       const bounds = geofire.geohashQueryBounds(center, radiusInM);
-      const promises = [];
+      const promises: Promise<any>[] = [];
       const matchingDocs: FirestoreEvent[] = [];
 
       try {
@@ -207,19 +207,25 @@ export const eventsService = {
       } catch (err: any) {
         if (err?.message?.includes('index') || err?.code === 9) {
           console.warn('[eventsService] Index missing for status+geoHash. Falling back to multi-bound search without order.');
-          const fallbackPromises = [];
-          for (const b of bounds) {
-            const q = baseQuery.where('geoHash', '>=', b[0]).where('geoHash', '<=', b[1]);
-            fallbackPromises.push(q.get());
-          }
-          const snapshots = await Promise.all(fallbackPromises);
-          for (const snap of snapshots) {
-            for (const doc of snap.docs) {
-              matchingDocs.push({ ...doc.data(), id: doc.id } as FirestoreEvent);
+          const fallbackPromises: Promise<any>[] = [];
+          try {
+            for (const b of bounds) {
+              const q = baseQuery.where('geoHash', '>=', b[0]).where('geoHash', '<=', b[1]);
+              fallbackPromises.push(q.get());
             }
+            const snapshots = await Promise.all(fallbackPromises);
+            for (const snap of snapshots) {
+              for (const doc of snap.docs) {
+                matchingDocs.push({ ...doc.data(), id: doc.id } as FirestoreEvent);
+              }
+            }
+          } catch (fbErr: any) {
+            console.error('[eventsService] Fallback geo query also failed', fbErr?.message || fbErr);
+            // fall through with whatever we have (likely empty)
           }
         } else {
-          throw err;
+          console.error('[eventsService] Geo query failed (non-index error)', err?.message || err);
+          // do not re-throw — return empty gracefully so callers don't 500
         }
       }
 

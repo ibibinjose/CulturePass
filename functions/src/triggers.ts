@@ -8,7 +8,10 @@ import type { FirestoreEvent } from './services/firestore';
  * Maintains the 'feed' collection by automatically creating, updating, or
  * soft-deleting FeedItem documents whenever an event is modified.
  */
-export const onEventWritten = onDocumentWritten('events/{eventId}', async (event) => {
+export const onEventWritten = onDocumentWritten({
+  document: 'events/{eventId}',
+  region: 'australia-southeast1'
+}, async (event) => {
   const change = event.data;
   if (!change) return;
 

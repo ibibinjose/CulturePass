@@ -39,3 +39,9 @@ jobs:
       # No EXPO_TOKEN — web export uses mock Firebase env vars from the script.
       - name: Run qa:solid
         run: npm run qa:solid
+
+      - name: Build web export (for bundle size check)
+        run: npm run build-web
+
+      - name: Check web bundle size (performance gate)
+        run: npm run size:web

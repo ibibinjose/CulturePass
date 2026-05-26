@@ -1,6 +1,9 @@
 import { fetch } from 'expo/fetch';
 import { Platform } from 'react-native';
-import { QueryClient, QueryFunction } from '@tanstack/react-query';
+import { QueryClient, QueryFunction, QueryCache } from '@tanstack/react-query';
+import { ApiError } from '@/platform/api/client';
+import { Sentry } from '@/lib/sentry';
+import { log } from '@/lib/logger';
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
@@ -258,7 +261,7 @@ export async function apiRequest(
 
   // expo/fetch uses FetchRequestInit which rejects null signal — strip it out.
   const { signal: callerSignal, ...safeOptions } = options as RequestInit & { signal?: AbortSignal | null };
-  const credentials = Platform.OS === 'web' ? 'omit' : safeOptions.credentials;
+  const credentials = Platform.OS === 'web' ? 'include' : safeOptions.credentials;
 
   // Use caller's signal if provided, otherwise create a timeout signal.
   // Some runtimes (including certain Expo environments) do not implement AbortSignal.timeout.
@@ -328,7 +331,7 @@ export async function apiRequestMultipart(
   }
 
   const { signal: callerSignal, ...safeOptions } = options as RequestInit & { signal?: AbortSignal | null };
-  const credentials = Platform.OS === 'web' ? 'omit' : safeOptions.credentials;
+  const credentials = Platform.OS === 'web' ? 'include' : safeOptions.credentials;
 
   let signal = callerSignal ?? undefined;
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
@@ -406,7 +409,7 @@ export const getQueryFn: <T>(
   const route = Array.isArray(queryKey) ? queryKey.join('/') : String(queryKey);
   const res = await fetch(buildApiUrl(route), {
     headers: _accessToken ? { Authorization: `Bearer ${_accessToken}` } : undefined,
-    credentials: Platform.OS === 'web' ? 'omit' : undefined,
+    credentials: Platform.OS === 'web' ? 'include' : undefined,
   });
 
   if (res.status === 401) {
@@ -438,6 +441,29 @@ function shouldRetry(failureCount: number, error: unknown): boolean {
 }
 
 export const queryClient = new QueryClient({
+  queryCache: new QueryCache({
+    onError: (error, query) => {
+      const queryKeyStr = JSON.stringify(query.queryKey);
+
+      if (error instanceof ApiError) {
+        if (error.isServerError) {
+          log.error('Query server error', error, {
+            queryKey: queryKeyStr,
+            status: error.status,
+            correlationId: log.getCorrelationId?.(),
+          });
+        } else if (error.isRateLimited) {
+          log.warn('Query rate limited', undefined, {
+            queryKey: queryKeyStr,
+          });
+        }
+      } else if (error instanceof Error) {
+        log.error('Unexpected query error', error, {
+          queryKey: queryKeyStr,
+        });
+      }
+    },
+  }),
   defaultOptions: {
     queries: {
       queryFn: getQueryFn({ on401: 'throw' }),

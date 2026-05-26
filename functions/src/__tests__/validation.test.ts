@@ -362,7 +362,7 @@ describe('Validation API Endpoints', () => {
     it('validates a correct ABN and returns business details', async () => {
       mockValidationService.validateABN.mockResolvedValue({
         valid: true,
-        businessName: 'Test Business Pty Ltd',
+        businessName: 'Test Business CulturePass.App',
         status: 'Active',
         gstRegistered: true,
       });
@@ -374,7 +374,7 @@ describe('Validation API Endpoints', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.valid).toBe(true);
-      expect(res.body.businessName).toBe('Test Business Pty Ltd');
+      expect(res.body.businessName).toBe('Test Business CulturePass.App');
       expect(res.body.status).toBe('Active');
       expect(res.body.gstRegistered).toBe(true);
     });

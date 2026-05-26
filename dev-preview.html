@@ -15,16 +15,37 @@
     <div class="loading">Loading http://localhost:8081/...</div>
     <iframe src="http://localhost:8081/" allow="geolocation; microphone; camera; midi; vr; accelerometer; gyroscope; payment; ambient-light-sensor; encrypted-media; usb"></iframe>
     <script>
-        // Check if server is up
-        fetch('http://localhost:8081/', { mode: 'no-cors' })
-            .catch(err => {
-                document.body.innerHTML = `
-                    <div class="container">
-                        <h1>Server Not Found</h1>
-                        <p>It looks like the Expo server at <b>http://localhost:8081/</b> is not running.</p>
-                        <p>Please start it using <code>npx expo start --web</code></p>
-                    </div>
-                `;
+        const serverUrl = 'http://localhost:8081/';
+        const showServerNotFound = () => {
+            document.body.innerHTML = `
+                <div class="container">
+                    <h1>Server Not Found</h1>
+                    <p>It looks like the Expo server at <b>${serverUrl}</b> is not running.</p>
+                    <p>Please start it using <code>npx expo start --web</code></p>
+                </div>
+            `;
+        };
+
+        const iframe = document.querySelector('iframe');
+        if (iframe) {
+            iframe.addEventListener('error', showServerNotFound);
+            iframe.addEventListener('load', () => {
+                // If the page loads but fetch failed, the server is still likely unavailable.
+                if (!window.__serverDetected) {
+                    showServerNotFound();
+                }
+            });
+        }
+
+        fetch(serverUrl)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Server responded with ${response.status}`);
+                }
+                window.__serverDetected = true;
+            })
+            .catch(() => {
+                showServerNotFound();
             });
     </script>
 </body>

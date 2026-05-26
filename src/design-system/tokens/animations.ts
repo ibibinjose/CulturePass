@@ -5,6 +5,13 @@ import { Platform } from 'react-native';
  * Follows Apple HIG and Material Design motion principles.
  */
 
+/**
+ * Whether to use the native driver for Animated API calls.
+ * Must be false on web (no native animated module), true on native.
+ * Using this prevents "useNativeDriver is not supported" warnings on web.
+ */
+export const USE_NATIVE_DRIVER = Platform.OS !== 'web';
+
 /** Duration constants (milliseconds) */
 export const Duration = {
   /** Micro-interactions: toggles, checkboxes, small state changes */

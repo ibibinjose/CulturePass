@@ -1,7 +1,7 @@
 import { authAdmin, db } from '../functions/src/admin';
 
 async function createDemoUser() {
-  const email = 'demo@culturepass.com.au';
+  const email = 'demo@culturepass.app';
   const password = 'CulturePassReview2026!'; // Strong password for app review
   const displayName = 'App Review Demo';
 

@@ -19,6 +19,7 @@ import { CultureTokens } from '@/design-system/tokens/theme';
 import SectionHeader from './SectionHeader';
 import { Skeleton } from '@/design-system/ui/Skeleton';
 import { RailErrorBanner } from './RailErrorBanner';
+import { DiscoverRailErrorBoundary } from './DiscoverRailErrorBoundary';
 import { useFeaturedCities, cityGradient, type FeaturedCityData } from '@/hooks/useFeaturedCities';
 
 const goCitiesHub = () => {
@@ -159,12 +160,12 @@ function CityRailComponent() {
           />
         </View>
 
-        {isError && !isLoading && cities.length === 0 ? (
-          <RailErrorBanner
-            message="Could not load cities. Try again."
-            onRetry={() => void refetchCities()}
-          />
-        ) : isLoading ? (
+        <DiscoverRailErrorBoundary
+          sectionKey="cities-rail"
+          fallbackMessage="Could not load cities right now."
+          onRetry={() => void refetchCities()}
+        >
+          {isLoading ? (
           <View style={[s.grid, { paddingHorizontal: hPad }]}>
             {skeletonData.map((k) => (
               <CityCardSkeleton key={k} width={cardWidth} />
@@ -181,6 +182,7 @@ function CityRailComponent() {
             renderItem={({ item }) => <CityCard city={item} width={cardWidth} />}
           />
         )}
+      </DiscoverRailErrorBoundary>
       </View>
     );
   }

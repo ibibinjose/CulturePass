@@ -13,7 +13,8 @@ import type {
   VerificationChecklistItem,
   CreateVerificationTask,
 } from '../../../shared/schema/hostVerificationTask';
-import type { HostProfile, HostEntityType } from '../../../shared/schema/hostProfile';
+import type { HostProfile } from '../../../shared/schema/hostProfile';
+import type { HostEntityType } from '../../../shared/schema/hostTypes';
 
 // ---------------------------------------------------------------------------
 // Collections

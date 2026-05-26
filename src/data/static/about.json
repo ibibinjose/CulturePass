@@ -1,0 +1,175 @@
+{
+  "title": "About CulturePass",
+  "tagline": "Connecting cultures, building belonging.",
+  "intro": "CulturePass is more than an app. We're building the social infrastructure for multicultural cities — a discovery engine and participation platform that connects people to the cultural communities and experiences already surrounding them.",
+  "stats": [
+    {
+      "target": 500,
+      "label": "Events Monthly",
+      "suffix": "+"
+    },
+    {
+      "target": 120,
+      "label": "Communities",
+      "suffix": "+"
+    },
+    {
+      "target": 45,
+      "label": "Partner Brands",
+      "suffix": "+"
+    }
+  ],
+  "whatWeAre": [
+    {
+      "icon": "map-outline",
+      "color": "#6366F1",
+      "title": "Discovery Engine",
+      "body": "A global layer for finding events, traditions, festivals, and cultural experiences that already exist around you — made discoverable for everyone."
+    },
+    {
+      "icon": "people-circle-outline",
+      "color": "#14B8A6",
+      "title": "Community Network",
+      "body": "Infrastructure for grassroots organisations and diaspora communities to gain visibility, reach audiences, and grow real participation."
+    },
+    {
+      "icon": "shield-outline",
+      "color": "#8B5CF6",
+      "title": "Participation Platform",
+      "body": "Built to strengthen real-world engagement — not replace it with passive scrolling. Technology that serves belonging, not screen time."
+    },
+    {
+      "icon": "id-card-outline",
+      "color": "#F43F5E",
+      "title": "Cultural Identity Layer",
+      "body": "A social infrastructure for cross-cultural discovery and genuine human connection in multicultural cities worldwide."
+    }
+  ],
+  "problems": [
+    {
+      "icon": "person-outline",
+      "color": "#F43F5E",
+      "title": "Loneliness & Isolation",
+      "body": "Urban life produces disconnected individuals despite dense populations. People struggle to find community and participate meaningfully offline."
+    },
+    {
+      "icon": "eye-off-outline",
+      "color": "#FFD700",
+      "title": "Invisible Communities",
+      "body": "Thousands of grassroots organisations remain digitally invisible. Small cultural groups lack the tools and reach to connect with the people who need them."
+    },
+    {
+      "icon": "git-branch-outline",
+      "color": "#6366F1",
+      "title": "Cultural Fragmentation",
+      "body": "When communities operate in silos, multicultural societies risk fracturing instead of flourishing. Discovery stays broken for those not inside the network."
+    }
+  ],
+  "cultureAsInfra": [
+    {
+      "icon": "home-outline",
+      "color": "#8B5CF6",
+      "label": "Belonging",
+      "body": "Culture creates identity, memory, and a sense of where you come from — and where you belong in the world."
+    },
+    {
+      "icon": "heart-outline",
+      "color": "#F43F5E",
+      "label": "Wellbeing",
+      "body": "Communities with strong cultural participation show improved mental health, reduced isolation, and stronger support networks."
+    },
+    {
+      "icon": "people-outline",
+      "color": "#14B8A6",
+      "label": "Social Trust",
+      "body": "Cultural participation rebuilds trust between neighbours, reduces civic fragmentation, and strengthens communities."
+    },
+    {
+      "icon": "refresh-outline",
+      "color": "#FFD700",
+      "label": "Resilience",
+      "body": "Culturally connected communities demonstrate greater resilience during social, economic, and community challenges."
+    }
+  ],
+  "steps": [
+    {
+      "icon": "location-outline",
+      "color": "#FFD700",
+      "title": "Choose Your City",
+      "desc": "Sydney, Melbourne, Brisbane, Perth & more"
+    },
+    {
+      "icon": "people-circle-outline",
+      "color": "#14B8A6",
+      "title": "Pick Your Cultures",
+      "desc": "Indian, Korean, Greek, Lebanese, First Nations"
+    },
+    {
+      "icon": "calendar-outline",
+      "color": "#FFD700",
+      "title": "Discover & Attend",
+      "desc": "Browse events, buy tickets, store in wallet"
+    },
+    {
+      "icon": "chatbubble-ellipses-outline",
+      "color": "#6366F1",
+      "title": "Stay Connected",
+      "desc": "Follow artists, sponsors and communities"
+    }
+  ],
+  "features": [
+    {
+      "icon": "sparkles-outline",
+      "color": "#FFD700",
+      "title": "Discover Events",
+      "desc": "Festivals, food, networking and cultural gatherings."
+    },
+    {
+      "icon": "people-outline",
+      "color": "#14B8A6",
+      "title": "Join Communities",
+      "desc": "Connect with cultural organisations near you."
+    },
+    {
+      "icon": "ticket-outline",
+      "color": "#FFD700",
+      "title": "Digital Tickets",
+      "desc": "Purchase, store in wallet, check in with QR."
+    },
+    {
+      "icon": "pricetag-outline",
+      "color": "#F43F5E",
+      "title": "Exclusive Perks",
+      "desc": "Discounts from local cultural businesses."
+    },
+    {
+      "icon": "globe-outline",
+      "color": "#6366F1",
+      "title": "Cultural Map",
+      "desc": "Live map of events, venues and hubs."
+    },
+    {
+      "icon": "shield-checkmark-outline",
+      "color": "#6366F1",
+      "title": "CulturePass ID",
+      "desc": "Your digital identity and membership."
+    }
+  ],
+  "testimonials": [
+    {
+      "name": "Priya K.",
+      "culture": "Indian community",
+      "text": "CulturePass helped me find Diwali events I never knew existed in Sydney!"
+    },
+    {
+      "name": "Min-Jun P.",
+      "culture": "Korean community",
+      "text": "I connected with the Korean film community within my first week."
+    },
+    {
+      "name": "Amara O.",
+      "culture": "African community",
+      "text": "Finally one place where our cultural events get visibility."
+    }
+  ]
+}

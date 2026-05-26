@@ -37,8 +37,14 @@ export default function NationBuildersProgramScreen() {
   const insets = useSafeAreaInsets();
 
   const handleJoinPress = () => {
-    // Navigate to signup or open external link
-    Linking.openURL('https://culturepass.app/NationBuildersProgram');
+    // Primary CTA for businesses (acquisition) — send to host application with Nation Builder Partner intent.
+    // This is the key entry point for bringing venues/businesses onto the platform.
+    router.push('/hostspace/apply?intent=nation-builder' as any);
+  };
+
+  const handleStaffClaim = () => {
+    // Staff / essential worker path — go to the rich program page or membership flow
+    router.push('/NationBuildersProgram');
   };
 
   const handleBackPress = () => {
@@ -158,27 +164,29 @@ export default function NationBuildersProgramScreen() {
             How to Join
           </Text>
           <Text style={[styles.description, { color: m3Colors.onSurfaceVariant }]}>
-            If you work in a venue, café, gym, barbershop, restaurant, hotel or service business in Sydney:
+            <Text style={{ fontWeight: '600' }}>For Businesses &amp; Venues:</Text> Apply to become a Nation Builder Partner. Your staff will get 50% off CulturePass+ and you&apos;ll get powerful retention + visibility tools.
           </Text>
-          <Text style={[styles.description, { color: m3Colors.onSurfaceVariant, marginTop: 8 }]}>
-            Ask your manager or owner if they&apos;ve partnered with CulturePass.
-          </Text>
-          <Text style={[styles.description, { color: m3Colors.onSurfaceVariant, marginTop: 16 }]}>
-            If you run a business or cultural venue:
-          </Text>
-          <Text style={[styles.description, { color: m3Colors.onSurfaceVariant, marginTop: 8 }]}>
-            List your venue for free and unlock the staff perk immediately.
+          <Text style={[styles.description, { color: m3Colors.onSurfaceVariant, marginTop: 12 }]}>
+            <Text style={{ fontWeight: '600' }}>For Staff &amp; Essential Workers:</Text> Once your workplace is a partner, use the code they provide (or the claim flow) to unlock your 50% CulturePass+ discount + Nation Builder badge.
           </Text>
         </M3Card>
 
-        {/* CTA Section */}
-        <View style={{ paddingHorizontal: hPad, marginBottom: 24 }}>
+        {/* CTA Section — Dual audience for acquisition + conversion */}
+        <View style={{ paddingHorizontal: hPad, marginBottom: 24, gap: 12 }}>
           <M3Button 
             variant="filled" 
             onPress={handleJoinPress}
             style={styles.ctaButton}
           >
-            Join the Nation Builders Program
+            I'm a Business / Venue Owner — Become a Partner
+          </M3Button>
+
+          <M3Button 
+            variant="outlined" 
+            onPress={handleStaffClaim}
+            style={styles.ctaButton}
+          >
+            I'm Staff / Essential Worker — Claim My 50% Off
           </M3Button>
           
           <Text style={[styles.hashtagText, { color: m3Colors.onSurfaceVariant, textAlign: 'center', marginTop: 16 }]}>

@@ -1,15 +1,5 @@
 <resources>
-  <color name="splashscreen_background">#0B0B14</color>
+  <color name="splashscreen_background">#FFFFFF</color>
   <color name="iconBackground">#0B0B14</color>
-  <!-- Brand violet — CultureTokens.violet #9333EA -->
-  <color name="colorPrimary">#9333EA</color>
-  <color name="colorPrimaryDark">#7C3AED</color>
-  <!-- Brand coral — CultureTokens.coral #FF5E5B -->
-  <color name="colorSecondary">#FF5E5B</color>
-  <color name="colorSecondaryDark">#E04040</color>
-  <color name="black">#000000</color>
-  <color name="white">#ffffff</color>
-  <color name="surface">#121212</color>
-  <color name="onSurface">#ffffff</color>
-  <color name="error">#cf6679</color>
+  <color name="colorPrimary">#023c69</color>
 </resources>

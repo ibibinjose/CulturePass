@@ -202,17 +202,26 @@ export function CommunityDetailHero({
       ) : (
         <LinearGradient
           pointerEvents="none"
-          colors={[accent, '#000000']}
+          colors={[accent, '#111111']}
           start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
+          end={{ x: 0.7, y: 1 }}
           style={StyleSheet.absoluteFill}
         />
       )}
 
+      {/* Rich multi-layer overlay for excellent text legibility on any image */}
       <LinearGradient
         pointerEvents="none"
-        colors={['rgba(0,0,0,0.1)', 'rgba(0,0,0,0.4)', 'rgba(0,0,0,0.8)']}
+        colors={['rgba(0,0,0,0.25)', 'rgba(0,0,0,0.55)', 'rgba(0,0,0,0.78)']}
+        locations={[0, 0.45, 1]}
         style={StyleSheet.absoluteFill}
+      />
+      {/* Subtle top vignette for top chrome integration */}
+      <LinearGradient
+        pointerEvents="none"
+        colors={['rgba(0,0,0,0.35)', 'rgba(0,0,0,0)']}
+        locations={[0, 0.6]}
+        style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 140 }}
       />
 
       <HeroIdentity {...identityProps} />
@@ -255,14 +264,15 @@ const heroStyles = StyleSheet.create({
     alignItems: 'center',
     gap: 20,
     marginTop: 20,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 16,
+    paddingHorizontal: 22,
+    paddingVertical: 11,
+    borderRadius: 999,
     borderWidth: 1,
+    backgroundColor: 'rgba(0,0,0,0.25)',
   },
   heroStatsWeb: {
     marginTop: 14,
-    gap: 14,
+    gap: 16,
     paddingHorizontal: 18,
     paddingVertical: 8,
   },
@@ -281,8 +291,8 @@ const heroStyles = StyleSheet.create({
   heroJoinButtonWeb: { alignSelf: 'center', minWidth: 220 },
   heroJoinBtn: {
     backgroundColor: CultureTokens.indigo,
-    borderColor: CultureTokens.coral,
-    borderWidth: 3,
+    borderColor: 'rgba(255,255,255,0.25)',
+    borderWidth: 1,
   },
   heroJoinLabel: { color: '#FFFFFF' },
 });

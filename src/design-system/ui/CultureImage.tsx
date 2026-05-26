@@ -46,7 +46,16 @@ export function CultureImage({ uri, style, thumbhash, blurhash, ...rest }: Cultu
     );
   }
 
-  return <Image source={source} style={style} {...rest} />;
+  return (
+    <Image
+      source={source}
+      style={style}
+      contentFit="cover"
+      cachePolicy="memory-disk"
+      transition={150}
+      {...rest}
+    />
+  );
 }
 
 export default CultureImage;

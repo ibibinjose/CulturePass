@@ -1,4 +1,6 @@
 import express, { Request, Response, NextFunction } from 'express';
+import { log } from './lib/logger';
+import { generateSecureId } from './handlers/utils';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimitMiddleware from 'express-rate-limit';
@@ -6,6 +8,7 @@ import { logger } from 'firebase-functions';
 import { authenticate } from './middleware/auth';
 import { getFirebaseProjectId } from './handlers/utils';
 import { extractClientIp } from './middleware/rateLimit';
+import { requestIdMiddleware } from './middleware/requestId';
 
 // HTTP handlers (Express routers)
 import { authRouter } from './handlers/auth';
@@ -70,7 +73,10 @@ const ALLOWED_ORIGINS: (string | RegExp)[] = [
   // Production
   'https://culturepass.app',
   'https://www.culturepass.app',
+  'https://culturepass.co',
+  'https://www.culturepass.co',
   /^https:\/\/[\w-]+\.culturepass\.app$/,          // preview/staging subdomains
+  /^https:\/\/[\w-]+\.culturepass\.co$/,           // alternate production domain
   'https://culturekerala.com',
   'https://www.culturekerala.com',
   /^https:\/\/[\w-]+\.culturekerala\.com$/,
@@ -86,12 +92,15 @@ const ALLOWED_ORIGINS: (string | RegExp)[] = [
   /^https?:\/\/127\.0\.0\.1(:\d+)?$/,
   // IPv6 loopback on explicitly allowed development ports only.
   /^https?:\/\/\[::1\](:\d+)?$/,
+  // Common Expo dev server ports (8081, 19000, 19006, etc.)
+  /^https?:\/\/localhost:8081$/,
+  /^https?:\/\/127\.0\.0\.1:8081$/,
   // Local network development (Expo on LAN; optional https tunnels)
-  /^https?:\/\/192\.168\.\d{1,3}\.\d{1,3}:\d+$/,
-  /^https?:\/\/10\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d+$/,
-  /^https?:\/\/172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}:\d+$/,
+  /^https?:\/\/192\.168\.\d{1,3}\.\d{1,3}(:\d+)?$/,
+  /^https?:\/\/10\.\d{1,3}\.\d{1,3}\.\d{1,3}(:\d+)?$/,
+  /^https?:\/\/172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}(:\d+)?$/,
   // *.local mDNS hostnames (common with Expo dev clients)
-  /^https?:\/\/[\w-]+\.local:\d+$/,
+  /^https?:\/\/[\w-]+\.local(:\d+)?$/,
   ...CORS_EXTRA,
 ];
 
@@ -161,7 +170,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   } else {
     res.setHeader(
       'Access-Control-Allow-Headers',
-      'Content-Type, Authorization, X-Requested-With, Accept, Accept-Language, If-None-Match',
+      'Content-Type, Authorization, X-Requested-With, Accept, Accept-Language, If-None-Match, X-Api-Version',
     );
   }
   res.setHeader('Access-Control-Max-Age', '86400');
@@ -171,6 +180,11 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 
 // CORS before helmet/json so every response (including errors) gets ACAO when origin matches
 app.use(cors(corsOptions));
+
+// Request ID — generate/attach early so all subsequent logs, errors, and responses
+// carry a consistent correlation ID. This is critical for production debugging.
+app.use(requestIdMiddleware);
+
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' }, // allow Firebase Hosting rewrites
   contentSecurityPolicy: {
@@ -290,6 +304,7 @@ app.use('/v1', indigenousRouter);
 app.use('/api/v1', indigenousRouter);
 
 // Error handler — never exposes internal details in production
+// Now uses structured logging + Sentry via the new logger
 app.use((err: Error & { status?: number }, req: Request, res: Response, _next: NextFunction) => {
   const origin = req.headers.origin;
   if (typeof origin === 'string' && isAllowedOrigin(origin)) {
@@ -297,10 +312,20 @@ app.use((err: Error & { status?: number }, req: Request, res: Response, _next: N
     res.setHeader('Access-Control-Allow-Credentials', 'true');
     res.setHeader('Vary', 'Origin');
   }
+
   const status = err.status ?? 500;
-  logger.error('[App Error]', err);
-  const safe = status < 500;  // 4xx errors are safe to surface to clients
+  const correlationId = (req as any).correlationId || generateSecureId('REQ-');
+
+  log.error('Unhandled application error', err, {
+    status,
+    path: req.path,
+    method: req.method,
+    correlationId,
+  });
+
+  const safe = status < 500;
   res.status(status).json({
     error: safe ? err.message : 'Internal Server Error',
+    correlationId, // Helps support teams correlate user reports with logs
   });
 });

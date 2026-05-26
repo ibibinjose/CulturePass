@@ -235,7 +235,7 @@ export function ArtistFields({
     // For now, we simulate adding a placeholder image URL
     const newItem: PortfolioItem = {
       type: 'image',
-      url: `https://placeholder.culturepass.app/portfolio-${portfolio.length + 1}.jpg`,
+      url: `https://placeholder.culturepass.co/portfolio-${portfolio.length + 1}.jpg`,
       order: portfolio.length,
     };
     updateArtistData({ portfolio: [...portfolio, newItem] });

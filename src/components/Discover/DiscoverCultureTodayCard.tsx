@@ -70,12 +70,12 @@ export function DiscoverCultureTodayCard() {
   const kickerColor = vitrine ? Vitrine.primaryContainer : CultureTokens.indigo;
   const headlineColor = vitrine ? Vitrine.primary : colors.text;
   const bodyColor = vitrine ? Vitrine.onSurfaceVariant : colors.textSecondary;
-  const accentBar = vitrine ? Vitrine.tertiary : CultureTokens.teal;
+  const accentBar = vitrine ? Vitrine.tertiary : CultureTokens.emeraldHarmony;
   const pillBorder = vitrine ? `${Vitrine.primary}35` : `${CultureTokens.indigo}40`;
   const pillText = vitrine ? Vitrine.primary : CultureTokens.indigo;
   const glowColors = vitrine
-    ? ([`${Vitrine.primary}22`, `${Vitrine.secondaryContainer}18`, 'transparent'] as const)
-    : ([`${CultureTokens.indigo}18`, `${CultureTokens.teal}12`, 'transparent'] as const);
+    ? ([`${Vitrine.primary}18`, `${Vitrine.tertiary}12`, 'transparent'] as const)
+    : ([`${CultureTokens.indigo}15`, `${CultureTokens.emeraldHarmony}10`, 'transparent'] as const);
 
   return (
     <View style={[styles.wrap, headerPadStyle]}>
@@ -113,7 +113,7 @@ export function DiscoverCultureTodayCard() {
           <View style={styles.copy}>
             <Text style={[styles.series, { color: bodyColor }]}>Reimagine</Text>
             <View style={styles.kickerRow}>
-              <Text style={[styles.kickerDot, { backgroundColor: CultureTokens.gold }]} />
+              <Text style={[styles.kickerDot, { backgroundColor: CultureTokens.heritageGold }]} />
               <Text style={[styles.kicker, { color: kickerColor }]}>Today we celebrate</Text>
             </View>
             <Text style={[styles.headline, { color: headlineColor }]} maxFontSizeMultiplier={1.3}>

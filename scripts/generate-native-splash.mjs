@@ -41,7 +41,7 @@ const BG_DEEP = "#0B0B14";
 const TEXT_MUTED = "#A8B0C4";
 
 /** Sync with src/lib/app-meta.ts */
-const TAGLINE_PRIMARY = "Belong anywhere.";
+const TAGLINE_PRIMARY = "Connecting cultures, building belonging.";
 const TAGLINE_SECONDARY = "Discover. Connect. Belong.";
 
 function escapeXml(s) {

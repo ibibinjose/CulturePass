@@ -1,0 +1,61 @@
+{
+  "title": "Help & Support",
+  "categories": [
+    {
+      "id": "start",
+      "label": "Getting Started",
+      "icon": "rocket-outline",
+      "color": "#6366F1",
+      "items": [
+        {
+          "q": "What is CulturePass?",
+          "a": "CulturePass is a lifestyle and community platform for cultural diaspora communities across Australia, New Zealand, UAE, UK, and Canada. Use the app or culturepass.co to discover cultural events, join communities, access perks, and connect with people who share your heritage."
+        },
+        {
+          "q": "How do I create an account?",
+          "a": "Tap \"Create Account\" on the welcome screen. Enter your email and a password (min 6 characters), then follow the steps to set your location and interests. You can also sign in with Google on web."
+        },
+        {
+          "q": "Is CulturePass free to use?",
+          "a": "Yes! The Free tier gives you access to browse events, join communities, and use the basic features. Upgrade to Plus or Elite for exclusive perks, early ticket access, and premium benefits."
+        }
+      ]
+    },
+    {
+      "id": "account",
+      "label": "Account & Profile",
+      "icon": "person-circle-outline",
+      "color": "#FFD700",
+      "items": [
+        {
+          "q": "How do I edit my profile?",
+          "a": "Go to Settings → Edit Profile (or tap your avatar on the Profile tab). You can update your display name, bio, profile photo, city, social links, and interests."
+        },
+        {
+          "q": "How do I change my password?",
+          "a": "Go to Settings → Privacy & Security → Change Password. You'll receive a reset link at your registered email address."
+        }
+      ]
+    }
+  ],
+  "contactOptions": [
+    {
+      "icon": "mail",
+      "label": "Email Support",
+      "sub": "hello@culturepass.co",
+      "color": "#6366F1"
+    },
+    {
+      "icon": "logo-whatsapp",
+      "label": "WhatsApp Us",
+      "sub": "+61 469 304 711",
+      "color": "#25D366"
+    },
+    {
+      "icon": "call",
+      "label": "Phone Support",
+      "sub": "+61 469 304 711 (Mon–Fri 9am–6pm AEST)",
+      "color": "#10B981"
+    }
+  ]
+}

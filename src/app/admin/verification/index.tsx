@@ -7,10 +7,11 @@
  * Related: Requirement 8 (Legal and Compliance Fields)
  */
 import React, { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, Pressable } from 'react-native';
+import { createLazyComponent } from '@/lib/lazy'; // for future heavy subcomponents
+import { View, Text, StyleSheet, FlatList, Pressable, TextInput } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useColors } from '@/hooks/useColors';
+import { useM3Colors as useColors } from '@/hooks/useM3Colors';
 import { useLayout } from '@/hooks/useLayout';
 import { HeaderTokens, CultureTokens, FontFamily } from '@/design-system/tokens/theme';
 import { Radius } from '@/design-system/tokens/spacing';
@@ -103,7 +104,25 @@ export default function VerificationQueueScreen() {
     refetchInterval: 15000,
   });
 
-  const tasks = useMemo<VerificationTask[]>(() => tasksData?.tasks ?? [], [tasksData]);
+  const [search, setSearch] = useState('');
+
+  const tasksRaw = useMemo<VerificationTask[]>(() => tasksData?.tasks ?? [], [tasksData]);
+
+  const tasks = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return tasksRaw;
+    return tasksRaw.filter((t) => {
+      const hay = [
+        t.id,
+        t.profileId,
+        t.entityType,
+        t.submittedBy,
+        t.adminNotes || '',
+        t.rejectionReason || '',
+      ].join(' ').toLowerCase();
+      return hay.includes(q);
+    });
+  }, [tasksRaw, search]);
 
   const totalPending = (statsData?.pending ?? 0) + (statsData?.inReview ?? 0) + (statsData?.moreInfoNeeded ?? 0);
   const overdueCount = statsData?.overdueSla ?? 0;
@@ -148,7 +167,26 @@ export default function VerificationQueueScreen() {
         </View>
       )}
 
-      {/* Filter Chips */}
+      {/* Search + Filters */}
+      <View style={[styles.searchRow, { paddingHorizontal: hPad }]}>
+        <View style={[styles.searchBox, { backgroundColor: colors.surface, borderColor: colors.borderLight }]}>
+          <Ionicons name="search" size={16} color={colors.textTertiary} />
+          <TextInput
+            style={[styles.searchInput, { color: colors.text }]}
+            placeholder="Search tasks, profiles, notes..."
+            placeholderTextColor={colors.textTertiary}
+            value={search}
+            onChangeText={setSearch}
+            autoCapitalize="none"
+          />
+          {search ? (
+            <Pressable onPress={() => setSearch('')}>
+              <Ionicons name="close-circle" size={16} color={colors.textTertiary} />
+            </Pressable>
+          ) : null}
+        </View>
+      </View>
+
       <View style={[styles.filterRow, { paddingHorizontal: hPad }]}>
         {STATUS_FILTERS.map((filter) => {
           const active = statusFilter === filter.value;
@@ -311,6 +349,23 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     borderRadius: 8,
     borderWidth: 1,
+  },
+  searchRow: {
+    paddingVertical: 12,
+  },
+  searchBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  searchInput: {
+    flex: 1,
+    fontFamily: FontFamily.regular,
+    fontSize: 14,
   },
 
   statsRow: {

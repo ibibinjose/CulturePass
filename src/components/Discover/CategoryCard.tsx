@@ -106,7 +106,7 @@ function CategoryCard({ item, onPress }: CategoryCardProps) {
             colors={['rgba(255,255,255,0.22)', 'rgba(255,255,255,0.00)', 'rgba(255,255,255,0.06)']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            style={StyleSheet.absoluteFillObject}
+            style={StyleSheet.absoluteFill}
             pointerEvents="none"
           />
 
@@ -122,7 +122,7 @@ function CategoryCard({ item, onPress }: CategoryCardProps) {
               colors={['rgba(255,255,255,0.30)', 'rgba(255,255,255,0.00)']}
               start={{ x: 0, y: 0 }}
               end={{ x: 0, y: 1 }}
-              style={StyleSheet.absoluteFillObject}
+              style={StyleSheet.absoluteFill}
               pointerEvents="none"
             />
             {item.emoji ? (

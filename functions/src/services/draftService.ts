@@ -8,7 +8,7 @@
 
 import { db } from '../admin';
 import type { ProfileDraft } from '../../../shared/schema/hostProfileDraft';
-import type { HostEntityType } from '../../../shared/schema/hostProfile';
+import type { HostEntityType } from '../../../shared/schema/hostTypes';
 
 // ---------------------------------------------------------------------------
 // Collections

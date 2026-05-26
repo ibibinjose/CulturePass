@@ -1,7 +1,6 @@
 import React from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { useLocalSearchParams, router, Stack } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 import { EventAnalyticsDashboard } from '@/modules/events/components/EventAnalyticsDashboard';
 import { useColors } from '@/hooks/useColors';
 import { M3TopAppBar } from '@/design-system/ui/M3TopAppBar';

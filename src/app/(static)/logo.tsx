@@ -54,7 +54,7 @@ export default function LogoPage() {
 
           {/* Tagline */}
           <Text style={styles.tagline}>
-            Belong anywhere.
+            Connecting cultures, building belonging.
           </Text>
 
         </View>

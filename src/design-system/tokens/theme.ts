@@ -19,7 +19,7 @@ import {
 } from './typography';
 import { Elevation, ElevationAlias } from './elevation';
 import { Duration, SpringConfig, prefersReducedMotion } from './animations';
-import { gradients as _gradients } from './colors';
+import { gradients as _gradients, CultureTokens } from './colors';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -93,8 +93,8 @@ export const ButtonTokens = {
 
 export const LayoutRules = {
   screenHorizontalPadding: Spacing.md,
-  cardPaddingMin: Spacing.md,
-  cardPaddingMax: Spacing.lg,
+  cardHorizontalPadding: Spacing.md,
+  cardVerticalPadding: Spacing.md,
   sectionSpacing: Spacing.xl,
   iconTextGap: 6,
   betweenCards: Spacing.md,
@@ -311,20 +311,46 @@ export const MaterialExpressive = {
     fab: 10,
   },
   heroChrome: {
-    iconFill: _gradients.culturepassBrand[0], // indigo
+    iconFill: _gradients.culturepassBrand[0], // terracotta
     iconOnFill: '#FFFFFF',
   },
 } as const;
 
 export const LiquidGlassAccents = {
-  eventIconWell: 'rgba(255, 140, 66, 0.18)',
-  communityIconWell: 'rgba(255, 94, 91, 0.18)',
-  perksIconWell: 'rgba(255, 200, 87, 0.2)',
-  valueRibbonFill: 'rgba(255, 200, 87, 0.14)',
-  valueRibbonBorder: '#FFC85755', // gold with opacity
-  hostAccentBar: '#0D9488', // teal
+  eventIconWell: `rgba(10, 140, 127, 0.18)`, // emerald harmony
+  communityIconWell: `rgba(245, 166, 35, 0.18)`, // deep saffron
+  perksIconWell: `rgba(212, 160, 23, 0.2)`, // heritage gold
+  valueRibbonFill: `rgba(212, 160, 23, 0.14)`, // heritage gold with opacity
+  valueRibbonBorder: `#D4A01755`, // heritage gold with opacity
+  hostAccentBar: CultureTokens.emeraldHarmony, // emerald harmony
   errorBannerFill: 'rgba(255, 94, 91, 0.16)',
   errorBannerBorder: '#FF5E5B55', // coral with opacity
+} as const;
+
+// ---------------------------------------------------------------------------
+// Cultural Accent System
+// ---------------------------------------------------------------------------
+
+export const CulturalAccents = {
+  terracottaGlow: CultureTokens.terracottaGlow,
+  deepSaffron: CultureTokens.deepSaffron,
+  richIndigo: CultureTokens.richIndigo,
+  emeraldHarmony: CultureTokens.emeraldHarmony,
+  heritageGold: CultureTokens.heritageGold,
+  
+  // Cultural-themed background patterns
+  terracottaSurface: `rgba(227, 106, 78, 0.05)`,
+  saffronSurface: `rgba(245, 166, 35, 0.05)`,
+  indigoSurface: `rgba(74, 94, 191, 0.05)`,
+  emeraldSurface: `rgba(10, 140, 127, 0.05)`,
+  goldSurface: `rgba(212, 160, 23, 0.05)`,
+  
+  // Cultural-themed borders
+  terracottaBorder: `rgba(227, 106, 78, 0.3)`,
+  saffronBorder: `rgba(245, 166, 35, 0.3)`,
+  indigoBorder: `rgba(74, 94, 191, 0.3)`,
+  emeraldBorder: `rgba(10, 140, 127, 0.3)`,
+  goldBorder: `rgba(212, 160, 23, 0.3)`,
 } as const;
 
 // ---------------------------------------------------------------------------
@@ -390,6 +416,7 @@ const theme = {
   LiquidGlassTokens,
   MaterialExpressive,
   LiquidGlassAccents,
+  CulturalAccents,
   SignatureGradient
 };
 

@@ -11,8 +11,8 @@ import { db } from '../admin';
 import type { PaginationParams, PaginatedResult } from './base';
 import type {
   HostProfile,
-  HostEntityType,
 } from '../../../shared/schema/hostProfile';
+import type { HostEntityType } from '../../../shared/schema/hostTypes';
 import type { ProfileVersion } from '../../../shared/schema/hostProfileVersion';
 import type { ProfileAnalytics } from '../../../shared/schema/hostProfileAnalytics';
 

@@ -1,5 +1,11 @@
 /**
- * useColors — runtime color hook for CulturePass.
+ * useColors — LEGACY runtime color hook for CulturePass.
+ *
+ * ⚠️  DEPRECATION NOTICE (Phase 0)
+ * This hook is being phased out in favor of `useM3Colors()` from `@/hooks/useM3Colors`.
+ * New code and refactors should use `useM3Colors()` + cultural extensions.
+ *
+ * See ADR-002 and docs/ARCHITECTURE.md for the color system consolidation effort.
  *
  * Platform behaviour:
  *   • iOS / Android / Web all resolve from the same appearance source:
@@ -15,10 +21,6 @@
  * cannot be called), import Colors directly:
  *   import Colors from '@/design-system/tokens/colors';
  *   // Colors.primary, Colors.background, etc. (maps to light theme by default)
- *
- * Note:
- *   Use this hook for all runtime colors instead of hardcoding values in
- *   components. This remains the single switch point for any future theme changes.
  */
 
 import type { ColorTheme } from '@/design-system/tokens/colors';

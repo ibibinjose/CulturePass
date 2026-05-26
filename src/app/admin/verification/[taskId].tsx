@@ -14,11 +14,10 @@ import {
   ScrollView,
   Pressable,
   TextInput,
-  Alert,
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useColors } from '@/hooks/useColors';
+import { useM3Colors as useColors } from '@/hooks/useM3Colors';
 import { useLayout } from '@/hooks/useLayout';
 import { HeaderTokens, CultureTokens, FontFamily } from '@/design-system/tokens/theme';
 import { Radius } from '@/design-system/tokens/spacing';
@@ -27,7 +26,11 @@ import { M3Button, Skeleton } from '@/design-system/ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { adminKeys } from '@/hooks/queries/keys';
-import { VerificationChecklist } from '@/modules/admin/components/VerificationChecklist';
+import { createLazyComponent } from '@/lib/lazy';
+
+const VerificationChecklist = createLazyComponent(
+  () => import('@/modules/admin/components/VerificationChecklist')
+);
 import type { VerificationTask, VerificationChecklistItem } from '@/shared/schema';
 
 const ENTITY_TYPE_LABELS: Record<string, string> = {
@@ -72,6 +75,7 @@ export default function VerificationTaskDetailScreen() {
   const [requestMessage, setRequestMessage] = useState('');
   const [showRejectForm, setShowRejectForm] = useState(false);
   const [showRequestInfoForm, setShowRequestInfoForm] = useState(false);
+  const [banner, setBanner] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   const { data: task, isLoading } = useQuery({
     queryKey: adminKeys.verificationTask(taskId ?? ''),
@@ -89,20 +93,20 @@ export default function VerificationTaskDetailScreen() {
     mutationFn: () => api.admin.approveVerification(taskId!, adminNotes || undefined),
     onSuccess: () => {
       invalidateAll();
-      Alert.alert('Approved', 'Verification has been approved.');
-      router.back();
+      setBanner({ type: 'success', message: 'Verification approved. Profile is now live.' });
+      setTimeout(() => router.back(), 1200);
     },
-    onError: (e: Error) => Alert.alert('Error', e.message ?? 'Failed to approve'),
+    onError: (e: Error) => setBanner({ type: 'error', message: e.message ?? 'Failed to approve' }),
   });
 
   const rejectMutation = useMutation({
     mutationFn: () => api.admin.rejectVerification(taskId!, rejectionReason, adminNotes || undefined),
     onSuccess: () => {
       invalidateAll();
-      Alert.alert('Rejected', 'Verification has been rejected.');
-      router.back();
+      setBanner({ type: 'success', message: 'Verification rejected.' });
+      setTimeout(() => router.back(), 1200);
     },
-    onError: (e: Error) => Alert.alert('Error', e.message ?? 'Failed to reject'),
+    onError: (e: Error) => setBanner({ type: 'error', message: e.message ?? 'Failed to reject' }),
   });
 
   const requestInfoMutation = useMutation({
@@ -111,15 +115,15 @@ export default function VerificationTaskDetailScreen() {
       invalidateAll();
       setShowRequestInfoForm(false);
       setRequestMessage('');
-      Alert.alert('Sent', 'More information has been requested.');
+      setBanner({ type: 'success', message: 'More information requested from the host.' });
     },
-    onError: (e: Error) => Alert.alert('Error', e.message ?? 'Failed to request info'),
+    onError: (e: Error) => setBanner({ type: 'error', message: e.message ?? 'Failed to request info' }),
   });
 
   const _assignMutation = useMutation({
     mutationFn: (adminId: string) => api.admin.assignVerification(taskId!, adminId),
     onSuccess: () => invalidateAll(),
-    onError: (e: Error) => Alert.alert('Error', e.message ?? 'Failed to assign'),
+    onError: (e: Error) => setBanner({ type: 'error', message: e.message ?? 'Failed to assign' }),
   });
 
   const checklistMutation = useMutation({
@@ -188,6 +192,17 @@ export default function VerificationTaskDetailScreen() {
           {ENTITY_TYPE_LABELS[task.entityType] ?? task.entityType} Profile
         </Text>
       </GlassView>
+
+      {/* Action feedback banner (consistent with other admin tools) */}
+      {banner && (
+        <GlassView intensity={20} style={[styles.banner, banner.type === 'error' ? styles.bannerError : styles.bannerSuccess]}>
+          <Ionicons name={banner.type === 'error' ? 'alert-circle' : 'checkmark-circle'} size={16} color={banner.type === 'error' ? CultureTokens.coral : '#10B981'} />
+          <Text style={[styles.bannerText, { color: colors.text }]}>{banner.message}</Text>
+          <Pressable onPress={() => setBanner(null)} style={{ marginLeft: 'auto' }}>
+            <Ionicons name="close" size={14} color={colors.textSecondary} />
+          </Pressable>
+        </GlassView>
+      )}
 
       {/* Task Info */}
       <GlassView intensity={8} style={styles.infoCard} contentStyle={styles.infoCardContent}>
@@ -422,6 +437,29 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   overdueText: { fontSize: 10, fontFamily: FontFamily.bold, color: CultureTokens.coral },
+
+  banner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    padding: 12,
+    borderRadius: Radius.md,
+  },
+  bannerSuccess: {
+    backgroundColor: 'rgba(16,185,129,0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(16,185,129,0.2)',
+  },
+  bannerError: {
+    backgroundColor: 'rgba(239,68,68,0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(239,68,68,0.2)',
+  },
+  bannerText: {
+    fontFamily: FontFamily.regular,
+    fontSize: 13,
+    flex: 1,
+  },
 
   infoCard: { borderRadius: Radius.lg },
   infoCardContent: { padding: 16, gap: 10 },

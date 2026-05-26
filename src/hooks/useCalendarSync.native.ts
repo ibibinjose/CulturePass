@@ -199,7 +199,7 @@ export function useCalendarSync() {
         endDate,
         timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         alarms: [{ relativeOffset: -60 }], // 1h reminder
-        url: `https://culturepass.app/e/${event.id}`,
+        url: `https://culturepass.co/e/${event.id}`,
       });
 
       Alert.alert('Added to Calendar', `"${event.title}" has been added to your calendar.`);
@@ -303,13 +303,13 @@ export function buildICS(event: EventData): string {
     'VERSION:2.0',
     'PRODID:-//CulturePass//CulturePass//EN',
     'BEGIN:VEVENT',
-    `UID:culturepass-${event.id}@culturepass.app`,
+    `UID:culturepass-${event.id}@culturepass.co`,
     `DTSTART:${fmt(start)}`,
     `DTEND:${fmt(end)}`,
     `SUMMARY:${(event.title ?? 'CulturePass Event').replace(/\n/g, '\\n')}`,
     location ? `LOCATION:${location.replace(/\n/g, '\\n')}` : '',
     event.description ? `DESCRIPTION:${event.description.replace(/\n/g, '\\n').substring(0, 500)}` : '',
-    `URL:https://culturepass.app/e/${event.id}`,
+    `URL:https://culturepass.co/e/${event.id}`,
     'END:VEVENT',
     'END:VCALENDAR',
   ].filter(Boolean).join('\r\n');

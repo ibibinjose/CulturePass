@@ -7,10 +7,14 @@
  *   or via Firebase Hosting rewrite: /api/** → api function
  */
 
-import * as functions from 'firebase-functions';
+import { https, setGlobalOptions } from 'firebase-functions/v2';
 import { app } from './app';
 
-export const api = functions.https.onRequest(app);
+// Ensure all v2 functions run in the same region as Firestore
+setGlobalOptions({ region: 'australia-southeast1' });
+
+// Export the API function using the v2 HTTPS function API
+export const api = https.onRequest(app);
 
 export * from './triggers';
 export * from './payments/stripeCheckout';

@@ -1,309 +1,231 @@
-# CulturePass Architecture (Expo + Firebase)
+# CulturePass Architecture
 
-> **Last updated**: 2026-05-08
-> **Stack**: Expo 55 · React Native 0.83 · Expo Router 5 · Reanimated 4 · Firebase 11
+**Status**: Living Document  
+**Last Updated**: Current session (Phase 0 Foundations)  
+**Owners**: Engineering + Product  
+**Audience**: Current team, new hires, future contributors, auditors
 
----
-
-## Product Identity
-
-CulturePass is a **B2B2C cultural lifestyle marketplace** — not a government portal.
-
-- **Users** discover events, join communities, earn perks
-- **Organisers/Businesses** list events, manage tickets, grow audiences
-- **Council (LGA)** is a **location attribute** for proximity services only
-
-The app targets diaspora communities worldwide — any city, any culture.
+This document describes how CulturePass is actually built, why key decisions were made, and the principles that guide future evolution.
 
 ---
 
-## Runtime Targets
+## 1. Vision & Principles
 
-Single codebase via Expo + React Native:
+CulturePass is a universal (iOS, Android, Web) platform that enables cultural creators, venues, businesses, communities, and organizers to reach diaspora audiences, sell experiences and products, build communities, and manage their presence with world-class tools.
 
-| Platform | Distribution | Build |
-|----------|-------------|-------|
-| iOS | App Store (`au.culturepass.app`) | EAS Build |
-| Android | Google Play | EAS Build |
-| Web | Firebase Hosting | `expo export --platform web` |
+**Guiding Principles** (inspired by the standards of Apple, Google, Amazon, x.com, and SpaceX):
 
----
-
-## System Layers
-
-### 1) Presentation Layer
-
-- `app/` — Expo Router file-based screens
-- `components/` — reusable UI building blocks
-- `src/design-system/tokens/theme.ts` — **SINGLE IMPORT POINT** for all design tokens
-- `hooks/useColors.ts` — theme-aware color access (dark default on native, light on web)
-- `hooks/useLayout.ts` — responsive layout: `isDesktop`, `hPad`, `width`, `sidebarWidth`, `columnWidth()`
-
-#### Tab Navigation (5 tabs)
-```
-Discover  →  app/(tabs)/index.tsx
-Calendar  →  app/(tabs)/calendar.tsx
-Community →  app/(tabs)/community.tsx
-Perks     →  app/(tabs)/perks.tsx
-Profile   →  app/(tabs)/profile.tsx
-```
-Additional tab-group screens: `directory.tsx`, `explore.tsx`
-
-#### Key Screens
-```
-app/events.tsx              All Events page — single-line filter bar (category + date + price)
-app/(tabs)/explore.tsx      Explore — category pills + 2-column event grid (pixel-width columns)
-app/(tabs)/directory.tsx    Directory — All/Events/Indigenous/Businesses/Venues/Organisations/Councils/Government/Charities
-app/event/[id].tsx          Event detail + ticket purchase
-app/event/create.tsx        9-step event creation wizard
-app/admin/dashboard.tsx     Admin panel — users, audit logs, notifications
-app/dashboard/organizer.tsx Organizer dashboard
-```
-
-#### Web Desktop Layout
-- **Left sidebar**: `components/web/WebSidebar.tsx` (240px fixed)
-- **No top bar** — sidebar replaces old 64px top nav
-- **Top inset**: always `0` on web: `const topInset = Platform.OS === 'web' ? 0 : insets.top`
-
-#### Design Token System
-
-All tokens export from `@/design-system/tokens/theme`:
-
-```typescript
-import { CultureTokens, ButtonTokens, CardTokens, InputTokens, gradients, SignatureGradient } from '@/design-system/tokens/theme';
-import { useColors } from '@/hooks/useColors';
-
-CultureTokens.indigo   // #4F46E5 — primary brand
-CultureTokens.violet   // #9333EA — active nav, gradient start
-CultureTokens.coral    // #FF5E5B — movement / action
-CultureTokens.gold     // #FFC857 — premium chrome (not body/datetime text)
-CultureTokens.teal     // #0D9488 — belonging, venues
-
-SignatureGradient      // violet → coral — hero / onboarding (max one per screen)
-gradients.culturepassBrand  // same as SignatureGradient
-```
-
-**Never hardcode hex values.** Use `useColors()` for theme-aware values.
+- **Reliability & Trust First**: Creators depend on this platform for their livelihood. Lost drafts, broken publishing flows, or unclear verification states are unacceptable.
+- **Documentation as Code**: Architectural decisions are written down, reviewed, and versioned alongside the code.
+- **Internal Tools Are Products**: The admin and moderation surfaces deserve the same level of craft as the consumer experience.
+- **Platform Thinking**: Stable, well-bounded primitives (auth, verification, forms, design, observability) enable fast, safe product development.
+- **Progressive Disclosure & Forgiveness**: Complex domains (legal requirements, verification, international nuances) must feel guided and recoverable.
+- **Measure What Matters**: Host success funnels, verification resolution times, time-to-first-publish, admin operational metrics, and error budgets drive prioritization.
 
 ---
 
-### 2) Client State + Session Layer
-
-| Concern | Solution |
-|---------|----------|
-| Server data | TanStack React Query (`useQuery`, `useMutation`) |
-| Auth state | `lib/auth.tsx` → `useAuth()` |
-| Onboarding | `contexts/OnboardingContext` (city, country, interests, isComplete) |
-| Saved items | `contexts/SavedContext` |
-| Contacts | `contexts/ContactsContext` |
-| UI state | `useState` / `useReducer` local to component |
-
----
-
-### 3) Data Access Layer
-
-- `lib/api.ts` — **ONLY** way to call backend (150+ typed endpoints, namespace pattern)
-- `lib/query-client.ts` — TanStack React Query setup + `apiRequest()` transport
-- `shared/schema.ts` — shared client/server TypeScript contracts (master re-export)
-- `shared/schema/` — domain schemas: event, user, ticket, profile, notification, perk, wallet, social, media, moderation
-
-```typescript
-// Always use api.* — never raw fetch()
-import { api, ApiError } from '@/lib/api';
-
-const { data } = useQuery({
-  queryKey: ['/api/events', city, country],
-  queryFn: () => api.events.list({ city, country, pageSize: 50 }),
-});
-```
-
----
-
-### 4) Backend Layer
-
-- `functions/src/app.ts` — Express app (150+ routes, 6500+ lines)
-- `functions/src/middleware/auth.ts` — Firebase ID token verification + role guards
-- `functions/src/middleware/moderation.ts` — content moderation
-- `functions/src/services/firestore.ts` — typed Firestore services
-- `functions/src/services/search.ts` — weighted full-text + trigram search
-- `functions/src/services/cache.ts` — in-memory TTL cache (60s default)
-- `functions/src/services/rollout.ts` — feature flag phased rollout
-
----
-
-## Auth + Request Flow
+## 2. High-Level System Overview
 
 ```
-1. Firebase Auth (email/Google/Apple) → ID token
-2. onAuthStateChanged in lib/auth.tsx → token stored via setAccessToken()
-3. Every apiRequest() → Authorization: Bearer <idToken>
-4. Functions middleware → verifyIdToken() → req.user = { uid, email, role }
-5. Token auto-refreshed every 50 minutes
+┌─────────────────────────────────────────────────────────────────┐
+│                        Clients (Universal)                       │
+│  Expo 56 + React Native + react-native-web + expo-router        │
+│  - iOS / Android (EAS)                                           │
+│  - Web (static export → Firebase Hosting)                        │
+│  - Apple Widgets / Live Activities (targets/)                    │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              │ Authenticated HTTP (Bearer ID token)
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                     API Layer (BFF Pattern)                      │
+│  Firebase Functions (v2 https.onRequest) → Express (app.ts)     │
+│  - Typed endpoints (platform/api/endpoints/*)                    │
+│  - Middleware: auth, validation, rateLimit, moderation           │
+│  - Region: australia-southeast1                                  │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                     Firebase Platform                            │
+│  - Auth (primary identity + custom claims for roles)             │
+│  - Firestore (hostProfiles, hostApplications, hostVerificationTasks, 
+│    events, profiles, users, auditLogs, drafts, etc.)             │
+│  - Storage (media, documents)                                    │
+│  - Triggers (onImageUpload, reviews, waitlist, digest, scores)   │
+│  - Hosting (SPA + /api/** → Functions)                           │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                     External Services                            │
+│  - Stripe (payments, Connect)                                    │
+│  - Resend (email)                                                │
+│  - PostHog (product analytics + session replay)                  │
+│  - FCM (push)                                                    │
+└─────────────────────────────────────────────────────────────────┘
 ```
+
+**Key Architectural Decisions** (see `docs/ADRs/`):
+- API over direct client Firestore access (consistency, authorization, business logic enforcement).
+- Shared `shared/schema/` as the contract between client and server.
+- TanStack Query as the primary data layer (with persistence).
+- Custom design system (M3 + cultural expression) rather than pure third-party UI library.
 
 ---
 
-## Firestore Data Model
+## 3. Frontend Architecture (Client)
 
-```
-users/{uid}
-  username, displayName, email, city, country
-  role: 'user' | 'organizer' | 'moderator' | 'admin' | 'cityAdmin' | 'platformAdmin'
-  membership: { tier: 'free'|'plus'|'elite', expiresAt }
-  stripeCustomerId, stripeSubscriptionId
-  isSydneyVerified, interests[], culturePassId (CP-USR-xxx)
-  lgaCode?           ← user's local government area (location service)
+### Directory Structure (Key Parts)
+- `src/app/` — File-based routing (expo-router). Groups: `(tabs)`, `(onboarding)`, `(domain)`, `admin/`, `hostspace/`, etc.
+- `src/modules/` — Feature modularity (strongest in `host/`).
+- `src/platform/api/` — Typed API client factories.
+- `src/lib/` — Cross-cutting (api, query-client, auth, config, deep links).
+- `src/design-system/` — Tokens + UI primitives (M3 + cultural variants + platform splits).
+- `src/hooks/queries/` — Domain-specific data hooks with structured keys.
+- `shared/` — Single source of truth for domain models (imported via alias).
 
-events/{eventId}
-  title, description, venue, address, date, time, endDate?, endTime?
-  city, country, imageUrl, heroImageUrl?
-  cultureTag[], tags[], category
-  entryType: 'ticketed' | 'free'
-  priceCents, tiers[], isFree, isFeatured
-  artists?: EventArtist[]       ← performers (name, role, bio, imageUrl)
-  eventSponsors?: EventSponsor[] ← sponsors with tier (gold/silver/bronze)
-  hostInfo?: EventHostInfo       ← host contact details
-  organizerId, capacity, attending
-  lgaCode?           ← council LGA for proximity matching
-  councilId?         ← linked council record
-  status: 'draft' | 'published' | 'cancelled'
-  cpid (CP-EVT-xxx), geoHash, deletedAt (soft delete)
+### Data & State
+- **Primary**: TanStack React Query v5 (persisted to AsyncStorage, 5min stale default, 401 self-healing).
+- **Auth**: Firebase Auth client SDK + module-level token store (to obey hook rules) injected into API layer.
+- **Local/Ephemeral**: React Contexts (limited) + form state inside complex wizards.
+- **No heavy global store** (Zustand is in deps but minimally used).
 
-tickets/{ticketId}
-  eventId, userId, tierName, quantity
-  totalPriceCents, priceCents
-  status: 'pending' | 'confirmed' | 'cancelled' | 'used'
-  paymentStatus: 'pending' | 'paid' | 'refunded' | 'failed'
-  qrCode, cpTicketId (CP-TKT-xxx)
-  cashbackCents, rewardPoints
-  stripeSessionId?, stripePaymentIntentId?
-  history[]: { at, status, note? }
+### Cross-Platform Strategy
+- `useLayout()` hook drives responsive behavior (compact/medium/expanded + `isDesktop`).
+- Platform-specific files (`.native.tsx`, `.web.tsx`).
+- Web: Static export + Firebase Hosting rewrites.
+- Native: EAS builds with Apple target extensions for widgets.
 
-profiles/{profileId}
-  entityType: 'community' | 'business' | 'venue' | 'artist' | 'organisation'
-  name, description, imageUrl, city, country
-  ownerId, isVerified, rating
-  lgaCode?           ← council LGA for location services
-  socialLinks: { website, instagram, facebook, twitter }
-
-councils/{councilId}
-  name, suburb, state, lgaCode, country
-  websiteUrl?, phone?, addressLine1?
-  verificationStatus: 'verified' | 'unverified'
-  description?
-  ← ~1000 AU LGAs seeded from functions/src/data/AllCouncilsList.csv
-```
+### Error Handling & Resilience (Current State)
+- `ErrorBoundary` + `ErrorFallback` on major screens (with limited auto-retry).
+- Strong `ApiError` classification in `platform/api/client.ts`.
+- `inline-retry-manager.ts` exists but is not fully wired in production UI.
 
 ---
 
-## Council as Location Service
+## 4. Backend Architecture (Firebase Functions)
 
-Council (LGA) is a **location attribute** in CulturePass — never a governance identity.
+### Structure
+- `functions/src/index.ts` → exports `api` (v2 HTTPS).
+- `functions/src/app.ts` → Express app (helmet, cors, rate limiting, global error handler).
+- `handlers/` — Thin routers per domain (auth, validation, ownership checks).
+- `services/` — Business logic (profileService, verificationService, draftService, events, etc.).
+- `middleware/` — `requireAuth`, `requireRole`, `rateLimit`, validation.
+- `triggers/` — Firestore event-driven side effects.
 
-### Where council data appears
-1. **Directory** (`app/(tabs)/directory.tsx`) — browsable Council filter chip; council records from `api.council.list` merged into directory profiles
-2. **Discover** (`app/(tabs)/index.tsx`) — "Events in Your Area" rail filters events by user's `lgaCode`
-3. **Calendar** (`app/(tabs)/calendar.tsx`) — civic reminders tagged with council context
-4. **Admin** (`app/admin/dashboard.tsx`) — council data management via admin panel (no dedicated council page)
+### Security & Authorization
+- Firebase ID tokens verified on every request (`checkRevoked: false` for perf, with freshness helpers for sensitive actions).
+- Role system via custom claims + `users/{uid}.role` (ranks defined in `middleware/auth.ts`).
+- `requireRole('admin')` on the admin router; moderator+ for host applications.
 
-### API surface (kept, UI governance screens removed)
-```typescript
-api.council.list({ pageSize, sortBy, q, state })   // Directory + admin
-api.council.getSelected()                           // User's saved LGA
-api.council.select(councilId)                       // Set user's LGA
-```
-
-### Removed (2026-03)
-- `app/(tabs)/council.tsx` — council tab
-- `app/council/[id].tsx` — council detail
-- `app/council/claim.tsx` — claim flow
-- `app/council/select.tsx` — selection screen
-- `app/dashboard/council.tsx` — council ops dashboard
-- `app/admin/council-management.tsx` — admin UI
-- `app/admin/council-claims.tsx` — claims admin
+### Data Model Highlights
+- `hostApplications` (Layer 1 approval → organizer role).
+- `hostProfiles` + `hostProfileDrafts` + `hostProfileVersions` (rich, versioned, draftable entities).
+- `hostVerificationTasks` (Layer 2 — triggered on publish for regulated entities).
+- Strong separation between internal rich `hostProfiles` and public directory `profiles`.
 
 ---
 
-## Event Creation Wizard (9 Steps)
+## 5. The HostSpace System (Current Crown Jewel)
 
-`app/event/create.tsx` — conditional step flow:
+This is the most sophisticated subsystem in the product.
 
-```
-Step 1: Basics       (title, description, category)
-Step 2: Image        (hero image upload → Firebase Storage temp path)
-Step 3: Location     (venue, address, city, country)
-Step 4: Date & Time  (start date/time, end date/time, locale-aware format)
-Step 5: Entry Type   (ticketed vs free — toggles step 6)
-Step 6: Tickets      [only if ticketed] (multi-tier builder, price, capacity)
-Step 7: Core Team    (artists/performers, sponsors with tiers, host info)
-Step 8: Culture      (culture tags, additional tags)
-Step 9: Review       → SuccessScreen on submit
-```
+**Flow**:
+1. User applies (`hostApplications` collection) → pending.
+2. Admin approves (Layer 1) → `organizer` role granted via custom claims.
+3. User enters gated HostSpace (`HostspaceAccessGate`).
+4. Creates profiles via EntityTypeSelector → workspace or FormWizard.
+5. On publish of certain entities → automatic `pending_verification` + `hostVerificationTask` creation (Layer 2).
+6. Admin reviews verification (checklist + documents) → approve → profile becomes `published` + `verified`.
 
----
+**Strengths**: Excellent internal documentation, strong separation of concerns, dual draft system, entity polymorphism, verification pipeline, accessibility utilities.
 
-## Responsive Layout Patterns
-
-```typescript
-const { isDesktop, isTablet, isMobile, numColumns, hPad, width, sidebarWidth } = useLayout();
-
-// 2-column grid (Explore page) — explicit pixel widths, not percentages:
-const colGap = 12;
-const gridCols = isDesktop ? 4 : 2;
-const colWidth = Math.floor((width - hPad * 2 - colGap * (gridCols - 1)) / gridCols);
-```
-
-**Never use percentage strings** (`width: '50%'`) in flex layouts with `gap` — use explicit pixel widths.
+**Current Architectural Debt** (see ADR-001):
+- The full 6-step `FormWizard` is mature but not the primary runtime path in `/hostspace/create`. Lighter dedicated forms + `HostspaceCreateWorkspace` dominate. This creates duplication and inconsistent mental models.
 
 ---
 
-## Scalability + Performance
+## 6. Admin & Operational Surfaces
 
-- Centralized config validation in `lib/config.ts`
-- API URL normalization to prevent `/api/api/...` duplication
-- Firestore-backed persistence: wallets, notifications, perks, tickets, reports, media
-- Query retry policy: no retry on 4xx, exponential back-off on 5xx
-- In-memory TTL cache for high-frequency read paths
-- React Compiler enabled (`babel-plugin-react-compiler`) — avoid manual memoization unless profiling shows need
-- `expo-image` for all image rendering — disk cache + transition animations
-- `FlatList` with `getItemLayout` + `removeClippedSubviews` for event rails
+Admin is protected by client-side role checks + server `requireRole('admin')` (moderator+ for host applications).
 
----
+Current surfaces include:
+- Host Applications (Layer 1)
+- Verification Queue + Detail (Layer 2) — recently completed with full backend routes
+- Moderation/Reports
+- User Directory, Finance, Discovery config, Promo codes, Audit Logs, System Health, etc.
 
-## Current Feature Surface
-
-| Feature | Status |
-|---------|--------|
-| Discover (events, communities, indigenous) | ✅ |
-| Events page (all events, single-line filter) | ✅ |
-| Explore (category grid, 2-col mobile layout) | ✅ |
-| Directory (All/Events/Indigenous/Business/Venue/Org/Council/Gov/Charity) | ✅ |
-| Event detail + ticket purchase | ✅ |
-| Event creation wizard (9 steps) | ✅ |
-| Calendar (month view, event dots, civic reminders) | ✅ |
-| Communities | ✅ |
-| Perks + redemption | ✅ |
-| Profile + membership tiers | ✅ |
-| Stripe payment + webhook | ✅ |
-| Push notifications (FCM) | ✅ |
-| QR ticket scanner | ✅ |
-| Admin dashboard | ✅ |
-| Organizer dashboard | ✅ |
-| Web desktop layout (sidebar) | ✅ |
-| Council as LGA location service | ✅ |
-| Geolocation geoHash queries | ⏳ stored, not queried |
-| Algolia full-text search | ⏳ planned |
-| Firebase DataConnect (GraphQL) | ⏳ exploratory |
+**Current State**: Good for a small-to-medium team. Lacks pagination, server-side search, bulk actions, deep observability, and workflow automation needed at scale.
 
 ---
 
-## Recommended Next Scalability Upgrades
+## 7. Key Cross-Cutting Concerns
 
-1. **Firestore composite indexes** — add indexes for `[city, date, status]` and `[lgaCode, date]` event queries
-2. **Geolocation geoHash queries** — implement Firestore geo queries using stored `geoHash` field
-3. **Algolia** — index events + profiles for full-text search with cultural tag facets
-4. **Council LGA auto-detect** — derive `lgaCode` from user GPS coordinates on onboarding
-5. **Route-level Zod validation** — validate all write endpoint payloads with Zod schemas
-6. **Playwright E2E** — web-focused end-to-end tests for critical paths (checkout, event creation)
-7. **Sentry performance traces** — structured telemetry on API latency + screen render times
-8. **Split large route screens** — event detail, event creation into feature sub-modules
+- **Design System**: M3 + expressive cultural tokens + GlassView + reanimated micro-interactions. Two color systems currently in use (in migration).
+- **Accessibility**: Strong investment in the host wizard; lighter elsewhere. Needs systematization.
+- **Analytics**: PostHog (product events + replays). Instrumentation is selective.
+- **Performance**: Implicit Metro splitting. No explicit budgets or aggressive lazy loading yet.
+- **Rate Limiting**: Dual (express-rate-limit + custom sliding window per route).
+
+---
+
+## 7. Performance Strategy
+
+Performance is treated as a first-class concern with measurable budgets.
+
+### Current Tools
+- `scripts/check-web-bundle-size.js` — Runs on every CI build. Measures both raw and gzipped sizes.
+- Budgets (as of latest update):
+  - Soft: 1.2 MB gzipped (warning)
+  - Hard: 1.8 MB gzipped (fails CI)
+- Reusable lazy loading utilities in `src/lib/lazy.tsx` and host-specific helpers in `src/modules/host/utils/performance.ts`.
+- `expo-image` is used in most places (better caching + decoding than React Native Image).
+
+### Critical Paths
+- Initial app load (fonts, auth, discover feed)
+- HostSpace creation (very heavy — partially mitigated with lazy steps)
+- Admin surfaces (loaded on demand)
+
+### Goals (Industry Standard)
+- Keep largest initial JS chunk under 1.5 MB gzipped.
+- Lazy load non-critical screens (Admin, heavy modals, complex forms).
+- Consistent image optimization with proper `contentFit`, priority, and caching policies.
+- Measure and protect Time to Interactive on low-end Android devices.
+
+---
+
+## 8. Current Risks & Technical Debt
+
+1. **Developer Experience** — Complex local setup (multiple emulators, token matching, API URL resolution) leads to "nuclear cleanup" culture.
+2. **Knowledge Silos** — Lack of architecture docs and ADRs.
+3. **Host Creation Fragmentation** — See ADR-001.
+4. **Operational Scalability** — Admin tooling and backend queries not hardened for 10x volume.
+5. **Observability** — Limited remote error tracking and distributed tracing.
+6. **Resilience** — General offline support and conflict handling lag behind the excellent draft system in HostSpace.
+
+---
+
+## 9. Evolution & Future Direction
+
+See the approved **World-Class Platform Transformation Plan** (root of planning artifacts) and the `docs/ADRs/` series for concrete decisions.
+
+The strategy is **evolutionary excellence**:
+- Phase 0: Foundations (DX + Docs + Governance)
+- Phase 1: HostSpace unification and verification loop closure
+- Phase 2: Operational excellence in admin tooling
+- Phase 3+: Platformization, performance, internationalization, and signature delight
+
+---
+
+## 10. How to Contribute to This Document
+
+- Major architectural changes require an ADR.
+- Update this document when significant new layers or boundaries are introduced.
+- Keep it honest — describe reality, not aspirations.
+
+---
+
+*This document is intentionally concise. Detailed decisions live in ADRs. Implementation details live in code and the excellent internal documentation inside `src/modules/host/`.*
+
+**Questions?** Start a discussion referencing the relevant ADR or section.

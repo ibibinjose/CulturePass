@@ -40,7 +40,7 @@ type FlowScreen = {
 const FLOW_SCREENS: readonly FlowScreen[] = [
   {
     eyebrow: '01',
-    title: 'Belong anywhere.',
+    title: 'Connecting cultures, building belonging.',
     subtitle: 'Find events, people, and places that feel like home.',
     icon: 'sparkles-outline',
     primaryAction: 'Get started',

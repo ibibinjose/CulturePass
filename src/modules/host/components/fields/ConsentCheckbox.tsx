@@ -24,7 +24,7 @@
  *   onChange={(checked) => setTermsAccepted(checked)}
  *   label="I agree to the Terms of Service"
  *   linkText="Terms of Service"
- *   linkUrl="https://culturepass.com/legal/terms"
+ *   linkUrl="https://culturepass.co/legal/terms"
  *   required
  * />
  * ```

@@ -151,7 +151,7 @@ it('Property 19b: invalid title (empty or >100 chars) returns non-empty error', 
       fc.oneof(
         fc.constant(''),
         fc.constant('   '),
-        fc.string({ minLength: 101, maxLength: 200 }),
+        fc.string({ minLength: 101, maxLength: 200 }).filter((s) => s.trim().length > 100),
       ),
       (title) => {
         const error = validateEventField('title', title);
@@ -177,7 +177,7 @@ it('Property 19d: invalid description (empty or >2000 chars) returns non-empty e
     fc.property(
       fc.oneof(
         fc.constant(''),
-        fc.string({ minLength: 2001, maxLength: 3000 }),
+        fc.string({ minLength: 2001, maxLength: 3000 }).filter((s) => s.trim().length > 2000),
       ),
       (desc) => {
         const error = validateEventField('description', desc);

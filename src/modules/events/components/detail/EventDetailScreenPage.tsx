@@ -349,7 +349,7 @@ export default function EventDetailScreen() {
       'location' in globalThis &&
       typeof globalThis.location?.origin === 'string'
         ? globalThis.location.origin
-        : 'https://culturepass.app';
+        : 'https://culturepass.co';
     const link = Platform.OS === 'web'
       ? `${webOrigin}/event/${event.id}`
       : `culturepass://event/${event.id}`;

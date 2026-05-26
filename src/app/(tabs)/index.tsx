@@ -50,6 +50,7 @@ import { useKeralaScoping } from '@/modules/discover/hooks/useKeralaScoping';
 import { useReminderPopup } from '@/hooks/useReminderPopup';
 import { ReminderPopupModal } from '@/components/ReminderPopupModal';
 import { NationBuildersPromo } from '@/components/NationBuilders/NationBuildersPromo';
+import { CulturalTopAppBar, CulturalFilterChip } from '@/design-system/ui';
 
 // ─── Filter chip definitions ───────────────────────────────────────────────────
 
@@ -97,6 +98,11 @@ export default function DiscoverScreen() {
   const { isDesktop, contentWidth, hPad } = useLayout();
   const scrollBottomPad = useTabScrollBottomPadding(28);
   const [keralaDomain, setKeralaDomain] = useState(false);
+
+  // On web desktop the sticky sidebar + root maxWidth already constrain the area.
+  // Use a modest internal side padding (matches the new rail insets) so nothing
+  // feels "covered" at the edges while keeping the layout balanced.
+  const pageSidePad = isDesktop && Platform.OS === 'web' ? 16 : hPad;
   const [activeFilter, setActiveFilter] = useState<DiscoverFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const { state: onboardingState } = useOnboarding();
@@ -155,13 +161,13 @@ export default function DiscoverScreen() {
       <View style={{ flex: 1, backgroundColor: colors.background }}>
         <View
           style={[
-            StyleSheet.absoluteFillObject,
+            StyleSheet.absoluteFill,
             { backgroundColor: colors.background },
           ]}
           pointerEvents="none"
         />
         <View style={ds.topAppBarLayer}>
-          <M3TopAppBar
+          <CulturalTopAppBar
             title={topBarTitle}
             variant="small"
             titleLeading={
@@ -183,7 +189,12 @@ export default function DiscoverScreen() {
         <DiscoverScrollShell
           scrollBottomPad={scrollBottomPad}
           contentContainerStyle={
-            isDesktop ? { width: contentWidth, alignSelf: 'center' } : undefined
+            // On web desktop the root layout (WebSidebar + mainFlex maxWidth:1200) already
+            // provides the sidebar gutter + centered container. Avoid double-constraining
+            // the inner ScrollView width here — it causes sides to clip or feel covered.
+            isDesktop && Platform.OS !== 'web'
+              ? { width: contentWidth, alignSelf: 'center' }
+              : undefined
           }
           refreshControl={
             <RefreshControl
@@ -195,7 +206,7 @@ export default function DiscoverScreen() {
         >
           <CommunityHomeBanner />
 
-          {/* Nation Builders Promo Banner */}
+          {/* Nation Builders Promo — admin flag controlled, only non CulturePass+ users, dismissible */}
           <NationBuildersPromo variant="full" />
 
           <DiscoverHeader
@@ -210,11 +221,16 @@ export default function DiscoverScreen() {
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={[ds.filterScroll, { paddingHorizontal: hPad }]}
-            style={{ marginBottom: Spacing.sm }}
+            contentContainerStyle={[ds.filterScroll, { paddingHorizontal: pageSidePad }]}
+            style={[
+              { marginBottom: Spacing.sm },
+              // Give a little breathing room between the subtitle
+              // ("Explore festivals...") and the CulturalFilterChip row on desktop web
+              isDesktop && Platform.OS === 'web' && { marginTop: 4 },
+            ]}
           >
             {DISCOVER_FILTERS.map((f) => (
-              <M3FilterChip
+              <CulturalFilterChip
                 key={f.id}
                 label={f.label}
                 icon={f.icon}
@@ -228,7 +244,7 @@ export default function DiscoverScreen() {
             <Animated.View entering={FadeInDown.duration(200)}>
               <View
                 style={[ds.searchBar, {
-                  marginHorizontal: hPad,
+                  marginHorizontal: pageSidePad,
                   backgroundColor: m3Colors.surfaceContainerHigh,
                   height: 56,
                   borderRadius: 28,
@@ -268,7 +284,7 @@ export default function DiscoverScreen() {
             skippedOnboardingSteps={(onboardingState as any).skippedSteps ?? []}
           />
 
-          <View style={[ds.footer, { marginHorizontal: hPad, borderTopColor: m3Colors.outlineVariant }]}>
+          <View style={[ds.footer, { marginHorizontal: pageSidePad, borderTopColor: m3Colors.outlineVariant }]}>
             <View style={ds.footerLinks}>
               {FOOTER_LINKS.map((link) => (
                 <Pressable key={link.href} onPress={() => router.push(link.href)}>

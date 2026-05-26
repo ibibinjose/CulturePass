@@ -77,13 +77,13 @@ export const darkM3: M3ColorScheme = {
   errorContainer: "#93000A",
   onErrorContainer: "#FFDAD6",
 
-  background: "#0C0A09",
+  background: "#000000",
   onBackground: "#FAF9F6",
 
-  surface: "#1C1917",
+  surface: "#121214",
   onSurface: "#FAF9F6",
-  surfaceVariant: "#292524",
-  onSurfaceVariant: "#A8A29E",
+  surfaceVariant: "#1E1E20",
+  onSurfaceVariant: "#A1A1AA",
 
   outline: "#78716C",
   outlineVariant: "#44403C",

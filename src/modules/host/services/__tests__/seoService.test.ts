@@ -32,12 +32,12 @@ import {
 // ---------------------------------------------------------------------------
 
 jest.mock('@/lib/publicPaths', () => ({
-  siteUrl: (path: string) => `https://culturepass.app${path}`,
+  siteUrl: (path: string) => `https://culturepass.co${path}`,
 }));
 
 jest.mock('@/lib/app-meta', () => ({
   APP_NAME: 'CulturePass',
-  SITE_ORIGIN: 'https://culturepass.app',
+  SITE_ORIGIN: 'https://culturepass.co',
 }));
 
 // ---------------------------------------------------------------------------
@@ -167,7 +167,7 @@ describe('generateCanonicalUrl', () => {
       handleStatus: 'approved',
     });
     const url = generateCanonicalUrl(profile);
-    expect(url).toBe('https://culturepass.app/community/sydney-hub');
+    expect(url).toBe('https://culturepass.co/community/sydney-hub');
   });
 
   it('uses slug when handle is not approved', () => {
@@ -177,7 +177,7 @@ describe('generateCanonicalUrl', () => {
       slug: 'my-slug',
     });
     const url = generateCanonicalUrl(profile);
-    expect(url).toBe('https://culturepass.app/community/my-slug');
+    expect(url).toBe('https://culturepass.co/community/my-slug');
   });
 
   it('falls back to ID when no handle or slug', () => {
@@ -187,7 +187,7 @@ describe('generateCanonicalUrl', () => {
       slug: undefined,
     });
     const url = generateCanonicalUrl(profile);
-    expect(url).toBe('https://culturepass.app/community/profile-123');
+    expect(url).toBe('https://culturepass.co/community/profile-123');
   });
 
   it('uses correct entity type prefix', () => {
@@ -370,7 +370,7 @@ describe('generateSitemapEntry', () => {
     const entry = generateSitemapEntry(profile);
 
     expect(entry).not.toBeNull();
-    expect(entry!.loc).toContain('culturepass.app');
+    expect(entry!.loc).toContain('culturepass.co');
     expect(entry!.changefreq).toBe('weekly');
     expect(entry!.priority).toBeGreaterThan(0);
   });

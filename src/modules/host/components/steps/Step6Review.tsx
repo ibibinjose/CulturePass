@@ -37,6 +37,10 @@ import { ProfilePreviewModal } from '../ProfilePreviewModal';
 import type { WizardStepProps } from '../FormWizard/WizardStep';
 import type { HostEntityType } from '@/shared/schema/hostTypes';
 
+// Creator Trust: Final verification impact banner before publish decision
+import { VerificationStatusBanner, type VerificationStatus } from '../VerificationStatusBanner';
+import { trackVerificationStatusViewed } from '../services/formAnalyticsService';
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -579,6 +583,46 @@ export function Step6Review({
         {reviewSections.map(renderSection)}
       </View>
 
+      {/* Creator Trust: Final verification impact banner before the publish decision */}
+      {(() => {
+        const rawStatus = (formData as any).verificationStatus as string | undefined;
+        const derivedStatus: VerificationStatus =
+          rawStatus === 'approved' || rawStatus === 'verified' ? 'approved' :
+          rawStatus === 'in_review' || rawStatus === 'pending' ? 'in_review' :
+          rawStatus === 'needs_more_info' ? 'needs_more_info' :
+          (entityType === 'business' || entityType === 'venue' || entityType === 'organiser') ? 'not_started' : 'approved';
+
+        const unlocksToday = getUnlocksTodayForReview(entityType, derivedStatus);
+        const unlocksAfter = getUnlocksAfterForReview(entityType);
+
+        try {
+          trackVerificationStatusViewed(
+            {
+              sessionId: `review-step-${Date.now()}`,
+              userId: 'current',
+              entityType: entityType as any,
+              device: { platform: Platform.OS === 'ios' ? 'ios' : Platform.OS === 'android' ? 'android' : 'web' },
+            } as any,
+            derivedStatus,
+            6,
+            'wizard'
+          );
+        } catch {}
+
+        return (
+          <VerificationStatusBanner
+            status={derivedStatus}
+            entityType={entityType}
+            unlocksToday={unlocksToday}
+            unlocksAfter={unlocksAfter}
+            onAction={() => {
+              console.log('[Trust] Pre-publish verification action tapped for', entityType);
+            }}
+            location="wizard"
+          />
+        );
+      })()}
+
       {/* Action Buttons */}
       <View style={styles.actions}>
         <Button
@@ -641,6 +685,26 @@ export function Step6Review({
     </ScrollView>
     </>
   );
+}
+
+/**
+ * Creator Trust helpers for the Review step (consistent with Step3Legal).
+ */
+function getUnlocksTodayForReview(entityType: any, status: VerificationStatus): string[] {
+  if (status === 'approved') return ['Accept payments', 'Directory listing', 'Host ticketed events'];
+  const base = ['Directory visibility', 'Free events & gatherings'];
+  if (['business', 'venue'].includes(entityType)) return [...base, 'Verified badge for customer trust'];
+  if (entityType === 'organiser') return [...base, 'Community event publishing'];
+  return base;
+}
+
+function getUnlocksAfterForReview(entityType: any): string[] {
+  if (['business', 'venue'].includes(entityType)) {
+    return ['Paid ticketing & sales', 'CultureMarket listings', 'Search featuring'];
+  }
+  if (entityType === 'organiser') return ['Paid events', 'Full analytics', 'Large-event tools'];
+  if (['artist', 'professional'].includes(entityType)) return ['Paid bookings', 'Creator directory feature', 'Direct inquiries'];
+  return ['Paid memberships', 'Ticketing', 'Advanced community features'];
 }
 
 // ---------------------------------------------------------------------------

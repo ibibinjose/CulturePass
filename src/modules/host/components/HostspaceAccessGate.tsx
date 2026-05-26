@@ -20,11 +20,10 @@ import { useRole } from '@/hooks/useRole';
 import { useAuth } from '@/lib/auth';
 import {
   CultureTokens,
-  Radius,
   FontFamily,
-  Spacing,
   SignatureGradient,
 } from '@/design-system/tokens/theme';
+import { Radius, Spacing } from '@/design-system/tokens/spacing';
 
 const HOST_PERKS = [
   {
@@ -70,24 +69,27 @@ function HostspaceGateScreen({ intent = 'hub' }: { intent?: HostspaceGateIntent 
       : `Join as a${'\n'}Cultural Host`;
   const body =
     intent === 'creationLab'
-      ? 'Listing studio, CultureMarket, and directory profiles are available once your account has host access. Sign in with an approved host account, or apply to join the creator program.'
-      : 'CulturePass hosts create events, list products and services, build communities, and reach thousands of diaspora members across Australia and New Zealand.';
+      ? 'Listing studio, CultureMarket, and directory profiles are available once your account has host access (organizer role). Most apps are reviewed within 24h. Some profiles (venues, ABN businesses, professionals) require a quick extra verification step after you create them.'
+      : 'CulturePass hosts create events, list products and services, build communities, and reach thousands of diaspora members across Australia and New Zealand. Applications are usually approved within 24 hours.';
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#0F0B1A' }}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
       <Stack.Screen options={{ headerShown: false }} />
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}
       >
-        <View style={{ paddingHorizontal: hPad, paddingTop: topInset + Spacing.lg, paddingBottom: 48 }}>
+        <View style={{ paddingHorizontal: hPad, paddingTop: topInset + Spacing.lg, paddingBottom: 64 }}>
+          {/* Enhanced Premium Background */}
           <LinearGradient
-            colors={[CultureTokens.violet + '55', 'transparent']}
-            start={{ x: 0.5, y: 0 }}
-            end={{ x: 0.5, y: 1 }}
+            colors={[CultureTokens.indigo + '33', CultureTokens.violet + '22', 'transparent']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
             style={StyleSheet.absoluteFillObject}
             pointerEvents="none"
           />
+          
+          <View style={[StyleSheet.absoluteFillObject, { backgroundColor: colors.background, opacity: 0.4 }]} pointerEvents="none" />
 
           <Animated.View
             entering={FadeInDown.delay(40).springify()}
@@ -102,13 +104,13 @@ function HostspaceGateScreen({ intent = 'hub' }: { intent?: HostspaceGateIntent 
               onPress={() =>
                 router.canGoBack() ? router.back() : router.replace('/(tabs)' as never)
               }
-              style={{ width: 40, height: 40, alignItems: 'center', justifyContent: 'center' }}
+              style={{ width: 40, height: 40, alignItems: 'center', justifyContent: 'center', borderRadius: 20, backgroundColor: colors.surfaceElevated }}
               accessibilityRole="button"
               accessibilityLabel="Go back"
             >
-              <Ionicons name="chevron-back" size={24} color="rgba(255,255,255,0.85)" />
+              <Ionicons name="chevron-back" size={24} color={colors.text} />
             </Pressable>
-            <Text style={{ fontFamily: FontFamily.bold, fontSize: 15, color: '#fff' }}>HostSpace</Text>
+            <Text style={{ fontFamily: FontFamily.bold, fontSize: 15, color: colors.text }}>HostSpace</Text>
             <View style={{ width: 40 }} />
           </Animated.View>
 
@@ -142,10 +144,10 @@ function HostspaceGateScreen({ intent = 'hub' }: { intent?: HostspaceGateIntent 
               style={{
                 fontFamily: FontFamily.bold,
                 fontSize: Platform.OS === 'web' ? 46 : 34,
-                letterSpacing: -0.6,
-                lineHeight: Platform.OS === 'web' ? 54 : 42,
-                color: '#fff',
-                marginBottom: 14,
+                letterSpacing: -0.8,
+                lineHeight: Platform.OS === 'web' ? 52 : 40,
+                color: colors.text,
+                marginBottom: 16,
               }}
             >
               {title}
@@ -153,11 +155,11 @@ function HostspaceGateScreen({ intent = 'hub' }: { intent?: HostspaceGateIntent 
             <Text
               style={{
                 fontFamily: FontFamily.regular,
-                fontSize: 15,
+                fontSize: 16,
                 lineHeight: 24,
-                color: 'rgba(255,255,255,0.65)',
-                maxWidth: 480,
-                marginBottom: 28,
+                color: colors.textSecondary,
+                maxWidth: 520,
+                marginBottom: 32,
               }}
             >
               {body}
@@ -249,7 +251,12 @@ function HostspaceGateScreen({ intent = 'hub' }: { intent?: HostspaceGateIntent 
                   borderWidth: 1,
                   borderColor: colors.borderLight,
                   backgroundColor: colors.surface,
-                  marginBottom: 10,
+                  marginBottom: 12,
+                  shadowColor: colors.text,
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.05,
+                  shadowRadius: 8,
+                  elevation: 2,
                 }}
               >
                 <View

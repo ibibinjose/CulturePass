@@ -81,21 +81,24 @@ function FeaturedEventItem({
         {heroImageUri ? (
           <Image
             source={{ uri: heroImageUri }}
-            style={StyleSheet.absoluteFillObject}
+            style={StyleSheet.absoluteFill}
             contentFit="cover"
-            transition={300}
+            transition={200}
+            cachePolicy="memory-disk"
+            priority="high"           // Hero images are critical for first impression
+            placeholderContentFit="cover"
           />
         ) : (
           <LinearGradient
             colors={[CultureTokens.violet, CultureTokens.teal]}
-            style={StyleSheet.absoluteFillObject}
+            style={StyleSheet.absoluteFill}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
           />
         )}
         <LinearGradient
           colors={['transparent', 'rgba(0,0,0,0.3)', 'rgba(0,0,0,0.85)']}
-          style={StyleSheet.absoluteFillObject}
+          style={StyleSheet.absoluteFill}
           locations={[0, 0.45, 1]}
         />
 
@@ -166,7 +169,7 @@ function HeroCarouselComponent({ events }: HeroCarouselProps) {
               colors={[`${CultureTokens.violet}22`, `${CultureTokens.teal}18`, 'transparent']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              style={StyleSheet.absoluteFillObject}
+              style={StyleSheet.absoluteFill}
             />
             <GlassView intensity={30} style={styles.emptyBadge}>
               <Text style={[styles.emptyBadgeText, { color: colors.text }]}>DISCOVER</Text>

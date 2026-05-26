@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, Pressable, Platform } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, Pressable, Platform, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { Input } from '@/design-system/ui/Input';
@@ -234,7 +234,11 @@ export function ABNField({
 
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        alert('Camera roll permission is needed to scan documents.');
+        if (Platform.OS === 'web') {
+          window.alert('Camera roll permission is needed to scan documents.');
+        } else {
+          Alert.alert('Permission Required', 'Camera roll permission is needed to scan documents.');
+        }
         setIsScanning(false);
         return;
       }
@@ -268,7 +272,11 @@ export function ABNField({
         setIsValidating(true);
         performValidation(formatted, currentId);
       } else {
-        alert('Could not detect an ABN in the document. Please enter it manually.');
+        if (Platform.OS === 'web') {
+          window.alert('Could not detect an ABN in the document. Please enter it manually.');
+        } else {
+          Alert.alert('OCR Result', 'Could not detect an ABN in the document. Please enter it manually.');
+        }
       }
 
       setIsScanning(false);

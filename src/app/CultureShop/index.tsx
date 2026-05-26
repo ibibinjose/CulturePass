@@ -130,7 +130,7 @@ function CultureShopScreenInner() {
       >
         <View style={[styles.hero, { paddingTop: topInset + Spacing.sm, paddingHorizontal: hPad }]}>
           <LinearGradient
-            colors={['#151127', '#211043']}
+            colors={['#0F0B1A', '#1C162E', '#2B124C']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={StyleSheet.absoluteFillObject}
@@ -261,7 +261,7 @@ export default function CultureShopScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1 },
   hero: {
-    paddingBottom: 42,
+    paddingBottom: 64,
     overflow: 'hidden',
   },
   headerRow: {
@@ -280,16 +280,19 @@ const styles = StyleSheet.create({
   heroContent: { gap: 14 },
   eyebrow: {
     fontFamily: FontFamily.semibold,
-    fontSize: 11,
-    letterSpacing: 1.4,
+    fontSize: 12,
+    letterSpacing: 1.8,
     color: CultureTokens.gold,
+    textTransform: 'uppercase',
+    marginBottom: 8,
   },
   title: {
     fontFamily: FontFamily.bold,
-    fontSize: Platform.OS === 'web' ? 44 : 34,
-    lineHeight: Platform.OS === 'web' ? 52 : 42,
+    fontSize: Platform.OS === 'web' ? 48 : 36,
+    lineHeight: Platform.OS === 'web' ? 56 : 44,
     color: '#fff',
-    maxWidth: 680,
+    maxWidth: 720,
+    letterSpacing: -1,
   },
   subtitle: {
     ...TextStyles.body,
@@ -305,10 +308,15 @@ const styles = StyleSheet.create({
   },
   architectureCard: {
     borderWidth: 1,
-    borderRadius: Radius.md,
-    padding: Spacing.md,
+    borderRadius: Radius.lg,
+    padding: Spacing.lg,
     flexDirection: 'row',
     gap: Spacing.md,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.05,
+    shadowRadius: 15,
+    elevation: 4,
   },
   archIcon: {
     width: 44,

@@ -65,7 +65,7 @@ export default function FeedCard({ item }: FeedCardProps) {
               <View style={styles.headerLeft}>
                 <View style={[styles.avatarBox, { backgroundColor: CultureTokens.indigo + '20' }]}>
                   {payload.authorAvatar ? (
-                    <Image source={{ uri: payload.authorAvatar }} style={StyleSheet.absoluteFillObject} />
+                    <Image source={{ uri: payload.authorAvatar }} style={StyleSheet.absoluteFill} />
                   ) : (
                     <Ionicons name="calendar" size={16} color={CultureTokens.indigo} />
                   )}
@@ -78,13 +78,13 @@ export default function FeedCard({ item }: FeedCardProps) {
             </View>
             <View style={styles.mediaContainer}>
               {payload.imageUrl ? (
-                <Image source={{ uri: payload.imageUrl }} style={StyleSheet.absoluteFillObject} contentFit="cover" />
+                <Image source={{ uri: payload.imageUrl }} style={StyleSheet.absoluteFill} contentFit="cover" />
               ) : (
                 <LinearGradient
                   colors={[CultureTokens.indigo, '#EBF5FF']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
-                  style={StyleSheet.absoluteFillObject}
+                  style={StyleSheet.absoluteFill}
                 />
               )}
             </View>
@@ -121,7 +121,7 @@ export default function FeedCard({ item }: FeedCardProps) {
               <View style={styles.headerLeft}>
                 <View style={[styles.avatarBox, { backgroundColor: CultureTokens.teal + '20' }]}>
                   {payload.authorAvatar ? (
-                    <Image source={{ uri: payload.authorAvatar }} style={StyleSheet.absoluteFillObject} />
+                    <Image source={{ uri: payload.authorAvatar }} style={StyleSheet.absoluteFill} />
                   ) : (
                     <Ionicons name="megaphone" size={16} color={CultureTokens.teal} />
                   )}
@@ -151,7 +151,7 @@ export default function FeedCard({ item }: FeedCardProps) {
               <View style={styles.headerLeft}>
                 <View style={[styles.avatarBox, { backgroundColor: colors.accent + '20' }]}> 
                   {payload.authorAvatar ? (
-                    <Image source={{ uri: payload.authorAvatar }} style={StyleSheet.absoluteFillObject} />
+                    <Image source={{ uri: payload.authorAvatar }} style={StyleSheet.absoluteFill} />
                   ) : (
                     <Ionicons name="gift" size={16} color={colors.accent} />
                   )}

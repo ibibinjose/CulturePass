@@ -86,8 +86,8 @@ export const PROFILE_HOST_ORGANIZER_ROWS: ProfileToolRow[] = [
 ];
 
 export const PROFILE_HOST_ASPIRING_ROWS: ProfileToolRow[] = [
-  { id: 'create', label: 'Create', sub: 'Events, communities, and listings', path: CREATE_HUB_ROUTE, icon: 'add-circle-outline', accent: CultureTokens.teal },
-  { id: 'assoc', label: 'Host on CulturePass', sub: 'How communities and businesses use the platform', path: '/community/association-platform', icon: 'people-circle-outline', accent: CultureTokens.indigo },
+  { id: 'create', label: 'Start Creating', sub: 'Events, communities, and listings (apply to publish)', path: CREATE_HUB_ROUTE, icon: 'add-circle-outline', accent: CultureTokens.teal },
+  { id: 'assoc', label: 'Become a Host', sub: 'Join the creator program and reach the diaspora', path: '/hostspace/apply', icon: 'rocket-outline', accent: CultureTokens.indigo },
   { id: 'help', label: 'Host help', sub: 'FAQs, payouts, and getting verified', path: '/help', icon: 'help-circle-outline', accent: CultureTokens.gold },
 ];
 
@@ -130,13 +130,13 @@ export const SIDEBAR_BROWSE_LINKS: SidebarNavLink[] = [
 
 export const SIDEBAR_HOST_HUB_LINKS: SidebarNavLink[] = [
   { label: 'Create', icon: 'add-circle-outline', iconActive: 'add-circle', route: CREATE_HUB_ROUTE },
-  { label: 'Host dashboard', icon: 'grid-outline', iconActive: 'grid', route: '/hostspace/dashboard', matchPrefix: true },
-  { label: 'Ticket scanner', icon: 'qr-code-outline', iconActive: 'qr-code', route: '/scanner' },
+  { label: 'Host Dashboard', icon: 'grid-outline', iconActive: 'grid', route: '/hostspace/dashboard', matchPrefix: true },
+  { label: 'Ticket Scanner', icon: 'qr-code-outline', iconActive: 'qr-code', route: '/scanner' },
 ];
 
 export const SIDEBAR_HOST_ASPIRING_LINKS: SidebarNavLink[] = [
-  { label: 'Create', icon: 'add-circle-outline', iconActive: 'add-circle', route: CREATE_HUB_ROUTE },
-  { label: 'Host on CulturePass', icon: 'people-circle-outline', iconActive: 'people-circle', route: '/community/association-platform' },
+  { label: 'Start Creating', icon: 'add-circle-outline', iconActive: 'add-circle', route: CREATE_HUB_ROUTE },
+  { label: 'Become a Host', icon: 'rocket-outline', iconActive: 'rocket', route: '/hostspace/apply' },
   { label: 'Host help', icon: 'help-circle-outline', iconActive: 'help-circle', route: '/help' },
 ];
 
@@ -168,19 +168,19 @@ export const MENU_ATTENDEE_SECTION: ExperienceMenuSection = {
 export function menuHostHubSection(isOrganizer: boolean): ExperienceMenuSection {
   if (isOrganizer) {
     return {
-      title: 'Host Hub',
+      title: 'Host Studio',
       items: [
         { id: 'host-create', label: 'Create', icon: 'add-circle-outline', route: CREATE_HUB_ROUTE, requiresAuth: true, requiresOrganizer: true, color: CultureTokens.teal },
-        { id: 'host-dash', label: 'Host dashboard', icon: 'grid-outline', route: '/hostspace/dashboard', requiresAuth: true, requiresOrganizer: true, color: CultureTokens.indigo },
-        { id: 'host-scan', label: 'Ticket scanner', icon: 'qr-code-outline', route: '/scanner', requiresAuth: true, requiresOrganizer: true, color: CultureTokens.gold },
+        { id: 'host-dash', label: 'Host Dashboard', icon: 'grid-outline', route: '/hostspace/dashboard', requiresAuth: true, requiresOrganizer: true, color: CultureTokens.indigo },
+        { id: 'host-scan', label: 'Ticket Scanner', icon: 'qr-code-outline', route: '/scanner', requiresAuth: true, requiresOrganizer: true, color: CultureTokens.gold },
       ],
     };
   }
   return {
-    title: 'Host Hub',
+    title: 'Host Studio',
     items: [
-      { id: 'host-create-all', label: 'Create', icon: 'add-circle-outline', route: CREATE_HUB_ROUTE, color: CultureTokens.teal },
-      { id: 'host-assoc', label: 'Host on CulturePass', icon: 'people-circle-outline', route: '/community/association-platform', color: CultureTokens.indigo },
+      { id: 'host-create-all', label: 'Start Creating', icon: 'add-circle-outline', route: CREATE_HUB_ROUTE, color: CultureTokens.teal },
+      { id: 'host-assoc', label: 'Become a Host', icon: 'rocket-outline', route: '/hostspace/apply', color: CultureTokens.indigo },
       { id: 'host-help', label: 'Host help', icon: 'help-circle-outline', route: '/help', color: CultureTokens.gold },
     ],
   };
@@ -285,3 +285,22 @@ export function settingsAboutWhatsNewItem(): SettingsNavRow {
     route: '/updates',
   };
 }
+
+// ── Admin / SuperAdmin sidebar nav (for WebSidebar + admin shell consistency) ─
+export const SIDEBAR_ADMIN_LINKS: SidebarNavLink[] = [
+  { label: 'AdminSpace', icon: 'shield-half-outline', iconActive: 'shield-half', route: '/admin', matchPrefix: false },
+  { label: 'Discover Curation', icon: 'sparkles-outline', iconActive: 'sparkles', route: '/admin/discover', matchPrefix: true },
+  { label: 'Users', icon: 'people-outline', iconActive: 'people', route: '/admin/users', matchPrefix: true },
+  { label: 'Audit Logs', icon: 'list-outline', iconActive: 'list', route: '/admin/audit-logs', matchPrefix: true },
+  { label: 'Compliance', icon: 'shield-checkmark-outline', iconActive: 'shield-checkmark', route: '/admin/data-compliance', matchPrefix: true },
+  { label: 'Platform', icon: 'settings-outline', iconActive: 'settings', route: '/admin/platform', matchPrefix: true },
+  { label: 'Finance', icon: 'card-outline', iconActive: 'card', route: '/admin/finance', matchPrefix: true },
+  { label: 'Moderation', icon: 'eye-outline', iconActive: 'eye', route: '/admin/moderation', matchPrefix: true },
+];
+
+export const SIDEBAR_SUPERADMIN_LINKS: SidebarNavLink[] = [
+  { label: 'Cockpit (Root)', icon: 'rocket-outline', iconActive: 'rocket', route: '/admin', matchPrefix: true },
+  { label: 'Audit Logs', icon: 'list-outline', iconActive: 'list', route: '/admin/audit-logs', matchPrefix: true },
+  { label: 'Compliance', icon: 'shield-checkmark-outline', iconActive: 'shield-checkmark', route: '/admin/data-compliance', matchPrefix: true },
+  { label: 'Platform', icon: 'settings-outline', iconActive: 'settings', route: '/admin/platform', matchPrefix: true },
+];

@@ -36,6 +36,7 @@ import { useSafeBack } from '@/lib/navigation';
 import { useSaved } from '@/contexts/SavedContext';
 import type { EventData, Profile } from '@/shared/schema';
 import { CULTUREX_EXPLORES_CULTURE_TAG } from '@/shared/schema';
+import { Footer } from '@/components/Footer';
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
@@ -287,7 +288,7 @@ export default function CityScreen() {
 
           {/* City identity */}
           <View style={[s.heroContent, { paddingHorizontal: hPad }]}>
-            <View style={s.heroBadge}><Text style={s.heroBadgeText}>MY CITY</Text></View>
+            <View style={s.heroBadge}><Text style={s.heroBadgeText}>CITY HUB</Text></View>
             <Text style={s.heroCity}>{cityName}</Text>
             {page.stateName && (
               <View style={s.heroStateRow}>
@@ -483,6 +484,9 @@ export default function CityScreen() {
           </View>
         </View>
 
+        {/* ── Footer ────────────────────────────────────────────────────────── */}
+        <Footer />
+        
         <View style={{ height: 120 }} />
       </ScrollView>
 

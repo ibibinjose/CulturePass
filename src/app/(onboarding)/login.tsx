@@ -318,7 +318,7 @@ export default function LoginScreen() {
               </Animated.View>
 
               <Animated.View entering={enter(70)}>
-                <Text style={[M3Typography.displayLarge, s.webHeadlineText]}>Belong anywhere.</Text>
+                <Text style={[M3Typography.displayLarge, s.webHeadlineText]}>Connecting cultures, building belonging.</Text>
               </Animated.View>
 
               <Animated.View entering={enter(100)}>

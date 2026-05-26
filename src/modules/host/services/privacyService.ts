@@ -420,7 +420,7 @@ export const REQUIRED_CONSENTS = [
     type: 'data-processing' as const,
     label: 'I consent to CulturePass processing my profile data',
     linkText: 'Privacy Policy',
-    linkUrl: 'https://culturepass.com/legal/privacy',
+    linkUrl: 'https://culturepass.co/legal/privacy',
     required: true,
     description: 'Required to create and publish your profile',
   },
@@ -429,7 +429,7 @@ export const REQUIRED_CONSENTS = [
     type: 'data-processing' as const,
     label: 'I agree to the Terms of Service',
     linkText: 'Terms of Service',
-    linkUrl: 'https://culturepass.com/legal/terms',
+    linkUrl: 'https://culturepass.co/legal/terms',
     required: true,
     description: 'Required to use the CulturePass platform',
   },
@@ -441,7 +441,7 @@ export const OPTIONAL_CONSENTS = [
     type: 'marketing' as const,
     label: 'I consent to receiving marketing communications',
     linkText: 'Marketing Preferences',
-    linkUrl: 'https://culturepass.com/legal/marketing',
+    linkUrl: 'https://culturepass.co/legal/marketing',
     required: false,
     description: 'Tips, updates, and promotional offers from CulturePass',
   },
@@ -450,7 +450,7 @@ export const OPTIONAL_CONSENTS = [
     type: 'analytics' as const,
     label: 'I consent to analytics tracking for profile optimization',
     linkText: 'Analytics Policy',
-    linkUrl: 'https://culturepass.com/legal/analytics',
+    linkUrl: 'https://culturepass.co/legal/analytics',
     required: false,
     description: 'Helps us provide better insights about your profile performance',
   },
@@ -459,7 +459,7 @@ export const OPTIONAL_CONSENTS = [
     type: 'third-party-sharing' as const,
     label: 'I consent to sharing data with verified partners',
     linkText: 'Partner Policy',
-    linkUrl: 'https://culturepass.com/legal/partners',
+    linkUrl: 'https://culturepass.co/legal/partners',
     required: false,
     description: 'Enables integrations with event platforms and business tools',
   },
@@ -508,8 +508,8 @@ export function validateRequiredConsents(
 // Privacy Policy Link
 // ---------------------------------------------------------------------------
 
-export const PRIVACY_POLICY_URL = 'https://culturepass.com/legal/privacy';
-export const TERMS_OF_SERVICE_URL = 'https://culturepass.com/legal/terms';
+export const PRIVACY_POLICY_URL = 'https://culturepass.co/legal/privacy';
+export const TERMS_OF_SERVICE_URL = 'https://culturepass.co/legal/terms';
 
 /**
  * Get the privacy policy URL for the user's region
@@ -517,9 +517,9 @@ export const TERMS_OF_SERVICE_URL = 'https://culturepass.com/legal/terms';
 export function getPrivacyPolicyUrl(region?: 'au' | 'eu' | 'default'): string {
   switch (region) {
     case 'au':
-      return 'https://culturepass.com/legal/privacy-au';
+      return 'https://culturepass.co/legal/privacy-au';
     case 'eu':
-      return 'https://culturepass.com/legal/privacy-eu';
+      return 'https://culturepass.co/legal/privacy-eu';
     default:
       return PRIVACY_POLICY_URL;
   }

@@ -20,7 +20,7 @@ config.resolver.blockList = [
   blockPath("ios/build"),
   blockPath("functions/lib"),
   blockPath("functions/node_modules"),
-  blockPath("host-app/node_modules"),
+
 ];
 
 // Metro sometimes fails to resolve bare "react" / "react-dom" from deep paths under
@@ -46,6 +46,20 @@ if (config.watcher && 'unstable_workerThreads' in config.watcher) {
 // and gracefully falls back when useSharedValue is absent, so this is safe.
 const originalResolveRequest = config.resolver?.resolveRequest;
 config.resolver.resolveRequest = (context, moduleName, platform) => {
+  // PostHog resolution fix: @posthog/core/surveys doesn't resolve correctly on some environments
+  if (moduleName === "@posthog/core/surveys") {
+    return {
+      filePath: path.resolve(__dirname, "node_modules/@posthog/core/dist/surveys/index.js"),
+      type: "sourceFile",
+    };
+  }
+  if (moduleName === "@posthog/core/error-tracking") {
+    return {
+      filePath: path.resolve(__dirname, "node_modules/@posthog/core/dist/error-tracking/index.js"),
+      type: "sourceFile",
+    };
+  }
+
   // Web-only stubs: real Reanimated + keyboard-controller are required on native for
   // gestures, tab bar motion, and keyboard avoidance. On web, Reanimated's native
   // initializer can crash before first paint; GH gestures fall back without shared values.
@@ -85,7 +99,7 @@ config.transformer.getTransformOptions = async () => ({
   },
 });
 
-// ── Performance: enable package exports for tree-shaking (date-fns, Firebase, etc.) ──
-config.resolver.unstable_enablePackageExports = true;
+// ── Performance: enable package exports for tree-shaking (disabled due to Metro/Expo internal resolution conflicts) ──
+config.resolver.unstable_enablePackageExports = false;
 
 module.exports = config;

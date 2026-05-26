@@ -241,7 +241,7 @@ export default function SettingsScreen() {
     { label: 'Contact Support', sub: EMAIL_SUPPORT, icon: 'mail-outline', iconColor: colors.primary, external: `mailto:${EMAIL_SUPPORT}` },
     { label: 'Report a Problem', sub: EMAIL_BUGS, icon: 'flag-outline', iconColor: colors.warning, external: `mailto:${EMAIL_BUGS}?subject=Bug%20Report` },
     { label: 'About CulturePass', icon: 'information-circle-outline', iconColor: ICON_COLORS.muted, route: '/settings/about' },
-    { label: 'Rate CulturePass', icon: 'star-outline', iconColor: CultureTokens.gold, external: Platform.OS === 'android' ? 'market://details?id=au.culturepass.app' : 'https://apps.apple.com/app/culturepass/id6742686059' },
+    { label: 'Rate CulturePass', icon: 'star-outline', iconColor: CultureTokens.gold, external: Platform.OS === 'android' ? 'market://details?id=au.culturepass.co' : 'https://apps.apple.com/app/culturepass/id6742686059' },
     { label: 'Instagram', icon: 'logo-instagram', iconColor: CultureTokens.coral, external: 'https://instagram.com/culturepassapp' },
   ], [colors.primary, colors.warning]);
 

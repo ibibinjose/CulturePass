@@ -267,7 +267,7 @@ export function Step1Identity({
                 Your profile URL:
               </Text>
               <Text style={[styles.previewUrl, { color: CultureTokens.indigo }]}>
-                culturepass.com/@{handle}
+                {SITE_ORIGIN.replace(/^https?:\/\//, '')}/@{handle}
               </Text>
             </View>
           )}

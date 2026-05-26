@@ -167,14 +167,14 @@ function PostCardInner({ post, colorIdx }: { post: FeedPost; colorIdx: number })
             <View style={pcd.eventImg}>
               <Image
                 source={{ uri: ev.imageUrl ?? undefined }}
-                style={StyleSheet.absoluteFillObject}
+                style={StyleSheet.absoluteFill}
                 contentFit="cover"
                 transition={200}
               />
               {/* Bottom gradient overlay */}
               <LinearGradient
                 colors={['transparent', 'rgba(0,0,0,0.85)']}
-                style={StyleSheet.absoluteFillObject}
+                style={StyleSheet.absoluteFill}
                 start={{ x: 0, y: 0.35 }}
               />
 
@@ -293,7 +293,7 @@ function PostCardInner({ post, colorIdx }: { post: FeedPost; colorIdx: number })
       case 'welcome':
         return (
           <Pressable onPress={handlePress} style={pcd.welcomeWrap}>
-            <LinearGradient colors={[accent + '1C', 'transparent']} style={StyleSheet.absoluteFillObject} />
+            <LinearGradient colors={[accent + '1C', 'transparent']} style={StyleSheet.absoluteFill} />
             <View style={[pcd.welcomeIconWrap, { backgroundColor: accent + '22' }]}>
               <Ionicons name="people" size={28} color={accent} />
             </View>
@@ -309,7 +309,7 @@ function PostCardInner({ post, colorIdx }: { post: FeedPost; colorIdx: number })
       case 'milestone':
         return (
           <Pressable onPress={handlePress} style={[pcd.milestoneWrap, { borderColor: accent + '30', backgroundColor: accent + '0A' }]}>
-            <LinearGradient colors={[accent + '20', 'transparent']} style={StyleSheet.absoluteFillObject} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} />
+            <LinearGradient colors={[accent + '20', 'transparent']} style={StyleSheet.absoluteFill} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} />
             <View style={[pcd.milestoneIcon, { backgroundColor: accent + '22' }]}>
               <Ionicons name="trophy" size={24} color={accent} />
             </View>
@@ -325,7 +325,7 @@ function PostCardInner({ post, colorIdx }: { post: FeedPost; colorIdx: number })
       case 'collection-highlight':
         return (
           <Pressable onPress={handlePress} style={[pcd.milestoneWrap, { borderColor: CultureTokens.gold + '40', backgroundColor: CultureTokens.gold + '08', padding: 18 }]}>
-            <LinearGradient colors={[CultureTokens.gold + '15', 'transparent']} style={StyleSheet.absoluteFillObject} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} />
+            <LinearGradient colors={[CultureTokens.gold + '15', 'transparent']} style={StyleSheet.absoluteFill} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} />
             <View style={[pcd.milestoneIcon, { backgroundColor: CultureTokens.gold + '20', width: 56, height: 56, borderRadius: 18 }]}>
               <Ionicons name="ribbon" size={28} color={CultureTokens.gold} />
             </View>
@@ -470,8 +470,8 @@ const pcd = StyleSheet.create({
   // ── Announcement ──────────────────────────────────────────────────────────
   postImg:         { height: 260, width: '100%', backgroundColor: '#0D0D14' },
   storyFrame:      { width: '100%', aspectRatio: 9 / 16, maxHeight: 520, backgroundColor: '#0D0D14', position: 'relative' },
-  storyImg:        { ...StyleSheet.absoluteFillObject },
-  storyGradient:   { ...StyleSheet.absoluteFillObject },
+  storyImg:        { ...StyleSheet.absoluteFill },
+  storyGradient:   { ...StyleSheet.absoluteFill },
   storyCaption:    { position: 'absolute', bottom: 0, left: 0, right: 0, paddingHorizontal: 16, paddingTop: 28, paddingBottom: 18 },
   storyCaptionText:{ fontSize: 16, fontFamily: 'Poppins_600SemiBold', lineHeight: 22, color: '#fff' },
   storyTextCard:   { marginHorizontal: 16, marginBottom: 12, padding: 18, borderRadius: 16, borderWidth: 1, alignItems: 'center' },

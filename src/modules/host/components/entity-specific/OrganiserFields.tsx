@@ -34,6 +34,7 @@ import {
   Platform,
   ActivityIndicator,
   ScrollView,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -192,7 +193,11 @@ export function OrganiserFields({
       const { status } =
         await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        alert('Camera roll permissions are required to upload documents.');
+        if (Platform.OS === 'web') {
+          window.alert('Camera roll permissions are required to upload documents.');
+        } else {
+          Alert.alert('Permission Required', 'Camera roll permissions are required to upload documents.');
+        }
         setIsUploadingInsurance(false);
         return;
       }
@@ -251,7 +256,11 @@ export function OrganiserFields({
       const { status } =
         await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        alert('Camera roll permissions are required to upload documents.');
+        if (Platform.OS === 'web') {
+          window.alert('Camera roll permissions are required to upload documents.');
+        } else {
+          Alert.alert('Permission Required', 'Camera roll permissions are required to upload documents.');
+        }
         setIsUploadingCredential(false);
         return;
       }

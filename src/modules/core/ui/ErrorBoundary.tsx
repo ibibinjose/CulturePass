@@ -1,5 +1,6 @@
 import React, { Component, ComponentType, PropsWithChildren } from "react";
 import { ErrorFallback, ErrorFallbackProps } from "@/modules/core/ui/ErrorFallback";
+import { Sentry } from "@/lib/sentry";
 
 export type ErrorBoundaryProps = PropsWithChildren<{
   FallbackComponent?: ComponentType<ErrorFallbackProps>;
@@ -47,6 +48,14 @@ export class ErrorBoundary extends Component<
     if (typeof this.props.onError === "function") {
       this.props.onError(error, info.componentStack);
     }
+
+    // World-class observability: Always report uncaught errors to Sentry
+    Sentry.captureException(error, {
+      extra: {
+        componentStack: info.componentStack,
+        retryCount: this.state.retryCount,
+      },
+    });
   }
 
   componentWillUnmount(): void {

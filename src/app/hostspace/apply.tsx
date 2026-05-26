@@ -31,8 +31,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
 import { api } from '@/lib/api';
+import { log } from '@/lib/logger';
 import { useAuth } from '@/lib/auth';
-import { useColors } from '@/hooks/useColors';
+import { useM3Colors as useColors } from '@/hooks/useM3Colors';
 import { useLayout } from '@/hooks/useLayout';
 import { ErrorBoundary } from '@/modules/core/ui/ErrorBoundary';
 import {
@@ -108,12 +109,14 @@ function ProfileField({ icon, label, value }: { icon: keyof typeof Ionicons.glyp
 // ─── Main screen ───────────────────────────────────────────────────────────
 
 function ApplyScreenInner() {
-  const params = useLocalSearchParams<{ initialTypes?: string }>();
+  const params = useLocalSearchParams<{ initialTypes?: string; intent?: string }>();
   const insets = useSafeAreaInsets();
   const topInset = Platform.OS === 'web' ? 0 : insets.top;
   const colors = useColors();
   const { hPad, isDesktop } = useLayout();
   const { user, hasRole } = useAuth();
+
+  const isNationBuilderIntent = params.intent === 'nation-builder';
 
   // Only skip the type picker when a SINGLE initialType is provided
   const initialTypes = useMemo(() => {
@@ -128,8 +131,11 @@ function ApplyScreenInner() {
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
 
+  // For Nation Builder intent, default to business/venue as the primary recommended types
+  const defaultNationBuilderType = isNationBuilderIntent ? 'business' : singleType;
+
   const [form, setForm] = useState<HostFormState>({
-    hostType: singleType,
+    hostType: defaultNationBuilderType,
   });
 
   const setField = useCallback(<K extends keyof HostFormState>(k: K, v: HostFormState[K]) => {
@@ -182,7 +188,13 @@ function ApplyScreenInner() {
         motivation:       undefined,
       });
     },
-    onSuccess: () => { setHasSubmitted(true); setStep('success'); },
+    onSuccess: () => {
+      log.action('host_application.submitted', {
+        hostType: form.hostType,
+      });
+      setHasSubmitted(true);
+      setStep('success');
+    },
     onError: (err: any) => {
       if (err?.code === 409 || err?.message?.includes('already_applied')) {
         setHasSubmitted(true);
@@ -297,14 +309,18 @@ function ApplyScreenInner() {
 
             <Animated.View entering={FadeInDown.delay(120).springify()}>
               <Text style={fs.successTitle}>
-                {isRejected ? 'Application not approved' : 'Application submitted!'}
+                {isRejected ? 'Application not approved' : app?.status === 'approved' ? 'Welcome, Host!' : 'Application submitted!'}
               </Text>
               <Text style={fs.successSub}>
                 {isRejected
                   ? app?.reviewNote
                     ? `Our team left a note: ${app.reviewNote}`
                     : 'Your application was not approved at this time. You can re-apply after 30 days.'
-                  : "Our team will review your application and get back to you within 24 hours. We'll notify you by email when your host account is ready."}
+                  : app?.status === 'approved'
+                    ? 'Your host account is active. You can now create events, listings, communities, and more in HostSpace. Some profile types (venues, ABN businesses, professionals) may require an additional quick verification before publishing.'
+                    : isNationBuilderIntent
+                    ? "Thank you for applying to become a Nation Builder Partner. Our team will review your business/venue. Once approved, we'll generate a unique staff promo code (50% off CulturePass+) that you can share with your team, plus Nation Builder badges for your staff."
+                    : "Our team will review your application and get back to you within 24 hours. We'll notify you by email when your host account is ready. Some profiles require extra verification after creation."}
               </Text>
             </Animated.View>
 
@@ -312,8 +328,8 @@ function ApplyScreenInner() {
               <Animated.View entering={FadeInDown.delay(200).springify()} style={fs.timeline}>
                 {[
                   { icon: 'checkmark-circle' as const, color: CultureTokens.teal, label: 'Application received', done: true },
-                  { icon: 'search' as const, color: CultureTokens.gold, label: 'Team review (up to 24 hrs)', done: false },
-                  { icon: 'rocket-outline' as const, color: CultureTokens.violet, label: 'Host account activated', done: false },
+                  { icon: 'search' as const, color: CultureTokens.gold, label: 'Team review (up to 24 hrs)', done: app?.status === 'approved' },
+                  { icon: 'rocket-outline' as const, color: CultureTokens.violet, label: 'Host account activated', done: app?.status === 'approved' },
                 ].map((t, i) => (
                   <View key={t.label} style={fs.timelineRow}>
                     <View style={[fs.timelineDot, { backgroundColor: t.done ? t.color : t.color + '33', borderColor: t.color }]}>
@@ -329,6 +345,32 @@ function ApplyScreenInner() {
             )}
 
             <Animated.View entering={FadeInDown.delay(300).springify()} style={fs.successActions}>
+              {app?.status === 'approved' && (
+                <Pressable
+                  onPress={() => router.replace('/hostspace' as any)}
+                  style={({ pressed }) => [
+                    fs.successBtn,
+                    { opacity: pressed ? 0.9 : 1, backgroundColor: CultureTokens.teal },
+                  ]}
+                  accessibilityRole="button"
+                >
+                  <Ionicons name="rocket-outline" size={18} color="#fff" />
+                  <Text style={fs.successBtnText}>Enter HostSpace — Create Listings & Events</Text>
+                </Pressable>
+              )}
+              {isNationBuilderIntent && app?.status !== 'approved' && (
+                <Pressable
+                  onPress={() => router.push('/hostspace/create?intent=nation-builder' as any)}
+                  style={({ pressed }) => [
+                    fs.successBtn,
+                    { opacity: pressed ? 0.9 : 1, backgroundColor: CultureTokens.gold },
+                  ]}
+                  accessibilityRole="button"
+                >
+                  <Ionicons name="briefcase-outline" size={18} color="#1C1917" />
+                  <Text style={[fs.successBtnText, { color: '#1C1917' }]}>Start Creating Your Partner Listing</Text>
+                </Pressable>
+              )}
               <Pressable
                 onPress={() => router.replace('/(tabs)' as any)}
                 style={({ pressed }) => [fs.successBtn, { opacity: pressed ? 0.9 : 1, backgroundColor: CultureTokens.indigo }]}
@@ -366,9 +408,28 @@ function ApplyScreenInner() {
         >
           <View style={pageCol}>
             <Animated.View entering={FadeInDown.delay(60).springify()}>
-              <Text style={fs.stepHeading}>What best{'\n'}describes you?</Text>
+              {isNationBuilderIntent && (
+                <View style={[fs.nbHero, { backgroundColor: CultureTokens.gold + '15', borderColor: CultureTokens.gold + '40' }]}>
+                  <View style={fs.nbBadge}>
+                    <Ionicons name="shield-checkmark" size={14} color={CultureTokens.gold} />
+                    <Text style={[fs.nbBadgeText, { color: CultureTokens.gold }]}>NATION BUILDER PARTNER</Text>
+                  </View>
+                  <Text style={[fs.nbHeroTitle, { color: '#fff' }]}>
+                    Partner with CulturePass
+                  </Text>
+                  <Text style={fs.nbHeroSub}>
+                    Register your business or venue as a Nation Builder Partner. Your team gets 50% off CulturePass+ and special badges. Powerful retention + visibility tool.
+                  </Text>
+                </View>
+              )}
+
+              <Text style={fs.stepHeading}>
+                {isNationBuilderIntent ? 'Choose your business type' : 'What best\n describes you?'}
+              </Text>
               <Text style={fs.stepSub}>
-                Choose your primary host role. You can create communities, events, businesses, venues, and listings after approval.
+                {isNationBuilderIntent 
+                  ? 'Select Business/Brand or Venue Owner to become a Nation Builder Partner and unlock staff perks.'
+                  : 'Choose your primary host role. You can create communities, events, businesses, venues, and listings after approval.'}
               </Text>
             </Animated.View>
 
@@ -396,6 +457,11 @@ function ApplyScreenInner() {
                     )}
                     <View style={[fs.typeCardIcon, { backgroundColor: ac + (active ? '33' : '1A') }]}>
                       <Ionicons name={opt.icon as any} size={24} color={ac} />
+                      {isNationBuilderIntent && (opt.id === 'business' || opt.id === 'venue') && (
+                        <View style={fs.nbRecommendBadge}>
+                          <Text style={fs.nbRecommendText}>Recommended</Text>
+                        </View>
+                      )}
                     </View>
                     <View style={{ flex: 1 }}>
                       <Text style={[fs.typeCardLabel, { color: active ? '#fff' : 'rgba(255,255,255,0.9)' }]}>
@@ -807,6 +873,57 @@ const fs = StyleSheet.create({
     gap: 8, overflow: 'hidden',
   },
   successBtnText: { fontFamily: FontFamily.semibold, fontSize: 16, color: '#fff' },
+
+  // Nation Builder Intent special styles
+  nbHero: {
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    padding: 16,
+    marginBottom: 20,
+  },
+  nbBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(255, 200, 50, 0.1)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+    marginBottom: 10,
+  },
+  nbBadgeText: {
+    fontFamily: FontFamily.semibold,
+    fontSize: 11,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+  },
+  nbHeroTitle: {
+    fontFamily: FontFamily.bold,
+    fontSize: 20,
+    marginBottom: 6,
+  },
+  nbHeroSub: {
+    fontFamily: FontFamily.regular,
+    fontSize: 14,
+    lineHeight: 20,
+    color: 'rgba(255,255,255,0.75)',
+  },
+  nbRecommendBadge: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
+    backgroundColor: CultureTokens.gold,
+    borderRadius: 4,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+  },
+  nbRecommendText: {
+    fontSize: 8,
+    fontFamily: FontFamily.bold,
+    color: '#1C1917',
+    letterSpacing: 0.5,
+  },
 });
 
 export default function ApplyScreen() {

@@ -42,3 +42,6 @@ export function withAlpha(color: string, alpha: number): string {
   // fallback for named colors or unknown
   return color;
 }
+
+// Adding default export as well to handle potential import variations
+export default withAlpha;

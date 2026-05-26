@@ -197,7 +197,7 @@ export function useCityPage(cityName: string, cityCountry: string) {
   }, [refetch]);
 
   const handleShare = useCallback(async () => {
-    const url = `https://culturepass.app/city/${encodeURIComponent(cityName)}?country=${encodeURIComponent(cityCountry)}`;
+    const url = `https://culturepass.co/city/${encodeURIComponent(cityName)}?country=${encodeURIComponent(cityCountry)}`;
     const msg = `Explore ${cityName} on CulturePass — local events, communities and experiences.\n${url}`;
     try {
       if (Platform.OS === 'web' && typeof navigator !== 'undefined' && navigator.share) {

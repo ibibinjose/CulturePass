@@ -280,7 +280,7 @@ const OG_DESCRIPTIONS: Record<DeepLinkEntityType, string> = {
 };
 
 /** Default OG image when entity has no image. */
-const DEFAULT_OG_IMAGE = 'https://culturepass.app/og-default.png';
+const DEFAULT_OG_IMAGE = 'https://culturepass.co/og-default.png';
 
 /**
  * Generates Open Graph meta tags for a given entity and prefix.

@@ -65,7 +65,7 @@ function ticketState(t: Ticket): 'upcoming' | 'past' | 'cancelled' {
 }
 
 async function shareTicket(t: Ticket) {
-  const url = t.eventId ? `https://culturepass.app/e/${t.eventId}` : 'https://culturepass.app';
+  const url = t.eventId ? `https://culturepass.co/e/${t.eventId}` : 'https://culturepass.co';
   const msg = `${t.eventTitle}\n${formatDate(t.eventDate || null)}${t.eventTime ? ` · ${t.eventTime}` : ''}\n${t.eventVenue || 'Venue TBA'}\n\n${url}`;
   try {
     await Share.share({ title: t.eventTitle, message: msg, url });

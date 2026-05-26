@@ -6,6 +6,7 @@
 import { randomBytes } from 'node:crypto';
 import { type Request, type Response, type NextFunction } from 'express';
 import { getPostcodeData, getPostcodesByPlace } from '../shared/australian-postcodes';
+import { log, setCorrelationId } from '../lib/logger';
 import { walletsService, notificationsService } from '../services/firestore';
 import { isFirestoreConfigured } from '../admin';
 
@@ -453,7 +454,13 @@ export function isSafeExternalUrl(value: unknown): boolean {
  * Use this in every route catch block instead of bare console.error.
  */
 export function captureRouteError(err: unknown, route: string): void {
-  console.error(`[${route}]:`, err);
+  const correlationId = generateSecureId('ERR-');
+  if (setCorrelationId) setCorrelationId(correlationId);
+
+  log.error(`Route error in ${route}`, err, {
+    route,
+    correlationId,
+  });
 }
 
 /**

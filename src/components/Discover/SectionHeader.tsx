@@ -5,6 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useColors } from '@/hooks/useColors';
 import { CultureTokens, FontFamily, Vitrine, SectionTokens } from '@/design-system/tokens/theme';
 import { useDiscoverVitrine } from '@/components/Discover/DiscoverVitrineContext';
+import { withAlpha } from '@/lib/withAlpha';
 
 interface SectionHeaderProps {
   title: string;
@@ -30,15 +31,18 @@ function SectionHeader({
   const subtitleColor = subtitleColorOverride ?? (vitrine ? Vitrine.onSurfaceVariant : colors.textSecondary);
   const seeAllColor = vitrine ? (accentColor ?? Vitrine.primaryContainer) : accent;
 
+  // Prepare gradient colors safely
+  const gradientColors = [accent, withAlpha(accent, 0.5)];
+
   return (
     <View style={styles.wrap}>
       <View style={styles.textBlock}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 2 }}>
           {vitrine ? (
-            <View style={[styles.accentDot, { backgroundColor: Vitrine.tertiary }]} />
+            <View style={[styles.accentDot, { backgroundColor: accent }]} />
           ) : (
             <LinearGradient
-              colors={[accent, accent + '80']}
+              colors={gradientColors}
               style={styles.accentBar}
               start={{ x: 0, y: 0 }}
               end={{ x: 0, y: 1 }}

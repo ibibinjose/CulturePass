@@ -78,6 +78,7 @@ export function TabPill({
         {
           backgroundColor: active ? m3Colors.secondaryContainer : 'transparent',
           borderColor: active ? 'transparent' : m3Colors.outlineVariant,
+          borderWidth: active ? 0 : StyleSheet.hairlineWidth,
         },
       ]}
       accessibilityRole="tab"
@@ -337,12 +338,12 @@ export const sc = StyleSheet.create({
 
 export const ts = StyleSheet.create({
   tabPill: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    borderRadius: 12,
+    borderRadius: 999,
+    paddingHorizontal: 18,
     paddingVertical: 10,
     borderWidth: 1,
     overflow: 'hidden',

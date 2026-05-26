@@ -8,7 +8,7 @@ import { useColors } from '@/hooks/useColors';
 import { Link, Stack } from 'expo-router';
 import { goBackOrReplace } from '@/lib/navigation';
 import { APP_NAME, APP_DOMAIN, PLATFORM_TAGLINE, PRIMARY_REGION, MADE_IN, getAppVersion } from '@/lib/app-meta';
-import { FOOTER_LINKS } from '@/lib/site-footer-links';
+import { FOOTER_LINKS, SOCIAL_LINKS } from '@/lib/site-footer-links';
 import { GlassView } from '@/design-system/ui/GlassView';
 import { M3TopAppBar } from '@/design-system/ui/M3TopAppBar';
 import Animated, { FadeInDown, useReducedMotion } from 'react-native-reanimated';
@@ -21,11 +21,38 @@ const FEATURES = [
   { icon: 'business' as const, label: 'Directory', desc: 'Discover and support local businesses', color: CultureTokens.coral },
 ];
 
-const SOCIAL_LINKS = [
-  { icon: 'logo-instagram' as const, label: 'Instagram', url: 'https://instagram.com/CulturePassApp', color: '#E1306C' },
-  { icon: 'logo-facebook' as const, label: 'Facebook', url: 'https://facebook.com/CulturePassApp', color: '#1877F2' },
-  { icon: 'logo-twitter' as const, label: 'Twitter', url: 'https://twitter.com/CulturePassApp', color: '#1DA1F2' },
-];
+// Define icons for social links
+const getSocialLinkIcon = (label: string): string => {
+  switch(label.toLowerCase()) {
+    case 'instagram': return 'logo-instagram';
+    case 'instagram india': return 'logo-instagram';
+    case 'facebook': return 'logo-facebook';
+    case 'x': return 'logo-twitter';
+    case 'tiktok': return 'logo-tiktok';
+    case 'youtube': return 'logo-youtube';
+    case 'linkedin': return 'logo-linkedin';
+    case 'support': return 'heart-outline';
+    default: return 'logo-social';
+  }
+};
+
+// Define icons for legal links
+const getLegalLinkIcon = (label: string): string => {
+  switch(label.toLowerCase()) {
+    case 'our story': return 'book-outline';
+    case 'about': return 'information-circle-outline';
+    case 'terms': return 'document-text-outline';
+    case 'privacy': return 'shield-checkmark-outline';
+    case 'community': return 'people-outline';
+    case 'cookies': return 'cafe-outline';
+    case 'contact': return 'mail-outline';
+    case 'help': return 'help-circle-outline';
+    case 'company info': return 'business-outline';
+    case 'guidelines': return 'bulb-outline';
+    case 'event terms': return 'receipt-outline';
+    default: return 'document-text-outline';
+  }
+};
 
 export default function AboutScreen() {
   const colors = useColors();
@@ -120,7 +147,7 @@ export default function AboutScreen() {
                                     style={({ pressed }) => [styles.legalRow, pressed && { backgroundColor: colors.primarySoft }]}
                                 >
                                     <View style={[styles.legalIcon, { backgroundColor: colors.primarySoft }]}>
-                                        <Ionicons name="document-text" size={18} color={colors.primary} />
+                                        <Ionicons name={getLegalLinkIcon(link.label)} size={18} color={colors.primary} />
                                     </View>
                                     <Text style={[styles.legalText, { color: colors.text }]}>{link.label}</Text>
                                     <Ionicons name="chevron-forward" size={16} color={colors.textTertiary} />
@@ -141,8 +168,8 @@ export default function AboutScreen() {
                                 onPress={() => openExternalUrl(link.url)}
                                 style={({ pressed }) => [styles.legalRow, pressed && { backgroundColor: colors.primarySoft }]}
                             >
-                                <View style={[styles.legalIcon, { backgroundColor: link.color + '15' }]}>
-                                    <Ionicons name={link.icon} size={18} color={link.color} />
+                                <View style={[styles.legalIcon, { backgroundColor: link.label === 'Support' ? CultureTokens.gold + '15' : colors.primarySoft }]}>
+                                    <Ionicons name={getSocialLinkIcon(link.label)} size={18} color={link.label === 'Support' ? CultureTokens.gold : colors.primary} />
                                 </View>
                                 <Text style={[styles.legalText, { color: colors.text }]}>{link.label}</Text>
                                 <Ionicons name="open-outline" size={16} color={colors.textTertiary} />

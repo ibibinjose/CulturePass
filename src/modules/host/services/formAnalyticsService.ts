@@ -130,6 +130,14 @@ const EVENTS = {
   FORM_AI_ASSIST: 'hostspace_form_ai_assist',
   FORM_HELP_CLICK: 'hostspace_form_help_click',
   FORM_ALERT_TRIGGERED: 'hostspace_form_alert_triggered',
+
+  // === Creator Trust Signals (North Star instrumentation) ===
+  TRUST_DRAFT_RECOVERY_SHOWN: 'hostspace_trust_draft_recovery_shown',
+  TRUST_DRAFT_RECOVERY_USED: 'hostspace_trust_draft_recovery_used',
+  TRUST_VERIFICATION_STATUS_VIEWED: 'hostspace_trust_verification_status_viewed',
+  TRUST_LEGAL_FRICTION: 'hostspace_trust_legal_friction',
+  TRUST_POST_PUBLISH_ACTIVATION: 'hostspace_trust_post_publish_activation',
+  TRUST_ABANDONED_AT_CRITICAL_STEP: 'hostspace_trust_abandoned_at_critical_step',
 } as const;
 
 // ---------------------------------------------------------------------------
@@ -513,6 +521,120 @@ export function trackAlertTriggered(
     value,
     platform: context.device.platform,
     ...(metadata ?? {}),
+  });
+}
+
+/**
+ * Track when the draft recovery modal is shown to the creator.
+ * Critical leading indicator of "we respect your time".
+ */
+export function trackDraftRecoveryShown(
+  context: FormSessionContext,
+  draftCount: number,
+): void {
+  captureEvent(EVENTS.TRUST_DRAFT_RECOVERY_SHOWN, {
+    session_id: context.sessionId,
+    user_id: context.userId,
+    entity_type: context.entityType,
+    draft_count: draftCount,
+    platform: context.device.platform,
+  });
+}
+
+/**
+ * Track when a creator successfully continues from a draft.
+ * One of the strongest positive trust signals.
+ */
+export function trackDraftRecoveryUsed(
+  context: FormSessionContext,
+  draftId: string,
+  completionPercent: number,
+  fromStep?: WizardStep,
+): void {
+  captureEvent(EVENTS.TRUST_DRAFT_RECOVERY_USED, {
+    session_id: context.sessionId,
+    user_id: context.userId,
+    entity_type: context.entityType,
+    draft_id: draftId,
+    completion_percent: completionPercent,
+    from_step: fromStep ?? null,
+    platform: context.device.platform,
+  });
+}
+
+/**
+ * Track every time a verification status banner / indicator is rendered and viewed.
+ * Measures transparency of the two-layer approval system.
+ */
+export function trackVerificationStatusViewed(
+  context: FormSessionContext,
+  status: 'not_started' | 'in_review' | 'approved' | 'needs_more_info',
+  step?: WizardStep,
+  location?: 'wizard' | 'post_publish' | 'dashboard' | 'profile_card',
+): void {
+  captureEvent(EVENTS.TRUST_VERIFICATION_STATUS_VIEWED, {
+    session_id: context.sessionId,
+    user_id: context.userId,
+    entity_type: context.entityType,
+    verification_status: status,
+    step: step ?? null,
+    location: location ?? 'unknown',
+    platform: context.device.platform,
+  });
+}
+
+/**
+ * Track friction specifically in the legal/compliance step (highest trust risk).
+ */
+export function trackLegalFriction(
+  context: FormSessionContext,
+  frictionType: 'abn_lookup_slow' | 'abn_lookup_failed' | 'licence_upload_failed' | 'tax_status_confusion' | 'other',
+  details?: Record<string, unknown>,
+): void {
+  captureEvent(EVENTS.TRUST_LEGAL_FRICTION, {
+    session_id: context.sessionId,
+    user_id: context.userId,
+    entity_type: context.entityType,
+    friction_type: frictionType,
+    step: 3,
+    platform: context.device.platform,
+    ...(details ?? {}),
+  });
+}
+
+/**
+ * Track clicks on post-publish activation actions (the "now we begin" moment).
+ */
+export function trackPostPublishActivation(
+  context: FormSessionContext,
+  action: 'create_event' | 'add_media' | 'request_verification' | 'invite_members' | 'share_profile' | 'view_dashboard',
+): void {
+  captureEvent(EVENTS.TRUST_POST_PUBLISH_ACTIVATION, {
+    session_id: context.sessionId,
+    user_id: context.userId,
+    entity_type: context.entityType,
+    activation_action: action,
+    platform: context.device.platform,
+  });
+}
+
+/**
+ * Track abandonment specifically at critical trust moments (especially Step 3).
+ */
+export function trackAbandonedAtCriticalStep(
+  context: FormSessionContext,
+  step: WizardStep,
+  reason?: string,
+  hadDraft?: boolean,
+): void {
+  captureEvent(EVENTS.TRUST_ABANDONED_AT_CRITICAL_STEP, {
+    session_id: context.sessionId,
+    user_id: context.userId,
+    entity_type: context.entityType,
+    step,
+    reason: reason ?? null,
+    had_draft: hadDraft ?? null,
+    platform: context.device.platform,
   });
 }
 

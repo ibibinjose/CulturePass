@@ -15,7 +15,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useColors } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
-import { CultureTokens, TextStyles } from '@/design-system/tokens/theme';
+import { CultureTokens, Spacing, TextStyles } from '@/design-system/tokens/theme';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import {
@@ -117,6 +117,16 @@ export function HostspaceCreateWorkspace({ initialCategory }: { initialCategory?
     haptic();
     setSelectedId(category.id);
     setShowSelector(false);
+
+    // Creator Trust + Phase 1 Unification:
+    // Rich persistent profiles (community, venue, business, organiser, etc.) must go through the full FormWizard.
+    // The workspace is now a launcher/orchestrator for quick content, not the form host for profiles.
+    const RICH_PROFILE_TYPES = ['community', 'organiser', 'venue', 'business', 'artist', 'professional'];
+    if (RICH_PROFILE_TYPES.includes(category.entityType as string)) {
+      router.push(`/hostspace/create?profileType=${category.entityType}` as never);
+      return;
+    }
+
     if (category.group === 'market') {
       router.replace({ pathname: CREATE_LAB_PATHNAME, params: { category: category.id } } as never);
       return;
@@ -345,6 +355,21 @@ export function HostspaceCreateWorkspace({ initialCategory }: { initialCategory?
             First verify your host information, then create the community, association, organisation, business, venue,
             charity, government, council, club, or society that will own your events and listings.
           </Text>
+
+          {/* Phase 1 Unification + Creator Trust callout: Rich profiles use the full guided wizard */}
+          <View style={[styles.unificationCallout, { backgroundColor: colors.surface, borderColor: colors.borderLight }]}>
+            <LinearGradient
+              colors={[CultureTokens.indigo, CultureTokens.violet]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={{ width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center' }}
+            >
+              <Ionicons name="shield-checkmark" size={14} color="#FFF" />
+            </LinearGradient>
+            <Text style={[styles.unificationCalloutText, { color: colors.textSecondary }]}>
+              Rich profiles use the guided 6-step creation wizard.
+            </Text>
+          </View>
         </Animated.View>
 
         <HostspaceCreateVerifyCard
@@ -463,6 +488,23 @@ const styles = StyleSheet.create({
   emptyStateText: {
     fontSize: 12,
     fontFamily: 'Poppins_500Medium',
+    flex: 1,
+  },
+
+  // Phase 1 Unification callout — sets clear expectation that rich profiles use the wizard
+  unificationCallout: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginTop: Spacing.lg,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+  },
+  unificationCalloutText: {
+    fontSize: 13,
+    fontWeight: '500',
     flex: 1,
   },
 });

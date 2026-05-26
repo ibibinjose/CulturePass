@@ -29,6 +29,7 @@ import { useLayout } from '@/hooks/useLayout';
 import { M3Card } from '@/design-system/ui/M3Card';
 import { Input } from '@/design-system/ui/Input';
 import { CultureTokens, Spacing, Radius, FontFamily, TextStyles } from '@/design-system/tokens/theme';
+import { SITE_ORIGIN } from '@/lib/app-meta';
 import { RichTextEditor } from '../fields/RichTextEditor';
 import type { WizardStepProps } from '../FormWizard/WizardStep';
 
@@ -518,6 +519,9 @@ export function Step5Description({
                       : colors.borderLight,
                   },
                 ]}
+                accessibilityRole="button"
+                accessibilityLabel={`${tag} tag, ${isSelected ? 'selected' : 'not selected'}`}
+                accessibilityState={{ selected: isSelected }}
               >
                 <Text
                   style={[
@@ -559,7 +563,7 @@ export function Step5Description({
             {formData.officialName || 'Your Profile Name'}
           </Text>
           <Text style={[styles.seoUrl, { color: CultureTokens.teal }]}>
-            culturepass.com/@{formData.handle || 'yourhandle'}
+            {SITE_ORIGIN.replace(/^https?:\/\//, '')}/@{formData.handle || 'yourhandle'}
           </Text>
           <Text style={[styles.seoDescription, { color: colors.textSecondary }]}>
             {tagline || 'Your tagline will appear here'}

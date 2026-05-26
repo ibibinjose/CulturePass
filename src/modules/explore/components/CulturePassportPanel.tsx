@@ -45,7 +45,7 @@ export function CulturePassportPanel({ onEditExploring }: Props) {
       <View style={styles.header}>
         <View style={{ flex: 1 }}>
           <Text style={styles.eyebrow}>YOUR CULTURE PASSPORT</Text>
-          <Text style={styles.title}>Belong anywhere. Earn points exploring.</Text>
+          <Text style={styles.title}>Connecting cultures, building belonging. Earn points exploring.</Text>
         </View>
         <Pressable
           onPress={goEdit}

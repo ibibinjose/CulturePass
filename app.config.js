@@ -26,7 +26,7 @@ export default function(appConfig) {
     [
       "expo-router",
       {
-        origin: "https://culturepass.app"
+        origin: "https://culturepass.co"
       }
     ],
     "expo-font",
@@ -68,6 +68,8 @@ export default function(appConfig) {
       }
     ],
     "expo-localization",
+    // Re-enabled. The plugin can be unstable during local `expo prebuild --clean` on some SDK versions.
+    // It generally works fine with EAS Build. If local prebuild fails again, comment this line temporarily.
     "@bacons/apple-targets",
     // NOTE: react-native-maps plugin temporarily removed due to iOS plugin loading issue
     // when starting Expo dev server. The plugin causes "withPodfile is not a function" error
@@ -219,9 +221,9 @@ export default function(appConfig) {
           googleMapsApiKey: "$(EXPO_PUBLIC_GOOGLE_MAPS_KEY)"
         },
         associatedDomains: [
-          "applinks:culturepass.app",
-          "applinks:www.culturepass.app",
-          "webcredentials:culturepass.app"
+          "applinks:culturepass.co",
+          "applinks:www.culturepass.co",
+          "webcredentials:culturepass.co"
         ],
         privacyManifests: {
           NSPrivacyAccessedAPITypes: [
@@ -254,7 +256,7 @@ export default function(appConfig) {
             data: [
               {
                 scheme: "https",
-                host: "culturepass.app",
+                host: "culturepass.co",
                 pathPrefix: "/"
               }
             ],
@@ -298,7 +300,7 @@ export default function(appConfig) {
         favicon: "./assets/images/favicon.png",
         name: "CulturePass — Belong anywhere.",
         shortName: "CulturePass",
-        description: "Discover cultural events and communities built for diaspora cities. Organizers reach the right audience; attendees find festivals, tickets, and belonging in one place.",
+        description: "Connecting global diaspora communities through cultural events, festivals, and shared belonging. Discover your city, connect with your roots.",
         lang: "en-AU",
         themeColor: "#0B0B14",
         backgroundColor: "#0B0B14",
@@ -313,7 +315,7 @@ export default function(appConfig) {
       },
       extra: {
         router: {
-          origin: "https://culturepass.app"
+          origin: "https://culturepass.co"
         },
         eas: {
           projectId: "9dc511ee-ee3e-4798-ae29-30efc8f5343e",

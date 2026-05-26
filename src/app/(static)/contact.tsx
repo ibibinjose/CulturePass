@@ -24,10 +24,15 @@ import {
 } from '@/design-system/tokens/theme';
 import {
   APP_NAME,
+  APP_AKA,
   EMAIL_BUGS,
   EMAIL_LEGAL,
   EMAIL_PRIVACY,
   EMAIL_SUPPORT,
+  CONTACT_PHONE,
+  CONTACT_PHONE_DISPLAY,
+  CONTACT_ADDRESS,
+  WHATSAPP_LINK,
   getAppVersionWithBuild,
 } from '@/lib/app-meta';
 import { goBackOrReplace } from '@/lib/navigation';
@@ -35,16 +40,16 @@ import { modulesApi } from '@/modules/api';
 import { getApiErrorMessage } from '@/lib/format';
 import { M3TopAppBar } from '@/design-system/ui';
 
-const PHONE_DISPLAY = '1800 285 887';
-const PHONE_URI = 'tel:1800285887';
-const EMAIL_PRESS = 'media@culturepass.app';
-const EMAIL_PARTNERSHIPS = 'partnerships@culturepass.app';
-const EMAIL_ORGANISERS = 'organisers@culturepass.app';
+const PHONE_DISPLAY = CONTACT_PHONE_DISPLAY;
+const PHONE_URI = `tel:${CONTACT_PHONE.replace(/\s+/g, '')}`;
+const EMAIL_PRESS = 'hello@culturepass.co';
+const EMAIL_PARTNERSHIPS = 'hello@culturepass.co';
+const EMAIL_ORGANISERS = 'hello@culturepass.co';
 
 const OFFICE_LINES = [
-  'CulturePass Pty Ltd',
-  'Level 2, 100 Harris Street',
-  'Pyrmont NSW 2009',
+  APP_NAME,
+  'Tech Central Level 1',
+  '477 Pitt St, Haymarket NSW 2000',
   'Australia',
 ] as const;
 
@@ -68,7 +73,7 @@ const CHANNELS: {
   {
     id: 'support',
     title: 'Help & account',
-    description: 'Billing, tickets, login issues, refund requests, and general questions about using CulturePass.',
+    description: `Billing, tickets, login issues, refund requests, and general questions about using ${APP_AKA}.`,
     email: EMAIL_SUPPORT,
     icon: 'chatbubbles-outline',
     accent: CultureTokens.indigo,
@@ -250,8 +255,15 @@ export default function ContactScreen() {
                 </View>
                 <View style={styles.heroMetaPill}>
                   <Ionicons name="location-outline" size={13} color="rgba(255,255,255,0.9)" />
-                  <Text style={styles.heroMetaText}>Sydney, Australia (AEST)</Text>
+                  <Text style={styles.heroMetaText}>Haymarket, Sydney (AEST)</Text>
                 </View>
+                <Pressable
+                  onPress={() => Linking.openURL(WHATSAPP_LINK)}
+                  style={styles.heroMetaPill}
+                >
+                  <Ionicons name="logo-whatsapp" size={13} color="rgba(255,255,255,0.9)" />
+                  <Text style={styles.heroMetaText}>WhatsApp</Text>
+                </Pressable>
               </View>
             </View>
           </LinearGradient>

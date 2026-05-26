@@ -411,7 +411,7 @@ export function useMultiLanguage(options: UseMultiLanguageOptions = {}): UseMult
           });
         } catch {
           // Continue with other fields if one fails
-          continue;
+
         }
       }
 

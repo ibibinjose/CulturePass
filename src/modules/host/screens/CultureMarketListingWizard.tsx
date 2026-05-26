@@ -527,7 +527,7 @@ function CreateListingInner({
                 />
                 <Text style={[ss.typeLinkNoteText, embedded && { color: colors.textSecondary }]}>
                   Every listing gets a shareable URL at{' '}
-                  <Text style={{ color: CultureTokens.violet }}>culturepass.app/s/[id]</Text>
+                  <Text style={{ color: CultureTokens.violet }}>culturepass.co/s/[id]</Text>
                 </Text>
               </View>
             </Animated.View>
@@ -913,9 +913,9 @@ function CreateListingInner({
               </Text>
               <Text style={[ss.deepLinkSub, { color: colors.textSecondary }]}>
                 Once published:{' '}
-                <Text style={{ color: CultureTokens.violet }}>culturepass.app/CultureMarket/[id]</Text>
+                <Text style={{ color: CultureTokens.violet }}>culturepass.co/CultureMarket/[id]</Text>
                 {' '}and the short form{' '}
-                <Text style={{ color: CultureTokens.violet }}>culturepass.app/s/[id]</Text>
+                <Text style={{ color: CultureTokens.violet }}>culturepass.co/s/[id]</Text>
                 {' '}— share on social media, in emails, or embed on your site.
               </Text>
             </View>
@@ -1097,11 +1097,16 @@ const ss = StyleSheet.create({
   typeCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 14,
-    padding: Spacing.md,
+    gap: 16,
+    padding: Spacing.lg,
     borderRadius: Radius.lg,
-    borderWidth: 1,
-    marginBottom: 12,
+    borderWidth: 2,
+    marginBottom: 14,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
   },
   typeIconBox: {
     width: 56,
@@ -1164,11 +1169,11 @@ const ss = StyleSheet.create({
   catChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 11,
-    paddingVertical: 8,
-    borderRadius: Radius.sm,
-    borderWidth: 1.5,
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: Radius.md,
+    borderWidth: 2,
   },
   catChipText: { fontFamily: FontFamily.semibold, fontSize: 12 },
   subCatLabel: {

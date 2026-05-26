@@ -12,6 +12,7 @@ import {
   triggerCommunityHomeBanner, 
   deleteCommunityHomeBanner 
 } from '../services/communityHomeBanner';
+import { verificationService } from '../services/verificationService';
 import { logger } from 'firebase-functions';
 import { runGeohashBackfill } from '../jobs/geohashBackfill';
 
@@ -519,5 +520,190 @@ adminRouter.delete('/admin/community-home-banners/:id', async (req: Request, res
     const status = message.includes('not found') || message.includes('Cannot delete') ? 400 : 500;
     logger.error('community-home-banners/delete', err);
     return res.status(status).json({ error: message });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Verification Workflow (2nd-layer host/profile approvals: ABN, venues, pros, etc.)
+// Routes called by /admin/verification/* UI. All require admin+ role (already applied at router level).
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** GET /api/admin/verification/tasks — list with filters */
+adminRouter.get('/admin/verification/tasks', async (req: Request, res: Response) => {
+  if (!isFirestoreConfigured) return res.json({ tasks: [] });
+  try {
+    const status = (req.query.status as string) || undefined;
+    const entityType = (req.query.entityType as string) || undefined;
+    const assignedTo = (req.query.assignedTo as string) || undefined;
+    const overdueSla = req.query.overdueSla === 'true';
+
+    const tasks = await verificationService.listTasks({
+      status: status as any,
+      entityType: entityType as any,
+      assignedTo,
+      overdueSla,
+    });
+    return res.json({ tasks });
+  } catch (err) {
+    logger.error('admin/verification/tasks list', err);
+    return res.status(500).json({ error: 'Failed to list verification tasks' });
+  }
+});
+
+/** GET /api/admin/verification/tasks/:id */
+adminRouter.get('/admin/verification/tasks/:id', async (req: Request, res: Response) => {
+  if (!isFirestoreConfigured) return res.status(503).json({ error: 'Firestore unavailable' });
+  const taskId = (req.params['id'] as string) || '';
+  if (!taskId) return res.status(400).json({ error: 'Task id required' });
+  try {
+    const task = await verificationService.getTask(taskId);
+    if (!task) return res.status(404).json({ error: 'Task not found' });
+    return res.json(task);
+  } catch (err) {
+    logger.error('admin/verification/task get', err);
+    return res.status(500).json({ error: 'Failed to fetch verification task' });
+  }
+});
+
+/** GET /api/admin/verification/stats */
+adminRouter.get('/admin/verification/stats', async (_req: Request, res: Response) => {
+  if (!isFirestoreConfigured) {
+    return res.json({ pending: 0, inReview: 0, approved: 0, rejected: 0, moreInfoNeeded: 0, overdueSla: 0 });
+  }
+  try {
+    const stats = await verificationService.getStatistics();
+    return res.json(stats);
+  } catch (err) {
+    logger.error('admin/verification/stats', err);
+    return res.status(500).json({ error: 'Failed to fetch verification stats' });
+  }
+});
+
+/** POST /api/admin/verification/tasks/:id/approve */
+adminRouter.post('/admin/verification/tasks/:id/approve', async (req: Request, res: Response) => {
+  if (!isFirestoreConfigured) return res.status(503).json({ error: 'Firestore unavailable' });
+  const taskId = (req.params['id'] as string) || '';
+  if (!taskId) return res.status(400).json({ error: 'Task id required' });
+  const { adminNotes } = req.body || {};
+  try {
+    await verificationService.approveTask(taskId, req.user!.id, adminNotes);
+    await db.collection('auditLogs').add({
+      action: 'verification_task_approved',
+      userId: req.user!.id,
+      userName: req.user!.username || req.user!.id,
+      targetId: taskId,
+      targetType: 'verificationTask',
+      metadata: { adminNotes: adminNotes || null },
+      createdAt: nowIso(),
+    });
+    logger.info(`Verification task ${taskId} approved by ${req.user!.id}`);
+    return res.json({ ok: true });
+  } catch (err: any) {
+    logger.error('admin/verification/approve', err);
+    const status = err?.message?.includes('not found') ? 404 : 500;
+    return res.status(status).json({ error: err?.message || 'Failed to approve verification' });
+  }
+});
+
+/** POST /api/admin/verification/tasks/:id/reject */
+adminRouter.post('/admin/verification/tasks/:id/reject', async (req: Request, res: Response) => {
+  if (!isFirestoreConfigured) return res.status(503).json({ error: 'Firestore unavailable' });
+  const taskId = (req.params['id'] as string) || '';
+  if (!taskId) return res.status(400).json({ error: 'Task id required' });
+  const { rejectionReason, adminNotes } = req.body || {};
+  if (!rejectionReason || typeof rejectionReason !== 'string') {
+    return res.status(400).json({ error: 'rejectionReason is required' });
+  }
+  try {
+    await verificationService.rejectTask(taskId, req.user!.id, rejectionReason, adminNotes);
+    await db.collection('auditLogs').add({
+      action: 'verification_task_rejected',
+      userId: req.user!.id,
+      userName: req.user!.username || req.user!.id,
+      targetId: taskId,
+      targetType: 'verificationTask',
+      metadata: { rejectionReason, adminNotes: adminNotes || null },
+      createdAt: nowIso(),
+    });
+    logger.info(`Verification task ${taskId} rejected by ${req.user!.id}`);
+    return res.json({ ok: true });
+  } catch (err: any) {
+    logger.error('admin/verification/reject', err);
+    const status = err?.message?.includes('not found') ? 404 : 500;
+    return res.status(status).json({ error: err?.message || 'Failed to reject verification' });
+  }
+});
+
+/** POST /api/admin/verification/tasks/:id/request-info */
+adminRouter.post('/admin/verification/tasks/:id/request-info', async (req: Request, res: Response) => {
+  if (!isFirestoreConfigured) return res.status(503).json({ error: 'Firestore unavailable' });
+  const taskId = (req.params['id'] as string) || '';
+  if (!taskId) return res.status(400).json({ error: 'Task id required' });
+  const { requestMessage } = req.body || {};
+  if (!requestMessage || typeof requestMessage !== 'string') {
+    return res.status(400).json({ error: 'requestMessage is required' });
+  }
+  try {
+    await verificationService.requestMoreInfo(taskId, req.user!.id, requestMessage);
+    await db.collection('auditLogs').add({
+      action: 'verification_task_requested_info',
+      userId: req.user!.id,
+      userName: req.user!.username || req.user!.id,
+      targetId: taskId,
+      targetType: 'verificationTask',
+      metadata: { requestMessage },
+      createdAt: nowIso(),
+    });
+    logger.info(`Verification task ${taskId} requested more info by ${req.user!.id}`);
+    return res.json({ ok: true });
+  } catch (err: any) {
+    logger.error('admin/verification/request-info', err);
+    const status = err?.message?.includes('not found') ? 404 : 500;
+    return res.status(status).json({ error: err?.message || 'Failed to request more info' });
+  }
+});
+
+/** POST /api/admin/verification/tasks/:id/assign */
+adminRouter.post('/admin/verification/tasks/:id/assign', async (req: Request, res: Response) => {
+  if (!isFirestoreConfigured) return res.status(503).json({ error: 'Firestore unavailable' });
+  const taskId = (req.params['id'] as string) || '';
+  if (!taskId) return res.status(400).json({ error: 'Task id required' });
+  const { adminId } = req.body || {};
+  if (!adminId) return res.status(400).json({ error: 'adminId is required' });
+  try {
+    await verificationService.assignTask(taskId, adminId);
+    await db.collection('auditLogs').add({
+      action: 'verification_task_assigned',
+      userId: req.user!.id,
+      userName: req.user!.username || req.user!.id,
+      targetId: taskId,
+      targetType: 'verificationTask',
+      metadata: { assignedTo: adminId },
+      createdAt: nowIso(),
+    });
+    return res.json({ ok: true });
+  } catch (err: any) {
+    logger.error('admin/verification/assign', err);
+    const status = err?.message?.includes('not found') ? 404 : 500;
+    return res.status(status).json({ error: err?.message || 'Failed to assign verification task' });
+  }
+});
+
+/** PUT /api/admin/verification/tasks/:id/checklist */
+adminRouter.put('/admin/verification/tasks/:id/checklist', async (req: Request, res: Response) => {
+  if (!isFirestoreConfigured) return res.status(503).json({ error: 'Firestore unavailable' });
+  const taskId = (req.params['id'] as string) || '';
+  if (!taskId) return res.status(400).json({ error: 'Task id required' });
+  const { checklist } = req.body || {};
+  if (!Array.isArray(checklist)) {
+    return res.status(400).json({ error: 'checklist array is required' });
+  }
+  try {
+    await verificationService.updateTask(taskId, { checklist });
+    return res.json({ ok: true });
+  } catch (err: any) {
+    logger.error('admin/verification/checklist', err);
+    const status = err?.message?.includes('not found') ? 404 : 500;
+    return res.status(status).json({ error: err?.message || 'Failed to update checklist' });
   }
 });

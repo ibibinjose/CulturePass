@@ -50,7 +50,7 @@ export function createAdminNamespace(request: ApiRequestFn) {
   resolveReport: (id: string, action: 'resolved' | 'dismissed' | 'keep_content' | 'remove_item' | 'ban_user') =>
     request<{ ok: boolean; status: 'resolved' | 'dismissed' }>('POST', `api/admin/reports/${id}/resolve`, { action }),
 
-  patchUser: (id: string, data: { role?: User['role']; status?: 'active' | 'suspended' }) =>
+  patchUser: (id: string, data: Partial<User> & { status?: 'active' | 'suspended' }) =>
     request<{ ok: boolean }>('PATCH', `api/admin/users/${encodeURIComponent(id)}`, data),
 
   runGeohashBackfill: (body?: { forceGeoHash?: boolean; overwriteCoordinates?: boolean; limit?: number }) =>

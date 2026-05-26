@@ -1,4 +1,5 @@
 import React, { useEffect, memo } from "react";
+import aboutData from "@/data/static/about.json";
 import {
   View,
   Text,
@@ -25,8 +26,9 @@ import { CultureTokens, gradients, type ColorTheme } from "@/design-system/token
 import { GlassView } from "@/design-system/ui/GlassView";
 import { M3TopAppBar } from '@/design-system/ui';
 import { TextStyles } from "@/design-system/tokens/typography";
+import { APP_NAME, APP_AKA, APP_PREFIX } from "@/lib/app-meta";
+import { Footer } from "@/components/Footer";
 import { goBackOrReplace } from "@/lib/navigation";
-import { AboutLegalStrip } from "@/components/about/AboutLegalStrip";
 
 const DARK_GLASS_TINT = '#0F0E1A';
 const darkGlassOverride = {
@@ -35,55 +37,22 @@ const darkGlassOverride = {
 } as const;
 
 // ─── What We Are ──────────────────────────────────────────────────────────────
-const WHAT_WE_ARE = [
-  { icon: "map-outline", color: CultureTokens.indigo, title: "Discovery Engine", body: "A global layer for finding events, traditions, festivals, and cultural experiences that already exist around you — made discoverable for everyone." },
-  { icon: "people-circle-outline", color: CultureTokens.teal, title: "Community Network", body: "Infrastructure for grassroots organisations and diaspora communities to gain visibility, reach audiences, and grow real participation." },
-  { icon: "shield-outline", color: CultureTokens.violet, title: "Participation Platform", body: "Built to strengthen real-world engagement — not replace it with passive scrolling. Technology that serves belonging, not screen time." },
-  { icon: "id-card-outline", color: CultureTokens.coral, title: "Cultural Identity Layer", body: "A social infrastructure for cross-cultural discovery and genuine human connection in multicultural cities worldwide." },
-] as const;
+const WHAT_WE_ARE = aboutData.whatWeAre;
 
 // ─── What We Are Solving ──────────────────────────────────────────────────────
-const PROBLEMS = [
-  { icon: "person-outline", color: CultureTokens.coral, title: "Loneliness & Isolation", body: "Urban life produces disconnected individuals despite dense populations. People struggle to find community and participate meaningfully offline." },
-  { icon: "eye-off-outline", color: CultureTokens.gold, title: "Invisible Communities", body: "Thousands of grassroots organisations remain digitally invisible. Small cultural groups lack the tools and reach to connect with the people who need them." },
-  { icon: "git-branch-outline", color: CultureTokens.indigo, title: "Cultural Fragmentation", body: "When communities operate in silos, multicultural societies risk fracturing instead of flourishing. Discovery stays broken for those not inside the network." },
-  { icon: "megaphone-outline", color: CultureTokens.teal, title: "Broken Discovery", body: "Culture exists everywhere — but scattered across WhatsApp groups, Facebook posts, and flyers. Important moments stay invisible to newcomers and outsiders." },
-  { icon: "heart-dislike-outline", color: CultureTokens.violet, title: "Declining Participation", body: "As engagement shifts toward passive online consumption, people increasingly disconnect from local civic and cultural life — and from each other." },
-  { icon: "airplane-outline", color: CultureTokens.coral, title: "Newcomers Left Behind", body: "Migrants, international students, and relocators struggle to find the cultural communities already surrounding them in their new cities." },
-] as const;
+const PROBLEMS = aboutData.problems;
 
 // ─── Culture as Infrastructure ────────────────────────────────────────────────
-const CULTURE_AS_INFRA = [
-  { icon: "home-outline", color: CultureTokens.violet, label: "Belonging", body: "Culture creates identity, memory, and a sense of where you come from — and where you belong in the world." },
-  { icon: "heart-outline", color: CultureTokens.coral, label: "Wellbeing", body: "Communities with strong cultural participation show improved mental health, reduced isolation, and stronger support networks." },
-  { icon: "people-outline", color: CultureTokens.teal, label: "Social Trust", body: "Cultural participation rebuilds trust between neighbours, reduces civic fragmentation, and strengthens communities." },
-  { icon: "refresh-outline", color: CultureTokens.gold, label: "Resilience", body: "Culturally connected communities demonstrate greater resilience during social, economic, and community challenges." },
-] as const;
+const CULTURE_AS_INFRA = aboutData.cultureAsInfra;
 
 // ─── How It Works ─────────────────────────────────────────────────────────────
-const STEPS = [
-  { icon: "location-outline", color: CultureTokens.gold, title: "Choose Your City", desc: "Sydney, Melbourne, Brisbane, Perth & more" },
-  { icon: "people-circle-outline", color: CultureTokens.teal, title: "Pick Your Cultures", desc: "Indian, Korean, Greek, Lebanese, First Nations" },
-  { icon: "calendar-outline", color: CultureTokens.gold, title: "Discover & Attend", desc: "Browse events, buy tickets, store in wallet" },
-  { icon: "chatbubble-ellipses-outline", color: CultureTokens.indigo, title: "Stay Connected", desc: "Follow artists, sponsors and communities" },
-] as const;
+const STEPS = aboutData.steps;
 
 // ─── Features ─────────────────────────────────────────────────────────────────
-const FEATURES = [
-  { icon: "sparkles-outline", color: CultureTokens.gold, title: "Discover Events", desc: "Festivals, food, networking and cultural gatherings." },
-  { icon: "people-outline", color: CultureTokens.teal, title: "Join Communities", desc: "Connect with cultural organisations near you." },
-  { icon: "ticket-outline", color: CultureTokens.gold, title: "Digital Tickets", desc: "Purchase, store in wallet, check in with QR." },
-  { icon: "pricetag-outline", color: CultureTokens.coral, title: "Exclusive Perks", desc: "Discounts from local cultural businesses." },
-  { icon: "globe-outline", color: CultureTokens.indigo, title: "Cultural Map", desc: "Live map of events, venues and hubs." },
-  { icon: "shield-checkmark-outline", color: CultureTokens.indigo, title: "CulturePass ID", desc: "Your digital identity and membership." },
-] as const;
+const FEATURES = aboutData.features;
 
 // ─── Testimonials ─────────────────────────────────────────────────────────────
-const TESTIMONIALS = [
-  { name: "Priya K.", culture: "Indian community", text: "CulturePass helped me find Diwali events I never knew existed in Sydney!" },
-  { name: "Min-Jun P.", culture: "Korean community", text: "I connected with the Korean film community within my first week." },
-  { name: "Amara O.", culture: "African community", text: "Finally one place where our cultural events get visibility." },
-] as const;
+const TESTIMONIALS = aboutData.testimonials;
 
 // ─── Animated Stat ────────────────────────────────────────────────────────────
 const Stat = memo(function Stat({ target, label, suffix = "+" }: { target: number; label: string; suffix?: string }) {
@@ -134,7 +103,6 @@ export default function AboutCulturePass() {
       />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
-
         {/* ── HERO ──────────────────────────────────────────────────────────── */}
         <LinearGradient colors={gradients.culturepassBrand} style={[styles.hero, { minHeight: isDesktop ? 680 : 600 }]}>
           <View style={styles.heroOverlay} />
@@ -149,7 +117,7 @@ export default function AboutCulturePass() {
             <Text style={styles.heroSub}>A global platform connecting people to real-world culture and community — wherever they are in the world.</Text>
 
             <GlassView tone="dark" tintColor={DARK_GLASS_TINT} borderRadius={24} style={[styles.heroCard, darkGlassOverride]}>
-              <Text style={styles.heroBody}>CulturePass is not simply an events platform. It is emerging cultural infrastructure — designed to help people participate in real-world cultural life.</Text>
+              <Text style={styles.heroBody}>{APP_NAME} is not simply an events platform. It is emerging cultural infrastructure — designed to help people participate in real-world cultural life.</Text>
 
               <View style={styles.statsRow}>
                 <Stat target={195} label="Countries" />
@@ -198,7 +166,7 @@ export default function AboutCulturePass() {
             </View>
             <Text style={styles.h2}>Not Just an Events App</Text>
             <Text style={styles.p}>
-              CulturePass is cultural infrastructure — a discovery and participation layer connecting people with real-world culture and community.
+              {APP_NAME} is cultural infrastructure — a discovery and participation layer connecting people with real-world culture and community.
             </Text>
 
             <View style={[styles.grid, { maxWidth: isTablet ? 980 : "100%" }]}>
@@ -253,7 +221,7 @@ export default function AboutCulturePass() {
             <View style={[styles.iconWrap, { backgroundColor: CultureTokens.gold + '20' }]}>
               <Ionicons name="sparkles" size={24} color={CultureTokens.gold} />
             </View>
-            <Text style={styles.solutionTitle}>CulturePass addresses this gap.</Text>
+            <Text style={styles.solutionTitle}>{APP_NAME} addresses this gap.</Text>
             <Text style={styles.solutionBody}>One platform to discover cultures, find community, and never miss the moments that matter — wherever you are in the world.</Text>
           </View>
         </View>
@@ -293,7 +261,7 @@ export default function AboutCulturePass() {
               <Text style={styles.infraQuoteText}>
                 {'"Communities with strong cultural participation show improved mental wellbeing, stronger social trust, and greater resilience during crises."'}
               </Text>
-              <Text style={styles.infraQuoteAttr}>— CulturePass Vision Paper, 2026</Text>
+              <Text style={styles.infraQuoteAttr}>— {APP_NAME} Vision Paper, 2026</Text>
             </View>
           </View>
         </View>
@@ -372,7 +340,7 @@ export default function AboutCulturePass() {
           <Text style={styles.visionTitle}>Technology That Strengthens{"\n"}Real-World Connection</Text>
           <View style={styles.visionLine} />
           <Text style={styles.visionText}>
-            CulturePass proposes a different model: technology that amplifies and connects physical communities, rather than replacing them with passive digital consumption.
+            {APP_NAME} proposes a different model: technology that amplifies and connects physical communities, rather than replacing them with passive digital consumption.
           </Text>
           <Text style={styles.visionText2}>
             Digital systems support physical participation. Online discovery strengthens offline engagement. Technology becomes an enabler of belonging — not a substitute for it.
@@ -386,20 +354,7 @@ export default function AboutCulturePass() {
           </Link>
         </LinearGradient>
 
-        <AboutLegalStrip />
-
-        {/* ── FINAL CTA ─────────────────────────────────────────────────────── */}
-        <View style={styles.finalCta}>
-          <Text style={styles.h2}>Ready to Explore{"\n"}Your Culture?</Text>
-          <Text style={styles.p}>Create your profile, pick your cultures and start discovering events in minutes.</Text>
-          <Link href="/signup" asChild>
-            <Pressable style={styles.ctaBtn}>
-              <LinearGradient colors={[CultureTokens.indigo, CultureTokens.gold]} style={StyleSheet.absoluteFill} />
-              <Text style={styles.ctaText}>Explore CulturePass</Text>
-              <Ionicons name="arrow-forward" size={18} color="white" />
-            </Pressable>
-          </Link>
-        </View>
+        <Footer />
       </ScrollView>
     </View>
   );
@@ -413,11 +368,11 @@ const statStyles = StyleSheet.create({
 
 // ─── Theme-dependent styles ───────────────────────────────────────────────────
 const getStyles = (c: ColorTheme) => StyleSheet.create({
-  bgMesh: { ...StyleSheet.absoluteFillObject, opacity: 0.06 },
+  bgMesh: { ...StyleSheet.absoluteFill, opacity: 0.06 },
 
   // Hero
   hero: { paddingTop: 60, paddingBottom: 40, paddingHorizontal: 20, alignItems: "center", justifyContent: "center" },
-  heroOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0,0,0,0.3)" },
+  heroOverlay: { ...StyleSheet.absoluteFill, backgroundColor: "rgba(0,0,0,0.3)" },
   heroContent: { width: "100%", maxWidth: 720, alignItems: "center" },
   pill: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 14, paddingVertical: 6, marginBottom: 16 },
   pillText: { color: "white", fontSize: 12, fontFamily: "Poppins_500Medium" },

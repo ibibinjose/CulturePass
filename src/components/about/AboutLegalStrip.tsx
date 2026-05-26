@@ -5,29 +5,42 @@ import { Ionicons } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
 import { CultureTokens } from "@/design-system/tokens/theme";
 import { LinearGradient } from "expo-linear-gradient";
-import { MADE_IN_WITH_COUNTRY } from "@/lib/app-meta";
+import { MADE_IN_WITH_COUNTRY, APP_NAME, APP_AKA, APP_FULL_BRANDING } from "@/lib/app-meta";
 import { openExternalUrl } from "@/lib/openExternalUrl";
+import { FOOTER_LINKS, SOCIAL_LINKS } from "@/lib/site-footer-links";
 
-const LEGAL_LINKS = [
-  { label: "Our Story", href: "/founder", icon: "book-outline" },
-  { label: "About", href: "/about", icon: "information-circle-outline" },
-  { label: "Terms", href: "/legal/terms", icon: "document-text-outline" },
-  { label: "Privacy", href: "/legal/privacy", icon: "shield-checkmark-outline" },
-  { label: "Community", href: "/legal/community", icon: "people-outline" },
-  { label: "Cookies", href: "/legal/cookies", icon: "cafe-outline" },
-  { label: "Contact", href: "/contact", icon: "mail-outline" },
-] as const;
+// Define icons for each link type
+const getLegalLinkIcon = (label: string): string => {
+  switch(label.toLowerCase()) {
+    case 'our story': return 'book-outline';
+    case 'about': return 'information-circle-outline';
+    case 'terms': return 'document-text-outline';
+    case 'privacy': return 'shield-checkmark-outline';
+    case 'community': return 'people-outline';
+    case 'cookies': return 'cafe-outline';
+    case 'contact': return 'mail-outline';
+    case 'help': return 'help-circle-outline';
+    case 'company info': return 'business-outline';
+    case 'guidelines': return 'bulb-outline';
+    case 'event terms': return 'receipt-outline';
+    default: return 'document-text-outline';
+  }
+};
 
-const SOCIAL_LINKS = [
-  { label: "Instagram", handle: "@culturepassapp", icon: "logo-instagram", url: "https://instagram.com/culturepassapp" },
-  { label: "Instagram India", handle: "@cultureindiaapp", icon: "logo-instagram", url: "https://instagram.com/cultureindiaapp" },
-  { label: "Facebook", handle: "CulturePass.App", icon: "logo-facebook", url: "https://facebook.com/CulturePass.App" },
-  { label: "X", handle: "@CulturePAssApp", icon: "logo-twitter", url: "https://x.com/CulturePAssApp" },
-  { label: "TikTok", handle: "@culturepassapp", icon: "logo-tiktok", url: "https://tiktok.com/@culturepassapp" },
-  { label: "YouTube", handle: "@culturepassapp", icon: "logo-youtube", url: "https://youtube.com/@culturepassapp" },
-  { label: "LinkedIn", handle: "CulturePass", icon: "logo-linkedin", url: "https://linkedin.com/company/culturepassapp" },
-  { label: "Support", handle: "airpal.me/CulturePassApp", icon: "heart-outline", url: "https://airpal.me/CulturePassApp" },
-] as const;
+// Define icons for social links
+const getSocialLinkIcon = (label: string): string => {
+  switch(label.toLowerCase()) {
+    case 'instagram': return 'logo-instagram';
+    case 'instagram india': return 'logo-instagram';
+    case 'facebook': return 'logo-facebook';
+    case 'x': return 'logo-twitter';
+    case 'tiktok': return 'logo-tiktok';
+    case 'youtube': return 'logo-youtube';
+    case 'linkedin': return 'logo-linkedin';
+    case 'support': return 'heart-outline';
+    default: return 'logo-social';
+  }
+};
 
 export const AboutLegalStrip = memo(function AboutLegalStrip() {
   const colors = useColors();
@@ -69,7 +82,7 @@ export const AboutLegalStrip = memo(function AboutLegalStrip() {
         </View>
 
         <View style={styles.columns}>
-          {/* LEGAL CARD - FIXED CLOSING TAGS */}
+          {/* LEGAL CARD */}
           <View style={[styles.card, { backgroundColor: colors.background, borderColor: colors.borderLight }]}>
             <View style={styles.cardHeader}>
               <View style={[styles.iconBadge, { backgroundColor: CultureTokens.indigo + "12" }]}>
@@ -82,9 +95,9 @@ export const AboutLegalStrip = memo(function AboutLegalStrip() {
             </View>
             <View style={styles.divider} />
             <View style={styles.pillGrid}>
-              {LEGAL_LINKS.map(l => (
+              {FOOTER_LINKS.map(l => (
                 <View key={l.label} style={styles.pillWrapper}>
-                  <Pill icon={l.icon} label={l.label} href={l.href} />
+                  <Pill icon={getLegalLinkIcon(l.label)} label={l.label} href={l.href} />
                 </View>
               ))}
             </View>
@@ -106,7 +119,7 @@ export const AboutLegalStrip = memo(function AboutLegalStrip() {
               {SOCIAL_LINKS.map(s => (
                 <View key={s.label} style={styles.pillWrapper}>
                   <Pill 
-                    icon={s.icon} 
+                    icon={getSocialLinkIcon(s.label)} 
                     label={s.label} 
                     sublabel={s.handle}
                     onPress={() => openExternalUrl(s.url)}
@@ -121,14 +134,15 @@ export const AboutLegalStrip = memo(function AboutLegalStrip() {
         <View style={styles.footer}>
           <View style={styles.footerDivider} />
           <Text style={styles.ack}>
-            CulturePass acknowledges the Traditional Custodians of Country throughout Australia. We pay our respects to Elders past and present.
+            {APP_NAME} acknowledges the Traditional Custodians of Country throughout Australia. We pay our respects to Elders past and present.
           </Text>
           <View style={styles.footerMeta}>
             <View style={styles.brand}>
               <View style={[styles.dot, { backgroundColor: CultureTokens.indigo }]} />
-              <Text style={styles.brandText}>CulturePass</Text>
+              <Text style={styles.brandText}>{APP_NAME}</Text>
+              <Text style={[styles.brandText, { fontSize: 11, opacity: 0.7 }]}>AKA {APP_AKA}</Text>
             </View>
-            <Text style={styles.copy}>© {new Date().getFullYear()} CulturePass Pty Ltd • {MADE_IN_WITH_COUNTRY}</Text>
+            <Text style={styles.copy}>© {new Date().getFullYear()} {APP_FULL_BRANDING} • {MADE_IN_WITH_COUNTRY}</Text>
           </View>
         </View>
       </View>

@@ -330,7 +330,7 @@ const sampleProfile = {
   entityType: 'business',
   ownerId: 'test-user-123',
   handle: 'test-business',
-  officialName: 'Test Business Pty Ltd',
+  officialName: 'Test Business CulturePass.App',
   status: 'draft',
   verificationStatus: 'pending',
   createdAt: '2024-01-01T00:00:00.000Z',
@@ -357,7 +357,7 @@ describe('Profile API Endpoints', () => {
     const createPayload = {
       entityType: 'business',
       handle: 'new-business',
-      officialName: 'New Business Pty Ltd',
+      officialName: 'New Business CulturePass.App',
       tagline: 'A great business',
       description: 'We do great things',
     };
@@ -377,7 +377,7 @@ describe('Profile API Endpoints', () => {
 
       expect(res.status).toBe(201);
       expect(res.body.id).toBe('new-profile-id');
-      expect(res.body.officialName).toBe('New Business Pty Ltd');
+      expect(res.body.officialName).toBe('New Business CulturePass.App');
       expect(mockValidationService.checkHandleExists).toHaveBeenCalledWith('new-business');
       expect(mockProfileService.create).toHaveBeenCalled();
     });
@@ -535,7 +535,7 @@ describe('Profile API Endpoints', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.id).toBe('profile-1');
-      expect(res.body.officialName).toBe('Test Business Pty Ltd');
+      expect(res.body.officialName).toBe('Test Business CulturePass.App');
     });
 
     it('returns 404 for non-existent profile', async () => {

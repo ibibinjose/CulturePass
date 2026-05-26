@@ -2,20 +2,21 @@ import "react-native-reanimated"; // <-- CRUCIAL FIX: Must be at the very top
 import { StatusBar } from "expo-status-bar";
 import { Buffer } from "buffer";
 
+// Sentry - World class error & performance monitoring (initialized as early as possible)
+import { initSentry, setSentryUser, Sentry } from "@/lib/sentry";
+initSentry();
+
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
-import Head from "expo-router/head";
-import { router, Stack, usePathname, useRootNavigationState } from "expo-router";
+import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { PostHogProvider, usePostHog } from 'posthog-react-native';
+import { PostHogProvider } from 'posthog-react-native';
 import posthogClient from '@/lib/analytics';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Ionicons } from '@expo/vector-icons';
 import {
   Platform,
   View,
   Text as RNText,
   StyleSheet,
-  Pressable,
 } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
@@ -29,7 +30,7 @@ import { SavedProvider } from "@/contexts/SavedContext";
 import { LikesProvider } from "@/contexts/LikesContext";
 import { ContactsProvider } from "@/contexts/ContactsContext";
 import { LinearGradient } from "expo-linear-gradient";
-import { gradients, CultureTokens } from "@/design-system/tokens/theme";
+import { CultureTokens } from "@/design-system/tokens/theme";
 import { useColors, useIsDark } from "@/hooks/useColors";
 import { useLayout } from "@/hooks/useLayout";
 import { AuthGuard, AuthSyncBanner, DataSync } from "@/providers";
@@ -37,31 +38,28 @@ import { withAlpha } from "@/lib/withAlpha";
 import { initializeWidgets } from "@/lib/widgets/register";
 import { WidgetSync } from "@/components/WidgetSync";
 import { WebSidebar } from "@/modules/core/layout/web/WebSidebar";
-import { isCultureKeralaHost } from "@/lib/domainHost";
 import { M3Button } from "@/design-system/ui";
-import {
-  APP_NAME,
-  APP_WEB_DESCRIPTION,
-  APP_WEB_KEYWORDS,
-  APP_WEB_TITLE,
-  APP_WEB_TAGLINE,
-  SITE_ORIGIN,
-} from "@/lib/app-meta";
+import { NavigationMetadata } from "@/components/NavigationMetadata";
+import { CulturalThemeProvider } from "@/providers/CulturalThemeProvider";
 
 import { useFonts, Poppins_400Regular, Poppins_500Medium, Poppins_600SemiBold, Poppins_700Bold, Poppins_800ExtraBold } from "@expo-google-fonts/poppins";
-// Web font loader for Expo web is automatically handled by @expo-google-fonts
+import { Ionicons } from "@expo/vector-icons";
 
 // Import LinkPreviewContextProvider if available
-let LinkPreviewContextProvider: React.ComponentType<{ children: React.ReactNode }> | null = null;
+let LinkPreviewContextProvider: any = null;
 try {
   // Try importing from expo-router if available in your version
-  const linkPreviewModule = require('expo-router').LinkPreviewContextProvider;
-  if (linkPreviewModule) {
-    LinkPreviewContextProvider = linkPreviewModule;
+  const mod = require('expo-router/build/link/preview/LinkPreviewContext');
+  if (mod && mod.LinkPreviewContextProvider) {
+    LinkPreviewContextProvider = mod.LinkPreviewContextProvider;
   }
 } catch (e) {
-  // LinkPreviewContextProvider might not be available in your version
-  console.warn('[RootLayout] LinkPreviewContextProvider not available:', (e as Error).message);
+  try {
+    const mod = require('expo-router');
+    if (mod && mod.LinkPreviewContextProvider) {
+      LinkPreviewContextProvider = mod.LinkPreviewContextProvider;
+    }
+  } catch (e2) {}
 }
 
 global.Buffer = Buffer;
@@ -85,148 +83,14 @@ if (typeof console !== 'undefined') {
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
 // ---------------------------------------------------------------------------
-// Global Metadata Component
-// ---------------------------------------------------------------------------
-function GlobalMetadata({ pathname = '/' }: { pathname?: string }) {
-  const isKeralaDomain = isCultureKeralaHost();
-  const colors = useColors();
-  const isDark = useIsDark();
-  const isWeb = Platform.OS === 'web';
-
-  const siteOrigin = isKeralaDomain ? 'https://culturekerala.com' : SITE_ORIGIN;
-  const siteTitle = isKeralaDomain
-    ? 'CultureKerala — Kerala & Malayalee Communities Worldwide'
-    : APP_WEB_TITLE;
-  const siteDescription = isKeralaDomain
-    ? 'Discover Kerala and Malayalee communities, events, businesses, and culture around the world.'
-    : APP_WEB_DESCRIPTION;
-  const siteKeywords = isKeralaDomain
-    ? 'CultureKerala, Kerala Communities, Malayalee, Malayalam, Kerala Events, Malayali Diaspora'
-    : APP_WEB_KEYWORDS;
-
-  const currentPath = pathname || '/';
-  const canonicalUrl = `${siteOrigin}${currentPath === '/' ? '' : currentPath}`;
-  const socialPreviewUrl = `${siteOrigin}/assets/images/social-preview.png`;
-
-  const keralaJsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'WebSite',
-    name: 'CultureKerala',
-    url: 'https://culturekerala.com/',
-    description: 'Discover Kerala and Malayalee communities, events, businesses, and culture around the world.',
-    inLanguage: ['en', 'ml'],
-    keywords: ['Kerala', 'Malayalee', 'Malayalam', 'Kerala events', 'Kerala communities'],
-    potentialAction: {
-      '@type': 'SearchAction',
-      target: 'https://culturekerala.com/search?query={search_term_string}',
-      'query-input': 'required name=search_term_string',
-    },
-  };
-
-  const culturepassJsonLd = {
-    '@context': 'https://schema.org',
-    '@graph': [
-      {
-        '@type': 'WebSite',
-        '@id': `${siteOrigin}/#website`,
-        name: APP_NAME,
-        alternateName: APP_WEB_TAGLINE,
-        url: siteOrigin + '/',
-        description: siteDescription,
-        inLanguage: 'en-AU',
-        publisher: { '@id': `${siteOrigin}/#organization` },
-        potentialAction: {
-          '@type': 'SearchAction',
-          target: `${siteOrigin}/search?q={search_term_string}`,
-          'query-input': 'required name=search_term_string',
-        },
-      },
-      {
-        '@type': 'Organization',
-        '@id': `${siteOrigin}/#organization`,
-        name: APP_NAME,
-        url: siteOrigin + '/',
-        description: siteDescription,
-        slogan: APP_WEB_TAGLINE,
-      },
-    ],
-  };
-
-  return (
-    <Head>
-      <title>{siteTitle}</title>
-      <meta name="description" content={siteDescription} />
-      <meta name="keywords" content={siteKeywords} />
-      <link rel="canonical" href={canonicalUrl} />
-      {isKeralaDomain && <meta name="robots" content="index,follow,max-image-preview:large" />}
-
-      {/* Open Graph / Facebook */}
-      <meta property="og:type" content="website" />
-      <meta property="og:url" content={canonicalUrl} />
-      <meta property="og:title" content={siteTitle} />
-      <meta property="og:description" content={siteDescription} />
-      <meta property="og:image" content={socialPreviewUrl} />
-      <meta property="og:site_name" content={isKeralaDomain ? 'CultureKerala' : APP_NAME} />
-      <meta property="og:locale" content={isKeralaDomain ? 'ml_IN' : 'en_AU'} />
-
-      {/* Twitter */}
-      <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:url" content={canonicalUrl} />
-      <meta name="twitter:title" content={siteTitle} />
-      <meta name="twitter:description" content={siteDescription} />
-      <meta name="twitter:image" content={socialPreviewUrl} />
-      <meta name="application-name" content={isKeralaDomain ? 'CultureKerala' : APP_NAME} />
-      <meta name="apple-mobile-web-app-title" content={isKeralaDomain ? 'CultureKerala' : APP_NAME} />
-
-      {isWeb && (
-        isKeralaDomain ? (
-          <script
-            type="application/ld+json"
-            dangerouslySetInnerHTML={{ __html: JSON.stringify(keralaJsonLd) }}
-          />
-        ) : (
-          <script
-            type="application/ld+json"
-            dangerouslySetInnerHTML={{ __html: JSON.stringify(culturepassJsonLd) }}
-          />
-        )
-      )}
-
-      <meta name="theme-color" content={colors.background} />
-      <meta name="apple-mobile-web-app-capable" content="yes" />
-      <meta
-        name="apple-mobile-web-app-status-bar-style"
-        content={isDark ? "black-translucent" : "default"}
-      />
-    </Head>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Manual Navigation Tracking for PostHog (since auto screen capture is disabled)
-// ---------------------------------------------------------------------------
-function NavigationTracker() {
-  const pathname = usePathname();
-  const posthog = usePostHog();
-
-  useEffect(() => {
-    if (pathname && posthog) {
-      posthog.screen(pathname);
-    }
-  }, [pathname, posthog]);
-
-  return null;
-}
-
-// ---------------------------------------------------------------------------
 // Stack navigator — all screens registered here so Expo Router can deep-link
 // ---------------------------------------------------------------------------
-import { NavigationMetadata } from "@/components/NavigationMetadata";
-
-// ...
-
 function RootLayoutNav() {
-  return (
+  const colors = useColors();
+  const { isDesktop } = useLayout();
+  const isWeb = Platform.OS === 'web';
+
+  const stackContent = (
     <Stack
       screenOptions={{
         headerShown: false,
@@ -307,67 +171,39 @@ function RootLayoutNav() {
       <Stack.Screen name="(shortlinks)/u/[id]" options={{ animation: 'none' }} />
     </Stack>
   );
-}
 
-// ---------------------------------------------------------------------------
-// Responsive web shell — centres content on wide screens, phone frame on small
-// ---------------------------------------------------------------------------
-function WebShell({ children }: { children: React.ReactNode }) {
-  const colors = useColors();
-  const { isDesktop } = useLayout();
-  const navState = useRootNavigationState();
-  const pathname = usePathname();
-
-  const isReady = !!navState?.key;
-  const isHome = isReady && (pathname === '/' || pathname === '/index');
-
-  const mainColumn = (
-    <View style={webStyles.contentContainer}>
-      {isReady && !isHome && isDesktop && (
-        <View style={[webStyles.topNav, { borderBottomColor: colors.borderLight }]}>
-          <Pressable
-            onPress={() => router.back()}
-            style={({ hovered }: any) => [
-              webStyles.backBtn,
-              hovered && { backgroundColor: colors.backgroundSecondary }
-            ]}
-          >
-            <Ionicons name="arrow-back" size={18} color={colors.textSecondary} />
-            <RNText style={[webStyles.backText, { color: colors.textSecondary }]}>Back</RNText>
-          </Pressable>
+  if (isWeb && isDesktop) {
+    return (
+      <View
+        style={[
+          webStyles.outerContainer,
+          {
+            backgroundColor: colors.background,
+          },
+        ]}
+      >
+        <LinearGradient
+          colors={[withAlpha(CultureTokens.indigo, 0.05), 'transparent']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={webStyles.ambientMesh}
+          pointerEvents="none"
+        />
+        <WebSidebar />
+        <View style={webStyles.contentContainer}>
+          <View style={[webStyles.mainFlex, webStyles.mainFlexDesktop]}>
+            {stackContent}
+          </View>
         </View>
-      )}
-      <View style={[webStyles.mainFlex, isDesktop && webStyles.mainFlexDesktop]}>
-        {children}
       </View>
-    </View>
-  );
+    );
+  }
 
   return (
-    <View
-      style={[
-        webStyles.outerContainer,
-        {
-          backgroundColor: colors.background,
-        },
-      ]}
-    >
-      <LinearGradient
-        colors={[withAlpha(CultureTokens.indigo, 0.05), 'transparent']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={webStyles.ambientMesh}
-        pointerEvents="none"
-      />
-      {isDesktop ? (
-        <>
-          <WebSidebar />
-          {mainColumn}
-        </>
-      ) : (
-        mainColumn
-      )}
-    </View>
+    <>
+      <NavigationMetadata />
+      {stackContent}
+    </>
   );
 }
 
@@ -389,19 +225,25 @@ function RootLayoutContent() {
     Poppins_600SemiBold,
     Poppins_700Bold,
     Poppins_800ExtraBold,
+    ...Ionicons.font,
   });
 
   // Add a timeout state to prevent indefinite loading
-  const [fontTimeout, setFontTimeout] = React.useState(false);
+  const [fontTimeout, setFontTimeout] = useState(false);
   
-  // Set a timeout after 3 seconds to allow the app to render with system fonts
-  React.useEffect(() => {
+  // Improved timeout: longer on web (fonts + network can be slower), shorter on native
+  const FONT_TIMEOUT_MS = Platform.OS === 'web' ? 5500 : 4200;
+
+  useEffect(() => {
     const timeoutId = setTimeout(() => {
-      setFontTimeout(true);
-    }, 3000); // 3 seconds timeout
+      if (!fontsLoaded) {
+        setFontTimeout(true);
+        console.warn(`[RootLayout] Font loading timed out after ${FONT_TIMEOUT_MS}ms — using system fonts as fallback`);
+      }
+    }, FONT_TIMEOUT_MS);
     
     return () => clearTimeout(timeoutId);
-  }, []);
+  }, [fontsLoaded]);
 
   // Log font loading errors for debugging
   useEffect(() => {
@@ -409,14 +251,6 @@ function RootLayoutContent() {
       console.error('[RootLayout] Font loading error:', fontError);
     }
   }, [fontError]);
-
-  // On web, icons might be loaded separately or via CDN in some configs.
-  // We separate them to see if they block the main fonts.
-  useEffect(() => {
-    if (Platform.OS !== 'web') {
-      // Load Ionicons font specifically if not web, as web often handles it via CSS
-    }
-  }, []);
 
   const onLayoutRootView = useCallback(async () => {
     if (fontsLoaded || fontError || fontTimeout) {
@@ -436,21 +270,20 @@ function RootLayoutContent() {
 
   const isWeb = Platform.OS === "web";
 
+  // SSR Hydration fix: Always render the same thing on server and first client pass
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   // If fonts fail to load OR timeout occurs, we still want to show the app instead of hanging on loading screen
-  if (!fontsLoaded && !fontError && !fontTimeout) {
-    if (__DEV__ && typeof window !== 'undefined') {
-      console.log('[RootLayout] Waiting for fonts to load...', { fontsLoaded, fontError, fontTimeout });
-    }
+  // But during SSR we must render the same thing as the first client render.
+  if (!isMounted || (!fontsLoaded && !fontError && !fontTimeout)) {
     return (
       <View style={{ flex: 1, backgroundColor: isDark ? '#0B0B14' : '#FFFFFF', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
         <RNText style={{ color: isDark ? '#FFFFFF' : '#000000', fontSize: 16, marginBottom: 20 }}>
           Loading CulturePass...
         </RNText>
-        {__DEV__ && (
-          <M3Button variant="text" onPress={() => SplashScreen.hideAsync()}>
-            Skip Font Wait (Dev Only)
-          </M3Button>
-        )}
       </View>
     );
   }
@@ -460,7 +293,7 @@ function RootLayoutContent() {
     if (fontError) {
       console.warn('[RootLayout] Fonts failed to load, using system fonts as fallback:', fontError);
     } else if (fontTimeout) {
-      console.warn('[RootLayout] Font loading timed out, using system fonts as fallback');
+      // Already logged the timeout above with duration
       SplashScreen.hideAsync().catch(() => {});
     }
   }
@@ -473,15 +306,13 @@ function RootLayoutContent() {
       ]}
       onLayout={onLayoutRootView}
     >
-      <StatusBar style={isDark ? "light" : "dark"} translucent />
+      <StatusBar style={isDark ? "light" : "dark"} />
       <DataSync />
       <WidgetSync />
       <AuthGuard />
       <AuthSyncBanner />
       {isWeb ? (
-        <WebShell>
-          <RootLayoutNav />
-        </WebShell>
+        <RootLayoutNav />
       ) : (
         <KeyboardProvider>
           <RootLayoutNav />
@@ -502,11 +333,13 @@ function RootLayoutContent() {
               <SavedProvider>
                 <LikesProvider>
                   <ContactsProvider>
-                    {posthogClient ? (
-                      <PostHogProvider client={posthogClient} autocapture={{ captureScreens: false }}>{appShell}</PostHogProvider>
-                    ) : (
-                      appShell
-                    )}
+                    <CulturalThemeProvider>
+                      {posthogClient ? (
+                        <PostHogProvider client={posthogClient} autocapture={{ captureScreens: false }}>{appShell}</PostHogProvider>
+                      ) : (
+                        appShell
+                      )}
+                    </CulturalThemeProvider>
                   </ContactsProvider>
                 </LikesProvider>
               </SavedProvider>
@@ -519,11 +352,13 @@ function RootLayoutContent() {
             <SavedProvider>
               <LikesProvider>
                 <ContactsProvider>
-                  {posthogClient ? (
-                    <PostHogProvider client={posthogClient} autocapture={{ captureScreens: false }}>{appShell}</PostHogProvider>
-                  ) : (
-                    appShell
-                  )}
+                  <CulturalThemeProvider>
+                    {posthogClient ? (
+                      <PostHogProvider client={posthogClient} autocapture={{ captureScreens: false }}>{appShell}</PostHogProvider>
+                    ) : (
+                      appShell
+                    )}
+                  </CulturalThemeProvider>
                 </ContactsProvider>
               </LikesProvider>
             </SavedProvider>
@@ -536,9 +371,7 @@ function RootLayoutContent() {
   return (
     <SafeAreaProvider style={Platform.OS === "web" ? ({ flex: 1, minHeight: 0 } as const) : undefined}>
       <ErrorBoundary>
-        <Head.Provider>
-          {queryAppTree}
-        </Head.Provider>
+        {queryAppTree}
       </ErrorBoundary>
     </SafeAreaProvider>
   );
@@ -550,7 +383,7 @@ const webStyles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "stretch",
     // Do NOT set overflow:hidden here — on web it clips absolutely-positioned
-    // modals, dropdowns, and popovers, blocking their touch events entirely.
+    // modals, dropdowns, and popales, blocking their touch events entirely.
     ...(Platform.OS !== "web" ? { overflow: "hidden" } as const : {}),
     ...(Platform.OS === "web" &&
       ({
@@ -560,7 +393,7 @@ const webStyles = StyleSheet.create({
       } as const)),
   },
   ambientMesh: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     opacity: 0.1,
   },
   contentContainer: {
@@ -569,25 +402,6 @@ const webStyles = StyleSheet.create({
     minHeight: 0,
     flexDirection: "column",
     alignSelf: "stretch",
-  },
-  topNav: {
-    height: 56,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 24,
-    borderBottomWidth: 1,
-  },
-  backBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-  },
-  backText: {
-    fontSize: 14,
-    fontWeight: '500',
   },
   mainFlex: {
     flex: 1,

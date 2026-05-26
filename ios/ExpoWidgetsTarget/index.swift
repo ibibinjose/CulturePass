@@ -6,10 +6,17 @@ internal import ExpoWidgets
 struct ExportWidgets0: WidgetBundle {
   var body: some Widget {
     CultureSpotlightWidget()
-	CultureNearYouWidget()
+    CultureNearYouWidget()
     CultureIdentityQRWidget()
-	CultureUpcomingTicketWidget()
+    CultureUpcomingTicketWidget()
+    ExportWidgets1().body
+  }
+}
+
+struct ExportWidgets1: WidgetBundle {
+  var body: some Widget {
     CulturePassWatchWidget()
+    CultureMembershipWidget()
     WidgetLiveActivity()
   }
 }

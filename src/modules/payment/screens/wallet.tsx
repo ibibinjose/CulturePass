@@ -279,8 +279,8 @@ export default function WalletScreen() {
   }, [memberSinceDate]);
   const displayTickets = tab === 'upcoming' ? upcoming : past;
   const businessCardQrValue = useMemo(() => {
-    if (user?.username) return `https://culturepass.app/u/${encodeURIComponent(user.username)}`;
-    return `https://culturepass.app/u/${encodeURIComponent(userId ?? 'guest')}`;
+    if (user?.username) return `https://culturepass.co/u/${encodeURIComponent(user.username)}`;
+    return `https://culturepass.co/u/${encodeURIComponent(userId ?? 'guest')}`;
   }, [user?.username, userId]);
 
   useEffect(() => {

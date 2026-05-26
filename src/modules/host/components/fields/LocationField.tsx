@@ -143,6 +143,18 @@ export default function LocationField({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [validationError, setValidationError] = useState<string | undefined>(error);
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isMounted = useRef(true);
+
+  // Clear timer and track mount state
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+      }
+    };
+  }, []);
 
   // Sync search query with value when value changes externally
   useEffect(() => {
@@ -194,14 +206,21 @@ export default function LocationField({
       }
 
       debounceTimer.current = setTimeout(async () => {
+        if (!isMounted.current) return;
         setIsLoading(true);
         try {
           const results = await fetchPlacePredictions(text);
-          setPredictions(results);
+          if (isMounted.current) {
+            setPredictions(results);
+          }
         } catch {
-          setPredictions([]);
+          if (isMounted.current) {
+            setPredictions([]);
+          }
         } finally {
-          setIsLoading(false);
+          if (isMounted.current) {
+            setIsLoading(false);
+          }
         }
       }, 300);
     },
@@ -220,6 +239,8 @@ export default function LocationField({
 
       try {
         const result = await geocodePlaceId(prediction.place_id);
+
+        if (!isMounted.current) return;
 
         if (result) {
           const address: Address = {
@@ -244,20 +265,27 @@ export default function LocationField({
           // If no LGA code from geocode, try to determine it
           if (!address.lgaCode && address.latitude && address.longitude) {
             const lgaCode = await determineLgaCode(address.latitude, address.longitude);
-            if (lgaCode) {
+            if (isMounted.current && lgaCode) {
               address.lgaCode = lgaCode;
             }
           }
 
+          if (!isMounted.current) return;
           onChange(address);
           setValidationError(undefined);
         } else {
-          setValidationError('Unable to load address details. Please try again.');
+          if (isMounted.current) {
+            setValidationError('Unable to load address details. Please try again.');
+          }
         }
       } catch {
-        setValidationError('Unable to load address details. Please try again.');
+        if (isMounted.current) {
+          setValidationError('Unable to load address details. Please try again.');
+        }
       } finally {
-        setIsGeocoding(false);
+        if (isMounted.current) {
+          setIsGeocoding(false);
+        }
       }
     },
     [onChange, validateAddress]

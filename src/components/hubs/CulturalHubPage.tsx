@@ -223,7 +223,7 @@ export function CulturalHubPage({ seed, showBuilder = true }: Props) {
 
   const canonical = seed.domainUrl
     ? seed.domainUrl
-    : `https://culturepass.app/hubs/${selectedState.toLowerCase()}/${selectedLanguage}`;
+    : `https://culturepass.co/hubs/${selectedState.toLowerCase()}/${selectedLanguage}`;
 
   const onToggleSaveHub = () => {
     if (Platform.OS !== 'web') {

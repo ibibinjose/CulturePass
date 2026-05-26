@@ -1,0 +1,68 @@
+# CulturePass CODEOWNERS
+#
+# This file defines who is responsible for reviewing changes in specific areas.
+# It is part of our Phase 0 Foundations work to improve governance and reduce risk.
+#
+# Format: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+#
+# IMPORTANT: Replace the placeholder teams/usernames below with real ones.
+
+# =============================================================================
+# Core Platform & High-Risk Areas (require senior review)
+# =============================================================================
+
+# Core API layer, auth, query client, and configuration
+src/lib/{api,query-client,auth,config,firebase}.ts*   @culturepass-team/core
+src/platform/api/                                     @culturepass-team/core
+
+# Authentication & Authorization middleware (very high risk)
+functions/src/middleware/auth.ts                      @culturepass-team/core
+
+# =============================================================================
+# HostSpace (the most complex and strategically important subsystem)
+# =============================================================================
+src/modules/host/                                     @culturepass-team/host
+src/app/hostspace/                                    @culturepass-team/host
+
+# =============================================================================
+# Admin & Operational Tooling
+# =============================================================================
+src/app/admin/                                        @culturepass-team/admin
+functions/src/handlers/admin.ts                       @culturepass-team/admin
+functions/src/services/verificationService.ts         @culturepass-team/admin
+functions/src/handlers/hostApplication.ts             @culturepass-team/admin
+
+# =============================================================================
+# Payments & Financial Systems (high compliance risk)
+# =============================================================================
+src/modules/payment/                                  @culturepass-team/payments
+functions/src/handlers/stripe.ts                      @culturepass-team/payments
+functions/src/handlers/stripeConnect.ts               @culturepass-team/payments
+functions/src/payments/                               @culturepass-team/payments
+
+# =============================================================================
+# Backend Handlers (general)
+# =============================================================================
+functions/src/handlers/                               @culturepass-team/backend
+
+# =============================================================================
+# Design System & Core UI Primitives
+# =============================================================================
+src/design-system/                                    @culturepass-team/design
+
+# =============================================================================
+# Shared Domain Models (contracts between client and server)
+# =============================================================================
+shared/schema/                                        @culturepass-team/core
+
+# =============================================================================
+# Root configuration & deployment (very high blast radius)
+# =============================================================================
+package.json                                          @culturepass-team/core
+app.config.js                                         @culturepass-team/core
+firebase.json                                         @culturepass-team/core
+.github/                                              @culturepass-team/core
+docs/                                                 @culturepass-team/core
+
+# Default fallback for everything else
+*                                                     @culturepass-team/core

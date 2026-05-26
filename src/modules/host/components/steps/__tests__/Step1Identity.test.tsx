@@ -196,7 +196,7 @@ describe('Step1Identity', () => {
       <Step1Identity {...defaultProps} formData={formData} />
     );
     
-    expect(getByText('culturepass.com/@my-handle')).toBeTruthy();
+    expect(getByText(/@my-handle$/)).toBeTruthy();
   });
 
   it('displays field errors when provided', () => {

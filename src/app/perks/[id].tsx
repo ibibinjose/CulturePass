@@ -4,6 +4,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
+import { log } from '@/lib/logger';
 import { goBackOrReplace } from '@/lib/navigation';
 import * as Haptics from 'expo-haptics';
 import { useQuery, useMutation } from '@tanstack/react-query';
@@ -140,7 +141,7 @@ export default function PerkDetailScreen() {
   const handleShare = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     try {
-      const shareUrl = `https://culturepass.app/perks/${id}`;
+      const shareUrl = `https://culturepass.co/perks/${id}`;
       await Share.share({
         title: `${perk.title} - CulturePass Perk`,
         message: `Check out this perk on CulturePass: ${perk.title}! ${perk.description || ''} ${perk.providerName ? `From ${perk.providerName}.` : ''}\n\n${shareUrl}`,
@@ -168,6 +169,12 @@ export default function PerkDetailScreen() {
         const createCheckoutSession = httpsCallable(functions, 'createCheckoutSession');
         const result = await createCheckoutSession({ perkId: perk.id });
         const { url } = result.data as any;
+
+        log.action('payment.checkout_initiated', {
+          perkId: perk.id,
+          priceTier: perk.priceTier,
+        });
+
         if (url) {
           openExternalUrl(url, { failureTitle: 'Could not open checkout' });
         }
@@ -182,7 +189,7 @@ export default function PerkDetailScreen() {
   const isIndigenous = perk.category === 'indigenous';
   const perkTitle = `${perk.title} | CulturePass Perks`;
   const perkDesc = perk.description || `Exclusive perk from ${perk.providerName ?? 'CulturePass'} — available to CulturePass members.`;
-  const perkUrl = `https://culturepass.app/perks/${id}`;
+  const perkUrl = `https://culturepass.co/perks/${id}`;
 
   return (
     <ErrorBoundary>

@@ -100,7 +100,7 @@ export const validationService = {
 
     return {
       valid: true,
-      businessName: 'Example Business Pty Ltd', // Would come from API
+      businessName: 'Example Business CulturePass.App', // Would come from API
       status: 'Active', // Would come from API
       gstRegistered: true, // Would come from API
     };

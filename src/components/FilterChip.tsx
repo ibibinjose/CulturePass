@@ -24,8 +24,10 @@ export function FilterChip({ item, isActive, onPress, size = 'medium' }: FilterC
   const colors = useColors();
   const isSmall = size === 'small';
   const accentColor = item.color || colors.primary;
-  const activeBackground = item.color || CultureTokens.coral;
-  const activeTextColor = '#fff';
+  const activeBackground = item.color || colors.primary;
+  const activeTextColor = colors.textInverse;
+  const inactiveBackground = item.backgroundColor || colors.surfaceSecondary;
+  const inactiveBorder = item.color ? item.color + '40' : colors.borderLight;
 
   const handlePress = () => {
     if (Platform.OS !== 'web') {
@@ -46,7 +48,7 @@ export function FilterChip({ item, isActive, onPress, size = 'medium' }: FilterC
         isSmall && styles.chipSmall,
         isActive
           ? { backgroundColor: activeBackground, borderColor: activeBackground }
-          : { backgroundColor: item.backgroundColor || colors.surfaceElevated, borderColor: item.color ? item.color + '40' : colors.border },
+          : { backgroundColor: inactiveBackground, borderColor: inactiveBorder },
         pressed && !isActive && styles.chipPressed,
         pressed && { opacity: 0.8, transform: [{ scale: 0.98 }] },
         isActive && styles.chipActiveShadow,
@@ -58,7 +60,7 @@ export function FilterChip({ item, isActive, onPress, size = 'medium' }: FilterC
         <Ionicons
           name={item.icon as any}
           size={isSmall ? 14 : 16}
-          color={isActive ? colors.textInverse : accentColor}
+          color={isActive ? activeTextColor : accentColor}
           style={styles.icon}
         />
       ) : null}
@@ -68,7 +70,7 @@ export function FilterChip({ item, isActive, onPress, size = 'medium' }: FilterC
           isSmall && styles.labelSmall,
           isActive
             ? { color: activeTextColor, fontFamily: 'Poppins_600SemiBold' }
-            : { color: colors.text },
+            : { color: colors.textSecondary },
         ]}
         numberOfLines={1}
       >
@@ -86,7 +88,7 @@ export function FilterChip({ item, isActive, onPress, size = 'medium' }: FilterC
           <Text
             style={[
               styles.badgeText,
-              { color: isActive ? colors.textInverse : accentColor },
+              { color: isActive ? activeTextColor : accentColor },
             ]}
           >
             {item.count}
@@ -105,8 +107,16 @@ interface FilterChipRowProps {
 }
 
 export function FilterChipRow({ items, selectedId, onSelect, size = 'medium' }: FilterChipRowProps) {
+  const colors = useColors();
+
   return (
-    <View style={styles.rowContainer}>
+    <View style={[
+      styles.rowContainer,
+      {
+        backgroundColor: colors.surfaceElevated,
+        borderColor: colors.borderLight,
+      },
+    ]}>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -133,9 +143,13 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+    borderRadius: ChipTokens.radius + 2,
+    borderWidth: 1,
   },
   row: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 12,
     gap: 8,
     paddingVertical: 4,
     justifyContent: 'center',

@@ -1,12 +1,12 @@
 import React from 'react';
 import { Platform } from 'react-native';
 import { Stack } from 'expo-router';
-import { NavigationMetadata } from '@/components/NavigationMetadata';
+
 
 export default function MembershipLayout() {
   return (
     <>
-      <NavigationMetadata />
+
       <Stack
         screenOptions={{
           headerShown: false,

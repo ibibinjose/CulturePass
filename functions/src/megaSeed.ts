@@ -35,7 +35,7 @@ const USERS = Array.from({ length: 10 }).map((_, i) => ({
   uid: `user-seed-${i + 1}`,
   username: `culture_user_${i + 1}`,
   displayName: `Culture Fan ${i + 1}`,
-  email: `fan${i + 1}@culturepass.com.au`,
+  email: `fan${i + 1}@culturepass.app`,
   city: i % 2 === 0 ? 'Sydney' : 'Melbourne',
   country: 'Australia',
   role: i < 2 ? 'organizer' : 'user', // first two are organizers

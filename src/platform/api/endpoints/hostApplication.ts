@@ -19,11 +19,16 @@ export function createHostApplicationNamespace(request: ApiRequestFn) {
     myApplication: () =>
       request<{ application: HostApplication | null }>('GET', 'api/host-applications/me'),
 
-    list: (status?: string) =>
-      request<{ applications: HostApplication[] }>(
+    list: (status?: string, limit?: number) => {
+      const params = new URLSearchParams();
+      if (status) params.set('status', status);
+      if (limit) params.set('limit', String(limit));
+      const qs = params.toString();
+      return request<{ applications: HostApplication[]; count?: number; limit?: number }>(
         'GET',
-        `api/host-applications${status ? `?status=${status}` : ''}`,
-      ),
+        `api/host-applications${qs ? `?${qs}` : ''}`,
+      );
+    },
 
     approve: (id: string, reviewNote?: string) =>
       request<HostApplication>('PUT', `api/host-applications/${id}/approve`, { reviewNote }),

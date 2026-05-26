@@ -104,16 +104,42 @@ export const ProfileLinksSection = React.memo(({
         <M3ListCard rows={attendeeRows} onPress={nav} />
       </View>
 
+      {/* Prominent Host Studio entry for organizers - elevated discoverability */}
+      {isOrganizer && (
+        <View style={[styles.section, { paddingHorizontal: hPad }]}>
+          <Pressable
+            onPress={() => nav('/hostspace')}
+            style={({ pressed }) => [
+              styles.hostStudioBanner,
+              { backgroundColor: m3.primaryContainer, opacity: pressed ? 0.9 : 1 }
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel="Enter Host Studio"
+          >
+            <View style={styles.hostStudioContent}>
+              <View style={styles.hostStudioIcon}>
+                <Ionicons name="briefcase-outline" size={22} color={m3.onPrimaryContainer} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.hostStudioTitle, { color: m3.onPrimaryContainer }]}>Host Studio</Text>
+                <Text style={[styles.hostStudioSub, { color: m3.onPrimaryContainer }]}>Create, manage events &amp; scan tickets</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={m3.onPrimaryContainer} />
+            </View>
+          </Pressable>
+        </View>
+      )}
+
       <View style={[styles.section, { paddingHorizontal: hPad }]}>
         <M3SectionHeader
           title="Host Hub"
-          actionLabel={isOrganizer ? 'Dashboard' : undefined}
-          onAction={isOrganizer ? () => nav('/dashboard/organizer') : undefined}
+          actionLabel={isOrganizer ? 'Host Dashboard' : undefined}
+          onAction={isOrganizer ? () => nav('/hostspace/dashboard') : undefined}
         />
         <Text style={[styles.sectionIntro, { color: m3.onSurfaceVariant }]}>
           {isOrganizer
-            ? 'Manage listings, payouts, and check-in from your organizer workspace.'
-            : 'List a cultural experience, sell tickets, and grow your audience.'}
+            ? 'Your command center for events, communities, ticket scanning, and growth.'
+            : 'Apply to host events, build communities, and reach thousands of cultural seekers.'}
         </Text>
         <M3ListCard rows={hostRows} onPress={nav} />
       </View>
@@ -164,5 +190,36 @@ const styles = StyleSheet.create({
     height: StyleSheet.hairlineWidth,
     marginLeft: 70,
     marginRight: 16,
+  },
+
+  // Prominent Host Studio banner for organizers (best-in-class discoverability)
+  hostStudioBanner: {
+    borderRadius: MaterialExpressive.shape.cornerExtraLarge,
+    padding: 18,
+    marginTop: 8,
+  },
+  hostStudioContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
+  hostStudioIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: MaterialExpressive.shape.cornerLarge,
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  hostStudioTitle: {
+    fontSize: 17,
+    fontFamily: FontFamily.semibold,
+    letterSpacing: -0.2,
+  },
+  hostStudioSub: {
+    fontSize: 13,
+    fontFamily: FontFamily.regular,
+    marginTop: 2,
+    opacity: 0.85,
   },
 });

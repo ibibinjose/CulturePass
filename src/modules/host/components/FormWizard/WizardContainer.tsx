@@ -218,7 +218,11 @@ export function WizardContainer({
     } catch (error) {
       console.error('[WizardContainer] Failed to advance step:', error);
       if (Platform.OS === 'web') {
-        alert('Please fix the errors before continuing.');
+        if (Platform.OS === 'web') {
+          window.alert('Please fix the errors before continuing.');
+        } else {
+          Alert.alert('Validation Error', 'Please fix the errors before continuing.');
+        }
       } else {
         Alert.alert('Validation Error', 'Please fix the errors before continuing.');
       }
@@ -237,7 +241,11 @@ export function WizardContainer({
       const message =
         error instanceof Error ? error.message : 'Failed to publish profile. Please try again.';
       if (Platform.OS === 'web') {
-        alert(message);
+        if (Platform.OS === 'web') {
+          window.alert(message);
+        } else {
+          Alert.alert('Publish Error', message);
+        }
       } else {
         Alert.alert('Publish failed', message);
       }
@@ -248,14 +256,22 @@ export function WizardContainer({
     try {
       await wizard.saveDraft();
       if (Platform.OS === 'web') {
-        alert('Draft saved successfully.');
+        if (Platform.OS === 'web') {
+          window.alert('Draft saved successfully.');
+        } else {
+          Alert.alert('Success', 'Draft saved successfully!');
+        }
       } else {
         Alert.alert('Success', 'Draft saved successfully!');
       }
     } catch (error) {
       console.error('[WizardContainer] Failed to save draft:', error);
       if (Platform.OS === 'web') {
-        alert('Failed to save draft. Please try again.');
+        if (Platform.OS === 'web') {
+          window.alert('Failed to save draft. Please try again.');
+        } else {
+          Alert.alert('Error', 'Failed to save draft. Please try again.');
+        }
       } else {
         Alert.alert('Error', 'Failed to save draft. Please try again.');
       }
@@ -402,7 +418,7 @@ export function WizardContainer({
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.loadingContainer}>
-          {/* TODO: Add loading spinner */}
+          {/* loading placeholder */}
         </View>
       </View>
     );

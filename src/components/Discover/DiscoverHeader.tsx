@@ -30,7 +30,8 @@ function DiscoverHeaderComponent({
   const { user } = useAuth();
   const greetingColor = colors.text;
   const metaColor = vitrine ? Vitrine.onSurfaceVariant : colors.textSecondary;
-  const accentColor = vitrine ? Vitrine.tertiary : colors.primary;
+  // Use a balanced brand accent (Terracotta) for both modes to ground the "sparkle" meta row
+  const accentColor = colors.primary;
 
   const { timeGreeting, firstName } = useMemo(() => {
     const hour = new Date().getHours();
@@ -40,11 +41,12 @@ function DiscoverHeaderComponent({
   }, [user?.displayName, user?.username]);
 
   const greeting = firstName ? `${timeGreeting}, ${firstName}` : timeGreeting;
+  // Refined gradient for better balancing: use a single-hue subtle glow instead of mixing with grey
   const discoverMetaGradient = useMemo(
-    () => [withAlpha(accentColor, 0.2), withAlpha(colors.textSecondary, 0.08)] as [string, string],
-    [accentColor, colors.textSecondary]
+    () => [withAlpha(accentColor, 0.15), withAlpha(accentColor, 0.05)] as [string, string],
+    [accentColor]
   );
-  const discoverMetaBadgeBg = useMemo(() => withAlpha(accentColor, 0.1), [accentColor]);
+  const discoverMetaBadgeBg = useMemo(() => withAlpha(accentColor, 0.08), [accentColor]);
 
   // Scale greeting font down for longer names so it never wraps
   const greetingFontSize = useMemo(() => {
@@ -168,7 +170,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginTop: 40,
-    marginBottom: 32,
+    // Tighter bottom spacing so the CulturalFilterChip row sits closer
+    // under "Good evening" + "Explore festivals, communities, and events in Sydney."
+    marginBottom: 18,
   },
   heroDesktopRow: {
     flex: 1,

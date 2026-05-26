@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { Platform } from 'react-native';
 import { useLayout } from '@/hooks/useLayout';
 
 /** Trailing padding so the next card peeks on horizontal rails */
@@ -13,7 +14,14 @@ export function useDiscoverRailInsets() {
   const { hPad, isDesktop, vPad } = useLayout();
 
   return useMemo(() => {
-    const pad = isDesktop ? 0 : hPad;
+    // On web desktop the sticky sidebar (240px) + root maxWidth centering already
+    // handles outer gutters. Give rails a modest internal side padding so the
+    // first/last cards don't feel "covered" by the sidebar or viewport edge.
+    const webDesktopPad = 16;
+    const pad = isDesktop
+      ? (Platform.OS === 'web' ? webDesktopPad : 0)
+      : hPad;
+
     return {
       pad,
       padEnd: pad + RAIL_END_BLEED,

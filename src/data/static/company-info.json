@@ -1,0 +1,43 @@
+{
+  "title": "Company Info",
+  "heroTitle": "Giving people the power to build community.",
+  "heroSub": "CulturePass is built to bring the world closer together, strengthening the social fabric of multicultural cities through cultural participation.",
+  "sections": [
+    {
+      "title": "Our Mission",
+      "body": "To give people the power to build community and bring the world closer together through the universal language of culture.",
+      "icon": "heart-outline",
+      "color": "#F43F5E"
+    },
+    {
+      "title": "What we do",
+      "body": "We build technology that helps people discover, connect and belong in their local cultural communities. From festivals to grassroots organisations, we make cultural life discoverable for everyone.",
+      "icon": "globe-outline",
+      "color": "#6366F1"
+    },
+    {
+      "title": "Who we serve",
+      "body": "We serve multicultural cities and diaspora communities worldwide, providing a home for culture and connection in an increasingly disconnected world.",
+      "icon": "people-outline",
+      "color": "#14B8A6"
+    }
+  ],
+  "values": [
+    {
+      "title": "Belonging",
+      "icon": "home"
+    },
+    {
+      "title": "Inclusion",
+      "icon": "people"
+    },
+    {
+      "title": "Preservation",
+      "icon": "library"
+    },
+    {
+      "title": "Innovation",
+      "icon": "flash"
+    }
+  ]
+}

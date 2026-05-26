@@ -95,9 +95,9 @@ hostApplicationRouter.post('/host-applications', requireAuth, async (req: Reques
       websiteUrl: payload.websiteUrl ?? null,
       instagramHandle: payload.instagramHandle ?? null,
       motivation: payload.motivation ?? null,
-      status: 'approved',
-      reviewedBy: 'system',
-      reviewedAt: now,
+      status: 'pending',
+      reviewedBy: null,
+      reviewedAt: null,
       reviewNote: null,
       createdAt: now,
       updatedAt: now,
@@ -105,13 +105,10 @@ hostApplicationRouter.post('/host-applications', requireAuth, async (req: Reques
 
     if (isFirestoreConfigured) {
       await (ref as FirebaseFirestore.DocumentReference).set(application);
-      await authAdmin.setCustomUserClaims(userId, { role: 'organizer' });
-      await db.collection('users').doc(userId).set(
-        { role: 'organizer', updatedAt: now },
-        { merge: true },
-      );
+      // No role upgrade here — only on explicit admin approval via PUT /:id/approve
     }
 
+    console.log(`Host application created (pending) id=${ref.id} user=${userId} type=${payload.hostType}`);
     return res.status(201).json(application);
   } catch (err) {
     captureRouteError(err, 'POST /host-applications');
@@ -153,12 +150,17 @@ hostApplicationRouter.get('/host-applications', requireAuth, async (req, res) =>
     if (!isFirestoreConfigured) return res.json({ applications: [] });
 
     const status = qstr(req.query.status) || undefined;
-    let q: FirebaseFirestore.Query = db.collection('hostApplications').orderBy('createdAt', 'desc').limit(100);
-    if (status) q = q.where('status', '==', status);
+    const limitRaw = parseInt(String(req.query.limit || ''), 10);
+    const limit = Math.max(1, Math.min(200, isNaN(limitRaw) ? 100 : limitRaw));
+
+    let q: FirebaseFirestore.Query = db.collection('hostApplications').orderBy('createdAt', 'desc').limit(limit);
+    if (status && ['pending', 'approved', 'rejected'].includes(status)) {
+      q = q.where('status', '==', status);
+    }
 
     const snap = await q.get();
     const applications = snap.docs.map((d) => ({ id: d.id, ...(d.data() as object) }));
-    return res.json({ applications });
+    return res.json({ applications, count: applications.length, limit });
   } catch (err) {
     captureRouteError(err, 'GET /host-applications');
     return res.status(500).json({ error: 'Failed to list applications' });
@@ -211,7 +213,23 @@ hostApplicationRouter.put('/host-applications/:id/approve', requireAuth, async (
       updatedAt: now,
     });
 
+    // Audit log
+    try {
+      await db.collection('auditLogs').add({
+        action: 'host_application_approved',
+        userId: req.user!.id,
+        userName: req.user!.username || req.user!.id,
+        targetId: id,
+        targetType: 'hostApplication',
+        metadata: { applicantId: app.userId, reviewNote: reviewNote ?? null },
+        createdAt: now,
+      });
+    } catch (auditErr) {
+      console.warn('Failed to write audit log for host approve', auditErr);
+    }
+
     const updated = await ref.get();
+    console.log(`Host application approved id=${id} by=${req.user!.id}`);
     return res.json({ id: updated.id, ...(updated.data() as object) });
   } catch (err) {
     captureRouteError(err, `PUT /host-applications/${id}/approve`);
@@ -255,6 +273,22 @@ hostApplicationRouter.put('/host-applications/:id/reject', requireAuth, async (r
       updatedAt: now,
     });
 
+    // Audit log
+    try {
+      await db.collection('auditLogs').add({
+        action: 'host_application_rejected',
+        userId: req.user!.id,
+        userName: req.user!.username || req.user!.id,
+        targetId: id,
+        targetType: 'hostApplication',
+        metadata: { applicantId: (await ref.get()).data()?.userId ?? null, reviewNote: reviewNote ?? null },
+        createdAt: now,
+      });
+    } catch (auditErr) {
+      console.warn('Failed to write audit log for host reject', auditErr);
+    }
+
+    console.log(`Host application rejected id=${id} by=${req.user!.id}`);
     return res.json({ success: true });
   } catch (err) {
     captureRouteError(err, `PUT /host-applications/${id}/reject`);

@@ -29,7 +29,7 @@ import {
   FontFamily,
   SignatureGradient,
 } from '@/design-system/tokens/theme';
-import { M3Button } from '@/design-system/ui';
+import { CulturalButton } from '@/design-system/ui';
 import { SocialButton } from '@/design-system/ui/SocialButton';
 import { useOnboarding } from '@/contexts/OnboardingContext';
 import { useM3Colors } from '@/hooks/useM3Colors';
@@ -56,7 +56,7 @@ const SLIDES: Slide[] = [
     headline: 'Discover your\ncultural world',
     sub: 'Find events, food, and cultural experiences — curated for your city.',
     icon: 'calendar',
-    gradientColors: ['#4F46E5', '#7C3AED'],
+    gradientColors: [CultureTokens.terracottaGlow, CultureTokens.deepSaffron],
   },
   {
     id: 'connect',
@@ -64,7 +64,7 @@ const SLIDES: Slide[] = [
     headline: 'Find your\ncommunity',
     sub: 'Connect with people who share your culture, language, and story.',
     icon: 'people',
-    gradientColors: ['#0F766E', '#0369A1'],
+    gradientColors: [CultureTokens.emeraldHarmony, CultureTokens.richIndigo],
   },
   {
     id: 'belong',
@@ -72,7 +72,7 @@ const SLIDES: Slide[] = [
     headline: 'Belong\nanywhere.',
     sub: 'Exclusive perks from businesses that understand your culture.',
     icon: 'gift',
-    gradientColors: SignatureGradient as unknown as readonly [string, string, ...string[]],
+    gradientColors: [CultureTokens.heritageGold, CultureTokens.deepSaffron],
   },
 ];
 
@@ -218,7 +218,7 @@ export default function WelcomeScreen() {
                   {
                     backgroundColor:
                       i === currentIndex
-                        ? CultureTokens.violet
+                        ? CultureTokens.heritageGold
                         : withAlpha(m3Colors.onSurface, 0.18),
                     width: i === currentIndex ? DOT_ACTIVE_WIDTH : DOT_SIZE,
                   },
@@ -231,7 +231,7 @@ export default function WelcomeScreen() {
           <View style={[s.actionArea, { height: ACTION_AREA_HEIGHT }]}>
             {isLast ? (
               <Animated.View entering={FadeIn.duration(220)} style={s.ctaFull}>
-                <M3Button
+                <CulturalButton
                   variant="filled"
                   fullWidth
                   rightIcon="arrow-forward"
@@ -239,11 +239,11 @@ export default function WelcomeScreen() {
                   style={s.ctaBtn}
                 >
                   Get Started
-                </M3Button>
+                </CulturalButton>
 
-                <M3Button variant="tonal" fullWidth onPress={handleSignIn} style={s.ctaBtn}>
+                <CulturalButton variant="tonal" fullWidth onPress={handleSignIn} style={s.ctaBtn}>
                   Sign In
-                </M3Button>
+                </CulturalButton>
 
                 <View style={s.divider}>
                   <View style={[s.divLine, { backgroundColor: m3Colors.outlineVariant }]} />
@@ -262,9 +262,9 @@ export default function WelcomeScreen() {
               </Animated.View>
             ) : (
               <View style={s.nextWrap}>
-                <M3Button variant="filled" fullWidth rightIcon="arrow-forward" onPress={goNext}>
+                <CulturalButton variant="filled" fullWidth rightIcon="arrow-forward" onPress={goNext}>
                   Next
-                </M3Button>
+                </CulturalButton>
               </View>
             )}
           </View>

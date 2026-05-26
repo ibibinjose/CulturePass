@@ -42,13 +42,13 @@ function eventToVEVENT(event: EventData): string {
 
   const lines = [
     'BEGIN:VEVENT',
-    `UID:culturepass-${event.id}@culturepass.app`,
+    `UID:culturepass-${event.id}@culturepass.co`,
     `DTSTART:${icsDate(start)}`,
     `DTEND:${icsDate(end)}`,
     `SUMMARY:${icsEscape(event.title ?? 'CulturePass Event')}`,
     location  ? `LOCATION:${icsEscape(location)}`  : '',
     desc      ? `DESCRIPTION:${desc}`               : '',
-    `URL:https://culturepass.app/e/${event.id}`,
+    `URL:https://culturepass.co/e/${event.id}`,
     'END:VEVENT',
   ];
   return lines.filter(Boolean).join('\r\n');

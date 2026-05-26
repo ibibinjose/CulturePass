@@ -26,6 +26,8 @@ export type EntityType = 'community' | 'organizer' | 'venue' | 'business' | 'art
 export interface EntityTypeSelectorProps {
   onSelect: (entityType: EntityType) => void;
   existingProfiles?: Profile[];
+  /** Special intent from upstream flows (e.g. nation-builder) */
+  intent?: string;
 }
 
 interface EntityTypeCard {
@@ -104,12 +106,13 @@ const CATEGORY_LABELS: Record<string, string> = {
   businesses: 'Businesses & Creators',
 };
 
-export function EntityTypeSelector({ onSelect, existingProfiles = [] }: EntityTypeSelectorProps) {
+export function EntityTypeSelector({ onSelect, existingProfiles = [], intent }: EntityTypeSelectorProps) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { hPad, isDesktop, isCompact } = useLayout();
 
   const topInset = Platform.OS === 'web' ? 0 : insets.top;
+  const isNationBuilder = intent === 'nation-builder';
 
   // Group entity types by category
   const groupedTypes = React.useMemo(() => {
@@ -155,10 +158,10 @@ export function EntityTypeSelector({ onSelect, existingProfiles = [] }: EntityTy
           <M3Card
             style={[
               styles.card,
-              { backgroundColor: colors.surface },
+              { backgroundColor: colors.surface, borderColor: alreadyCreated ? CultureTokens.teal + '44' : colors.borderLight },
               alreadyCreated && styles.cardExisting,
             ]}
-            variant="elevated"
+            variant={alreadyCreated ? 'outlined' : 'elevated'}
           >
             {/* Icon with colored background */}
             <View style={[styles.iconContainer, { backgroundColor: entity.color + '18' }]}>
@@ -176,6 +179,16 @@ export function EntityTypeSelector({ onSelect, existingProfiles = [] }: EntityTy
                     style={styles.verificationBadge}
                   >
                     Verification
+                  </Badge>
+                )}
+                {/* Phase 1 Unification indicator */}
+                {['business', 'venue', 'artist', 'professional', 'organizer', 'community'].includes(entity.type) && (
+                  <Badge
+                    variant="success"
+                    size="sm"
+                    style={{ marginLeft: 6 }}
+                  >
+                    Pro Wizard
                   </Badge>
                 )}
               </View>
@@ -198,6 +211,14 @@ export function EntityTypeSelector({ onSelect, existingProfiles = [] }: EntityTy
             <View style={styles.arrowContainer}>
               <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
             </View>
+
+            {/* Creator Trust indicator: Rich profiles use the full guided wizard */}
+            {['community', 'organiser', 'venue', 'business', 'artist', 'professional'].includes(entity.type) && (
+              <View style={styles.guidedBadge}>
+                <Ionicons name="shield-checkmark-outline" size={12} color={CultureTokens.indigo} />
+                <Text style={styles.guidedBadgeText}>Guided wizard</Text>
+              </View>
+            )}
           </M3Card>
         </Pressable>
       </Animated.View>
@@ -216,17 +237,37 @@ export function EntityTypeSelector({ onSelect, existingProfiles = [] }: EntityTy
       >
         {/* Hero Section */}
         <View style={styles.heroSection}>
-          <LinearGradient
-            colors={SignatureGradient}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.heroGradient}
-          >
-            <Text style={styles.heroTitle}>Create Your Host Profile</Text>
-            <Text style={styles.heroSubtitle}>
-              Choose the type of profile that best represents your cultural presence on CulturePass
-            </Text>
-          </LinearGradient>
+          {isNationBuilder ? (
+            <LinearGradient
+              colors={[CultureTokens.gold, '#E8A923', CultureTokens.terracottaGlow]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0.9 }}
+              style={styles.heroGradient}
+            >
+              <View style={styles.nbHeroContent}>
+                <View style={styles.nbBadge}>
+                  <Ionicons name="shield-checkmark" size={14} color="#1C1917" />
+                  <Text style={styles.nbBadgeText}>NATION BUILDER PARTNER</Text>
+                </View>
+                <Text style={styles.nbHeroTitle}>Become a Nation Builder Partner</Text>
+                <Text style={styles.nbHeroSubtitle}>
+                  Register your business or venue. Your employees get 50% off CulturePass+ and special Nation Builder badges. Powerful staff retention + visibility tool.
+                </Text>
+              </View>
+            </LinearGradient>
+          ) : (
+            <LinearGradient
+              colors={SignatureGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.heroGradient}
+            >
+              <Text style={styles.heroTitle}>Create Your Host Profile</Text>
+              <Text style={styles.heroSubtitle}>
+                Choose the type of profile that best represents your cultural presence on CulturePass
+              </Text>
+            </LinearGradient>
+          )}
         </View>
 
         {/* Entity Type Cards by Category */}
@@ -264,8 +305,10 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   heroGradient: {
-    padding: Spacing.xl,
+    paddingVertical: Spacing.xl * 1.5,
+    paddingHorizontal: Spacing.xl,
     alignItems: 'center',
+    borderRadius: Radius.lg,
   },
   heroTitle: {
     ...TextStyles.title2,
@@ -315,6 +358,8 @@ const styles = StyleSheet.create({
     padding: Spacing.md,
     borderRadius: CardTokens.radius,
     minHeight: 120,
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
   cardExisting: {
     opacity: 0.8,
@@ -360,5 +405,58 @@ const styles = StyleSheet.create({
   arrowContainer: {
     justifyContent: 'center',
     marginLeft: Spacing.sm,
+  },
+
+  // Nation Builder Partner special hero
+  nbHeroContent: {
+    padding: Spacing.xl,
+    alignItems: 'flex-start',
+  },
+  nbBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(28,25,23,0.85)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+    marginBottom: Spacing.sm,
+  },
+  nbBadgeText: {
+    fontFamily: TextStyles.label.fontFamily,
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 1,
+    color: '#1C1917',
+  },
+  nbHeroTitle: {
+    ...TextStyles.headline,
+    color: '#1C1917',
+    marginBottom: Spacing.xs,
+  },
+  nbHeroSubtitle: {
+    ...TextStyles.body,
+    color: 'rgba(28,25,23,0.85)',
+    lineHeight: 22,
+  },
+
+  // Creator Trust: Visual signal that rich profiles use the full guided wizard (not quick form)
+  guidedBadge: {
+    position: 'absolute',
+    top: Spacing.sm,
+    right: Spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: CultureTokens.indigo + '15',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: Radius.sm,
+  },
+  guidedBadgeText: {
+    ...TextStyles.caption,
+    color: CultureTokens.indigo,
+    fontWeight: '600',
+    fontSize: 10,
   },
 });

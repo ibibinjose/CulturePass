@@ -10,7 +10,7 @@ import { useState } from 'react';
 import { FontFamily, CultureTokens, ScreenTokens } from '@/design-system/tokens/theme';
 import { useColors } from '@/hooks/useColors';
 import { goBackOrReplace } from '@/lib/navigation';
-import { APP_NAME, EMAIL_SUPPORT, SITE_ORIGIN } from '@/lib/app-meta';
+import { APP_NAME, APP_AKA, EMAIL_SUPPORT, SITE_ORIGIN, CONTACT_PHONE, CONTACT_PHONE_DISPLAY, WHATSAPP_LINK } from '@/lib/app-meta';
 import { GlassView } from '@/design-system/ui/GlassView';
 import { M3TopAppBar } from '@/design-system/ui/M3TopAppBar';
 import Animated, { FadeInDown, useReducedMotion } from 'react-native-reanimated';
@@ -24,12 +24,13 @@ const FAQ_ITEMS = [
 
 const CONTACT_OPTIONS = [
   { icon: 'mail' as const, label: 'Email Support', sub: EMAIL_SUPPORT, color: (colors: any) => colors.primary, action: () => Linking.openURL(`mailto:${EMAIL_SUPPORT}`) },
-  { icon: 'call' as const, label: 'Phone Support', sub: '1800-CULTURE (1800 285 887)', color: CultureTokens.teal, action: () => Linking.openURL('tel:1800285887') },
+  { icon: 'logo-whatsapp' as const, label: 'WhatsApp Us', sub: CONTACT_PHONE_DISPLAY, color: '#25D366', action: () => Linking.openURL(WHATSAPP_LINK) },
+  { icon: 'call' as const, label: 'Phone Support', sub: CONTACT_PHONE_DISPLAY, color: CultureTokens.teal, action: () => Linking.openURL(`tel:${CONTACT_PHONE.replace(/\s+/g, '')}`) },
 ];
 
 const HELP_HEAD_TITLE = `Help & FAQ · ${APP_NAME}`;
 const HELP_HEAD_DESC =
-  'Get answers about CulturePass — communities, tickets, perks, and how to reach support.';
+  `Get answers about ${APP_AKA} — communities, tickets, perks, and how to reach support.`;
 const HELP_HEAD_URL = `${SITE_ORIGIN}/settings/help`;
 
 export default function SettingsHelpScreen() {

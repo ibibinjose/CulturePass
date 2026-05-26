@@ -25,6 +25,7 @@ import {
   formatStartsInCountdown,
   parseEventStartMs,
 } from '@/lib/dateUtils';
+import { USE_NATIVE_DRIVER } from '@/design-system/tokens/animations';
 import { CULTUREX_EXPLORES_CULTURE_TAG } from '@/shared/schema';
 import { normalizeRemoteImageUri } from '@/lib/mediaUrls';
 
@@ -324,7 +325,7 @@ function EventCard({
       toValue: 0.97,
       friction: 6,
       tension: 400,
-      useNativeDriver: true,
+      useNativeDriver: USE_NATIVE_DRIVER,
     }).start();
   };
   const handlePressOut = () => {
@@ -332,7 +333,7 @@ function EventCard({
       toValue: 1,
       friction: 7,
       tension: 140,
-      useNativeDriver: true,
+      useNativeDriver: USE_NATIVE_DRIVER,
     }).start();
   };
 
@@ -438,7 +439,7 @@ function EventCard({
       >
         <Image
           source={imageUri ? { uri: imageUri } : undefined}
-          style={StyleSheet.absoluteFillObject}
+          style={StyleSheet.absoluteFill}
           contentFit="cover"
           contentPosition="top"
           transition={300}
@@ -447,7 +448,7 @@ function EventCard({
         <LinearGradient
           colors={['rgba(0,0,0,0.1)', 'rgba(0,0,0,0.4)', 'rgba(0,0,0,0.92)']}
           locations={[0, 0.4, 1]}
-          style={StyleSheet.absoluteFillObject}
+          style={StyleSheet.absoluteFill}
         />
 
         {showCultureXBadge ? <CultureXInviteBadge /> : null}

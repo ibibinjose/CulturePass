@@ -129,6 +129,7 @@ export const CultureTokens = {
   backgroundDark: '#000000',
   surfaceLight: '#FFFFFF',
   surfaceDark: '#121214',
+  grey500: '#71717A',
 } as const;
 
 /** Olympics 5-ring colors for filter chips, buttons, and accents (mostly black/white base per request). */

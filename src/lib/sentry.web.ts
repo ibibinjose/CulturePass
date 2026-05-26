@@ -29,7 +29,6 @@ export function initSentry() {
     environment: isDev ? 'development' : process.env.EXPO_PUBLIC_ENV || 'production',
     release: `${release}@${Platform.OS}`,
     autoSessionTracking: true,
-    sessionTrackingIntervalMillis: 30000,
     tracesSampleRate: isDev ? 1.0 : 0.1,
     beforeSend(event, hint) {
       if (isDev && !process.env.EXPO_PUBLIC_FORCE_SENTRY) {

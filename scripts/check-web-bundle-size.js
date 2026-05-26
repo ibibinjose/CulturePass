@@ -48,7 +48,7 @@ function formatKB(bytes) {
   return (bytes / 1024).toFixed(0) + ' KB';
 }
 
-function main() {
+async function main() {
   console.log('📦 Checking web bundle size...\n');
 
   if (!fs.existsSync(DIST_DIR)) {

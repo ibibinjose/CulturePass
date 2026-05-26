@@ -35,12 +35,13 @@ export {
   glass,
   gradients,
   neon,
-  CultureTokens,
   CTA_VIVID_BLUE,
   CategoryColors,
   EntityTypeColors,
   OlympicsColors,
 } from './colors';
+
+export { CultureTokens };
 
 export const SignatureGradient = _gradients.culturepassBrand;
 
@@ -417,7 +418,8 @@ const theme = {
   MaterialExpressive,
   LiquidGlassAccents,
   CulturalAccents,
-  SignatureGradient
+  SignatureGradient,
+  CultureTokens
 };
 
 export default theme;

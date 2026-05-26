@@ -70,7 +70,7 @@ export default function(appConfig) {
     "expo-localization",
     // Re-enabled. The plugin can be unstable during local `expo prebuild --clean` on some SDK versions.
     // It generally works fine with EAS Build. If local prebuild fails again, comment this line temporarily.
-    "@bacons/apple-targets",
+    // "@bacons/apple-targets",
     // NOTE: react-native-maps plugin temporarily removed due to iOS plugin loading issue
     // when starting Expo dev server. The plugin causes "withPodfile is not a function" error
     // during config evaluation, even when trying to conditionally load it.
@@ -187,7 +187,7 @@ export default function(appConfig) {
       plugins: basePlugins,
       name: "CulturePass",
       slug: "culturepass",
-      version: "1.2.1",
+      version: "1.2.2",
       description: "Discover cultural events and communities built for diaspora cities. Organizers reach the right audience; attendees find festivals, tickets, and belonging in one place.",
       orientation: "portrait",
       icon: "./assets/images/icon.png",
@@ -201,7 +201,7 @@ export default function(appConfig) {
       ios: {
         supportsTablet: true,
         bundleIdentifier: "au.culturepass.app",
-        buildNumber: "25",
+        buildNumber: "26",
         appleTeamId: "26WGXSNG58",
         infoPlist: {
           NSSupportsLiveActivities: true,
@@ -294,7 +294,7 @@ export default function(appConfig) {
           "android.permission.USE_FINGERPRINT",
           "android.permission.READ_MEDIA_IMAGES"
         ],
-        versionCode: 4
+        versionCode: 5
       },
       web: {
         favicon: "./assets/images/favicon.png",

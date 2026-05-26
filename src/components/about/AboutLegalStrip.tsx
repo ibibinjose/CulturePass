@@ -121,9 +121,8 @@ export const AboutLegalStrip = memo(function AboutLegalStrip() {
                   <Pill 
                     icon={getSocialLinkIcon(s.label)} 
                     label={s.label} 
-                    sublabel={s.handle}
                     onPress={() => openExternalUrl(s.url)}
-                    highlight={s.label === "Support"}
+                    highlight={(s as any).label === "Support"}
                   />
                 </View>
               ))}

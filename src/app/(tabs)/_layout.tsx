@@ -72,7 +72,7 @@ export default function TabsLayout() {
         )}
         <View style={styles.tabsFlex}>
         <Tabs
-          tabBar={(props) => isCompact ? <CustomTabBar {...props} /> : null}
+          tabBar={(props) => isCompact ? <CustomTabBar {...(props as any)} /> : null}
           screenOptions={{
             headerShown: false,
             tabBarHideOnKeyboard: true,

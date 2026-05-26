@@ -192,6 +192,14 @@ export function DraftRecoveryModal({
           >
             We saved your progress. Pick up exactly where you left off — nothing is lost.
           </Text>
+          <Text
+            style={[
+              TextStyles.caption,
+              { color: colors.textTertiary, marginTop: Spacing.xs },
+            ]}
+          >
+            You have {drafts.length} incomplete profile{drafts.length === 1 ? '.' : 's'}
+          </Text>
         </View>
 
         {/* Draft List */}
@@ -241,7 +249,7 @@ export function DraftRecoveryModal({
             accessibilityLabel="Continue with most recent draft"
           >
             <Text style={[TextStyles.callout, { color: '#FFFFFF', fontWeight: '600' }]}>
-              Continue Editing
+              Continue Most Recent
             </Text>
           </Pressable>
 
@@ -389,9 +397,6 @@ function DraftCard({ draft, onSelect, colors }: DraftCardProps) {
             { color: entityConfig.color, minWidth: 36, textAlign: 'right' },
           ]}
         >
-          {completion}%
-        </Text>
-        <Text style={[TextStyles.caption, { color: colors.textTertiary }]}>
           {completion}%
         </Text>
       </View>

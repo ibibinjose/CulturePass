@@ -44,6 +44,8 @@ export interface VerificationStatusBannerProps {
   unlocksToday?: string[];
   /** What this status will unlock once completed */
   unlocksAfter?: string[];
+  /** Optional verification notes (e.g. from backend) */
+  notes?: string;
   /** Optional callback for primary action (e.g. "Complete verification") */
   onAction?: () => void;
   /** Render in compact form (for inside wizard steps) */
@@ -94,6 +96,7 @@ export function VerificationStatusBanner({
   entityType,
   unlocksToday = [],
   unlocksAfter = [],
+  notes,
   onAction,
   compact = false,
   actionLabel,
@@ -139,6 +142,7 @@ export function VerificationStatusBanner({
         >
           {config.label}
           {unlocksToday.length > 0 && ` • ${unlocksToday[0]}`}
+          {notes && ` • ${notes}`}
         </Text>
       </View>
     );
@@ -177,6 +181,15 @@ export function VerificationStatusBanner({
           </View>
         )}
       </View>
+
+      {/* Notes (if any) */}
+      {notes && (
+        <View style={{ marginTop: Spacing.xs }}>
+          <Text style={[TextStyles.caption, { color: colors.textSecondary }]}>
+            {notes}
+          </Text>
+        </View>
+      )}
 
       {/* Impact messaging */}
       {unlocksToday.length > 0 && (

@@ -1,4 +1,4 @@
-import { CultureTokens } from '@/constants/theme';
+import { CultureTokens } from '@/design-system/tokens/theme';
 
 export interface InterestCategory {
   id: string;

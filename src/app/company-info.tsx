@@ -140,8 +140,8 @@ export default function CompanyInfoScreen() {
                                 onPress={() => openExternalUrl(link.url)}
                                 style={({ pressed }) => [styles.legalRow, pressed && { backgroundColor: colors.primarySoft }]}
                             >
-                                <View style={[styles.legalIcon, { backgroundColor: link.label === 'Support' ? CultureTokens.gold + '15' : colors.primarySoft }]}>
-                                    <Ionicons name={link.icon as any} size={18} color={link.label === 'Support' ? CultureTokens.gold : colors.primary} />
+                                <View style={[styles.legalIcon, { backgroundColor: (link as any).label === 'Support' ? CultureTokens.gold + '15' : colors.primarySoft }]}>
+                                    <Ionicons name={link.icon as any} size={18} color={(link as any).label === 'Support' ? CultureTokens.gold : colors.primary} />
                                 </View>
                                 <Text style={[styles.legalText, { color: colors.text }]}>{link.label}</Text>
                                 <Ionicons name="open-outline" size={16} color={colors.textTertiary} />

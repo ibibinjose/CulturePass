@@ -33,7 +33,7 @@ import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { api } from '@/lib/api';
 import { log } from '@/lib/logger';
 import { useAuth } from '@/lib/auth';
-import { useM3Colors as useColors } from '@/hooks/useM3Colors';
+import { useColors } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
 import { ErrorBoundary } from '@/modules/core/ui/ErrorBoundary';
 import {

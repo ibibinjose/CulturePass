@@ -324,7 +324,7 @@ function EmptyState({ title, action, onPress }: { title: string; action: string;
     <View style={[styles.emptyBox, { borderColor: colors.borderLight }]}>
       <Ionicons name="add-circle-outline" size={30} color={CultureTokens.indigo} />
       <Text style={[styles.emptyTitle, { color: colors.text }]}>{title}</Text>
-      <M3Button variant="primary" size="sm" leftIcon="add" onPress={onPress}>
+      <M3Button variant="filled" size="sm" leftIcon="add" onPress={onPress}>
         {action}
       </M3Button>
     </View>
@@ -399,7 +399,7 @@ function CreateProfileCTA() {
           </View>
           {isDesktop && (
             <M3Button
-              variant="primary"
+              variant="filled"
               size="md"
               leftIcon="add"
               onPress={() => router.push('/hostspace/create' as never)}
@@ -412,7 +412,7 @@ function CreateProfileCTA() {
         </View>
         {!isDesktop && (
           <M3Button
-            variant="primary"
+            variant="filled"
             size="md"
             leftIcon="add"
             onPress={() => router.push('/hostspace/create' as never)}
@@ -701,7 +701,7 @@ function HostspaceWorkspace() {
 
         <View style={{ alignItems: 'flex-end', marginBottom: 12 }}>
           <M3Button
-            variant="ghost"
+            variant="text"
             onPress={() => router.push('/hostspace/dashboard' as never)}
           >
             View detailed analytics →
@@ -712,7 +712,7 @@ function HostspaceWorkspace() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>Communities you manage</Text>
-            <M3Button variant="ghost" size="sm" leftIcon="add" onPress={() => router.push('/hostspace/create/community' as never)}>
+            <M3Button variant="text" size="sm" leftIcon="add" onPress={() => router.push('/hostspace/create/community' as never)}>
               Community
             </M3Button>
           </View>
@@ -733,7 +733,7 @@ function HostspaceWorkspace() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>Events you manage</Text>
-            <M3Button variant="ghost" size="sm" leftIcon="add" onPress={() => router.push('/hostspace/create/event' as never)}>
+            <M3Button variant="text" size="sm" leftIcon="add" onPress={() => router.push('/hostspace/create/event' as never)}>
               Event
             </M3Button>
           </View>
@@ -754,7 +754,7 @@ function HostspaceWorkspace() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>Listings and profiles</Text>
-            <M3Button variant="ghost" size="sm" leftIcon="add" onPress={() => router.push('/hostspace/create' as never)}>
+            <M3Button variant="text" size="sm" leftIcon="add" onPress={() => router.push('/hostspace/create' as never)}>
               Listing
             </M3Button>
           </View>

@@ -20,8 +20,8 @@ import { Badge } from '@/design-system/ui/Badge';
 import type { Profile } from '@/shared/schema';
 
 // Entity types as defined in the spec
-// Note: 'organizer' maps to Profile.entityType 'organizer', 'professional' is a new type
-export type EntityType = 'community' | 'organizer' | 'venue' | 'business' | 'artist' | 'professional';
+// Note: 'organiser' maps to Profile.entityType 'organiser', 'professional' is a new type
+export type EntityType = 'community' | 'organiser' | 'venue' | 'business' | 'artist' | 'professional';
 
 export interface EntityTypeSelectorProps {
   onSelect: (entityType: EntityType) => void;
@@ -52,7 +52,7 @@ const ENTITY_TYPES: EntityTypeCard[] = [
     category: 'communities',
   },
   {
-    type: 'organizer',
+    type: 'organiser',
     icon: 'flag-outline',
     title: 'Organiser',
     description: 'Create the producing brand behind festivals, series, and ticketing. Showcase credentials and past events.',
@@ -213,6 +213,7 @@ export function EntityTypeSelector({ onSelect, existingProfiles = [], intent }: 
             </View>
 
             {/* Creator Trust indicator: Rich profiles use the full guided wizard */}
+            {/* FIXES-001: absolute overlay badge — tracked for potential extraction (see docs/FIXES-001) */}
             {['community', 'organiser', 'venue', 'business', 'artist', 'professional'].includes(entity.type) && (
               <View style={styles.guidedBadge}>
                 <Ionicons name="shield-checkmark-outline" size={12} color={CultureTokens.indigo} />
@@ -239,6 +240,8 @@ export function EntityTypeSelector({ onSelect, existingProfiles = [], intent }: 
         <View style={styles.heroSection}>
           {isNationBuilder ? (
             <LinearGradient
+              // FIXES-001: nation-builder gradient uses a deliberate warm variation for the hero.
+              // The middle stop is intentionally a touch lighter than CultureTokens.gold for contrast on the dark overlay.
               colors={[CultureTokens.gold, '#E8A923', CultureTokens.terracottaGlow]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0.9 }}
@@ -441,6 +444,7 @@ const styles = StyleSheet.create({
   },
 
   // Creator Trust: Visual signal that rich profiles use the full guided wizard (not quick form)
+  // FIXES-001: absolute badge pattern — consider extracting to a shared AbsoluteBadge/OverlayBadge atom in a follow-up pass.
   guidedBadge: {
     position: 'absolute',
     top: Spacing.sm,

@@ -42,7 +42,7 @@ import { modulesApi } from '@/modules/api';
 //
 // All entry points (EntityTypeSelector, quick actions, deep links, draft recovery)
 // must route rich types here with ?profileType= so the wizard is unambiguous.
-const RICH_PROFILE_TYPES: EntityType[] = ['business', 'venue', 'artist', 'professional', 'organizer', 'community'];
+const RICH_PROFILE_TYPES: EntityType[] = ['business', 'venue', 'artist', 'professional', 'organiser', 'community'];
 
 function isRichProfileType(type: string | undefined): type is EntityType {
   return !!type && RICH_PROFILE_TYPES.includes(type as EntityType);

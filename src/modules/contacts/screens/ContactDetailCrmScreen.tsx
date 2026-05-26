@@ -82,7 +82,7 @@ export default function ContactDetailCrmScreen() {
 
   const { getContact, updateContact, removeContact } = useContacts();
   const c = getContact(cpid);
-  const displayName = contactDisplayName(c);
+  const displayName = contactDisplayName(c || { cpid, name: cpid });
 
   const [notes, setNotes] = useState(c?.notes ?? '');
   const [tagsText, setTagsText] = useState('');

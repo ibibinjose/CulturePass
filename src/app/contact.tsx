@@ -119,7 +119,7 @@ export default function ContactScreen() {
                                 style={({ pressed }) => [styles.legalRow, pressed && { backgroundColor: colors.primarySoft }]}
                             >
                                 <View style={[styles.legalIcon, { backgroundColor: channel.color + '15' }]}>
-                                    <Ionicons name={channel.icon} size={18} color={channel.color} />
+                                    <Ionicons name={channel.icon as any} size={18} color={channel.color} />
                                 </View>
                                 <Text style={[styles.legalText, { color: colors.text }]}>{channel.label}</Text>
                                 <Ionicons name="open-outline" size={16} color={colors.textTertiary} />

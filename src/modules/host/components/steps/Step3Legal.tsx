@@ -330,13 +330,20 @@ export function Step3Legal({
       </View>
 
       {/* Creator Trust: Prominent Verification Status Banner (replaces old info + status card) */}
+      <View style={styles.verificationHeader}>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>
+          Verification Process
+        </Text>
+      </View>
+
       {(() => {
         // Derive realistic verification status for this wiring
-        const rawStatus = (formData as any).verificationStatus as string | undefined;
+        const rawStatus = formData.verificationStatus;
+        const notes = formData.verificationNotes;
         const derivedStatus: VerificationStatus =
-          rawStatus === 'approved' || rawStatus === 'verified' ? 'approved' :
-          rawStatus === 'in_review' || rawStatus === 'pending' ? 'in_review' :
-          rawStatus === 'needs_more_info' ? 'needs_more_info' :
+          rawStatus === 'verified' ? 'approved' :
+          rawStatus === 'pending' ? 'in_review' :
+          rawStatus === 'rejected' ? 'needs_more_info' :
           (entityType === 'business' || entityType === 'venue' || entityType === 'organiser') ? 'not_started' : 'approved';
 
         // Entity-specific livelihood impact messaging (from Creator Trust Playbook)
@@ -364,6 +371,7 @@ export function Step3Legal({
             entityType={entityType}
             unlocksToday={unlocksToday}
             unlocksAfter={unlocksAfter}
+            notes={notes}
             onAction={() => {
               // Placeholder — in full unification this would open the verification flow / document upload
               // For now it demonstrates the actionable pattern
@@ -546,6 +554,14 @@ const styles = StyleSheet.create({
   },
   fieldGroup: {
     gap: Spacing.sm,
+  },
+  verificationHeader: {
+    marginTop: Spacing.xl,
+    marginBottom: Spacing.xs,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontFamily: FontFamily.bold,
   },
   infoBanner: {
     flexDirection: 'row',

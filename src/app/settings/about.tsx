@@ -147,7 +147,7 @@ export default function AboutScreen() {
                                     style={({ pressed }) => [styles.legalRow, pressed && { backgroundColor: colors.primarySoft }]}
                                 >
                                     <View style={[styles.legalIcon, { backgroundColor: colors.primarySoft }]}>
-                                        <Ionicons name={getLegalLinkIcon(link.label)} size={18} color={colors.primary} />
+                                        <Ionicons name={getLegalLinkIcon(link.label) as any} size={18} color={colors.primary} />
                                     </View>
                                     <Text style={[styles.legalText, { color: colors.text }]}>{link.label}</Text>
                                     <Ionicons name="chevron-forward" size={16} color={colors.textTertiary} />
@@ -168,9 +168,9 @@ export default function AboutScreen() {
                                 onPress={() => openExternalUrl(link.url)}
                                 style={({ pressed }) => [styles.legalRow, pressed && { backgroundColor: colors.primarySoft }]}
                             >
-                                <View style={[styles.legalIcon, { backgroundColor: link.label === 'Support' ? CultureTokens.gold + '15' : colors.primarySoft }]}>
-                                    <Ionicons name={getSocialLinkIcon(link.label)} size={18} color={link.label === 'Support' ? CultureTokens.gold : colors.primary} />
-                                </View>
+                                    <View style={[styles.legalIcon, { backgroundColor: (link as any).label === 'Support' ? CultureTokens.gold + '15' : colors.primarySoft }]}>
+                                        <Ionicons name={getSocialLinkIcon(link.label) as any} size={18} color={(link as any).label === 'Support' ? CultureTokens.gold : colors.primary} />
+                                    </View>
                                 <Text style={[styles.legalText, { color: colors.text }]}>{link.label}</Text>
                                 <Ionicons name="open-outline" size={16} color={colors.textTertiary} />
                             </Pressable>

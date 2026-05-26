@@ -12,7 +12,6 @@ import { goBackOrReplace } from '@/lib/navigation';
 
 export default function CompanyInfoScreen() {
   const colors = useColors();
-  const styles = getStyles(colors);
 
   return (
     <StaticPageLayout

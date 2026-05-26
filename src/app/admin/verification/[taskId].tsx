@@ -17,7 +17,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useM3Colors as useColors } from '@/hooks/useM3Colors';
+import { useColors } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
 import { HeaderTokens, CultureTokens, FontFamily } from '@/design-system/tokens/theme';
 import { Radius } from '@/design-system/tokens/spacing';

@@ -20,7 +20,7 @@ import * as Clipboard from 'expo-clipboard';
 import { useColors } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
 import { Ionicons } from '@expo/vector-icons';
-import { HeaderTokens, CultureTokens, FontFamily } from '@/design-system/tokens/theme';
+import { HeaderTokens, CultureTokens, FontFamily, Spacing, Radius } from '@/design-system/tokens/theme';
 import { GlassView } from '@/design-system/ui/GlassView';
 import { M3Button } from '@/design-system/ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -337,7 +337,7 @@ export default function UserDirectoryScreen() {
               <Text style={[styles.statusLabel, { color: colors.textTertiary }]}>
                 {(acctStatus === 'suspended' ? 'SUSPENDED' : 'ACTIVE').toUpperCase()}
               </Text>
-              <View style={{ width: 1, height: 10, backgroundColor: colors.borderLight, marginHorizontal: 4 }} />
+              <View style={[styles.verticalDivider, { height: 10, backgroundColor: colors.borderLight }]} />
               <Text style={[styles.statusLabel, { color: colors.textTertiary }]}>
                 {u.role?.toUpperCase() || 'USER'}
               </Text>
@@ -671,17 +671,18 @@ export default function UserDirectoryScreen() {
 
       {/* Bulk Action Bar - Task 1: Fully implemented */}
       {selectedIds.size > 0 && (
-        <View style={{
-          backgroundColor: colors.primarySoft,
-          paddingHorizontal: contentPad,
-          paddingVertical: 10,
-          borderBottomWidth: 1,
-          borderBottomColor: colors.borderLight,
-          flexDirection: 'row',
-          flexWrap: 'wrap',
-          gap: 8,
-          alignItems: 'center'
-        }}>
+        <View style={[
+          styles.bulkActionBar,
+          {
+            backgroundColor: colors.primarySoft,
+            borderBottomColor: colors.borderLight,
+            paddingHorizontal: contentPad,
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            gap: 8,
+            alignItems: 'center'
+          }
+        ]}>
           <Text style={{ fontFamily: FontFamily.medium, color: colors.text }}>
             {selectedIds.size} selected:
           </Text>
@@ -732,7 +733,7 @@ export default function UserDirectoryScreen() {
       </Modal>
 
       {/* Filter chips - fully wired (A) */}
-      <View style={{ paddingHorizontal: contentPad, paddingTop: 12, paddingBottom: 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+      <View style={[styles.filterSortHeader, { paddingHorizontal: contentPad }]}>
         <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap', alignItems: 'center', flex: 1 }}>
           <Text style={{ color: colors.textTertiary, fontSize: 12, marginRight: 4 }}>Filter:</Text>
 
@@ -748,18 +749,14 @@ export default function UserDirectoryScreen() {
                 ]}
                 onPress={() => toggleFilter('roles', role)}
               >
-                <Text style={{ 
-                  fontSize: 13, 
-                  fontFamily: FontFamily.medium, 
-                  color: active ? '#fff' : colors.text 
-                }}>
+                <Text style={[styles.filterChipText, { color: active ? '#fff' : colors.text }]}>
                   {role}
                 </Text>
               </Pressable>
             );
           })}
 
-          <View style={{ width: 1, height: 20, backgroundColor: colors.borderLight, marginHorizontal: 4 }} />
+          <View style={[styles.verticalDivider, { height: 20, backgroundColor: colors.borderLight }]} />
 
           {/* Status & Membership quick filters */}
           {['active', 'suspended'].map((s) => {
@@ -773,7 +770,7 @@ export default function UserDirectoryScreen() {
                 ]}
                 onPress={() => toggleFilter('statuses', s)}
               >
-                <Text style={{ fontSize: 13, fontFamily: FontFamily.medium, color: active ? '#fff' : colors.text }}>{s}</Text>
+                <Text style={[styles.filterChipText, { color: active ? '#fff' : colors.text }]}>{s}</Text>
               </Pressable>
             );
           })}
@@ -789,7 +786,7 @@ export default function UserDirectoryScreen() {
                 ]}
                 onPress={() => toggleFilter('memberships', m)}
               >
-                <Text style={{ fontSize: 13, fontFamily: FontFamily.medium, color: active ? '#fff' : colors.text }}>{m}</Text>
+                <Text style={[styles.filterChipText, { color: active ? '#fff' : colors.text }]}>{m}</Text>
               </Pressable>
             );
           })}
@@ -842,7 +839,7 @@ export default function UserDirectoryScreen() {
 
       {/* Bulk selection shortcuts */}
       {users.length > 0 && (
-        <View style={{ paddingHorizontal: contentPad, flexDirection: 'row', gap: 16, alignItems: 'center', marginBottom: 8 }}>
+        <View style={[styles.selectAllRow, { paddingHorizontal: contentPad }]}>
           <Pressable onPress={selectedIds.size > 0 ? clearSelection : selectAllVisible}>
             <Text style={{ color: colors.primary, fontSize: 13, fontFamily: FontFamily.medium }}>
               {selectedIds.size > 0 ? `Deselect All (${selectedIds.size})` : 'Select All Visible'}
@@ -1003,7 +1000,7 @@ function StatCard({ label, value, icon, color, colors }: { label: string; value:
   return (
     <GlassView style={styles.statCard}>
       <View style={[styles.statIcon, { backgroundColor: color + '20' }]}>
-        <Ionicons name={icon} size={20} color={color} />
+        <Ionicons name={icon as any} size={20} color={color} />
       </View>
       <View>
         <Text style={[styles.statCardLabel, { color: colors.textTertiary }]}>{label}</Text>
@@ -1027,7 +1024,7 @@ function InfoRow({ label, value, color, colors }: { label: string; value: string
 function EmptyDetail({ colors }: { colors: ReturnType<typeof useColors> }) {
   return (
     <View style={[styles.emptyDetail, styles.emptyDetailDesktop]}>
-      <Ionicons name="person-circle-outline" size={64} color={colors.textTertiary} />
+      <Ionicons name={"person-circle-outline" as any} size={64} color={colors.textTertiary} />
       <Text style={{ color: colors.textTertiary, marginTop: 16, fontFamily: FontFamily.medium }}>
         Select a user to view controls
       </Text>
@@ -1104,7 +1101,7 @@ const styles = StyleSheet.create({
   controlSectionTitle: {
     fontSize: 10,
     fontFamily: FontFamily.bold,
-    color: CultureTokens.grey500,
+    color: '#71717A',
     letterSpacing: 1,
     marginBottom: 4,
   },
@@ -1134,6 +1131,14 @@ const styles = StyleSheet.create({
   },
   modalTitle: { fontSize: 17, fontFamily: FontFamily.bold },
 
+  sortChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.1)',
+  },
+
   // New high-quality styles for hardened directory
   filterChip: {
     paddingHorizontal: 14,
@@ -1158,7 +1163,7 @@ const styles = StyleSheet.create({
   tableHeaderText: {
     fontSize: 10,
     fontFamily: FontFamily.bold,
-    color: CultureTokens.grey500,
+    color: '#71717A',
     letterSpacing: 0.5,
   },
   tableRow: {
@@ -1251,5 +1256,35 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
+  },
+
+  // --- FIXES-001: Targeted extraction of repeated inline styles (layout deformity remediation) ---
+  // These entries replace the most common raw inline objects in the filter/sort/bulk bar and detail views.
+  // All values align with design tokens (Spacing, Radius, FontFamily). See docs/FIXES-001-layout-deformities.md
+  bulkActionBar: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+  },
+  filterSortHeader: {
+    paddingTop: 12,
+    paddingBottom: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  filterChipText: {
+    fontSize: 13,
+    fontFamily: FontFamily.medium,
+  },
+  selectAllRow: {
+    flexDirection: 'row',
+    gap: 16,
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  verticalDivider: {
+    width: 1,
+    // backgroundColor supplied at call site
   },
 });

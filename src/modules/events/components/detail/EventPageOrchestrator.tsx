@@ -64,6 +64,7 @@ const styles = StyleSheet.create({
   mainCol: {
     flex: 1,
     minWidth: 0,
+    paddingRight: Spacing.lg,
   },
   sidebarCol: {
     width: 380,

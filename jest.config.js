@@ -5,7 +5,7 @@ module.exports = {
   // Nested `react-native/node_modules/@react-native/js-polyfills` is Flow; default RN preset
   // only whitelists top-level `react-native/`, so those files were skipped by Babel.
   transformIgnorePatterns: [
-    'node_modules/(?!(jest-)?react-native|@react-native|@react-native-community|expo(nent)?|@expo(nent)?/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg|firebase|@firebase)',
+    'node_modules/(?!(jest-)?react-native|@react-native|@react-native-community|expo(nent)?|@expo(nent)?/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg|firebase|@firebase|@sentry)',
   ],
   setupFiles: ['./jest.setup.js'],
   moduleNameMapper: {

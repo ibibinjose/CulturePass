@@ -205,11 +205,13 @@ export function CustomTabBar({ state, navigation, insets }: BottomTabBarProps) {
   const { isDesktop } = useLayout();
 
   const visibleRoutes = useMemo(
-    () => state.routes.filter(isMainTabRoute),
-    [state.routes],
+    () => (state?.routes || []).filter(isMainTabRoute),
+    [state?.routes],
   );
 
-  const activeRouteKey = state.routes[state.index]?.key;
+  const activeRouteKey = state?.routes && state?.index !== undefined
+    ? state.routes[state.index]?.key
+    : undefined;
   const bottomInset = Math.max(
     insets.bottom,
     Platform.OS === 'android' ? Spacing.sm : Spacing.xs,

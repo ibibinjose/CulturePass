@@ -65,7 +65,7 @@ function shouldShowDomainHeader(routeName?: string | null): boolean {
 
 function DomainHeader({ navigation, route }: NativeStackHeaderProps) {
   const title = useMemo(() => titleFromRouteName(route?.name), [route?.name]);
-  const canGoBack = navigation.canGoBack();
+  const canGoBack = navigation?.canGoBack?.() ?? false;
 
   return (
     <M3TopAppBar
@@ -79,19 +79,16 @@ function DomainHeader({ navigation, route }: NativeStackHeaderProps) {
 
 export default function DomainLayout() {
   return (
-    <>
-
-      <Stack
-        screenOptions={({ route }) => ({
-          headerShown: shouldShowDomainHeader(route?.name),
-          header: (props) => <DomainHeader {...props} />,
-        })}
-      >
-        {/* Fade for canonical detail pages — avoids jarring slide when navigating from a shortlink redirect */}
-        <Stack.Screen name="community/[id]" options={{ animation: 'fade' }} />
-        <Stack.Screen name="community/[id]/members" options={{ animation: 'fade' }} />
-        <Stack.Screen name="event/[id]" options={{ animation: 'fade' }} />
-      </Stack>
-    </>
+    <Stack
+      screenOptions={({ route }) => ({
+        headerShown: shouldShowDomainHeader(route?.name),
+        header: (props) => <DomainHeader {...props} />,
+      })}
+    >
+      {/* Fade for canonical detail pages — avoids jarring slide when navigating from a shortlink redirect */}
+      <Stack.Screen name="community/[id]" options={{ animation: 'fade' }} />
+      <Stack.Screen name="community/[id]/members" options={{ animation: 'fade' }} />
+      <Stack.Screen name="event/[id]" options={{ animation: 'fade' }} />
+    </Stack>
   );
 }

@@ -13,6 +13,7 @@ import { requestIdMiddleware } from './middleware/requestId';
 // HTTP handlers (Express routers)
 import { authRouter } from './handlers/auth';
 import { ticketsRouter } from './handlers/tickets';
+import { calendarRouter } from './handlers/calendar';
 import { createEventsRouter } from './handlers/events';
 import { createStripeRouter } from './handlers/stripe';
 import { createIndigenousRouter } from './handlers/indigenous';
@@ -270,6 +271,7 @@ const stripeRouter = createStripeRouter();
 mount('/', stripeRouter);
 
 mount('/', authRouter);
+mount('/', calendarRouter);
 mount('/', ticketsRouter);
 mount('/', usersRouter);
 mount('/', profilesRouter);

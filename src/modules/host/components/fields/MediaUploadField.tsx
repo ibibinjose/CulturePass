@@ -20,6 +20,8 @@ import {
 import { useMediaUpload, type MediaUploadOptions } from '@/modules/host/hooks/useMediaUpload';
 import { ImageCropModal } from './ImageCropModal';
 import { mediaUploadLabel } from '../../utils/accessibility';
+import { getAlignFromUri, setAlignInUri, isDefaultImageUri } from '@/lib/defaultImages';
+
 
 export interface MediaUploadFieldProps {
   label?: string;
@@ -484,6 +486,7 @@ function MediaUploadField({
     const isFirst = index === 0;
     const isLast = index === currentValues.length - 1;
     const showReorderButtons = isGallery && currentValues.length > 1;
+    const currentAlign = getAlignFromUri(url);
 
     return (
       <View
@@ -502,6 +505,7 @@ function MediaUploadField({
             isGallery && styles.galleryPreview,
           ]}
           contentFit={type === 'logo' ? 'contain' : 'cover'}
+          contentPosition={currentAlign as any}
           accessibilityLabel={`${type === 'logo' ? 'Logo' : type === 'hero' ? 'Hero' : `Gallery image ${(index ?? 0) + 1} of ${currentValues.length}`} preview`}
         />
 
@@ -577,6 +581,52 @@ function MediaUploadField({
               <Ionicons name="trash-outline" size={16} color={colors.error} />
             </Pressable>
           </View>
+        </View>
+      </View>
+    );
+  };
+
+  const renderAlignmentControls = (url: string) => {
+    if (isDefaultImageUri(url)) return null;
+    const currentAlign = getAlignFromUri(url);
+
+    return (
+      <View style={[styles.alignmentRow, { backgroundColor: colors.surfaceContainerLow || 'rgba(0,0,0,0.02)', borderColor: colors.borderLight }]}>
+        <Text style={[styles.alignmentLabel, { color: colors.textSecondary }]}>
+          Align cover:
+        </Text>
+        <View style={styles.alignmentButtons}>
+          {(['top', 'center', 'bottom'] as const).map((alignOption) => {
+            const isSelected = currentAlign === alignOption;
+            return (
+              <Pressable
+                key={alignOption}
+                onPress={() => {
+                  const newUrl = setAlignInUri(url, alignOption);
+                  onChange(newUrl);
+                }}
+                style={[
+                  styles.alignmentButton,
+                  {
+                    backgroundColor: isSelected ? CultureTokens.indigo : 'transparent',
+                    borderColor: isSelected ? CultureTokens.indigo : colors.borderLight,
+                  },
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel={`Align image to the ${alignOption}`}
+                accessibilityState={{ selected: isSelected }}
+              >
+                <Text
+                  style={[
+                    styles.alignmentButtonText,
+                    { color: isSelected ? '#FFFFFF' : colors.textSecondary },
+                  ]}
+                >
+                  {alignOption.charAt(0).toUpperCase() + alignOption.slice(1)}
+                </Text>
+              </Pressable>
+            );
+          })}
         </View>
       </View>
     );
@@ -667,7 +717,10 @@ function MediaUploadField({
       {hasValue && isVideo ? (
         renderVideoPreview(currentValues[0])
       ) : hasValue && !isGallery ? (
-        renderImagePreview(currentValues[0])
+        <View style={styles.singlePreviewWrapper}>
+          {renderImagePreview(currentValues[0])}
+          {type !== 'logo' && renderAlignmentControls(currentValues[0])}
+        </View>
       ) : isGallery && hasValue ? (
         renderGallery()
       ) : (
@@ -960,7 +1013,38 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: FontFamily.medium,
   },
+  singlePreviewWrapper: {
+    gap: 8,
+  },
+  alignmentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 12,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    marginTop: 4,
+  },
+  alignmentLabel: {
+    fontSize: 13,
+    fontFamily: FontFamily.semibold,
+  },
+  alignmentButtons: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  alignmentButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: Radius.sm,
+    borderWidth: 1,
+  },
+  alignmentButtonText: {
+    fontSize: 12,
+    fontFamily: FontFamily.medium,
+  },
 });
+
 
 export { MediaUploadField };
 export default MediaUploadField;

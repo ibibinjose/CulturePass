@@ -10,6 +10,8 @@
  */
 
 import type { EventData, Ticket } from '@/shared/schema';
+import { buildApiUrl } from '@/lib/query-client';
+
 
 // ---------------------------------------------------------------------------
 // Types
@@ -201,29 +203,12 @@ export function getDayViewEvents(
 // ---------------------------------------------------------------------------
 
 /**
- * Base HTTPS URL for the public city calendar endpoint.
- * Uses the known Cloud Functions URL — consistent across web and native.
- *
- * In local dev, set EXPO_PUBLIC_API_URL to the emulator URL and this
- * will automatically use that base instead.
- */
-function calendarApiBase(): string {
-  const envUrl = process.env.EXPO_PUBLIC_API_URL;
-  if (envUrl) {
-    // Strip trailing slash and /api suffix if present, then re-add /api
-    const base = envUrl.replace(/\/api\/?$/, '').replace(/\/$/, '');
-    return `${base}/api`;
-  }
-  return 'https://us-central1-culturepass-4f264.cloudfunctions.net/api';
-}
-
-/**
  * Returns the HTTPS URL for the city calendar .ics feed.
  * Use this for the download fallback and as the basis for webcal:// URLs.
  */
 export function buildCityCalendarHttpsUrl(city: string, country = 'Australia'): string {
-  const base = calendarApiBase();
-  return `${base}/calendar/city.ics?city=${encodeURIComponent(city)}&country=${encodeURIComponent(country)}`;
+  const route = `api/calendar/city.ics?city=${encodeURIComponent(city)}&country=${encodeURIComponent(country)}`;
+  return buildApiUrl(route);
 }
 
 /**
@@ -233,5 +218,5 @@ export function buildCityCalendarHttpsUrl(city: string, country = 'Australia'): 
  * the webcal:// redirect to the underlying HTTPS feed.
  */
 export function generateWebcalUrl(city: string, country = 'Australia'): string {
-  return buildCityCalendarHttpsUrl(city, country).replace(/^https:\/\//, 'webcal://');
+  return buildCityCalendarHttpsUrl(city, country).replace(/^https?:\/\//, 'webcal://');
 }

@@ -16,6 +16,9 @@ import { Image } from 'expo-image';
 import { useColors, useIsDark } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
 import { useImageUpload } from '@/hooks/useImageUpload';
+import { CultureImage } from '@/design-system/ui/CultureImage';
+import { ImageGalleryPicker } from '@/design-system/ui/ImageGalleryPicker';
+
 import * as ImagePicker from 'expo-image-picker';
 import {
   CultureTokens,
@@ -165,31 +168,14 @@ export function HostspaceEventCreateForm({ onReview }: { onReview?: () => void }
   const showPreview = true;
   const [showSponsorForm, setShowSponsorForm] = useState(false);
   const [newSponsor, setNewSponsor] = useState<Sponsor>({ id: '', name: '', tier: 'gold' });
+  const [showImagePickerModal, setShowImagePickerModal] = useState(false);
 
   const updateDraft = (patch: Partial<EventDraft>) => {
     setDraft((prev) => ({ ...prev, ...patch }));
   };
 
-  const handlePickImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permission needed', 'Please allow access to your photo library.');
-      return;
-    }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
-    if (!result.canceled && result.assets[0]) {
-      try {
-        const { downloadURL } = await uploadImage(result, 'events', user?.id || 'anon', 'hero', true);
-        updateDraft({ heroImageUrl: downloadURL });
-      } catch {
-        Alert.alert('Upload failed', 'Could not upload image. Please try again.');
-      }
-    }
+  const handlePickImage = () => {
+    setShowImagePickerModal(true);
   };
 
   const addTier = () => {
@@ -588,7 +574,7 @@ export function HostspaceEventCreateForm({ onReview }: { onReview?: () => void }
                <View style={styles.brandingAction}>
                  <View style={[styles.brandingIconPh, { backgroundColor: CultureTokens.indigo + '20' }]}>
                    {draft.heroImageUrl ? (
-                     <Image source={{ uri: draft.heroImageUrl }} style={StyleSheet.absoluteFill} contentFit="cover" cachePolicy="memory-disk" placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }} />
+                      <CultureImage uri={draft.heroImageUrl} style={StyleSheet.absoluteFill} placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }} />
                    ) : (
                      <Ionicons name="image-outline" size={24} color={CultureTokens.indigo} />
                    )}
@@ -630,7 +616,7 @@ export function HostspaceEventCreateForm({ onReview }: { onReview?: () => void }
                   </Text>
                   <View style={styles.socialImagePh}>
                     {draft.heroImageUrl ? (
-                      <Image source={{ uri: draft.heroImageUrl }} style={StyleSheet.absoluteFill} contentFit="cover" cachePolicy="memory-disk" placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }} />
+                      <CultureImage uri={draft.heroImageUrl} style={StyleSheet.absoluteFill} placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }} />
                     ) : (
                       <Ionicons name="image-outline" size={40} color={colors.textTertiary} />
                     )}
@@ -645,7 +631,16 @@ export function HostspaceEventCreateForm({ onReview }: { onReview?: () => void }
             </GlassView>
           </View>
         )}
-      </View>
+      {showImagePickerModal && (
+        <ImageGalleryPicker
+          visible={showImagePickerModal}
+          onClose={() => setShowImagePickerModal(false)}
+          currentUri={draft.heroImageUrl}
+          onSelect={(url) => updateDraft({ heroImageUrl: url })}
+          collectionName="events"
+          docId={user?.id || 'anon'}
+        />
+      )}
     </View>
   );
 }
@@ -730,11 +725,9 @@ function EventPreviewCard({ draft, colors }: { draft: EventDraft; colors: any })
     <View style={styles.previewCardOuter}>
       <GlassView intensity={15} style={[styles.previewCard, { borderColor: colors.borderLight }]}>
         <View style={styles.previewImageArea}>
-           <Image
-             source={draft.heroImageUrl ? { uri: draft.heroImageUrl } : undefined}
+           <CultureImage
+             uri={draft.heroImageUrl}
              style={StyleSheet.absoluteFillObject}
-             contentFit="cover"
-             cachePolicy="memory-disk"
              placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }}
            />
            <LinearGradient

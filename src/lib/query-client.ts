@@ -52,12 +52,12 @@ function normalizeBaseUrl(url: string): string {
  */
 function localFunctionsEmulatorApiBase(host: string): string {
   const projectId = getFirebaseWebConfig().projectId;
-  return normalizeBaseUrl(`http://${host}:5001/${projectId}/us-central1/api`);
+  return normalizeBaseUrl(`http://${host}:5001/${projectId}/australia-southeast1/api`);
 }
 
 /**
  * True when EXPO_PUBLIC_API_URL points at the local Firebase Functions emulator HTTP
- * entry (port 5001, …/us-central1/api). The emulator process sets FIREBASE_AUTH_EMULATOR_HOST;
+ * entry (port 5001, …/australia-southeast1/api). The emulator process sets FIREBASE_AUTH_EMULATOR_HOST;
  * Firebase Admin then verifies ID tokens against the Auth emulator. Tokens from
  * production Firebase Auth (client with EXPO_PUBLIC_USE_FIREBASE_EMULATORS !== 'true')
  * will always fail → 401 "Authentication required." on /api/auth/me.
@@ -72,7 +72,7 @@ function isFunctionsEmulatorHttpApiBase(url: string): boolean {
       u.hostname === '[::1]' ||
       u.hostname === '10.0.2.2';
     if (!loopbackHost || u.port !== '5001') return false;
-    return u.pathname.includes('/us-central1/api');
+    return u.pathname.includes('/australia-southeast1/api');
   } catch {
     return false;
   }
@@ -81,7 +81,7 @@ function isFunctionsEmulatorHttpApiBase(url: string): boolean {
 function hostedCloudFunctionsApiBase(): string | null {
   const projectId = getFirebaseWebConfig().projectId;
   if (!projectId) return null;
-  return normalizeBaseUrl(`https://us-central1-${projectId}.cloudfunctions.net/api`);
+  return normalizeBaseUrl(`https://australia-southeast1-${projectId}.cloudfunctions.net/api`);
 }
 
 let _cachedApiUrl: string | null = null;

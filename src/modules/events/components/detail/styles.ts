@@ -1,5 +1,5 @@
 import { Platform, StyleSheet } from 'react-native';
-import { CultureTokens } from '@/design-system/tokens/theme';
+import { CultureTokens, Spacing } from '@/design-system/tokens/theme';
 import { useColors } from '@/hooks/useColors';
 
 export const getStyles = (colors: ReturnType<typeof useColors>, isDark: boolean) => StyleSheet.create({
@@ -16,19 +16,19 @@ export const getStyles = (colors: ReturnType<typeof useColors>, isDark: boolean)
 
   desktopShellWrapper: { flex: 1, alignItems: 'center' },
   desktopShell: { width: '100%', maxWidth: 800 },
-  detailShell: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 40 },
+  detailShell: { paddingHorizontal: Spacing.md, paddingTop: Spacing.md, paddingBottom: Spacing.xxl },
 
   heroWrapper: { width: '100%' },
   heroSection: { position: 'relative', justifyContent: 'flex-end', overflow: 'hidden' },
   heroOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 10, justifyContent: 'space-between' },
-  heroNav: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 20, zIndex: 20 },
+  heroNav: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: Spacing.md, zIndex: 20 },
   navBtn: { width: 44, height: 44, borderRadius: 14, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(11, 11, 20, 0.45)', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.15)' },
-  heroActions: { flexDirection: 'row', gap: 10 },
+  heroActions: { flexDirection: 'row', gap: Spacing.sm },
 
-  heroBottomContent: { paddingHorizontal: 24, paddingBottom: 32, gap: 12 },
+  heroBottomContent: { paddingHorizontal: Spacing.lg, paddingBottom: Spacing.xxl, gap: Spacing.md },
   heroTitleRibbon: { alignSelf: 'flex-start' },
   heroImageTitle: { fontSize: 28, fontFamily: 'Poppins_700Bold', color: 'white', letterSpacing: -0.5, lineHeight: 34, ...Platform.select({ web: { textShadow: '0px 2px 4px rgba(0,0,0,0.3)' }, default: { textShadowColor: 'rgba(0,0,0,0.3)', textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 4 } }) },
-  heroMetaRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  heroMetaRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
   heroCardBadge: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10 },
   heroCardBadgeText: { fontSize: 12, fontFamily: 'Poppins_700Bold', color: 'black', textTransform: 'uppercase', letterSpacing: 0.8 },
   heroDateRibbonText: { fontSize: 13, fontFamily: 'Poppins_600SemiBold', color: 'rgba(255,255,255,0.85)' },
@@ -52,13 +52,13 @@ export const getStyles = (colors: ReturnType<typeof useColors>, isDark: boolean)
       android: { elevation: 8 }
     }),
   },
-  heroBadges: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 4 },
+  heroBadges: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm, marginBottom: 4 },
   heroBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
   heroBadgeText: { color: colors.background, fontSize: 12, fontFamily: 'Poppins_700Bold', textTransform: 'uppercase', letterSpacing: 1.2 },
   heroTitle: { fontSize: 26, fontFamily: 'Poppins_700Bold', color: colors.text, lineHeight: 32, letterSpacing: -0.4 },
   heroOrganizer: { fontSize: 16, fontFamily: 'Poppins_500Medium', color: colors.textSecondary },
 
-  countdownWrapper: { marginBottom: 20 },
+  countdownWrapper: { marginBottom: Spacing.lg },
   countdownEndedBox: {
     flexDirection: 'row', alignItems: 'center', gap: 8, padding: 16, borderRadius: 20, borderWidth: 1, justifyContent: 'center', backgroundColor: colors.surface, borderColor: colors.borderLight,
     ...Platform.select({
@@ -101,7 +101,7 @@ export const getStyles = (colors: ReturnType<typeof useColors>, isDark: boolean)
   countLabel: { fontSize: 11, fontFamily: 'Poppins_600SemiBold', textTransform: 'uppercase', color: colors.textTertiary, letterSpacing: 0.5 },
   countSep: { fontSize: 20, fontFamily: 'Poppins_700Bold', color: colors.borderLight, paddingBottom: 12 },
 
-  infoGrid: { gap: 12, marginBottom: 20 },
+  infoGrid: { gap: Spacing.lg, marginBottom: Spacing.lg },
   infoGridDesktop: { flexDirection: 'row', flexWrap: 'wrap' },
   infoCardDesktopHalf: { flex: 1, minWidth: 280 },
   infoCard: {
@@ -128,13 +128,13 @@ export const getStyles = (colors: ReturnType<typeof useColors>, isDark: boolean)
 
   divider: { height: 1, width: '100%', marginVertical: 32, backgroundColor: colors.borderLight, opacity: 0.5 },
 
-  section: { gap: 12 },
+  section: { gap: Spacing.lg },
   sectionTitle: { fontSize: 12, fontFamily: 'Poppins_700Bold', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 4, color: colors.textTertiary },
   aboutDesc: { fontSize: 16, fontFamily: 'Poppins_400Regular', lineHeight: 26, color: colors.textSecondary },
-  actionGrid: { gap: 10 },
+  actionGrid: { gap: Spacing.md },
   actionGridDesktop: { flexDirection: 'row', flexWrap: 'wrap' },
   actionButton: { flex: 1, minWidth: 160 },
-  metaBlock: { gap: 10 },
+  metaBlock: { gap: Spacing.md },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   metaChip: {
     paddingHorizontal: 12,

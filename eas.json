@@ -47,7 +47,7 @@
         "simulator": false
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://us-central1-culturepass-4f264.cloudfunctions.net/api/",
+        "EXPO_PUBLIC_API_URL": "https://australia-southeast1-culturepass-4f264.cloudfunctions.net/api/",
         "EXPO_PUBLIC_FIREBASE_API_KEY": "AIzaSyDjAJFTdTfkP63pjuQd7j41DNEKYAYYupw",
         "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "culturepass-4f264.firebaseapp.com",
         "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "culturepass-4f264",
@@ -69,7 +69,7 @@
         "buildType": "app-bundle"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://us-central1-culturepass-4f264.cloudfunctions.net/api/",
+        "EXPO_PUBLIC_API_URL": "https://australia-southeast1-culturepass-4f264.cloudfunctions.net/api/",
         "EXPO_PUBLIC_FIREBASE_API_KEY": "AIzaSyDjAJFTdTfkP63pjuQd7j41DNEKYAYYupw",
         "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN": "culturepass-4f264.firebaseapp.com",
         "EXPO_PUBLIC_FIREBASE_PROJECT_ID": "culturepass-4f264",

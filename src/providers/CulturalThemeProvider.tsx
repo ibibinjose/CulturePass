@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useMemo, ReactNode } from 'react';
-import { useColorScheme } from 'react-native';
+import { useAppAppearance } from '@/hooks/useAppAppearance';
 import { light as LightColors, dark as DarkColors, CultureTokens } from '@/design-system/tokens/colors';
 
 interface CulturalTheme {
@@ -75,12 +75,12 @@ function getSafeTheme(colorScheme: string | null | undefined): CulturalTheme {
 const CulturalThemeContext = createContext<CulturalTheme>(SAFE_DEFAULT_THEME);
 
 export const CulturalThemeProvider: React.FC<CulturalThemeProviderProps> = ({ children }) => {
-  const colorScheme = useColorScheme();
+  const { resolvedScheme } = useAppAppearance();
 
   // Use useMemo for performance + immediate safe computation
   const theme = useMemo(() => {
-    return getSafeTheme(colorScheme);
-  }, [colorScheme]);
+    return getSafeTheme(resolvedScheme);
+  }, [resolvedScheme]);
 
   return (
     <CulturalThemeContext.Provider value={theme}>

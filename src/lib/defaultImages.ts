@@ -10,12 +10,18 @@ export type DefaultImageKey =
   | 'harvest'
   | 'jade'
   | 'stone'
-  | 'midnight';
+  | 'midnight'
+  | 'stock-art'
+  | 'stock-kathakali'
+  | 'stock-concert'
+  | 'stock-dining'
+  | 'stock-community';
 
 export type DefaultImageConfig = {
   key: DefaultImageKey;
   label: string;
-  gradientColors: readonly [string, string];
+  gradientColors?: readonly [string, string];
+  imageAsset?: any;
   icon: string;
 };
 
@@ -34,6 +40,14 @@ export function makeDefaultUri(key: DefaultImageKey): string {
 }
 
 export const DEFAULT_IMAGE_CONFIGS: DefaultImageConfig[] = [
+  // 5 Stock Images
+  { key: 'stock-art',       label: 'Art & Theater', imageAsset: require('../../assets/images/stock/art_performance.png'), icon: 'easel' },
+  { key: 'stock-kathakali', label: 'Kathakali',     imageAsset: require('../../assets/images/stock/festival_kathakali.png'), icon: 'sparkles' },
+  { key: 'stock-concert',   label: 'Concert',       imageAsset: require('../../assets/images/stock/live_concert.png'), icon: 'musical-notes' },
+  { key: 'stock-dining',    label: 'Food & Wine',   imageAsset: require('../../assets/images/stock/dining_food.png'), icon: 'restaurant' },
+  { key: 'stock-community', label: 'Community',     imageAsset: require('../../assets/images/stock/heritage_gather.png'), icon: 'people' },
+
+  // Gradient placeholders
   { key: 'indigo-violet', label: 'Royal',   gradientColors: ['#4F46E5', '#7C3AED'], icon: 'sparkles' },
   { key: 'coral-rose',    label: 'Sunset',  gradientColors: ['#FF5E5B', '#E11D48'], icon: 'heart' },
   { key: 'teal-cyan',     label: 'Ocean',   gradientColors: ['#0F766E', '#0891B2'], icon: 'water' },
@@ -55,4 +69,18 @@ export function getDefaultConfig(key: DefaultImageKey): DefaultImageConfig | und
 export function getDefaultConfigFromUri(uri: string): DefaultImageConfig | undefined {
   if (!isDefaultImageUri(uri)) return undefined;
   return getDefaultConfig(getDefaultKey(uri));
+}
+
+export function getAlignFromUri(uri?: string | null): string {
+  if (!uri) return 'center';
+  const match = uri.match(/[?&]align=([^&]+)/);
+  return match && match[1] ? decodeURIComponent(match[1]) : 'center';
+}
+
+export function setAlignInUri(uri: string, align: string): string {
+  let cleanUri = uri.replace(/[?&]align=[/s/S]*?(?:&|$)/g, '').replace(/[?&]align=[^&]*/g, '');
+  // Simple regex to safely remove align parameter
+  cleanUri = uri.replace(/[?&]align=[^&]+/g, '');
+  const separator = cleanUri.includes('?') ? '&' : '?';
+  return `${cleanUri}${separator}align=${encodeURIComponent(align)}`;
 }

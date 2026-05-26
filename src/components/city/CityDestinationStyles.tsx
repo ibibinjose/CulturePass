@@ -3,6 +3,7 @@ import { Text, Pressable, StyleSheet, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { EdgeInsets } from 'react-native-safe-area-context';
 import { CultureTokens, FontFamily, type ColorTheme } from '@/design-system/tokens/theme';
+import { Radius, Spacing } from '@/design-system/tokens/spacing';
 import { TextStyles } from '@/design-system/tokens/typography';
 import { GlassView } from '@/design-system/ui/GlassView';
 
@@ -359,14 +360,21 @@ export function getCityDestinationStyles(
     mapCard: {
       marginTop: 16,
       padding: 16,
-      borderRadius: 16,
-      borderWidth: 1,
+      borderRadius: Radius.lg,
+      borderWidth: 1.5,
+      borderColor: colors.borderLight,
+      backgroundColor: colors.surfaceElevated,
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 10,
+      gap: 12,
       justifyContent: 'center',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.04,
+      shadowRadius: 6,
+      elevation: 1,
     },
-    mapCardText: { fontSize: 13, fontFamily: 'Poppins_600SemiBold' },
+    mapCardText: { fontSize: 14, fontFamily: FontFamily.semibold, color: colors.text },
 
     tagCloud: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
     tagPill: {
@@ -395,13 +403,23 @@ export function getCityDestinationStyles(
     emptyTitle: { fontSize: 18, fontFamily: 'Poppins_600SemiBold', color: colors.text },
     emptySubtitle: { fontSize: 14, color: colors.textTertiary, textAlign: 'center', maxWidth: 260 },
     retryButton: {
-      marginTop: 12,
+      marginTop: 18,
       backgroundColor: CultureTokens.indigo,
       paddingHorizontal: 28,
-      paddingVertical: 12,
-      borderRadius: 30,
+      paddingVertical: 14,
+      borderRadius: Radius.full,
+      shadowColor: CultureTokens.indigo,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.2,
+      shadowRadius: 10,
+      elevation: 4,
     },
-    retryText: { color: colors.textOnBrandGradient, fontFamily: 'Poppins_600SemiBold', fontSize: 15 },
+    retryText: {
+      color: colors.textOnBrandGradient,
+      fontFamily: FontFamily.bold,
+      fontSize: 16,
+      letterSpacing: 0.2,
+    },
 
     fab: {
       position: 'absolute',

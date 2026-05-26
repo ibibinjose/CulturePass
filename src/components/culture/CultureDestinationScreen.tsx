@@ -19,6 +19,7 @@ import { useColors } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
 import { TextStyles } from '@/design-system/tokens/typography';
 import { CultureTokens, FontFamily, gradients } from '@/design-system/tokens/theme';
+import { Radius, Spacing } from '@/design-system/tokens/spacing';
 import { ErrorBoundary } from '@/modules/core/ui/ErrorBoundary';
 import EventCard from '@/components/Discover/EventCard';
 import { GLOBAL_REGIONS, getStateForCity } from '@/constants/locations';
@@ -135,7 +136,7 @@ type Props = {
 
 export function CultureDestinationScreen({ definition: def, routeSearchParams }: Props) {
   const colors = useColors();
-  const { isDesktop, contentWidth, width } = useLayout();
+  const { isDesktop, contentWidth, width, hPad } = useLayout();
   const insets = useSafeAreaInsets();
   const scrollRef = useRef<ScrollView>(null);
   const { state: onboarding, isLoading: onboardingLoading } = useOnboarding();
@@ -326,8 +327,8 @@ export function CultureDestinationScreen({ definition: def, routeSearchParams }:
 
   const totalActiveFilters = selectedCategories.length + selectedCultures.length + selectedLanguages.length;
 
-  const gridGap = 16;
-  const gridWidth = isDesktop ? contentWidth : width - 40;
+  const gridGap = isDesktop ? 24 : 16;
+  const gridWidth = isDesktop ? contentWidth : width - 32;
   const cardWidth = Math.floor((gridWidth - gridGap) / 2) - 1;
 
   const goToMap = useCallback(() => {
@@ -685,7 +686,7 @@ export function CultureDestinationScreen({ definition: def, routeSearchParams }:
                         end={{ x: 1, y: 1 }}
                         style={localStyles.exploreChipGradient}
                       >
-                        <Ionicons name={item.icon} size={13} color="#fff" />
+                        <Ionicons name={item.icon} size={14} color="#fff" />
                         <Text style={localStyles.exploreChipOnGradient}>{item.label}</Text>
                       </LinearGradient>
                     ) : (
@@ -698,7 +699,7 @@ export function CultureDestinationScreen({ definition: def, routeSearchParams }:
                           },
                         ]}
                       >
-                        <Ionicons name={item.icon} size={13} color={colors.textSecondary} />
+                        <Ionicons name={item.icon} size={14} color={colors.textSecondary} />
                         <Text style={[localStyles.exploreChipIdleText, { color: colors.textSecondary }]}>
                           {item.label}
                         </Text>
@@ -765,13 +766,13 @@ export function CultureDestinationScreen({ definition: def, routeSearchParams }:
             </View>
           )}
 
-          <View
-            style={
-              isDesktop
-                ? { flexDirection: 'row', gap: gridGap * 2, paddingHorizontal: 20 }
-                : undefined
-            }
-          >
+        <View
+          style={
+            isDesktop
+              ? { flexDirection: 'row', gap: gridGap * 2, paddingHorizontal: hPad }
+              : undefined
+          }
+        >
             <View style={{ flex: isDesktop ? 2.8 : 1 }}>
               <View style={[styles.section, isDesktop && { paddingHorizontal: 0 }]}>
                 <View style={styles.sectionHeader}>
@@ -821,7 +822,8 @@ export function CultureDestinationScreen({ definition: def, routeSearchParams }:
                 ) : (
                   <View style={[styles.grid, { gap: gridGap }]}>
                     {eventResults.map((event) => {
-                      const w = isDesktop ? (gridWidth * 0.72 - gridGap) / 2 : cardWidth;
+                      const firstColWidth = (gridWidth - gridGap * 2) * (2.8 / 3.8);
+                      const w = isDesktop ? (firstColWidth - gridGap) / 2 : cardWidth;
                       return (
                         <View key={event.id} style={{ width: w, marginBottom: gridGap }}>
                           <EventCard event={event} containerWidth={w} containerHeight={260} />
@@ -880,43 +882,48 @@ export function CultureDestinationScreen({ definition: def, routeSearchParams }:
                   <Text style={[TextStyles.caption, { color: colors.textSecondary, marginBottom: 12 }]}>
                     Explore listings across different categories.
                   </Text>
-                  <View style={{ gap: 8 }}>
+                  <View style={{ gap: 12 }}>
                     {LISTING_TYPE_ROWS.map((row) => (
                       <Pressable
                         key={row.key}
                         onPress={() => openListingTypeResults(row.key)}
                         style={({ pressed }) => [
                           {
-                            borderWidth: 1,
+                            borderWidth: 1.5,
                             borderColor: colors.borderLight,
-                            borderRadius: 12,
-                            paddingHorizontal: 10,
-                            paddingVertical: 9,
-                            backgroundColor: colors.backgroundSecondary,
+                            borderRadius: Radius.lg,
+                            paddingHorizontal: Spacing.md,
+                            paddingVertical: 14,
+                            backgroundColor: colors.surfaceElevated,
                             opacity: pressed ? 0.9 : 1,
+                            shadowColor: '#000',
+                            shadowOffset: { width: 0, height: 4 },
+                            shadowOpacity: 0.05,
+                            shadowRadius: 8,
+                            elevation: 2,
                           },
                         ]}
                         accessibilityRole="button"
                         accessibilityLabel={`Open ${row.title} results`}
                       >
-                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                          <Text style={[TextStyles.callout, { color: colors.text, fontFamily: 'Poppins_600SemiBold' }]}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                          <Text style={[TextStyles.callout, { color: colors.text, fontFamily: FontFamily.semibold }]}>
                             {row.title}
                           </Text>
                           <View
                             style={{
-                              borderRadius: 999,
-                              paddingHorizontal: 8,
-                              paddingVertical: 2,
-                              backgroundColor: CultureTokens.indigo + '18',
+                              borderRadius: Radius.full,
+                              paddingHorizontal: 10,
+                              paddingVertical: 4,
+                              backgroundColor: CultureTokens.indigo + '14',
                             }}
                           >
-                            <Text style={[TextStyles.caption, { color: CultureTokens.indigo, fontFamily: 'Poppins_600SemiBold' }]}>
-                              {listingResultCounts[row.key]} results
+                            <Text style={[TextStyles.caption, { color: CultureTokens.indigo, fontFamily: FontFamily.bold }]}>
+                              {listingResultCounts[row.key]}
                             </Text>
                           </View>
                         </View>
-                        <Text style={[TextStyles.caption, { color: colors.textSecondary, marginTop: 2 }]}>
+                        <Text style={[TextStyles.caption, { color: colors.textSecondary, marginTop: 6, lineHeight: 16 }]}>
                           {row.description}
                         </Text>
                       </Pressable>
@@ -1033,23 +1040,23 @@ const localStyles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 4,
-    marginTop: 14,
-    paddingHorizontal: 8,
+    gap: 8,
+    marginTop: 18,
+    paddingHorizontal: 12,
     maxWidth: '96%',
   },
   heroMetricNum: {
     fontFamily: FontFamily.bold,
-    fontSize: 14,
+    fontSize: 16,
     ...Platform.select({
-      web: { textShadow: '0 1px 3px rgba(0,0,0,0.75)' } as object,
+      web: { textShadow: '0 1px 4px rgba(0,0,0,0.85)' } as object,
       default: {},
     }),
   },
   heroMetricSep: {
-    color: 'rgba(255,255,255,0.35)',
-    fontSize: 11,
-    marginHorizontal: 2,
+    color: 'rgba(255,255,255,0.45)',
+    fontSize: 13,
+    marginHorizontal: 4,
     fontFamily: FontFamily.medium,
   },
   exploreRow: {
@@ -1089,10 +1096,9 @@ const localStyles = StyleSheet.create({
   topScopeRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 0,
+    gap: 6,
   },
   topScopeM3Chip: {
-    marginRight: 6,
     borderRadius: 999,
     borderColor: 'rgba(255,255,255,0.48)',
     backgroundColor: 'rgba(20,20,30,0.36)',

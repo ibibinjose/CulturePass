@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Platform } from 'react-native';
-import { Image } from 'expo-image';
+import { CultureImage } from '@/design-system/ui/CultureImage';
+
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useColors } from '@/hooks/useColors';
@@ -53,7 +54,7 @@ export function BrowseCardComponent({
     >
       <View style={isGrid ? [styles.gridImageWrap, { aspectRatio: imageRatio }] : styles.cardImage}>
         {item.imageUrl ? (
-          <Image source={{ uri: item.imageUrl }} style={StyleSheet.absoluteFillObject} contentFit="cover" transition={200} />
+          <CultureImage uri={item.imageUrl} style={StyleSheet.absoluteFillObject} transition={200} />
         ) : (
           <View style={[StyleSheet.absoluteFillObject, styles.cardImageFallback, { backgroundColor: colors.surfaceElevated, borderColor: accentColor + '35' }]}>
             <Ionicons name={accentIcon as keyof typeof Ionicons.glyphMap} size={isGrid ? 32 : 28} color={accentColor} />

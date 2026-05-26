@@ -47,12 +47,12 @@ export const CulturalFilterChip: React.FC<CulturalFilterChipProps> = ({
   // === Unselected (not clicked) colours ===
   // Improved visibility by using higher contrast colors
   const unselectedBg = isDark 
-    ? withAlpha(theme.onSurface, 0.12) // Increased opacity from 0.055 to 0.12
-    : withAlpha(theme.onSurface, 0.08); // Increased opacity from 0.05 to 0.08 for better visibility
+    ? withAlpha(theme.onSurface, 0.12)
+    : withAlpha(theme.onSurface, 0.12);
   const unselectedBorder = isDark 
-    ? withAlpha(theme.onSurface, 0.30) // Increased opacity from 0.20 to 0.30
-    : withAlpha(theme.onSurface, 0.20); // Increased opacity from 0.12 to 0.20
-  const unselectedContent = withAlpha(theme.onSurface, isDark ? 0.95 : 0.70); // Increased dark opacity from 0.90 to 0.95, light from 0.80 to 0.70
+    ? withAlpha(theme.onSurface, 0.30)
+    : withAlpha(theme.onSurface, 0.24);
+  const unselectedContent = withAlpha(theme.onSurface, isDark ? 0.95 : 0.85);
 
   // Hover (web) — subtle preview of selection
   const hoverBg = isHovered 

@@ -31,10 +31,9 @@ import { ErrorBoundary } from '@/modules/core/ui/ErrorBoundary';
 import {
   CultureTokens,
   FontFamily,
-  Radius,
-  Spacing,
   SignatureGradient,
 } from '@/design-system/tokens/theme';
+import { Radius, Spacing } from '@/design-system/tokens/spacing';
 import type { CreateShopListingInput, ShopListing, ShopListingType } from '@/shared/schema';
 import { MARKET_CATEGORIES, CULTURE_TAGS, CITY_TAGS } from '@/shared/schema/cultureShopListing';
 

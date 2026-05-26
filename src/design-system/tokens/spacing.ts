@@ -1,24 +1,24 @@
 /**
- * Consistent spacing scale and layout constants.
- * Use these tokens instead of raw numbers for maintainable layouts.
+ * Spacing tokens for the CulturePass design system
+ * Provides consistent spacing values across the application
  */
-
-/** App-wide compact density — tighter rhythm without breaking the 4px grid. */
 export const Spacing = {
-  /** 4px */
   xs: 4,
-  /** 6px */
-  sm: 6,
-  /** 12px */
-  md: 12,
-  /** 20px */
-  lg: 20,
-  /** 28px */
-  xl: 28,
-  /** 36px */
-  xxl: 36,
-  /** 44px */
-  xxxl: 44,
+  sm: 8,
+  md: 16,
+  lg: 24,
+  xl: 32,
+  xxl: 48,
+  xxxl: 64,
+} as const;
+
+/**
+ * Responsive spacing multipliers
+ */
+export const ResponsiveSpacing = {
+  mobile: 1,
+  tablet: 1.2,
+  desktop: 1.5,
 } as const;
 
 export const Radius = {
@@ -34,6 +34,28 @@ export const Radius = {
   xl: 24,
   /** 9999px — fully round (pills, avatars) */
   full: 9999,
+} as const;
+
+/**
+ * Section spacing presets
+ */
+export const SectionSpacing = {
+  compact: {
+    vertical: Spacing.md,
+    horizontal: Spacing.md,
+  },
+  regular: {
+    vertical: Spacing.xl,
+    horizontal: Spacing.lg,
+  },
+  spacious: {
+    vertical: Spacing.xxl,
+    horizontal: Spacing.xl,
+  },
+  generous: {
+    vertical: Spacing.xxxl,
+    horizontal: Spacing.xxl,
+  },
 } as const;
 
 export const Breakpoints = {
@@ -58,4 +80,47 @@ export const Layout = {
   wideBreakpoint: 768,
   /** Tab bar approximate height for bottom padding (legacy estimate; prefer `TabBarTokens` + insets in hooks) */
   tabBarHeight: 72,
+} as const;
+
+/**
+ * Card spacing presets
+ */
+export const CardSpacing = {
+  tight: {
+    padding: Spacing.sm,
+    gap: Spacing.sm,
+  },
+  regular: {
+    padding: Spacing.md,
+    gap: Spacing.md,
+  },
+  comfortable: {
+    padding: Spacing.lg,
+    gap: Spacing.md,
+  },
+  spacious: {
+    padding: Spacing.xl,
+    gap: Spacing.lg,
+  },
+} as const;
+
+/**
+ * Button spacing presets
+ */
+export const ButtonSpacing = {
+  compact: {
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    gap: Spacing.sm,
+  },
+  regular: {
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    gap: Spacing.sm,
+  },
+  spacious: {
+    paddingVertical: Spacing.lg,
+    paddingHorizontal: Spacing.xl,
+    gap: Spacing.md,
+  },
 } as const;

@@ -1,294 +1,130 @@
-import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
+import { Router, type Request, type Response } from 'express';
+import { db, isFirestoreConfigured } from '../admin';
+import { eventsService } from '../services/events';
+import { qstr, captureRouteError } from './utils';
 
-// Simple calendar service implementation for user events
-const calendarService = {
-  getUserEvents: async (userId: string, options?: { limit?: number; offset?: number; filters?: any }) => {
-    // This is a simplified implementation - in a real app you'd have proper calendar service
-    // For now, we'll return events related to the user (attending, created, etc.)
-    const { _limit, _offset, _filters } = options || {} as any;
+export const calendarRouter = Router();
+
+function formatDateToIcsString(dateStr: string, timeStr = '00:00'): string {
+  const cleanDate = dateStr.replace(/[^0-9]/g, '').slice(0, 8);
+  const cleanTime = timeStr.replace(/[^0-9]/g, '').slice(0, 4).padEnd(4, '0') + '00';
+  return `${cleanDate}T${cleanTime}`;
+}
+
+function getIcsEndString(startDateStr: string, startTimeStr: string, endDateStr?: string | null, endTimeStr?: string | null): string {
+  if (endDateStr) {
+    return formatDateToIcsString(endDateStr, endTimeStr || startTimeStr);
+  }
+  
+  const dateObj = new Date(`${startDateStr}T${startTimeStr || '00:00'}:00`);
+  if (!isNaN(dateObj.getTime())) {
+    dateObj.setHours(dateObj.getHours() + 2);
+    const yyyy = dateObj.getFullYear();
+    const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const dd = String(dateObj.getDate()).padStart(2, '0');
+    const hh = String(dateObj.getHours()).padStart(2, '0');
+    const min = String(dateObj.getMinutes()).padStart(2, '0');
+    return `${yyyy}${mm}${dd}T${hh}${min}00`;
+  }
+  
+  const cleanDate = startDateStr.replace(/[^0-9]/g, '').slice(0, 8);
+  return `${cleanDate}T020000`;
+}
+
+function escapeIcsText(text = ''): string {
+  return text
+    .replace(/\\/g, '\\\\')
+    .replace(/,/g, '\\,')
+    .replace(/;/g, '\\;')
+    .replace(/\r?\n/g, '\\n');
+}
+
+function generateIcsFeed(city: string, siteOrigin: string, events: any[]): string {
+  const lines = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//CulturePass//City Calendar//EN',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    `X-WR-CALNAME:CulturePass - ${city}`,
+    'X-WR-TIMEZONE:Australia/Sydney',
+  ];
+
+  for (const e of events) {
+    const uid = `${e.id}@culturepass.co`;
+    const dtstamp = e.createdAt ? e.createdAt.replace(/[^0-9]/g, '').slice(0, 15) + 'Z' : '20260527T000000Z';
+    const dtstart = formatDateToIcsString(e.date, e.time);
+    const dtend = getIcsEndString(e.date, e.time, e.endDate, e.endTime);
+    const summary = escapeIcsText(e.title);
+    const location = escapeIcsText((e.venue || '') + (e.address ? `, ${e.address}` : '') + `, ${e.city} ${e.state || ''}`);
+    const eventUrl = `${siteOrigin}/event/${e.id}`;
     
-    // In a real implementation, this would query user's calendar events
-    // For now, we'll return an empty list to allow compilation
-    return {
-      items: [] as any[],
-      total: 0,
-      hasMore: false,
-    };
-  },
-  
-  // Adding missing methods that the handler expects
-  getEventById: async (eventId: string, userId: string) => {
-    // Placeholder implementation
-    return null;
-  },
-  
-  verifyUserEvent: async (eventId: string, userId: string) => {
-    // Placeholder implementation
-    return null;
-  },
-  
-  create: async (calendarEventData: any) => {
-    // Placeholder implementation
-    return calendarEventData;
-  },
-  
-  update: async (eventId: string, calendarEventData: any) => {
-    // Placeholder implementation
-    return calendarEventData;
-  },
-  
-  delete: async (eventId: string, userId: string) => {
-    // Placeholder implementation
-    return true;
-  },
-  
-  getEventsByDateRange: async (userId: string, startDate: string, endDate: string) => {
-    // Placeholder implementation
-    return [];
-  },
-};
-
-export async function getCalendarEvents(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
-  try {
-    const { userId, startDate, endDate, limit, offset } = event.queryStringParameters || {};
-    
-    if (!userId) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'User ID is required' }),
-      };
+    let descriptionText = e.description || '';
+    if (descriptionText) {
+      if (descriptionText.length > 300) {
+        descriptionText = descriptionText.slice(0, 300) + '...';
+      }
     }
+    descriptionText += `\n\nMore details and tickets: ${eventUrl}`;
+    const description = escapeIcsText(descriptionText);
 
-    const filters = {
-      startDate: startDate ? new Date(startDate) : undefined,
-      endDate: endDate ? new Date(endDate) : undefined,
-    };
-
-    const calendarEvents = await calendarService.getUserEvents(userId, {
-      limit: limit ? parseInt(limit, 10) : undefined,
-      offset: offset ? parseInt(offset, 10) : undefined,
-      filters,
-    });
-
-    return {
-      statusCode: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-      },
-      body: JSON.stringify(calendarEvents),
-    };
-  } catch (error) {
-    console.error('Error fetching calendar events:', error);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: 'Failed to fetch calendar events' }),
-    };
+    lines.push('BEGIN:VEVENT');
+    lines.push(`UID:${uid}`);
+    lines.push(`DTSTAMP:${dtstamp}`);
+    lines.push(`DTSTART:${dtstart}`);
+    lines.push(`DTEND:${dtend}`);
+    lines.push(`SUMMARY:${summary}`);
+    lines.push(`DESCRIPTION:${description}`);
+    lines.push(`LOCATION:${location}`);
+    lines.push(`URL;VALUE=URI:${eventUrl}`);
+    lines.push('END:VEVENT');
   }
+
+  lines.push('END:VCALENDAR');
+  return lines.join('\r\n');
 }
 
-export async function getCalendarEventById(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
+calendarRouter.get('/calendar/city.ics', async (req: Request, res: Response) => {
   try {
-    const eventId = event.pathParameters?.eventId;
-    const userId = event.queryStringParameters?.userId;
+    const city = qstr(req.query.city).trim();
+    const country = qstr(req.query.country).trim() || 'Australia';
 
-    if (!eventId) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'Event ID is required' }),
-      };
+    if (!city) {
+      return res.status(400).send('City query parameter is required');
     }
 
-    if (!userId) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'User ID is required' }),
-      };
+    const originHeader = req.headers.host;
+    let siteOrigin = 'https://culturepass.co';
+    if (originHeader) {
+      if (originHeader.includes('culturekerala.com')) {
+        siteOrigin = 'https://culturekerala.com';
+      } else if (originHeader.includes('culturepass.app')) {
+        siteOrigin = 'https://culturepass.app';
+      } else if (originHeader.includes('localhost') || originHeader.includes('127.0.0.1')) {
+        siteOrigin = `http://${originHeader}`;
+      }
     }
 
-    const calendarEvent = await calendarService.getEventById(eventId, userId);
-    if (!calendarEvent) {
-      return {
-        statusCode: 404,
-        body: JSON.stringify({ error: 'Calendar event not found' }),
-      };
+    if (!isFirestoreConfigured) {
+      const emptyIcs = generateIcsFeed(city, siteOrigin, []);
+      res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="${city.toLowerCase().replace(/\s+/g, '_')}_calendar.ics"`);
+      return res.send(emptyIcs);
     }
 
-    return {
-      statusCode: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-      },
-      body: JSON.stringify(calendarEvent),
-    };
-  } catch (error) {
-    console.error('Error fetching calendar event:', error);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: 'Failed to fetch calendar event' }),
-    };
+    const result = await eventsService.list(
+      { city, country, status: 'published' },
+      { page: 1, pageSize: 200 }
+    );
+
+    const icsContent = generateIcsFeed(city, siteOrigin, result.items);
+
+    res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${city.toLowerCase().replace(/\s+/g, '_')}_calendar.ics"`);
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    return res.send(icsContent);
+  } catch (err) {
+    captureRouteError(err, 'GET /calendar/city.ics');
+    return res.status(500).send('Failed to generate calendar feed');
   }
-}
-
-export async function createCalendarEvent(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
-  try {
-    const userId = event.pathParameters?.userId;
-    if (!userId) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'User ID is required' }),
-      };
-    }
-
-    const requestData = JSON.parse(event.body || '{}');
-    
-    // Create calendar event data structure without using parse method
-    const calendarEventData = {
-      userId,
-      eventId: requestData.eventId,
-      title: requestData.title,
-      startDate: requestData.startDate,
-      endDate: requestData.endDate,
-      isAllDay: requestData.isAllDay || false,
-      notes: requestData.notes || '',
-      reminderTime: requestData.reminderTime,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-
-    const newCalendarEvent = await calendarService.create(calendarEventData);
-
-    return {
-      statusCode: 201,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-      },
-      body: JSON.stringify(newCalendarEvent),
-    };
-  } catch (error) {
-    console.error('Error creating calendar event:', error);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: 'Failed to create calendar event' }),
-    };
-  }
-}
-
-export async function updateCalendarEvent(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
-  try {
-    const userId = event.pathParameters?.userId;
-    const eventId = event.pathParameters?.eventId;
-    if (!userId || !eventId) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'User ID and Event ID are required' }),
-      };
-    }
-
-    const requestData = JSON.parse(event.body || '{}');
-    
-    // Create calendar event data structure without using parse method
-    const calendarEventData = {
-      userId,
-      eventId,
-      title: requestData.title,
-      startDate: requestData.startDate,
-      endDate: requestData.endDate,
-      isAllDay: requestData.isAllDay || false,
-      notes: requestData.notes || '',
-      reminderTime: requestData.reminderTime,
-      updatedAt: new Date().toISOString()
-    };
-
-    const updatedCalendarEvent = await calendarService.update(eventId, calendarEventData);
-
-    return {
-      statusCode: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-      },
-      body: JSON.stringify(updatedCalendarEvent),
-    };
-  } catch (error) {
-    console.error('Error updating calendar event:', error);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: 'Failed to update calendar event' }),
-    };
-  }
-}
-
-export async function deleteCalendarEvent(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
-  try {
-    const eventId = event.pathParameters?.eventId;
-    const userId = event.queryStringParameters?.userId;
-
-    if (!eventId) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'Event ID is required' }),
-      };
-    }
-
-    if (!userId) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'User ID is required' }),
-      };
-    }
-
-    await calendarService.delete(eventId, userId);
-
-    return {
-      statusCode: 204,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-      },
-      body: '',
-    };
-  } catch (error) {
-    console.error('Error deleting calendar event:', error);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: 'Failed to delete calendar event' }),
-    };
-  }
-}
-
-export async function getCalendarEventsByDateRange(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
-  try {
-    const userId = event.pathParameters?.userId;
-    if (!userId) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'User ID is required' }),
-      };
-    }
-
-    const { startDate, endDate } = event.queryStringParameters || {};
-    
-    // Convert dates to strings if they're Date objects
-    const startStr = startDate || new Date().toISOString();
-    const endStr = endDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(); // Next week
-
-    const calendarEvents = await calendarService.getEventsByDateRange(userId, startStr, endStr);
-
-    return {
-      statusCode: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-      },
-      body: JSON.stringify(calendarEvents),
-    };
-  } catch (error) {
-    console.error('Error fetching calendar events by date range:', error);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: 'Failed to fetch calendar events by date range' }),
-    };
-  }
-}
+});

@@ -12,7 +12,9 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
+import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 
 import { useM3Colors } from '@/hooks/useM3Colors';
 import { useImageUpload } from '@/hooks/useImageUpload';
@@ -214,44 +216,62 @@ export function ImageGalleryPicker({
               )}
             </Pressable>
 
-            {/* Gradient default tiles */}
             {DEFAULT_IMAGE_CONFIGS.map((config) => {
               const isSelected = currentDefaultKey === config.key;
               return (
                 <Pressable
                   key={config.key}
                   onPress={() => handleSelectDefault(config.key)}
-                  style={[styles.tile, { width: tileSize, height: tileSize }]}
+                  style={[styles.tile, { width: tileSize, height: tileSize, borderColor: isSelected ? m3Colors.primary : m3Colors.outlineVariant }]}
                   accessibilityRole="button"
                   accessibilityLabel={`Select ${config.label} default image`}
                   accessibilityState={{ selected: isSelected }}
                 >
-                  <LinearGradient
-                    colors={config.gradientColors as readonly [string, string]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={styles.gradientFill}
-                  >
-                    <Ionicons
-                      name={config.icon as keyof typeof Ionicons.glyphMap}
-                      size={24}
-                      color="rgba(255,255,255,0.9)"
-                    />
-                    <Text style={styles.gradientLabel}>{config.label}</Text>
-
-                    {isSelected && (
-                      <View style={styles.checkOverlay}>
-                        <View
-                          style={[
-                            styles.checkCircle,
-                            { backgroundColor: m3Colors.primary },
-                          ]}
-                        >
-                          <Ionicons name="checkmark" size={14} color={m3Colors.onPrimary} />
-                        </View>
+                  {config.gradientColors ? (
+                    <LinearGradient
+                      colors={config.gradientColors as readonly [string, string]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={styles.gradientFill}
+                    >
+                      <Ionicons
+                        name={config.icon as keyof typeof Ionicons.glyphMap}
+                        size={24}
+                        color="rgba(255,255,255,0.9)"
+                      />
+                      <Text style={styles.gradientLabel}>{config.label}</Text>
+                    </LinearGradient>
+                  ) : (
+                    <View style={StyleSheet.absoluteFillObject}>
+                      <Image
+                        source={config.imageAsset}
+                        style={StyleSheet.absoluteFillObject}
+                        contentFit="cover"
+                      />
+                      <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0,0,0,0.3)' }]} />
+                      <View style={styles.gradientFill}>
+                        <Ionicons
+                          name={config.icon as keyof typeof Ionicons.glyphMap}
+                          size={24}
+                          color="rgba(255,255,255,0.9)"
+                        />
+                        <Text style={styles.gradientLabel}>{config.label}</Text>
                       </View>
-                    )}
-                  </LinearGradient>
+                    </View>
+                  )}
+
+                  {isSelected && (
+                    <View style={styles.checkOverlay}>
+                      <View
+                        style={[
+                          styles.checkCircle,
+                          { backgroundColor: m3Colors.primary },
+                        ]}
+                      >
+                        <Ionicons name="checkmark" size={14} color={m3Colors.onPrimary} />
+                      </View>
+                    </View>
+                  )}
                 </Pressable>
               );
             })}

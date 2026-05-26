@@ -164,7 +164,12 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth * 2,
     overflow: 'hidden',
   },
-  formCardDesktop: { maxWidth: 540 },
+  formCardDesktop: { 
+    maxWidth: 540,
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.lg,
+    paddingBottom: Spacing.xl,
+  },
   formCardInner: {
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.lg,

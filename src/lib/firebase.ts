@@ -139,7 +139,7 @@ export const auth: Auth | null = (() => {
 export const db: Firestore | null = firebaseApp ? getFirestore(firebaseApp) : null;
 export const storage: FirebaseStorage | null = firebaseApp ? getStorage(firebaseApp) : null;
 export const functions: Functions | null = firebaseApp
-  ? getFunctions(firebaseApp, 'us-central1')
+  ? getFunctions(firebaseApp, 'australia-southeast1')
   : null;
 
 let emulatorsConnected = false;

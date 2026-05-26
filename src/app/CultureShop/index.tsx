@@ -34,11 +34,10 @@ import { DailyDealSquareTile } from '@/modules/marketplace/DailyDealSquareTile';
 import {
   CultureTokens,
   FontFamily,
-  Radius,
-  Spacing,
   SignatureGradient,
   TextStyles,
 } from '@/design-system/tokens/theme';
+import { Radius, Spacing } from '@/design-system/tokens/spacing';
 import type { DailyDeal } from '@/shared/schema';
 import { APP_NAME, SITE_ORIGIN } from '@/lib/app-meta';
 

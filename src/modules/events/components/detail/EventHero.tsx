@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, Text, Pressable, Platform } from 'react-native';
-import { Image } from 'expo-image';
+import { CultureImage } from '@/design-system/ui/CultureImage';
+
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import type { EventData } from '@/shared/schema';
@@ -56,10 +57,9 @@ export function EventHero({
     <View style={[styles.container, { height }]}>
       {heroDisplayUri ? (
         <Animated.View entering={FadeIn.duration(600)} style={StyleSheet.absoluteFill}>
-          <Image
-            source={{ uri: heroDisplayUri }}
+          <CultureImage
+            uri={heroDisplayUri}
             style={StyleSheet.absoluteFill}
-            contentFit="cover"
             transition={300}
           />
         </Animated.View>

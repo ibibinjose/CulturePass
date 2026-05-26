@@ -202,7 +202,9 @@ function RootLayoutNav() {
   return (
     <>
       <NavigationMetadata />
-      {stackContent}
+      <View style={{ padding: 16 }}>
+        {stackContent}
+      </View>
     </>
   );
 }

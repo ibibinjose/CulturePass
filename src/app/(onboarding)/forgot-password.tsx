@@ -263,16 +263,19 @@ const styles = StyleSheet.create({
   keyboardAvoid: { flex: 1 },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 20,
+    paddingHorizontal: Spacing.md,
     justifyContent: 'center',
     paddingTop: 12,
   },
-  scrollContentDesktop: { paddingVertical: 60 },
+  scrollContentDesktop: { 
+    paddingVertical: Spacing.xl,
+    paddingHorizontal: Spacing.xxl
+  },
   cardWrap: { width: '100%', maxWidth: 420, alignSelf: 'center' },
 
   brandBlock: {
     alignItems: 'center',
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.lg,
   },
   headerBlock: {
     alignItems: 'center',
@@ -300,7 +303,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 21,
   },
-  formBlock: { gap: Spacing.md },
+  formBlock: { gap: Spacing.lg },
   submitBtn: { height: 56, borderRadius: CardTokens.radius },
   backRow: {
     flexDirection: 'row',

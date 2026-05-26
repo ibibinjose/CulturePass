@@ -506,7 +506,7 @@ export default function FounderStory() {
             end={{ x: 1, y: 1 }}
             style={StyleSheet.absoluteFill}
           />
-          <View style={{ ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.45)' }} />
+          <View style={{ ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0,0,0,0.45)' }} />
           <FloatingOrb color="white" size={200} style={{ top: -60, right: -60, opacity: 0.06 }} />
 
           <Animated.View entering={FadeInUp.duration(600)} style={[styles.closeInner, { maxWidth: isDesktop ? 680 : '100%' }]}>

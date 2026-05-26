@@ -51,10 +51,10 @@ export function ScannerCameraPanel({
   return (
     <Animated.View
       entering={FadeIn.duration(220)}
-      style={[styles.wrap, fullscreen && StyleSheet.absoluteFillObject]}
+      style={[styles.wrap, fullscreen && StyleSheet.absoluteFill]}
     >
       <CameraView
-        style={StyleSheet.absoluteFillObject}
+        style={StyleSheet.absoluteFill}
         facing="back"
         barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
         onBarcodeScanned={scanningEnabled ? onBarcodeScanned : undefined}
@@ -63,7 +63,7 @@ export function ScannerCameraPanel({
       <LinearGradient
         colors={['rgba(0,0,0,0.65)', 'transparent', 'rgba(0,0,0,0.75)']}
         locations={[0, 0.42, 1]}
-        style={StyleSheet.absoluteFillObject}
+        style={StyleSheet.absoluteFill}
         pointerEvents="none"
       />
 
@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
     fontFamily: FontFamily.semibold,
   },
   center: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     alignItems: 'center',
     justifyContent: 'center',
     paddingBottom: 24,

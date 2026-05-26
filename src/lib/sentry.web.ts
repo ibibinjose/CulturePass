@@ -28,7 +28,7 @@ export function initSentry() {
     dsn: SENTRY_DSN,
     environment: isDev ? 'development' : process.env.EXPO_PUBLIC_ENV || 'production',
     release: `${release}@${Platform.OS}`,
-    enableAutoSessionTracking: true,
+    autoSessionTracking: true,
     sessionTrackingIntervalMillis: 30000,
     tracesSampleRate: isDev ? 1.0 : 0.1,
     beforeSend(event, hint) {

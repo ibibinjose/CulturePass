@@ -388,7 +388,7 @@ export function CommunityWebDesktopLayout({
         colors={isDark ? ['#030711', '#0c1a32', CultureTokens.indigo + '33'] : ['#FFFBF7', '#F5F5F4']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFillObject}
+        style={StyleSheet.absoluteFill}
       />
       {/* Flex wrapper: LinearGradient on web may not shrink; minHeight:0 enables nested ScrollView scroll */}
       <View style={styles.pageInner}>
@@ -1153,7 +1153,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.2)',
   },
   patternOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     opacity: 0.08,
     backgroundColor: 'transparent',
     // subtle dots
@@ -1324,8 +1324,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.2)',
   },
-  trendThumb: { ...StyleSheet.absoluteFillObject },
-  trendGrad: { ...StyleSheet.absoluteFillObject },
+  trendThumb: { ...StyleSheet.absoluteFill },
+  trendGrad: { ...StyleSheet.absoluteFill },
   trendBody: { position: 'absolute', left: 0, right: 0, bottom: 0, padding: 14 },
   trendTitle: { color: '#fff', fontFamily: FontFamily.bold, fontSize: 15, lineHeight: 20 },
   trendMeta: { marginTop: 8 },

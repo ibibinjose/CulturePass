@@ -87,7 +87,7 @@ function Option({
 
 const styles = StyleSheet.create({
   root: { flex: 1, justifyContent: 'flex-end' },
-  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.45)' },
+  backdrop: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0,0,0,0.45)' },
   sheet: { maxHeight: '55%', paddingHorizontal: 20, paddingBottom: 24, gap: 12 },
   handle: { width: 36, height: 4, borderRadius: 2, alignSelf: 'center', marginTop: 10 },
   title: { fontSize: 22, fontFamily: FontFamily.bold, letterSpacing: -0.4 },

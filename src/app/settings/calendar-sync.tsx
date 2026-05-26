@@ -137,7 +137,7 @@ export default function CalendarSyncScreen() {
         <Stack.Screen options={{ headerShown: false }} />
         <LinearGradient
             colors={[`${colors.primary}08`, 'transparent']}
-            style={StyleSheet.absoluteFillObject}
+            style={StyleSheet.absoluteFill}
             pointerEvents="none"
         />
 
@@ -415,7 +415,7 @@ const styles = StyleSheet.create({
   actionsRow: { flexDirection: 'row', gap: 12 },
 
   syncOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 100,

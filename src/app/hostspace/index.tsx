@@ -542,7 +542,7 @@ function HostspaceWorkspace() {
       />
       <LinearGradient
         colors={[CultureTokens.indigo + '10', CultureTokens.teal + '08', colors.background]}
-        style={StyleSheet.absoluteFillObject}
+        style={StyleSheet.absoluteFill}
         pointerEvents="none"
       />
 

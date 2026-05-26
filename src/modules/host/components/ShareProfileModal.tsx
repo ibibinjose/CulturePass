@@ -164,7 +164,7 @@ export function ShareProfileModal({
   return (
     <View style={styles.overlay}>
       <Pressable
-        style={StyleSheet.absoluteFillObject}
+        style={StyleSheet.absoluteFill}
         onPress={onDismiss}
         accessibilityRole="button"
         accessibilityLabel="Close share modal"
@@ -616,7 +616,7 @@ function ToggleButton({ label, active, onPress, colors }: ToggleButtonProps) {
 
 const styles = StyleSheet.create({
   overlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(0,0,0,0.7)',
     justifyContent: 'center',
     alignItems: 'center',

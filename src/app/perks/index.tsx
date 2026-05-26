@@ -422,7 +422,7 @@ const card = StyleSheet.create({
   },
   discountText: { fontFamily: FontFamily.bold, fontSize: 11 },
   expiredOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(0,0,0,0.55)',
     alignItems: 'center', justifyContent: 'center',
   },

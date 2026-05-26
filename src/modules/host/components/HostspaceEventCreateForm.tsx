@@ -728,13 +728,13 @@ function EventPreviewCard({ draft, colors }: { draft: EventDraft; colors: any })
         <View style={styles.previewImageArea}>
            <CultureImage
              uri={draft.heroImageUrl}
-             style={StyleSheet.absoluteFillObject}
+             style={StyleSheet.absoluteFill}
              placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }}
            />
            <LinearGradient
              colors={['rgba(0,0,0,0.1)', 'rgba(0,0,0,0.4)', 'rgba(0,0,0,0.92)']}
              locations={[0, 0.4, 1]}
-             style={StyleSheet.absoluteFillObject}
+             style={StyleSheet.absoluteFill}
            />
            <View style={styles.previewBadge}>
              <Text style={styles.previewBadgeText}>{draft.category.toUpperCase()}</Text>

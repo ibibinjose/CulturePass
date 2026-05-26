@@ -53,7 +53,7 @@ export default function NotificationSettingsScreen() {
       <Stack.Screen options={{ headerShown: false }} />
       <LinearGradient
         colors={[`${colors.primary}08`, 'transparent']}
-        style={StyleSheet.absoluteFillObject}
+        style={StyleSheet.absoluteFill}
         pointerEvents="none"
       />
 

@@ -11,11 +11,12 @@ import { router, Stack } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInUp } from 'react-native-reanimated';
+import { Ionicons } from '@expo/vector-icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useColors } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
-import { CultureTokens, Spacing, TextStyles } from '@/design-system/tokens/theme';
+import { CultureTokens, Spacing, Radius, TextStyles } from '@/design-system/tokens/theme';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import {
@@ -332,7 +333,7 @@ export function HostspaceCreateWorkspace({ initialCategory }: { initialCategory?
       <Stack.Screen options={{ title: 'Culture Business Hub | CulturePass', headerShown: false }} />
       <LinearGradient
         colors={[CultureTokens.indigo + '12', CultureTokens.teal + '06', colors.background]}
-        style={StyleSheet.absoluteFillObject}
+        style={StyleSheet.absoluteFill}
       />
 
       <HostspaceCreateTopChrome liveListingCount={liveListingCount} listingCountLoading={listingCountLoading} />

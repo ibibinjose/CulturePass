@@ -14,10 +14,10 @@ export function CultureWalletMap({ cultures: _cultures }: { cultures: CultureWal
     <View style={[styles.container, { backgroundColor: colors.surface }]}>
       <Image
         source={{ uri: 'https://images.unsplash.com/photo-1521295121783-8a321d551ad2?q=80&w=800' }}
-        style={StyleSheet.absoluteFillObject}
+        style={StyleSheet.absoluteFill}
         contentFit="cover"
       />
-      <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFillObject} />
+      <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
       <View style={styles.overlay}>
         <Ionicons name="map-outline" size={40} color="#fff" style={{ opacity: 0.5 }} />
         <Text style={styles.text}>Interactive Map on App</Text>

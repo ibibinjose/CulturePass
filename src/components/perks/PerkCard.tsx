@@ -71,7 +71,7 @@ function PerkCardInner({ perk, containerWidth, highlight, perkStatus, requiredTi
         <CultureImage
           uri={perk.coverUrl}
           thumbhash={perk.thumbhash}
-          style={StyleSheet.absoluteFillObject}
+          style={StyleSheet.absoluteFill}
           contentFit="cover"
           recyclingKey={`perk-${perk.id}`}
         />

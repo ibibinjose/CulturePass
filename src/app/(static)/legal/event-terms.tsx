@@ -54,7 +54,7 @@ export default function EventListingTermsScreen() {
 }
 
 const legalAmbient = StyleSheet.create({
-  mesh: { ...StyleSheet.absoluteFillObject, opacity: 0.07 },
+  mesh: { ...StyleSheet.absoluteFill, opacity: 0.07 },
 });
 
 const getStyles = (colors: ReturnType<typeof useColors>) => StyleSheet.create({

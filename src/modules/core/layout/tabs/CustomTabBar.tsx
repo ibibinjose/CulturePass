@@ -31,7 +31,7 @@ import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 type Route<T extends string, P extends object | undefined = object | undefined> = {
   key: string;
   name: T;
-  params: P;
+  params?: P;
   path?: string;
 };
 

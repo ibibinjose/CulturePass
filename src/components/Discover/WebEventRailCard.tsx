@@ -32,7 +32,7 @@ function WebEventRailCard({ event }: WebEventRailCardProps) {
       <LinearGradient
         colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.25)', 'rgba(0,0,0,0.88)']}
         locations={[0.3, 0.6, 1]}
-        style={StyleSheet.absoluteFillObject}
+        style={StyleSheet.absoluteFill}
       />
       {dateChip ? (
         <View style={styles.webRailDateChip}>

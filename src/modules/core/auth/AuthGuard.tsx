@@ -111,7 +111,7 @@ export function AuthGuard({
           <View style={[styles.iconWrap, { backgroundColor: colors.primarySoft, borderColor: colors.borderLight }]}>
             <LinearGradient
               colors={[CultureTokens.indigo + '28', CultureTokens.teal + '22']}
-              style={StyleSheet.absoluteFillObject}
+              style={StyleSheet.absoluteFill}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
             />
@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   ambientMesh: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     opacity: 0.06,
   },
   backChip: {

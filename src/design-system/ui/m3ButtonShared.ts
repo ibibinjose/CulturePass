@@ -14,6 +14,7 @@ export type M3Variant = 'filled' | 'tonal' | 'outlined' | 'elevated' | 'text' | 
 
 export interface M3ButtonProps extends Omit<PressableProps, 'style'> {
   variant?: M3Variant;
+  size?: 'sm' | 'md' | 'lg';
   leftIcon?: keyof typeof Ionicons.glyphMap;
   rightIcon?: keyof typeof Ionicons.glyphMap;
   loading?: boolean;
@@ -76,6 +77,14 @@ export function resolveM3ButtonVisuals(
 export const m3ButtonLayout = {
   buttonHeight: ButtonTokens.height.md,
   radius: MaterialExpressive.shape.full,
+};
+
+export const getM3ButtonSize = (size: 'sm' | 'md' | 'lg' = 'md') => {
+  return {
+    height: ButtonTokens.height[size],
+    fontSize: ButtonTokens.fontSize[size],
+    paddingH: ButtonTokens.paddingH[size],
+  };
 };
 
 export const m3ButtonStyles = StyleSheet.create({

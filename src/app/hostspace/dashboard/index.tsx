@@ -173,7 +173,7 @@ function HostDashboard() {
       <Stack.Screen options={{ title: 'Host Dashboard | CulturePass', headerShown: false }} />
       <LinearGradient
         colors={[CultureTokens.indigo + '08', 'transparent']}
-        style={StyleSheet.absoluteFillObject}
+        style={StyleSheet.absoluteFill}
         pointerEvents="none"
       />
 

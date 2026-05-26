@@ -62,13 +62,13 @@ export function DefaultHostBrandMark({
         colors={PRIMARY[idx]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFillObject}
+        style={StyleSheet.absoluteFill}
       />
       <LinearGradient
         colors={OVERLAY[idx]}
         start={{ x: 1, y: 0 }}
         end={{ x: 0, y: 1 }}
-        style={[StyleSheet.absoluteFillObject, { opacity: 0.55 }]}
+        style={[StyleSheet.absoluteFill, { opacity: 0.55 }]}
       />
       <View
         style={[

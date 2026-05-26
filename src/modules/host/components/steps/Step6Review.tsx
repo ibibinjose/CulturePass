@@ -39,7 +39,7 @@ import type { HostEntityType } from '@/shared/schema/hostTypes';
 
 // Creator Trust: Final verification impact banner before publish decision
 import { VerificationStatusBanner, type VerificationStatus } from '../VerificationStatusBanner';
-import { trackVerificationStatusViewed } from '../services/formAnalyticsService';
+import { trackVerificationStatusViewed } from '../../services/formAnalyticsService';
 
 // ---------------------------------------------------------------------------
 // Types

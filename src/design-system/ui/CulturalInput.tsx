@@ -167,4 +167,6 @@ export const CulturalInput = forwardRef<TextInput, CulturalInputProps>(({
   );
 });
 
+CulturalInput.displayName = 'CulturalInput';
+
 export default CulturalInput;

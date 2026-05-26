@@ -64,7 +64,7 @@ function CityCard({ city, onPress, width, height }: CityCardProps) {
     >
       <Image
         source={{ uri: imageUri }}
-        style={StyleSheet.absoluteFillObject}
+        style={StyleSheet.absoluteFill}
         contentFit="cover"
         transition={200}
         onError={() => {
@@ -78,7 +78,7 @@ function CityCard({ city, onPress, width, height }: CityCardProps) {
       <LinearGradient
         colors={['transparent', 'rgba(0,0,0,0.5)', 'rgba(0,0,0,0.85)']}
         locations={[0.2, 0.6, 1]}
-        style={StyleSheet.absoluteFillObject}
+        style={StyleSheet.absoluteFill}
       />
       <View style={styles.content}>
         <View style={styles.cityTextRibbon}>

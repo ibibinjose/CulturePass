@@ -25,6 +25,26 @@ We are building this with the same standards of engineering discipline, user tru
 | **Admin & Operations**  | Production (good for small team)| Major operational hardening in Phase 2 |
 | **Two-Layer Approvals** | Production                      | Host Applications + Verification Tasks with audit |
 | **Architecture**        | Documented                      | See `docs/ARCHITECTURE.md` + ADRs |
+| **UI/UX Enhancements**  | Production                      | Responsive design, improved accessibility, consistent footers |
+| **Design System**       | Production                      | Comprehensive spacing tokens, responsive utilities |
+
+---
+
+## Features
+
+### Core Features
+- **Event Discovery**: Find cultural events tailored to your community interests
+- **Venue Connections**: Discover and connect with cultural venues worldwide
+- **Community Building**: Join and participate in cultural communities
+- **Personalized Recommendations**: Curated content based on your cultural interests
+- **Multi-platform Support**: Seamless experience across iOS, Android, and Web
+
+### Recent Improvements
+- **Enhanced UI/UX**: Improved spacing and responsive design for desktop and mobile
+- **Consistent Footer**: Unified footer component across all pages with navigation, legal, and social links
+- **Accessibility**: Enhanced accessibility features and improved user experience
+- **Performance**: Optimized loading times and smoother navigation
+- **Cultural Sensitivity**: Respectful representation of diverse cultural communities
 
 ---
 
@@ -90,6 +110,12 @@ shared/
 └── schema/               # Single source of truth for domain models (used by client + server)
 ```
 
+### Design System Components
+- **[Footer](src/components/Footer.tsx)** - Consistent footer across all pages with navigation, legal, and social sections
+- **[Spacing Tokens](src/design-system/tokens/spacing.ts)** - Responsive spacing system for consistent layouts
+- **[Responsive Utilities](src/lib/responsive.ts)** - Utilities for managing responsive design patterns
+- **[Site Footer Links](src/lib/site-footer-links.ts)** - Centralized footer navigation management
+
 See `docs/ARCHITECTURE.md` for the full picture.
 
 ---
@@ -112,6 +138,7 @@ The full plan is available in the planning artifacts from the current engineerin
 - Major architectural changes require an ADR.
 - We are moving toward strict code ownership for high-risk areas (see future `CODEOWNERS`).
 - Documentation updates are first-class contributions.
+- UI/UX improvements should maintain consistency with the design system and cultural sensitivity guidelines.
 
 ---
 
@@ -122,6 +149,31 @@ The full plan is available in the planning artifacts from the current engineerin
 - **Design**: Custom M3 + expressive cultural design system
 - **Payments**: Stripe (including Connect)
 - **Analytics**: PostHog
+- **State Management**: Zustand + React Hook Form
+- **Validation**: Zod + Custom Error Handling
+- **Maps**: React Native Maps
+- **QR Codes**: React Native QR Code SVG
+
+---
+
+## Quality Assurance
+
+- **Testing**: Jest for unit tests, integration, and end-to-end tests (205+ test cases)
+- **Code Quality**: ESLint + TypeScript strict mode + Prettier
+- **Security**: Firebase security rules, input validation, secure authentication
+- **Performance**: Bundle size monitoring, lazy loading, caching strategies
+- **Accessibility**: WCAG 2.1 AA compliance, screen reader support
+
+---
+
+## Cultural Sensitivity & Inclusivity
+
+CulturePass is committed to respectfully representing diverse cultural communities:
+- Inclusive design practices that honor various cultural aesthetics
+- Respectful content moderation and community guidelines
+- Multi-language support capabilities
+- Culturally-aware recommendation algorithms
+- Accessibility features for diverse user needs
 
 ---
 

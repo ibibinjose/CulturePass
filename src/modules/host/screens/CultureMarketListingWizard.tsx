@@ -485,7 +485,7 @@ function CreateListingInner({
                       colors={[opt.color + '28', opt.color + '08']}
                       start={{ x: 0, y: 0 }}
                       end={{ x: 1, y: 1 }}
-                      style={StyleSheet.absoluteFillObject}
+                      style={StyleSheet.absoluteFill}
                     />
                     {/* Left accent bar */}
                     <View style={[ss.typeCardAccentBar, { backgroundColor: opt.color }]} />
@@ -944,7 +944,7 @@ function CreateListingInner({
               colors={SignatureGradient}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
-              style={StyleSheet.absoluteFillObject}
+              style={StyleSheet.absoluteFill}
             />
             {isBusy ? (
               <ActivityIndicator color="#fff" size="small" />

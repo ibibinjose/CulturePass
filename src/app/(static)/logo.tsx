@@ -17,18 +17,18 @@ export default function LogoPage() {
       <M3TopAppBar title="Brand Logo" onBack={() => goBackOrReplace('/menu')} />
       
       {/* Sunrise ambient background */}
-      <View style={StyleSheet.absoluteFillObject}>
+      <View style={StyleSheet.absoluteFill}>
         <LinearGradient
           colors={['#D8E3EF', '#F5EBE1']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
-          style={StyleSheet.absoluteFillObject}
+          style={StyleSheet.absoluteFill}
         />
         <LinearGradient
           colors={['transparent', '#F5F6F8', '#F5F6F8']}
           start={{ x: 0, y: 0 }}
           end={{ x: 0, y: 0.7 }}
-          style={StyleSheet.absoluteFillObject}
+          style={StyleSheet.absoluteFill}
         />
       </View>
 

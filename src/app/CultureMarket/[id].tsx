@@ -93,9 +93,9 @@ function HeroHostMark({ listing }: { listing: ShopListing }) {
   }
 
   const inner = logo ? (
-    <Image source={{ uri: logo }} style={StyleSheet.absoluteFillObject} contentFit="contain" />
+    <Image source={{ uri: logo }} style={StyleSheet.absoluteFill} contentFit="contain" />
   ) : (
-    <Image source={{ uri: avatar! }} style={StyleSheet.absoluteFillObject} contentFit="cover" />
+    <Image source={{ uri: avatar! }} style={StyleSheet.absoluteFill} contentFit="cover" />
   );
 
   return (
@@ -284,14 +284,14 @@ function ListingDetailInner() {
           {listing.imageUrl ? (
             <Image
               source={{ uri: listing.imageUrl }}
-              style={StyleSheet.absoluteFillObject}
+              style={StyleSheet.absoluteFill}
               contentFit="cover"
             />
           ) : (
             <LinearGradient
               colors={grad}
               start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-              style={StyleSheet.absoluteFillObject}
+              style={StyleSheet.absoluteFill}
             />
           )}
           {/* Type badge overlay */}
@@ -346,7 +346,7 @@ function ListingDetailInner() {
               {listing.logoUrl?.trim() || listing.sellerAvatarUrl?.trim() ? (
                 <Image
                   source={{ uri: (listing.logoUrl?.trim() || listing.sellerAvatarUrl) ?? '' }}
-                  style={StyleSheet.absoluteFillObject}
+                  style={StyleSheet.absoluteFill}
                   contentFit={listing.logoUrl?.trim() ? 'contain' : 'cover'}
                 />
               ) : (
@@ -471,7 +471,7 @@ function ListingDetailInner() {
             <LinearGradient
               colors={SignatureGradient}
               start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-              style={StyleSheet.absoluteFillObject}
+              style={StyleSheet.absoluteFill}
             />
             <Ionicons name={primaryIcon} size={20} color="#fff" />
             <Text style={styles.ctaPrimaryText}>{primaryLabel}</Text>

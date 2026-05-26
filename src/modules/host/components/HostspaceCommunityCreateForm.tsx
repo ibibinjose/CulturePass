@@ -655,7 +655,7 @@ function CommunityPreviewCard({ draft, colors }: { draft: CommunityDraft; colors
       <View style={[styles.previewCover, { backgroundColor: accent + '20' }]}>
         <LinearGradient
           colors={[accent + '40', 'transparent']}
-          style={StyleSheet.absoluteFillObject}
+          style={StyleSheet.absoluteFill}
         />
         <Ionicons name="people" size={48} color={accent} />
         <View style={[styles.previewTypeBadge, { backgroundColor: accent }]}>

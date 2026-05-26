@@ -178,7 +178,7 @@ export default function NationBuildersProgramScreen() {
             onPress={handleJoinPress}
             style={styles.ctaButton}
           >
-            I'm a Business / Venue Owner — Become a Partner
+            {"I'm a Business / Venue Owner — Become a Partner"}
           </M3Button>
 
           <M3Button 
@@ -186,7 +186,7 @@ export default function NationBuildersProgramScreen() {
             onPress={handleStaffClaim}
             style={styles.ctaButton}
           >
-            I'm Staff / Essential Worker — Claim My 50% Off
+            {"I'm Staff / Essential Worker — Claim My 50% Off"}
           </M3Button>
           
           <Text style={[styles.hashtagText, { color: m3Colors.onSurfaceVariant, textAlign: 'center', marginTop: 16 }]}>

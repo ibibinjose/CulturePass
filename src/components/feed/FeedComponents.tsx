@@ -292,7 +292,7 @@ function GuestBanner({ colors }: { colors: ReturnType<typeof useColors> }) {
     >
       <LinearGradient
         colors={[CultureTokens.indigo + '14', CultureTokens.teal + '0C']}
-        style={StyleSheet.absoluteFillObject}
+        style={StyleSheet.absoluteFill}
         start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
       />
       <View style={[gst.iconWrap, { backgroundColor: CultureTokens.indigo + '20' }]}>
@@ -338,7 +338,7 @@ function TrendingInterstitial({ city, colors }: { city: string; colors: ReturnTy
     >
       <LinearGradient
         colors={[CultureTokens.gold + '12', CultureTokens.coral + '08']}
-        style={StyleSheet.absoluteFillObject}
+        style={StyleSheet.absoluteFill}
         start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
       />
       <View style={[ti.iconWrap, { backgroundColor: CultureTokens.gold + '20' }]}>

@@ -83,7 +83,7 @@ export function ContactsLookupDialog({
 
 const styles = StyleSheet.create({
   root: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
-  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.55)' },
+  backdrop: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0,0,0,0.55)' },
   dialog: {
     width: '100%',
     maxWidth: 400,

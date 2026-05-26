@@ -104,7 +104,7 @@ export function ShopListingCard({ listing, width, onPress, onSave, saved }: Prop
           {listing.imageUrl ? (
             <Image
               source={{ uri: listing.imageUrl }}
-              style={StyleSheet.absoluteFillObject}
+              style={StyleSheet.absoluteFill}
               contentFit="cover"
               transition={150}
               recyclingKey={`shop-${listing.id}`}
@@ -114,7 +114,7 @@ export function ShopListingCard({ listing, width, onPress, onSave, saved }: Prop
               colors={grad}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              style={StyleSheet.absoluteFillObject}
+              style={StyleSheet.absoluteFill}
             />
           )}
 

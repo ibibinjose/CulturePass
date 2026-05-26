@@ -30,7 +30,7 @@ const heroReadableShadow = Platform.select({
 });
 
 export const cityAmbient = StyleSheet.create({
-  mesh: { ...StyleSheet.absoluteFillObject, opacity: 0.06 },
+  mesh: { ...StyleSheet.absoluteFill, opacity: 0.06 },
 });
 
 export function StatPill({
@@ -120,7 +120,7 @@ export function getCityDestinationStyles(
     scroll: { paddingBottom: 40 },
 
     hero: { height: 400, position: 'relative', overflow: 'hidden' },
-    heroImage: { ...StyleSheet.absoluteFillObject },
+    heroImage: { ...StyleSheet.absoluteFill },
     heroTopBar: {
       position: 'absolute',
       left: 20,
@@ -302,7 +302,7 @@ export function getCityDestinationStyles(
       overflow: 'hidden',
       backgroundColor: colors.surface,
     },
-    trendingImage: { ...StyleSheet.absoluteFillObject },
+    trendingImage: { ...StyleSheet.absoluteFill },
     trendingInfo: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 12, gap: 3 },
     trendingCategoryPill: {
       alignSelf: 'flex-start',

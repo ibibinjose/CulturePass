@@ -297,7 +297,7 @@ function ApplyScreenInner() {
             <Animated.View entering={FadeInUp.delay(60).springify()} style={fs.successIconWrap}>
               <LinearGradient
                 colors={isRejected ? ['#EF444444', '#EF444422'] : [CultureTokens.teal + '44', CultureTokens.teal + '22']}
-                style={StyleSheet.absoluteFillObject}
+                style={StyleSheet.absoluteFill}
                 start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
               />
               <Ionicons
@@ -452,7 +452,7 @@ function ApplyScreenInner() {
                       <LinearGradient
                         colors={[ac + '28', ac + '08']}
                         start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-                        style={StyleSheet.absoluteFillObject}
+                        style={StyleSheet.absoluteFill}
                       />
                     )}
                     <View style={[fs.typeCardIcon, { backgroundColor: ac + (active ? '33' : '1A') }]}>
@@ -657,7 +657,7 @@ function ApplyScreenInner() {
             <LinearGradient
               colors={SignatureGradient}
               start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-              style={StyleSheet.absoluteFillObject}
+              style={StyleSheet.absoluteFill}
               pointerEvents="none"
             />
             {submitMutation.isPending ? (

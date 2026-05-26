@@ -82,6 +82,7 @@ export default function ContactDetailCrmScreen() {
 
   const { getContact, updateContact, removeContact } = useContacts();
   const c = getContact(cpid);
+  const displayName = contactDisplayName(c);
 
   const [notes, setNotes] = useState(c?.notes ?? '');
   const [tagsText, setTagsText] = useState('');
@@ -234,7 +235,6 @@ export default function ContactDetailCrmScreen() {
   }
 
   const stage = c.stage ?? 'new';
-  const displayName = contactDisplayName(c);
   const initials = displayName
     .replace(/^@/, '')
     .split(' ')

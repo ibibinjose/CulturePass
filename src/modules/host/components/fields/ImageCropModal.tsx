@@ -401,7 +401,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   gridContainer: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   gridLineH: {
     position: 'absolute',

@@ -48,7 +48,7 @@ export function MarketplaceSquareTile({ tile, size, showPremiumLock, onPress }: 
         {tile.imageUrl ? (
           <Image
             source={{ uri: tile.imageUrl }}
-            style={StyleSheet.absoluteFillObject}
+            style={StyleSheet.absoluteFill}
             contentFit="cover"
             transition={120}
           />
@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   placeholder: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     alignItems: 'center',
     justifyContent: 'center',
   },

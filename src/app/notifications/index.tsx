@@ -249,7 +249,7 @@ export default function NotificationsScreen() {
       {/* Subtle brand glow background */}
       <LinearGradient
         colors={[`${CultureTokens.violet}0A`, 'transparent']}
-        style={StyleSheet.absoluteFillObject}
+        style={StyleSheet.absoluteFill}
         pointerEvents="none"
       />
 

@@ -341,18 +341,43 @@ export function useFormWizard({
         }
         // Phase 1 Business Migration Enhancement: Smart pre-fill from authenticated user profile
         else if (user && ['business', 'venue', 'artist', 'professional', 'organiser'].includes(entityType)) {
+          // Transform user.socialLinks (Record<string, string>) to HostProfile socialLinks (Array<SocialLink>)
+          const socialLinksArray: any[] = [];
+          if (user.socialLinks) {
+            Object.entries(user.socialLinks).forEach(([platform, url]) => {
+              if (url && typeof url === 'string') {
+                socialLinksArray.push({
+                  platform: ['facebook', 'instagram', 'twitter', 'linkedin', 'tiktok', 'youtube', 'website'].includes(platform)
+                    ? platform
+                    : 'other',
+                  url: url.startsWith('http') ? url : `https://${url}`,
+                  verified: false,
+                });
+              }
+            });
+          }
+
           initialData = {
             entityType,
             // Pre-fill identity from main user profile (high value for Business flows)
-            fullName: user.displayName || user.username || '',
+            officialName: user.displayName || user.username || '',
             description: user.bio || '',
-            city: user.city || '',
-            country: user.country || '',
+            // Location pre-fill
+            primaryAddress: {
+              city: user.city || '',
+              country: user.country || '',
+              // Fill required dummy values for AddressSchema if necessary, or let user complete it
+              street: '',
+              state: user.state || '',
+              postcode: String(user.postcode || ''),
+              latitude: 0,
+              longitude: 0,
+            },
             // Social links pre-fill (very useful for business/artist verification)
-            socialLinks: user.socialLinks || {},
+            socialLinks: socialLinksArray,
             // Store a reference that this was pre-filled
             _preFilledFromUser: true,
-          } as PartialFormData;
+          } as any;
         }
       }
 

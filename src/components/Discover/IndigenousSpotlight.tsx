@@ -40,7 +40,7 @@ function IndigenousSpotlightComponent({ land, organisations, festivals, business
               colors={['rgba(212,165,116,0.15)', 'rgba(212,165,116,0.05)']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
-              style={StyleSheet.absoluteFillObject}
+              style={StyleSheet.absoluteFill}
             />
             <View style={styles.landBannerContent}>
               <View style={styles.landIconWrap}>

@@ -3,7 +3,7 @@ import { Platform } from 'react-native';
 import { QueryClient, QueryFunction, QueryCache } from '@tanstack/react-query';
 import { ApiError } from '@/platform/api/client';
 import { Sentry } from '@/lib/sentry';
-import { log } from '@/lib/logger';
+import { log, getCorrelationId } from '@/lib/logger';
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
@@ -450,7 +450,7 @@ export const queryClient = new QueryClient({
           log.error('Query server error', error, {
             queryKey: queryKeyStr,
             status: error.status,
-            correlationId: log.getCorrelationId?.(),
+            correlationId: getCorrelationId(),
           });
         } else if (error.isRateLimited) {
           log.warn('Query rate limited', undefined, {

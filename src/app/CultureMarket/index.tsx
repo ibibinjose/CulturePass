@@ -219,7 +219,7 @@ function CarouselRow({ brands, reverse }: { brands: BrandRowData; reverse?: bool
               <LinearGradient
                 colors={[b.color + 'DD', b.color + '55']}
                 start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-                style={StyleSheet.absoluteFillObject}
+                style={StyleSheet.absoluteFill}
               />
               <Text style={styles.brandTileName} numberOfLines={2}>{b.name}</Text>
             </View>
@@ -722,7 +722,7 @@ function CultureMarketScreenInner() {
             colors={[CultureTokens.violet + '44', 'transparent']}
             start={{ x: 0.5, y: 0 }}
             end={{ x: 0.5, y: 1 }}
-            style={StyleSheet.absoluteFillObject}
+            style={StyleSheet.absoluteFill}
             pointerEvents="none"
           />
 
@@ -774,7 +774,7 @@ function CultureMarketScreenInner() {
                   colors={SignatureGradient}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
-                  style={StyleSheet.absoluteFillObject}
+                  style={StyleSheet.absoluteFill}
                 />
                 <Ionicons name="add-circle-outline" size={18} color="#fff" />
                 <Text style={styles.heroBtnFillText}>List your business</Text>
@@ -1036,7 +1036,7 @@ function CultureMarketScreenInner() {
             colors={[CultureTokens.violet, '#130C2A']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            style={StyleSheet.absoluteFillObject}
+            style={StyleSheet.absoluteFill}
           />
           <View style={[styles.sellContent, { paddingHorizontal: hPad }]}>
             <View style={pageCol}>
@@ -1082,7 +1082,7 @@ function CultureMarketScreenInner() {
                   colors={[CultureTokens.coral, '#CC237F']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
-                  style={StyleSheet.absoluteFillObject}
+                  style={StyleSheet.absoluteFill}
                 />
                 <Ionicons name="rocket-outline" size={18} color="#fff" />
                 <Text style={styles.sellCtaText}>List on CultureMarket — free</Text>
@@ -1124,8 +1124,8 @@ const styles = StyleSheet.create({
 
   // Hero
   hero: { backgroundColor: HERO_BG, paddingBottom: 64 },
-  heroGradient: { ...StyleSheet.absoluteFillObject },
-  heroNoise: { ...StyleSheet.absoluteFillObject, opacity: 0.03 },
+  heroGradient: { ...StyleSheet.absoluteFill },
+  heroNoise: { ...StyleSheet.absoluteFill, opacity: 0.03 },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',

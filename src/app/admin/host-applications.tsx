@@ -26,7 +26,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
-import { useM3Colors as useColors } from '@/hooks/useM3Colors';
+import { useColors } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
 import { useRole } from '@/hooks/useRole';
 import { api } from '@/lib/api';

@@ -142,7 +142,7 @@ export const getStyles = (colors: ColorTheme) => StyleSheet.create({
     justifyContent: 'center',
   },
   cameraVignette: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(0,0,0,0.45)',
   },
   cameraVignetteImmersive: {

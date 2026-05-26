@@ -19,6 +19,7 @@ import {
   type M3ButtonProps,
   resolveM3ButtonVisuals,
   m3ButtonLayout,
+  getM3ButtonSize,
   m3ButtonStyles as styles,
 } from './m3ButtonShared';
 
@@ -29,6 +30,7 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 /** Premium M3 Button with tactile feedback and expressive states. */
 export function M3Button({
   variant = 'filled',
+  size = 'md',
   leftIcon,
   rightIcon,
   loading,
@@ -44,6 +46,7 @@ export function M3Button({
   const colors = useM3Colors();
   const isDisabled = disabled || loading;
   const { backgroundColor, textColor, borderColor, elevation } = resolveM3ButtonVisuals(variant, colors);
+  const layout = React.useMemo(() => getM3ButtonSize(size), [size]);
 
   const scale = useSharedValue(1);
   const opacity = useSharedValue(1);
@@ -67,7 +70,7 @@ export function M3Button({
     opacity.value = withSpring(1, SpringConfig.smooth);
   };
 
-  const horizontalPadding = variant === 'text' ? 12 : 24;
+  const horizontalPadding = variant === 'text' ? layout.paddingH / 2 : layout.paddingH;
 
   return (
     <AnimatedPressable
@@ -79,7 +82,7 @@ export function M3Button({
       style={[
         styles.base,
         {
-          minHeight: m3ButtonLayout.buttonHeight,
+          minHeight: layout.height,
           paddingHorizontal: horizontalPadding,
           backgroundColor,
           borderColor,
@@ -106,7 +109,7 @@ export function M3Button({
         ) : (
           <>
             {leftIcon ? (
-              <Ionicons name={leftIcon} size={18} color={textColor} />
+              <Ionicons name={leftIcon as any} size={size === 'sm' ? 16 : 18} color={textColor} />
             ) : null}
             {typeof children === 'string' ? (
               <Text
@@ -114,7 +117,7 @@ export function M3Button({
                   styles.label,
                   {
                     color: textColor,
-                    fontSize: 14,
+                    fontSize: layout.fontSize,
                     letterSpacing: 0.15,
                   },
                   labelStyle,
@@ -126,7 +129,7 @@ export function M3Button({
               children
             )}
             {rightIcon ? (
-              <Ionicons name={rightIcon} size={18} color={textColor} />
+              <Ionicons name={rightIcon as any} size={size === 'sm' ? 16 : 18} color={textColor} />
             ) : null}
           </>
         )}

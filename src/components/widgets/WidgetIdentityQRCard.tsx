@@ -43,7 +43,7 @@ export function WidgetIdentityQRCard({
         colors={gradients.culturepassBrand}
         start={{ x: 0, y: 0.2 }}
         end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFillObject}
+        style={StyleSheet.absoluteFill}
       />
 
       {/* Gloss highlight */}
@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
     }),
   },
   gloss: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(255,255,255,0.06)',
   },
   content: {

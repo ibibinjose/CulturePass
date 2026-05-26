@@ -15,16 +15,29 @@ import {
 } from '@/lib/app-meta';
 
 // ---------------------------------------------------------------------------
+// Custom Hooks to Safely Access Route State
+// ---------------------------------------------------------------------------
+function useOptionalPathname() {
+  try {
+    return usePathname();
+  } catch (e) {
+    return null;
+  }
+}
+
+function useOptionalRootNavigationState() {
+  try {
+    return useRootNavigationState();
+  } catch (e) {
+    return null;
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Global Metadata Component
 // ---------------------------------------------------------------------------
 export function GlobalMetadata() {
-  // Also guard usePathname defensively
-  let pathname = '/';
-  try {
-    pathname = usePathname() || '/';
-  } catch {
-    pathname = '/';
-  }
+  const pathname = useOptionalPathname() || '/';
 
   const isKeralaDomain = isCultureKeralaHost();
   const colors = useColors();
@@ -159,19 +172,7 @@ export function NavigationTracker() {
 export function NavigationMetadata() {
   // Defensive guard: useRootNavigationState can throw during early web hydration
   // or before Expo Router has mounted its internal NavigationContainer.
-  let navState: ReturnType<typeof useRootNavigationState> | null = null;
-
-  try {
-    navState = useRootNavigationState();
-  } catch (error) {
-    // Navigation context not ready yet — silently skip on first few renders.
-    // This is common on web during initial bundle/hydration.
-    if (__DEV__) {
-      // Only log in development to avoid noise
-      console.warn('[NavigationMetadata] Navigation context not ready yet');
-    }
-    return null;
-  }
+  const navState = useOptionalRootNavigationState();
 
   if (!navState?.key) {
     return null;

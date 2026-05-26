@@ -66,6 +66,7 @@ export interface Profile {
   avatarUrl?: string;
   gallery?: string[];
   city?: string;
+  state?: string;
   country?: string;
   location?: { lat: number; lng: number };
   latitude?: number;

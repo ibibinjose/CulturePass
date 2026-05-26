@@ -163,11 +163,11 @@ export default function FinderScreen() {
       <Stack.Screen options={{ headerShown: false }} />
       <LinearGradient
         colors={isDark ? ['#0C0A09', '#1C1917'] : ['#FFFBF7', '#F5F5F4']}
-        style={StyleSheet.absoluteFillObject}
+        style={StyleSheet.absoluteFill}
       />
       <LinearGradient
         colors={[`${colors.primary}08`, 'transparent']}
-        style={[StyleSheet.absoluteFillObject, { height: 600 }]}
+        style={[StyleSheet.absoluteFill, { height: 600 }]}
       />
 
       <GlassView

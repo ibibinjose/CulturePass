@@ -41,7 +41,7 @@ export default function ContactScreen() {
       <Stack.Screen options={{ headerShown: false }} />
       <LinearGradient
         colors={[`${colors.primary}08`, 'transparent']}
-        style={StyleSheet.absoluteFillObject}
+        style={StyleSheet.absoluteFill}
         pointerEvents="none"
       />
       
@@ -73,7 +73,7 @@ export default function ContactScreen() {
                     <Ionicons name="mail" size={40} color="#FFFFFF" />
                 </LinearGradient>
                 <Text style={[styles.appName, { color: colors.text }]}>{APP_NAME} Support</Text>
-                <Text style={[styles.appSubtitle, { color: colors.textSecondary }]}>We're here to help with any questions</Text>
+                <Text style={[styles.appSubtitle, { color: colors.textSecondary }]}>{"We're here to help with any questions"}</Text>
             </View>
 
             <Animated.View entering={reducedMotion ? undefined : FadeInDown.duration(400)} style={styles.section}>

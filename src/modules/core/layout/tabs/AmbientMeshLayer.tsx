@@ -19,7 +19,7 @@ export function AmbientMeshLayer() {
 
 const styles = StyleSheet.create({
   mesh: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     opacity: 0.06,
   },
 });

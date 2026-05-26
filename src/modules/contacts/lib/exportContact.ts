@@ -93,7 +93,7 @@ export async function exportToAddressBook(data: ExportContactData): Promise<{ su
       .filter(Boolean)
       .join('\n');
 
-    const contact: Contacts.ContactFormParameters = {
+    const contact: any = {
       [Contacts.Fields.FirstName]: firstName,
       [Contacts.Fields.LastName]: lastName,
       [Contacts.Fields.Note]: notes,
@@ -140,7 +140,7 @@ export async function exportToAddressBook(data: ExportContactData): Promise<{ su
       console.warn('Contacts.presentFormAsync failed, falling back to direct add:', formError);
       await Contacts.addContactAsync({
         ...contact,
-        contactType: Contacts.ContactType.Person,
+        contactType: (Contacts as any).ContactType?.Person || (Contacts as any).ContactTypes?.Person || 'person',
       } as any);
       return { success: true, message: 'Contact saved directly to address book.' };
     }

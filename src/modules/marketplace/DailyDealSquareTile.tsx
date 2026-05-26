@@ -61,7 +61,7 @@ export function DailyDealSquareTile({ deal, size, isPlus, onPress }: Props) {
         {deal.coverUrl ? (
           <Image
             source={{ uri: deal.coverUrl }}
-            style={StyleSheet.absoluteFillObject}
+            style={StyleSheet.absoluteFill}
             contentFit="cover"
             transition={120}
           />
@@ -70,7 +70,7 @@ export function DailyDealSquareTile({ deal, size, isPlus, onPress }: Props) {
             colors={[accent + '66', accent + '22']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            style={StyleSheet.absoluteFillObject}
+            style={StyleSheet.absoluteFill}
           />
         )}
 

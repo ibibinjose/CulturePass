@@ -709,7 +709,7 @@ export default function UserDirectoryScreen() {
           <GlassView style={styles.confirmModal}>
             <Text style={[styles.modalTitle, { color: colors.text }]}>Confirm Bulk Action</Text>
             <Text style={{ color: colors.textSecondary, marginBottom: 16 }}>
-              Apply "{pendingBulkAction?.type}" to {selectedIds.size} users? This cannot be undone easily.
+              Apply &quot;{pendingBulkAction?.type}&quot; to {selectedIds.size} users? This cannot be undone easily.
             </Text>
 
             {isSuperAdmin && (

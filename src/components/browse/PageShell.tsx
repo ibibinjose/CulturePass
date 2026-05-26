@@ -70,6 +70,6 @@ export function PageShell({
 
 const s = StyleSheet.create({
   root: { flex: 1 },
-  mesh: { ...StyleSheet.absoluteFillObject, opacity: 0.055 },
+  mesh: { ...StyleSheet.absoluteFill, opacity: 0.055 },
   content: { flex: 1 },
 });

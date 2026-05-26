@@ -133,7 +133,7 @@ export const prk = StyleSheet.create({
       web: webShadow('0 4px 10px rgba(0,0,0,0.06)'),
     }),
   },
-  cardGrad: { ...StyleSheet.absoluteFillObject, opacity: 0.1 },
+  cardGrad: { ...StyleSheet.absoluteFill, opacity: 0.1 },
   icon: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginBottom: Spacing.sm + 4 },
   title: { fontSize: FontSize.chip, fontFamily: FontFamily.semibold, lineHeight: 18, height: 36 },
   badge: { alignSelf: 'flex-start', paddingHorizontal: Spacing.sm, paddingVertical: 3, borderRadius: 6, marginTop: 10 },

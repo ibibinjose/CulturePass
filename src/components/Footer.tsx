@@ -14,7 +14,7 @@ export function Footer() {
 
   // Group links by section
   const get2knowLinks = FOOTER_LINKS.filter(link => 
-    link.href === '/' || 
+    (link.href as string) === '/' ||
     link.href.startsWith('/about') || 
     link.href.startsWith('/company-info') || 
     link.href.startsWith('/founder') || 

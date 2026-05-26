@@ -132,7 +132,7 @@ function CultureShopScreenInner() {
             colors={['#0F0B1A', '#1C162E', '#2B124C']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            style={StyleSheet.absoluteFillObject}
+            style={StyleSheet.absoluteFill}
           />
           <View style={[styles.headerRow, pageCol]}>
             <BackButton fallback="/(tabs)" color="rgba(255,255,255,0.86)" />
@@ -228,7 +228,7 @@ function CultureShopScreenInner() {
                 colors={SignatureGradient}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
-                style={StyleSheet.absoluteFillObject}
+                style={StyleSheet.absoluteFill}
               />
               <Text style={styles.marketTitle}>Selling products or services?</Text>
               <Text style={styles.marketText}>

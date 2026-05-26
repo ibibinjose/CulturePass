@@ -41,7 +41,7 @@ export default function AppearanceSettingsScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <LinearGradient
         colors={[`${colors.primary}08`, 'transparent']}
-        style={StyleSheet.absoluteFillObject}
+        style={StyleSheet.absoluteFill}
         pointerEvents="none"
       />
 

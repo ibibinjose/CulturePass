@@ -30,7 +30,7 @@ export function WidgetSpotlightCard({ item }: WidgetSpotlightCardProps) {
       {/* Hero image */}
       <Image
         source={item.imageUrl ?? undefined}
-        style={StyleSheet.absoluteFillObject}
+        style={StyleSheet.absoluteFill}
         contentFit="cover"
       />
 
@@ -38,7 +38,7 @@ export function WidgetSpotlightCard({ item }: WidgetSpotlightCardProps) {
       <LinearGradient
         colors={['transparent', 'rgba(15,14,46,0.4)', 'rgba(15,14,46,0.85)', 'rgba(15,14,46,0.97)']}
         locations={[0, 0.4, 0.75, 1]}
-        style={StyleSheet.absoluteFillObject}
+        style={StyleSheet.absoluteFill}
       />
 
       {/* Eyebrow badge — top-left */}

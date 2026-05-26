@@ -142,7 +142,7 @@ export default function QRScreen() {
     <View style={s.root}>
       <LinearGradient
         colors={gradients.midnight}
-        style={StyleSheet.absoluteFillObject}
+        style={StyleSheet.absoluteFill}
       />
       <AppHeaderBar
         title="Digital ID"
@@ -293,7 +293,7 @@ export default function QRScreen() {
                     <LinearGradient
                       colors={['#1C1C1E', '#000000']}
                       start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                      style={StyleSheet.absoluteFillObject}
+                      style={StyleSheet.absoluteFill}
                     />
                     <Ionicons name="wallet-outline" size={20} color="#FFFFFF" />
                     <View style={s.walletBtnText}>
@@ -318,7 +318,7 @@ export default function QRScreen() {
                     <LinearGradient
                       colors={['#1A73E8', '#1557B0']}
                       start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                      style={StyleSheet.absoluteFillObject}
+                      style={StyleSheet.absoluteFill}
                     />
                     <Ionicons name="card-outline" size={20} color="#FFFFFF" />
                     <View style={s.walletBtnText}>

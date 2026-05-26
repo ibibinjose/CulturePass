@@ -32,7 +32,7 @@ function SectionHeader({
   const seeAllColor = vitrine ? (accentColor ?? Vitrine.primaryContainer) : accent;
 
   // Prepare gradient colors safely
-  const gradientColors = [accent, withAlpha(accent, 0.5)];
+  const gradientColors = [accent, withAlpha(accent, 0.5)] as [string, string];
 
   return (
     <View style={styles.wrap}>

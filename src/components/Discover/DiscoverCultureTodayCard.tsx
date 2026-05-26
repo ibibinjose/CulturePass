@@ -210,7 +210,7 @@ const styles = StyleSheet.create({
     paddingRight: 40,
   },
   glow: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     opacity: 1,
   },
   dismissFab: {

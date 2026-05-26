@@ -168,7 +168,7 @@ const gs = StyleSheet.create({
     alignSelf: 'center',
     overflow: 'hidden',
   },
-  iconRingFill: { ...StyleSheet.absoluteFillObject },
+  iconRingFill: { ...StyleSheet.absoluteFill },
   iconWrap: {
     width: 96,
     height: 96,

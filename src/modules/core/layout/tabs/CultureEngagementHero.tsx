@@ -46,7 +46,7 @@ export function CultureEngagementHero({
           colors={[CultureTokens.indigo + '20', CultureTokens.teal + '14', CultureTokens.gold + '10']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          style={StyleSheet.absoluteFillObject}
+          style={StyleSheet.absoluteFill}
         />
         <View style={styles.topRow}>
           <View style={[styles.iconWrap, { backgroundColor: colors.primarySoft }]}>

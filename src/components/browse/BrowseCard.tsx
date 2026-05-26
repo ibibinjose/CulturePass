@@ -54,9 +54,9 @@ export function BrowseCardComponent({
     >
       <View style={isGrid ? [styles.gridImageWrap, { aspectRatio: imageRatio }] : styles.cardImage}>
         {item.imageUrl ? (
-          <CultureImage uri={item.imageUrl} style={StyleSheet.absoluteFillObject} transition={200} />
+          <CultureImage uri={item.imageUrl} style={StyleSheet.absoluteFill} transition={200} />
         ) : (
-          <View style={[StyleSheet.absoluteFillObject, styles.cardImageFallback, { backgroundColor: colors.surfaceElevated, borderColor: accentColor + '35' }]}>
+          <View style={[StyleSheet.absoluteFill, styles.cardImageFallback, { backgroundColor: colors.surfaceElevated, borderColor: accentColor + '35' }]}>
             <Ionicons name={accentIcon as keyof typeof Ionicons.glyphMap} size={isGrid ? 32 : 28} color={accentColor} />
           </View>
         )}

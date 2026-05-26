@@ -201,7 +201,7 @@ const card = StyleSheet.create({
     }),
   },
   border: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     borderRadius: 20,
     borderWidth: 1,
   },

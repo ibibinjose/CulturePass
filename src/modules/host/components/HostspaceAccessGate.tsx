@@ -85,11 +85,11 @@ function HostspaceGateScreen({ intent = 'hub' }: { intent?: HostspaceGateIntent 
             colors={[CultureTokens.indigo + '33', CultureTokens.violet + '22', 'transparent']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            style={StyleSheet.absoluteFillObject}
+            style={StyleSheet.absoluteFill}
             pointerEvents="none"
           />
           
-          <View style={[StyleSheet.absoluteFillObject, { backgroundColor: colors.background, opacity: 0.4 }]} pointerEvents="none" />
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.background, opacity: 0.4 }]} pointerEvents="none" />
 
           <Animated.View
             entering={FadeInDown.delay(40).springify()}
@@ -187,7 +187,7 @@ function HostspaceGateScreen({ intent = 'hub' }: { intent?: HostspaceGateIntent 
                   colors={SignatureGradient}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
-                  style={StyleSheet.absoluteFillObject}
+                  style={StyleSheet.absoluteFill}
                 />
                 <Ionicons name="rocket-outline" size={18} color="#fff" />
                 <Text style={{ fontFamily: FontFamily.semibold, fontSize: 15, color: '#fff' }}>

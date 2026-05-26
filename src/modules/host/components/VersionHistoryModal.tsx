@@ -643,7 +643,7 @@ function RollbackConfirmation({
 
 const styles = StyleSheet.create({
   overlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(0,0,0,0.7)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -815,7 +815,7 @@ const styles = StyleSheet.create({
     width: 24,
   },
   confirmOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',

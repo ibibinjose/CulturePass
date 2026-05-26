@@ -531,7 +531,7 @@ function UserPublicScreen() {
               <LinearGradient
                 colors={['rgba(255,255,255,0.09)', 'transparent', 'rgba(255,255,255,0.04)']}
                 start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-                style={StyleSheet.absoluteFillObject}
+                style={StyleSheet.absoluteFill}
                 pointerEvents="none"
               />
 

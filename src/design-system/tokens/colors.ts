@@ -237,6 +237,12 @@ export type ColorTheme = {
   card: string;
   cardBorder: string;
 
+  // Material 3 / Modern surfaces
+  surfaceVariant: string;
+  onSurfaceVariant: string;
+  surfaceContainerLow: string;
+  surfaceContainerHigh: string;
+
   // Tab bar
   tabBar: string;
   tabBarBorder: string;
@@ -313,6 +319,11 @@ export const light: ColorTheme = {
   card: "#FFFFFF",
   cardBorder: "#E7E5E4",
 
+  surfaceVariant: "#F5F1EE",
+  onSurfaceVariant: "#44403C",
+  surfaceContainerLow: "#FCFAFA",
+  surfaceContainerHigh: "#F0EBE8",
+
   tabBar: "rgba(255,255,255,0.92)",
   tabBarBorder: "rgba(231,229,228,0.5)",
   tabIconDefault: "#71717A",
@@ -375,6 +386,11 @@ export const dark: ColorTheme = {
 
   card: "#121214",
   cardBorder: "#27272A",
+
+  surfaceVariant: "#1E1E20",
+  onSurfaceVariant: "#A1A1AA",
+  surfaceContainerLow: "#161618",
+  surfaceContainerHigh: "#27272A",
 
   tabBar: "rgba(0,0,0,0.92)",
   tabBarBorder: "rgba(39,39,42,0.6)",

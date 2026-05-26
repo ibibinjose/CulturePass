@@ -44,7 +44,7 @@ function WebHeroCarousel({ events }: WebHeroCarouselProps) {
           colors={[colors.primary, colors.secondary, colors.accent]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          style={StyleSheet.absoluteFillObject}
+          style={StyleSheet.absoluteFill}
         />
         <View style={styles.webHeroCarouselMeta}>
           <Text style={styles.webHeroCarouselTitle}>Explore Cultural Events</Text>
@@ -57,17 +57,17 @@ function WebHeroCarousel({ events }: WebHeroCarouselProps) {
   const event = events[current];
   return (
     <View style={[styles.webHeroCarousel, { height: heroHeight, backgroundColor: colors.surface }]}>
-      <Image source={{ uri: event.imageUrl }} style={StyleSheet.absoluteFillObject} contentFit="cover" />
+      <Image source={{ uri: event.imageUrl }} style={StyleSheet.absoluteFill} contentFit="cover" />
       <LinearGradient
         colors={['rgba(0,0,0,0.05)', 'rgba(0,0,0,0.3)', 'rgba(0,0,0,0.88)']}
         locations={[0, 0.5, 1]}
-        style={StyleSheet.absoluteFillObject}
+        style={StyleSheet.absoluteFill}
       />
       <View style={styles.webHeroCatBadge}>
         <Text style={[styles.webHeroCatBadgeText, { color: colors.text }]}>{event.communityId || event.category || 'Featured'}</Text>
       </View>
       {isDesktopW && events.length > 1 && (
-        <View style={[StyleSheet.absoluteFillObject, styles.webHeroArrowContainer]}>
+        <View style={[StyleSheet.absoluteFill, styles.webHeroArrowContainer]}>
           <Pressable style={styles.webHeroArrow} onPress={() => goTo((current - 1 + events.length) % events.length)}>
             <Ionicons name="chevron-back" size={22} color={colors.text} />
           </Pressable>

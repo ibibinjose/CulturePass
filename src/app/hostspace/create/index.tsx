@@ -14,6 +14,7 @@ import { trackPostPublishActivation } from '@/modules/host/services/formAnalytic
 import { Button } from '@/design-system/ui/Button';
 import { CultureTokens, Spacing, Radius } from '@/design-system/tokens/theme';
 import { useColors } from '@/hooks/useColors';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 
 const HostspaceCreateWorkspace = createLazyComponent(
@@ -121,7 +122,7 @@ export default function HostspaceCreateIndex() {
             <ScrollView contentContainerStyle={{ flexGrow: 1, padding: Spacing.xl, backgroundColor: colors.background }}>
               <LinearGradient
                 colors={[CultureTokens.success + '15', 'transparent']}
-                style={[StyleSheet.absoluteFillObject, { height: 400 }]}
+                style={[StyleSheet.absoluteFill, { height: 400 }]}
               />
               <View style={{ alignItems: 'center', marginBottom: Spacing.xl, paddingTop: Spacing.xl * 2 }}>
                 <View style={{ backgroundColor: CultureTokens.success + '20', padding: 20, borderRadius: 100, marginBottom: Spacing.lg }}>

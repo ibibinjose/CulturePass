@@ -136,7 +136,7 @@ export default function GetToKnowCulturePass() {
 
             <Ionicons name="earth" size={isDesktop ? 56 : 44} color="white" style={{ opacity: 0.95, marginTop: 12 }} />
             <Text style={styles.heroTitle}>Getting to Know{"\n"}CulturePass.</Text>
-            <Text style={styles.heroSub}>Discover who we are, what we stand for, and how we're building cultural infrastructure for everyone.</Text>
+            <Text style={styles.heroSub}>{"Discover who we are, what we stand for, and how we're building cultural infrastructure for everyone."}</Text>
 
             <GlassView tone="dark" tintColor={DARK_GLASS_TINT} borderRadius={24} style={[styles.heroCard, darkGlassOverride]}>
               <Text style={styles.heroBody}>CulturePass is not simply an events platform. It is emerging cultural infrastructure — designed to help people participate in real-world cultural life.</Text>

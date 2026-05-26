@@ -150,6 +150,13 @@ export const TextStyles = {
     lineHeight: LineHeight.body,
     ...(Platform.OS === 'android' && { includeFontPadding: false }),
   },
+  bodySmall: {
+    fontFamily: FontFamily.regular,
+    fontWeight: weight('400'),
+    fontSize:   FontSize.caption,
+    lineHeight: LineHeight.caption,
+    ...(Platform.OS === 'android' && { includeFontPadding: false }),
+  },
   callout: {
     fontFamily: FontFamily.regular,
     fontWeight: weight('400'),
@@ -229,11 +236,26 @@ export const TextStyles = {
     lineHeight: LineHeight.caption,
     ...(Platform.OS === 'android' && { includeFontPadding: false }),
   },
+  captionStrong: {
+    fontFamily: FontFamily.semibold,
+    fontWeight: weight('600'),
+    fontSize:   FontSize.caption,
+    lineHeight: LineHeight.caption,
+    ...(Platform.OS === 'android' && { includeFontPadding: false }),
+  },
   captionSemibold: {
     fontFamily: FontFamily.semibold,
     fontWeight: weight('600'),
     fontSize:   FontSize.caption,
     lineHeight: LineHeight.caption,
+    ...(Platform.OS === 'android' && { includeFontPadding: false }),
+  },
+  title1: {
+    fontFamily: FontFamily.bold,
+    fontWeight: weight('700'),
+    fontSize:   28,
+    lineHeight: 36,
+    letterSpacing: LetterSpacing.tight,
     ...(Platform.OS === 'android' && { includeFontPadding: false }),
   },
 

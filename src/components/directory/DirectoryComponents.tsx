@@ -175,7 +175,7 @@ const fr = StyleSheet.create({
       web:     { boxShadow: '0 4px 12px rgba(0,0,0,0.12)' },
     }),
   },
-  imgPlaceholder: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center' },
+  imgPlaceholder: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center' },
   cardInfo:       { position: 'absolute', bottom: 12, left: 12, right: 12 },
   verifiedBadge:  {
     width: 20, height: 20, borderRadius: 10,

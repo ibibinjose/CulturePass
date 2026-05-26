@@ -60,7 +60,7 @@ import type { PartialFormData } from '../../services/formStateSerializer';
 
 // Creator Trust: Rich verification status banner (highest leverage trust surface in legal step)
 import { VerificationStatusBanner, type VerificationStatus } from '../VerificationStatusBanner';
-import { trackVerificationStatusViewed } from '../services/formAnalyticsService';
+import { trackVerificationStatusViewed } from '../../services/formAnalyticsService';
 
 // ---------------------------------------------------------------------------
 // Types

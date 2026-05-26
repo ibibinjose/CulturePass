@@ -513,7 +513,7 @@ export interface ModalStyleSet {
 export function makeModalStyles(colors: ColorTheme): ModalStyleSet {
   return {
     overlay: {
-      ...StyleSheet.absoluteFillObject,
+      ...StyleSheet.absoluteFill,
       backgroundColor: 'rgba(0,0,0,0.45)',
       zIndex: ZIndex.overlay,
     },

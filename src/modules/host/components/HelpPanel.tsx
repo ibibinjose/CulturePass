@@ -787,11 +787,11 @@ const styles = StyleSheet.create({
 
   // Panel Overlay
   panelOverlayContainer: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: ZIndex.overlay,
   },
   backdrop: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: '#000',
   },
 

@@ -242,13 +242,13 @@ export function ImageGalleryPicker({
                       <Text style={styles.gradientLabel}>{config.label}</Text>
                     </LinearGradient>
                   ) : (
-                    <View style={StyleSheet.absoluteFillObject}>
+                    <View style={StyleSheet.absoluteFill}>
                       <Image
                         source={config.imageAsset}
-                        style={StyleSheet.absoluteFillObject}
+                        style={StyleSheet.absoluteFill}
                         contentFit="cover"
                       />
-                      <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0,0,0,0.3)' }]} />
+                      <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.3)' }]} />
                       <View style={styles.gradientFill}>
                         <Ionicons
                           name={config.icon as keyof typeof Ionicons.glyphMap}

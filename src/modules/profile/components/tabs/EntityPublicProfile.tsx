@@ -456,7 +456,7 @@ export function EntityPublicProfile({ profile, isOwner, insets, colors }: Entity
 
 const e = StyleSheet.create({
   hero: { height: 380, justifyContent: 'flex-end', overflow: 'hidden' },
-  heroImage: { ...StyleSheet.absoluteFillObject },
+  heroImage: { ...StyleSheet.absoluteFill },
   shell: { paddingTop: 24 },
   tabsWrap: { borderRadius: 24, marginHorizontal: 16, marginBottom: 20, overflow: 'hidden' },
   tabsScroll: { paddingHorizontal: 12, paddingVertical: 12, gap: 12 },

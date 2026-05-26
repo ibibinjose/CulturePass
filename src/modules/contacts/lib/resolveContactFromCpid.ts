@@ -46,9 +46,13 @@ async function fromUser(cpid: string, userId: string): Promise<ResolvedContactFi
     tier: u.membership?.tier,
     avatarUrl: u.avatarUrl,
     city: u.city,
+    state: u.state,
     country: u.country,
     bio: u.bio,
     userId: u.id,
+    email: u.email,
+    phone: u.phone,
+    website: u.website,
   };
 }
 
@@ -61,9 +65,13 @@ async function fromProfile(cpid: string, profileId: string): Promise<ResolvedCon
     org: p.entityType === 'business' ? p.name : undefined,
     avatarUrl: p.imageUrl ?? p.avatarUrl,
     city: p.city,
+    state: p.state,
     country: p.country,
     bio: p.description,
     userId: p.ownerId,
+    email: p.email,
+    phone: p.phone,
+    website: p.website,
   };
 }
 

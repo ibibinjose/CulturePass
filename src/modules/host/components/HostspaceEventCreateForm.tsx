@@ -627,10 +627,11 @@ export function HostspaceEventCreateForm({ onReview }: { onReview?: () => void }
                       {draft.socialTitle || draft.title || "Vibrant Cultural Celebration"}
                     </Text>
                   </View>
-               </View>
-            </GlassView>
-          </View>
+                </View>
+             </GlassView>
+           </View>
         )}
+      </View>
       {showImagePickerModal && (
         <ImageGalleryPicker
           visible={showImagePickerModal}

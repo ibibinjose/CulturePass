@@ -33,6 +33,7 @@ import { M3TopAppBar } from '@/design-system/ui';
 import { useSafeBack } from '@/lib/navigation';
 import { useContacts } from '@/contexts/ContactsContext';
 import type { SavedContact } from '@/repositories/ContactsRepository';
+import { exportToAddressBook } from '@/modules/contacts/lib/exportContact';
 import { CONTACTS_CONTENT_MAX } from '../components/contactsLayout';
 import { contactDisplayName } from '../lib/contactDisplayName';
 import { resolveContactFromCpid } from '../lib/resolveContactFromCpid';
@@ -182,6 +183,29 @@ export default function ContactDetailCrmScreen() {
     Alert.alert('Updated', 'Last contact date set to now.');
   }, [c, updateContact]);
 
+  const handleExportToPhone = useCallback(async () => {
+    if (!c) return;
+    try {
+      const res = await exportToAddressBook({
+        displayName: displayName,
+        email: c.email,
+        phone: c.phone,
+        website: c.website,
+        city: c.city,
+        state: c.state,
+        country: c.country,
+        bio: c.bio,
+        cpid: c.cpid,
+        membershipTier: c.tier || 'free',
+      });
+      if (Platform.OS !== 'web') {
+        Alert.alert(res.success ? 'Success' : 'Export Failed', res.message);
+      }
+    } catch (err: any) {
+      Alert.alert('Error', err?.message || 'Failed to save contact.');
+    }
+  }, [c, displayName]);
+
   const onRemove = useCallback(() => {
     if (!c) return;
     Alert.alert('Remove contact', `Remove ${c.name || c.cpid}?`, [
@@ -307,6 +331,10 @@ export default function ContactDetailCrmScreen() {
             Contacted
           </Button>
         </View>
+
+        <Button variant="outline" leftIcon="download-outline" onPress={handleExportToPhone}>
+          Save to Phone Contacts
+        </Button>
 
         <Section title="Relationship">
           <View style={styles.stageRow}>

@@ -37,7 +37,7 @@ describe('createSupportTicket use-case', () => {
         userId: 'u_123',
         department: 'support',
         subject: 'Support request',
-        toEmail: 'hello@culturepass.co',
+        toEmail: 'support@culturepass.app',
         status: 'new',
       }),
     );

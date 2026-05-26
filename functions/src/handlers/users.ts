@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { usersService } from '../services/firestore';
 import { requireAuth } from '../middleware/auth';
+import { db, isFirestoreConfigured } from '../admin';
 import { sanitizeUserResponse, parseBody,
   captureRouteError,
 } from './utils';
@@ -67,8 +68,38 @@ usersRouter.get('/users/:id', async (req: Request, res: Response) => {
   try {
     const user = await usersService.getById(id);
     if (!user) return res.status(404).json({ error: 'User not found' });
-    return res.json(sanitizeUserResponse(user as any, req.user));
+
+    let shareContacts = false;
+    if (req.user) {
+      if (req.user.id === id || req.user.role === 'admin' || req.user.role === 'platformAdmin') {
+        shareContacts = true;
+      } else if (isFirestoreConfigured) {
+        // Disclose contacts if requester follows the user OR saved their contact
+        const followId = `${req.user.id}_user_${id}`;
+        const contactSaveId = `${req.user.id}_${id}`;
+        const [followSnap, contactSaveSnap] = await Promise.all([
+          db.collection('follows').doc(followId).get(),
+          db.collection('contactSaves').doc(contactSaveId).get(),
+        ]);
+        if (followSnap.exists || contactSaveSnap.exists) {
+          shareContacts = true;
+        }
+      }
+    }
+
+    let responseObj = sanitizeUserResponse(user as any, req.user);
+    if (shareContacts) {
+      responseObj = {
+        ...responseObj,
+        email: user.email,
+        phone: user.phone,
+        postcode: user.postcode,
+      };
+    }
+
+    return res.json(responseObj);
   } catch (err) {
+    captureRouteError(err, 'GET /api/users/:id');
     return res.status(500).json({ error: 'Failed to fetch user' });
   }
 });

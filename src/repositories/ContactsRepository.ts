@@ -8,10 +8,12 @@ export interface SavedContact {
   org?: string;
   avatarUrl?: string;
   city?: string;
+  state?: string;
   country?: string;
   bio?: string;
   email?: string;
   phone?: string;
+  website?: string;
   savedAt: string; // ISO string
   userId?: string;
   fromPhone?: boolean;

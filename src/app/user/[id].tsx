@@ -6,6 +6,7 @@ import {
   Pressable,
   ActivityIndicator,
   Share,
+  Alert,
   StyleSheet,
   Platform,
 } from 'react-native';
@@ -23,6 +24,7 @@ import { api } from '@/lib/api';
 import { modulesApi, ApiError } from '@/modules/api';
 import { useAuth } from '@/lib/auth';
 import { useContacts } from '@/contexts/ContactsContext';
+import { exportToAddressBook } from '@/modules/contacts/lib/exportContact';
 import { isAppAdminEmail } from '@/lib/admin';
 import { goBackOrReplace } from '@/lib/navigation';
 import { userPublicSegment, siteUrl } from '@/lib/publicPaths';
@@ -216,7 +218,42 @@ function UserPublicScreen() {
   const alreadySaved = isContactSaved(cpid);
   const handleSaveContact = () => {
     if (alreadySaved) return;
-    addContact({ cpid, name: displayName, username: user?.username, avatarUrl: user?.avatarUrl, userId: user?.id, city: user?.city, country: user?.country });
+    addContact({
+      cpid,
+      name: displayName,
+      username: user?.username,
+      avatarUrl: user?.avatarUrl,
+      userId: user?.id,
+      city: user?.city,
+      country: user?.country,
+      email: user?.email,
+      phone: user?.phone,
+      bio: user?.bio,
+      website: user?.website,
+      tier: user?.membership?.tier,
+    });
+  };
+
+  const handleExportToPhone = async () => {
+    try {
+      const res = await exportToAddressBook({
+        displayName: displayName,
+        email: user?.email,
+        phone: user?.phone,
+        website: user?.website,
+        city: user?.city,
+        state: user?.state,
+        country: user?.country,
+        bio: user?.bio,
+        cpid: cpid,
+        membershipTier: user?.membership?.tier || 'free',
+      });
+      if (Platform.OS !== 'web') {
+        Alert.alert(res.success ? 'Success' : 'Export Failed', res.message);
+      }
+    } catch (err: any) {
+      Alert.alert('Error', err?.message || 'Failed to save contact to device.');
+    }
   };
   const tier = user.membership?.tier ?? 'free';
   const tierConf = TIER_CFG[tier] ?? TIER_CFG.free;
@@ -346,13 +383,13 @@ function UserPublicScreen() {
                 <Text style={[s.actionBtnText, { color: VIOLET }]}>Edit profile</Text>
               </Pressable>
             ) : currentUserId ? (
-              <View style={[s.actionRow, { justifyContent: 'space-between' }]}> 
-                <Pressable style={s.msgBtn} onPress={() => router.push('/network' as never)}>
-                  <Ionicons name="chatbubble-outline" size={15} color={TEXT} />
-                  <Text style={[s.actionBtnText, { color: TEXT }]}>Message</Text>
-                </Pressable>
+              <View style={{ gap: 10 }}>
+                <View style={s.actionRow}> 
+                  <Pressable style={s.msgBtn} onPress={() => router.push('/network' as never)}>
+                    <Ionicons name="chatbubble-outline" size={15} color={TEXT} />
+                    <Text style={[s.actionBtnText, { color: TEXT }]}>Message</Text>
+                  </Pressable>
 
-                <View style={{ flexDirection: 'row', gap: 10 }}>
                   <Pressable
                     style={[s.followBtn, isFollowing && s.followBtnDone]}
                     onPress={() => followMut.mutate({ action: isFollowing ? 'unfollow' : 'follow' })}
@@ -379,6 +416,17 @@ function UserPublicScreen() {
                     </Text>
                   </Pressable>
                 </View>
+
+                {/* Save to Phone Address Book */}
+                <Pressable
+                  style={s.exportBtn}
+                  onPress={handleExportToPhone}
+                >
+                  <Ionicons name="download-outline" size={16} color={VIOLET} />
+                  <Text style={[s.actionBtnText, { color: VIOLET }]}>
+                    Save to Phone Contacts
+                  </Text>
+                </Pressable>
               </View>
             ) : null}
 
@@ -407,6 +455,32 @@ function UserPublicScreen() {
                 </View>
                 <Text style={s.linkLabel} numberOfLines={1}>
                   {user.website.replace(/^https?:\/\//, '')}
+                </Text>
+                <Ionicons name="arrow-forward" size={15} color={MUTED} />
+              </Pressable>
+            ) : null}
+
+            {/* email */}
+            {user.email ? (
+              <Pressable style={s.linkPill} onPress={() => openExternalUrl(`mailto:${user.email}`)}>
+                <View style={[s.linkIcon, { backgroundColor: '#00D4AA18' }]}>
+                  <Ionicons name="mail-outline" size={18} color="#00D4AA" />
+                </View>
+                <Text style={s.linkLabel} numberOfLines={1}>
+                  {user.email}
+                </Text>
+                <Ionicons name="arrow-forward" size={15} color={MUTED} />
+              </Pressable>
+            ) : null}
+
+            {/* phone */}
+            {user.phone ? (
+              <Pressable style={s.linkPill} onPress={() => openExternalUrl(`tel:${user.phone}`)}>
+                <View style={[s.linkIcon, { backgroundColor: VIOLET + '18' }]}>
+                  <Ionicons name="call-outline" size={18} color={VIOLET} />
+                </View>
+                <Text style={s.linkLabel} numberOfLines={1}>
+                  {user.phone}
                 </Text>
                 <Ionicons name="arrow-forward" size={15} color={MUTED} />
               </Pressable>
@@ -656,6 +730,11 @@ const s = StyleSheet.create({
     ...shadow,
   },
   editBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 7, paddingVertical: 13, borderRadius: 14,
+    backgroundColor: VIOLET + '10', borderWidth: 1.5, borderColor: VIOLET + '30',
+  },
+  exportBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: 7, paddingVertical: 13, borderRadius: 14,
     backgroundColor: VIOLET + '10', borderWidth: 1.5, borderColor: VIOLET + '30',

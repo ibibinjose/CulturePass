@@ -212,7 +212,7 @@ export default function NetworkScreen() {
       <Stack.Screen options={{ headerShown: false }} />
       <LinearGradient
         colors={[`${colors.primary}08`, 'transparent']}
-        style={StyleSheet.absoluteFillObject}
+        style={StyleSheet.absoluteFill}
         pointerEvents="none"
       />
 

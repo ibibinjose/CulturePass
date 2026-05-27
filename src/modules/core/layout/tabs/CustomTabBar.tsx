@@ -26,7 +26,7 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 import { Pressable } from 'react-native';
-import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import type { BottomTabBarProps } from 'expo-router/tabs';
 // import type { Route } from '@react-navigation/native';
 type Route<T extends string, P extends object | undefined = object | undefined> = {
   key: string;
@@ -278,7 +278,7 @@ export function CustomTabBar({ state, navigation, insets }: BottomTabBarProps) {
           />
         )}
         <View style={styles.row}>
-          {visibleRoutes.map((route) => {
+          {visibleRoutes.map((route: Route<string>) => {
             const config = TAB_CONFIG_BY_NAME.get(route.name);
             if (!config) return null;
             const isActive = activeRouteKey === route.key;

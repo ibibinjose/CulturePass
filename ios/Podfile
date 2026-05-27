@@ -42,10 +42,10 @@ target 'CulturePass' do
     ]
   end
 
-# @generated begin react-native-maps - expo prebuild (DO NOT MODIFY)
-  # Disabled the react-native-google-maps pod because the plugin is not active in this build.
-  # This keeps `pod install` 100% clean.
-  # When re-enabling the maps plugin, this section will be regenerated.
+# @generated begin react-native-maps - expo prebuild (DO NOT MODIFY) sync-6e84b14a1fae03c3232b35fa730d04616afc158e
+  rn_maps_path = File.dirname(`node --print "require.resolve('react-native-maps/package.json')"`) 
+  pod 'react-native-maps/Google', :path => rn_maps_path 
+
 # @generated end react-native-maps
   config = use_native_modules!(config_command)
 

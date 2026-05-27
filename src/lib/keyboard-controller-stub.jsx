@@ -1,12 +1,12 @@
 import React from 'react';
 
 // UI Components
-export const KeyboardProvider = ({ children }) => <>{children}</>;
-export const KeyboardAwareScrollView = ({ children, ...props }) => <>{children}</>;
-export const KeyboardButton = ({ children }) => <>{children}</>;
+export const KeyboardProvider = ({ children }) => children;
+export const KeyboardAwareScrollView = ({ children, ...props }) => children;
+export const KeyboardButton = ({ children }) => children;
 export const KeyboardToolbar = () => null;
-export const KeyboardStickyView = ({ children }) => <>{children}</>;
-export const KeyboardAvoidingView = ({ children }) => <>{children}</>;
+export const KeyboardStickyView = ({ children }) => children;
+export const KeyboardAvoidingView = ({ children }) => children;
 
 // Hooks
 export const useKeyboardHandler = () => ({});

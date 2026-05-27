@@ -52,7 +52,8 @@ module.exports = [
       "react-hooks/immutability": "off",
       "react-hooks/preserve-manual-memoization": "off",
       "react-hooks/refs": "off",
-      "@typescript-eslint/no-unused-vars": "warn",
+      // @typescript-eslint/no-unused-vars is provided by eslint-config-expo/flat (which loads the plugin).
+      // Explicit reference removed to avoid "plugin not found" in flat config.
     }
   },
   prettier,

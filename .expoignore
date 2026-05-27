@@ -1,0 +1,23 @@
+# Documentation and dev-only files — never bundle into native or web builds
+docs/
+*.md
+claude.md
+agents.md
+CLAUDE.md
+AGENTS.md
+CHANGELOG.md
+README.md
+LICENSE*
+*.mdx
+
+# Development / AI tooling
+.claude/
+.junie/
+.cursor/
+.vscode/
+
+# Source maps and build artifacts we never want shipped
+*.map
+dist/
+web/
+functions/

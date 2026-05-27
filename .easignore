@@ -1,6 +1,6 @@
-# EAS Build Upload Ignore — Bare Workflow
-# ios/ and android/ source folders are intentionally included.
-# Only their generated/cached subdirectories are excluded.
+# EAS Build Upload Ignore — CNG / Prebuild Workflow
+/ios
+/android
 
 # ── iOS ──────────────────────────────────────────────────────────────────────
 # EAS runs `pod install` on its own — no need to upload 1 GB of Pods

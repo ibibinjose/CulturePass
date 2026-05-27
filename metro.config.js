@@ -72,7 +72,7 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
     }
     if (moduleName.includes("react-native-keyboard-controller")) {
       return {
-        filePath: path.resolve(__dirname, "src/lib/keyboard-controller-stub.js"),
+        filePath: path.resolve(__dirname, "src/lib/keyboard-controller-stub.jsx"),
         type: "sourceFile",
       };
     }
@@ -101,5 +101,52 @@ config.transformer.getTransformOptions = async () => ({
 
 // ── Performance: enable package exports for tree-shaking (disabled due to Metro/Expo internal resolution conflicts) ──
 config.resolver.unstable_enablePackageExports = false;
+
+// === Launch hygiene: aggressively block docs + dev files from the JS bundle ===
+// This prevents any accidental import of .md files, claude.md, agents.md, etc.
+// from ever reaching the production or dev client bundle.
+const blockDocsAndDevFiles = (context, moduleName) => {
+  const lower = moduleName.toLowerCase();
+  if (
+    lower.endsWith('.md') ||
+    lower.endsWith('.mdx') ||
+    lower.includes('claude.md') ||
+    lower.includes('agents.md') ||
+    lower.includes('/docs/') ||
+    lower.includes('/.claude/') ||
+    lower.includes('/.junie/')
+  ) {
+    // Return an empty module so the bundle never contains docs/dev files.
+    return {
+      type: 'empty',
+    };
+  }
+  return null;
+};
+
+const originalResolveRequest2 = config.resolver.resolveRequest;
+config.resolver.resolveRequest = (context, moduleName, platform) => {
+  const blocked = blockDocsAndDevFiles(context, moduleName);
+  if (blocked) return blocked;
+
+  if (originalResolveRequest2) {
+    return originalResolveRequest2(context, moduleName, platform);
+  }
+  return context.resolveRequest(context, moduleName, platform);
+};
+
+// Also extend the blockList regex for extra safety during file watching.
+// Note: We avoid regex flags (like /i) here because Metro's blockList
+// cannot combine patterns with different flags.
+config.resolver.blockList = [
+  ...(Array.isArray(config.resolver.blockList) ? config.resolver.blockList : []),
+  /.*\.md$/,
+  /.*\.mdx$/,
+  /\/docs\//,
+  /\/\.claude\//,
+  /\/\.junie\//,
+  /claude\.md$/,
+  /agents\.md$/,
+];
 
 module.exports = config;

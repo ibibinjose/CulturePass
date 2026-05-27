@@ -43,7 +43,7 @@
       </intent-filter>
       <intent-filter android:autoVerify="true" data-generated="true">
         <action android:name="android.intent.action.VIEW"/>
-        <data android:scheme="https" android:host="culturepass.app" android:pathPrefix="/"/>
+        <data android:scheme="https" android:host="culturepass.co" android:pathPrefix="/"/>
         <category android:name="android.intent.category.BROWSABLE"/>
         <category android:name="android.intent.category.DEFAULT"/>
       </intent-filter>
@@ -55,5 +55,53 @@
         <category android:name="android.intent.category.DEFAULT"/>
       </intent-filter>
     </activity>
+    <receiver android:name=".CultureSpotlightWidgetProvider" android:exported="true" android:label="@string/culture_spotlight_widget_display_name">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
+        <action android:name="expo.modules.widgets.ACTION_WIDGET_INTERACTION"/>
+      </intent-filter>
+      <meta-data android:name="android.appwidget.provider" android:resource="@xml/culture_spotlight_widget_info"/>
+      <meta-data android:name="expo.modules.widgets.NAME" android:value="CultureSpotlightWidget"/>
+    </receiver>
+    <receiver android:name=".CultureNearYouWidgetProvider" android:exported="true" android:label="@string/culture_near_you_widget_display_name">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
+        <action android:name="expo.modules.widgets.ACTION_WIDGET_INTERACTION"/>
+      </intent-filter>
+      <meta-data android:name="android.appwidget.provider" android:resource="@xml/culture_near_you_widget_info"/>
+      <meta-data android:name="expo.modules.widgets.NAME" android:value="CultureNearYouWidget"/>
+    </receiver>
+    <receiver android:name=".CultureIdentityQRWidgetProvider" android:exported="true" android:label="@string/culture_identity_qr_widget_display_name">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
+        <action android:name="expo.modules.widgets.ACTION_WIDGET_INTERACTION"/>
+      </intent-filter>
+      <meta-data android:name="android.appwidget.provider" android:resource="@xml/culture_identity_qr_widget_info"/>
+      <meta-data android:name="expo.modules.widgets.NAME" android:value="CultureIdentityQRWidget"/>
+    </receiver>
+    <receiver android:name=".CultureUpcomingTicketWidgetProvider" android:exported="true" android:label="@string/culture_upcoming_ticket_widget_display_name">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
+        <action android:name="expo.modules.widgets.ACTION_WIDGET_INTERACTION"/>
+      </intent-filter>
+      <meta-data android:name="android.appwidget.provider" android:resource="@xml/culture_upcoming_ticket_widget_info"/>
+      <meta-data android:name="expo.modules.widgets.NAME" android:value="CultureUpcomingTicketWidget"/>
+    </receiver>
+    <receiver android:name=".CulturePassWatchWidgetProvider" android:exported="true" android:label="@string/culture_pass_watch_widget_display_name">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
+        <action android:name="expo.modules.widgets.ACTION_WIDGET_INTERACTION"/>
+      </intent-filter>
+      <meta-data android:name="android.appwidget.provider" android:resource="@xml/culture_pass_watch_widget_info"/>
+      <meta-data android:name="expo.modules.widgets.NAME" android:value="CulturePassWatchWidget"/>
+    </receiver>
+    <receiver android:name=".CultureMembershipWidgetProvider" android:exported="true" android:label="@string/culture_membership_widget_display_name">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
+        <action android:name="expo.modules.widgets.ACTION_WIDGET_INTERACTION"/>
+      </intent-filter>
+      <meta-data android:name="android.appwidget.provider" android:resource="@xml/culture_membership_widget_info"/>
+      <meta-data android:name="expo.modules.widgets.NAME" android:value="CultureMembershipWidget"/>
+    </receiver>
   </application>
 </manifest>

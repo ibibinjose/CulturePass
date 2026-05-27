@@ -68,18 +68,14 @@ export default function(appConfig) {
       }
     ],
     "expo-localization",
-    // Re-enabled. The plugin can be unstable during local `expo prebuild --clean` on some SDK versions.
-    // It generally works fine with EAS Build. If local prebuild fails again, comment this line temporarily.
+    // Temporarily disabled due to prebuild --clean failure (see REBUILD.md)
     // "@bacons/apple-targets",
-    // NOTE: react-native-maps plugin temporarily removed due to iOS plugin loading issue
-    // when starting Expo dev server. The plugin causes "withPodfile is not a function" error
-    // during config evaluation, even when trying to conditionally load it.
-    // [
-    //   "react-native-maps",
-    //   {
-    //     googleMaps: true
-    //   }
-    // ],
+    [
+      "react-native-maps",
+      {
+        iosGoogleMapsApiKey: "$(EXPO_PUBLIC_GOOGLE_MAPS_KEY)"
+      }
+    ],
     [
       "expo-build-properties",
       {
@@ -98,6 +94,7 @@ export default function(appConfig) {
     [
       "expo-widgets",
       {
+        bundleIdentifier: "au.culturepass.app.widgets",
         groupIdentifier: "group.au.culturepass.app",
         widgets: [
           {
@@ -203,6 +200,11 @@ export default function(appConfig) {
         bundleIdentifier: "au.culturepass.app",
         buildNumber: "26",
         appleTeamId: "26WGXSNG58",
+        entitlements: {
+          "com.apple.security.application-groups": [
+            "group.au.culturepass.app"
+          ]
+        },
         infoPlist: {
           NSSupportsLiveActivities: true,
           NSLocationWhenInUseUsageDescription: "CulturePass uses your location to show events and communities near you.",
@@ -218,7 +220,7 @@ export default function(appConfig) {
           ]
         },
         config: {
-          googleMapsApiKey: "$(EXPO_PUBLIC_GOOGLE_MAPS_KEY)"
+          // Key moved to react-native-maps plugin props
         },
         associatedDomains: [
           "applinks:culturepass.co",
@@ -324,9 +326,13 @@ export default function(appConfig) {
               ios: {
                 appExtensions: [
                   {
-                    bundleIdentifier: "au.culturepass.app.widget",
-                    targetName: "widget",
-                    entitlements: {}
+                    bundleIdentifier: "au.culturepass.app.native-widget",
+                    targetName: "native-widget",
+                    entitlements: {
+                      "com.apple.security.application-groups": [
+                        "group.au.culturepass.app"
+                      ]
+                    }
                   },
                   {
                     bundleIdentifier: "au.culturepass.app.spotlight",
@@ -335,12 +341,16 @@ export default function(appConfig) {
                   },
                   {
                     bundleIdentifier: "au.culturepass.app.smart-card",
-                    targetName: "smartcard",
-                    entitlements: {}
+                    targetName: "smart-card",
+                    entitlements: {
+                      "com.apple.security.application-groups": [
+                        "group.au.culturepass.app"
+                      ]
+                    }
                   },
                   {
                     targetName: "ExpoWidgetsTarget",
-                    bundleIdentifier: "au.culturepass.app.ExpoWidgetsTarget",
+                    bundleIdentifier: "au.culturepass.app.widgets",
                     entitlements: {
                       "com.apple.security.application-groups": [
                         "group.au.culturepass.app"

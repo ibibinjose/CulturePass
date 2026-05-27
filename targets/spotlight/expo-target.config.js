@@ -1,5 +1,7 @@
 /** @type {import('@bacons/apple-targets/app.plugin').ConfigFunction} */
 module.exports = config => ({
   type: "spotlight",
-  entitlements: { /* Add entitlements */ },
+  entitlements: {
+    "com.apple.security.application-groups": ["group.au.culturepass.app"]
+  },
 });

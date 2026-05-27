@@ -16,6 +16,7 @@ import { CultureTokens, Spacing, Radius } from '@/design-system/tokens/theme';
 import { useColors } from '@/hooks/useColors';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { withAlpha } from '@/lib/withAlpha';
 
 const HostspaceCreateWorkspace = createLazyComponent(
   () => import('@/modules/host/components/HostspaceCreateWorkspace')
@@ -121,7 +122,7 @@ export default function HostspaceCreateIndex() {
           {publishedProfile ? (
             <ScrollView contentContainerStyle={{ flexGrow: 1, padding: Spacing.xl, backgroundColor: colors.background }}>
               <LinearGradient
-                colors={[CultureTokens.success + '15', 'transparent']}
+                colors={[withAlpha(CultureTokens.success, 0.12), 'transparent']}
                 style={[StyleSheet.absoluteFill, { height: 400 }]}
               />
               <View style={{ alignItems: 'center', marginBottom: Spacing.xl, paddingTop: Spacing.xl * 2 }}>

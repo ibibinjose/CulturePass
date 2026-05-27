@@ -78,6 +78,10 @@ export const Layout = {
   desktopMaxWidth: 1280,
   /** Wider breakpoint for tablet / desktop */
   wideBreakpoint: 768,
+
+  // Sidebar (web desktop experience)
+  sidebarWidth: 240,
+  sidebarRailWidth: 64,
   /** Tab bar approximate height for bottom padding (legacy estimate; prefer `TabBarTokens` + insets in hooks) */
   tabBarHeight: 72,
 } as const;

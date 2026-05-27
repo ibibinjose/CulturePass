@@ -28,8 +28,8 @@ import {
 import { withAlpha } from '@/lib/withAlpha';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-const SIDEBAR_WIDTH = 240;
-const RAIL_WIDTH = 64;
+const SIDEBAR_WIDTH = Layout.sidebarWidth;
+const RAIL_WIDTH = Layout.sidebarRailWidth;
 const ACTIVE_COLOR = CultureTokens.violet;
 const ACTIVE_GRAD: [string, string] = [CultureTokens.violet, CultureTokens.coral];
 const SIDEBAR_COLLAPSED_STORAGE_KEY = 'culturepass:web-sidebar-collapsed';

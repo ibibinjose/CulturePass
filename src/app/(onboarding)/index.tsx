@@ -160,11 +160,13 @@ export default function WelcomeScreen() {
           <Ionicons name={item.icon} size={56} color="#FFFFFF" />
         </View>
         <Text style={s.eyebrow}>{item.eyebrow}</Text>
-        {/* Luxe Heritage injection: hero headline now uses premium display typography */}
-        <LuxeText variant="displayHero" style={{ color: '#FFFFFF', fontSize: 42, lineHeight: 48, letterSpacing: -0.8 }}>
+        {/* Deep Luxe Heritage polish: stronger premium display voice + tighter hierarchy */}
+        <LuxeText variant="displayHero" style={{ color: '#FFFFFF', fontSize: Platform.OS === 'web' ? 44 : 38, lineHeight: Platform.OS === 'web' ? 50 : 44, letterSpacing: -1.0 }}>
           {item.headline}
         </LuxeText>
-        <Text style={s.sub}>{item.sub}</Text>
+        <LuxeText variant="callout" style={{ color: 'rgba(255,255,255,0.82)', maxWidth: 340, marginTop: 8 }}>
+          {item.sub}
+        </LuxeText>
       </LinearGradient>
     ),
     [width, topInset],
@@ -236,7 +238,7 @@ export default function WelcomeScreen() {
           <View style={[s.actionArea, { height: ACTION_AREA_HEIGHT }]}>
             {isLast ? (
               <Animated.View entering={FadeIn.duration(220)} style={s.ctaFull}>
-                {/* Luxe Heritage: primary CTA now uses the stunning LuxeButton */}
+                {/* Deep Luxe polish: stronger primary action + secondary glass treatment */}
                 <LuxeButton
                   variant="filled"
                   size="lg"
@@ -247,9 +249,9 @@ export default function WelcomeScreen() {
                   Get Started
                 </LuxeButton>
 
-                <CulturalButton variant="tonal" fullWidth onPress={handleSignIn} style={s.ctaBtn}>
+                <LuxeButton variant="glass" size="md" fullWidth onPress={handleSignIn}>
                   Sign In
-                </CulturalButton>
+                </LuxeButton>
 
                 <View style={s.divider}>
                   <View style={[s.divLine, { backgroundColor: m3Colors.outlineVariant }]} />

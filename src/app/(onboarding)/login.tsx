@@ -37,8 +37,11 @@ import {
   M3Typography,
   Spacing,
   TextStyles,
+  Luxe,
+  LuxeTextStyles,
 } from '@/design-system/tokens/theme';
 
+import { LuxeButton, LuxeCard, LuxeText } from '@/design-system/ui';
 import { routeWithRedirect, sanitizeInternalRedirect } from '@/lib/routes';
 import { AuthAmbientBackground } from '@/components/onboarding/AuthScreenPrimitives';
 import Head from 'expo-router/head';

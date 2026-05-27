@@ -45,6 +45,7 @@ import {
   getCityDestinationStyles,
   CITY_HERO_FG,
   CITY_HERO_FG_MUTED,
+  StatPill,
 } from '@/components/city/CityDestinationStyles';
 import {
   FilterRail,
@@ -328,8 +329,8 @@ export function CultureDestinationScreen({ definition: def, routeSearchParams }:
   const totalActiveFilters = selectedCategories.length + selectedCultures.length + selectedLanguages.length;
 
   const gridGap = isDesktop ? 24 : 16;
-  const gridWidth = isDesktop ? contentWidth : width - 32;
-  const cardWidth = Math.floor((gridWidth - gridGap) / 2) - 1;
+  const gridWidth = isDesktop ? contentWidth : width - hPad * 2;
+  const cardWidth = Math.floor((gridWidth - gridGap) / 2);
 
   const goToMap = useCallback(() => {
     haptic();
@@ -539,7 +540,11 @@ export function CultureDestinationScreen({ definition: def, routeSearchParams }:
               locations={[0, 0.42, 1]}
               style={StyleSheet.absoluteFill}
             />
-            <View style={[styles.heroTopBar, { paddingTop: Platform.OS === 'web' ? 16 : insets.top + 16 }]}>
+            <View style={[styles.heroTopBar, {
+              paddingTop: Platform.OS === 'web' ? 16 : insets.top + 16,
+              left: hPad,
+              right: hPad
+            }]}>
               <View style={[localStyles.topIconButtonShell, { borderColor: CultureTokens.indigo + 'CC' }]}>
                 <Pressable
                   onPress={() => {
@@ -609,13 +614,15 @@ export function CultureDestinationScreen({ definition: def, routeSearchParams }:
               </View>
             </View>
 
-            <View style={styles.heroContent}>
+            <View style={[styles.heroContent, { paddingHorizontal: hPad }]}>
               <View style={styles.heroBadge}>
                 <Text style={styles.heroBadgeText}>{def.heroBadge}</Text>
               </View>
-              <Text style={styles.heroCity}>{def.heroTitle}</Text>
+              <Text style={[styles.heroCity, { fontSize: isDesktop ? 64 : 52, lineHeight: isDesktop ? 72 : 58 }]}>
+                {def.heroTitle}
+              </Text>
               <View style={styles.stateRow}>
-                <Ionicons name="map-outline" size={13} color={CITY_HERO_FG} style={{ opacity: 0.85 }} />
+                <Ionicons name="location-sharp" size={14} color={CultureTokens.coral} style={{ opacity: 0.95 }} />
                 <Text style={styles.stateText}>
                   {hubScope === 'diaspora'
                     ? `Diaspora hub · ${focusCountry} ranked first`
@@ -626,27 +633,27 @@ export function CultureDestinationScreen({ definition: def, routeSearchParams }:
               </View>
               <Text style={styles.heroSubtitle}>{cityMeta.tagline}</Text>
               <View style={localStyles.heroMetrics}>
-                {(
-                  [
-                    { n: regionFilteredEvents.length, label: 'events', tint: CultureTokens.teal },
-                    { n: venues.length ? venues.length : '—', label: 'places', tint: CultureTokens.coral },
-                    { n: uniqueCultureTags.length, label: 'cultures', tint: '#E8E6FF' },
-                    { n: uniqueLanguageTags.length, label: 'languages', tint: CultureTokens.indigo },
-                  ] as const
-                ).map((seg, i, arr) => (
-                  <React.Fragment key={seg.label}>
-                    <Text>
-                      <Text style={[localStyles.heroMetricNum, { color: seg.tint }]}>{seg.n}</Text>
-                      <Text style={{ color: CITY_HERO_FG_MUTED, fontFamily: FontFamily.medium, fontSize: 12 }}>
-                        {' '}
-                        {seg.label}
-                      </Text>
-                    </Text>
-                    {i < arr.length - 1 ? (
-                      <Text style={localStyles.heroMetricSep}>·</Text>
-                    ) : null}
-                  </React.Fragment>
-                ))}
+                <StatPill
+                  icon="calendar"
+                  value={regionFilteredEvents.length}
+                  label="events"
+                  color={CultureTokens.teal}
+                  compact
+                />
+                <StatPill
+                  icon="business"
+                  value={venues.length || '—'}
+                  label="places"
+                  color={CultureTokens.coral}
+                  compact
+                />
+                <StatPill
+                  icon="globe-outline"
+                  value={uniqueCultureTags.length}
+                  label="cultures"
+                  color={CultureTokens.indigo}
+                  compact
+                />
               </View>
             </View>
           </View>
@@ -664,7 +671,10 @@ export function CultureDestinationScreen({ definition: def, routeSearchParams }:
               horizontal
               nestedScrollEnabled
               showsHorizontalScrollIndicator={false}
-              contentContainerStyle={[localStyles.exploreRow, { paddingHorizontal: 12, paddingVertical: 8 }]}
+              contentContainerStyle={[
+                localStyles.exploreRow,
+                { paddingHorizontal: hPad, paddingVertical: 8 },
+              ]}
             >
               {EXPLORE_CATEGORY_LINKS.map((item) => {
                 const active = activeExploreCategory === item.key;
@@ -719,15 +729,20 @@ export function CultureDestinationScreen({ definition: def, routeSearchParams }:
           </View>
 
           {regionFilteredEvents.length > 5 && totalActiveFilters === 0 && (
-            <View style={styles.section}>
-              <Text style={[TextStyles.title3, { color: colors.text, marginBottom: 12 }]}>
+            <View style={[styles.section, { paddingHorizontal: 0 }]}>
+              <Text
+                style={[
+                  TextStyles.title3,
+                  { color: colors.text, marginBottom: 12, paddingHorizontal: hPad },
+                ]}
+              >
                 Highlights · {hubScope === 'diaspora' ? `${focusCountry} first` : focusCountry}
               </Text>
               <ScrollView
                 horizontal
                 nestedScrollEnabled
                 showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ gap: 12, paddingRight: 4 }}
+                contentContainerStyle={{ gap: 12, paddingHorizontal: hPad }}
               >
                 {regionFilteredEvents.slice(0, 6).map((e) => (
                   <Pressable
@@ -774,7 +789,7 @@ export function CultureDestinationScreen({ definition: def, routeSearchParams }:
           }
         >
             <View style={{ flex: isDesktop ? 2.8 : 1 }}>
-              <View style={[styles.section, isDesktop && { paddingHorizontal: 0 }]}>
+              <View style={[styles.section, { paddingHorizontal: isDesktop ? 0 : hPad }]}>
                 <View style={styles.sectionHeader}>
                   <View>
                     <Text style={[TextStyles.title3, { color: colors.text }]}>{sectionTitle}</Text>
@@ -836,8 +851,48 @@ export function CultureDestinationScreen({ definition: def, routeSearchParams }:
             </View>
 
             <View style={{ flex: 1, paddingTop: isDesktop ? 28 : 0 }}>
+              {def.slug === 'tamil' && (
+                <View
+                  style={[
+                    styles.section,
+                    {
+                      backgroundColor: CultureTokens.gold + '0A',
+                      borderRadius: Radius.lg,
+                      marginHorizontal: isDesktop ? 0 : hPad,
+                      padding: 20,
+                      marginBottom: 24,
+                      borderWidth: 1,
+                      borderColor: CultureTokens.gold + '33',
+                    },
+                  ]}
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                    <View
+                      style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: 16,
+                        backgroundColor: CultureTokens.gold + '22',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <Ionicons name="sparkles" size={18} color={CultureTokens.gold} />
+                    </View>
+                    <Text style={[TextStyles.title3, { color: colors.text, fontFamily: FontFamily.bold }]}>
+                      Tamil Heritage Spotlight
+                    </Text>
+                  </View>
+                  <Text style={[TextStyles.callout, { color: colors.textSecondary, lineHeight: 22 }]}>
+                    Connecting the global Tamil diaspora through language, arts, and community. From
+                    Pongal celebrations to contemporary film screenings, explore the heartbeat of Tamil
+                    culture wherever you are.
+                  </Text>
+                </View>
+              )}
+
               {venueResults.length > 0 && (
-                <View style={[styles.section, isDesktop && { paddingHorizontal: 0, paddingTop: 0 }]}>
+                <View style={[styles.section, { paddingHorizontal: isDesktop ? 0 : hPad, paddingTop: isDesktop ? 0 : 28 }]}>
                   <Text style={[TextStyles.title3, { color: colors.text, marginBottom: 16 }]}>
                     Places & partners
                   </Text>
@@ -875,64 +930,87 @@ export function CultureDestinationScreen({ definition: def, routeSearchParams }:
                 </View>
               )}
 
-              <View style={[styles.section, isDesktop && { paddingHorizontal: 0 }]}>
-                  <Text style={[TextStyles.title3, { color: colors.text, marginBottom: 4 }]}>
-                    Browse by type
-                  </Text>
-                  <Text style={[TextStyles.caption, { color: colors.textSecondary, marginBottom: 12 }]}>
-                    Explore listings across different categories.
-                  </Text>
-                  <View style={{ gap: 12 }}>
-                    {LISTING_TYPE_ROWS.map((row) => (
-                      <Pressable
-                        key={row.key}
-                        onPress={() => openListingTypeResults(row.key)}
-                        style={({ pressed }) => [
-                          {
-                            borderWidth: 1.5,
-                            borderColor: colors.borderLight,
-                            borderRadius: Radius.lg,
-                            paddingHorizontal: Spacing.md,
-                            paddingVertical: 14,
-                            backgroundColor: colors.surfaceElevated,
-                            opacity: pressed ? 0.9 : 1,
-                            shadowColor: '#000',
-                            shadowOffset: { width: 0, height: 4 },
-                            shadowOpacity: 0.05,
-                            shadowRadius: 8,
-                            elevation: 2,
-                          },
-                        ]}
-                        accessibilityRole="button"
-                        accessibilityLabel={`Open ${row.title} results`}
+              <View style={[styles.section, { paddingHorizontal: isDesktop ? 0 : hPad }]}>
+                <Text style={[TextStyles.title3, { color: colors.text, marginBottom: 4 }]}>
+                  Browse by type
+                </Text>
+                <Text style={[TextStyles.caption, { color: colors.textSecondary, marginBottom: 20 }]}>
+                  Explore listings across different categories.
+                </Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
+                  {LISTING_TYPE_ROWS.map((row) => (
+                    <Pressable
+                      key={row.key}
+                      onPress={() => openListingTypeResults(row.key)}
+                      style={({ pressed }) => [
+                        {
+                          width: isDesktop ? '100%' : '48%',
+                          borderWidth: 1.5,
+                          borderColor: colors.borderLight,
+                          borderRadius: Radius.lg,
+                          padding: 14,
+                          backgroundColor: colors.surfaceElevated,
+                          opacity: pressed ? 0.9 : 1,
+                          ...Platform.select({
+                            web: { transition: 'transform 0.2s ease, box-shadow 0.2s ease' },
+                            default: {},
+                          }),
+                        },
+                      ]}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Open ${row.title} results`}
+                    >
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          marginBottom: 6,
+                        }}
                       >
-                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-                          <Text style={[TextStyles.callout, { color: colors.text, fontFamily: FontFamily.semibold }]}>
-                            {row.title}
-                          </Text>
-                          <View
+                        <Text
+                          style={[
+                            TextStyles.callout,
+                            { color: colors.text, fontFamily: FontFamily.bold, fontSize: 13 },
+                          ]}
+                        >
+                          {row.title}
+                        </Text>
+                        <View
+                          style={{
+                            borderRadius: Radius.full,
+                            paddingHorizontal: 8,
+                            paddingVertical: 2,
+                            backgroundColor: CultureTokens.indigo + '14',
+                          }}
+                        >
+                          <Text
                             style={{
-                              borderRadius: Radius.full,
-                              paddingHorizontal: 10,
-                              paddingVertical: 4,
-                              backgroundColor: CultureTokens.indigo + '14',
+                              fontSize: 10,
+                              color: CultureTokens.indigo,
+                              fontFamily: FontFamily.bold,
                             }}
                           >
-                            <Text style={[TextStyles.caption, { color: CultureTokens.indigo, fontFamily: FontFamily.bold }]}>
-                              {listingResultCounts[row.key]}
-                            </Text>
-                          </View>
+                            {listingResultCounts[row.key]}
+                          </Text>
                         </View>
-                        <Text style={[TextStyles.caption, { color: colors.textSecondary, marginTop: 6, lineHeight: 16 }]}>
-                          {row.description}
-                        </Text>
-                      </Pressable>
-                    ))}
-                  </View>
+                      </View>
+                      <Text
+                        style={[
+                          TextStyles.caption,
+                          { color: colors.textSecondary, lineHeight: 14, fontSize: 11 },
+                        ]}
+                        numberOfLines={2}
+                      >
+                        {row.description}
+                      </Text>
+                    </Pressable>
+                  ))}
                 </View>
+              </View>
 
               {uniqueCultureTags.length > 0 && (
-                <View style={[styles.section, isDesktop && { paddingHorizontal: 0 }]}>
+                <View style={[styles.section, { paddingHorizontal: isDesktop ? 0 : hPad }]}>
                   <Text style={[TextStyles.title3, { color: colors.text, marginBottom: 12 }]}>
                     Cultural tags
                   </Text>
@@ -970,7 +1048,7 @@ export function CultureDestinationScreen({ definition: def, routeSearchParams }:
               )}
 
               {uniqueLanguageTags.length > 0 && (
-                <View style={[styles.section, isDesktop && { paddingHorizontal: 0 }]}>
+                <View style={[styles.section, { paddingHorizontal: isDesktop ? 0 : hPad }]}>
                   <Text style={[TextStyles.title3, { color: colors.text, marginBottom: 12 }]}>
                     Languages
                   </Text>
@@ -1034,6 +1112,8 @@ const localStyles = StyleSheet.create({
   stickyControls: {
     overflow: 'hidden',
     zIndex: 5,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(0,0,0,0.08)',
   },
   heroMetrics: {
     flexDirection: 'row',
@@ -1042,7 +1122,7 @@ const localStyles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     marginTop: 18,
-    paddingHorizontal: 12,
+    paddingHorizontal: 20,
     maxWidth: '96%',
   },
   heroMetricNum: {

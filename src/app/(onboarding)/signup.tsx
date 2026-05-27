@@ -41,8 +41,11 @@ import {
   IconSize,
   LiquidGlassTokens,
   M3Typography,
+  Luxe,
+  LuxeTextStyles,
 } from '@/design-system/tokens/theme';
 
+import { LuxeButton, LuxeCard, LuxeText } from '@/design-system/ui';
 import { routeWithRedirect } from '@/lib/routes';
 import Head from 'expo-router/head';
 import { APP_NAME, SITE_ORIGIN } from '@/lib/app-meta';
@@ -51,6 +54,10 @@ const SIGNUP_SEO_TITLE = `Create account · ${APP_NAME}`;
 const SIGNUP_SEO_DESC =
   'Join CulturePass to discover cultural events, join communities, unlock member perks, and belong anywhere.';
 const SIGNUP_CANONICAL = `${SITE_ORIGIN}/signup`;
+
+// Luxe Heritage values
+const LUXE_TITLE = 'Create your account';
+const LUXE_SUB = 'Your cultural passport starts here.';
 
 const VALUE_PROPS = [
   { icon: 'calendar-outline' as const, title: 'Cultural Events', desc: "Discover what's on this week in your city." },

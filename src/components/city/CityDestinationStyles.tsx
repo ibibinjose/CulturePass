@@ -296,11 +296,15 @@ export function getCityDestinationStyles(
     clearBtnText: { fontSize: 12, fontFamily: 'Poppins_600SemiBold', color: colors.textSecondary },
 
     trendingCard: {
-      width: 220,
-      height: 160,
-      borderRadius: 20,
+      width: 280,
+      height: 180,
+      borderRadius: 24,
       overflow: 'hidden',
       backgroundColor: colors.surface,
+      ...Platform.select({
+        web: { boxShadow: '0 4px 20px rgba(0,0,0,0.12)' } as any,
+        default: { elevation: 3 },
+      }),
     },
     trendingImage: { ...StyleSheet.absoluteFill },
     trendingInfo: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 12, gap: 3 },

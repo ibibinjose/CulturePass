@@ -131,7 +131,7 @@ function AvatarWithRing({
   const isDark = useIsDark();
   const innerSize = size - ringWidth * 2 - 2;
   // Theme-aware cutout so ring contrasts in both light & dark
-  const cutoutBg = isDark ? '#1a1a2e' : colors.surfaceElevated || '#F8F1E9';
+  const cutoutBg = isDark ? withAlpha(CultureTokens.indigo, 0.08) : colors.surfaceElevated || '#F8F1E9';
   return (
     <View style={{ width: size, height: size, borderRadius: size / 2, alignItems: 'center', justifyContent: 'center' }}>
       <LinearGradient
@@ -739,7 +739,7 @@ const ni = StyleSheet.create({
   label: { ...TextStyles.body, fontSize: 13, flex: 1 },
   labelActive: { fontWeight: '600' },
   badge: { backgroundColor: CultureTokens.coral, paddingHorizontal: 6, borderRadius: 10 },
-  badgeText: { color: '#fff', fontSize: 10, fontWeight: '700' },
+  badgeText: { color: '#fff', fontSize: 10, fontWeight: '700' }, // keep white for contrast on colored badges; could pull from tokens if needed later
 });
 
 const pb = StyleSheet.create({

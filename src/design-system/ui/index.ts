@@ -40,3 +40,8 @@ export { CulturalCard } from './CulturalCard';
 export { CulturalTopAppBar } from './CulturalTopAppBar';
 export { CulturalFilterChip } from './CulturalFilterChip';
 export { CulturalInput } from './CulturalInput';
+
+// Luxe Heritage 2026 — new stunning primitives
+export { LuxeButton } from './LuxeButton';
+export { LuxeText } from './LuxeText';
+export { LuxeCard } from './LuxeCard';

@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { M3Button } from '@/design-system/ui/M3Button';
+import { LuxeButton } from '@/design-system/ui/LuxeButton';
 import type { EventData } from '@/shared/schema';
 import type { ColorTheme } from '@/design-system/tokens/colors';
 import { Spacing } from '@/design-system/tokens/theme';
@@ -34,8 +34,9 @@ export function PrimaryActionSection({
 
   return (
     <View style={styles.container}>
-      <M3Button
-        variant={isGoing ? 'outlined' : 'filled'}
+      <LuxeButton
+        variant={isGoing ? 'glass' : 'filled'}
+        size="lg"
         fullWidth
         haptic
         loading={rsvpMutation.isPending}
@@ -43,7 +44,7 @@ export function PrimaryActionSection({
         leftIcon={isGoing ? 'checkmark-circle' : isFreeOrOpen ? 'calendar' : 'ticket-outline'}
       >
         {isFreeOrOpen ? (isGoing ? "You're going" : "I'm Going") : 'Get Tickets'}
-      </M3Button>
+      </LuxeButton>
     </View>
   );
 }

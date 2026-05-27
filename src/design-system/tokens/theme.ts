@@ -20,6 +20,17 @@ import {
 import { Elevation, ElevationAlias } from './elevation';
 import { Duration, SpringConfig, prefersReducedMotion } from './animations';
 import { gradients as _gradients, CultureTokens } from './colors';
+import {
+  Luxe,
+  LuxeTextStyles,
+  luxeGradients,
+  TERRACOTTA_GLOW,
+  DEEP_SAFFRON,
+  RICH_INDIGO,
+  EMERALD_HARMONY,
+  HERITAGE_GOLD,
+  DEEP_PLUM,
+} from './luxeHeritage';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -50,6 +61,19 @@ export type { M3ColorScheme } from './material3';
 
 export { Vitrine, vitrineGhostBorder, vitrinePlumShadowSoft } from './vitrineTheme';
 export type { ColorTheme, ShadowStyle } from './colors';
+
+// --- Luxe Heritage 2026 (new elevated system) ---
+export {
+  Luxe,
+  LuxeTextStyles,
+  luxeGradients,
+  TERRACOTTA_GLOW,
+  DEEP_SAFFRON,
+  RICH_INDIGO,
+  EMERALD_HARMONY,
+  HERITAGE_GOLD,
+  DEEP_PLUM,
+} from './luxeHeritage';
 
 // Explicitly re-exporting constants
 export { Spacing, Radius, Breakpoints, Layout };
@@ -419,7 +443,18 @@ const theme = {
   LiquidGlassAccents,
   CulturalAccents,
   SignatureGradient,
-  CultureTokens
+  CultureTokens,
+
+  // Luxe Heritage 2026 (full token set exposed for easy adoption)
+  Luxe,
+  LuxeTextStyles,
+  luxeGradients,
+  TERRACOTTA_GLOW,
+  DEEP_SAFFRON,
+  RICH_INDIGO,
+  EMERALD_HARMONY,
+  HERITAGE_GOLD,
+  DEEP_PLUM,
 };
 
 export default theme;

@@ -21,6 +21,17 @@ import { Manrope_400Regular, Manrope_600SemiBold, Manrope_700Bold } from '@expo-
 import { Ionicons } from '@expo/vector-icons';
 
 import { Vitrine, vitrineGhostBorder } from '@/design-system/tokens/vitrineTheme';
+import {
+  Luxe,
+  LuxeTextStyles,
+  TERRACOTTA_GLOW,
+  DEEP_SAFFRON,
+  HERITAGE_GOLD,
+  DEEP_PLUM,
+  RICH_INDIGO,
+  EMERALD_HARMONY,
+} from '@/design-system/tokens/theme';
+import { LuxeButton, LuxeText } from '@/design-system/ui';
 
 const IS_WEB = Platform.OS === 'web';
 
@@ -186,6 +197,77 @@ export default function DesignVitrineScreen() {
       <Text style={[styles.footer, { fontFamily: 'Manrope_400Regular', color: Vitrine.onSurfaceVariant }]}>
         Ship path: map screens incrementally to Vitrine tokens or fold selected roles into `constants/colors.ts` after sign-off.
       </Text>
+
+      {/* ============================================================
+          LUXE HERITAGE 2026 — NEW ELEVATED SYSTEM (Tasks 1/2/3/4 live)
+          ============================================================ */}
+      <View style={{ marginTop: 48, paddingTop: 32, borderTopWidth: 1, borderTopColor: '#2E0052' }}>
+        <LuxeText
+          variant="display"
+          style={{ color: DEEP_PLUM, letterSpacing: -0.6, marginBottom: 8 }}
+        >
+          Luxe Heritage 2026
+        </LuxeText>
+
+        <Text style={{ fontFamily: 'Manrope_600SemiBold', color: RICH_INDIGO, fontSize: 15, marginBottom: 16 }}>
+          The new premium visual language — warm cultural soul, true OLED dark, Playfair display voice.
+        </Text>
+
+        {/* Color Swatches */}
+        <Text style={[styles.sectionLabel, { fontFamily: 'Manrope_600SemiBold', color: Vitrine.primaryContainer, marginBottom: 12 }]}>
+          Signature Palette
+        </Text>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 24 }}>
+          {[
+            { name: 'Terracotta', hex: TERRACOTTA_GLOW },
+            { name: 'Saffron', hex: DEEP_SAFFRON },
+            { name: 'Indigo', hex: RICH_INDIGO },
+            { name: 'Emerald', hex: EMERALD_HARMONY },
+            { name: 'Gold', hex: HERITAGE_GOLD },
+            { name: 'Plum', hex: DEEP_PLUM },
+          ].map((c) => (
+            <View key={c.name} style={{ alignItems: 'center' }}>
+              <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: c.hex, borderWidth: 1, borderColor: '#CEC3D3' }} />
+              <Text style={{ fontSize: 11, color: Vitrine.onSurfaceVariant, marginTop: 4, fontFamily: 'Manrope_400Regular' }}>{c.name}</Text>
+            </View>
+          ))}
+        </View>
+
+        {/* Typography samples with Playfair */}
+        <Text style={[styles.sectionLabel, { fontFamily: 'Manrope_600SemiBold', color: Vitrine.primaryContainer, marginBottom: 12 }]}>
+          Premium Display (Playfair + Poppins)
+        </Text>
+        <View style={{ marginBottom: 24, gap: 8 }}>
+          <LuxeText variant="displayHero" style={{ color: DEEP_PLUM, fontSize: 36, lineHeight: 42 }}>
+            Belong anywhere.
+          </LuxeText>
+          <Text style={{ fontFamily: 'Poppins_600SemiBold', color: Vitrine.onSurface, fontSize: 18 }}>
+            Feel at home everywhere.
+          </Text>
+          <Text style={{ fontFamily: 'Manrope_400Regular', color: Vitrine.onSurfaceVariant, fontSize: 13 }}>
+            PlayfairDisplay for heroes & branding. Poppins for everything else.
+          </Text>
+        </View>
+
+        {/* Live LuxeButton examples (Task 2 injected) */}
+        <Text style={[styles.sectionLabel, { fontFamily: 'Manrope_600SemiBold', color: Vitrine.primaryContainer, marginBottom: 12 }]}>
+          LuxeButton Primitives (live)
+        </Text>
+        <View style={{ gap: 12 }}>
+          <LuxeButton variant="filled" size="lg" leftIcon="compass" fullWidth onPress={() => {}}>
+            Explore Culture
+          </LuxeButton>
+          <LuxeButton variant="gold" size="md" onPress={() => {}}>
+            Upgrade to CulturePass+
+          </LuxeButton>
+          <LuxeButton variant="plum" size="md" leftIcon="heart" onPress={() => {}}>
+            Join Community
+          </LuxeButton>
+          <LuxeButton variant="glass" size="sm" onPress={() => {}}>
+            Glass Variant
+          </LuxeButton>
+        </View>
+      </View>
     </ScrollView>
   );
 }

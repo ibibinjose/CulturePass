@@ -28,8 +28,10 @@ import {
   M3Typography,
   FontFamily,
   SignatureGradient,
+  Luxe,
+  LuxeTextStyles,
 } from '@/design-system/tokens/theme';
-import { CulturalButton } from '@/design-system/ui';
+import { CulturalButton, LuxeButton, LuxeText } from '@/design-system/ui';
 import { SocialButton } from '@/design-system/ui/SocialButton';
 import { useOnboarding } from '@/contexts/OnboardingContext';
 import { useM3Colors } from '@/hooks/useM3Colors';
@@ -158,7 +160,10 @@ export default function WelcomeScreen() {
           <Ionicons name={item.icon} size={56} color="#FFFFFF" />
         </View>
         <Text style={s.eyebrow}>{item.eyebrow}</Text>
-        <Text style={s.headline}>{item.headline}</Text>
+        {/* Luxe Heritage injection: hero headline now uses premium display typography */}
+        <LuxeText variant="displayHero" style={{ color: '#FFFFFF', fontSize: 42, lineHeight: 48, letterSpacing: -0.8 }}>
+          {item.headline}
+        </LuxeText>
         <Text style={s.sub}>{item.sub}</Text>
       </LinearGradient>
     ),
@@ -231,15 +236,16 @@ export default function WelcomeScreen() {
           <View style={[s.actionArea, { height: ACTION_AREA_HEIGHT }]}>
             {isLast ? (
               <Animated.View entering={FadeIn.duration(220)} style={s.ctaFull}>
-                <CulturalButton
+                {/* Luxe Heritage: primary CTA now uses the stunning LuxeButton */}
+                <LuxeButton
                   variant="filled"
+                  size="lg"
                   fullWidth
                   rightIcon="arrow-forward"
                   onPress={handleGetStarted}
-                  style={s.ctaBtn}
                 >
                   Get Started
-                </CulturalButton>
+                </LuxeButton>
 
                 <CulturalButton variant="tonal" fullWidth onPress={handleSignIn} style={s.ctaBtn}>
                   Sign In

@@ -8,7 +8,7 @@ import { CultureImage } from '@/design-system/ui/CultureImage';
 import { EventPublisherLine } from '@/modules/events/components/list/EventPublisherLine';
 import { EventPublisherLogo } from '@/modules/events/components/list/EventPublisherLogo';
 import { CultureTagRow, mergeCultureTagFields } from '@/design-system/ui/CultureTag';
-import { CultureTokens, TextStyles, Radius } from '@/design-system/tokens/theme';
+import { CultureTokens, TextStyles, Radius, Luxe, LuxeTextStyles } from '@/design-system/tokens/theme';
 import { useSaved } from '@/contexts/SavedContext';
 import { useLikes } from '@/contexts/LikesContext';
 import { eventPaths } from '@/modules/events/services/navigation';
@@ -154,14 +154,16 @@ function EventCardInner({ event, isLive, canEdit, onEdit, onDelete }: EventCardP
 
         <View style={styles.info}>
           <View style={styles.contentWrap}>
-            <Text style={[TextStyles.eventCardTitle, { color: colors.text, height: 44 }]} numberOfLines={2}>
+            {/* Luxe migration (parity with V2): using LuxeTextStyles */}
+            <Text style={[LuxeTextStyles.eventCardTitle, { color: colors.text, height: 44 }]} numberOfLines={2}>
               {event.title}
             </Text>
             
             <View style={styles.metaSection}>
               <View style={styles.dateRow}>
                 <Ionicons name="calendar-outline" size={12} color={colors.eventDate} />
-                <Text style={[TextStyles.eventCardDate, { color: colors.eventDate }]}>
+                {/* Luxe migration complete (parity with V2): fully on LuxeTextStyles */}
+                <Text style={[LuxeTextStyles.eventCardDate, { color: colors.eventDate }]}>
                   {formatEventDateTime(event.date, event.time)}
                 </Text>
               </View>

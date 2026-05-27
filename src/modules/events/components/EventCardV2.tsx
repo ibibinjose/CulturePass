@@ -24,7 +24,7 @@ import { LikeToggle } from '@/design-system/ui/LikeToggle';
 import { EventPublisherLine } from '@/modules/events/components/list/EventPublisherLine';
 import { EventPublisherLogo } from '@/modules/events/components/list/EventPublisherLogo';
 import { CultureTagRow, mergeCultureTagFields } from '@/design-system/ui/CultureTag';
-import { CardTokens, CultureTokens, TextStyles, gradients } from '@/design-system/tokens/theme';
+import { CardTokens, CultureTokens, TextStyles, gradients, Luxe, LuxeTextStyles } from '@/design-system/tokens/theme';
 import { useSaved } from '@/contexts/SavedContext';
 import { useLikes } from '@/contexts/LikesContext';
 import { eventPaths } from '@/modules/events/services/navigation';
@@ -199,7 +199,7 @@ function EventCardV2Inner({ event, isLive, canEdit, onEdit, onDelete }: EventCar
               </View>
             )}
 
-            <Text style={[TextStyles.eventCardTitle, { color: colors.text, height: 44 }]} numberOfLines={2}>
+            <Text style={[LuxeTextStyles.eventCardTitle, { color: colors.text, height: 44 }]} numberOfLines={2}>
               {event.title}
             </Text>
 
@@ -207,7 +207,8 @@ function EventCardV2Inner({ event, isLive, canEdit, onEdit, onDelete }: EventCar
 
               <View style={styles.dateRow}>
                 <Ionicons name="calendar-outline" size={12} color={colors.eventDate} />
-                <Text style={[TextStyles.eventCardDate, { color: colors.eventDate }]}> 
+                {/* Luxe migration: using LuxeTextStyles + semantic eventDate color (never gold) */}
+                <Text style={[LuxeTextStyles.eventCardDate, { color: colors.eventDate }]}> 
                   {formatEventDateTime(event.date, event.time)}
                 </Text>
                 <Pressable

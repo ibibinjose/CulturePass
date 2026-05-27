@@ -42,7 +42,19 @@ import { M3Button } from "@/design-system/ui";
 import { NavigationMetadata } from "@/components/NavigationMetadata";
 import { CulturalThemeProvider } from "@/providers/CulturalThemeProvider";
 
-import { useFonts, Poppins_400Regular, Poppins_500Medium, Poppins_600SemiBold, Poppins_700Bold, Poppins_800ExtraBold } from "@expo-google-fonts/poppins";
+import {
+  useFonts,
+  Poppins_400Regular,
+  Poppins_500Medium,
+  Poppins_600SemiBold,
+  Poppins_700Bold,
+  Poppins_800ExtraBold,
+} from "@expo-google-fonts/poppins";
+import {
+  PlayfairDisplay_400Regular,
+  PlayfairDisplay_500Medium,
+  PlayfairDisplay_700Bold,
+} from "@expo-google-fonts/playfair-display";
 import { Ionicons } from "@expo/vector-icons";
 
 // Import LinkPreviewContextProvider if available
@@ -227,6 +239,10 @@ function RootLayoutContent() {
     Poppins_600SemiBold,
     Poppins_700Bold,
     Poppins_800ExtraBold,
+    // Premium display pairing for Luxe Heritage 2026 (heroes, onboarding, branding)
+    PlayfairDisplay_400Regular,
+    PlayfairDisplay_500Medium,
+    PlayfairDisplay_700Bold,
     ...Ionicons.font,
   });
 

@@ -31,7 +31,10 @@ import {
   Vitrine,
   FontFamily,
   Spacing,
+  Luxe,
+  LuxeTextStyles,
 } from '@/design-system/tokens/theme';
+import { LuxeButton } from '@/design-system/ui';
 import { isCultureKeralaHost } from '@/lib/domainHost';
 import { FOOTER_LINKS } from '@/lib/site-footer-links';
 import { APP_NAME, MADE_IN, SITE_ORIGIN } from '@/lib/app-meta';
@@ -217,6 +220,19 @@ export default function DiscoverScreen() {
             isAuthenticated={d.isAuthenticated}
             onRefresh={d.handleRefresh}
           />
+
+          {/* Luxe Heritage 2026 — first live usage of new premium button */}
+          <View style={{ paddingHorizontal: pageSidePad, marginBottom: Spacing.md }}>
+            <LuxeButton
+              variant="filled"
+              size="lg"
+              fullWidth
+              leftIcon="compass"
+              onPress={() => router.push('/browse')}
+            >
+              Explore Culture
+            </LuxeButton>
+          </View>
 
           <ScrollView
             horizontal

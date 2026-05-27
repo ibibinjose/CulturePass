@@ -242,7 +242,7 @@ export function EntityTypeSelector({ onSelect, existingProfiles = [], intent }: 
             <LinearGradient
               // FIXES-001: nation-builder gradient uses a deliberate warm variation for the hero.
               // The middle stop is intentionally a touch lighter than CultureTokens.gold for contrast on the dark overlay.
-              colors={[CultureTokens.gold, '#E8A923', CultureTokens.terracottaGlow]}
+              colors={[CultureTokens.gold, CultureTokens.heritageGold, CultureTokens.terracottaGlow]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0.9 }}
               style={styles.heroGradient}

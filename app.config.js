@@ -320,25 +320,7 @@ export default function(appConfig) {
           origin: "https://culturepass.co"
         },
         eas: {
-          projectId: "9dc511ee-ee3e-4798-ae29-30efc8f5343e",
-          build: {
-            experimental: {
-              ios: {
-                appExtensions: [
-                  // Only the real widget target created by the expo-widgets plugin
-                  {
-                    targetName: "ExpoWidgetsTarget",
-                    bundleIdentifier: "au.culturepass.app.widgets",
-                    entitlements: {
-                      "com.apple.security.application-groups": [
-                        "group.au.culturepass.app"
-                      ]
-                    }
-                  }
-                ]
-              }
-            }
-          }
+          projectId: "9dc511ee-ee3e-4798-ae29-30efc8f5343e"
         }
       },
       owner: "cultureos",

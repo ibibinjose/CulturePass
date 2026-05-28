@@ -49,12 +49,7 @@ import { ABNField } from '../fields/ABNField';
 import { TaxStatusField } from '../fields/TaxStatusField';
 import { LicenceUploadField } from '../fields/LicenceUploadField';
 import type { Licence } from '../fields/LicenceUploadField';
-import {
-  CultureTokens,
-  Spacing,
-  Radius,
-  FontFamily,
-} from '@/design-system/tokens/theme';
+import { Luxe } from '@/design-system/tokens/luxeHeritage';
 import type { EntityType } from '../../hooks/useFormWizard';
 import type { PartialFormData } from '../../services/formStateSerializer';
 
@@ -255,7 +250,7 @@ export function Step3Legal({
           <Ionicons
             name="shield-checkmark-outline"
             size={28}
-            color={CultureTokens.indigo}
+            color={Luxe.colors.dark.accent}
           />
         </View>
 
@@ -269,8 +264,8 @@ export function Step3Legal({
 
         {/* Phase 1 Business Migration: Enhanced verification context */}
         {entityType === 'business' && (
-          <View style={[styles.verificationNote, { backgroundColor: colors.surfaceElevated, borderLeftColor: CultureTokens.indigo }]}>
-            <Ionicons name="information-circle-outline" size={16} color={CultureTokens.indigo} />
+          <View style={[styles.verificationNote, { backgroundColor: colors.surfaceElevated, borderLeftColor: Luxe.colors.dark.accent }]}>
+            <Ionicons name="information-circle-outline" size={16} color={Luxe.colors.dark.accent} />
             <Text style={[styles.verificationNoteText, { color: colors.textSecondary }]}>
               Business profiles require verification (ABN + identity docs) to build trust with customers and enable paid features. Your main profile info has been pre-filled to speed things up.
             </Text>

@@ -46,12 +46,7 @@ import { SITE_ORIGIN } from '@/lib/app-meta';
 import { HandleField } from '../fields/HandleField';
 import { NameField } from '../fields/NameField';
 import { DateField } from '../fields/DateField';
-import {
-  CultureTokens,
-  Spacing,
-  Radius,
-  FontFamily,
-} from '@/design-system/tokens/theme';
+import { Luxe } from '@/design-system/tokens/luxeHeritage';
 import type { EntityType } from '../../hooks/useFormWizard';
 import type { PartialFormData } from '../../services/formStateSerializer';
 
@@ -212,7 +207,7 @@ export function Step1Identity({
           <Ionicons
             name="person-outline"
             size={28}
-            color={CultureTokens.indigo}
+            color={Luxe.colors.dark.accent}
           />
         </View>
 
@@ -257,13 +252,13 @@ export function Step1Identity({
               <Ionicons
                 name="link-outline"
                 size={16}
-                color={CultureTokens.indigo}
+                color={Luxe.colors.dark.accent}
                 style={styles.previewIcon}
               />
               <Text style={[styles.previewLabel, { color: colors.textSecondary }]}>
                 Your profile URL:
               </Text>
-              <Text style={[styles.previewUrl, { color: CultureTokens.indigo }]}>
+              <Text style={[styles.previewUrl, { color: Luxe.colors.dark.accent }]}>
                 {SITE_ORIGIN.replace(/^https?:\/\//, '')}/@{handle}
               </Text>
             </View>
@@ -301,7 +296,7 @@ export function Step1Identity({
         <Ionicons
           name="information-circle-outline"
           size={20}
-          color={CultureTokens.indigo}
+          color={Luxe.colors.dark.accent}
           style={styles.infoIcon}
         />
         <View style={styles.infoContent}>

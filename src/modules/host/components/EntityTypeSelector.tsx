@@ -7,16 +7,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useColors } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
-import {
-  CultureTokens,
-  TextStyles,
-  Radius,
-  Spacing,
-  SignatureGradient,
-  CardTokens,
-  luxeDark,
-} from '@/design-system/tokens/theme';
-import { M3Card } from '@/design-system/ui/M3Card';
+import { Luxe } from '@/design-system/tokens/luxeHeritage';
+import { LuxeCard } from '@/design-system/ui/LuxeCard';
+import { LuxeText } from '@/design-system/ui/LuxeText';
 import { Badge } from '@/design-system/ui/Badge';
 import type { Profile } from '@/shared/schema';
 
@@ -48,7 +41,7 @@ const ENTITY_TYPES: EntityTypeCard[] = [
     icon: 'people-outline',
     title: 'Community',
     description: 'Launch a diaspora group, cultural association, or member community with free, paid, or invite-only membership models.',
-    color: CultureTokens.indigo,
+    color: Luxe.colors.dark.accent,
     requiresVerification: false,
     category: 'communities',
   },
@@ -57,7 +50,7 @@ const ENTITY_TYPES: EntityTypeCard[] = [
     icon: 'flag-outline',
     title: 'Organiser',
     description: 'Create the producing brand behind festivals, series, and ticketing. Showcase credentials and past events.',
-    color: CultureTokens.indigo,
+    color: Luxe.colors.dark.accent,
     requiresVerification: true,
     category: 'communities',
   },
@@ -67,7 +60,7 @@ const ENTITY_TYPES: EntityTypeCard[] = [
     icon: 'location-outline',
     title: 'Venue',
     description: 'Register halls, galleries, clubs, theatres, and cultural spaces with capacity and technical specifications.',
-    color: CultureTokens.teal,
+    color: Luxe.colors.dark.emerald,
     requiresVerification: true,
     category: 'venues',
   },
@@ -77,7 +70,7 @@ const ENTITY_TYPES: EntityTypeCard[] = [
     icon: 'briefcase-outline',
     title: 'Business',
     description: 'Add shops, services, producers, and cultural brands with product catalogues and business hours.',
-    color: CultureTokens.violet,
+    color: Luxe.colors.dark.accent,
     requiresVerification: true,
     category: 'businesses',
   },
@@ -86,7 +79,7 @@ const ENTITY_TYPES: EntityTypeCard[] = [
     icon: 'mic-outline',
     title: 'Artist',
     description: 'Create performer, maker, speaker, and creative profiles with portfolios and availability calendars.',
-    color: CultureTokens.coral,
+    color: Luxe.colors.dark.primary,
     requiresVerification: false,
     category: 'businesses',
   },
@@ -95,7 +88,7 @@ const ENTITY_TYPES: EntityTypeCard[] = [
     icon: 'school-outline',
     title: 'Professional',
     description: 'Showcase freelancer, expert, or influencer credentials with rate cards and areas of expertise.',
-    color: CultureTokens.coral,
+    color: Luxe.colors.dark.primary,
     requiresVerification: true,
     category: 'businesses',
   },
@@ -156,10 +149,10 @@ export function EntityTypeSelector({ onSelect, existingProfiles = [], intent }: 
           accessibilityLabel={`Create ${entity.title} profile. ${entity.description}${entity.requiresVerification ? ' Requires verification.' : ''}${alreadyCreated ? ' Already created.' : ''}`}
           accessibilityHint="Tap to start creating this profile type"
         >
-          <M3Card
+          <LuxeCard
             style={[
               styles.card,
-              { backgroundColor: colors.surface, borderColor: alreadyCreated ? CultureTokens.teal + '44' : colors.borderLight },
+              { backgroundColor: colors.surface, borderColor: alreadyCreated ? Luxe.colors.dark.emerald + '44' : colors.borderLight },
               alreadyCreated && styles.cardExisting,
             ]}
             variant={alreadyCreated ? 'outlined' : 'elevated'}
@@ -200,8 +193,8 @@ export function EntityTypeSelector({ onSelect, existingProfiles = [], intent }: 
 
               {alreadyCreated && (
                 <View style={styles.existingBadge}>
-                  <Ionicons name="checkmark-circle" size={14} color={CultureTokens.teal} />
-                  <Text style={[styles.existingText, { color: CultureTokens.teal }]}>
+                  <Ionicons name="checkmark-circle" size={14} color={Luxe.colors.dark.emerald} />
+                  <Text style={[styles.existingText, { color: Luxe.colors.dark.emerald }]}>
                     Already created
                   </Text>
                 </View>
@@ -217,11 +210,11 @@ export function EntityTypeSelector({ onSelect, existingProfiles = [], intent }: 
             {/* FIXES-001: absolute overlay badge — tracked for potential extraction (see docs/FIXES-001) */}
             {['community', 'organiser', 'venue', 'business', 'artist', 'professional'].includes(entity.type) && (
               <View style={styles.guidedBadge}>
-                <Ionicons name="shield-checkmark-outline" size={12} color={CultureTokens.indigo} />
+                <Ionicons name="shield-checkmark-outline" size={12} color={Luxe.colors.dark.accent} />
                 <Text style={styles.guidedBadgeText}>Guided wizard</Text>
               </View>
             )}
-          </M3Card>
+          </LuxeCard>
         </Pressable>
       </Animated.View>
     );
@@ -242,8 +235,8 @@ export function EntityTypeSelector({ onSelect, existingProfiles = [], intent }: 
           {isNationBuilder ? (
             <LinearGradient
               // FIXES-001: nation-builder gradient uses a deliberate warm variation for the hero.
-              // The middle stop is intentionally a touch lighter than CultureTokens.gold for contrast on the dark overlay.
-              colors={[CultureTokens.gold, CultureTokens.heritageGold, CultureTokens.terracottaGlow]}
+              // The middle stop is intentionally a touch lighter than heritage gold for contrast on the dark overlay.
+              colors={[Luxe.colors.dark.secondary, '#D4A017', '#E36A4E']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0.9 }}
               style={styles.heroGradient}
@@ -453,14 +446,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: CultureTokens.indigo + '15',
+    backgroundColor: Luxe.colors.dark.accent + '15',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: Radius.sm,
   },
   guidedBadgeText: {
     ...TextStyles.caption,
-    color: CultureTokens.indigo,
+    color: Luxe.colors.dark.accent,
     fontWeight: '600',
     fontSize: 10,
   },

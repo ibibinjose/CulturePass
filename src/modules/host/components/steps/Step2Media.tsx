@@ -25,12 +25,7 @@ import {
 } from 'react-native';
 import { useColors } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
-import {
-  CultureTokens,
-  Spacing,
-  Radius,
-  FontFamily,
-} from '@/design-system/tokens/theme';
+import { Luxe } from '@/design-system/tokens/luxeHeritage';
 import { MediaUploadField } from '../fields/MediaUploadField';
 import type { EntityType } from '../../hooks/useFormWizard';
 import type { PartialFormData } from '../../services/formStateSerializer';
@@ -99,7 +94,7 @@ export function Step2Media({
           {title}
         </Text>
         {required && (
-          <View style={[styles.requiredBadge, { backgroundColor: CultureTokens.coral }]}>
+          <View style={[styles.requiredBadge, { backgroundColor: Luxe.colors.dark.primary }]}>
             <Text style={styles.requiredBadgeText}>Required</Text>
           </View>
         )}

@@ -17,7 +17,7 @@
  * - LocationField for address input
  * - AccessibilityChecklistField for venue accessibility
  * - MapPreview for location visualization
- * - M3Card for section containers
+ * - LuxeCard for section containers
  * - CultureTokens for colors
  */
 
@@ -29,10 +29,10 @@ import {
   ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { M3Card } from '@/design-system/ui/M3Card';
+import { LuxeCard } from '@/design-system/ui/LuxeCard';
 import { Checkbox } from '@/design-system/ui/Checkbox';
 import { useColors } from '@/hooks/useColors';
-import { CultureTokens, Radius, Spacing, TextStyles } from '@/design-system/tokens/theme';
+import { Luxe } from '@/design-system/tokens/luxeHeritage';
 import LocationField from '../fields/LocationField';
 import AccessibilityChecklistField from '../fields/AccessibilityChecklistField';
 import type { WizardStepProps } from '../FormWizard/WizardStep';
@@ -183,8 +183,8 @@ export default function Step4Location({
     >
       {/* Header */}
       <View style={styles.header}>
-        <View style={[styles.iconContainer, { backgroundColor: `${CultureTokens.teal}15` }]}>
-          <Ionicons name="location" size={28} color={CultureTokens.teal} />
+        <View style={[styles.iconContainer, { backgroundColor: `${Luxe.colors.dark.emerald}15` }]}>
+          <Ionicons name="location" size={28} color={Luxe.colors.dark.emerald} />
         </View>
         <View style={styles.headerText}>
           <Text style={[styles.title, { color: colors.text }]}>
@@ -200,15 +200,15 @@ export default function Step4Location({
 
       {/* Online-Only Option */}
       {showOnlineOnlyOption && (
-        <M3Card
+        <LuxeCard
           style={[
             styles.onlineOnlyCard,
             {
               backgroundColor: isOnlineOnly
-                ? `${CultureTokens.indigo}10`
+                ? `${Luxe.colors.dark.accent}10`
                 : colors.card,
               borderColor: isOnlineOnly
-                ? CultureTokens.indigo
+                ? Luxe.colors.dark.accent
                 : colors.borderLight,
             },
           ]}
@@ -220,7 +220,7 @@ export default function Step4Location({
                   styles.onlineOnlyIcon,
                   {
                     backgroundColor: isOnlineOnly
-                      ? `${CultureTokens.indigo}20`
+                      ? `${Luxe.colors.dark.accent}20`
                       : colors.surfaceElevated,
                   },
                 ]}
@@ -228,7 +228,7 @@ export default function Step4Location({
                 <Ionicons
                   name="globe-outline"
                   size={24}
-                  color={isOnlineOnly ? CultureTokens.indigo : colors.textSecondary}
+                  color={isOnlineOnly ? Luxe.colors.dark.accent : colors.textSecondary}
                 />
               </View>
               <View style={styles.onlineOnlyText}>
@@ -242,7 +242,7 @@ export default function Step4Location({
             </View>
             <Checkbox checked={isOnlineOnly} onToggle={handleOnlineOnlyToggle} />
           </View>
-        </M3Card>
+        </LuxeCard>
       )}
 
       {/* Address Section */}
@@ -272,7 +272,7 @@ export default function Step4Location({
               { backgroundColor: colors.surfaceElevated, borderColor: colors.borderLight },
             ]}
           >
-            <Ionicons name="information-circle" size={16} color={CultureTokens.indigo} />
+            <Ionicons name="information-circle" size={16} color={Luxe.colors.dark.accent} />
             <Text style={[styles.infoText, { color: colors.textSecondary }]}>
               {requirePhysicalAddress
                 ? 'Physical address required. PO Boxes are not allowed for venues.'
@@ -311,10 +311,10 @@ export default function Step4Location({
           <View
             style={[
               styles.benefitsBox,
-              { backgroundColor: `${CultureTokens.teal}10`, borderColor: CultureTokens.teal },
+              { backgroundColor: `${Luxe.colors.dark.emerald}10`, borderColor: Luxe.colors.dark.emerald },
             ]}
           >
-            <Ionicons name="star" size={16} color={CultureTokens.teal} />
+            <Ionicons name="star" size={16} color={Luxe.colors.dark.emerald} />
             <Text style={[styles.benefitsText, { color: colors.text }]}>
               Higher accessibility scores improve visibility in accessibility-focused searches
               and demonstrate your commitment to inclusive spaces.
@@ -332,7 +332,7 @@ export default function Step4Location({
           ]}
         >
           <View style={styles.lgaHeader}>
-            <Ionicons name="map" size={18} color={CultureTokens.indigo} />
+            <Ionicons name="map" size={18} color={Luxe.colors.dark.accent} />
             <Text style={[styles.lgaTitle, { color: colors.text }]}>
               Local Government Area
             </Text>
@@ -449,7 +449,7 @@ const styles = StyleSheet.create({
     marginTop: -4,
   },
   requiredBadge: {
-    backgroundColor: CultureTokens.coral,
+    backgroundColor: Luxe.colors.dark.primary,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: Radius.xs,

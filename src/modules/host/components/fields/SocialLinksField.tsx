@@ -10,11 +10,11 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { Input } from '@/design-system/ui/Input';
 import { useColors } from '@/hooks/useColors';
-import { CultureTokens, FontFamily, Radius } from '@/design-system/tokens/theme';
+import { Luxe } from '@/design-system/tokens/luxeHeritage';
+import { LuxeCard } from '@/design-system/ui/LuxeCard';
+import { LuxeButton } from '@/design-system/ui/LuxeButton';
 import { FIELD_LIMITS } from '@/modules/host/schemas/validationRules';
 import { api } from '@/lib/api';
-import { M3Card } from '@/design-system/ui/M3Card';
-import { Button } from '@/design-system/ui/Button';
 
 export type SocialPlatform =
   | 'website'
@@ -76,7 +76,7 @@ const PLATFORM_CONFIGS: Record<SocialPlatform, PlatformConfig> = {
   website: {
     name: 'Website',
     icon: 'globe-outline',
-    color: CultureTokens.violet,
+    color: Luxe.colors.dark.accent,
     placeholder: 'https://yourwebsite.com',
     urlPattern: /^https:\/\/.+\..+/i,
   },
@@ -125,7 +125,7 @@ const PLATFORM_CONFIGS: Record<SocialPlatform, PlatformConfig> = {
   other: {
     name: 'Other',
     icon: 'link-outline',
-    color: CultureTokens.indigo,
+    color: Luxe.colors.dark.accent,
     placeholder: 'https://...',
     urlPattern: /^https:\/\/.+/i,
   },
@@ -343,7 +343,7 @@ export function SocialLinksField({
     const config = PLATFORM_CONFIGS[editingPlatform];
 
     return (
-      <M3Card key={`edit-${index}`} style={styles.linkCard}>
+      <LuxeCard key={`edit-${index}`} style={styles.linkCard}>
         <View style={styles.editHeader}>
           {/* Platform selector */}
           <View style={styles.platformSelector}>
@@ -360,9 +360,9 @@ export function SocialLinksField({
                 const platformConfig = PLATFORM_CONFIGS[platform];
                 const isSelected = editingPlatform === platform;
                 return (
-                  <Button
+                  <LuxeButton
                     key={platform}
-                    variant={isSelected ? 'primary' : 'secondary'}
+                    variant={isSelected ? 'filled' : 'tonal'}
                     size="sm"
                     leftIcon={platformConfig.icon}
                     onPress={() => setEditingPlatform(platform)}
@@ -371,7 +371,7 @@ export function SocialLinksField({
                     style={styles.platformChipButton}
                   >
                     {platformConfig.name}
-                  </Button>
+                  </LuxeButton>
                 );
               })}
             </ScrollView>
@@ -395,7 +395,7 @@ export function SocialLinksField({
           {/* Loading indicator */}
           {(isValidating || isFetchingMetadata) && (
             <View style={styles.loadingIndicator} accessibilityLabel="Validating URL">
-              <ActivityIndicator size="small" color={CultureTokens.indigo} />
+              <ActivityIndicator size="small" color={Luxe.colors.dark.accent} />
               <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
                 {isValidating ? 'Validating URL...' : 'Fetching preview...'}
               </Text>
@@ -404,26 +404,26 @@ export function SocialLinksField({
 
           {/* Actions */}
           <View style={styles.editActions}>
-            <Button
-              variant="primary"
+            <LuxeButton
+              variant="filled"
               size="sm"
               onPress={handleSaveLink}
               disabled={!editingUrl || isValidating || isFetchingMetadata}
               accessibilityLabel="Save social link"
             >
               Save
-            </Button>
-            <Button
-              variant="ghost"
+            </LuxeButton>
+            <LuxeButton
+              variant="outlined"
               size="sm"
               onPress={handleCancelEdit}
               accessibilityLabel="Cancel editing"
             >
               Cancel
-            </Button>
+            </LuxeButton>
           </View>
         </View>
-      </M3Card>
+      </LuxeCard>
     );
   };
 
@@ -435,7 +435,7 @@ export function SocialLinksField({
     const config = PLATFORM_CONFIGS[link.platform];
 
     return (
-      <M3Card
+      <LuxeCard
         key={`link-${index}`}
         style={styles.linkCard}
         accessibilityLabel={`${config.name} link: ${link.url}`}
@@ -459,10 +459,10 @@ export function SocialLinksField({
 
             {link.verified && (
               <View
-                style={[styles.verifiedBadge, { backgroundColor: CultureTokens.teal + '20' }]}
+                style={[styles.verifiedBadge, { backgroundColor: Luxe.colors.dark.emerald + '20' }]}
                 accessibilityLabel="Link verified"
               >
-                <Ionicons name="checkmark-circle" size={16} color={CultureTokens.teal} />
+                <Ionicons name="checkmark-circle" size={16} color={Luxe.colors.dark.emerald} />
               </View>
             )}
           </View>
@@ -501,17 +501,17 @@ export function SocialLinksField({
 
           {/* Action buttons */}
           <View style={[styles.linkActions, { borderTopColor: colors.borderLight }]}>
-            <Button
-              variant="ghost"
+            <LuxeButton
+              variant="outlined"
               size="sm"
               leftIcon="pencil-outline"
               onPress={() => handleStartEdit(index)}
               accessibilityLabel={`Edit ${config.name} link`}
             >
               Edit
-            </Button>
-            <Button
-              variant="ghost"
+            </LuxeButton>
+            <LuxeButton
+              variant="outlined"
               size="sm"
               leftIcon="trash-outline"
               onPress={() => handleRemoveLink(index)}
@@ -519,10 +519,10 @@ export function SocialLinksField({
               style={styles.removeButton}
             >
               Remove
-            </Button>
+            </LuxeButton>
           </View>
         </View>
-      </M3Card>
+      </LuxeCard>
     );
   };
 
@@ -540,8 +540,8 @@ export function SocialLinksField({
       </View>
 
       {value.length < maxLinks && editingIndex === null && (
-        <Button
-          variant="outline"
+        <LuxeButton
+          variant="outlined"
           size="sm"
           leftIcon="add-circle-outline"
           onPress={handleAddLink}
@@ -549,7 +549,7 @@ export function SocialLinksField({
           accessibilityLabel={`Add social link. ${value.length} of ${maxLinks} added`}
         >
           {`Add Social Link (${value.length}/${maxLinks})`}
-        </Button>
+        </LuxeButton>
       )}
 
       {value.length >= maxLinks && (
@@ -584,9 +584,9 @@ export function SocialLinksField({
             ]).map((option) => {
               const isSelected = primaryContactMethod === option.key;
               return (
-                <Button
+                <LuxeButton
                   key={option.key}
-                  variant={isSelected ? 'primary' : 'secondary'}
+                  variant={isSelected ? 'filled' : 'tonal'}
                   size="sm"
                   leftIcon={option.icon}
                   onPress={() => onPrimaryContactMethodChange?.(option.key)}
@@ -595,7 +595,7 @@ export function SocialLinksField({
                   style={styles.contactMethodButton}
                 >
                   {option.label}
-                </Button>
+                </LuxeButton>
               );
             })}
           </View>

@@ -26,9 +26,9 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { useColors } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
-import { M3Card } from '@/design-system/ui/M3Card';
+import { LuxeCard } from '@/design-system/ui/LuxeCard';
 import { Input } from '@/design-system/ui/Input';
-import { CultureTokens, Spacing, Radius, FontFamily } from '@/design-system/tokens/theme';
+import { Spacing, Radius, FontFamily } from '@/design-system/tokens/theme';
 import { SITE_ORIGIN } from '@/lib/app-meta';
 import { RichTextEditor } from '../fields/RichTextEditor';
 import type { WizardStepProps } from '../FormWizard/WizardStep';
@@ -316,7 +316,7 @@ export function Step5Description({
             <Ionicons 
               name="pricetag" 
               size={20} 
-              color={CultureTokens.violet} 
+              color={Luxe.colors.dark.accent} 
             />
             <Text style={[styles.sectionTitle, { color: colors.text }]}>
               Tagline
@@ -341,8 +341,8 @@ export function Step5Description({
 
         {isTaglineValid && (
           <View style={[styles.successBadge, { backgroundColor: colors.surfaceElevated }]}>
-            <Ionicons name="checkmark-circle" size={16} color={CultureTokens.teal} />
-            <Text style={[styles.successText, { color: CultureTokens.teal }]}>
+            <Ionicons name="checkmark-circle" size={16} color={Luxe.colors.dark.emerald} />
+            <Text style={[styles.successText, { color: Luxe.colors.dark.emerald }]}>
               Great tagline!
             </Text>
           </View>
@@ -356,7 +356,7 @@ export function Step5Description({
             <Ionicons 
               name="document-text" 
               size={20} 
-              color={CultureTokens.violet} 
+              color={Luxe.colors.dark.accent} 
             />
             <Text style={[styles.sectionTitle, { color: colors.text }]}>
               Long Description
@@ -383,8 +383,8 @@ export function Step5Description({
 
         {isDescriptionValid && (
           <View style={[styles.successBadge, { backgroundColor: colors.surfaceElevated }]}>
-            <Ionicons name="checkmark-circle" size={16} color={CultureTokens.teal} />
-            <Text style={[styles.successText, { color: CultureTokens.teal }]}>
+            <Ionicons name="checkmark-circle" size={16} color={Luxe.colors.dark.emerald} />
+            <Text style={[styles.successText, { color: Luxe.colors.dark.emerald }]}>
               Excellent description!
             </Text>
           </View>
@@ -398,7 +398,7 @@ export function Step5Description({
             <Ionicons 
               name="pricetags" 
               size={20} 
-              color={CultureTokens.violet} 
+              color={Luxe.colors.dark.accent} 
             />
             <Text style={[styles.sectionTitle, { color: colors.text }]}>
               Category Tags
@@ -416,7 +416,7 @@ export function Step5Description({
             {selectedTags.length} of {MAX_TAGS} tags selected
           </Text>
           {selectedTags.length < MIN_TAGS && (
-            <Text style={[styles.tagsCounterHint, { color: CultureTokens.coral }]}>
+            <Text style={[styles.tagsCounterHint, { color: Luxe.colors.dark.primary }]}>
               (minimum {MIN_TAGS} required)
             </Text>
           )}
@@ -437,10 +437,10 @@ export function Step5Description({
                   styles.tagChip,
                   {
                     backgroundColor: isSelected 
-                      ? CultureTokens.violet 
+                      ? Luxe.colors.dark.accent 
                       : colors.surface,
                     borderColor: isSelected 
-                      ? CultureTokens.violet 
+                      ? Luxe.colors.dark.accent 
                       : colors.borderLight,
                     opacity: isDisabled ? 0.5 : 1,
                   },
@@ -474,8 +474,8 @@ export function Step5Description({
 
         {areTagsValid && (
           <View style={[styles.successBadge, { backgroundColor: colors.surfaceElevated }]}>
-            <Ionicons name="checkmark-circle" size={16} color={CultureTokens.teal} />
-            <Text style={[styles.successText, { color: CultureTokens.teal }]}>
+            <Ionicons name="checkmark-circle" size={16} color={Luxe.colors.dark.emerald} />
+            <Text style={[styles.successText, { color: Luxe.colors.dark.emerald }]}>
               Perfect tag selection!
             </Text>
           </View>
@@ -489,7 +489,7 @@ export function Step5Description({
             <Ionicons
               name="heart"
               size={20}
-              color={CultureTokens.coral}
+              color={Luxe.colors.dark.primary}
             />
             <Text style={[styles.sectionTitle, { color: colors.text }]}>
               First Nations Recognition
@@ -512,10 +512,10 @@ export function Step5Description({
                   styles.tagChip,
                   {
                     backgroundColor: isSelected
-                      ? CultureTokens.coral
+                      ? Luxe.colors.dark.primary
                       : colors.surface,
                     borderColor: isSelected
-                      ? CultureTokens.coral
+                      ? Luxe.colors.dark.primary
                       : colors.borderLight,
                   },
                 ]}
@@ -547,7 +547,7 @@ export function Step5Description({
             <Ionicons 
               name="search" 
               size={20} 
-              color={CultureTokens.violet} 
+              color={Luxe.colors.dark.accent} 
             />
             <Text style={[styles.sectionTitle, { color: colors.text }]}>
               SEO Preview
@@ -558,11 +558,11 @@ export function Step5Description({
           </Text>
         </View>
 
-        <M3Card style={[styles.seoPreview, { backgroundColor: colors.card }]}>
-          <Text style={[styles.seoTitle, { color: CultureTokens.indigo }]}>
+        <LuxeCard style={[styles.seoPreview, { backgroundColor: colors.card }]}>
+          <Text style={[styles.seoTitle, { color: Luxe.colors.dark.accent }]}>
             {formData.officialName || 'Your Profile Name'}
           </Text>
-          <Text style={[styles.seoUrl, { color: CultureTokens.teal }]}>
+          <Text style={[styles.seoUrl, { color: Luxe.colors.dark.emerald }]}>
             {SITE_ORIGIN.replace(/^https?:\/\//, '')}/@{formData.handle || 'yourhandle'}
           </Text>
           <Text style={[styles.seoDescription, { color: colors.textSecondary }]}>
@@ -575,7 +575,7 @@ export function Step5Description({
               </Text>
             )}
           </Text>
-        </M3Card>
+        </LuxeCard>
       </View>
 
       {/* Bottom Spacing */}

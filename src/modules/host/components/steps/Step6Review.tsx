@@ -30,9 +30,11 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { useColors } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
-import { M3Card } from '@/design-system/ui/M3Card';
-import { Button } from '@/design-system/ui/Button';
-import { CultureTokens, Spacing, Radius, FontFamily } from '@/design-system/tokens/theme';
+import { LuxeCard } from '@/design-system/ui/LuxeCard';
+import { LuxeButton } from '@/design-system/ui/LuxeButton';
+import { LuxeText } from '@/design-system/ui/LuxeText';
+import { Luxe } from '@/design-system/tokens/luxeHeritage';
+import { FontFamily } from '@/design-system/tokens/theme';
 import { ProfilePreviewModal } from '../ProfilePreviewModal';
 import type { WizardStepProps } from '../FormWizard/WizardStep';
 import type { HostEntityType } from '@/shared/schema/hostTypes';
@@ -450,7 +452,7 @@ export function Step6Review({
 
   const renderSection = (section: ReviewSection) => {
     return (
-      <M3Card key={section.title} style={[styles.sectionCard, { backgroundColor: colors.card }]}>
+      <LuxeCard key={section.title} variant="glass" size="md" style={[styles.sectionCard, { backgroundColor: colors.card }]}>
         {/* Section Header */}
         <View style={styles.sectionHeader}>
           <View style={styles.sectionTitleRow}>
@@ -459,7 +461,7 @@ export function Step6Review({
                 styles.sectionIconContainer,
                 {
                   backgroundColor: section.isComplete
-                    ? CultureTokens.teal + '20'
+                    ? Luxe.colors.dark.emerald + '20'
                     : colors.surfaceElevated,
                 },
               ]}
@@ -467,7 +469,7 @@ export function Step6Review({
               <Ionicons
                 name={section.icon}
                 size={20}
-                color={section.isComplete ? CultureTokens.teal : colors.textSecondary}
+                color={section.isComplete ? Luxe.colors.dark.emerald : colors.textSecondary}
               />
             </View>
             <View style={styles.sectionTitleContent}>
@@ -476,15 +478,15 @@ export function Step6Review({
               </Text>
               {section.isComplete ? (
                 <View style={styles.completeBadge}>
-                  <Ionicons name="checkmark-circle" size={14} color={CultureTokens.teal} />
-                  <Text style={[styles.completeBadgeText, { color: CultureTokens.teal }]}>
+                  <Ionicons name="checkmark-circle" size={14} color={Luxe.colors.dark.emerald} />
+                  <Text style={[styles.completeBadgeText, { color: Luxe.colors.dark.emerald }]}>
                     Complete
                   </Text>
                 </View>
               ) : (
                 <View style={styles.incompleteBadge}>
-                  <Ionicons name="alert-circle" size={14} color={CultureTokens.coral} />
-                  <Text style={[styles.incompleteBadgeText, { color: CultureTokens.coral }]}>
+                  <Ionicons name="alert-circle" size={14} color={Luxe.colors.dark.primary} />
+                  <Text style={[styles.incompleteBadgeText, { color: Luxe.colors.dark.primary }]}>
                     Incomplete
                   </Text>
                 </View>
@@ -498,8 +500,8 @@ export function Step6Review({
             accessibilityRole="button"
             accessibilityLabel={`Edit ${section.title}`}
           >
-            <Ionicons name="pencil" size={16} color={CultureTokens.indigo} />
-            <Text style={[styles.editButtonText, { color: CultureTokens.indigo }]}>
+            <Ionicons name="pencil" size={16} color={Luxe.colors.dark.accent} />
+            <Text style={[styles.editButtonText, { color: Luxe.colors.dark.accent }]}>
               Edit
             </Text>
           </Pressable>
@@ -516,7 +518,7 @@ export function Step6Review({
             </View>
           ))}
         </View>
-      </M3Card>
+      </LuxeCard>
     );
   };
 
@@ -554,10 +556,10 @@ export function Step6Review({
 
       {/* Validation Summary */}
       {!isReadyToPublish && (
-        <View style={[styles.validationBanner, { backgroundColor: CultureTokens.coral + '15' }]}>
-          <Ionicons name="alert-circle" size={20} color={CultureTokens.coral} />
+        <View style={[styles.validationBanner, { backgroundColor: Luxe.colors.dark.primary + '15' }]}>
+          <Ionicons name="alert-circle" size={20} color={Luxe.colors.dark.primary} />
           <View style={styles.validationContent}>
-            <Text style={[styles.validationTitle, { color: CultureTokens.coral }]}>
+            <Text style={[styles.validationTitle, { color: Luxe.colors.dark.primary }]}>
               Incomplete Sections
             </Text>
             <Text style={[styles.validationText, { color: colors.text }]}>
@@ -569,7 +571,7 @@ export function Step6Review({
                 onPress={() => handleEditSection(section.step)}
                 style={styles.validationItem}
               >
-                <Text style={[styles.validationItemText, { color: CultureTokens.coral }]}>
+                <Text style={[styles.validationItemText, { color: Luxe.colors.dark.primary }]}>
                   • {section.title}
                 </Text>
               </Pressable>
@@ -631,8 +633,8 @@ export function Step6Review({
           style={styles.actionButton}
           accessibilityLabel="Preview profile"
         >
-          <Ionicons name="eye-outline" size={20} color={CultureTokens.indigo} />
-          <Text style={[styles.actionButtonText, { color: CultureTokens.indigo }]}>
+          <Ionicons name="eye-outline" size={20} color={Luxe.colors.dark.accent} />
+          <Text style={[styles.actionButtonText, { color: Luxe.colors.dark.accent }]}>
             Preview
           </Text>
         </Button>
@@ -668,7 +670,7 @@ export function Step6Review({
       {/* Info Banner */}
       {isReadyToPublish && (
         <View style={[styles.infoBanner, { backgroundColor: colors.surfaceElevated }]}>
-          <Ionicons name="information-circle-outline" size={20} color={CultureTokens.indigo} />
+          <Ionicons name="information-circle-outline" size={20} color={Luxe.colors.dark.accent} />
           <View style={styles.infoContent}>
             <Text style={[styles.infoTitle, { color: colors.text }]}>
               Ready to Publish

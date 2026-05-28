@@ -40,7 +40,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useColors } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
 import { useFormWizard, type EntityType } from '../../hooks/useFormWizard';
-import { Spacing, Radius } from '@/design-system/tokens/theme';
+import { Luxe } from '@/design-system/tokens/luxeHeritage';
 import { responsiveMaxWidth } from '../../utils/responsive';
 import {
   announceStepChange,
@@ -445,7 +445,7 @@ export function WizardContainer({
         style={[
           styles.progressContainer,
           {
-            paddingTop: topInset + Spacing.md,
+            paddingTop: topInset + Luxe.spacing.md,
             backgroundColor: colors.surface,
             borderBottomColor: colors.border,
           },
@@ -502,7 +502,7 @@ export function WizardContainer({
         style={[
           styles.navigationContainer,
           {
-            paddingBottom: insets.bottom + Spacing.md,
+            paddingBottom: insets.bottom + Luxe.spacing.md,
             backgroundColor: colors.surface,
             borderTopColor: colors.border,
           },
@@ -556,19 +556,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   progressContainer: {
-    paddingHorizontal: Spacing.md,
-    paddingBottom: Spacing.md,
+    paddingHorizontal: Luxe.spacing.md,
+    paddingBottom: Luxe.spacing.md,
     borderBottomWidth: 1,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    paddingTop: Spacing.lg,
+    paddingTop: Luxe.spacing.lg,
   },
   navigationContainer: {
-    paddingHorizontal: Spacing.md,
-    paddingTop: Spacing.md,
+    paddingHorizontal: Luxe.spacing.md,
+    paddingTop: Luxe.spacing.md,
     borderTopWidth: 1,
   },
 });

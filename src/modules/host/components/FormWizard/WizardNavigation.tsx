@@ -34,8 +34,8 @@ import {
 } from 'react-native';
 
 import { useLayout } from '@/hooks/useLayout';
-import { Spacing } from '@/design-system/tokens/theme';
-import { Button } from '@/design-system/ui/Button';
+import { Luxe } from '@/design-system/tokens/luxeHeritage';
+import { LuxeButton } from '@/design-system/ui';
 import { MIN_TOUCH_TARGET } from '../../utils/responsive';
 import { navigationButtonLabel } from '../../utils/accessibility';
 
@@ -113,22 +113,22 @@ export const WizardNavigation = memo(function WizardNavigation({
       <View style={styles.desktopContainer} accessibilityRole="toolbar" accessibilityLabel="Wizard navigation">
         {/* Left: Cancel */}
         <View style={styles.leftSection}>
-          <Button
-            variant="ghost"
+          <LuxeButton
+            variant="outlined"
             size="md"
             onPress={onCancel}
             disabled={isValidating || isPublishing}
             accessibilityLabel={navigationButtonLabel('cancel')}
           >
             Cancel
-          </Button>
+          </LuxeButton>
         </View>
 
         {/* Right: Back + Next/Publish */}
         <View style={styles.rightSection}>
           {!isFirstStep && (
-            <Button
-              variant="secondary"
+            <LuxeButton
+              variant="tonal"
               size="md"
               onPress={onBack}
               disabled={isValidating || isPublishing}
@@ -136,12 +136,12 @@ export const WizardNavigation = memo(function WizardNavigation({
               accessibilityLabel={navigationButtonLabel('back')}
             >
               Back
-            </Button>
+            </LuxeButton>
           )}
 
           {isLastStep ? (
-            <Button
-              variant="primary"
+            <LuxeButton
+              variant="filled"
               size="md"
               onPress={onPublish}
               loading={isPublishing}
@@ -150,10 +150,10 @@ export const WizardNavigation = memo(function WizardNavigation({
               accessibilityLabel={navigationButtonLabel('publish')}
             >
               Publish Profile
-            </Button>
+            </LuxeButton>
           ) : (
-            <Button
-              variant="primary"
+            <LuxeButton
+              variant="filled"
               size="md"
               onPress={onNext}
               loading={isValidating}
@@ -161,7 +161,7 @@ export const WizardNavigation = memo(function WizardNavigation({
               accessibilityLabel={navigationButtonLabel('next', { currentStep, totalSteps })}
             >
               Next
-            </Button>
+            </LuxeButton>
           )}
         </View>
       </View>
@@ -176,8 +176,8 @@ export const WizardNavigation = memo(function WizardNavigation({
     <View style={styles.mobileContainer} accessibilityRole="toolbar" accessibilityLabel="Wizard navigation">
       {/* Primary Action: Next or Publish — lg size for 54pt height */}
       {isLastStep ? (
-        <Button
-          variant="primary"
+        <LuxeButton
+          variant="filled"
           size="lg"
           fullWidth
           onPress={onPublish}
@@ -188,10 +188,10 @@ export const WizardNavigation = memo(function WizardNavigation({
           accessibilityLabel={navigationButtonLabel('publish')}
         >
           Publish Profile
-        </Button>
+        </LuxeButton>
       ) : (
-        <Button
-          variant="primary"
+        <LuxeButton
+          variant="filled"
           size="lg"
           fullWidth
           onPress={onNext}
@@ -201,14 +201,14 @@ export const WizardNavigation = memo(function WizardNavigation({
           accessibilityLabel={navigationButtonLabel('next', { currentStep, totalSteps })}
         >
           Next
-        </Button>
+        </LuxeButton>
       )}
 
       {/* Secondary Actions Row */}
       <View style={styles.mobileSecondaryRow}>
         {!isFirstStep && (
-          <Button
-            variant="secondary"
+          <LuxeButton
+            variant="tonal"
             size="md"
             onPress={onBack}
             disabled={isValidating || isPublishing}
@@ -217,11 +217,11 @@ export const WizardNavigation = memo(function WizardNavigation({
             accessibilityLabel={navigationButtonLabel('back')}
           >
             Back
-          </Button>
+          </LuxeButton>
         )}
 
-        <Button
-          variant="ghost"
+        <LuxeButton
+          variant="outlined"
           size="md"
           onPress={onCancel}
           disabled={isValidating || isPublishing}
@@ -229,7 +229,7 @@ export const WizardNavigation = memo(function WizardNavigation({
           accessibilityLabel={navigationButtonLabel('cancel')}
         >
           Cancel
-        </Button>
+        </LuxeButton>
       </View>
     </View>
   );
@@ -248,20 +248,20 @@ const styles = StyleSheet.create({
   },
   leftSection: {
     flexDirection: 'row',
-    gap: Spacing.sm,
+    gap: Luxe.spacing.sm,
   },
   rightSection: {
     flexDirection: 'row',
-    gap: Spacing.sm,
+    gap: Luxe.spacing.sm,
   },
 
   // Mobile Styles
   mobileContainer: {
-    gap: Spacing.sm,
+    gap: Luxe.spacing.sm,
   },
   mobileSecondaryRow: {
     flexDirection: 'row',
-    gap: Spacing.sm,
+    gap: Luxe.spacing.sm,
   },
   mobileSecondaryButton: {
     flex: 1,

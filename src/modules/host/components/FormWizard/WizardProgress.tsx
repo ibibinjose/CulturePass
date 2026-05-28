@@ -36,8 +36,8 @@ import * as Haptics from 'expo-haptics';
 
 import { useColors } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
-import { CultureTokens } from '@/design-system/tokens/colors';
-import { Spacing, Radius, TextStyles } from '@/design-system/tokens/theme';
+import { Luxe } from '@/design-system/tokens/luxeHeritage';
+import { LuxeText } from '@/design-system/ui';
 import { MIN_TOUCH_TARGET } from '../../utils/responsive';
 import { stepIndicatorLabel, createKeyboardHandler } from '../../utils/accessibility';
 
@@ -129,14 +129,14 @@ export const WizardProgress = memo(function WizardProgress({
             styles.stepCircle,
             {
               backgroundColor: isActive
-                ? CultureTokens.violet
+                ? Luxe.colors.dark.accent
                 : isCompleted
-                ? CultureTokens.teal
+                ? Luxe.colors.dark.emerald
                 : colors.border,
               borderColor: isActive
-                ? CultureTokens.violet
+                ? Luxe.colors.dark.accent
                 : isCompleted
-                ? CultureTokens.teal
+                ? Luxe.colors.dark.emerald
                 : colors.border,
             },
           ]}
@@ -184,7 +184,7 @@ export const WizardProgress = memo(function WizardProgress({
               styles.connector,
               {
                 backgroundColor: isCompleted
-                  ? CultureTokens.teal
+                  ? Luxe.colors.dark.emerald
                   : colors.border,
               },
             ]}
@@ -254,9 +254,9 @@ export const WizardProgress = memo(function WizardProgress({
                   styles.mobileDot,
                   {
                     backgroundColor: isActive
-                      ? CultureTokens.violet
+                      ? Luxe.colors.dark.accent
                       : isCompleted
-                      ? CultureTokens.teal
+                      ? Luxe.colors.dark.emerald
                       : colors.border,
                   },
                   isActive && styles.mobileDotActive,
@@ -277,7 +277,7 @@ export const WizardProgress = memo(function WizardProgress({
               styles.progressFill,
               {
                 width: `${progress}%`,
-                backgroundColor: CultureTokens.violet,
+                backgroundColor: Luxe.colors.dark.accent,
               },
             ]}
           />
@@ -307,7 +307,7 @@ export const WizardProgress = memo(function WizardProgress({
                   style={[
                     styles.mobileStepListItem,
                     { minHeight: MIN_TOUCH_TARGET },
-                    isActive && { backgroundColor: CultureTokens.violet + '10' },
+                    isActive && { backgroundColor: Luxe.colors.dark.accent + '10' },
                   ]}
                   accessibilityRole="button"
                   accessibilityLabel={`Go to step ${step}: ${stepLabels[step - 1]}`}
@@ -318,9 +318,9 @@ export const WizardProgress = memo(function WizardProgress({
                       styles.stepListDot,
                       {
                         backgroundColor: isActive
-                          ? CultureTokens.violet
+                          ? Luxe.colors.dark.accent
                           : isCompleted
-                          ? CultureTokens.teal
+                          ? Luxe.colors.dark.emerald
                           : colors.border,
                       },
                     ]}
@@ -345,7 +345,7 @@ export const WizardProgress = memo(function WizardProgress({
                     {stepLabels[step - 1]}
                   </Text>
                   {isActive && (
-                    <View style={[styles.currentBadge, { backgroundColor: CultureTokens.violet }]}>
+                    <View style={[styles.currentBadge, { backgroundColor: Luxe.colors.dark.accent }]}>
                       <Text style={styles.currentBadgeText}>Current</Text>
                     </View>
                   )}
@@ -378,7 +378,7 @@ export const WizardProgress = memo(function WizardProgress({
 const styles = StyleSheet.create({
   // Mobile Styles
   mobileContainer: {
-    gap: Spacing.sm,
+    gap: Luxe.spacing.sm,
   },
   mobileHeader: {
     gap: 4,
@@ -408,7 +408,7 @@ const styles = StyleSheet.create({
   mobileDot: {
     width: 8,
     height: 8,
-    borderRadius: Radius.full,
+    borderRadius: Luxe.radius.full,
   },
   mobileDotActive: {
     width: 12,
@@ -416,15 +416,15 @@ const styles = StyleSheet.create({
   },
   progressBar: {
     height: 4,
-    borderRadius: Radius.full,
+    borderRadius: Luxe.radius.full,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    borderRadius: Radius.full,
+    borderRadius: Luxe.radius.full,
   },
   mobileStepList: {
-    borderRadius: Radius.md,
+    borderRadius: Luxe.radius.md,
     borderWidth: 1,
     overflow: 'hidden',
     marginTop: 4,
@@ -439,7 +439,7 @@ const styles = StyleSheet.create({
   stepListDot: {
     width: 20,
     height: 20,
-    borderRadius: Radius.full,
+    borderRadius: Luxe.radius.full,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -450,7 +450,7 @@ const styles = StyleSheet.create({
   currentBadge: {
     paddingHorizontal: 8,
     paddingVertical: 2,
-    borderRadius: Radius.full,
+    borderRadius: Luxe.radius.full,
   },
   currentBadgeText: {
     fontSize: 10,
@@ -468,13 +468,13 @@ const styles = StyleSheet.create({
   stepIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
+    gap: Luxe.spacing.sm,
     position: 'relative',
   },
   stepCircle: {
     width: 32,
     height: 32,
-    borderRadius: Radius.full,
+    borderRadius: Luxe.radius.full,
     borderWidth: 2,
     justifyContent: 'center',
     alignItems: 'center',

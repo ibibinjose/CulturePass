@@ -30,7 +30,8 @@ import {
 
 import { useColors } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
-import { Spacing, TextStyles } from '@/design-system/tokens/theme';
+import { Luxe } from '@/design-system/tokens/luxeHeritage';
+import { LuxeText } from '@/design-system/ui';
 import { responsiveMaxWidth, responsiveSectionGap } from '../../utils/responsive';
 import { createLazyStep, StepLoadingFallback } from '../../utils/performance';
 import type { EntityType } from '../../hooks/useFormWizard';
@@ -205,8 +206,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   placeholderContainer: {
-    padding: Spacing.xl,
-    gap: Spacing.md,
+    padding: Luxe.spacing.xl,
+    gap: Luxe.spacing.md,
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 300,
@@ -220,7 +221,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   errorContainer: {
-    padding: Spacing.xl,
+    padding: Luxe.spacing.xl,
     alignItems: 'center',
     justifyContent: 'center',
   },

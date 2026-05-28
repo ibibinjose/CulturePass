@@ -292,11 +292,13 @@ export default function LocationScreen() {
       goToStep('city', 'forward');
 
       // Slice 2: Auto-trigger council detection for AU users after successful city GPS
+      // TEMP: Increased delay + logging to help reproduce/test the JSI promise crash scenario
       if (r.country === 'Australia') {
-        // Small delay so the UI settles
-        setTimeout(() => {
+        console.log('[LocationScreen] AU city detected via GPS — scheduling council detection in 1500ms');
+        const timeout = setTimeout(() => {
+          console.log('[LocationScreen] Auto-triggering detectCouncil() now');
           void detectCouncil();
-        }, 400);
+        }, 1500); // Increased from 400ms so user has time to navigate away
       }
     } else {
       if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -738,6 +740,22 @@ export default function LocationScreen() {
             )}
 
             <View style={s.spacer} />
+
+            {/* TEMP DEBUG: Manual trigger for crash reproduction testing */}
+            {__DEV__ && state.city === 'Sydney' && (
+              <View style={{ paddingHorizontal: hPad, marginBottom: 12 }}>
+                <LuxeButton
+                  variant="glass"
+                  size="sm"
+                  onPress={() => {
+                    console.log('[DEBUG] Manual detectCouncil triggered from button');
+                    void detectCouncil();
+                  }}
+                >
+                  [DEBUG] Trigger Council Detect (for crash test)
+                </LuxeButton>
+              </View>
+            )}
 
             {/* Council / LGA Detection — Slice 2 (polished) */}
             {state.city && (

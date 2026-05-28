@@ -1,3 +1,19 @@
+// Force React Native's Event implementation to win over event-target-shim
+// (from expo-notifications). Prevents "Cannot assign to read-only property 'NONE'" crash.
+import { Platform } from 'react-native';
+if (Platform.OS !== 'web') {
+  try {
+    // @ts-expect-error - intentional early polyfill ordering fix
+    global.Event = require('react-native/Libraries/Events/Event');
+  } catch {
+    try {
+      // Fallback for newer RN structure
+      // @ts-expect-error
+      global.Event = require('react-native/src/private/webapis/dom/events/Event').default;
+    } catch {}
+  }
+}
+
 import "react-native-reanimated"; // <-- CRUCIAL FIX: Must be at the very top
 import { StatusBar } from "expo-status-bar";
 import { Buffer } from "buffer";
@@ -39,7 +55,8 @@ import { WidgetSync } from "@/components/WidgetSync";
 import { WebSidebar } from "@/modules/core/layout/web/WebSidebar";
 import { NavigationMetadata } from "@/components/NavigationMetadata";
 import { CulturalThemeProvider } from "@/providers/CulturalThemeProvider";
-import { Footer } from "@/components/Footer"; // Add Footer import
+import { Footer } from "@/components/Footer";
+import { ScrollToFooterButton, ScrollToTopButton } from "@/components/web/ScrollToFooterButton";
 
 import {
   useFonts,
@@ -216,6 +233,12 @@ function RootLayoutNav() {
           </View>
         </View>
         <Footer />
+        <ScrollToFooterButton 
+          position="bottom-right" 
+          label="" 
+          alwaysVisible={true} 
+        />
+        <ScrollToTopButton position="bottom-left" />
       </View>
     );
   }
@@ -227,6 +250,12 @@ function RootLayoutNav() {
         {stackContent}
       </View>
       <Footer />
+      <ScrollToFooterButton 
+        position="bottom-right" 
+        label="" 
+        alwaysVisible={true} 
+      />
+      <ScrollToTopButton position="bottom-left" />
     </View>
   );
 }

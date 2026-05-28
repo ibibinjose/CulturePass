@@ -184,7 +184,7 @@ export default function(appConfig) {
       plugins: basePlugins,
       name: "CulturePass",
       slug: "culturepass",
-      version: "1.2.2",
+      version: "1.3.0",
       description: "Discover cultural events and communities built for diaspora cities. Organizers reach the right audience; attendees find festivals, tickets, and belonging in one place.",
       orientation: "portrait",
       icon: "./assets/images/icon.png",
@@ -198,7 +198,7 @@ export default function(appConfig) {
       ios: {
         supportsTablet: true,
         bundleIdentifier: "au.culturepass.app",
-        buildNumber: "26",
+        buildNumber: "27",
         appleTeamId: "26WGXSNG58",
         entitlements: {
           "com.apple.security.application-groups": [
@@ -296,7 +296,7 @@ export default function(appConfig) {
           "android.permission.USE_FINGERPRINT",
           "android.permission.READ_MEDIA_IMAGES"
         ],
-        versionCode: 5
+        versionCode: 6
       },
       web: {
         favicon: "./assets/images/favicon.png",
@@ -325,29 +325,7 @@ export default function(appConfig) {
             experimental: {
               ios: {
                 appExtensions: [
-                  {
-                    bundleIdentifier: "au.culturepass.app.native-widget",
-                    targetName: "native-widget",
-                    entitlements: {
-                      "com.apple.security.application-groups": [
-                        "group.au.culturepass.app"
-                      ]
-                    }
-                  },
-                  {
-                    bundleIdentifier: "au.culturepass.app.spotlight",
-                    targetName: "spotlight",
-                    entitlements: {}
-                  },
-                  {
-                    bundleIdentifier: "au.culturepass.app.smart-card",
-                    targetName: "smart-card",
-                    entitlements: {
-                      "com.apple.security.application-groups": [
-                        "group.au.culturepass.app"
-                      ]
-                    }
-                  },
+                  // Only the real widget target created by the expo-widgets plugin
                   {
                     targetName: "ExpoWidgetsTarget",
                     bundleIdentifier: "au.culturepass.app.widgets",
@@ -364,7 +342,7 @@ export default function(appConfig) {
         }
       },
       owner: "cultureos",
-      runtimeVersion: "1.1.0",
+      runtimeVersion: "1.3.0",
       updates: {
         url: "https://u.expo.dev/9dc511ee-ee3e-4798-ae29-30efc8f5343e"
       }

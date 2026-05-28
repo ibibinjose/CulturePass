@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import * as Location from 'expo-location';
 import { api } from '@/lib/api';
 import type { CouncilData } from '@/shared/schema';
@@ -22,18 +22,36 @@ export function useNearestCouncil() {
   const [matchMethod, setMatchMethod] = useState<CouncilMatchMethod>('none');
   const [confidence, setConfidence] = useState<CouncilConfidence>('weak');
 
+  // Prevent state updates after unmount (critical to avoid JSI promise crashes)
+  const isMounted = useRef(true);
+
+  useEffect(() => {
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
   const detect = useCallback(async (): Promise<NearestCouncilResult | null> => {
+    if (!isMounted.current) {
+      console.log('[useNearestCouncil] detect() called but component unmounted — aborting');
+      return null;
+    }
+
+    console.log('[useNearestCouncil] detect() started');
     setStatus('requesting');
+
     try {
       const hasServices = await Location.hasServicesEnabledAsync();
       if (!hasServices) {
-        setStatus('unavailable');
+        if (isMounted.current) setStatus('unavailable');
+        console.log('[useNearestCouncil] Location services unavailable');
         return null;
       }
 
       const { status: perm } = await Location.requestForegroundPermissionsAsync();
       if (perm !== 'granted') {
-        setStatus('denied');
+        if (isMounted.current) setStatus('denied');
+        console.log('[useNearestCouncil] Location permission denied');
         return null;
       }
 
@@ -43,10 +61,10 @@ export function useNearestCouncil() {
 
       const { latitude, longitude } = pos.coords;
 
-      // We also need city/state for fallback in the backend resolve
       const addresses = await Location.reverseGeocodeAsync({ latitude, longitude });
       const geo = addresses[0];
 
+      console.log('[useNearestCouncil] Calling api.council.nearest...');
       const result = await api.council.nearest({
         latitude,
         longitude,
@@ -55,12 +73,19 @@ export function useNearestCouncil() {
         country: geo?.isoCountryCode || undefined,
       });
 
+      if (!isMounted.current) {
+        console.log('[useNearestCouncil] Promise resolved but component unmounted — ignoring result (prevents JSI crash)');
+        return null;
+      }
+
       if (result?.council) {
         setCouncil(result.council);
         setDistanceKm(result.distanceKm ?? null);
         setMatchMethod(result.matchMethod ?? 'coordinate');
         setConfidence(result.confidence ?? 'medium');
         setStatus('success');
+
+        console.log('[useNearestCouncil] Success:', result.council.name, 'distance:', result.distanceKm);
 
         return {
           council: result.council,
@@ -70,16 +95,20 @@ export function useNearestCouncil() {
         };
       } else {
         setStatus('error');
+        console.log('[useNearestCouncil] No council found');
         return null;
       }
     } catch (err) {
-      console.error('[useNearestCouncil] error:', err);
-      setStatus('error');
+      if (isMounted.current) {
+        console.error('[useNearestCouncil] error:', err);
+        setStatus('error');
+      }
       return null;
     }
   }, []);
 
   const reset = useCallback(() => {
+    if (!isMounted.current) return;
     setStatus('idle');
     setCouncil(null);
     setDistanceKm(null);

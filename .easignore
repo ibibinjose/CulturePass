@@ -93,3 +93,33 @@ google-play-service-account.json
 .DS_Store
 .vscode
 *.swp
+
+# ── Extra bloat reduction (safe for native iOS/Android builds) ────────────────
+# These are the main reasons for 1.8 GB uploads
+*.map
+**/*.map
+**/*-meta.json
+coverage/
+.nyc_output/
+*.orig
+*.patch
+*.diff
+
+# Large stock / marketing assets not needed in the native bundle
+assets/marketing/
+assets/stock/
+
+# Heavy dev / debug tooling
+**/.turbo
+**/.next
+**/.cache
+
+# Any remaining large generated or backup files
+*.bak
+*.tmp
+*.zip
+*.tar.gz
+*.tgz
+*.apk
+*.ipa
+*.aab

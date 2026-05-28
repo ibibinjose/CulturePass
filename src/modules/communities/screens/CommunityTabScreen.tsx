@@ -40,110 +40,134 @@ import { getCommunityMemberCount } from '@/lib/community';
 
 // ... (keep your existing imports for hooks, utils, types)
 
-// (removed unused width constants after Luxe migration)
+type CommunityCategory = 'all' | 'cultural' | 'business' | 'civic' | 'club' | 'faith' | 'arts';
 
-type Segment = 'feed' | 'discover';
-type CommunityCategory = 'all' | 'cultural' | 'business' | 'civic' | 'club';
+const CATEGORY_OPTIONS: { id: CommunityCategory; label: string; icon?: string }[] = [
+  { id: 'all', label: 'All' },
+  { id: 'cultural', label: 'Cultural', icon: 'globe' },
+  { id: 'business', label: 'Business', icon: 'briefcase' },
+  { id: 'civic', label: 'Civic', icon: 'people' },
+  { id: 'club', label: 'Clubs', icon: 'people-circle' },
+  { id: 'faith', label: 'Faith', icon: 'heart' },
+  { id: 'arts', label: 'Arts', icon: 'color-palette' },
+];
 
 export default function CommunityTabScreen() {
-  const colors = useColors();
   const m3Colors = useM3Colors();
   const insets = useSafeAreaInsets();
   const layout = useLayout();
-  const { isDesktop } = layout;
+  const { isDesktop, windowSizeClass } = layout;
 
-  const { state: onboarding, setCity } = useOnboarding();
-  const { savedCommunityBookmarks } = useSaved();
-  const { isAuthenticated, user } = useAuth();
+  const { state: onboarding } = useOnboarding();
+  const { user } = useAuth();
 
-  const cityName = onboarding?.city?.trim() || 'Sydney';
+  const userCity = onboarding?.city?.trim() || 'Sydney';
   const hPad = isDesktop ? Luxe.spacing.xl : Luxe.spacing.lg;
 
   const [refreshing, setRefreshing] = useState(false);
   const [activeCategory, setActiveCategory] = useState<CommunityCategory>('all');
-  const [segment, setSegment] = useState<Segment>('feed');
+  const [selectedLocation, setSelectedLocation] = useState<'all' | 'near-you'>('near-you');
+  const [sortMode, setSortMode] = useState<'activity' | 'size' | 'name'>('activity');
 
-  // Add type definitions
-  type CommunityPost = {
-    id: string;
-    name: string;
-    imageUrl?: string;
-  };
+  const numColumns = windowSizeClass === 'expanded' ? 3 : 2;
 
-  type FeedItem = {
-    id: string;
-    kind: string;
-    communityId?: string;
-    communityName?: string;
-    communityImageUrl?: string;
-    body?: string;
-    postStyle?: string;
-    imageUrl?: string;
-    authorId?: string;
-    likesCount?: number;
-    commentsCount?: number;
-    createdAt: string;
-    event?: any;
-  };
-
-  // Loose type matching what the local luxe FeedPostCard expects
-  type FeedPost = {
-    id: string;
-    authorName: string;
-    authorAvatar?: string;
-    authorInitial: string;
-    timeLabel?: string;
-    locationLabel?: string;
-    title: string;
-    body?: string;
-    imageUrl?: string;
-    likeCount?: number;
-    commentCount?: number;
-    onPress: () => void;
-    onShare: () => void;
-  };
-
-  // Feed query (stubbed safely so the screen doesn't crash when the real API isn't wired)
-  const feedQuery = useQuery({
-    queryKey: ['community-feed', cityName],
-    queryFn: async () => ({ items: [] as any[] }),
-    staleTime: 3 * 60 * 1000,
-  });
-
-  const feedPosts = useMemo(() => {
-    const serverItems = (feedQuery.data?.items ?? []) as unknown as FeedItem[];
-    return serverItems.map((item: FeedItem) => {
-      const communityName = item.communityName || 'Community';
-      const authorName = communityName;
-      const title = item.body ? item.body.slice(0, 80) : (item.kind === 'event' ? 'Community Event' : 'Update from ' + communityName);
-
-      return {
-        id: item.id,
-        authorName,
-        authorAvatar: item.communityImageUrl,
-        authorInitial: communityName.charAt(0).toUpperCase(),
-        accentColor: Luxe.colors.terracotta,
-        timeLabel: item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '',
-        locationLabel: cityName,
-        title,
-        body: item.body || '',
-        imageUrl: item.imageUrl || item.communityImageUrl,
-        likeCount: item.likesCount || 0,
-        commentCount: item.commentsCount || 0,
-        onPress: () => {
-          if (item.communityId) {
-            router.push({ pathname: '/c/[id]', params: { id: item.communityId } });
-          }
-        },
-        onShare: () => {
-          Share.share({ message: title + (item.body ? '\n' + item.body : '') }).catch(() => {});
-        },
-      };
-    });
-  }, [feedQuery.data, cityName]);
-
-  // Community data for Discover rails + Trending (restored for luxe experience)
   const { data: allCommunities = [] } = useCommunities();
+
+  // === Clean & Beautiful Filter Bar ===
+  const FilterBar = () => (
+    <View style={{ paddingHorizontal: hPad, paddingTop: 12, paddingBottom: 8, gap: 12 }}>
+      {/* Category Filters */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+        {CATEGORY_OPTIONS.map((cat) => (
+          <LuxeFilterChip
+            key={cat.id}
+            label={cat.label}
+            icon={cat.icon as any}
+            selected={activeCategory === cat.id}
+            onPress={() => setActiveCategory(cat.id)}
+            compact
+          />
+        ))}
+      </ScrollView>
+
+      {/* Location + Sort Row */}
+      <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+        <LuxeFilterChip
+          label="Near You"
+          selected={selectedLocation === 'near-you'}
+          onPress={() => setSelectedLocation('near-you')}
+          compact
+        />
+        <LuxeFilterChip
+          label="All Cities"
+          selected={selectedLocation === 'all'}
+          onPress={() => setSelectedLocation('all')}
+          compact
+        />
+
+        <View style={{ flex: 1 }} />
+
+        {/* Simple Sort */}
+        <Pressable 
+          onPress={() => {
+            const next = sortMode === 'activity' ? 'size' : sortMode === 'size' ? 'name' : 'activity';
+            setSortMode(next);
+          }}
+          style={{ 
+            flexDirection: 'row', 
+            alignItems: 'center', 
+            gap: 4, 
+            backgroundColor: m3Colors.surface,
+            paddingHorizontal: 12,
+            paddingVertical: 6,
+            borderRadius: 20,
+          }}
+        >
+          <LuxeText variant="caption" style={{ color: m3Colors.onSurfaceVariant }}>
+            {sortMode === 'activity' ? 'Most Active' : sortMode === 'size' ? 'Largest' : 'A–Z'}
+          </LuxeText>
+          <Ionicons name="swap-vertical" size={14} color={m3Colors.onSurfaceVariant} />
+        </Pressable>
+      </View>
+    </View>
+  );
+
+  // === Clean Gallery Filtering ===
+  const filteredCommunities = useMemo(() => {
+    let result = [...allCommunities];
+
+    // Category filter
+    if (activeCategory !== 'all') {
+      result = result.filter((c: any) => 
+        c.communityCategory === activeCategory || 
+        c.category?.toLowerCase() === activeCategory
+      );
+    }
+
+    // Location filter
+    if (selectedLocation === 'near-you') {
+      result = result.filter((c: any) => 
+        c.city?.toLowerCase() === userCity.toLowerCase() ||
+        (c.chapterCities || []).some((ch: string) => ch.toLowerCase() === userCity.toLowerCase())
+      );
+    }
+
+    // Sorting
+    if (sortMode === 'size') {
+      result.sort((a: any, b: any) => (b.membersCount || 0) - (a.membersCount || 0));
+    } else if (sortMode === 'name') {
+      result.sort((a: any, b: any) => (a.name || '').localeCompare(b.name || ''));
+    } else {
+      const levelOrder: Record<string, number> = { thriving: 4, active: 3, steady: 2, new: 1 };
+      result.sort((a: any, b: any) => {
+        const aLevel = levelOrder[a.activityLevel || 'new'] || 0;
+        const bLevel = levelOrder[b.activityLevel || 'new'] || 0;
+        return bLevel - aLevel || (b.membersCount || 0) - (a.membersCount || 0);
+      });
+    }
+
+    return result;
+  }, [allCommunities, activeCategory, selectedLocation, sortMode, userCity]);
   const { data: joinedData } = useJoinedCommunities();
   const { data: followingIds = [] } = useFollowingCommunityIds();
 
@@ -297,24 +321,24 @@ export default function CommunityTabScreen() {
       </View>
 
       {/* Segment Switcher */}
-      <View style={[styles.segmentContainer, { paddingHorizontal: hPad }]}>
-        <View style={styles.segmentShell}>
-          {(['feed', 'discover'] as const).map((s) => (
-            <Pressable
-              key={s}
-              onPress={() => setSegment(s)}
-              style={[styles.segmentPill, segment === s && styles.segmentPillActive]}
-            >
-              <Ionicons
-                name={s === 'feed' ? 'pulse' : 'compass'}
-                size={18}
-                color={segment === s ? m3Colors.onPrimary : m3Colors.onSurfaceVariant}
-              />
-              <LuxeText style={[styles.segmentText, segment === s && styles.segmentTextActive]}>
-                {s === 'feed' ? 'Activity' : 'Discover'}
-              </LuxeText>
-            </Pressable>
-          ))}
+      {/* Filters */}
+      <View style={{ paddingHorizontal: hPad, paddingTop: 8 }}>
+        <CategoryChips active={activeCategory} onChange={setActiveCategory} hPad={hPad} />
+        
+        {/* Location Filter */}
+        <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
+          <LuxeFilterChip 
+            label="Near You" 
+            selected={selectedLocation === 'near-you'} 
+            onPress={() => setSelectedLocation('near-you')} 
+            compact 
+          />
+          <LuxeFilterChip 
+            label="All Locations" 
+            selected={selectedLocation === 'all'} 
+            onPress={() => setSelectedLocation('all')} 
+            compact 
+          />
         </View>
       </View>
     </View>
@@ -332,24 +356,15 @@ export default function CommunityTabScreen() {
     </View>
   );
 
-  const discoverContent = renderDiscoverContent(
-    segment,
-    activeCategory,
-    setActiveCategory,
-    hPad,
-    trendingCommunities,
-    recommendedCommunities,
-    exploreCommunities,
-    setSegment
-  );
+  // discoverContent removed - now using unified gallery
 
-  // Main Render
+  // Main Render - Unified Community Gallery
   return (
     <View style={[styles.screen, { backgroundColor: m3Colors.background }]}>
       <Stack.Screen options={{ headerShown: false }} />
 
       <M3TopAppBar
-        title="Community"
+        title="Communities"
         titleLeading={
           <Image source={require('@/assets/images/culturepass-logo.png')} style={{ width: 36, height: 36 }} />
         }
@@ -358,26 +373,94 @@ export default function CommunityTabScreen() {
         ]}
       />
 
-      <View style={[styles.shell, isDesktop && styles.shellDesktop]}>
-        {segment === 'feed' ? (
-          <FlatList
-            data={feedPosts}
-            renderItem={({ item }) => <FeedPostCard post={item} />}
-            ListHeaderComponent={renderListHeader}
-            ListEmptyComponent={<EmptyFeed onDiscover={() => setSegment('discover')} />}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => setRefreshing(false)} />}
-            contentContainerStyle={{ paddingBottom: insets.bottom + 60 }}
-            showsVerticalScrollIndicator={false}
-          />
-        ) : (
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingHorizontal: hPad, paddingBottom: 80 }}
-          >
-            {discoverContent}
-          </ScrollView>
+      <FlatList
+        data={filteredCommunities}
+        keyExtractor={(item) => item.id}
+        numColumns={numColumns}
+        columnWrapperStyle={numColumns > 1 ? { gap: 12, paddingHorizontal: hPad } : undefined}
+        renderItem={({ item }) => (
+          <View style={{ flex: 1 / numColumns, marginBottom: 12 }}>
+            <LuxeCommunityCard community={item} />
+          </View>
         )}
-      </View>
+        ListHeaderComponent={
+          <>
+            <View style={{ paddingHorizontal: hPad, paddingTop: 16, paddingBottom: 4 }}>
+              <LuxeText variant="title2" style={{ color: luxeDark.text }}>
+                Discover Communities
+              </LuxeText>
+              <LuxeText variant="body" style={{ color: luxeDark.textSecondary, marginTop: 2 }}>
+                {filteredCommunities.length} communities • {selectedLocation === 'near-you' ? `Near ${userCity}` : 'Worldwide'}
+              </LuxeText>
+            </View>
+
+            {/* Clean & Good Looking Filter Chips */}
+            <View style={{ paddingHorizontal: hPad, paddingBottom: 12, gap: 10 }}>
+              {/* Category Chips */}
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+                {CATEGORY_OPTIONS.map((cat) => (
+                  <LuxeFilterChip
+                    key={cat.id}
+                    label={cat.label}
+                    icon={cat.icon as any}
+                    selected={activeCategory === cat.id}
+                    onPress={() => setActiveCategory(cat.id)}
+                    compact
+                  />
+                ))}
+              </ScrollView>
+
+              {/* Location + Sort */}
+              <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+                <LuxeFilterChip
+                  label="Near You"
+                  selected={selectedLocation === 'near-you'}
+                  onPress={() => setSelectedLocation('near-you')}
+                  compact
+                />
+                <LuxeFilterChip
+                  label="All Locations"
+                  selected={selectedLocation === 'all'}
+                  onPress={() => setSelectedLocation('all')}
+                  compact
+                />
+
+                <View style={{ flex: 1 }} />
+
+                <Pressable
+                  onPress={() => {
+                    const next = sortMode === 'activity' ? 'size' : sortMode === 'size' ? 'name' : 'activity';
+                    setSortMode(next);
+                  }}
+                  style={{
+                    backgroundColor: m3Colors.surface,
+                    paddingHorizontal: 14,
+                    paddingVertical: 7,
+                    borderRadius: 20,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 4,
+                  }}
+                >
+                  <LuxeText variant="caption" style={{ color: m3Colors.onSurfaceVariant }}>
+                    {sortMode === 'activity' ? 'Most Active' : sortMode === 'size' ? 'Largest' : 'A–Z'}
+                  </LuxeText>
+                  <Ionicons name="swap-vertical" size={13} color={m3Colors.onSurfaceVariant} />
+                </Pressable>
+              </View>
+            </View>
+          </>
+        }
+        ListEmptyComponent={
+          <View style={{ padding: 40, alignItems: 'center' }}>
+            <LuxeText variant="body" style={{ color: luxeDark.textSecondary, textAlign: 'center' }}>
+              No communities match your current filters.
+            </LuxeText>
+          </View>
+        }
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => setRefreshing(false)} />}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}
+      />
     </View>
   );
 }
@@ -434,72 +517,7 @@ function CategoryChips({ active, onChange, hPad }: { active: CommunityCategory; 
   );
 }
 
-function renderDiscoverContent(
-  segment: Segment,
-  activeCategory: CommunityCategory,
-  setActiveCategory: (c: CommunityCategory) => void,
-  hPad: number,
-  trending: any[],
-  recommended: any[],
-  explore: any[],
-  setSegment: (s: Segment) => void
-) {
-  if (segment !== 'discover') return null;
 
-  return (
-    <View style={{ paddingHorizontal: hPad, gap: 28, paddingTop: 12 }}>
-      {/* Trending rail with prominent luxe cards (the main feature we built) */}
-      {trending.length > 0 && (
-        <View>
-          <M3SectionHeader title="Trending in your city" subtitle="Standout communities people are joining right now" />
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} snapToInterval={340} decelerationRate="fast" contentContainerStyle={{ gap: 14, paddingVertical: 4 }}>
-            {trending.map((c: any) => (
-              <View key={c.id} style={{ width: 338 }}>
-                <LuxeCommunityCard community={c} variant="featured" size="large" />
-              </View>
-            ))}
-          </ScrollView>
-        </View>
-      )}
-
-      {/* Recommended */}
-      {recommended.length > 0 && (
-        <View>
-          <M3SectionHeader title="Recommended for you" subtitle="Based on your interests" />
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} snapToInterval={328} decelerationRate="fast" contentContainerStyle={{ gap: 14 }}>
-            {recommended.map((c: any) => (
-              <View key={c.id} style={{ width: 310 }}>
-                <LuxeCommunityCard community={c} />
-              </View>
-            ))}
-          </ScrollView>
-        </View>
-      )}
-
-      {/* Near you / Explore */}
-      {explore.length > 0 && (
-        <View>
-          <M3SectionHeader title="Discover more" subtitle="Communities in your area" />
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} snapToInterval={328} decelerationRate="fast" contentContainerStyle={{ gap: 14 }}>
-            {explore.map((c: any) => (
-              <View key={c.id} style={{ width: 310 }}>
-                <LuxeCommunityCard community={c} />
-              </View>
-            ))}
-          </ScrollView>
-        </View>
-      )}
-
-      {trending.length === 0 && recommended.length === 0 && explore.length === 0 && (
-        <View style={{ padding: 24, alignItems: 'center' }}>
-          <LuxeText variant="body" style={{ color: luxeDark.textSecondary, textAlign: 'center' }}>
-            No communities found yet. Try creating one!
-          </LuxeText>
-        </View>
-      )}
-    </View>
-  );
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // EmptyFeed — luxe empty state for the Activity tab

@@ -42,7 +42,7 @@ export function createCouncilNamespace(request: ApiRequestFn) {
       const q = qs.toString();
       return request<CouncilLgaContext>('GET', `api/council/resolve${q ? `?${q}` : ''}`);
     },
-    /** Public: best LGA match from coordinates */
+    /** Public: best LGA match from coordinates (now returns richer data) */
     nearest: async (params: { latitude: number; longitude: number; city?: string; state?: string; country?: string }) => {
       const qs = new URLSearchParams();
       qs.set('latitude', String(params.latitude));
@@ -51,7 +51,14 @@ export function createCouncilNamespace(request: ApiRequestFn) {
       if (params.state) qs.set('state', params.state);
       if (params.country) qs.set('country', params.country);
       const q = qs.toString();
-      return request<CouncilLgaContext>('GET', `api/council/nearest?${q}`);
+
+      type NearestCouncilResponse = CouncilLgaContext & {
+        distanceKm?: number;
+        matchMethod?: 'coordinate' | 'city-state' | 'none';
+        confidence?: 'strong' | 'medium' | 'weak';
+      };
+
+      return request<NearestCouncilResponse>('GET', `api/council/nearest?${q}`);
     },
     getSelected: async () => {
       const res = await request<CouncilLgaContext>('GET', 'api/council/selected');

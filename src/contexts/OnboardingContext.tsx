@@ -6,6 +6,8 @@ interface OnboardingState {
   isComplete: boolean;
   country: string;
   city: string;
+  councilId: string;
+  lgaCode: string;
   communities: string[];
   // Cultural Identity Layer
   nationalityId: string;
@@ -32,6 +34,7 @@ interface OnboardingContextValue {
   isLoading: boolean;
   setCountry: (country: string) => void;
   setCity: (city: string) => void;
+  setCouncil: (councilId: string, lgaCode?: string) => void;
   setCommunities: (communities: string[]) => void;
   // Cultural Identity
   setNationalityId: (nationalityId: string) => void;
@@ -64,6 +67,8 @@ const defaultState: OnboardingState = {
   isComplete: false,
   country: '',
   city: '',
+  councilId: '',
+  lgaCode: '',
   communities: [],
   nationalityId: '',
   cultureIds: [],
@@ -162,6 +167,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
 
   const setCountry = useCallback((country: string) => persistUpdate({ country }), []);
   const setCity = useCallback((city: string) => persistUpdate({ city }), []);
+  const setCouncil = useCallback((councilId: string, lgaCode?: string) => persistUpdate({ councilId, lgaCode: lgaCode ?? '' }), []);
   const setCommunities = useCallback((communities: string[]) => persistUpdate({ communities }), []);
   const setNationalityId = useCallback((nationalityId: string) => persistUpdate({ nationalityId }), []);
   const setCultureIds = useCallback((cultureIds: string[]) => persistUpdate({ cultureIds }), []);
@@ -209,6 +215,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     isLoading,
     setCountry,
     setCity,
+    setCouncil,
     setCommunities,
     setNationalityId,
     setCultureIds,

@@ -5,11 +5,24 @@ import type { CouncilData } from '@/shared/schema';
 
 export type CouncilDetectStatus = 'idle' | 'requesting' | 'success' | 'error' | 'denied' | 'unavailable';
 
+export type CouncilMatchMethod = 'coordinate' | 'city-state' | 'none';
+export type CouncilConfidence = 'strong' | 'medium' | 'weak';
+
+export interface NearestCouncilResult {
+  council: CouncilData;
+  distanceKm?: number;
+  matchMethod: CouncilMatchMethod;
+  confidence: CouncilConfidence;
+}
+
 export function useNearestCouncil() {
   const [status, setStatus] = useState<CouncilDetectStatus>('idle');
   const [council, setCouncil] = useState<CouncilData | null>(null);
+  const [distanceKm, setDistanceKm] = useState<number | null>(null);
+  const [matchMethod, setMatchMethod] = useState<CouncilMatchMethod>('none');
+  const [confidence, setConfidence] = useState<CouncilConfidence>('weak');
 
-  const detect = useCallback(async () => {
+  const detect = useCallback(async (): Promise<NearestCouncilResult | null> => {
     setStatus('requesting');
     try {
       const hasServices = await Location.hasServicesEnabledAsync();
@@ -42,10 +55,19 @@ export function useNearestCouncil() {
         country: geo?.isoCountryCode || undefined,
       });
 
-      if (result.council) {
+      if (result?.council) {
         setCouncil(result.council);
+        setDistanceKm(result.distanceKm ?? null);
+        setMatchMethod(result.matchMethod ?? 'coordinate');
+        setConfidence(result.confidence ?? 'medium');
         setStatus('success');
-        return result.council;
+
+        return {
+          council: result.council,
+          distanceKm: result.distanceKm,
+          matchMethod: result.matchMethod ?? 'coordinate',
+          confidence: result.confidence ?? 'medium',
+        };
       } else {
         setStatus('error');
         return null;
@@ -57,5 +79,21 @@ export function useNearestCouncil() {
     }
   }, []);
 
-  return { detect, council, status };
+  const reset = useCallback(() => {
+    setStatus('idle');
+    setCouncil(null);
+    setDistanceKm(null);
+    setMatchMethod('none');
+    setConfidence('weak');
+  }, []);
+
+  return {
+    detect,
+    reset,
+    council,
+    distanceKm,
+    matchMethod,
+    confidence,
+    status,
+  };
 }

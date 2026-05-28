@@ -14,10 +14,6 @@ import {
 import { Image } from 'expo-image';
 import { router , useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useQuery } from '@tanstack/react-query';
-import { LinearGradient } from 'expo-linear-gradient';
-import * as Location from 'expo-location';
 import * as Haptics from 'expo-haptics';
 import Animated, { FadeIn, FadeInRight, FadeInLeft, FadeInDown, useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
 
@@ -41,6 +37,7 @@ import { useAuth } from '@/lib/auth';
 import { useLocations } from '@/hooks/useLocations';
 import { useNearestMarketplaceLocation } from '@/hooks/useNearestMarketplaceLocation';
 import { useDetectCountry } from '@/hooks/useDetectCountry';
+import { useNearestCouncil } from '@/hooks/useNearestCouncil';
 import { sanitizeInternalRedirect, routeWithRedirect } from '@/lib/routes';
 import { getCountryFlag , 
   getCountryForCity, 
@@ -48,6 +45,7 @@ import { getCountryFlag ,
   listMarketplaceCountries, 
   resolveCountryPickerPin 
 } from '@/lib/marketplaceLocation';
+import { api } from '@/lib/api';
 import { syncUserMarketplaceLocation } from '@/lib/syncMarketplaceLocation';
 import { CountrySelectList } from '@/components/location/CountrySelectList';
 
@@ -117,11 +115,12 @@ export default function LocationScreen() {
   const isExpanded = windowSizeClass === 'expanded';
 
   const { user } = useAuth();
-  const { state, setCountry, setCity } = useOnboarding();
+  const { state, setCountry, setCity, setCouncil } = useOnboarding();
   const { states, getStateForCity, isLoading: locationsLoading, error: locationsError } = useLocations();
 
   // City detection — marketplace countries (region step)
   const { detect: detectCity, status: cityDetectStatus } = useNearestMarketplaceLocation();
+  const { detect: detectCouncil, council: detectedCouncil, distanceKm, matchMethod, confidence, status: councilStatus, reset: resetCouncil } = useNearestCouncil();
   const isDetectingCity = cityDetectStatus === 'requesting';
 
   // Country detection (country step)
@@ -291,6 +290,14 @@ export default function LocationScreen() {
       const stateCode = getStateForCity(r.city);
       if (stateCode) setPendingState(stateCode);
       goToStep('city', 'forward');
+
+      // Slice 2: Auto-trigger council detection for AU users after successful city GPS
+      if (r.country === 'Australia') {
+        // Small delay so the UI settles
+        setTimeout(() => {
+          void detectCouncil();
+        }, 400);
+      }
     } else {
       if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       if (cityDetectStatus === 'denied') {
@@ -314,12 +321,23 @@ export default function LocationScreen() {
     }
   };
 
+  const handleDetectCouncil = async () => {
+    if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    const result = await detectCouncil();
+    if (result?.council) {
+      if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } else {
+      if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    }
+  };
+
   // ---------------------------------------------------------------------------
   // Finish
   // ---------------------------------------------------------------------------
 
   const handleNext = () => {
     if (state.country && state.city) {
+      // Slice 2: council is already persisted via setCouncil when user chooses it
       router.replace(routeWithRedirect('/(onboarding)/communities', redirectTo) as string);
       return;
     }
@@ -720,6 +738,83 @@ export default function LocationScreen() {
             )}
 
             <View style={s.spacer} />
+
+            {/* Council / LGA Detection — Slice 2 (polished) */}
+            {state.city && (
+              <LuxeCard variant="default" style={{ marginBottom: 16, padding: 18 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
+                  <LuxeText variant="title3" style={{ color: luxeDark.text, flex: 1 }}>
+                    Local Council (LGA)
+                  </LuxeText>
+                  {detectedCouncil && confidence && (
+                    <LuxeText variant="badgeCaps" style={{ color: confidence === 'strong' ? luxeDark.primary : luxeDark.textSecondary }}>
+                      {confidence.toUpperCase()}
+                    </LuxeText>
+                  )}
+                </View>
+
+                <LuxeText variant="body" style={{ color: luxeDark.textSecondary, marginBottom: 14, fontSize: 14 }}>
+                  Get more tailored events and communities near you.
+                </LuxeText>
+
+                {councilStatus === 'requesting' ? (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <ActivityIndicator size="small" color={luxeDark.primary} />
+                    <LuxeText variant="body" style={{ color: luxeDark.textSecondary }}>Detecting your council…</LuxeText>
+                  </View>
+                ) : !detectedCouncil ? (
+                  <LuxeButton
+                    variant="tonal"
+                    onPress={handleDetectCouncil}
+                    leftIcon="navigate-circle"
+                    style={{ height: 52 }}
+                  >
+                    Detect my local council
+                  </LuxeButton>
+                ) : (
+                  <View style={{ backgroundColor: luxeDark.surfaceElevated, borderRadius: 12, padding: 14 }}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <View>
+                        <LuxeText variant="body" style={{ color: luxeDark.text, fontWeight: '600' }}>
+                          {detectedCouncil.name}
+                        </LuxeText>
+                        {distanceKm != null && (
+                          <LuxeText variant="caption" style={{ color: luxeDark.textSecondary, marginTop: 2 }}>
+                            {distanceKm.toFixed(0)} km away • {matchMethod}
+                          </LuxeText>
+                        )}
+                      </View>
+                      <LuxeButton
+                        variant="filled"
+                        size="sm"
+                        onPress={async () => {
+                          setCouncil(detectedCouncil.id);
+                          if (user?.id) {
+                            try {
+                              await api.council.select(detectedCouncil.id);
+                            } catch (e) {
+                              if (__DEV__) console.warn('[location] Failed to persist council to profile', e);
+                            }
+                          }
+                          if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                        }}
+                      >
+                        Use
+                      </LuxeButton>
+                    </View>
+
+                    <LuxeButton
+                      variant="glass"
+                      size="sm"
+                      onPress={resetCouncil}
+                      style={{ marginTop: 10, alignSelf: 'flex-start' }}
+                    >
+                      Detect again
+                    </LuxeButton>
+                  </View>
+                )}
+              </LuxeCard>
+            )}
 
             <LuxeButton
               variant="filled"

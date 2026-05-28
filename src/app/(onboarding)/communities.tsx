@@ -27,7 +27,6 @@ import { luxeDark } from '@/design-system/tokens/theme';
 import { routeWithRedirect, sanitizeInternalRedirect } from '@/lib/routes';
 
 export default function CommunitiesScreen() {
-  const colors = useColors();
   const m3Colors = useM3Colors();
   const { windowSizeClass } = useLayout();
   const isDesktop = windowSizeClass === 'expanded';
@@ -122,7 +121,7 @@ export default function CommunitiesScreen() {
               {communityGroups.map((group) => (
                 <View key={group.label} style={styles.section}>
                   <View style={styles.sectionHeader}>
-                    <LuxeText variant="titleSmall" style={styles.sectionTitle}>
+                    <LuxeText variant="title3" style={styles.sectionTitle}>
                       {group.label}
                     </LuxeText>
                   </View>
@@ -155,7 +154,7 @@ export default function CommunitiesScreen() {
               rightIcon="arrow-forward"
               disabled={selected.length === 0}
               onPress={handleNext}
-              size="large"
+              size="lg"
             >
               Continue
             </LuxeButton>

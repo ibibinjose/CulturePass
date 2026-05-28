@@ -5,13 +5,13 @@ import {
   StyleSheet,
   ScrollView,
   ActivityIndicator,
-  Image,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { Input } from '@/design-system/ui/Input';
 import { useColors } from '@/hooks/useColors';
 import { CultureTokens, FontFamily, Radius } from '@/design-system/tokens/theme';
-import { FIELD_LIMITS, VALIDATION_TIMING } from '@/modules/host/schemas/validationRules';
+import { FIELD_LIMITS } from '@/modules/host/schemas/validationRules';
 import { api } from '@/lib/api';
 import { M3Card } from '@/design-system/ui/M3Card';
 import { Button } from '@/design-system/ui/Button';

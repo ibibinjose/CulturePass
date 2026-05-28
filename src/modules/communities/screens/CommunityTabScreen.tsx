@@ -363,7 +363,7 @@ export default function CommunityTabScreen() {
         titleLeading={
           <Image source={require('@/assets/images/culturepass-logo.png')} style={{ width: 36, height: 36 }} />
         }
-        rightActions={[
+        actions={[
           { icon: 'add-circle-outline', onPress: () => router.push('/create/community') },
         ]}
       />
@@ -567,7 +567,7 @@ const styles = StyleSheet.create({
 
   segmentContainer: { marginBottom: 16 },
   segmentShell: {
-    backgroundColor: luxeDark.surfaceContainerHigh,
+    backgroundColor: luxeDark.surfaceElevated,
     borderRadius: 999,
     padding: 4,
     flexDirection: 'row',
@@ -584,7 +584,7 @@ const styles = StyleSheet.create({
   },
   segmentPillActive: { backgroundColor: luxeDark.primary },
   segmentText: { fontSize: 15, fontWeight: '600' },
-  segmentTextActive: { color: luxeDark.onPrimary },
+  segmentTextActive: { color: '#FFFFFF' },
 
   postCard: {
     marginHorizontal: Luxe.spacing.lg,

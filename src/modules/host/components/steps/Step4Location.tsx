@@ -27,7 +27,6 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { M3Card } from '@/design-system/ui/M3Card';

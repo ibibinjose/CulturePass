@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -9,11 +9,10 @@ import {
   Platform,
   Alert,
   ActivityIndicator,
-  TouchableOpacity,
+  type DimensionValue,
 } from 'react-native';
 import { Image } from 'expo-image';
-import { router } from 'expo-router';
-import { useLocalSearchParams } from 'expo-router';
+import { router , useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
@@ -26,20 +25,16 @@ import { useOnboarding } from '@/contexts/OnboardingContext';
 import { useColors } from '@/hooks/useColors';
 import { useM3Colors } from '@/hooks/useM3Colors';
 import { useLayout } from '@/hooks/useLayout';
-import { Button, Input } from '@/design-system/ui';
-import { CultureTokens, Radius, Spacing, Layout, M3Typography, TextStyles, FontFamily, IconSize } from '@/design-system/tokens/theme';
-import { 
-  getPostcodesByPlace, 
-  getPostcodesByState, 
-  australianPostcodes 
-} from '@shared/location/australian-postcodes';
-import { log } from '@/lib/logger';
 import { luxeDark } from '@/design-system/tokens/luxeHeritage';
 import { LuxeText } from '@/design-system/ui/LuxeText';
 import { LuxeCard } from '@/design-system/ui/LuxeCard';
 import { LuxeButton } from '@/design-system/ui/LuxeButton';
 import { LuxeFilterChip } from '@/design-system/ui/LuxeFilterChip';
 import { M3TopAppBar } from '@/design-system/ui/M3TopAppBar';
+import { CultureTokens, FontFamily, IconSize, M3Typography } from '@/design-system/tokens/theme';
+import { 
+  australianPostcodes 
+} from '@shared/location/australian-postcodes';
 
 // Import missing hooks and utils
 import { useAuth } from '@/lib/auth';
@@ -47,13 +42,13 @@ import { useLocations } from '@/hooks/useLocations';
 import { useNearestMarketplaceLocation } from '@/hooks/useNearestMarketplaceLocation';
 import { useDetectCountry } from '@/hooks/useDetectCountry';
 import { sanitizeInternalRedirect, routeWithRedirect } from '@/lib/routes';
-import { syncUserMarketplaceLocation } from '@/lib/syncMarketplaceLocation';
-import { 
+import { getCountryFlag , 
   getCountryForCity, 
   getRegionsForCountry,
   listMarketplaceCountries, 
   resolveCountryPickerPin 
 } from '@/lib/marketplaceLocation';
+import { syncUserMarketplaceLocation } from '@/lib/syncMarketplaceLocation';
 import { CountrySelectList } from '@/components/location/CountrySelectList';
 
 // Define types directly since they may not be properly exported

@@ -1,55 +1,58 @@
 #!/usr/bin/env bash
-# backup.sh - Robust snapshot script for CulturePass
+# backup.sh - CulturePass Code Backup System
+# Usage: npm run backup
+#
+# Creates a timestamped backup of the project with date and time.
+# Backups are stored in the ./backups/ folder.
 
-# 1. Robustly find the project root using Git
+set -e
+
+# Find project root
 if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
     PROJECT_ROOT="$(git rev-parse --show-toplevel)"
 else
-    # Fallback to relative path if git fails
     PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 fi
 
 cd "$PROJECT_ROOT"
 
-# 2. Configuration
-NAME="xCxPxAx"
-TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
-# Requested: name, date and time
-ARCHIVE_NAME="${NAME}_${TIMESTAMP}.tar.gz"
-# Save to parent directory (one before this folder)
-DEST_DIR=".."
+# Configuration
+BACKUP_DIR="backups"
+TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
+ARCHIVE_NAME="CulturePass_${TIMESTAMP}.tar.gz"
+ARCHIVE_PATH="${BACKUP_DIR}/${ARCHIVE_NAME}"
 
-echo "==> CulturePass Backup"
-echo "    Project : $PROJECT_ROOT"
-echo "    Output  : $DEST_DIR/$ARCHIVE_NAME"
-echo "    Time    : $(date)"
+# Create backups directory if it doesn't exist
+mkdir -p "$BACKUP_DIR"
+
+echo "==> CulturePass Backup System"
+echo "    Project   : $PROJECT_ROOT"
+echo "    Timestamp : $TIMESTAMP"
+echo "    Output    : $ARCHIVE_PATH"
 echo ""
 
-# 3. Git snapshot
-echo "[1/2] Git snapshot..."
-git add -A
-if git diff --cached --quiet; then
-    echo "      Nothing to commit — working tree clean."
-else
-    git commit -m "chore: backup snapshot ${TIMESTAMP}"
-    echo "      Committed: $(git log -1 --oneline)"
-fi
+# Create the backup archive
+echo "[1/1] Creating timestamped backup archive..."
 
-# 4. Create archive
-echo "[2/2] Creating archive..."
-# Archive from the parent directory to preserve the project folder structure
-PARENT_DIR="$(dirname "$PROJECT_ROOT")"
-PROJECT_DIR_NAME="$(basename "$PROJECT_ROOT")"
+tar -czf "$ARCHIVE_PATH" \
+    --exclude='./node_modules' \
+    --exclude='./.git' \
+    --exclude='./dist' \
+    --exclude='./.expo' \
+    --exclude='./web/node_modules' \
+    --exclude='./functions/node_modules' \
+    --exclude='./backups' \
+    --exclude='./*.log' \
+    --exclude='./.DS_Store' \
+    .
 
-tar -czf "$DEST_DIR/$ARCHIVE_NAME" \
-  -C "$PARENT_DIR" \
-  --exclude="$PROJECT_DIR_NAME/node_modules" \
-  --exclude="$PROJECT_DIR_NAME/.expo" \
-  --exclude="$PROJECT_DIR_NAME/.git" \
-  --exclude="$PROJECT_DIR_NAME/dist" \
-  --exclude="$PROJECT_DIR_NAME/*.log" \
-  "$PROJECT_DIR_NAME"
+# Get size
+SIZE=$(du -h "$ARCHIVE_PATH" | cut -f1)
 
-echo "      Archive saved to: $(cd "$DEST_DIR" && pwd)/$ARCHIVE_NAME"
 echo ""
-echo "==> Backup complete."
+echo "==> Backup complete!"
+echo "    File : $ARCHIVE_PATH"
+echo "    Size : $SIZE"
+echo "    Date : $(date)"
+echo ""
+echo "Tip: You can also run 'npm run backup' from anywhere in the project."

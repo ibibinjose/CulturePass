@@ -27,6 +27,7 @@ import { M3TopAppBar } from '@/design-system/ui/M3TopAppBar';
 import { useInterestsSelection } from '@/hooks/useInterestsSelection';
 // Local minimal types to match the simplified data used in this onboarding screen
 // (full InterestCategory/Interest live in shared/schema but resolution + shape mismatch in current visual work)
+// Local simplified types for this screen's data model
 type Interest = { id?: string; name: string; icon?: string };
 type InterestCategory = {
   id: string;
@@ -64,7 +65,7 @@ const interestCategories: { id: string; title: string; emoji: string; interests:
 ];
 
 // Define the minimum required interests constant
-const MIN_REQUIRED = 3;
+const MIN_REQUIRED = 3; // kept for future enforcement
 
 // ---------------------------------------------------------------------------
 // InterestChip
@@ -105,7 +106,6 @@ export default function InterestsScreen() {
     expanded,
     isSubmitting,
     selectedSet,
-    categoryByInterest,
     isReady,
     remaining,
     MIN_REQUIRED,

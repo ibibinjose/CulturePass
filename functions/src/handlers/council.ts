@@ -76,7 +76,7 @@ async function findNearestCouncilByCoordinates(
   latitude: number,
   longitude: number,
   state?: string,
-): Promise<FirebaseFirestore.QueryDocumentSnapshot | null> {
+): Promise<{ doc: FirebaseFirestore.QueryDocumentSnapshot; distanceKm: number } | null> {
   const stateNorm = normState(state);
   let q: FirebaseFirestore.Query = db.collection('councils');
   if (stateNorm) q = q.where('state', '==', stateNorm);
@@ -102,7 +102,7 @@ async function findNearestCouncilByCoordinates(
     }
   }
 
-  return best?.doc ?? null;
+  return best ?? null;
 }
 
 async function getCouncilDocById(id: string): Promise<FirebaseFirestore.DocumentSnapshot | null> {
@@ -212,20 +212,61 @@ councilRouter.get('/council/nearest', async (req: Request, res: Response) => {
   const latitude = toNumber(req.query.latitude);
   const longitude = toNumber(req.query.longitude);
 
+  const requestInfo = { latitude, longitude, city, state, country };
+
   if (country && country !== 'australia' && country !== 'au') {
-    return res.json({ council: null });
+    console.log('[council/nearest] non-AU request ignored', requestInfo);
+    return res.json({ council: null, matchMethod: 'none' });
   }
 
   try {
-    let hit: FirebaseFirestore.QueryDocumentSnapshot | null = null;
+    let result: { doc: FirebaseFirestore.QueryDocumentSnapshot; distanceKm: number } | null = null;
+    let matchMethod: 'coordinate' | 'city-state' | 'none' = 'none';
+
     if (latitude != null && longitude != null) {
-      hit = await findNearestCouncilByCoordinates(latitude, longitude, state || undefined);
+      result = await findNearestCouncilByCoordinates(latitude, longitude, state || undefined);
+      if (result) matchMethod = 'coordinate';
     }
-    if (!hit) {
-      hit = await findCouncilByCityState(city || undefined, state || undefined);
+
+    if (!result) {
+      const hit = await findCouncilByCityState(city || undefined, state || undefined);
+      if (hit) {
+        result = { doc: hit, distanceKm: 0 };
+        matchMethod = 'city-state';
+      }
     }
-    if (!hit) return res.json({ council: null });
-    return res.json({ council: { id: hit.id, ...hit.data() } });
+
+    if (!result) {
+      console.log('[council/nearest] no match found', requestInfo);
+      return res.json({ council: null, matchMethod: 'none' });
+    }
+
+    const councilData = { id: result.doc.id, ...result.doc.data() };
+
+    // Refined confidence scoring
+    let confidence: 'strong' | 'medium' | 'weak' = 'weak';
+    if (matchMethod === 'coordinate') {
+      if (result.distanceKm <= 25) confidence = 'strong';
+      else if (result.distanceKm <= 75) confidence = 'medium';
+      else confidence = 'weak';
+    } else if (matchMethod === 'city-state') {
+      confidence = 'medium';
+    }
+
+    console.log('[council/nearest] resolved', {
+      ...requestInfo,
+      councilId: result.doc.id,
+      matchMethod,
+      distanceKm: result.distanceKm,
+      confidence,
+    });
+
+    return res.json({
+      council: councilData,
+      distanceKm: result.distanceKm,
+      matchMethod,
+      confidence,
+    });
   } catch (err) {
     captureRouteError(err, 'GET /council/nearest');
     return res.status(500).json({ error: 'Failed to resolve nearest council' });

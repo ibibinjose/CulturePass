@@ -129,6 +129,12 @@ CulturePass must feel like a **premium cultural passport** — warm, human, soph
 - **Gate**: `npm run typecheck && npm run lint -- --max-warnings 150` passes. No new TODOs without owner.
 
 **2026-05-28 Update (Slice 1 Stabilization on `fix/luxe-foundation-stabilize` branch)**:
+
+See dedicated plan: [`docs/SLICE2-GEOHASH-NEAREST-COUNCIL.md`](docs/SLICE2-GEOHASH-NEAREST-COUNCIL.md) — created after user request to proceed with A/B/C + explicit "write Slice 2 plan".
+
+---
+
+## Slice 2 Status (as of plan creation)
 - User explicitly authorized execution start ("Start executing now").
 - Created backup tag `pre-luxe-stabilize-20260528-0300` + execution branch.
 - Eliminated all 15+ TypeScript errors introduced by the in-flight Luxe visual work (onboarding + host steps + CommunityTabScreen).

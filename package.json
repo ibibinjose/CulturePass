@@ -50,7 +50,8 @@
     "dev:full": "npm run doctor && echo '✅ Doctor passed. Starting emulators + Expo...' && npm run emulator:start & sleep 8 && npx expo start --clear",
     "size:web": "node scripts/check-web-bundle-size.js",
     "size:web:ci": "npm run build-web && node scripts/check-web-bundle-size.js",
-    "clean": "rm -rf node_modules && rm -rf functions/node_modules && rm -rf dist && rm -rf .expo"
+    "clean": "rm -rf node_modules && rm -rf functions/node_modules && rm -rf dist && rm -rf .expo",
+    "backup": "bash scripts/backup.sh"
   },
   "dependencies": {
     "@bacons/apple-targets": "4.0.6",

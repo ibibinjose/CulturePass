@@ -1,12 +1,5 @@
-import React, {
-  useCallback,
-  useMemo,
-  useRef,
-  useState,
-  type ReactNode,
-} from 'react';
+import React, { useState, useMemo } from 'react';
 import {
-  ActivityIndicator,
   FlatList,
   Platform,
   Pressable,
@@ -20,7 +13,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
@@ -41,16 +34,13 @@ import {
   M3SectionHeader,
 } from '@/design-system/ui';
 import { LuxeCommunityCard } from '@/modules/communities/components/LuxeCommunityCard';
-import { LuxeEventCard } from '@/modules/events/components/LuxeEventCard';
 import { useCommunities, useJoinedCommunities, useFollowingCommunityIds } from '@/modules/communities/hooks/useCommunities';
 import { getCommunityRecommendations } from '@/lib/community-utils';
 import { getCommunityMemberCount } from '@/lib/community';
 
 // ... (keep your existing imports for hooks, utils, types)
 
-const COMMUNITY_CARD_WIDTH = 320;
-const EVENT_CARD_WIDTH = 272;
-const POST_HEIGHT_ESTIMATE = 360;
+// (removed unused width constants after Luxe migration)
 
 type Segment = 'feed' | 'discover';
 type CommunityCategory = 'all' | 'cultural' | 'business' | 'civic' | 'club';

@@ -59,6 +59,7 @@ export default function BrowsePage({
 }: BrowsePageProps) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const { isDesktop, contentWidth, hPad } = useLayout();
   const topInset = Platform.OS === 'web' ? 0 : insets.top;
   const bottomInset = Platform.OS === 'web' ? 34 : insets.bottom;
 
@@ -79,16 +80,21 @@ export default function BrowsePage({
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background, paddingTop: topInset + 16 }]}>
-      <BrowseHeader 
-        title={title} 
-        tagline={tagline} 
-        accentColor={accentColor} 
-        accentIcon={accentIcon} 
-      />
+      <View style={isDesktop && { width: contentWidth + hPad * 2, alignSelf: 'center' }}>
+        <BrowseHeader
+          title={title}
+          tagline={tagline}
+          accentColor={accentColor}
+          accentIcon={accentIcon}
+        />
+      </View>
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: bottomInset + 100 }}
+        contentContainerStyle={[
+          { paddingBottom: bottomInset + 100 },
+          isDesktop && { width: contentWidth + hPad * 2, alignSelf: 'center' }
+        ]}
         refreshControl={refreshControl}
       >
         <PromotedRail 

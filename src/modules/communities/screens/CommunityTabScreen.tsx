@@ -397,7 +397,7 @@ export default function CommunityTabScreen() {
             {/* Clean & Good Looking Filter Chips */}
             <View style={{ paddingHorizontal: hPad, paddingBottom: 12, gap: 10 }}>
               {/* Category Chips */}
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingRight: hPad + 32 }}>
                 {CATEGORY_OPTIONS.map((cat) => (
                   <LuxeFilterChip
                     key={cat.id}
@@ -459,7 +459,11 @@ export default function CommunityTabScreen() {
           </View>
         }
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => setRefreshing(false)} />}
-        contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}
+        contentContainerStyle={{
+          paddingBottom: insets.bottom + 100,
+          width: isDesktop ? layout.contentWidth + layout.hPad * 2 : '100%',
+          alignSelf: 'center'
+        }}
       />
     </View>
   );
@@ -502,7 +506,7 @@ function CategoryChips({ active, onChange, hPad }: { active: CommunityCategory; 
     { id: 'civic', label: 'Civic', icon: 'business-outline' },
   ];
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: hPad, gap: 8, paddingVertical: 8 }}>
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: hPad, gap: 8, paddingVertical: 8, paddingRight: hPad + 32 }}>
       {cats.map((c) => (
         <LuxeFilterChip
           key={c.id}

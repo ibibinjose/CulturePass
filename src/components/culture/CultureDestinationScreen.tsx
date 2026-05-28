@@ -673,7 +673,7 @@ export function CultureDestinationScreen({ definition: def, routeSearchParams }:
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={[
                 localStyles.exploreRow,
-                { paddingHorizontal: hPad, paddingVertical: 8 },
+                { paddingHorizontal: hPad, paddingVertical: 8, paddingRight: hPad + 24 },
               ]}
             >
               {EXPLORE_CATEGORY_LINKS.map((item) => {
@@ -937,14 +937,14 @@ export function CultureDestinationScreen({ definition: def, routeSearchParams }:
                 <Text style={[TextStyles.caption, { color: colors.textSecondary, marginBottom: 20 }]}>
                   Explore listings across different categories.
                 </Text>
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: isDesktop ? 20 : 12 }}>
                   {LISTING_TYPE_ROWS.map((row) => (
                     <Pressable
                       key={row.key}
                       onPress={() => openListingTypeResults(row.key)}
                       style={({ pressed }) => [
                         {
-                          width: isDesktop ? '100%' : '48%',
+                          width: isDesktop ? '31%' : '48%',
                           borderWidth: 1.5,
                           borderColor: colors.borderLight,
                           borderRadius: Radius.lg,
@@ -1110,7 +1110,6 @@ export function CultureDestinationScreen({ definition: def, routeSearchParams }:
 
 const localStyles = StyleSheet.create({
   stickyControls: {
-    overflow: 'hidden',
     zIndex: 5,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: 'rgba(0,0,0,0.08)',

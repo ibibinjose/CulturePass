@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { db, isFirestoreConfigured } from '../admin';
 import { requireRole } from '../middleware/auth';
-import { nowIso } from './utils';
+import { nowIso, qstr } from './utils';
 import { adminService } from '../services/admin';
 import { 
   listCommunityHomeBanners, 
@@ -51,13 +51,42 @@ adminRouter.get('/admin/stats', async (req: Request, res: Response) => {
 });
 
 /**
+ * POST /api/admin/stats/recompute-daily
+ * Manually trigger daily stats aggregation (useful for testing or backfill).
+ * Only super admins should call this in production.
+ */
+adminRouter.post('/admin/stats/recompute-daily', requireRole('superAdmin'), async (req: Request, res: Response) => {
+  try {
+    const { computeDailyStats } = await import('../triggers/dailyStats');
+    const stats = await computeDailyStats();
+
+    const today = new Date().toISOString().split('T')[0];
+    await db.collection('dailyStats').doc(today).set({
+      ...stats,
+      date: today,
+      computedAt: nowIso(),
+      manuallyTriggeredBy: req.user!.id,
+    });
+
+    res.json({ ok: true, date: today, stats });
+  } catch (error) {
+    logger.error('Manual daily stats recompute error:', error);
+    res.status(500).json({ error: 'Failed to recompute daily stats' });
+  }
+});
+
+/**
  * GET /api/admin/audit-logs
  * Retrieve recent administrative actions.
  */
 adminRouter.get('/admin/audit-logs', async (req: Request, res: Response) => {
   try {
-    const limit = parseInt(req.query.limit as string) || 50;
+    const limitRaw = Number(qstr(req.query.limit) || '50');
+    const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(200, Math.floor(limitRaw))) : 50;
     const logs = await adminService.getAuditLogs(limit);
+    if ((adminService as any)._lastAuditUsedFallback) {
+      res.setHeader('X-Query-Mode', 'fallback');
+    }
     res.json({ logs });
   } catch (_error) {
     res.status(500).json({ error: 'Failed to fetch audit logs' });
@@ -70,12 +99,21 @@ adminRouter.get('/admin/audit-logs', async (req: Request, res: Response) => {
  */
 adminRouter.get('/admin/reports', async (req: Request, res: Response) => {
   try {
-    const status = (req.query.status as string) || 'pending';
-    const limit = parseInt(req.query.limit as string) || 50;
+    const status = (qstr(req.query.status) || 'pending') as any;
+    const limitRaw = Number(qstr(req.query.limit) || '50');
+    const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(200, Math.floor(limitRaw))) : 50;
     const reports = await adminService.getReports(status, limit);
+
+    if ((adminService as any)._lastReportsUsedFallback) {
+      res.setHeader('X-Query-Mode', 'fallback');
+    }
+
     res.json({ reports });
-  } catch (_error) {
-    res.status(500).json({ error: 'Failed to fetch reports' });
+  } catch (error) {
+    logger.error('Admin Reports Error:', error);
+    // Firestore often returns a helpful message with an index creation URL
+    const message = error instanceof Error ? error.message : 'Failed to fetch reports';
+    res.status(500).json({ error: 'Failed to load reports', details: message });
   }
 });
 
@@ -161,8 +199,12 @@ adminRouter.post('/admin/reports/:id/escalate', async (req: AdminRequest, res: R
  */
 adminRouter.get('/admin/finance/transactions', async (req: Request, res: Response) => {
   try {
-    const limit = parseInt(req.query.limit as string) || 50;
+    const limitRaw = Number(qstr(req.query.limit) || '50');
+    const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(200, Math.floor(limitRaw))) : 50;
     const transactions = await adminService.getRecentTransactions(limit);
+    if ((adminService as any)._lastTransactionsUsedFallback) {
+      res.setHeader('X-Query-Mode', 'fallback');
+    }
     res.json({ transactions });
   } catch (_error) {
     res.status(500).json({ error: 'Failed to fetch transactions' });
@@ -323,9 +365,22 @@ const promoCodeSchema = z.object({
 adminRouter.get('/admin/promo-codes', async (_req: Request, res: Response) => {
   if (!isFirestoreConfigured) return res.status(503).json({ error: 'Firestore unavailable' });
   try {
-    const snap = await db.collection('promoCodes').orderBy('createdAt', 'desc').limit(200).get();
-    const codes = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    return res.json({ codes });
+    try {
+      const snap = await db.collection('promoCodes').orderBy('createdAt', 'desc').limit(200).get();
+      const codes = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      return res.json({ codes });
+    } catch (err: any) {
+      const isIndexError = err?.code === 9 || /index/i.test(err?.message || '');
+      if (isIndexError) {
+        logger.warn('listPromoCodes: Missing index. Falling back.');
+        const snap = await db.collection('promoCodes').limit(400).get();
+        const codes: any[] = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        codes.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+        res.setHeader('X-Query-Mode', 'fallback');
+        return res.json({ codes: codes.slice(0, 200) });
+      }
+      throw err;
+    }
   } catch (err) {
     logger.error('promo-codes/list', err);
     return res.status(500).json({ error: 'Failed to list promo codes' });
@@ -532,10 +587,10 @@ adminRouter.delete('/admin/community-home-banners/:id', async (req: Request, res
 adminRouter.get('/admin/verification/tasks', async (req: Request, res: Response) => {
   if (!isFirestoreConfigured) return res.json({ tasks: [] });
   try {
-    const status = (req.query.status as string) || undefined;
-    const entityType = (req.query.entityType as string) || undefined;
-    const assignedTo = (req.query.assignedTo as string) || undefined;
-    const overdueSla = req.query.overdueSla === 'true';
+    const status = qstr(req.query.status) || undefined;
+    const entityType = qstr(req.query.entityType) || undefined;
+    const assignedTo = qstr(req.query.assignedTo) || undefined;
+    const overdueSla = qstr(req.query.overdueSla) === 'true';
 
     const tasks = await verificationService.listTasks({
       status: status as any,
@@ -543,6 +598,9 @@ adminRouter.get('/admin/verification/tasks', async (req: Request, res: Response)
       assignedTo,
       overdueSla,
     });
+    if ((verificationService as any)._lastVerificationUsedFallback) {
+      res.setHeader('X-Query-Mode', 'fallback');
+    }
     return res.json({ tasks });
   } catch (err) {
     logger.error('admin/verification/tasks list', err);

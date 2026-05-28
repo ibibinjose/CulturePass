@@ -1,0 +1,151 @@
+name: Sentry Release (Reusable)
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: 'Release version string (must match Sentry.init release)'
+        required: true
+        type: string
+      environment:
+        description: 'Environment (production / preview / development)'
+        required: false
+        default: 'production'
+        type: string
+      upload_sourcemaps:
+        description: 'Whether to upload sourcemaps with sentry-cli'
+        required: false
+        default: false
+        type: boolean
+      platform:
+        description: 'Platform (ios / android / web / all)'
+        required: false
+        default: 'all'
+        type: string
+
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version'
+        required: true
+      environment:
+        description: 'Environment'
+        required: true
+        default: 'production'
+      upload_sourcemaps:
+        description: 'Upload sourcemaps?'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Notify Sentry via Release Hook (lightweight)
+        if: ${{ secrets.SENTRY_RELEASE_HOOK_URL != '' }}
+        env:
+          SENTRY_RELEASE_HOOK_URL: ${{ secrets.SENTRY_RELEASE_HOOK_URL }}
+        run: |
+          echo "Notifying Sentry release via hook: ${{ inputs.version }}"
+          ./scripts/notify-sentry-release.sh "${{ inputs.version }}" || echo "Hook notification failed (non-fatal)"
+
+      - name: Setup Node (for sentry-cli)
+        if: inputs.upload_sourcemaps == true
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies (for sentry-cli)
+        if: inputs.upload_sourcemaps == true
+        run: npm ci
+
+      - name: Download EAS build artifacts (for native Hermes sourcemaps)
+        if: inputs.upload_sourcemaps == true && (inputs.platform == 'ios' || inputs.platform == 'android')
+        run: |
+          PLATFORM="${{ inputs.platform }}"
+          echo "Downloading EAS artifact for platform: $PLATFORM (this may take a while)..."
+
+          mkdir -p ./artifacts
+
+          # Download the latest successful build for this platform + profile
+          eas build:download \
+            --platform "$PLATFORM" \
+            --profile "${{ inputs.environment }}" \
+            --output "./artifacts/${PLATFORM}" \
+            --latest \
+            --non-interactive || {
+              echo "⚠️  Artifact download failed or not available for $PLATFORM."
+              echo "   Native Hermes sourcemap upload will be skipped for this platform."
+              exit 0
+            }
+
+          echo "Artifact saved to ./artifacts/${PLATFORM}"
+
+      - name: Extract & Upload Native Hermes Sourcemaps
+        if: inputs.upload_sourcemaps == true && (inputs.platform == 'ios' || inputs.platform == 'android')
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ vars.SENTRY_ORG || 'culturepass' }}
+          SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT || 'culturepass' }}
+        run: |
+          VERSION="${{ inputs.version }}"
+          PLATFORM="${{ inputs.platform }}"
+          ARTIFACT_PATH="./artifacts/${PLATFORM}"
+
+          echo "Attempting Hermes sourcemap extraction + upload for $PLATFORM..."
+
+          # Note: Full reliable extraction from .ipa/.aab in CI is non-trivial and depends on your EAS config.
+          # The most robust solution is usually to upload *during* the EAS build by setting SENTRY_AUTH_TOKEN as a secret.
+
+          if [ "$PLATFORM" = "android" ] && [ -f "$ARTIFACT_PATH" ]; then
+            # Try to locate bundle + map inside the downloaded artifact (works better with APK than AAB)
+            unzip -o "$ARTIFACT_PATH" -d ./extracted-android 2>/dev/null || true
+
+            BUNDLE=$(find ./extracted-android -name "index.android.bundle" -type f 2>/dev/null | head -1 || true)
+            MAP=$(find ./extracted-android -name "*.map" -path "*android*" -type f 2>/dev/null | head -1 || true)
+
+            if [ -n "$BUNDLE" ] && [ -n "$MAP" ]; then
+              echo "Found Android Hermes files. Uploading..."
+              npx @sentry/cli releases files "$VERSION" upload-sourcemaps "$(dirname "$MAP")" \
+                --dist "$VERSION" \
+                --url-prefix '~/assets' \
+                --rewrite || echo "Upload completed with warnings"
+            else
+              echo "Could not auto-locate Android Hermes bundle + sourcemap in the artifact."
+            fi
+          fi
+
+          if [ "$PLATFORM" = "ios" ]; then
+            echo "iOS Hermes extraction from IPA is complex. Consider uploading during the EAS build instead."
+          fi
+
+      - name: Create Sentry Release + Upload Web Sourcemaps (sentry-cli)
+        if: inputs.upload_sourcemaps == true
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ vars.SENTRY_ORG || 'culturepass' }}
+          SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT || 'culturepass' }}
+        run: |
+          VERSION="${{ inputs.version }}"
+          ENV="${{ inputs.environment }}"
+
+          echo "Creating Sentry release: $VERSION"
+
+          npx @sentry/cli releases new "$VERSION"
+          npx @sentry/cli releases set-commits "$VERSION" --auto
+
+          # Web sourcemaps (Expo web export)
+          if [ -d "dist" ]; then
+            npx @sentry/cli releases files "$VERSION" upload-sourcemaps dist \
+              --url-prefix '~/' \
+              --rewrite
+          fi
+
+          # Create deployment record
+          npx @sentry/cli releases deploys "$VERSION" new -e "$ENV"
+
+          echo "✅ Sentry release $VERSION created and deployed to $ENV"

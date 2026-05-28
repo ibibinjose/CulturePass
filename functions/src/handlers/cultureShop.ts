@@ -18,6 +18,7 @@ import { db, isFirestoreConfigured } from '../admin';
 import { requireAuth, ROLE_RANK, userRank, type RequestUser } from '../middleware/auth';
 import { usersService } from '../services/firestore';
 import { captureRouteError, nowIso, parseBody, qparam, qstr } from './utils';
+import { logger } from 'firebase-functions';
 import type { DailyDeal } from '../../../shared/schema/dailyDeal';
 import type {
   ShopListing,
@@ -284,7 +285,27 @@ cultureShopRouter.get(['/culture-market/listings', '/culture-shop/listings'], as
     if (featured) q = q.where('isFeatured', '==', true);
     q = q.orderBy('createdAt', 'desc').limit(limit + 1);
 
-    const snap = await q.get();
+    let snap: FirebaseFirestore.QuerySnapshot;
+    try {
+      snap = await q.get();
+    } catch (err: any) {
+      const isIndexError = err?.code === 9 || /index/i.test(err?.message || '');
+      if (!isIndexError) throw err;
+      logger.warn('culture-shop listings: Missing index for filters + createdAt. Falling back to in-memory sort.');
+      // Fallback without orderBy
+      let fbQ: FirebaseFirestore.Query = db.collection('cultureShopListings').where('status', '==', status);
+      if (category) fbQ = fbQ.where('category', '==', category);
+      if (type) fbQ = fbQ.where('type', '==', type);
+      if (city) fbQ = fbQ.where('city', '==', city);
+      if (country) fbQ = fbQ.where('country', '==', country);
+      if (featured) fbQ = fbQ.where('isFeatured', '==', true);
+      const fbSnap = await fbQ.limit(limit * 2).get();
+      let all = fbSnap.docs.map((d) => ({ id: d.id, ...(d.data() as object) }) as ShopListing);
+      all.sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''));
+      const hasMore = all.length > limit;
+      return res.json({ listings: all.slice(0, limit), total: all.slice(0, limit).length, hasMore } as ShopListingsResponse);
+    }
+
     const all = snap.docs.map((d) => ({ id: d.id, ...(d.data() as object) }) as ShopListing);
     const hasMore = all.length > limit;
     return res.json({ listings: all.slice(0, limit), total: all.slice(0, limit).length, hasMore } as ShopListingsResponse);

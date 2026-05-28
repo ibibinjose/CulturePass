@@ -10,6 +10,7 @@ import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Skeleton } from '@/design-system/ui/Skeleton';
 import { useColors } from '@/hooks/useColors';
+import { Luxe } from '@/design-system/tokens/luxeHeritage';
 
 export function EventCardSkeleton() {
   const colors = useColors();
@@ -45,34 +46,36 @@ export function EventCardSkeleton() {
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 16,
+    borderRadius: Luxe.radius.lg,
     overflow: 'hidden',
     borderWidth: 1,
+    borderColor: Luxe.colors.dark.border || 'rgba(255,255,255,0.08)',
+    backgroundColor: Luxe.colors.dark.surfaceElevated,
   },
   info: {
-    padding: 16,
+    padding: Luxe.spacing.md,
     minHeight: 180,
     justifyContent: 'space-between',
   },
   contentWrap: {
     flex: 1,
-    marginBottom: 12,
+    marginBottom: Luxe.spacing.sm,
   },
   metaSection: {
-    marginTop: 8,
+    marginTop: Luxe.spacing.sm,
     gap: 6,
   },
   row: {
-    marginBottom: 8,
+    marginBottom: Luxe.spacing.sm,
   },
   rowSmall: {
-    marginBottom: 6,
+    marginBottom: Luxe.spacing.xs,
   },
   footer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: 12,
+    paddingTop: Luxe.spacing.sm,
     borderTopWidth: 1,
     borderColor: 'rgba(0,0,0,0.1)', // Placeholder border
   },

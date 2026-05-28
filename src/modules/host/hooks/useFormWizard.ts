@@ -137,7 +137,9 @@ export interface UseFormWizardReturn extends FormWizardState {
 }
 
 const DRAFT_STORAGE_PREFIX = '@culturepass_profile_draft';
-const TOTAL_STEPS = 6;
+function getTotalSteps(entityType: EntityType): number {
+  return (entityType === 'community' || entityType === 'business') ? 7 : 6;
+}
 
 /**
  * Get local storage key for draft
@@ -422,7 +424,7 @@ export function useFormWizard({
 
   const canNavigateToStep = useCallback(
     (step: number): boolean => {
-      if (step < 1 || step > TOTAL_STEPS) return false;
+      if (step < 1 || step > getTotalSteps(entityType)) return false;
       if (step <= currentStep) return true;
       return completedSteps.has(step - 1);
     },
@@ -466,7 +468,7 @@ export function useFormWizard({
     const isValid = await validateCurrentStep();
     if (isValid) {
       setCompletedSteps((prev) => new Set([...prev, currentStep]));
-      setCurrentStep((prev) => Math.min(prev + 1, TOTAL_STEPS));
+      setCurrentStep((prev) => Math.min(prev + 1, getTotalSteps(entityType)));
       setValidationErrors({});
     }
   }, [currentStep, validateCurrentStep]);
@@ -574,7 +576,7 @@ export function useFormWizard({
 
   const publish = useCallback(async () => {
     // Validate all steps before publishing
-    for (let step = 1; step <= TOTAL_STEPS; step++) {
+    for (let step = 1; step <= getTotalSteps(entityType); step++) {
       setCurrentStep(step);
       const isValid = await validateCurrentStep();
       if (!isValid) {
@@ -602,7 +604,7 @@ export function useFormWizard({
     // State
     currentStep,
     completedSteps,
-    totalSteps: TOTAL_STEPS,
+    totalSteps: getTotalSteps(entityType),
     formData,
     entityType,
     validationErrors,

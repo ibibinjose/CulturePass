@@ -9,7 +9,8 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { useColors } from '@/hooks/useColors';
 import type { MarketplaceTile } from '@/shared/schema';
-import { CultureTokens, FontFamily, Radius, Spacing, TextStyles } from '@/design-system/tokens/theme';
+import { Luxe } from '@/design-system/tokens/luxeHeritage';
+import { FontFamily } from '@/design-system/tokens/theme';
 
 type Props = {
   tile: MarketplaceTile;
@@ -40,8 +41,8 @@ export function MarketplaceSquareTile({ tile, size, showPremiumLock, onPress }: 
           {
             width: size,
             height: size,
-            borderColor: colors.borderLight,
-            backgroundColor: colors.surface,
+            borderColor: 'rgba(255,255,255,0.06)',
+            backgroundColor: colors.surfaceElevated,
           },
         ]}
       >

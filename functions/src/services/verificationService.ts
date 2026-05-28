@@ -8,6 +8,7 @@
  */
 
 import { db } from '../admin';
+import { logger } from 'firebase-functions';
 import type {
   VerificationTask,
   VerificationChecklistItem,
@@ -149,15 +150,31 @@ export const verificationService = {
    * Get verification task for a profile
    */
   async getTaskForProfile(profileId: string): Promise<VerificationTask | null> {
-    const snap = await verificationTasksCol()
-      .where('profileId', '==', profileId)
-      .orderBy('submittedAt', 'desc')
-      .limit(1)
-      .get();
+    try {
+      const snap = await verificationTasksCol()
+        .where('profileId', '==', profileId)
+        .orderBy('submittedAt', 'desc')
+        .limit(1)
+        .get();
 
-    if (snap.empty) return null;
-    const doc = snap.docs[0];
-    return { ...doc.data() as VerificationTask, id: doc.id };
+      if (snap.empty) return null;
+      const doc = snap.docs[0];
+      return { ...doc.data() as VerificationTask, id: doc.id };
+    } catch (err: any) {
+      const isIndexError = err?.code === 9 || /index/i.test(err?.message || '');
+      if (isIndexError) {
+        logger.warn('getTaskForProfile: Missing index on hostVerificationTasks(profileId + submittedAt). Falling back.');
+        const snap = await verificationTasksCol()
+          .where('profileId', '==', profileId)
+          .limit(5)
+          .get();
+        if (snap.empty) return null;
+        const docs = snap.docs.map(d => ({ ...d.data() as VerificationTask, id: d.id }));
+        docs.sort((a, b) => new Date(b.submittedAt || 0).getTime() - new Date(a.submittedAt || 0).getTime());
+        return docs[0];
+      }
+      throw err;
+    }
   },
 
   /**
@@ -181,18 +198,43 @@ export const verificationService = {
       query = query.where('assignedTo', '==', filters.assignedTo);
     }
 
-    query = query.orderBy('submittedAt', 'desc');
+    (this as any)._lastVerificationUsedFallback = false;
 
-    const snap = await query.get();
-    let tasks = snap.docs.map(doc => ({ ...doc.data() as VerificationTask, id: doc.id }));
+    try {
+      query = query.orderBy('submittedAt', 'desc');
+      const snap = await query.limit(500).get();
+      let tasks = snap.docs.map(doc => ({ ...doc.data() as VerificationTask, id: doc.id }));
 
-    // Filter by overdue SLA in memory (can't use Firestore query for this)
-    if (filters.overdueSla) {
-      const now = new Date().toISOString();
-      tasks = tasks.filter(task => task.slaDeadline < now && task.status !== 'approved' && task.status !== 'rejected');
+      if (filters.overdueSla) {
+        const now = new Date().toISOString();
+        tasks = tasks.filter(task => task.slaDeadline < now && task.status !== 'approved' && task.status !== 'rejected');
+      }
+      return tasks;
+    } catch (err: any) {
+      const isIndexError = err?.code === 9 || /index/i.test(err?.message || '');
+      if (isIndexError) {
+        logger.warn('listTasks: Missing composite index for hostVerificationTasks (status/entityType/assignedTo + submittedAt). Falling back to in-memory sort.');
+        (this as any)._lastVerificationUsedFallback = true;
+
+        // Fallback: fetch without the orderBy (or with minimal where) and sort + filter in memory
+        let fbQuery = verificationTasksCol() as FirebaseFirestore.Query;
+        if (filters.status) fbQuery = fbQuery.where('status', '==', filters.status);
+        if (filters.entityType) fbQuery = fbQuery.where('entityType', '==', filters.entityType);
+        if (filters.assignedTo) fbQuery = fbQuery.where('assignedTo', '==', filters.assignedTo);
+
+        const snap = await fbQuery.limit(1000).get();
+        let tasks = snap.docs.map(doc => ({ ...doc.data() as VerificationTask, id: doc.id }));
+
+        tasks.sort((a, b) => new Date(b.submittedAt || 0).getTime() - new Date(a.submittedAt || 0).getTime());
+
+        if (filters.overdueSla) {
+          const now = new Date().toISOString();
+          tasks = tasks.filter(task => task.slaDeadline < now && task.status !== 'approved' && task.status !== 'rejected');
+        }
+        return tasks;
+      }
+      throw err;
     }
-
-    return tasks;
   },
 
   /**

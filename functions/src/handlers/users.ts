@@ -15,6 +15,7 @@ export const usersRouter = Router();
 
 const userUpdateSchema = z.object({
   username: z.string().nullish(),
+  handle: z.string().nullish(),
   displayName: z.string().nullish(),
   email: z.string().email().nullish(),
   phone: z.string().nullish(),
@@ -113,7 +114,25 @@ usersRouter.put('/users/:id', requireAuth, moderationCheck, async (req: Request,
     }
 
     const updates = parseBody(userUpdateSchema, req.body);
-    
+
+    // Enforce username/handle uniqueness on updates (prevents collisions that registration already guards)
+    if (updates.username) {
+      const normalized = String(updates.username).toLowerCase().trim();
+      const existing = await db
+        .collection('users')
+        .where('username', '==', normalized)
+        .limit(2)
+        .get();
+      const conflict = existing.docs.some((d) => d.id !== userId);
+      if (conflict) {
+        return res.status(409).json({ error: 'Username is already taken' });
+      }
+      // Also keep handle in sync if not explicitly provided
+      if (!updates.handle) {
+        updates.handle = normalized;
+      }
+    }
+
     await usersService.update(userId, updates as any);
     const fresh = await usersService.getById(userId);
     return res.json(fresh);

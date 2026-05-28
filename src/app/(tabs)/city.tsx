@@ -39,10 +39,10 @@ import {
   useFollowingCommunityIds,
   useJoinedCommunities,
 } from '@/modules/communities/hooks/useCommunities';
-import { useCityPage } from '@/hooks/useCityPage';
+import { useCityPage, LISTING_TYPE_ROWS, type ListingTypeKey, type ExploreCategoryKey } from '@/hooks/useCityPage';
 import { PopularEventsRail } from '@/components/city/PopularEventsRail';
 import { CultureTokens } from '@/design-system/tokens/colors';
-import { M3Typography, Radius } from '@/design-system/tokens/theme';
+import { M3Typography, Radius, gradients, FontFamily } from '@/design-system/tokens/theme';
 import { useSaved } from '@/contexts/SavedContext';
 import type { Community, EventData } from '@/shared/schema';
 import { CULTUREX_EXPLORES_CULTURE_TAG } from '@/shared/schema';
@@ -57,6 +57,22 @@ const ORBIT_CARD_W = 260;
 const COMMUNITY_CARD_W = 280;
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
+
+const EXPLORE_CATEGORY_LINKS: readonly {
+  key: ExploreCategoryKey;
+  label: string;
+  icon: keyof typeof Ionicons.glyphMap;
+}[] = [
+  { key: 'events', label: 'Events', icon: 'calendar-outline' },
+  { key: 'movies', label: 'Movies', icon: 'film-outline' },
+  { key: 'dining', label: 'Dining', icon: 'restaurant-outline' },
+  { key: 'activities', label: 'Activities', icon: 'compass-outline' },
+  { key: 'shopping', label: 'Shopping', icon: 'bag-handle-outline' },
+  { key: 'offers', label: 'Offers', icon: 'pricetag-outline' },
+  { key: 'artists', label: 'Artists', icon: 'color-palette-outline' },
+  { key: 'directory', label: 'Directory', icon: 'grid-outline' },
+  { key: 'indigenous', label: 'Indigenous', icon: 'leaf-outline' },
+];
 
 function normPlace(v: string | undefined) {
   return (v ?? '').trim().toLowerCase();
@@ -167,6 +183,8 @@ export default function MyCityScreen() {
       .slice(0, 12);
   }, [allCommunities, cityName, cityCountry, joinedSet]);
 
+  const [activeExploreCategory, setActiveExploreCategory] = React.useState<ExploreCategoryKey>('events');
+
   const cultureXEventCount = useMemo(() => {
     const cx = CULTUREX_EXPLORES_CULTURE_TAG.toLowerCase();
     return page.allEvents.filter((e) => {
@@ -215,7 +233,60 @@ export default function MyCityScreen() {
     onPress: () => page.onToggleFilter(opt),
   }));
 
+  const openListingTypeResults = useCallback(
+    (listingType: ListingTypeKey) => {
+      const hubQuery = encodeURIComponent(cityName);
+      const routes: Record<ListingTypeKey, string> = {
+        event: `/events`,
+        festival: `/search?q=${encodeURIComponent(`${cityName} festival`)}`,
+        concert: `/search?q=${encodeURIComponent(`${cityName} concert`)}`,
+        workshop: `/search?q=${encodeURIComponent(`${cityName} workshop`)}`,
+        movie: `/movies`,
+        dining: `/restaurants`,
+        shopping: `/shopping`,
+        activity: `/a`,
+        professional: `/search?q=${encodeURIComponent(`${cityName} professional`)}`,
+        organisation: `/search?q=${encodeURIComponent(`${cityName} organisation`)}`,
+        business: `/directory`,
+        artist: `/search?q=${encodeURIComponent(`${cityName} artist`)}`,
+        perk: `/perks`,
+      };
+      const route = routes[listingType];
+      if (route.includes('?q=')) {
+        router.push(route as never);
+        return;
+      }
+      const suffix = route.includes('?') ? '&' : '?';
+      router.push(`${route}${suffix}q=${hubQuery}` as never);
+    },
+    [cityName],
+  );
+
+  const filteredEventsByExplore = useMemo(() => {
+    const includesAny = (haystack: string, needles: string[]) => needles.some((n) => haystack.includes(n));
+    return page.filteredEvents.filter((e) => {
+      const blob = `${e.category ?? ''} ${(e.tags ?? []).join(' ')} ${(e.cultureTag ?? []).join(' ')} ${(e.cultureTags ?? []).join(' ')}`.toLowerCase();
+      switch (activeExploreCategory) {
+        case 'events':
+          return true;
+        case 'movies':
+          return includesAny(blob, ['movie', 'film', 'cinema', 'screening']);
+        case 'activities':
+          return includesAny(blob, ['activity', 'tour', 'experience', 'workshop', 'class']);
+        case 'offers':
+          return includesAny(blob, ['offer', 'deal', 'discount', 'free', 'perk']);
+        case 'indigenous':
+          return includesAny(blob, ['indigenous', 'aboriginal', 'first nations', 'torres strait']);
+        case 'artists':
+          return includesAny(blob, ['artist', 'music', 'dance', 'creative', 'performance', 'concert']);
+        default:
+          return true;
+      }
+    });
+  }, [activeExploreCategory, page.filteredEvents]);
+
   const numCols = windowSizeClass === 'expanded' ? 3 : windowSizeClass === 'medium' ? 2 : 1;
+  const { contentWidth } = useLayout();
 
   return (
     <ErrorBoundary>
@@ -229,8 +300,11 @@ export default function MyCityScreen() {
         <ScrollView
           ref={scrollRef}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: tabBarHeight + insets.bottom + 40 }}
-          stickyHeaderIndices={[2]}
+          contentContainerStyle={[
+            { paddingBottom: tabBarHeight + insets.bottom + 40 },
+            Platform.OS === 'web' && isExpanded && { width: contentWidth, alignSelf: 'center' }
+          ]}
+          stickyHeaderIndices={[3]}
           refreshControl={
             <RefreshControl refreshing={page.refreshing} onRefresh={onRefresh} tintColor={m3Colors.primary} />
           }
@@ -248,15 +322,28 @@ export default function MyCityScreen() {
             <View style={[s.heroNav, { paddingTop: topInset + 16, paddingHorizontal: hPad }]}>
               <M3Button
                 variant="tonal"
-                leftIcon="share-social-outline"
-                onPress={() => {}}
+                leftIcon={isViewingNonHome ? 'home-outline' : 'share-social-outline'}
+                onPress={isViewingNonHome ? handleBackToHome : () => {}}
                 style={s.heroNavBtn}
               />
               <View style={s.heroNavCenter}>
-                <M3Card variant="elevated" style={s.locPill}>
-                  <Ionicons name="location" size={16} color={m3Colors.primary} />
-                  <Text style={[M3Typography.labelLarge, { color: m3Colors.onSurface }]}>{cityName}</Text>
-                </M3Card>
+                <Pressable
+                  onPress={() => router.push('/cities')}
+                  style={({ pressed }) => [{ opacity: pressed ? 0.9 : 1 }]}
+                >
+                  <M3Card variant="elevated" style={[s.locPill, { gap: 8, paddingRight: 12 }]}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                      <Ionicons name="location" size={14} color={m3Colors.primary} />
+                      <Text style={[M3Typography.labelLarge, { color: m3Colors.onSurface }]} numberOfLines={1}>
+                        {effectiveCity}
+                      </Text>
+                    </View>
+                    <View style={{ width: 1, height: 14, backgroundColor: m3Colors.outlineVariant }} />
+                    <Text style={[M3Typography.labelMedium, { color: m3Colors.primary, fontFamily: FontFamily.bold }]}>
+                      Explore
+                    </Text>
+                  </M3Card>
+                </Pressable>
               </View>
               <M3Button
                 variant="tonal"
@@ -269,8 +356,29 @@ export default function MyCityScreen() {
             {/* Content */}
             <View style={[s.heroContent, { paddingHorizontal: hPad }]}>
               <Animated.View entering={FadeInDown.delay(100).springify()}>
-                <View style={[s.heroBadge, { backgroundColor: m3Colors.primaryContainer }]}>
-                  <Text style={[M3Typography.labelSmall, { color: m3Colors.onPrimaryContainer, letterSpacing: 1.5 }]}>MY CITY HUB</Text>
+                <View
+                  style={[
+                    s.heroBadge,
+                    {
+                      backgroundColor: isViewingNonHome
+                        ? m3Colors.secondaryContainer
+                        : m3Colors.primaryContainer,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      M3Typography.labelSmall,
+                      {
+                        color: isViewingNonHome
+                          ? m3Colors.onSecondaryContainer
+                          : m3Colors.onPrimaryContainer,
+                        letterSpacing: 1.5,
+                      },
+                    ]}
+                  >
+                    {isViewingNonHome ? 'EXPLORING' : 'MY CITY HUB'}
+                  </Text>
                 </View>
               </Animated.View>
 
@@ -279,10 +387,14 @@ export default function MyCityScreen() {
               </Animated.Text>
 
               <Animated.View entering={FadeInDown.delay(300).springify()} style={s.heroGreetingRow}>
-                {isAuthenticated && firstName ? (
-                  <Text style={[M3Typography.titleLarge, { color: '#fff', opacity: 0.9 }]}>Welcome home, {firstName} 👋</Text>
+                {isAuthenticated && firstName && !isViewingNonHome ? (
+                  <Text style={[M3Typography.titleLarge, { color: '#fff', opacity: 0.9 }]}>
+                    Welcome home, {firstName} 👋
+                  </Text>
                 ) : (
-                  <Text style={[M3Typography.bodyLarge, { color: '#fff', opacity: 0.8, textAlign: 'center' }]}>{page.meta.tagline}</Text>
+                  <Text style={[M3Typography.bodyLarge, { color: '#fff', opacity: 0.8, textAlign: 'center' }]}>
+                    {page.meta.tagline}
+                  </Text>
                 )}
               </Animated.View>
 
@@ -300,7 +412,7 @@ export default function MyCityScreen() {
 
           {/* ── Stats ─────────────────────────────────────────────────────── */}
           <View style={[s.statsStrip, { backgroundColor: m3Colors.surface, borderBottomColor: m3Colors.outlineVariant }]}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[s.statsContent, { paddingHorizontal: hPad }]}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[s.statsContent, { paddingHorizontal: hPad, paddingRight: hPad + 40 }]}>
               <StatPill icon="calendar" value={page.allEvents.length} label="Events" color={m3Colors.primary} />
               <StatPill icon="people" value={joinedCommunities.length || '—'} label="Your Hubs" color={m3Colors.secondary} />
               <StatPill icon="globe" value={page.uniqueCultureTags.length} label="Cultures" color={m3Colors.tertiary} />
@@ -308,45 +420,63 @@ export default function MyCityScreen() {
             </ScrollView>
           </View>
 
-          {/* ── Back to Home / Explore Other Cities (Req 7.1, 7.4) ─────── */}
-          <View style={{ paddingHorizontal: hPad, paddingVertical: 10, flexDirection: 'row', gap: 10, flexWrap: 'wrap' }}>
-            {isViewingNonHome && (
-              <Pressable
-                onPress={handleBackToHome}
-                style={({ pressed }) => [{
-                  flexDirection: 'row', alignItems: 'center', gap: 6,
-                  backgroundColor: m3Colors.primaryContainer,
-                  paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20,
-                  opacity: pressed ? 0.8 : 1,
-                }]}
-                accessibilityRole="button"
-                accessibilityLabel={`Back to ${cityName}`}
-              >
-                <Ionicons name="arrow-back" size={14} color={m3Colors.onPrimaryContainer} />
-                <Text style={[M3Typography.labelMedium, { color: m3Colors.onPrimaryContainer }]}>Back to {cityName}</Text>
-              </Pressable>
-            )}
-            <Pressable
-              onPress={() => router.push('/cities')}
-              style={({ pressed }) => [{
-                flexDirection: 'row', alignItems: 'center', gap: 6,
-                backgroundColor: m3Colors.surfaceContainerHigh,
-                paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20,
-                opacity: pressed ? 0.8 : 1,
-              }]}
-              accessibilityRole="button"
-              accessibilityLabel="Explore other cities"
-            >
-              <Ionicons name="globe-outline" size={14} color={m3Colors.onSurfaceVariant} />
-              <Text style={[M3Typography.labelMedium, { color: m3Colors.onSurfaceVariant }]}>
-                {isViewingNonHome ? `Viewing ${effectiveCity}` : 'Explore Other Cities'}
-              </Text>
-            </Pressable>
-          </View>
+
 
           {/* ── Sticky Filters ────────────────────────────────────────────── */}
           <View style={[s.stickyFilters, { backgroundColor: m3Colors.surface, borderBottomColor: m3Colors.outlineVariant }]}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: hPad, gap: 8, paddingVertical: 12 }}>
+            <ScrollView
+              horizontal
+              nestedScrollEnabled
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={[
+                s.exploreRow,
+                { paddingHorizontal: hPad, paddingVertical: 8, paddingRight: hPad + 32 },
+              ]}
+            >
+              {EXPLORE_CATEGORY_LINKS.map((item) => {
+                const active = activeExploreCategory === item.key;
+                return (
+                  <Pressable
+                    key={item.key}
+                    onPress={() => {
+                      setActiveExploreCategory(item.key);
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Show ${item.label}`}
+                    accessibilityState={{ selected: active }}
+                  >
+                    {active ? (
+                      <LinearGradient
+                        colors={gradients.culturepassBrand}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={s.exploreChipGradient}
+                      >
+                        <Ionicons name={item.icon} size={14} color="#fff" />
+                        <Text style={s.exploreChipOnGradient}>{item.label}</Text>
+                      </LinearGradient>
+                    ) : (
+                      <View
+                        style={[
+                          s.exploreChipIdle,
+                          {
+                            backgroundColor: m3Colors.surfaceVariant,
+                            borderColor: m3Colors.outlineVariant,
+                          },
+                        ]}
+                      >
+                        <Ionicons name={item.icon} size={14} color={m3Colors.onSurfaceVariant} />
+                        <Text style={[s.exploreChipIdleText, { color: m3Colors.onSurfaceVariant }]}>
+                          {item.label}
+                        </Text>
+                      </View>
+                    )}
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: hPad, gap: 8, paddingVertical: 12, paddingRight: hPad + 40 }}>
               {railChips.map((chip) => (
                 <M3FilterChip key={chip.id} label={chip.label} selected={chip.active} onPress={chip.onPress} />
               ))}
@@ -359,7 +489,7 @@ export default function MyCityScreen() {
               <View style={{ paddingHorizontal: hPad }}>
                 <M3SectionHeader title="From Your Orbit" subtitle="Latest updates from your joined communities" onAction={() => router.push('/(tabs)/calendar')} />
               </View>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: hPad, gap: 16, paddingVertical: 8 }}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: hPad, gap: 16, paddingVertical: 8, paddingRight: hPad + 40 }}>
                 {orbitIds.length === 0 ? (
                   <EmptyOrbitCard onDiscover={() => router.push('/(tabs)/community')} />
                 ) : orbitEvents.length === 0 ? (
@@ -386,9 +516,53 @@ export default function MyCityScreen() {
             </Animated.View>
           )}
 
+          {/* ── Browse by Type ───────────────────────────────────────────── */}
+          {page.totalActiveFilters === 0 && (
+            <View style={s.section}>
+              <View style={{ paddingHorizontal: hPad }}>
+                <M3SectionHeader title="Browse by Type" subtitle="Explore your city's cultural listings" />
+              </View>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: hPad, gap: 12, paddingVertical: 8, paddingRight: hPad + 40 }}>
+                {LISTING_TYPE_ROWS.map((row) => (
+                  <Pressable
+                    key={row.key}
+                    onPress={() => openListingTypeResults(row.key)}
+                    style={({ pressed }) => [
+                      {
+                        width: 220,
+                        borderWidth: 1.5,
+                        borderColor: m3Colors.outlineVariant,
+                        borderRadius: Radius.lg,
+                        padding: 16,
+                        backgroundColor: m3Colors.surfaceContainerLow,
+                        opacity: pressed ? 0.9 : 1,
+                      },
+                    ]}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Open ${row.title} results`}
+                  >
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                      <Text style={[M3Typography.titleSmall, { color: m3Colors.onSurface }]}>
+                        {row.title}
+                      </Text>
+                      <View style={{ borderRadius: Radius.full, paddingHorizontal: 8, paddingVertical: 2, backgroundColor: m3Colors.primaryContainer }}>
+                        <Text style={[M3Typography.labelSmall, { color: m3Colors.onPrimaryContainer, fontFamily: FontFamily.bold }]}>
+                          {page.listingResultCounts[row.key]}
+                        </Text>
+                      </View>
+                    </View>
+                    <Text style={[M3Typography.bodySmall, { color: m3Colors.onSurfaceVariant }]} numberOfLines={2}>
+                      {row.description}
+                    </Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
+            </View>
+          )}
+
           {/* ── Main Grid ─────────────────────────────────────────────────── */}
           <View style={[s.section, { paddingHorizontal: hPad }]}>
-            <M3SectionHeader title={page.sectionTitle} subtitle={`${page.filteredEvents.length} items found`} onAction={page.totalActiveFilters > 0 ? page.clearAllFilters : undefined} actionLabel="Clear" />
+            <M3SectionHeader title={page.sectionTitle} subtitle={`${filteredEventsByExplore.length} items found`} onAction={page.totalActiveFilters > 0 ? page.clearAllFilters : undefined} actionLabel="Clear" />
 
             {page.isLoading ? (
               <View style={s.grid}>
@@ -398,7 +572,7 @@ export default function MyCityScreen() {
                   </View>
                 ))}
               </View>
-            ) : page.filteredEvents.length === 0 ? (
+            ) : filteredEventsByExplore.length === 0 ? (
               <M3Card variant="outlined" style={s.emptyGrid}>
                 <Ionicons name="search-outline" size={48} color={m3Colors.onSurfaceVariant} />
                 <Text style={[M3Typography.titleLarge, { color: m3Colors.onSurface }]}>No matches found</Text>
@@ -406,7 +580,7 @@ export default function MyCityScreen() {
               </M3Card>
             ) : (
               <View style={s.grid}>
-                {page.filteredEvents.map((ev, i) => (
+                {filteredEventsByExplore.map((ev, i) => (
                   <Animated.View key={ev.id} entering={FadeInDown.delay(i * 50).springify()} style={[s.gridItem, { width: `${100 / numCols}%` as any }]}>
                     <M3EventCard event={ev} variant="filled" />
                   </Animated.View>
@@ -421,7 +595,7 @@ export default function MyCityScreen() {
               <View style={{ paddingHorizontal: hPad }}>
                 <M3SectionHeader title="Nearby Hubs" subtitle="Connect with local groups" onAction={() => router.push('/(tabs)/community')} />
               </View>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: hPad, gap: 16, paddingVertical: 8 }}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: hPad, gap: 16, paddingVertical: 8, paddingRight: hPad + 40 }}>
                 {exploreNearby.map((c: Community) => (
                   <View key={c.id} style={{ width: COMMUNITY_CARD_W }}>
                     <M3CommunityCard community={c} />
@@ -470,6 +644,44 @@ const s = StyleSheet.create({
   statText: { gap: 1 },
 
   stickyFilters: { borderBottomWidth: 1, zIndex: 50 },
+
+  exploreRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flexGrow: 1,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(0,0,0,0.05)',
+  },
+  exploreChipGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'transparent',
+  },
+  exploreChipOnGradient: {
+    fontSize: 12,
+    fontFamily: 'Poppins_600SemiBold',
+    color: '#fff',
+  },
+  exploreChipIdle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderRadius: 999,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  exploreChipIdleText: {
+    fontSize: 12,
+    fontFamily: 'Poppins_600SemiBold',
+  },
+
   section: { paddingTop: 32, gap: 16 },
 
   grid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -8 },

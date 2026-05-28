@@ -15,14 +15,56 @@ export const adminService = {
    */
   async getStats(): Promise<AdminStats> {
     try {
+      // Prefer pre-aggregated data from dailyStats for performance at scale
+      const latestDailySnap = await db.collection('dailyStats')
+        .orderBy('date', 'desc')
+        .limit(1)
+        .get();
+
+      if (!latestDailySnap.empty) {
+        const latest = latestDailySnap.docs[0].data();
+
+        // Light live counts for freshness (very fast)
+        const [usersSnap, eventsSnap] = await Promise.all([
+          db.collection('users').count().get(),
+          db.collection('events').count().get(),
+        ]);
+
+        // Use 90-day data when available for better historical view
+        const trendSource = latest.signupsByDay90d || latest.signupsByDay || {};
+        const signupTrends = Object.entries(trendSource)
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([date, count]) => ({ date, count: Number(count) }));
+
+        return {
+          users: usersSnap.data().count,
+          events: eventsSnap.data().count,
+          tickets: latest.tickets || 0,
+          revenue: latest.revenueLast30DaysCents || 0,
+
+          multiOrganizerProfiles: (latest.multiOrganizerCommunities || 0) + (latest.multiOrganizerBusinesses || 0),
+          activeOrganizers: latest.activeOrganizers || 0,
+
+          signupTrends,
+
+          newProfiles30d: latest.signupsLast30Days || 0,
+          newEvents30d: 0,
+
+          // Pass through rich pre-aggregated data for the dashboard
+          multiOrganizerCommunities: latest.multiOrganizerCommunities,
+          multiOrganizerBusinesses: latest.multiOrganizerBusinesses,
+          organizerRoleCounts: latest.organizerRoleCounts,
+          signupsLast90Days: latest.signupsLast90Days,
+        };
+      }
+
+      // === Fallback: on-demand computation (for first run or if aggregation hasn't run yet) ===
       const [usersSnap, eventsSnap, ticketsSnap] = await Promise.all([
         db.collection('users').count().get(),
         db.collection('events').count().get(),
         db.collection('tickets').count().get(),
       ]);
 
-      // Calculate revenue (sum of amountCents in paid tickets)
-      // For performance in large datasets, this should be a rolling aggregate.
       const paidTicketsSnap = await db.collection('tickets')
         .where('paymentStatus', '==', 'paid')
         .get();
@@ -32,11 +74,70 @@ export const adminService = {
         revenue += (doc.data().amountCents || 0);
       });
 
+      // Team / Multi-Organizer Stats (on-demand fallback)
+      let multiOrganizerProfiles = 0;
+      let activeOrganizers = 0;
+      const organizerUserIds = new Set<string>();
+
+      const profilesSnap = await db.collection('profiles')
+        .where('entityType', 'in', ['community', 'business'])
+        .get();
+
+      let multiOrganizerCommunities = 0;
+      let multiOrganizerBusinesses = 0;
+
+      profilesSnap.forEach((doc) => {
+        const data = doc.data();
+        const organizers: any[] = data.organizers || [];
+        const et = data.entityType;
+
+        if (organizers.length > 0) {
+          multiOrganizerProfiles++;
+          if (et === 'community') multiOrganizerCommunities++;
+          if (et === 'business') multiOrganizerBusinesses++;
+        }
+
+        if (data.ownerId) organizerUserIds.add(data.ownerId);
+        organizers.forEach((o: any) => o.userId && organizerUserIds.add(o.userId));
+      });
+      activeOrganizers = organizerUserIds.size;
+
+      // Signup trends (on-demand fallback)
+      const signupTrends: Array<{ date: string; count: number }> = [];
+      const now = new Date();
+      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+      const recentUsers = await db.collection('users')
+        .where('createdAt', '>=', thirtyDaysAgo.toISOString())
+        .get();
+
+      const countsByDay: Record<string, number> = {};
+      recentUsers.forEach((doc) => {
+        const ca = doc.data().createdAt;
+        if (ca) {
+          const key = new Date(ca).toISOString().split('T')[0];
+          countsByDay[key] = (countsByDay[key] || 0) + 1;
+        }
+      });
+
+      for (let i = 29; i >= 0; i--) {
+        const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+        const key = d.toISOString().split('T')[0];
+        signupTrends.push({ date: key, count: countsByDay[key] || 0 });
+      }
+
       return {
         users: usersSnap.data().count,
         events: eventsSnap.data().count,
         tickets: ticketsSnap.data().count,
         revenue,
+        multiOrganizerProfiles,
+        multiOrganizerCommunities,
+        multiOrganizerBusinesses,
+        activeOrganizers,
+        signupTrends,
+        organizerRoleCounts: {}, // computed in pre-agg path
+        signupsLast90Days: signupTrends.reduce((sum, d) => sum + d.count, 0),
       };
     } catch (error) {
       logger.error('Error fetching admin stats:', error);
@@ -58,12 +159,26 @@ export const adminService = {
    * Retrieve recent audit logs.
    */
   async getAuditLogs(limit = 50): Promise<AuditLog[]> {
-    const snap = await db.collection('auditLogs')
-      .orderBy('createdAt', 'desc')
-      .limit(limit)
-      .get();
+    try {
+      const snap = await db.collection('auditLogs')
+        .orderBy('createdAt', 'desc')
+        .limit(limit)
+        .get();
 
-    return snap.docs.map((doc: QueryDocumentSnapshot) => ({ id: doc.id, ...doc.data() } as AuditLog));
+      (this as any)._lastAuditUsedFallback = false;
+      return snap.docs.map((doc: QueryDocumentSnapshot) => ({ id: doc.id, ...doc.data() } as AuditLog));
+    } catch (err: any) {
+      const isIndexError = err?.code === 9 || /index/i.test(err?.message || '');
+      if (isIndexError) {
+        logger.warn('getAuditLogs: Missing index on auditLogs(createdAt). Falling back to unsorted recent docs.');
+        (this as any)._lastAuditUsedFallback = true;
+        const snap = await db.collection('auditLogs').limit(limit * 2).get();
+        const items = snap.docs.map((doc: QueryDocumentSnapshot) => ({ id: doc.id, ...doc.data() } as AuditLog));
+        items.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+        return items.slice(0, limit);
+      }
+      throw err;
+    }
   },
 
   /**
@@ -76,8 +191,39 @@ export const adminService = {
       query = query.where('status', '==', status);
     }
 
-    const snap = await query.orderBy('createdAt', 'desc').limit(limit).get();
-    return snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as ContentReport));
+    try {
+      // Preferred path: requires composite index (status + createdAt)
+      const snap = await query.orderBy('createdAt', 'desc').limit(limit).get();
+      (this as any)._lastReportsUsedFallback = false;
+      return snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as ContentReport));
+    } catch (err: any) {
+      const isIndexError = err?.code === 9 || /index/i.test(err?.message || '');
+
+      if (isIndexError) {
+        logger.warn(
+          `getReports: Composite index not ready for (status, createdAt). Falling back to in-memory sort. ` +
+          `This is expected while the index is building. Error: ${err.message}`
+        );
+
+        (this as any)._lastReportsUsedFallback = true;
+
+        // Fallback: fetch without orderBy and sort in memory
+        const snap = await query.limit(limit * 2).get();
+        const items = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as ContentReport));
+
+        items.sort((a, b) => {
+          const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return bTime - aTime;
+        });
+
+        return items.slice(0, limit);
+      }
+
+      // Other unexpected errors
+      logger.error('getReports query failed with unexpected error:', err);
+      throw err;
+    }
   },
 
   /**
@@ -204,24 +350,50 @@ export const adminService = {
    * List recent transactions for finance terminal.
    */
   async getRecentTransactions(limit = 100) {
-    const snap = await db.collection('tickets')
-      .orderBy('createdAt', 'desc')
-      .limit(limit)
-      .get();
+    try {
+      const snap = await db.collection('tickets')
+        .orderBy('createdAt', 'desc')
+        .limit(limit)
+        .get();
 
-    return snap.docs.map((doc: QueryDocumentSnapshot) => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        userId: data.userId,
-        eventId: data.eventId,
-        eventTitle: data.eventTitle || 'Unknown Event',
-        amountCents: data.amountCents || 0,
-        paymentStatus: data.paymentStatus || 'unknown',
-        status: data.status || 'unknown',
-        createdAt: data.createdAt,
-      };
-    });
+      (this as any)._lastTransactionsUsedFallback = false;
+      return snap.docs.map((doc: QueryDocumentSnapshot) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          userId: data.userId,
+          eventId: data.eventId,
+          eventTitle: data.eventTitle || 'Unknown Event',
+          amountCents: data.amountCents || 0,
+          paymentStatus: data.paymentStatus || 'unknown',
+          status: data.status || 'unknown',
+          createdAt: data.createdAt,
+        };
+      });
+    } catch (err: any) {
+      const isIndexError = err?.code === 9 || /index/i.test(err?.message || '');
+      if (isIndexError) {
+        logger.warn('getRecentTransactions: Missing index on tickets(createdAt). Falling back to unsorted.');
+        (this as any)._lastTransactionsUsedFallback = true;
+        const snap = await db.collection('tickets').limit(limit * 2).get();
+        const items = snap.docs.map((doc: QueryDocumentSnapshot) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            userId: data.userId,
+            eventId: data.eventId,
+            eventTitle: data.eventTitle || 'Unknown Event',
+            amountCents: data.amountCents || 0,
+            paymentStatus: data.paymentStatus || 'unknown',
+            status: data.status || 'unknown',
+            createdAt: data.createdAt,
+          };
+        });
+        items.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+        return items.slice(0, limit);
+      }
+      throw err;
+    }
   }
 };
 

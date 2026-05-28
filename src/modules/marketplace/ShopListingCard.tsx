@@ -13,22 +13,26 @@
  *   └──────────────────────────────┘
  */
 import React from 'react';
-import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
+import { View, Pressable, StyleSheet, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useColors } from '@/hooks/useColors';
 import type { ShopListing } from '@/shared/schema';
-import { CultureTokens, FontFamily } from '@/design-system/tokens/theme';
+import { Luxe } from '@/design-system/tokens/luxeHeritage';
+import { LuxeText } from '@/design-system/ui/LuxeText';
+import { LuxeCard } from '@/design-system/ui/LuxeCard';
+import { FontFamily } from '@/design-system/tokens/theme';
 import { DefaultHostBrandMark } from '@/modules/marketplace/DefaultHostBrandMark';
 
 // ─── Accent palette ───────────────────────────────────────────────────────────
 
 const ACCENT: Record<string, [string, string]> = {
-  coral:  [CultureTokens.coral  + 'EE', CultureTokens.coral  + '44'],
-  violet: [CultureTokens.violet + 'EE', CultureTokens.violet + '44'],
-  teal:   [CultureTokens.teal   + 'EE', CultureTokens.teal   + '44'],
-  gold:   [CultureTokens.gold   + 'EE', CultureTokens.gold   + '44'],
+  coral:  [Luxe.colors.dark.primary + 'EE', Luxe.colors.dark.primary + '44'],
+  violet: [Luxe.colors.dark.accent + 'EE', Luxe.colors.dark.accent + '44'],
+  teal:   [Luxe.colors.dark.emerald + 'EE', Luxe.colors.dark.emerald + '44'],
+  gold:   [Luxe.colors.dark.heritageGold + 'EE', Luxe.colors.dark.heritageGold + '44'],
+  indigo: [Luxe.colors.dark.richIndigo + 'EE', Luxe.colors.dark.richIndigo + '44'],
 };
 
 function accentGrad(l: ShopListing): [string, string] {
@@ -88,14 +92,18 @@ export function ShopListingCard({ listing, width, onPress, onSave, saved }: Prop
   const imageH = Math.round(width * (166 / 280));
 
   return (
-    // Outer View — card shell with shadow. Never a Pressable so nested
-    // interactive elements (heart button) don't cause button-in-button errors.
-    <View style={[styles.card, { width, backgroundColor: colors.surface }]}>
-
+    // LuxeCard wrapper for premium visual treatment (big win)
+    <LuxeCard
+      variant="default"
+      size="md"
+      style={{ width, overflow: 'visible' }}
+      onPress={onPress}
+      haptic={true}
+    >
       {/* ── Main tap area (image + body) ─────────────────────────────────── */}
       <Pressable
         onPress={onPress}
-        style={({ pressed }) => [styles.tapArea, pressed && { opacity: 0.93 }]}
+        style={({ pressed }) => [{ opacity: pressed ? 0.93 : 1 }]}
         accessibilityRole="button"
         accessibilityLabel={`${listing.title} by ${listing.sellerName} — ${priceLabel(listing)}`}
       >
@@ -120,7 +128,7 @@ export function ShopListingCard({ listing, width, onPress, onSave, saved }: Prop
 
           {/* Type badge — top-left */}
           <View style={styles.typeBadge}>
-            <Text style={styles.typeBadgeText}>{typeLabel(listing.type)}</Text>
+            <LuxeText variant="caption" style={styles.typeBadgeText}>{typeLabel(listing.type)}</LuxeText>
           </View>
 
           {/* Brand logo tile — bottom-right (UNiDAYS pattern) */}
@@ -129,17 +137,17 @@ export function ShopListingCard({ listing, width, onPress, onSave, saved }: Prop
           </View>
         </View>
 
-        {/* Card body — seller name row leaves space for the heart (positioned absolute) */}
+        {/* Card body — LuxeText for premium typography */}
         <View style={styles.body}>
-          <Text style={[styles.sellerName, { color: colors.textTertiary, paddingRight: 28 }]} numberOfLines={1}>
+          <LuxeText variant="caption" style={{ color: colors.textTertiary, paddingRight: 28 }} numberOfLines={1}>
             {listing.sellerName}{listing.city ? `  ·  ${listing.city}` : ''}
-          </Text>
-          <Text style={[styles.title, { color: colors.text }]} numberOfLines={2}>
+          </LuxeText>
+          <LuxeText variant="body" style={{ color: colors.text, fontWeight: '600', marginTop: 4 }} numberOfLines={2}>
             {listing.title}
-          </Text>
-          <Text style={[styles.price, { color: colors.textSecondary }]}>
+          </LuxeText>
+          <LuxeText variant="caption" style={{ color: colors.textSecondary, marginTop: 2 }}>
             {priceLabel(listing)}
-          </Text>
+          </LuxeText>
         </View>
       </Pressable>
 
@@ -155,138 +163,57 @@ export function ShopListingCard({ listing, width, onPress, onSave, saved }: Prop
           <Ionicons
             name={saved ? 'heart' : 'heart-outline'}
             size={18}
-            color={saved ? CultureTokens.coral : colors.textTertiary}
+            color={saved ? Luxe.colors.dark.primary : colors.textTertiary}
           />
         </Pressable>
       )}
-    </View>
+    </LuxeCard>
   );
 }
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  // Outer card shell — View so nested Pressables never cause button-in-button errors
-  card: {
-    borderRadius: 8,
-    overflow: 'hidden',
-    position: 'relative',
-    ...Platform.select({
-      ios: {
-        shadowColor: 'rgb(0,45,80)',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.10,
-        shadowRadius: 8,
-      },
-      android: { elevation: 3 },
-      web: { boxShadow: '0px 2px 8px 0px rgba(0, 45, 80, 0.10)' } as any,
-    }),
-  },
-  // Inner tap area covers the whole card content
-  tapArea: {
-    width: '100%',
-  },
-
+  tapArea: { width: "100%" },
   imageWrap: {
-    width: '100%',
-    overflow: 'hidden',
-    backgroundColor: '#f0f0f0',
-    // top-left corner sharp (UNiDAYS style: borderTopLeftRadius: 0)
+    width: "100%",
+    overflow: "hidden",
+    backgroundColor: "#111",
     borderTopLeftRadius: 0,
-    borderTopRightRadius: 8,
+    borderTopRightRadius: Luxe.radius.lg,
   },
-
   typeBadge: {
-    position: 'absolute',
-    top: 8,
-    left: 8,
-    backgroundColor: 'rgba(0,0,0,0.42)',
-    paddingHorizontal: 8,
+    position: "absolute",
+    top: Luxe.spacing.sm,
+    left: Luxe.spacing.sm,
+    backgroundColor: "rgba(0,0,0,0.55)",
+    paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 4,
+    borderRadius: Luxe.radius.sm,
     zIndex: 2,
   },
   typeBadgeText: {
     fontFamily: FontFamily.semibold,
     fontSize: 10,
-    color: '#fff',
-    letterSpacing: 0.4,
+    color: "#fff",
+    letterSpacing: 0.5,
   },
-
   logoWrap: {
-    position: 'absolute',
-    right: 8,
-    bottom: 8,
+    position: "absolute",
+    right: Luxe.spacing.sm,
+    bottom: Luxe.spacing.sm,
     zIndex: 3,
   },
-
-  // Heart button — absolutely positioned over the body, right-aligned with seller row
   heartBtn: {
-    position: 'absolute',
-    right: 8,
-    bottom: 26, // sits alongside the seller name row
-    width: 28,
-    height: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 4,
-  },
-
-  // White square logo box — exact UNiDAYS pattern
-  logoBox: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    overflow: 'hidden',
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...Platform.select({
-      ios: {
-        shadowColor: 'rgb(0,45,80)',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.10,
-        shadowRadius: 8,
-      },
-      android: { elevation: 4 },
-      web: { boxShadow: '0px 2px 8px 0px rgba(0, 45, 80, 0.10)' } as any,
-    }),
-  },
-  logoShell: {
-    borderRadius: 8,
-    overflow: 'hidden',
-    backgroundColor: 'transparent',
-  },
-
-  // Card body — below image
-  body: {
-    paddingHorizontal: 8,
-    paddingTop: 8,
-    paddingBottom: 10,
-    minHeight: 90,
-  },
-
-  sellerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 6,
-  },
-  sellerName: {
-    fontFamily: FontFamily.regular,
-    fontSize: 13,
-    flex: 1,
-    marginRight: 8,
-  },
-
-  title: {
-    fontFamily: FontFamily.semibold,
-    fontSize: Platform.OS === 'web' ? 15 : 14,
-    lineHeight: Platform.OS === 'web' ? 21 : 19,
-    marginBottom: 5,
-  },
-
-  price: {
-    fontFamily: FontFamily.medium,
-    fontSize: 13,
-    lineHeight: 17,
+    position: "absolute",
+    top: Luxe.spacing.md,
+    right: Luxe.spacing.md,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "rgba(255,255,255,0.92)",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 10,
   },
 });

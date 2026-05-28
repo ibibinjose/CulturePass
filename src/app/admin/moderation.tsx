@@ -71,9 +71,15 @@ export default function ModerationScreen() {
     queryKey: adminKeys.reports(status),
     queryFn: () => api.admin.reports({ status, limit: 100 }),
     refetchInterval: status === 'pending' ? 45000 : false,
+    retry: 1, // Don't hammer the server too hard on index build errors
   });
 
   const reports = useMemo(() => reportsQuery.data?.reports ?? [], [reportsQuery.data?.reports]);
+  const isIndexError = reportsQuery.error?.message?.includes('Failed to load reports') || 
+                       reportsQuery.error?.message?.includes('index');
+
+  // Show warning if we're in fallback mode or index is still building
+  const showIndexWarning = !!reportsQuery.error || isIndexError;
 
   useEffect(() => {
     if (!selectedId && reports.length > 0 && isDesktop) setSelectedId(reports[0].id);
@@ -102,6 +108,31 @@ export default function ModerationScreen() {
   const selectedReport = reports.find((report) => report.id === selectedId) ?? contextQuery.data?.report ?? null;
   const pendingCount = status === 'pending' ? reports.length : undefined;
 
+  // Warning banner for index issues (very common during initial rollout)
+  const IndexWarningBanner = showIndexWarning ? (
+    <View style={{ 
+      backgroundColor: '#FEF3C7', 
+      borderColor: '#F59E0B', 
+      borderWidth: 1, 
+      borderRadius: 8, 
+      padding: 12, 
+      marginBottom: 16 
+    }}>
+      <Text style={{ color: '#92400E', fontFamily: FontFamily.semibold }}>
+        ⚠️ Reports query is degraded
+      </Text>
+      <Text style={{ color: '#92400E', fontSize: 13, marginTop: 4 }}>
+        The Firestore index for reports is still building or missing. Results may be unsorted or limited. 
+        This is temporary — the page will recover automatically once the index is ready (usually 5-30 minutes).
+      </Text>
+      {reportsQuery.error && (
+        <Text style={{ color: '#78350F', fontSize: 12, marginTop: 6, fontFamily: FontFamily.mono }}>
+          {reportsQuery.error.message}
+        </Text>
+      )}
+    </View>
+  ) : null;
+
   const runAction = (report: ContentReport, action: ModerationAction) => {
     const destructive = action === 'remove_item' || action === 'ban_user';
     Alert.alert('Confirm moderation action', `${ACTION_LABELS[action]} for this report?`, [
@@ -128,6 +159,8 @@ export default function ModerationScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
+      {IndexWarningBanner}
+
       <View style={[styles.header, { paddingHorizontal: hPad, borderBottomColor: colors.borderLight }]}>
         <View style={styles.headerLeft}>
           <Text style={[styles.title, { color: colors.text }]}>Moderation Queue</Text>

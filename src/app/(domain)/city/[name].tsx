@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef } from 'react';
+import React, { useState, useCallback, useMemo, useRef } from 'react';
 import {
   Alert,
   Platform,
@@ -18,13 +18,13 @@ import * as Haptics from 'expo-haptics';
 import { useColors } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
 import { useCalendarSync } from '@/hooks/useCalendarSync';
-import { CultureTokens, gradients } from '@/design-system/tokens/theme';
+import { CultureTokens, gradients, FontFamily } from '@/design-system/tokens/theme';
 import { TextStyles } from '@/design-system/tokens/typography';
 import { GlassView } from '@/design-system/ui/GlassView';
 import EventCard from '@/components/Discover/EventCard';
 import { useOnboarding } from '@/contexts/OnboardingContext';
 import { useAuth } from '@/lib/auth';
-import { useCityPage } from '@/hooks/useCityPage';
+import { useCityPage, LISTING_TYPE_ROWS, type ListingTypeKey, type ExploreCategoryKey } from '@/hooks/useCityPage';
 import {
   cityAmbient,
   StatPill,
@@ -37,6 +37,26 @@ import { useSaved } from '@/contexts/SavedContext';
 import type { EventData, Profile } from '@/shared/schema';
 import { CULTUREX_EXPLORES_CULTURE_TAG } from '@/shared/schema';
 import { Footer } from '@/components/Footer';
+import { M3Typography, Radius } from '@/design-system/tokens/theme';
+import { M3Card } from '@/design-system/ui';
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const EXPLORE_CATEGORY_LINKS: readonly {
+  key: ExploreCategoryKey;
+  label: string;
+  icon: keyof typeof Ionicons.glyphMap;
+}[] = [
+  { key: 'events', label: 'Events', icon: 'calendar-outline' },
+  { key: 'movies', label: 'Movies', icon: 'film-outline' },
+  { key: 'dining', label: 'Dining', icon: 'restaurant-outline' },
+  { key: 'activities', label: 'Activities', icon: 'compass-outline' },
+  { key: 'shopping', label: 'Shopping', icon: 'bag-handle-outline' },
+  { key: 'offers', label: 'Offers', icon: 'pricetag-outline' },
+  { key: 'artists', label: 'Artists', icon: 'color-palette-outline' },
+  { key: 'directory', label: 'Directory', icon: 'grid-outline' },
+  { key: 'indigenous', label: 'Indigenous', icon: 'leaf-outline' },
+];
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
@@ -154,7 +174,6 @@ export default function CityScreen() {
   const goBackSafe = useSafeBack();
 
   const scrollToContent = useCallback(() => {
-    // Scroll just past hero + stats + filter bar (~560px)
     scrollRef.current?.scrollTo({ y: 560, animated: true });
   }, []);
 
@@ -166,6 +185,8 @@ export default function CityScreen() {
   const cityCountry = Array.isArray(country) ? country[0] : country ?? onboarding?.country ?? 'Australia';
 
   const page = useCityPage(cityName, cityCountry);
+
+  const [activeExploreCategory, setActiveExploreCategory] = useState<ExploreCategoryKey>('events');
 
   const cultureXEventCount = useMemo(() => {
     const cx = CULTUREX_EXPLORES_CULTURE_TAG.toLowerCase();
@@ -231,6 +252,58 @@ export default function CityScreen() {
     router.push({ pathname: '/map', params: { city: cityName } });
   }, [cityName]);
 
+  const openListingTypeResults = useCallback(
+    (listingType: ListingTypeKey) => {
+      const hubQuery = encodeURIComponent(cityName);
+      const routes: Record<ListingTypeKey, string> = {
+        event: `/events`,
+        festival: `/search?q=${encodeURIComponent(`${cityName} festival`)}`,
+        concert: `/search?q=${encodeURIComponent(`${cityName} concert`)}`,
+        workshop: `/search?q=${encodeURIComponent(`${cityName} workshop`)}`,
+        movie: `/movies`,
+        dining: `/restaurants`,
+        shopping: `/shopping`,
+        activity: `/a`,
+        professional: `/search?q=${encodeURIComponent(`${cityName} professional`)}`,
+        organisation: `/search?q=${encodeURIComponent(`${cityName} organisation`)}`,
+        business: `/directory`,
+        artist: `/search?q=${encodeURIComponent(`${cityName} artist`)}`,
+        perk: `/perks`,
+      };
+      const route = routes[listingType];
+      if (route.includes('?q=')) {
+        router.push(route as never);
+        return;
+      }
+      const suffix = route.includes('?') ? '&' : '?';
+      router.push(`${route}${suffix}q=${hubQuery}` as never);
+    },
+    [cityName],
+  );
+
+  const filteredEventsByExplore = useMemo(() => {
+    const includesAny = (haystack: string, needles: string[]) => needles.some((n) => haystack.includes(n));
+    return page.filteredEvents.filter((e) => {
+      const blob = `${e.category ?? ''} ${(e.tags ?? []).join(' ')} ${(e.cultureTag ?? []).join(' ')} ${(e.cultureTags ?? []).join(' ')}`.toLowerCase();
+      switch (activeExploreCategory) {
+        case 'events':
+          return true;
+        case 'movies':
+          return includesAny(blob, ['movie', 'film', 'cinema', 'screening']);
+        case 'activities':
+          return includesAny(blob, ['activity', 'tour', 'experience', 'workshop', 'class']);
+        case 'offers':
+          return includesAny(blob, ['offer', 'deal', 'discount', 'free', 'perk']);
+        case 'indigenous':
+          return includesAny(blob, ['indigenous', 'aboriginal', 'first nations', 'torres strait']);
+        case 'artists':
+          return includesAny(blob, ['artist', 'music', 'dance', 'creative', 'performance', 'concert']);
+        default:
+          return true;
+      }
+    });
+  }, [activeExploreCategory, page.filteredEvents]);
+
   return (
     <View style={[s.root, { backgroundColor: colors.background }]}>
       <LinearGradient
@@ -272,12 +345,20 @@ export default function CityScreen() {
               </Pressable>
             </GlassView>
 
-            <GlassView borderRadius={18} bordered={false} style={[s.heroChip, s.heroChipOrange]} contentStyle={s.heroChipInner}>
-                <Ionicons name="location" size={12} color={CultureTokens.indigo} />
-                <Text style={[s.heroChipText, { color: CultureTokens.indigo }]} numberOfLines={1}>
-                  {page.stateCode ? `${page.stateCode} · ${cityCountry}` : cityCountry}
+            <Pressable onPress={() => router.push('/cities')} style={({ pressed }) => [{ opacity: pressed ? 0.9 : 1 }]}>
+              <M3Card variant="elevated" style={[s.locPill, { gap: 8, paddingRight: 12 }]}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <Ionicons name="location" size={14} color={CultureTokens.indigo} />
+                  <Text style={[M3Typography.labelLarge, { color: CultureTokens.indigo }]} numberOfLines={1}>
+                    {cityName}
+                  </Text>
+                </View>
+                <View style={{ width: 1, height: 14, backgroundColor: 'rgba(0,0,0,0.1)' }} />
+                <Text style={[M3Typography.labelMedium, { color: CultureTokens.indigo, fontFamily: FontFamily.bold }]}>
+                  Explore
                 </Text>
-              </GlassView>
+              </M3Card>
+            </Pressable>
 
             <GlassView borderRadius={20} bordered={false} style={[s.heroNavBtn, s.heroNavBtnOrange]} contentStyle={s.heroNavBtnInner}>
               <Pressable onPress={() => void page.handleShare()} style={s.heroIconHit} accessibilityLabel="Share" accessibilityRole="button">
@@ -321,38 +402,92 @@ export default function CityScreen() {
         </View>
 
         {/* ── Stats strip ─────────────────────────────────────────────────── */}
-        <View style={[s.statsStrip, { backgroundColor: colors.surface, borderBottomColor: colors.borderLight }]}>
-          <StatPill icon="calendar"            value={page.allEvents.length}            label="Events"    colors={colors} onPress={() => { page.clearAllFilters(); scrollToContent(); }} />
-          <View style={[s.statDiv, { backgroundColor: colors.borderLight }]} />
-          {page.council && (
-            <>
-              <StatPill icon="business" value={page.council.name.split(' ')[0]} label="Council" colors={colors} color={CultureTokens.teal} onPress={() => router.push('/my-council')} />
-              <View style={[s.statDiv, { backgroundColor: colors.borderLight }]} />
-            </>
-          )}
-          <StatPill icon="business"            value={page.venues.length || '—'}        label="Venues"    colors={colors} onPress={scrollToVenues} />
-          <View style={[s.statDiv, { backgroundColor: colors.borderLight }]} />
-          <StatPill icon="people"              value={page.uniqueCultureTags.length}    label="Cultures"  colors={colors} onPress={() => page.setFilterMode('culture')} />
-          <View style={[s.statDiv, { backgroundColor: colors.borderLight }]} />
-          <StatPill icon="chatbubble-ellipses" value={page.uniqueLanguageTags.length}   label="Languages" colors={colors} onPress={() => page.setFilterMode('language')} />
-          <View style={[s.statDiv, { backgroundColor: colors.borderLight }]} />
-          <StatPill
-            icon="sparkles-outline"
-            value={cultureXEventCount}
-            label="CultureX"
-            colors={colors}
-            color={CultureTokens.coral}
-            onPress={() => {
-              page.clearAllFilters();
-              page.setFilterMode('culture');
-              page.setSelectedCultures([CULTUREX_EXPLORES_CULTURE_TAG]);
-              scrollToContent();
-            }}
-          />
+        <View style={[s.statsStripContainer, { backgroundColor: colors.surface, borderBottomColor: colors.borderLight }]}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[s.statsStrip, { paddingHorizontal: hPad, paddingRight: hPad + 32 }]}>
+            <StatPill icon="calendar"            value={page.allEvents.length}            label="Events"    colors={colors} onPress={() => { page.clearAllFilters(); scrollToContent(); }} />
+            <View style={[s.statDiv, { backgroundColor: colors.borderLight }]} />
+            {page.council && (
+              <>
+                <StatPill icon="business" value={page.council.name.split(' ')[0]} label="Council" colors={colors} color={CultureTokens.teal} onPress={() => router.push('/my-council')} />
+                <View style={[s.statDiv, { backgroundColor: colors.borderLight }]} />
+              </>
+            )}
+            <StatPill icon="business"            value={page.venues.length || '—'}        label="Venues"    colors={colors} onPress={scrollToVenues} />
+            <View style={[s.statDiv, { backgroundColor: colors.borderLight }]} />
+            <StatPill icon="people"              value={page.uniqueCultureTags.length}    label="Cultures"  colors={colors} onPress={() => page.setFilterMode('culture')} />
+            <View style={[s.statDiv, { backgroundColor: colors.borderLight }]} />
+            <StatPill icon="chatbubble-ellipses" value={page.uniqueLanguageTags.length}   label="Languages" colors={colors} onPress={() => page.setFilterMode('language')} />
+            <View style={[s.statDiv, { backgroundColor: colors.borderLight }]} />
+            <StatPill
+              icon="sparkles-outline"
+              value={cultureXEventCount}
+              label="CultureX"
+              colors={colors}
+              color={CultureTokens.coral}
+              onPress={() => {
+                page.clearAllFilters();
+                page.setFilterMode('culture');
+                page.setSelectedCultures([CULTUREX_EXPLORES_CULTURE_TAG]);
+                scrollToContent();
+              }}
+            />
+          </ScrollView>
         </View>
 
         {/* ── Sticky filter bar — single row ───────────────────────────────── */}
         <View style={[s.filterBar, { backgroundColor: colors.background }]}>
+          <ScrollView
+            horizontal
+            nestedScrollEnabled
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={[
+              s.exploreRow,
+              { paddingHorizontal: hPad, paddingVertical: 8, paddingRight: hPad + 32 },
+            ]}
+          >
+            {EXPLORE_CATEGORY_LINKS.map((item) => {
+              const active = activeExploreCategory === item.key;
+              return (
+                <Pressable
+                  key={item.key}
+                  onPress={() => {
+                    setActiveExploreCategory(item.key);
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Show ${item.label}`}
+                  accessibilityState={{ selected: active }}
+                >
+                  {active ? (
+                    <LinearGradient
+                      colors={gradients.culturepassBrand}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={s.exploreChipGradient}
+                    >
+                      <Ionicons name={item.icon} size={14} color="#fff" />
+                      <Text style={s.exploreChipOnGradient}>{item.label}</Text>
+                    </LinearGradient>
+                  ) : (
+                    <View
+                      style={[
+                        s.exploreChipIdle,
+                        {
+                          backgroundColor: colors.surfaceElevated,
+                          borderColor: colors.borderLight,
+                        },
+                      ]}
+                    >
+                      <Ionicons name={item.icon} size={14} color={colors.textSecondary} />
+                      <Text style={[s.exploreChipIdleText, { color: colors.textSecondary }]}>
+                        {item.label}
+                      </Text>
+                    </View>
+                  )}
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+
           <FilterRail
             modes={railModes}
             groups={[{ items: railChips }]}
@@ -372,7 +507,7 @@ export default function CityScreen() {
                 <View>
                   <Text style={[TextStyles.title3, { color: colors.text }]}>{page.sectionTitle}</Text>
                   <Text style={[TextStyles.caption, { color: colors.textTertiary, marginTop: 2 }]}>
-                    {page.filteredEvents.length} result{page.filteredEvents.length !== 1 ? 's' : ''} · {page.venues.length} places in {cityName}
+                    {filteredEventsByExplore.length} result{filteredEventsByExplore.length !== 1 ? 's' : ''} · {page.venues.length} places in {cityName}
                   </Text>
                 </View>
                 {page.totalActiveFilters > 0 && (
@@ -386,7 +521,7 @@ export default function CityScreen() {
               </View>
 
               <EventsGrid
-                events={page.filteredEvents}
+                events={filteredEventsByExplore}
                 isLoading={page.isLoading}
                 width={width}
                 isDesktop={isDesktop}
@@ -419,6 +554,50 @@ export default function CityScreen() {
                 )}
               </View>
             )}
+
+            <View style={[s.section, isDesktop && { paddingHorizontal: 0 }]}>
+              <Text style={[TextStyles.title3, { color: colors.text, marginBottom: 4 }]}>
+                Browse by type
+              </Text>
+              <Text style={[TextStyles.caption, { color: colors.textSecondary, marginBottom: 16 }]}>
+                Explore {cityName} across different categories.
+              </Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+                {LISTING_TYPE_ROWS.map((row) => (
+                  <Pressable
+                    key={row.key}
+                    onPress={() => openListingTypeResults(row.key)}
+                    style={({ pressed }) => [
+                      {
+                        width: isDesktop ? '100%' : '48.2%',
+                        borderWidth: 1.5,
+                        borderColor: colors.borderLight,
+                        borderRadius: Radius.lg,
+                        padding: 12,
+                        backgroundColor: colors.surfaceElevated,
+                        opacity: pressed ? 0.9 : 1,
+                      },
+                    ]}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Open ${row.title} results`}
+                  >
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                      <Text style={[TextStyles.callout, { color: colors.text, fontFamily: FontFamily.bold, fontSize: 13 }]}>
+                        {row.title}
+                      </Text>
+                      <View style={{ borderRadius: Radius.full, paddingHorizontal: 6, paddingVertical: 1, backgroundColor: colors.primarySoft }}>
+                        <Text style={{ fontSize: 10, color: colors.primary, fontFamily: FontFamily.bold }}>
+                          {page.listingResultCounts[row.key]}
+                        </Text>
+                      </View>
+                    </View>
+                    <Text style={[TextStyles.caption, { color: colors.textSecondary, lineHeight: 14, fontSize: 11 }]} numberOfLines={2}>
+                      {row.description}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
 
             {page.uniqueCultureTags.length > 0 && (
               <View style={[s.section, isDesktop && { paddingHorizontal: 0 }]}>
@@ -525,10 +704,17 @@ const s = StyleSheet.create({
   heroNavBtnOrange: { borderWidth: 1.5, borderColor: CultureTokens.coral + 'CC' },
   heroNavBtnInner: { alignItems: 'center', justifyContent: 'center' },
   heroIconHit: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  heroChip: {},
-  heroChipOrange: { borderWidth: 1.5, borderColor: CultureTokens.indigo + 'CC' },
-  heroChipInner: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 6 },
-  heroChipText: { fontSize: 12, fontFamily: 'Poppins_600SemiBold' },
+
+  locPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: Radius.full,
+    backgroundColor: '#fff',
+  },
+
   heroContent: { position: 'absolute', bottom: 28, left: 0, right: 0 },
   heroBadge: {
     alignSelf: 'flex-start',
@@ -570,15 +756,16 @@ const s = StyleSheet.create({
   },
 
   // Stats strip
+  statsStripContainer: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
   statsStrip: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-around',
     paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    gap: 12,
   },
-  statDiv: { width: 1, height: 28, opacity: 0.6 },
+  statDiv: { width: 1, height: 28, opacity: 0.6, marginHorizontal: 4 },
 
   // Filter bar
   filterBar: { zIndex: 10 },
@@ -587,6 +774,43 @@ const s = StyleSheet.create({
   desktopRow: { flexDirection: 'row', gap: 32, paddingHorizontal: 20 },
   desktopEvents: { flex: 2.8 },
   desktopSidebar: { flex: 1, paddingTop: 28 },
+
+  exploreRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flexGrow: 1,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(0,0,0,0.05)',
+  },
+  exploreChipGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'transparent',
+  },
+  exploreChipOnGradient: {
+    fontSize: 12,
+    fontFamily: 'Poppins_600SemiBold',
+    color: '#fff',
+  },
+  exploreChipIdle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderRadius: 999,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  exploreChipIdleText: {
+    fontSize: 12,
+    fontFamily: 'Poppins_600SemiBold',
+  },
 
   // Section
   section: { paddingHorizontal: 20, paddingTop: 28 },

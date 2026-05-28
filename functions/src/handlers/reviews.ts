@@ -1,6 +1,7 @@
 import { Router, type Request, type Response } from 'express';
 import { FieldValue } from 'firebase-admin/firestore';
 import { randomUUID } from 'node:crypto';
+import { logger } from 'firebase-functions';
 import { db, isFirestoreConfigured } from '../admin';
 import { requireAuth, isAdminUser } from '../middleware/auth';
 import { captureRouteError, nowIso } from './utils';
@@ -87,25 +88,40 @@ reviewsRouter.get('/events/:id/reviews', async (req: Request, res: Response) => 
   try {
     if (!isFirestoreConfigured) return res.json({ reviews: [], total: 0 });
     const eventId = String(req.params.id ?? '');
-    const page = Math.max(1, parseInt(String(req.query.page ?? '1'), 10));
+    const page = Math.max(1, parseInt(String(req.query.page ?? '1'), 10) || 1);
 
-    const [snap, totalSnap] = await Promise.all([
-      db
-        .collection('reviews')
-        .where('eventId', '==', eventId)
-        .where('status', '==', 'approved')
-        .orderBy('createdAt', 'desc')
-        .offset((page - 1) * PAGE_SIZE)
-        .limit(PAGE_SIZE)
-        .get(),
-      db.collection('reviews').where('eventId', '==', eventId).where('status', '==', 'approved').count().get(),
-    ]);
+    const base = db.collection('reviews').where('eventId', '==', eventId).where('status', '==', 'approved');
 
-    return res.json({
-      reviews: snap.docs.map((d) => ({ id: d.id, ...d.data() })),
-      total: totalSnap.data().count,
-      page,
-    });
+    try {
+      const [snap, totalSnap] = await Promise.all([
+        base.orderBy('createdAt', 'desc')
+          .offset((page - 1) * PAGE_SIZE)
+          .limit(PAGE_SIZE)
+          .get(),
+        base.count().get(),
+      ]);
+
+      return res.json({
+        reviews: snap.docs.map((d) => ({ id: d.id, ...d.data() })),
+        total: totalSnap.data().count,
+        page,
+      });
+    } catch (err: any) {
+      const isIndexError = err?.code === 9 || /index/i.test(err?.message || '');
+      if (!isIndexError) throw err;
+
+      logger.warn('reviews/event: Missing index for (eventId, status, createdAt). Using in-memory fallback.');
+      // Fallback: fetch wider set without orderBy, sort + paginate in memory
+      const fbSnap = await base.limit(500).get();
+      let items = fbSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      items.sort((a: any, b: any) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+
+      const total = items.length;
+      const offset = (page - 1) * PAGE_SIZE;
+      const pageItems = items.slice(offset, offset + PAGE_SIZE);
+
+      return res.json({ reviews: pageItems, total, page });
+    }
   } catch (err) {
     captureRouteError(err, 'GET /api/events/:id/reviews');
     return res.status(500).json({ error: 'Failed to fetch reviews' });
@@ -117,25 +133,39 @@ reviewsRouter.get('/profiles/:id/reviews', async (req: Request, res: Response) =
   try {
     if (!isFirestoreConfigured) return res.json({ reviews: [], total: 0 });
     const organizerId = String(req.params.id ?? '');
-    const page = Math.max(1, parseInt(String(req.query.page ?? '1'), 10));
+    const page = Math.max(1, parseInt(String(req.query.page ?? '1'), 10) || 1);
 
-    const [snap, totalSnap] = await Promise.all([
-      db
-        .collection('reviews')
-        .where('organizerId', '==', organizerId)
-        .where('status', '==', 'approved')
-        .orderBy('createdAt', 'desc')
-        .offset((page - 1) * PAGE_SIZE)
-        .limit(PAGE_SIZE)
-        .get(),
-      db.collection('reviews').where('organizerId', '==', organizerId).where('status', '==', 'approved').count().get(),
-    ]);
+    const base = db.collection('reviews').where('organizerId', '==', organizerId).where('status', '==', 'approved');
 
-    return res.json({
-      reviews: snap.docs.map((d) => ({ id: d.id, ...d.data() })),
-      total: totalSnap.data().count,
-      page,
-    });
+    try {
+      const [snap, totalSnap] = await Promise.all([
+        base.orderBy('createdAt', 'desc')
+          .offset((page - 1) * PAGE_SIZE)
+          .limit(PAGE_SIZE)
+          .get(),
+        base.count().get(),
+      ]);
+
+      return res.json({
+        reviews: snap.docs.map((d) => ({ id: d.id, ...d.data() })),
+        total: totalSnap.data().count,
+        page,
+      });
+    } catch (err: any) {
+      const isIndexError = err?.code === 9 || /index/i.test(err?.message || '');
+      if (!isIndexError) throw err;
+
+      logger.warn('reviews/profile: Missing index for (organizerId, status, createdAt). Using in-memory fallback.');
+      const fbSnap = await base.limit(500).get();
+      let items = fbSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      items.sort((a: any, b: any) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+
+      const total = items.length;
+      const offset = (page - 1) * PAGE_SIZE;
+      const pageItems = items.slice(offset, offset + PAGE_SIZE);
+
+      return res.json({ reviews: pageItems, total, page });
+    }
   } catch (err) {
     captureRouteError(err, 'GET /api/profiles/:id/reviews');
     return res.status(500).json({ error: 'Failed to fetch reviews' });

@@ -507,6 +507,15 @@ export const completeProfileSchema = z
     // Metadata
     status: z.enum(['draft', 'published', 'pending_verification', 'suspended']).default('draft'),
     verificationStatus: z.enum(['pending', 'verified', 'rejected']).default('pending'),
+
+    // Multi-organizer support for communities & businesses
+    organizers: z.array(z.object({
+      userId: z.string(),
+      role: z.string().default('co_organizer'),
+      title: z.string().optional(),
+      addedAt: z.string(),
+      addedBy: z.string().optional(),
+    })).default([]),
   })
   .refine(
     (data) => {

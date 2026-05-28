@@ -216,7 +216,7 @@ export default function SettingsScreen() {
 
   const coreRows = useMemo<SettingsRow[]>(() => [
     { label: 'Edit Profile', sub: 'Photo, bio, culture, location, and social links', icon: 'create-outline', iconColor: colors.primary, route: '/profile/edit' },
-    { label: 'Account', sub: 'Email, username, passkeys, and deletion', icon: 'person-outline', iconColor: ICON_COLORS.account, route: '/settings/account' },
+    { label: 'Account', sub: 'Email, username, password, security & deletion', icon: 'person-outline', iconColor: ICON_COLORS.account, route: '/settings/account' },
     { label: 'Privacy & Permissions', sub: 'Visibility, data sharing, activity, and location', icon: 'shield-checkmark-outline', iconColor: ICON_COLORS.privacy, route: '/settings/privacy' },
   ], [colors.primary]);
 

@@ -4,7 +4,19 @@ import type { ApiRequestFn } from '../client';
 
 export function createAdminNamespace(request: ApiRequestFn) {
   return {
-  stats: () => request<AdminStats>('GET', 'api/admin/stats'),
+  stats: () => request<AdminStats & {
+    multiOrganizerProfiles?: number;
+    activeOrganizers?: number;
+    signupTrends?: Array<{ date: string; count: number }>;
+    newProfiles30d?: number;
+    newEvents30d?: number;
+    organizerRoleCounts?: Record<string, number>;
+    multiOrganizerCommunities?: number;
+    multiOrganizerBusinesses?: number;
+  }>('GET', 'api/admin/stats'),
+
+  recomputeDailyStats: () =>
+    request<{ ok: boolean; date: string; stats: any }>('POST', 'api/admin/stats/recompute-daily'),
   systemHealth: () =>
     request<{
       generatedAt: string;

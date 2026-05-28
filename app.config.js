@@ -181,7 +181,23 @@ export default function(appConfig) {
     ...config,
     expo: {
       ...config.expo,
-      plugins: basePlugins,
+      plugins: [
+        ...basePlugins,
+        [
+          "@sentry/react-native",
+          {
+            // These are required for automatic source map uploads during EAS builds
+            organization: process.env.SENTRY_ORG,
+            project: process.env.SENTRY_PROJECT,
+
+            // Enable Hermes sourcemap support for native iOS/Android builds
+            hermes: true,
+
+            // Note: For full native Hermes sourcemap uploads in cloud EAS builds,
+            // set SENTRY_AUTH_TOKEN as an EAS secret so the plugin can upload automatically.
+          },
+        ],
+      ],
       name: "CulturePass",
       slug: "culturepass",
       version: "1.3.0",
@@ -321,7 +337,9 @@ export default function(appConfig) {
         },
         eas: {
           projectId: "9dc511ee-ee3e-4798-ae29-30efc8f5343e"
-        }
+        },
+        // Sentry DSN - loaded at runtime via EXPO_PUBLIC_SENTRY_DSN or this fallback
+        sentryDsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
       },
       owner: "cultureos",
       runtimeVersion: "1.3.0",

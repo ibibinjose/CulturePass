@@ -29,9 +29,11 @@ export function initSentry() {
     return;
   }
 
+  // Release name must match what you create via release hook or sentry-cli in CI.
+  // Recommended: "1.3.0-b27@ios" (use EXPO_PUBLIC_RELEASE in CI for richer versions).
   const release =
-    Constants.expoConfig?.version ||
     process.env.EXPO_PUBLIC_RELEASE ||
+    Constants.expoConfig?.version ||
     'development';
 
   Sentry.init({

@@ -413,8 +413,7 @@ export default function LocationScreen() {
             marginBottom: 16,
           },
         ]}
-      >
-        <View style={[s.gpsSuggestIconWrap, { backgroundColor: luxeDark.onPrimaryContainer + '20' }]}>
+      ><View style={[s.gpsSuggestIconWrap, { backgroundColor: luxeDark.onPrimaryContainer + '20' }]}>
           <Ionicons name="navigate-circle" size={24} color={luxeDark.onPrimaryContainer} />
         </View>
         <View style={s.gpsSuggestTextWrap}>
@@ -423,8 +422,7 @@ export default function LocationScreen() {
             {getCountryFlag(gpsCountry)}{'  '}{gpsCountry}
           </LuxeText>
         </View>
-        <Ionicons name="chevron-forward" size={18} color={luxeDark.onPrimaryContainer} />
-      </LuxeCard>
+        <Ionicons name="chevron-forward" size={18} color={luxeDark.onPrimaryContainer} /></LuxeCard>
       );
     }
 
@@ -477,9 +475,7 @@ export default function LocationScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <Animated.View entering={enter(40)} style={[s.formContainer, isDesktop && s.formContainerDesktop]}>
-          <LuxeCard variant="default" style={s.formContent}>
-
-            {/* Breadcrumb — shown after country is chosen */}
+          <LuxeCard variant="default" style={s.formContent}>{/* Breadcrumb — shown after country is chosen */}
             {step !== 'country' && (
               <View style={s.breadcrumbRow}>
                 {breadcrumbItems.map((item, i) => (
@@ -635,15 +631,13 @@ export default function LocationScreen() {
                               borderWidth: isSelected ? 0 : 1,
                             },
                           ]}
-                        >
-                          <Text style={s.stateEmoji}>{st.emoji}</Text>
+                        ><Text style={s.stateEmoji}>{st.emoji}</Text>
                           <LuxeText variant="title3" style={{ textAlign: 'center', color: isSelected ? luxeDark.onPrimaryContainer : luxeDark.text }}>
                             {st.name}
                           </LuxeText>
                           <LuxeText variant="caption" style={{ textAlign: 'center', color: isSelected ? luxeDark.onPrimaryContainer : luxeDark.textSecondary }}>
                             {st.cities.length} cities
-                          </LuxeText>
-                        </LuxeCard>
+                          </LuxeText></LuxeCard>
                       );
                     })}
                   </View>
@@ -679,13 +673,11 @@ export default function LocationScreen() {
                   </View>
 
                   {citiesToShow.length === 0 ? (
-                    <LuxeCard variant="default" style={s.noResults}>
-                      <Ionicons name="search-outline" size={48} color={luxeDark.textTertiary} />
+                    <LuxeCard variant="default" style={s.noResults}><Ionicons name="search-outline" size={48} color={luxeDark.textTertiary} />
                       <LuxeText variant="title3" style={{ color: luxeDark.text }}>
                         No cities match
                       </LuxeText>
-                      <LuxeButton variant="glass" size="sm" onPress={() => setCitySearch('')}>Clear search</LuxeButton>
-                    </LuxeCard>
+                      <LuxeButton variant="glass" size="sm" onPress={() => setCitySearch('')}>Clear search</LuxeButton></LuxeCard>
                   ) : (
                     <View style={s.cityGrid}>
                       {citiesToShow.map((city) => {
@@ -703,8 +695,7 @@ export default function LocationScreen() {
                                 borderWidth: isActive ? 0 : 1,
                               },
                             ]}
-                          >
-                            <Ionicons
+                          ><Ionicons
                                 name={isActive ? "checkmark-circle" : "location-outline"}
                                 size={20}
                                 color={isActive ? "#FFF" : luxeDark.primary}
@@ -715,8 +706,7 @@ export default function LocationScreen() {
                               numberOfLines={1}
                             >
                               {city}
-                            </LuxeText>
-                          </LuxeCard>
+                            </LuxeText></LuxeCard>
                         );
                       })}
                     </View>
@@ -759,8 +749,7 @@ export default function LocationScreen() {
 
             {/* Council / LGA Detection — Slice 2 (polished) */}
             {state.city && (
-              <LuxeCard variant="default" style={{ marginBottom: 16, padding: 18 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
+              <LuxeCard variant="default" style={{ marginBottom: 16, padding: 18 }}><View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
                   <LuxeText variant="title3" style={{ color: luxeDark.text, flex: 1 }}>
                     Local Council (LGA)
                   </LuxeText>
@@ -830,8 +819,7 @@ export default function LocationScreen() {
                       Detect again
                     </LuxeButton>
                   </View>
-                )}
-              </LuxeCard>
+                )}</LuxeCard>
             )}
 
             <LuxeButton

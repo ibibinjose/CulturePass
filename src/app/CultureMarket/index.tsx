@@ -33,6 +33,11 @@ import { useRole } from '@/hooks/useRole';
 import { ErrorBoundary } from '@/modules/core/ui/ErrorBoundary';
 import { BackButton } from '@/design-system/ui/BackButton';
 import { GlassView } from '@/design-system/ui/GlassView';
+import { Luxe, luxeDark, LuxeTextStyles } from '@/design-system/tokens/luxeHeritage';
+import { LuxeText } from '@/design-system/ui/LuxeText';
+import { LuxeCard } from '@/design-system/ui/LuxeCard';
+import { LuxeButton } from '@/design-system/ui/LuxeButton';
+import { LuxeFilterChip } from '@/design-system/ui/LuxeFilterChip';
 import {
   CultureTokens,
   FontFamily,
@@ -123,7 +128,11 @@ function RotatingWord() {
   return (
     <View style={styles.rotatingWrap}>
       <Animated.Text
-        style={[styles.heroWord, { transform: [{ translateY }], opacity }]}
+        style={[
+          Luxe.typography.styles.display,
+          styles.heroWord,
+          { transform: [{ translateY }], opacity }
+        ]}
         numberOfLines={1}
       >
         {HERO_WORDS[idx]}
@@ -251,53 +260,25 @@ function CategoryChips({
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={[styles.chipRow, { paddingHorizontal: hPad }]}
     >
-      {/* "All" chip */}
-      <Pressable
+      <LuxeFilterChip
+        label="All"
+        selected={activeCat == null}
         onPress={() => onSelect(null)}
-        style={({ pressed }) => [
-          styles.chip,
-          { backgroundColor: chipBg, borderColor: chipBorder },
-          activeCat == null && styles.chipActiveViolet,
-          { opacity: pressed ? 0.8 : 1 },
-        ]}
-        accessibilityRole="button"
-        accessibilityState={{ selected: activeCat == null }}
-      >
-        <Ionicons
-          name="apps"
-          size={14}
-          color={activeCat == null ? CultureTokens.violet : colors.textTertiary}
-        />
-        <Text style={[styles.chipLabel, { color: activeCat == null ? CultureTokens.violet : colors.textSecondary }]}>
-          All
-        </Text>
-      </Pressable>
+        icon="apps"
+        style={{ marginRight: 8 }}
+      />
 
       {MARKET_CATEGORIES.map((cat) => {
         const isActive = activeCat === cat.id;
-        const accent = ACCENT_MAP[cat.accentKey] ?? CultureTokens.violet;
         return (
-          <Pressable
+          <LuxeFilterChip
             key={cat.id}
+            label={cat.label}
+            selected={isActive}
             onPress={() => onSelect(isActive ? null : cat.id)}
-            style={({ pressed }) => [
-              styles.chip,
-              { backgroundColor: chipBg, borderColor: chipBorder },
-              isActive && { borderColor: accent, backgroundColor: accent + '18', borderWidth: 1.5 },
-              { opacity: pressed ? 0.8 : 1 },
-            ]}
-            accessibilityRole="button"
-            accessibilityState={{ selected: isActive }}
-          >
-            <Ionicons
-              name={cat.icon as any}
-              size={14}
-              color={isActive ? accent : colors.textTertiary}
-            />
-            <Text style={[styles.chipLabel, { color: isActive ? accent : colors.textSecondary }]}>
-              {cat.label}
-            </Text>
-          </Pressable>
+            icon={cat.icon as any}
+            style={{ marginRight: 8 }}
+          />
         );
       })}
     </ScrollView>
@@ -395,11 +376,8 @@ function SubcategoryChips({
   onSelect: (id: string | null) => void;
   hPad: number;
 }) {
-  const colors = useColors();
   const cat = MARKET_CATEGORIES.find((c) => c.id === parentId);
   if (!cat || cat.subcategories.length === 0) return null;
-  const accent = ACCENT_MAP[cat.accentKey] ?? CultureTokens.violet;
-  const chipBg = colors.surfaceSecondary;
 
   return (
     <ScrollView
@@ -407,40 +385,24 @@ function SubcategoryChips({
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={[styles.chipRow, styles.subChipRow, { paddingHorizontal: hPad }]}
     >
-      <Pressable
+      <LuxeFilterChip
+        label={`All ${cat.label}`}
+        selected={activeSub == null}
         onPress={() => onSelect(null)}
-        style={({ pressed }) => [
-          styles.subChip,
-          { backgroundColor: chipBg, borderColor: colors.border },
-          activeSub == null && { borderColor: accent, backgroundColor: accent + '14', borderWidth: 1.5 },
-          { opacity: pressed ? 0.8 : 1 },
-        ]}
-        accessibilityRole="button"
-        accessibilityState={{ selected: activeSub == null }}
-      >
-        <Text style={[styles.subChipLabel, { color: activeSub == null ? accent : colors.textSecondary }]}>
-          All {cat.label}
-        </Text>
-      </Pressable>
+        compact
+        style={{ marginRight: 8 }}
+      />
       {cat.subcategories.map((sub) => {
         const isActive = activeSub === sub.id;
         return (
-          <Pressable
+          <LuxeFilterChip
             key={sub.id}
+            label={sub.label}
+            selected={isActive}
             onPress={() => onSelect(isActive ? null : sub.id)}
-            style={({ pressed }) => [
-              styles.subChip,
-              { backgroundColor: chipBg, borderColor: colors.border },
-              isActive && { borderColor: accent, backgroundColor: accent + '14', borderWidth: 1.5 },
-              { opacity: pressed ? 0.8 : 1 },
-            ]}
-            accessibilityRole="button"
-            accessibilityState={{ selected: isActive }}
-          >
-            <Text style={[styles.subChipLabel, { color: isActive ? accent : colors.textSecondary }]}>
-              {sub.label}
-            </Text>
-          </Pressable>
+            compact
+            style={{ marginRight: 8 }}
+          />
         );
       })}
     </ScrollView>
@@ -524,8 +486,8 @@ function SectionHeader({
           </View>
         )}
         <View style={{ flex: 1 }}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>{title}</Text>
-          {sub && <Text style={[styles.sectionSub, { color: colors.textSecondary }]}>{sub}</Text>}
+          <LuxeText variant="title3" style={{ color: colors.text }}>{title}</LuxeText>
+          {sub && <LuxeText variant="caption" style={{ color: colors.textSecondary, marginTop: 2 }}>{sub}</LuxeText>}
         </View>
       </View>
       {onMore && (
@@ -747,63 +709,42 @@ function CultureMarketScreenInner() {
 
           {/* Hero copy */}
           <View style={[styles.heroContent, pageCol]}>
-            <Text style={styles.heroEyebrow}>MARKETPLACE · {APP_NAME}</Text>
+            <LuxeText variant="badgeCaps" style={styles.heroEyebrow}>MARKETPLACE · {APP_NAME}</LuxeText>
             <View style={styles.heroTitleRow}>
-              <Text style={styles.heroStatic}>Discover{' '}</Text>
+              <LuxeText variant="displayHero" style={styles.heroStatic}>Discover{' '}</LuxeText>
               <RotatingWord />
             </View>
-            <Text style={styles.heroSub}>
+            <LuxeText variant="body" style={styles.heroSub}>
               {city && country
                 ? `Cultural shops and services in ${city}, ${country} — plus online listings.`
                 : city
                   ? `Cultural businesses in ${city} — products, services, and listings.`
                   : 'Browse products, services, and business links from CulturePass hosts.'}
-            </Text>
+            </LuxeText>
             <View style={styles.heroCtas}>
-              <Pressable
+              <LuxeButton
+                variant="filled"
+                leftIcon="add-circle-outline"
                 onPress={() => router.push(hostListingHref)}
-                style={({ pressed }) => [
-                  styles.heroBtn,
-                  styles.heroBtnFill,
-                  { opacity: pressed ? 0.9 : 1 },
-                ]}
-                accessibilityRole="button"
-                accessibilityLabel="List your business"
+                style={{ minWidth: 180 }}
               >
-                <LinearGradient
-                  colors={SignatureGradient}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={StyleSheet.absoluteFill}
-                />
-                <Ionicons name="add-circle-outline" size={18} color="#fff" />
-                <Text style={styles.heroBtnFillText}>List your business</Text>
-              </Pressable>
-              <Pressable
+                List your business
+              </LuxeButton>
+              <LuxeButton
+                variant="tonal"
                 onPress={() => handleCatSelect(null)}
-                style={({ pressed }) => [
-                  styles.heroBtn,
-                  styles.heroBtnOutline,
-                  { opacity: pressed ? 0.9 : 1 },
-                ]}
-                accessibilityRole="button"
-                accessibilityLabel="Show all categories"
+                style={{ minWidth: 120 }}
               >
-                <Text style={styles.heroBtnOutlineText}>Browse all</Text>
-              </Pressable>
-              <Pressable
+                Browse all
+              </LuxeButton>
+              <LuxeButton
+                variant="glass"
+                leftIcon="search-outline"
                 onPress={scrollToSearchAndFocus}
-                style={({ pressed }) => [
-                  styles.heroBtn,
-                  styles.heroBtnOutline,
-                  { opacity: pressed ? 0.9 : 1 },
-                ]}
-                accessibilityRole="button"
-                accessibilityLabel="Jump to search"
+                style={{ minWidth: 120 }}
               >
-                <Ionicons name="search-outline" size={17} color="rgba(255,255,255,0.82)" />
-                <Text style={styles.heroBtnOutlineText}>Search</Text>
-              </Pressable>
+                Search
+              </LuxeButton>
             </View>
           </View>
         </View>
@@ -1159,21 +1100,15 @@ const styles = StyleSheet.create({
   },
   heroTitleRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8 },
   heroStatic: {
-    fontFamily: FontFamily.bold,
-    fontSize: Platform.OS === 'web' ? 52 : 40,
-    lineHeight: Platform.OS === 'web' ? 60 : 48,
     color: '#fff',
     letterSpacing: -1,
   },
   rotatingWrap: {
-    height: Platform.OS === 'web' ? 54 : 44,
+    height: Platform.OS === 'web' ? 60 : 48,
     overflow: 'hidden',
     justifyContent: 'center',
   },
   heroWord: {
-    fontFamily: FontFamily.bold,
-    fontSize: Platform.OS === 'web' ? 52 : 40,
-    lineHeight: Platform.OS === 'web' ? 60 : 48,
     color: CultureTokens.coral,
     letterSpacing: -1,
   },

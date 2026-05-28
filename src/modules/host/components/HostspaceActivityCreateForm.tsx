@@ -78,6 +78,13 @@ const LANGUAGES = ['English', 'Malayalam', 'Mandarin', 'Tagalog', 'Hindi', 'Cant
 const TAGS = ['Onam', 'Diwali', 'Lunar New Year', 'Christmas', 'Eid', 'Harmony Week', 'Food', 'Family'];
 const INCLUSIONS = ['Materials provided', 'Food & refreshments', 'Certificate', 'Recording access'];
 
+type Sponsor = {
+  id: string;
+  name: string;
+  tier: string;
+  website?: string;
+};
+
 type ActivityDraft = {
   title: string;
   handle: string;
@@ -113,6 +120,7 @@ type ActivityDraft = {
   communities: string;
   city: string;
   country: string;
+  sponsors: Sponsor[];
 };
 
 const INITIAL_DRAFT: ActivityDraft = {
@@ -150,6 +158,7 @@ const INITIAL_DRAFT: ActivityDraft = {
   communities: '',
   city: 'Sydney',
   country: 'Australia',
+  sponsors: [],
 };
 
 function slugify(value: string) {
@@ -256,6 +265,27 @@ function Field({
       </View>
       {children}
     </View>
+  );
+}
+
+function FormInput({ ...props }: TextInput['props']) {
+  const colors = useColors();
+  return (
+    <TextInput
+      placeholderTextColor={colors.textTertiary}
+      style={[
+        styles.input,
+        {
+          backgroundColor: colors.background + '80',
+          borderColor: colors.borderLight,
+          color: colors.text,
+        },
+        props.multiline && styles.textarea,
+        props.style,
+      ]}
+      textAlignVertical={props.multiline ? 'top' : 'center'}
+      {...props}
+    />
   );
 }
 
@@ -414,12 +444,26 @@ export function HostspaceActivityCreateForm({ onReview }: { onReview?: () => voi
   const [draft, setDraft] = useState<ActivityDraft>(INITIAL_DRAFT);
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<'draft' | 'published' | null>(null);
+  const [showSponsorForm, setShowSponsorForm] = useState(false);
+  const [newSponsor, setNewSponsor] = useState<Sponsor>({ id: '', name: '', tier: 'gold' });
   const showPreview = true;
 
   const handlePath = useMemo(() => `/a/${draft.handle || slugify(draft.title) || 'your-activity-name'}`, [draft.handle, draft.title]);
 
   const updateDraft = (patch: Partial<ActivityDraft>) => {
     setDraft((prev) => ({ ...prev, ...patch }));
+  };
+
+  const addSponsor = () => {
+    if (!newSponsor.name.trim()) return;
+    const sponsorWithId = { ...newSponsor, id: Math.random().toString(36).substr(2, 9) };
+    updateDraft({ sponsors: [...draft.sponsors, sponsorWithId] });
+    setNewSponsor({ id: '', name: '', tier: 'gold' });
+    setShowSponsorForm(false);
+  };
+
+  const removeSponsor = (id: string) => {
+    updateDraft({ sponsors: draft.sponsors.filter((s) => s.id !== id) });
   };
 
   const setTitle = (title: string) => {
@@ -629,6 +673,54 @@ export function HostspaceActivityCreateForm({ onReview }: { onReview?: () => voi
             <Field label="Contact Email / Phone">
               <DraftInput value={draft.contact} onChangeText={(contact) => updateDraft({ contact })} placeholder="host@example.com" accessibilityLabel="Contact email or phone" />
             </Field>
+
+            <View style={styles.divider} />
+
+            <View style={styles.teamSectionHeader}>
+              <Ionicons name="ribbon-outline" size={20} color={CultureTokens.gold} />
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Sponsors & Supporters</Text>
+            </View>
+
+            {draft.sponsors.map((sp) => (
+              <View key={sp.id} style={[styles.sponsorChip, { backgroundColor: colors.surfaceElevated, borderColor: colors.borderLight }]}>
+                <View style={styles.sponsorChipInfo}>
+                  <Text style={[styles.sponsorName, { color: colors.text }]}>{sp.name}</Text>
+                  <Text style={[styles.sponsorTier, { color: CultureTokens.gold }]}>{sp.tier.toUpperCase()}</Text>
+                </View>
+                <Pressable onPress={() => removeSponsor(sp.id)}>
+                  <Ionicons name="close-circle" size={20} color={colors.textTertiary} />
+                </Pressable>
+              </View>
+            ))}
+
+            {showSponsorForm ? (
+              <GlassView intensity={10} style={styles.addSponsorBox}>
+                <FormInput
+                  value={newSponsor.name}
+                  onChangeText={(name) => setNewSponsor({ ...newSponsor, name })}
+                  placeholder="Sponsor / Supporter Name"
+                  style={{ marginBottom: 12 }}
+                />
+                <View style={styles.chipGrid}>
+                  {['Platinum', 'Gold', 'Silver', 'Bronze', 'Supporter'].map((t) => (
+                    <ChoiceChip
+                      key={t}
+                      label={t}
+                      selected={newSponsor.tier === t.toLowerCase()}
+                      onPress={() => setNewSponsor({ ...newSponsor, tier: t.toLowerCase() })}
+                    />
+                  ))}
+                </View>
+                <View style={[styles.twoCol, { marginTop: 12 }]}>
+                  <Button variant="outline" size="sm" style={{ flex: 1 }} onPress={() => setShowSponsorForm(false)}>Cancel</Button>
+                  <Button variant="primary" size="sm" style={{ flex: 1 }} onPress={addSponsor}>Add</Button>
+                </View>
+              </GlassView>
+            ) : (
+              <Button variant="outline" size="sm" leftIcon="add-circle-outline" onPress={() => setShowSponsorForm(true)}>
+                Add Sponsor / Supporter
+              </Button>
+            )}
           </Section>
 
           <Section title="Additional Settings" icon="settings-outline">
@@ -860,6 +952,47 @@ const styles = StyleSheet.create({
     ...TextStyles.caption,
     fontFamily: 'Poppins_600SemiBold',
     lineHeight: 18,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: 'rgba(0,0,0,0.05)',
+    marginVertical: 12,
+  },
+  teamSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 14,
+  },
+  sponsorChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+    marginBottom: 8,
+  },
+  sponsorChipInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  sponsorName: {
+    fontFamily: 'Poppins_600SemiBold',
+    fontSize: 14,
+  },
+  sponsorTier: {
+    fontFamily: 'Poppins_700Bold',
+    fontSize: 10,
+    letterSpacing: 0.5,
+  },
+  addSponsorBox: {
+    padding: 16,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: CultureTokens.gold + '40',
+    backgroundColor: 'rgba(255, 215, 0, 0.05)',
   },
   previewHeading: {
     ...TextStyles.title3,

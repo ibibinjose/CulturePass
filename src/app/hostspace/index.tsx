@@ -35,6 +35,9 @@ import type { ProfileDraft } from '@/platform/api/endpoints/createProfilesNamesp
 
 // Creator Trust: Ongoing verification status visibility in HostSpace dashboard
 import { VerificationStatusBanner } from '@/modules/host/components/VerificationStatusBanner';
+import { HostItemActionSheet } from '@/modules/host/components/HostItemActionSheet';
+import { useHostItemActions } from '@/modules/host/components/useHostItemActions';
+import { CreateMenuSheet } from '@/modules/host/components/CreateMenuSheet';
 
 type HostspaceSummary = {
   events: EventData[];
@@ -146,7 +149,17 @@ function StatCard({
 // Profile Manage Card (with verification status badge)
 // ---------------------------------------------------------------------------
 
-function ProfileManageCard({ profile, index, isDesktop }: { profile: Profile; index: number; isDesktop: boolean }) {
+function ProfileManageCard({ 
+  profile, 
+  index, 
+  isDesktop,
+  onActionsPress,
+}: { 
+  profile: Profile; 
+  index: number; 
+  isDesktop: boolean;
+  onActionsPress?: (profile: Profile) => void;
+}) {
   const colors = useColors();
   const icon = PROFILE_ICON[profile.entityType] ?? 'grid-outline';
   const status = (profile.status ?? 'draft') as ProfileStatus;
@@ -177,6 +190,20 @@ function ProfileManageCard({ profile, index, isDesktop }: { profile: Profile; in
           <View style={[styles.statusPill, { backgroundColor: statusConfig.color }]}>
             <Text style={styles.statusText}>{statusConfig.label}</Text>
           </View>
+
+          {/* Unified Actions Menu (Edit / Share / Analytics / Team / Delete) */}
+          {onActionsPress && (
+            <Pressable
+              onPress={(e) => {
+                e.stopPropagation();
+                onActionsPress(profile);
+              }}
+              style={styles.actionMenuButton}
+              hitSlop={12}
+            >
+              <Ionicons name="ellipsis-vertical" size={16} color="#fff" />
+            </Pressable>
+          )}
         </View>
         <View style={styles.manageBody}>
           <Text style={[styles.cardTitle, { color: colors.text }]} numberOfLines={1}>
@@ -219,7 +246,17 @@ function ProfileManageCard({ profile, index, isDesktop }: { profile: Profile; in
 // Event Manage Card
 // ---------------------------------------------------------------------------
 
-function EventManageCard({ event, index, isDesktop }: { event: EventData; index: number; isDesktop: boolean }) {
+function EventManageCard({ 
+  event, 
+  index, 
+  isDesktop,
+  onActionsPress,
+}: { 
+  event: EventData; 
+  index: number; 
+  isDesktop: boolean;
+  onActionsPress?: (event: EventData) => void;
+}) {
   const colors = useColors();
   const status = event.status ?? 'draft';
 
@@ -243,6 +280,20 @@ function EventManageCard({ event, index, isDesktop }: { event: EventData; index:
           <View style={[styles.statusPill, { backgroundColor: status === 'published' ? CultureTokens.teal : CultureTokens.gold }]}>
             <Text style={styles.statusText}>{status === 'published' ? 'LIVE' : 'DRAFT'}</Text>
           </View>
+
+          {/* Unified Actions Menu */}
+          {onActionsPress && (
+            <Pressable
+              onPress={(e) => {
+                e.stopPropagation();
+                onActionsPress(event);
+              }}
+              style={styles.actionMenuButton}
+              hitSlop={12}
+            >
+              <Ionicons name="ellipsis-vertical" size={16} color="#fff" />
+            </Pressable>
+          )}
         </View>
         <View style={styles.manageBody}>
           <Text style={[styles.cardTitle, { color: colors.text }]} numberOfLines={1}>
@@ -438,6 +489,17 @@ function HostspaceWorkspace() {
   const { userId, user } = useAuth();
   const [showDraftModal, setShowDraftModal] = useState(false);
 
+  // Action Sheet state for unified Edit/Share/Analytics/Team/Delete
+  const [actionSheetItem, setActionSheetItem] = useState<{
+    type: 'profile' | 'event';
+    data: Profile | EventData;
+  } | null>(null);
+
+  // Fast Create Menu
+  const [showCreateMenu, setShowCreateMenu] = useState(false);
+
+  const { getProfileActions, getEventActions } = useHostItemActions();
+
   // Fetch workspace summary (profiles + events)
   const { data, isLoading, isRefetching, refetch } = useQuery({
     queryKey: ['hostspace', 'workspace', userId],
@@ -535,6 +597,11 @@ function HostspaceWorkspace() {
             contentFit="contain"
           />
         }
+        rightAction={{
+          icon: 'add-circle',
+          onPress: () => setShowCreateMenu(true),
+          accessibilityLabel: 'Create something new',
+        }}
         actions={[
           { icon: 'add-circle-outline', onPress: () => router.push('/hostspace/create' as never) },
           { icon: 'scan-outline', onPress: () => router.push('/scanner' as never) },
@@ -699,6 +766,22 @@ function HostspaceWorkspace() {
           />
         </View>
 
+        {/* Simple Insights — Monitoring brought into the main view (no need to jump to separate dashboard) */}
+        <Pressable 
+          onPress={() => router.push('/hostspace/dashboard' as never)}
+          style={[styles.insightsBar, { backgroundColor: colors.surface, borderColor: colors.borderLight }]}
+        >
+          <View style={styles.insightsContent}>
+            <Ionicons name="analytics-outline" size={16} color={CultureTokens.teal} />
+            <Text style={[styles.insightsText, { color: colors.text }]}>
+              {events.length > 0 
+                ? `${events.filter(e => e.status === 'published').length} live • Tap for reach & team activity` 
+                : 'View performance insights & team activity'}
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={16} color={colors.textTertiary} />
+        </Pressable>
+
         <View style={{ alignItems: 'flex-end', marginBottom: 12 }}>
           <M3Button
             variant="text"
@@ -724,7 +807,15 @@ function HostspaceWorkspace() {
             <EmptyState title="No communities yet." action="Create Community" onPress={() => router.push('/hostspace/create/community' as never)} />
           ) : (
             <View style={styles.grid}>
-              {communities.map((profile, index) => <ProfileManageCard key={profile.id} profile={profile} index={index} isDesktop={isDesktop} />)}
+              {communities.map((profile, index) => (
+                <ProfileManageCard 
+                  key={profile.id} 
+                  profile={profile} 
+                  index={index} 
+                  isDesktop={isDesktop} 
+                  onActionsPress={(p) => setActionSheetItem({ type: 'profile', data: p })} 
+                />
+              ))}
             </View>
           )}
         </View>
@@ -745,7 +836,15 @@ function HostspaceWorkspace() {
             <EmptyState title="No events yet." action="Create Event" onPress={() => router.push('/hostspace/create/event' as never)} />
           ) : (
             <View style={styles.grid}>
-              {events.map((event, index) => <EventManageCard key={event.id} event={event} index={index} isDesktop={isDesktop} />)}
+              {events.map((event, index) => (
+                <EventManageCard 
+                  key={event.id} 
+                  event={event} 
+                  index={index} 
+                  isDesktop={isDesktop} 
+                  onActionsPress={(e) => setActionSheetItem({ type: 'event', data: e })} 
+                />
+              ))}
             </View>
           )}
         </View>
@@ -766,7 +865,15 @@ function HostspaceWorkspace() {
             <EmptyState title="No listings or profiles yet." action="Create Listing" onPress={() => router.push('/hostspace/create' as never)} />
           ) : (
             <View style={styles.grid}>
-              {otherProfiles.map((profile, index) => <ProfileManageCard key={profile.id} profile={profile} index={index} isDesktop={isDesktop} />)}
+              {otherProfiles.map((profile, index) => (
+                <ProfileManageCard 
+                  key={profile.id} 
+                  profile={profile} 
+                  index={index} 
+                  isDesktop={isDesktop} 
+                  onActionsPress={(p) => setActionSheetItem({ type: 'profile', data: p })} 
+                />
+              ))}
             </View>
           )}
         </View>
@@ -779,6 +886,31 @@ function HostspaceWorkspace() {
         onSelectDraft={handleSelectDraft}
         onStartFresh={handleStartFresh}
         onDismiss={handleDismissDraftModal}
+      />
+
+      {/* Unified Action Sheet for all Host Creations - simplifies Edit/Share/Analytics/Team/Delete */}
+      {actionSheetItem && (
+        <HostItemActionSheet
+          visible={!!actionSheetItem}
+          itemType={actionSheetItem.type}
+          itemName={
+            actionSheetItem.type === 'profile' 
+              ? (actionSheetItem.data as Profile).name 
+              : (actionSheetItem.data as EventData).title || 'Event'
+          }
+          onClose={() => setActionSheetItem(null)}
+          actions={
+            actionSheetItem.type === 'profile'
+              ? getProfileActions(actionSheetItem.data as Profile)
+              : getEventActions(actionSheetItem.data as EventData)
+          }
+        />
+      )}
+
+      {/* Fast Create Menu - collapses the old split between wizard and quick content */}
+      <CreateMenuSheet 
+        visible={showCreateMenu} 
+        onClose={() => setShowCreateMenu(false)} 
       />
     </View>
   );
@@ -916,6 +1048,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     minWidth: 140,
   },
+  actionMenuButton: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+  },
+
   createCTAButtonMobile: {
     backgroundColor: '#FFFFFF',
     alignSelf: 'stretch',

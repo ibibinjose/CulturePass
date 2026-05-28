@@ -1,5 +1,5 @@
 import React from 'react';
-import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -121,6 +121,19 @@ export function HostspaceCreateTopChrome({
             accessibilityLabel="Open host dashboard"
           >
             <Ionicons name="grid-outline" size={20} color={colors.text} />
+          </Pressable>
+
+          <Pressable
+            onPress={() => {
+              haptic();
+              // In a real app, this might open a help modal or the HelpPanel
+              Alert.alert('Help & Support', 'Need help with Listing Studio? Our guide is coming soon. For now, contact hello@culturepass.app');
+            }}
+            style={({ pressed }) => [iconGlass, pressed && { opacity: 0.85 }]}
+            accessibilityRole="button"
+            accessibilityLabel="Open help"
+          >
+            <Ionicons name="help-circle-outline" size={22} color={colors.text} />
           </Pressable>
         </View>
       </GlassView>

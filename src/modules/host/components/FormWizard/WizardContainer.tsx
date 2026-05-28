@@ -1,11 +1,11 @@
 /**
  * WizardContainer Component
  * 
- * Orchestrates the 6-step profile creation wizard flow.
+ * Orchestrates the profile creation wizard flow (6 or 7 steps depending on entity type).
  * Manages step navigation, progress tracking, and integrates with form state management.
  * 
  * Features:
- * - 6-step wizard flow with validation
+ * - 6 or 7-step wizard flow (extra Team step for community/business) with validation
  * - Progress indicator
  * - Auto-save integration
  * - Draft recovery
@@ -87,14 +87,25 @@ export interface WizardContainerProps {
 // Step Labels
 // ---------------------------------------------------------------------------
 
-const STEP_LABELS = [
-  'Basic Identity',
-  'Media & Branding',
-  'Legal & Compliance',
-  'Location & Operations',
-  'Rich Description',
-  'Review & Publish',
-];
+function getStepLabels(entityType: EntityType): string[] {
+  const base = [
+    'Basic Identity',
+    'Media & Branding',
+    'Legal & Compliance',
+    'Location & Operations',
+  ];
+
+  if (entityType === 'community' || entityType === 'business') {
+    return [
+      ...base,
+      'Team & Organizers',
+      'Rich Description',
+      'Review & Publish',
+    ];
+  }
+
+  return [...base, 'Rich Description', 'Review & Publish'];
+}
 
 // ---------------------------------------------------------------------------
 // Component
@@ -168,7 +179,7 @@ export function WizardContainer({
       // Announce the new step to screen readers
       announceStepChange(
         wizard.currentStep,
-        STEP_LABELS[wizard.currentStep - 1],
+        getStepLabels(wizard.entityType)[wizard.currentStep - 1],
         wizard.totalSteps
       );
 
@@ -453,14 +464,14 @@ export function WizardContainer({
         {...progressAccessibilityProps({
           currentStep: wizard.currentStep,
           totalSteps: wizard.totalSteps,
-          stepLabel: STEP_LABELS[wizard.currentStep - 1],
+          stepLabel: getStepLabels(wizard.entityType)[wizard.currentStep - 1],
         })}
       >
         <WizardProgress
           currentStep={wizard.currentStep}
           totalSteps={wizard.totalSteps}
           completedSteps={wizard.completedSteps}
-          stepLabels={STEP_LABELS}
+          stepLabels={getStepLabels(wizard.entityType)}
           onStepClick={handleStepClick}
         />
       </View>
@@ -477,7 +488,7 @@ export function WizardContainer({
           contentMaxWidthStyle,
         ]}
         keyboardShouldPersistTaps="handled"
-        accessibilityLabel={`Step ${wizard.currentStep}: ${STEP_LABELS[wizard.currentStep - 1]}`}
+        accessibilityLabel={`Step ${wizard.currentStep}: ${getStepLabels(wizard.entityType)[wizard.currentStep - 1]}`}
       >
         <View ref={stepContentRef}>
           <WizardStep

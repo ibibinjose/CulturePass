@@ -981,6 +981,13 @@ const ss = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingBottom: Spacing.md,
+    ...Platform.select({
+      web: {
+        position: 'sticky',
+        top: 0,
+        zIndex: 100,
+      },
+    }),
   },
   backBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   topBarTitle: { fontFamily: FontFamily.bold, fontSize: 17, color: '#fff', textAlign: 'center' },
@@ -1034,6 +1041,13 @@ const ss = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: '#161221',
+    ...Platform.select({
+      web: {
+        transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+        cursor: 'pointer',
+      },
+    }),
   },
   typeCardAccentBar: {
     position: 'absolute',
@@ -1235,6 +1249,13 @@ const ss = StyleSheet.create({
     right: 0,
     borderTopWidth: 1,
     paddingTop: 12,
+    ...Platform.select({
+      web: {
+        position: 'sticky',
+        bottom: 0,
+        marginTop: 'auto',
+      },
+    }),
   },
   submitBtn: {
     height: 54,

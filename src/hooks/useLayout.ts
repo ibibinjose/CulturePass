@@ -133,13 +133,17 @@ export function useLayout(): LayoutState {
     ? 0  // no tab bar on desktop — sidebar handles navigation
     : TabBarTokens.heightMobile;
 
-  // Usable content width (subtract sidebar on desktop)
-  const contentWidth = width - sidebarWidth - hPad * 2;
+  // Usable content width (subtract sidebar on desktop, cap at 1200 for web center)
+  const baseAreaWidth = width - sidebarWidth;
+  const contentWidth = isDesktop
+    ? Math.min(baseAreaWidth, 1200) - hPad * 2
+    : width - hPad * 2;
 
   // Column width helper
   const columnWidth = (cols = numColumns): number => {
     const totalGaps = (cols - 1) * columnGap;
-    return (width - sidebarWidth - hPad * 2 - totalGaps) / cols;
+    const usableWidth = isDesktop ? Math.min(baseAreaWidth, 1200) : width - sidebarWidth;
+    return (usableWidth - hPad * 2 - totalGaps) / cols;
   };
 
   return {

@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useColors } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
-import { Luxe } from '@/design-system/tokens/luxeHeritage';
+import { Luxe, luxeDark, SignatureGradient, Spacing, Radius, CardTokens, TextStyles } from '@/design-system/tokens/theme';
 import { LuxeCard } from '@/design-system/ui/LuxeCard';
 import { LuxeText } from '@/design-system/ui/LuxeText';
 import { Badge } from '@/design-system/ui/Badge';

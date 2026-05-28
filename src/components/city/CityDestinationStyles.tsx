@@ -230,6 +230,7 @@ export function getCityDestinationStyles(
 
     filterBar: {
       zIndex: 5,
+      width: '100%',
     },
     filterBarGlassInner: {
       paddingBottom: 8,

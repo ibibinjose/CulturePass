@@ -4,13 +4,15 @@ import { Pressable, View, StyleSheet, Text } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/lib/auth';
 import { useColors } from '@/hooks/useColors';
+import { useProfileImage } from '@/hooks/useProfileImage';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { CultureImage } from '@/design-system/ui/CultureImage';
 
 export default function HeaderLogo() {
   const router = useRouter();
-  const { user, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
+  const { profileImage, firstName, recyclingKey } = useProfileImage();
   const colors = useColors();
 
   const handlePress = () => {
@@ -28,8 +30,13 @@ export default function HeaderLogo() {
       accessibilityRole="button"
       accessibilityLabel="Open profile"
     >
-      {isAuthenticated && user?.avatarUrl ? (
-        <CultureImage uri={user.avatarUrl} style={styles.avatar} contentFit="cover" />
+      {isAuthenticated && profileImage ? (
+        <CultureImage
+          uri={profileImage}
+          style={styles.avatar}
+          contentFit="cover"
+          recyclingKey={recyclingKey}
+        />
       ) : (
         <View style={[styles.avatar, { backgroundColor: colors.background, borderColor: colors.borderLight, justifyContent: 'center', alignItems: 'center' }]}> 
           <Ionicons name="person" size={20} color={colors.textTertiary} />
@@ -37,7 +44,7 @@ export default function HeaderLogo() {
       )}
       {isAuthenticated && (
         <Text style={[styles.name, { color: colors.text }]} numberOfLines={1}>
-          {user?.displayName?.split(' ')[0] || 'Profile'}
+          {firstName}
         </Text>
       )}
     </Pressable>

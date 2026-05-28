@@ -1,25 +1,36 @@
-name: EAS Build
+name: EAS Build + Sentry Release
 
 on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: 'EAS build profile'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - preview
+          - development
+
   push:
-    branches:
-      - preview    # triggers preview build
-      - main       # triggers production build
+    branches: [main]
+    # You can add tags or paths filters here if desired
 
 jobs:
   build:
-    name: EAS ${{ github.ref_name == 'main' && 'Production' || 'Preview' }} Build
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Needed for commit linking with Sentry later
 
-      - name: Setup Node.js
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
+          cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
@@ -30,12 +41,81 @@ jobs:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
 
-      - name: Build (preview)
-        if: github.ref_name == 'preview'
+      - name: Build with EAS
+        id: eas-build
         run: |
-          eas build --platform all --profile preview --non-interactive
+          PROFILE="${{ github.event.inputs.profile || 'production' }}"
+          # Run build and capture JSON output for reliable build metadata
+          BUILD_JSON=$(eas build --platform all --profile "$PROFILE" --non-interactive --wait --json 2>/dev/null || echo '[]')
+          echo "build_json<<EOF" >> $GITHUB_ENV
+          echo "$BUILD_JSON" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
 
-      - name: Build (production)
-        if: github.ref_name == 'main'
+          # Extract first build ID (they share the same submission/build number across platforms usually)
+          FIRST_BUILD_ID=$(echo "$BUILD_JSON" | jq -r '.[0].id // empty')
+          echo "EAS_FIRST_BUILD_ID=$FIRST_BUILD_ID" >> $GITHUB_ENV
+          echo "Captured EAS build ID: $FIRST_BUILD_ID"
+
+      - name: Generate rich release version (aggressively prefer EAS build number)
+        id: version
         run: |
-          eas build --platform all --profile production --non-interactive
+          BASE_VERSION=$(node -p "require('./app.config.js').expo.version || require('./package.json').version")
+          PROFILE="${{ github.event.inputs.profile || 'production' }}"
+
+          # Prefer the exact build ID captured from the just-completed EAS build
+          BUILD_ID="${EAS_FIRST_BUILD_ID:-}"
+
+          # If we don't have it from the build step, query for the latest (with retry)
+          if [ -z "$BUILD_ID" ]; then
+            for i in 1 2 3; do
+              BUILD_ID=$(eas build:view --json --limit 1 --profile "$PROFILE" 2>/dev/null | jq -r '.[0].id // empty')
+              if [ -n "$BUILD_ID" ]; then break; fi
+              sleep 5
+            done
+          fi
+
+          # Now fetch full details for that specific build ID
+          if [ -n "$BUILD_ID" ]; then
+            BUILD_INFO=$(eas build:view "$BUILD_ID" --json 2>/dev/null || echo '{}')
+            BUILD_NUMBER=$(echo "$BUILD_INFO" | jq -r '.buildNumber // "unknown"')
+          else
+            BUILD_NUMBER="unknown"
+          fi
+
+          # === AGGRESSIVE PREFERENCE FOR EAS BUILD NUMBER ===
+          if [ "$BUILD_NUMBER" != "unknown" ] && [ "$BUILD_NUMBER" != "null" ] && [ -n "$BUILD_NUMBER" ]; then
+            # Clean format that Sentry loves: 1.3.0-b42@production
+            RELEASE_VERSION="${BASE_VERSION}-b${BUILD_NUMBER}@${PROFILE}"
+          else
+            # Last resort fallback (should rarely happen)
+            SHORT_SHA=$(git rev-parse --short HEAD)
+            RELEASE_VERSION="${BASE_VERSION}-${SHORT_SHA}@${PROFILE}"
+            echo "⚠️  Warning: Could not determine EAS build number. Using git SHA fallback."
+          fi
+
+          echo "release_version=${RELEASE_VERSION}" >> $GITHUB_OUTPUT
+          echo "build_number=${BUILD_NUMBER}" >> $GITHUB_OUTPUT
+          echo "build_id=${BUILD_ID}" >> $GITHUB_OUTPUT
+
+          echo "Generated Sentry release version: $RELEASE_VERSION (buildNumber: $BUILD_NUMBER)"
+
+    outputs:
+      release_version: ${{ steps.version.outputs.release_version }}
+      build_number: ${{ steps.version.outputs.build_number }}
+      build_id: ${{ steps.version.outputs.build_id }}
+
+  # Matrix to notify Sentry separately for iOS and Android
+  sentry-notify:
+    needs: build
+    if: success() && (github.event.inputs.profile == 'production' || github.event.inputs.profile == 'preview' || github.ref == 'refs/heads/main')
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [ios, android]
+    uses: ./.github/workflows/sentry-release.yml
+    with:
+      version: ${{ needs.build.outputs.release_version }}
+      environment: ${{ github.event.inputs.profile || 'production' }}
+      upload_sourcemaps: true
+      platform: ${{ matrix.platform }}
+    secrets: inherit

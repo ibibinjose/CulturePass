@@ -169,6 +169,32 @@ export function Step6Review({
       ],
     });
 
+    // Team & Organizers (only for community/business)
+    const isTeamEntity = entityType === 'community' || entityType === 'business';
+    if (isTeamEntity) {
+      const organizers = (formData as any).organizers || [];
+      sections.push({
+        title: 'Team & Organizers',
+        step: 5,
+        icon: 'people-outline',
+        isComplete: true,
+        fields: [
+          {
+            label: 'Team Size',
+            value: `${organizers.length + 1} member(s)`,
+            type: 'text',
+          },
+          {
+            label: 'Additional Organizers',
+            value: organizers.length > 0 
+              ? organizers.map((o: any) => `${o.role} (${o.userId})`).join(', ') 
+              : 'Only you (Lead Organizer)',
+            type: 'text',
+          },
+        ],
+      });
+    }
+
     // Section 2: Media & Branding
     sections.push({
       title: 'Media & Branding',

@@ -9,7 +9,9 @@ import { useColors } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
 import type { MarketplaceSection, MarketplaceTile } from '@/shared/schema';
 import { MarketplaceSquareTile } from '@/modules/marketplace/MarketplaceSquareTile';
-import { CultureTokens, FontFamily, Spacing, TextStyles } from '@/design-system/tokens/theme';
+import { LuxeText } from '@/design-system/ui/LuxeText';
+import { Luxe } from '@/design-system/tokens/luxeHeritage';
+import { FontFamily } from '@/design-system/tokens/theme';
 
 type Props = {
   section: MarketplaceSection;
@@ -34,11 +36,13 @@ export function MarketplaceFeedSection({ section, maxInnerWidth, isPlus, onNavig
     <View style={styles.section}>
       <View style={styles.headRow}>
         <View style={{ flex: 1, minWidth: 0 }}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]} accessibilityRole="header">
+          <LuxeText variant="title" style={{ color: colors.text }} accessibilityRole="header">
             {section.title}
-          </Text>
+          </LuxeText>
           {section.subtitle ? (
-            <Text style={[styles.sectionSub, { color: colors.textSecondary }]}>{section.subtitle}</Text>
+            <LuxeText variant="body" style={{ color: colors.textSecondary, marginTop: 4, fontSize: 14 }}>
+              {section.subtitle}
+            </LuxeText>
           ) : null}
         </View>
         {section.viewMoreHref ? (
@@ -73,31 +77,20 @@ export function MarketplaceFeedSection({ section, maxInnerWidth, isPlus, onNavig
 
 const styles = StyleSheet.create({
   section: {
-    marginTop: Spacing.xl,
+    marginTop: Luxe.spacing.xl,
     width: '100%',
   },
   headRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
-    marginBottom: Spacing.md,
-    gap: Spacing.sm,
-  },
-  sectionTitle: {
-    fontFamily: FontFamily.bold,
-    fontSize: Platform.OS === 'web' ? 22 : 20,
-    letterSpacing: -0.35,
-  },
-  sectionSub: {
-    ...TextStyles.body,
-    fontSize: 14,
-    marginTop: 4,
-    lineHeight: 20,
+    marginBottom: Luxe.spacing.md,
+    gap: Luxe.spacing.sm,
   },
   viewMore: {
     fontFamily: FontFamily.semibold,
     fontSize: 14,
-    marginTop: Platform.OS === 'web' ? 4 : 2,
+    color: Luxe.colors.dark.emerald,
   },
   grid: {
     flexDirection: 'row',

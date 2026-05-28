@@ -29,15 +29,18 @@ import { useLayout } from '@/hooks/useLayout';
 import { useRole } from '@/hooks/useRole';
 import { ErrorBoundary } from '@/modules/core/ui/ErrorBoundary';
 import { BackButton } from '@/design-system/ui/BackButton';
-import { Button } from '@/design-system/ui/Button';
+import { Luxe, luxeDark } from '@/design-system/tokens/luxeHeritage';
+import { LuxeText } from '@/design-system/ui/LuxeText';
+import { LuxeCard } from '@/design-system/ui/LuxeCard';
+import { LuxeButton } from '@/design-system/ui/LuxeButton';
 import { DailyDealSquareTile } from '@/modules/marketplace/DailyDealSquareTile';
 import {
   CultureTokens,
   FontFamily,
   SignatureGradient,
-  TextStyles,
 } from '@/design-system/tokens/theme';
 import { Radius, Spacing } from '@/design-system/tokens/spacing';
+import { TextStyles } from '@/design-system/tokens/typography';
 import type { DailyDeal } from '@/shared/schema';
 import { APP_NAME, SITE_ORIGIN } from '@/lib/app-meta';
 
@@ -141,55 +144,57 @@ function CultureShopScreenInner() {
           </View>
 
           <View style={[styles.heroContent, pageCol]}>
-            <Text style={styles.eyebrow}>MANAGED BY CULTUREPASS</Text>
-            <Text style={styles.title}>Daily deals, rewards, and member perks.</Text>
-            <Text style={styles.subtitle}>
+            <LuxeText variant="badgeCaps" style={styles.eyebrow}>MANAGED BY CULTUREPASS</LuxeText>
+            <LuxeText variant="displayHero" style={styles.title}>Daily deals, rewards, and member perks.</LuxeText>
+            <LuxeText variant="body" style={styles.subtitle}>
               Curated CulturePass offers in one place. Products and services from hosts now live in CultureMarket.
-            </Text>
+            </LuxeText>
             <View style={styles.ctaRow}>
-              <Button
-                variant="gradient"
+              <LuxeButton
+                variant="filled"
                 leftIcon="pricetag-outline"
                 onPress={() => router.push('/offers' as Href)}
+                style={{ minWidth: 160 }}
               >
                 Browse offers
-              </Button>
-              <Button
-                variant="outline"
+              </LuxeButton>
+              <LuxeButton
+                variant="tonal"
                 leftIcon="storefront-outline"
                 onPress={() => router.push('/CultureMarket' as Href)}
+                style={{ minWidth: 160 }}
               >
                 CultureMarket
-              </Button>
+              </LuxeButton>
             </View>
           </View>
         </View>
 
         <View style={{ paddingHorizontal: hPad, paddingTop: Spacing.xl }}>
           <View style={pageCol}>
-            <View style={[styles.architectureCard, { backgroundColor: colors.surface, borderColor: colors.borderLight }]}>
-              <View style={[styles.archIcon, { backgroundColor: CultureTokens.gold + '22' }]}>
-                <Ionicons name="sparkles-outline" size={22} color={CultureTokens.gold} />
+            <LuxeCard variant="default" style={styles.architectureCard}>
+              <View style={[styles.archIcon, { backgroundColor: Luxe.colors.gold + '22' }]}>
+                <Ionicons name="sparkles-outline" size={22} color={Luxe.colors.gold} />
               </View>
               <View style={{ flex: 1, minWidth: 0 }}>
-                <Text style={[styles.archTitle, { color: colors.text }]}>CultureShop is curated by CulturePass</Text>
-                <Text style={[styles.archText, { color: colors.textSecondary }]}>
+                <LuxeText variant="title3" style={{ color: colors.text }}>CultureShop is curated by CulturePass</LuxeText>
+                <LuxeText variant="body" style={{ color: colors.textSecondary, fontSize: 14 }}>
                   Rewards, featured offers, and official campaigns stay here. Host posts, product sales,
                   services, and website listings belong in CultureMarket.
-                </Text>
+                </LuxeText>
               </View>
-            </View>
+            </LuxeCard>
 
             {canManage ? (
               <View style={styles.manageRow}>
-                <Button
-                  variant="outline"
+                <LuxeButton
+                  variant="glass"
                   size="sm"
                   leftIcon="create-outline"
                   onPress={() => router.push('/CultureShop/manage' as Href)}
                 >
                   Manage CultureShop deals
-                </Button>
+                </LuxeButton>
               </View>
             ) : null}
 
@@ -198,7 +203,7 @@ function CultureShopScreenInner() {
             ) : groupedDeals.length > 0 ? (
               groupedDeals.map(([label, items]) => (
                 <View key={label} style={styles.section}>
-                  <Text style={[styles.sectionTitle, { color: colors.text }]}>{label}</Text>
+                  <LuxeText variant="title2" style={{ color: colors.text, marginBottom: Spacing.md }}>{label}</LuxeText>
                   <View style={[styles.grid, { gap: columnGap }]}>
                     {items.map((deal) => (
                       <View key={deal.id} style={{ width: tileW }}>
@@ -223,25 +228,26 @@ function CultureShopScreenInner() {
               </View>
             )}
 
-            <View style={[styles.marketBanner, { borderColor: colors.borderLight }]}>
+            <LuxeCard variant="tonal" style={[styles.marketBanner, { borderColor: colors.borderLight }]}>
               <LinearGradient
-                colors={SignatureGradient}
+                colors={Luxe.gradients.culturepassBrand}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={StyleSheet.absoluteFill}
               />
-              <Text style={styles.marketTitle}>Selling products or services?</Text>
-              <Text style={styles.marketText}>
+              <LuxeText variant="title2" style={styles.marketTitle}>Selling products or services?</LuxeText>
+              <LuxeText variant="body" style={styles.marketText}>
                 Use CultureMarket through Hostspace to post products, offer services, or link your business website.
-              </Text>
-              <Button
-                variant="secondary"
+              </LuxeText>
+              <LuxeButton
+                variant="filled"
                 leftIcon="storefront-outline"
                 onPress={() => router.push('/CultureMarket' as Href)}
+                style={{ alignSelf: 'flex-start', marginTop: 8 }}
               >
                 Open CultureMarket
-              </Button>
-            </View>
+              </LuxeButton>
+            </LuxeCard>
           </View>
         </View>
       </ScrollView>
@@ -278,26 +284,17 @@ const styles = StyleSheet.create({
   },
   heroContent: { gap: 14 },
   eyebrow: {
-    fontFamily: FontFamily.semibold,
-    fontSize: 12,
-    letterSpacing: 1.8,
     color: CultureTokens.gold,
-    textTransform: 'uppercase',
     marginBottom: 8,
   },
   title: {
-    fontFamily: FontFamily.bold,
-    fontSize: Platform.OS === 'web' ? 48 : 36,
-    lineHeight: Platform.OS === 'web' ? 56 : 44,
     color: '#fff',
     maxWidth: 720,
     letterSpacing: -1,
   },
   subtitle: {
-    ...TextStyles.body,
     color: 'rgba(255,255,255,0.72)',
     maxWidth: 600,
-    lineHeight: 23,
   },
   ctaRow: {
     flexDirection: 'row',
@@ -306,16 +303,9 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   architectureCard: {
-    borderWidth: 1,
-    borderRadius: Radius.lg,
     padding: Spacing.lg,
     flexDirection: 'row',
     gap: Spacing.md,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.05,
-    shadowRadius: 15,
-    elevation: 4,
   },
   archIcon: {
     width: 44,
@@ -366,21 +356,15 @@ const styles = StyleSheet.create({
   },
   marketBanner: {
     marginTop: Spacing.xl * 2,
-    borderWidth: 1,
-    borderRadius: Radius.lg,
     padding: Spacing.lg,
     overflow: 'hidden',
     gap: 10,
   },
   marketTitle: {
-    fontFamily: FontFamily.bold,
-    fontSize: 22,
     color: '#fff',
   },
   marketText: {
-    ...TextStyles.body,
     color: 'rgba(255,255,255,0.86)',
     maxWidth: 560,
-    lineHeight: 22,
   },
 });

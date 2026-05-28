@@ -14,6 +14,52 @@ export type FilterMode = 'category' | 'culture' | 'language';
 
 export const CATEGORY_FILTERS = ['Music', 'Food', 'Arts', 'Nightlife', 'Indigenous', 'Sports', 'Workshop'];
 
+export type ExploreCategoryKey =
+  | 'artists'
+  | 'events'
+  | 'movies'
+  | 'dining'
+  | 'activities'
+  | 'shopping'
+  | 'offers'
+  | 'directory'
+  | 'indigenous';
+
+export type ListingTypeKey =
+  | 'event'
+  | 'festival'
+  | 'concert'
+  | 'workshop'
+  | 'movie'
+  | 'dining'
+  | 'shopping'
+  | 'activity'
+  | 'professional'
+  | 'organisation'
+  | 'business'
+  | 'artist'
+  | 'perk';
+
+export const LISTING_TYPE_ROWS: readonly {
+  key: ListingTypeKey;
+  title: string;
+  description: string;
+}[] = [
+  { key: 'event', title: 'Event', description: 'Timed happenings & community gatherings' },
+  { key: 'festival', title: 'Festival', description: 'Multi-day festivals & celebrations' },
+  { key: 'concert', title: 'Concert / show', description: 'Live music, theatre & performances' },
+  { key: 'workshop', title: 'Workshop / class', description: 'Classes, talks & skill sessions' },
+  { key: 'movie', title: 'Movie', description: 'Cinema listings & screenings' },
+  { key: 'dining', title: 'Dining', description: 'Restaurant & café listings' },
+  { key: 'shopping', title: 'Shopping', description: 'Retail & boutique listings' },
+  { key: 'activity', title: 'Activity', description: 'Tours, experiences & cultural sites' },
+  { key: 'professional', title: 'Professional', description: 'Practice & professional profile page' },
+  { key: 'organisation', title: 'Organisation', description: 'Cultural groups & communities' },
+  { key: 'business', title: 'Business', description: 'General business profile' },
+  { key: 'artist', title: 'Artist', description: 'Musicians, dancers & creatives' },
+  { key: 'perk', title: 'Perk', description: 'Discounts & member benefits' },
+];
+
 const CITY_META_MAP: Record<string, { tagline: string; cultures: string[]; languages: string[] }> = {
   sydney:    { tagline: 'Where 200+ cultures call home', cultures: ['Indian', 'Chinese', 'Lebanese', 'Greek', 'Filipino', 'Vietnamese', 'Korean', 'Sri Lankan', 'Nepalese'], languages: ['Tamil', 'Mandarin', 'Hindi', 'Arabic', 'Cantonese', 'Filipino', 'Malayalam', 'Telugu', 'Sinhalese'] },
   melbourne: { tagline: 'Cultural capital of the Southern Hemisphere', cultures: ['Italian', 'Greek', 'Vietnamese', 'Indian', 'Chinese', 'Lebanese', 'Sri Lankan'], languages: ['Greek', 'Mandarin', 'Hindi', 'Vietnamese', 'Italian', 'Arabic', 'Punjabi'] },
@@ -190,6 +236,33 @@ export function useCityPage(cityName: string, cityCountry: string) {
     else setSelectedLanguages([]);
   }, [filterMode]);
 
+  // Ported from CultureDestinationScreen — analytics counts for the "Browse by type" section
+  const listingResultCounts = useMemo(() => {
+    const countByEvent = (matcher: (text: string) => boolean): number =>
+      allEvents.filter((e) => {
+        const haystack = `${e.category ?? ''} ${(e.tags ?? []).join(' ')} ${(e.cultureTag ?? []).join(' ')}`.toLowerCase();
+        return matcher(haystack);
+      }).length;
+    const countByVenue = (matcher: (text: string) => boolean): number =>
+      venues.filter((v) => matcher(`${v.category ?? ''} ${v.name ?? ''}`.toLowerCase())).length;
+
+    return {
+      event: allEvents.length,
+      festival: countByEvent((t) => /festival|celebration|carnival|mela/.test(t)),
+      concert: countByEvent((t) => /concert|music|show|theatre|theater|performance|live/.test(t)),
+      workshop: countByEvent((t) => /workshop|class|talk|masterclass|session/.test(t)),
+      movie: countByEvent((t) => /movie|film|cinema|screening/.test(t)),
+      dining: countByVenue((t) => /dining|restaurant|cafe|café|food/.test(t)),
+      shopping: countByVenue((t) => /shop|shopping|retail|store|boutique/.test(t)),
+      activity: countByEvent((t) => /activity|tour|experience|sport|outdoor/.test(t)),
+      professional: countByVenue((t) => /professional|practice|consult|service/.test(t)),
+      organisation: countByVenue((t) => /organisation|organization|community|group|association/.test(t)),
+      business: venues.length,
+      artist: countByEvent((t) => /artist|music|dance|creative|performer/.test(t)),
+      perk: 0,
+    } satisfies Record<ListingTypeKey, number>;
+  }, [allEvents, venues]);
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await refetch();
@@ -225,5 +298,6 @@ export function useCityPage(cityName: string, cityCountry: string) {
     sectionTitle,
     // actions
     onToggleFilter, clearAllFilters, clearModeFilter, handleShare,
+    listingResultCounts,
   };
 }

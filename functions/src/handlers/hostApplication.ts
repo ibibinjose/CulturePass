@@ -150,8 +150,8 @@ hostApplicationRouter.get('/host-applications', requireAuth, async (req, res) =>
     if (!isFirestoreConfigured) return res.json({ applications: [] });
 
     const status = qstr(req.query.status) || undefined;
-    const limitRaw = parseInt(String(req.query.limit || ''), 10);
-    const limit = Math.max(1, Math.min(200, isNaN(limitRaw) ? 100 : limitRaw));
+    const limitRaw = Number(qstr(req.query.limit) || '100');
+    const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(200, Math.floor(limitRaw))) : 100;
 
     let q: FirebaseFirestore.Query = db.collection('hostApplications').orderBy('createdAt', 'desc').limit(limit);
     if (status && ['pending', 'approved', 'rejected'].includes(status)) {

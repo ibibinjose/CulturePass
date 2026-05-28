@@ -10,6 +10,7 @@ import { useLayout } from '@/hooks/useLayout';
 import { CultureTokens, M3Typography, Radius } from '@/design-system/tokens/theme';
 import { profileApi } from '@/modules/profile/api';
 import { useAuth } from '@/lib/auth';
+import { FontFamily } from '@/design-system/tokens/theme';
 import { useM3Colors } from '@/hooks/useM3Colors';
 import { goBackOrReplace } from '@/lib/navigation';
 import { M3TopAppBar, M3Button, M3Card, M3FilterChip, M3SectionHeader } from '@/design-system/ui';
@@ -20,6 +21,7 @@ import { fmt, openLink, pickHostedEvents, type ExtendedProfile } from './Profile
 import { EventRailCard } from '@/modules/profile/components/private/ProfileRailCards';
 import { api } from '@/lib/api';
 import { openExternalUrl } from '@/lib/openExternalUrl';
+import { TeamManagementModal } from '../TeamManagementModal';
 
 const SOCIAL_ICONS_LEGACY = [
   { key: 'facebook', icon: 'logo-facebook' as const, color: '#FFFFFF' },
@@ -47,6 +49,7 @@ export function EntityPublicProfile({ profile, isOwner, insets, colors }: Entity
   const { isAuthenticated } = useAuth();
   const [isFollowing, setIsFollowing] = useState(false);
   const [activeTab, setActiveTab] = useState<'feed' | 'events' | 'community' | 'media' | 'about'>('feed');
+  const [showTeamModal, setShowTeamModal] = useState(false);
   const bottomInset = Platform.OS === 'web' ? 34 : insets.bottom;
   const isExpanded = windowSizeClass === 'expanded';
   const showHostedEvents = ENTITY_HOSTED_TYPES.has(String(profile.entityType ?? '').toLowerCase());
@@ -225,6 +228,46 @@ export function EntityPublicProfile({ profile, isOwner, insets, colors }: Entity
                 </View>
               </M3Card>
             )}
+
+            {/* Team & Organizers Management (for leads/admins) */}
+            {(() => {
+              const organizers = (profile as any).organizers || [];
+              const canManageTeam = isOwner || organizers.some((o: any) => 
+                ['lead_organizer', 'co_organizer', 'manager', 'admin'].includes(o.role)
+              );
+
+              if (!canManageTeam && organizers.length === 0) return null;
+
+              return (
+                <M3Card variant="filled">
+                  <View style={{ padding: 20 }}>
+                    <M3SectionHeader 
+                      title="Team & Organizers" 
+                      actionLabel={canManageTeam ? "Manage Team" : undefined}
+                      onAction={canManageTeam ? () => setShowTeamModal(true) : undefined}
+                    />
+                    
+                    <View style={{ marginTop: 12, gap: 10 }}>
+                      {/* Lead / Creator */}
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                        <Ionicons name="star" size={18} color={CultureTokens.gold} />
+                        <Text style={{ color: m3Colors.onSurface, fontFamily: FontFamily.semibold }}>Lead Organizer (You)</Text>
+                      </View>
+
+                      {organizers.length > 0 ? organizers.map((org: any, idx: number) => (
+                        <View key={idx} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingLeft: 4 }}>
+                          <Ionicons name="person" size={16} color={m3Colors.onSurfaceVariant} />
+                          <Text style={{ color: m3Colors.onSurface }}>{org.title || org.role}</Text>
+                          <Text style={{ color: m3Colors.onSurfaceVariant, fontSize: 12 }}>({org.userId.slice(0, 8)}...)</Text>
+                        </View>
+                      )) : (
+                        <Text style={{ color: m3Colors.onSurfaceVariant, fontSize: 13 }}>No additional organizers yet.</Text>
+                      )}
+                    </View>
+                  </View>
+                </M3Card>
+              );
+            })()}
             <M3Card variant="filled">
               <View style={{ padding: 20 }}>
                 <M3SectionHeader title="Explore locally" />
@@ -450,6 +493,19 @@ export function EntityPublicProfile({ profile, isOwner, insets, colors }: Entity
           </View>
         </View>
       </ScrollView>
+
+      {/* Team Management Modal */}
+      <TeamManagementModal
+        visible={showTeamModal}
+        onClose={() => setShowTeamModal(false)}
+        profileId={profile.id}
+        currentOrganizers={(profile as any).organizers || []}
+        currentUserId={currentUserId}
+        onTeamUpdated={() => {
+          // The query invalidation inside the modal will refresh data
+          setShowTeamModal(false);
+        }}
+      />
     </View>
   );
 }

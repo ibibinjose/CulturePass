@@ -6,6 +6,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '@/lib/auth';
 import { useRole } from '@/hooks/useRole';
 import { useCouncil } from '@/hooks/useCouncil';
+import { useProfileImage } from '@/hooks/useProfileImage';
 import { CultureTokens, gradients, Radius, Spacing, Layout } from '@/design-system/tokens/theme';
 import { TextStyles } from '@/design-system/tokens/typography';
 import { useColors, useIsDark } from '@/hooks/useColors';
@@ -285,6 +286,7 @@ function WebSidebarContent() {
   const colors = useColors();
   const isDark = useIsDark();
   const { user, logout, isAuthenticated } = useAuth();
+  const { profileImage, initials, recyclingKey } = useProfileImage();
   const { isOrganizer, isAdmin, isSuperAdmin, role } = useRole();
   const isVenue = role === 'business';
   const isSponsor = role === 'sponsor';
@@ -457,11 +459,11 @@ function WebSidebarContent() {
             accessibilityLabel="View public profile"
            >
             <AvatarWithRing
-              avatarUrl={user?.avatarUrl}
-              initials="CP"
+              avatarUrl={profileImage}
+              initials={initials}
               size={28}
               ringWidth={1}
-              recyclingKey={(user as any)?.updatedAt || (user as any)?.avatarUpdatedAt || Date.now()}
+              recyclingKey={recyclingKey}
             />
            </Pressable>
         )}
@@ -656,6 +658,7 @@ function SidebarItem({ item, active, isDark, onPress, colors }: { item: NavItem;
 
 function SidebarProfileBlock({ user, colors, isDark, friendlyRole, onNavigate, onLogout }: any) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const { profileImage, initials, recyclingKey } = useProfileImage();
   const displayName = user.displayName || user.username || 'User';
   // Prefer the canonical /user/ path (supports CPID or clean username when handle approved)
   const publicProfileRoute = user?.id
@@ -730,10 +733,10 @@ function SidebarProfileBlock({ user, colors, isDark, friendlyRole, onNavigate, o
         onPress={() => setMenuOpen(!menuOpen)}
       >
         <AvatarWithRing
-          avatarUrl={user.avatarUrl}
-          initials={displayName[0]}
+          avatarUrl={profileImage}
+          initials={initials}
           size={32}
-          recyclingKey={(user as any)?.updatedAt || (user as any)?.avatarUpdatedAt || Date.now()}
+          recyclingKey={recyclingKey}
         />
         <View style={{ flex: 1 }}>
           <Text style={[pb.name, { color: colors.text }]} numberOfLines={1}>{displayName}</Text>

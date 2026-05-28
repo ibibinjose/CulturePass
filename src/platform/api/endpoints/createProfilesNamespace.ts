@@ -299,5 +299,12 @@ export function createProfilesNamespace(request: ApiRequestFn) {
       const q = qs.toString();
       return request<ProfileAnalytics>('GET', `api/profiles/${profileId}/analytics${q ? `?${q}` : ''}`);
     },
+
+    // Multi-organizer / Team management (communities & businesses)
+    addOrUpdateTeamMember: (profileId: string, data: { userId: string; role: string; title?: string }) =>
+      request('POST', `api/profiles/${encodeURIComponent(profileId)}/team`, data),
+
+    removeTeamMember: (profileId: string, userId: string) =>
+      request('DELETE', `api/profiles/${encodeURIComponent(profileId)}/team/${encodeURIComponent(userId)}`),
   };
 }

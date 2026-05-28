@@ -76,6 +76,18 @@ export interface Profile {
   visibility?: 'public' | 'private' | 'community_only';
   createdBy?: string;
   approvedBy?: string;
+
+  /** 
+   * Multiple organizers / team members for communities, businesses, venues, etc.
+   * Supports different roles (lead_organizer, co_organizer, manager, moderator, editor, etc.)
+   */
+  organizers?: Array<{
+    userId: string;
+    role: string;           // e.g. 'lead_organizer' | 'co_organizer' | 'manager' | 'moderator' | 'editor'
+    title?: string;         // Display title, e.g. "Cultural Director"
+    addedAt: string;
+    addedBy?: string;
+  }>;
   approvedAt?: string;
   reportCount?: number;
   isClaimed?: boolean;

@@ -11,9 +11,19 @@ export type CultureImageProps = Omit<ImageProps, 'source'> & {
   thumbhash?: string;
   blurhash?: string;
   align?: 'top' | 'center' | 'bottom' | 'left' | 'right' | string;
+  /** Pass a changing value (e.g. updatedAt) to force re-fetch after an update */
+  recyclingKey?: string | number;
 };
 
-export function CultureImage({ uri, style, thumbhash, blurhash, align, ...rest }: CultureImageProps) {
+export function CultureImage({
+  uri,
+  style,
+  thumbhash,
+  blurhash,
+  align,
+  recyclingKey,
+  ...rest
+}: CultureImageProps) {
   const parsedAlign = align || getAlignFromUri(uri);
   const contentPosition = parsedAlign || rest.contentPosition || 'center';
 
@@ -72,6 +82,7 @@ export function CultureImage({ uri, style, thumbhash, blurhash, align, ...rest }
       contentPosition={contentPosition as any}
       cachePolicy="memory-disk"
       transition={150}
+      recyclingKey={recyclingKey ? String(recyclingKey) : undefined}
       {...rest}
     />
   );

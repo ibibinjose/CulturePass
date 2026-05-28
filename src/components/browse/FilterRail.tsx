@@ -216,7 +216,7 @@ export function FilterRail({
   const hasActions = actions && actions.length > 0;
 
   return (
-    <View style={[fr.wrap, { borderBottomColor: colors.divider }, style]}>
+    <View style={[fr.wrap, { borderBottomColor: colors.divider, backgroundColor: colors.background }, style]}>
       <View style={fr.row}>
 
         {/* ── Left: mode icon buttons ────────────────────────────── */}
@@ -232,7 +232,7 @@ export function FilterRail({
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={[fr.chipRow, { paddingLeft: hasModes ? 10 : hPad }]}
+          contentContainerStyle={[fr.chipRow, { paddingLeft: hasModes ? 10 : hPad, paddingRight: 20 }]}
           accessibilityRole="tablist"
           style={{ flex: 1 }}
         >

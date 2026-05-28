@@ -79,6 +79,28 @@ export function HostspaceCreateCategoryGrid({
         })}
       </ScrollView>
 
+      {query === '' && activeGroups.includes('all') && (
+        <View style={styles.suggestedSection}>
+          <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>Suggested for you</Text>
+          <View style={styles.suggestedRow}>
+            {categories.filter(c => ['community', 'event', 'market-listing'].includes(c.id)).map((c) => (
+              <Pressable
+                key={`suggested-${c.id}`}
+                onPress={() => onSelect(c)}
+                style={styles.suggestedCard}
+                accessibilityRole="button"
+                accessibilityLabel={`Suggested: ${c.label}`}
+              >
+                <GlassView intensity={20} style={[styles.suggestedInner, { borderColor: c.color + '40' }]}>
+                  <Ionicons name={c.icon} size={20} color={c.color} />
+                  <Text style={[styles.suggestedLabel, { color: colors.text }]}>{c.label}</Text>
+                </GlassView>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+      )}
+
       <View style={styles.gridRow}>
         {categories.map((c) => (
           <Pressable
@@ -184,5 +206,38 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins_500Medium',
     textAlign: 'center',
     lineHeight: 15,
+  },
+  suggestedSection: {
+    gap: 12,
+    marginBottom: 10,
+  },
+  sectionSubtitle: {
+    fontSize: 12,
+    fontFamily: 'Poppins_700Bold',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    opacity: 0.8,
+  },
+  suggestedRow: {
+    flexDirection: 'row',
+    gap: 10,
+    flexWrap: 'wrap',
+  },
+  suggestedCard: {
+    flex: 1,
+    minWidth: 100,
+  },
+  suggestedInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: 16,
+    borderWidth: 1.5,
+  },
+  suggestedLabel: {
+    fontSize: 13,
+    fontFamily: 'Poppins_600SemiBold',
   },
 });

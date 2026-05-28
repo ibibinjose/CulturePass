@@ -52,5 +52,7 @@ export function useProfileImage() {
     getProfileImage,
     getInitials,
     initials: getInitials(),
+    firstName: user?.displayName?.split(' ')[0] || user?.username || 'Profile',
+    recyclingKey: (user as any)?.avatarUpdatedAt || (user as any)?.updatedAt || user?.id || 'guest',
   };
 }

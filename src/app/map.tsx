@@ -5,7 +5,9 @@ import { router, useLocalSearchParams, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
+import { Luxe } from '@/design-system/tokens/luxeHeritage';
 import { FontFamily, Radius } from '@/design-system/tokens/theme';
+import { LuxeText, LuxeButton, LuxeCard, LuxeFilterChip, M3TopAppBar, Button } from '@/design-system/ui';
 import { modulesApi } from '@/modules/api';
 import { useState, useMemo } from 'react';
 import * as Haptics from 'expo-haptics';
@@ -17,8 +19,6 @@ import { useOnboarding } from '@/contexts/OnboardingContext';
 import { useLayout } from '@/hooks/useLayout';
 import { isIndigenousEvent } from '@/lib/indigenous';
 import { GlassView } from '@/design-system/ui/GlassView';
-import { Button } from '@/design-system/ui/Button';
-import { M3TopAppBar } from '@/design-system/ui/M3TopAppBar';
 import { useSafeBack } from '@/lib/navigation';
 import { NavigationMetadata } from '@/components/NavigationMetadata';
 
@@ -172,6 +172,10 @@ export default function MapScreen() {
   const params = useLocalSearchParams<{ city?: string }>();
 
   const [selectedCity, setSelectedCity] = useState<string | null>(params.city || null);
+  const handleSelectCity = (city: string | null) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setSelectedCity(city);
+  };
   const [indigenousOnly, setIndigenousOnly] = useState(false);
   const [citySearch, setCitySearch] = useState('');
 
@@ -301,7 +305,7 @@ export default function MapScreen() {
             <WebCityList
               cityGroups={allMapGroups}
               selectedCity={selectedCity}
-              onSelectCity={setSelectedCity}
+              onSelectCity={handleSelectCity}
               onEventPress={onEventPress}
               colors={colors}
               onOpenSystemMap={openCityInMaps}
@@ -318,7 +322,7 @@ export default function MapScreen() {
                   selectedCity={selectedCity}
                   selectedEvents={selectedEvents}
                   onMarkerPress={setSelectedCity}
-                  onSelectCity={setSelectedCity}
+                  onSelectCity={handleSelectCity}
                   onClearCity={() => setSelectedCity(null)}
                   onEventPress={onEventPress}
                   onOpenSystemMap={(key) => openCityInMaps(allMapGroups[key]?.label || key)}
@@ -336,7 +340,7 @@ export default function MapScreen() {
           selectedCity={selectedCity}
           selectedEvents={selectedEvents}
           onMarkerPress={setSelectedCity}
-          onSelectCity={setSelectedCity}
+          onSelectCity={handleSelectCity}
           onClearCity={() => setSelectedCity(null)}
           onEventPress={onEventPress}
           onOpenSystemMap={(key) => openCityInMaps(allMapGroups[key]?.label || key)}

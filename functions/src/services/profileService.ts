@@ -154,6 +154,7 @@ export const profileService = {
         page,
         pageSize,
         hasNextPage: offset + paginatedItems.length < total,
+        usedFallback: true,
       };
     }
 
@@ -172,6 +173,7 @@ export const profileService = {
         page,
         pageSize,
         hasNextPage: offset + items.length < total,
+        usedFallback: false,
       };
     } catch (err: any) {
       if (err?.code === 9 || String(err).includes('index')) {
@@ -184,6 +186,7 @@ export const profileService = {
           page: 1,
           pageSize,
           hasNextPage: false,
+          usedFallback: true,
         };
       }
       throw err;

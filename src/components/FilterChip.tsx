@@ -120,7 +120,7 @@ export function FilterChipRow({ items, selectedId, onSelect, size = 'medium' }: 
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.row}
+        contentContainerStyle={[styles.row, { paddingRight: 24 }]}
         style={{ flexGrow: 0 }}
         keyboardShouldPersistTaps="handled"
       >

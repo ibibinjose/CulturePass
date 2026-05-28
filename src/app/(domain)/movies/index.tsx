@@ -338,7 +338,7 @@ export default function MoviesScreen() {
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={[s.chipRow, { paddingHorizontal: hPad }]}
+            contentContainerStyle={[s.chipRow, { paddingHorizontal: hPad, paddingRight: hPad + 32 }]}
             style={s.chipScroll}
           >
             {GENRE_FILTERS.map(genre => {

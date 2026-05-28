@@ -12,6 +12,7 @@ import { useM3Colors } from '@/hooks/useM3Colors';
 import { useLayout } from '@/hooks/useLayout';
 import { useAuth } from '@/lib/auth';
 import { useRole } from '@/hooks/useRole';
+import { useProfileImage } from '@/hooks/useProfileImage';
 import type { SubmitType } from '@/features/submit/config';
 import { canUserCreateListingType } from '@/features/submit/creatorAccess';
 import { CultureTokens } from '@/design-system/tokens/theme';
@@ -24,6 +25,7 @@ import {
 } from '@/constants/navigation/experienceNav';
 import { useSafeBack } from '@/lib/navigation';
 import { M3TopAppBar, M3Card, M3Button } from '@/design-system/ui';
+import { CultureImage } from '@/design-system/ui/CultureImage';
 
 // LayoutAnimation: `setLayoutAnimationEnabledExperimental` is a no-op on the New Architecture
 // and logs a warning; `configureNext` below still runs on supported paths.
@@ -222,6 +224,7 @@ export default function MenuScreen() {
   const { isDesktop, contentWidth, hPad } = useLayout();
   const appVersionWithBuild = getAppVersionWithBuild();
   const { user, isAuthenticated, logout } = useAuth();
+  const { profileImage, recyclingKey } = useProfileImage();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { isAdmin, isSuperAdmin, isOrganizer } = useRole();
 
@@ -291,10 +294,11 @@ export default function MenuScreen() {
               style={({ pressed }) => [pressed && { opacity: 0.85 }]}
             >
               <M3Card variant="elevated" style={styles.profileCard}>
-                <Image
-                  source={{ uri: user.avatarUrl || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.displayName || user.username || 'U') + '&background=4F46E5&color=fff' }}
+                <CultureImage
+                  uri={profileImage || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.displayName || user.username || 'U') + '&background=4F46E5&color=fff'}
                   style={styles.avatar}
                   contentFit="cover"
+                  recyclingKey={recyclingKey}
                 />
                 <View style={styles.profileInfo}>
                   <Text style={[styles.profileName, { color: m3Colors.onSurface }]} numberOfLines={1}>

@@ -105,9 +105,7 @@ export function LuxeCard({
   const surfaceStyle = getSurfaceStyle();
 
   const content = (
-    <View style={[styles.inner, { padding: t.padding, borderRadius: t.radius }, surfaceStyle, style]}>
-      {children}
-    </View>
+    <View style={[styles.inner, { padding: t.padding, borderRadius: t.radius }, surfaceStyle, style]}>{children}</View>
   );
 
   if (onPress) {

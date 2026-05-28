@@ -2,20 +2,22 @@ import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   StyleSheet, Text, View, Platform, ActivityIndicator,
   FlatList, ScrollView, type ListRenderItemInfo,
+  Pressable,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useInfiniteQuery, keepPreviousData } from '@tanstack/react-query';
+import * as Haptics from 'expo-haptics';
 import { useOnboarding } from '@/contexts/OnboardingContext';
 import { useColors } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
-import { M3EventCard } from '@/modules/events/components/M3EventCard';
+import { LuxeEventCard } from '@/modules/events/components/LuxeEventCard';
 import { EventCardSkeleton } from '@/modules/events/components/EventCardSkeleton';
 import { ErrorBoundary } from '@/modules/core/ui/ErrorBoundary';
 import type { EventData, PaginatedEventsResponse } from '@/shared/schema';
-import { CultureTokens, TextStyles } from '@/design-system/tokens/theme';
-import { M3TopAppBar, M3Button, M3FilterChip, M3FAB, Input } from '@/design-system/ui';
+import { Luxe } from '@/design-system/tokens/luxeHeritage';
+import { LuxeText, LuxeButton, LuxeFilterChip, LuxeCard, Input } from '@/design-system/ui';
 import {
   EVENT_CATEGORIES,
   type EventCategory,
@@ -137,16 +139,16 @@ const ListFooter = React.memo(function ListFooter({
 }) {
   if (isFetchingNextPage) return (
     <View style={s.listFooter}>
-      <ActivityIndicator size="small" color={CultureTokens.indigo} />
-      <Text style={[s.listFooterText, { color: colors.textTertiary }]}>Loading more…</Text>
+      <ActivityIndicator size="small" color={Luxe.colors.dark.primary} />
+      <LuxeText variant="caption" style={[s.listFooterText, { color: colors.textTertiary }]}>Loading more…</LuxeText>
     </View>
   );
   if (!hasNextPage && count > 0) return (
     <View style={s.listFooter}>
       <View style={[s.endLine, { backgroundColor: colors.divider }]} />
-      <Text style={[s.listFooterText, { color: colors.textTertiary }]}>
+      <LuxeText variant="caption" style={[s.listFooterText, { color: colors.textTertiary }]}>
         {count} event{count !== 1 ? 's' : ''} shown
-      </Text>
+      </LuxeText>
       <View style={[s.endLine, { backgroundColor: colors.divider }]} />
     </View>
   );
@@ -169,25 +171,25 @@ const ListEmpty = React.memo(function ListEmpty({
   return (
     <View style={s.emptyState}>
       <View style={[s.emptyIcon, { backgroundColor: colors.surfaceElevated, borderColor: colors.borderLight }]}>
-        <Ionicons name={searchQuery ? "search-outline" : "calendar-outline"} size={32} color={CultureTokens.indigo} />
+        <Ionicons name={searchQuery ? "search-outline" : "calendar-outline"} size={32} color={Luxe.colors.dark.primary} />
       </View>
-      <Text style={[s.emptyTitle, { color: colors.text }]}>
+      <LuxeText variant="title" style={[s.emptyTitle, { color: colors.text }]}>
         {searchQuery ? `No results for "${searchQuery}"` : "No events found"}
-      </Text>
-      <Text style={[s.emptyDesc, { color: colors.textSecondary }]}>
+      </LuxeText>
+      <LuxeText variant="caption" style={[s.emptyDesc, { color: colors.textSecondary }]}>
         {filtersActive
           ? 'Try adjusting your filters, searching for something else, or expanding the date range.'
           : `We couldn't find any upcoming events in ${locationLabel}.`}
-      </Text>
+      </LuxeText>
       {filtersActive && (
-        <M3Button
+        <LuxeButton
           variant="tonal"
           leftIcon="refresh-outline"
           onPress={onClearFilters}
           style={{ marginTop: 8 }}
         >
           Clear all filters
-        </M3Button>
+        </LuxeButton>
       )}
     </View>
   );
@@ -313,7 +315,7 @@ export default function AllEventsScreen() {
   const renderItem = useCallback(({ item }: ListRenderItemInfo<EventData>) => {
     return (
       <View style={s.flexOne}>
-        <M3EventCard event={item} variant="elevated" />
+        <LuxeEventCard event={item} variant="glass" />
       </View>
     );
   }, []);
@@ -379,18 +381,29 @@ export default function AllEventsScreen() {
     <ErrorBoundary>
       <View style={[s.container, { backgroundColor: colors.background }]}>
 
-        <M3TopAppBar
-          title="Events"
-          onBack={handleBack}
-          variant={isWeb ? 'small' : windowSizeClass === 'expanded' ? 'large' : 'medium'}
-          denseWeb={isWeb}
-          actions={[
-            { icon: 'map-outline' as any, onPress: () => router.push('/map') },
-            ...(filtersActive
-              ? [{ icon: 'close-circle-outline' as any, onPress: clearFilters }]
-              : [])
-          ]}
-        />
+        {/* Luxe Header */}
+        <View style={{ 
+          flexDirection: 'row', 
+          alignItems: 'center', 
+          paddingHorizontal: hPad, 
+          paddingTop: isWeb ? 16 : insets.top + 8, 
+          paddingBottom: 12,
+          borderBottomWidth: 1,
+          borderBottomColor: Luxe.colors.dark.border || 'rgba(255,255,255,0.08)',
+        }}>
+          <Pressable onPress={handleBack} style={{ padding: 8, marginRight: 8 }}>
+            <Ionicons name="arrow-back" size={22} color={colors.text} />
+          </Pressable>
+          <LuxeText variant="title" style={{ flex: 1, color: colors.text }}>Events</LuxeText>
+          <Pressable onPress={() => router.push('/map')} style={{ padding: 8 }}>
+            <Ionicons name="map-outline" size={22} color={colors.text} />
+          </Pressable>
+          {filtersActive && (
+            <Pressable onPress={clearFilters} style={{ padding: 8, marginLeft: 4 }}>
+              <Ionicons name="close-circle-outline" size={22} color={Luxe.colors.dark.primary} />
+            </Pressable>
+          )}
+        </View>
 
         {/* ── Centred content shell ── */}
         <View style={[s.shell, isDesktop && s.shellDesktop]}>
@@ -410,22 +423,22 @@ export default function AllEventsScreen() {
           {/* ── Filter row — single line ── */}
           {isDesktop ? (
             <View style={[s.filterWrapDesktop, { paddingHorizontal: hPad }]}>
-              <M3FilterChip
+              <LuxeFilterChip
                 label="All"
                 icon="apps"
                 compact
                 selected={selectedCategory === 'All' && priceFilter === 'all'}
-                onPress={() => { setSelectedCategory('All'); setPriceFilter('all'); }}
+                onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setSelectedCategory('All'); setPriceFilter('all'); }}
               />
-              <M3FilterChip
+              <LuxeFilterChip
                 label="Free"
                 icon="gift-outline"
                 compact
                 selected={priceFilter === 'free'}
-                onPress={() => setPriceFilter(priceFilter === 'free' ? 'all' : 'free')}
+                onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setPriceFilter(priceFilter === 'free' ? 'all' : 'free'); }}
               />
               {EVENT_CATEGORIES.map(c => (
-                <M3FilterChip
+                <LuxeFilterChip
                   key={c.id}
                   label={c.id}
                   icon={c.icon as keyof typeof Ionicons.glyphMap}
@@ -436,13 +449,13 @@ export default function AllEventsScreen() {
               ))}
               <View style={{ width: 1, height: 24, backgroundColor: colors.divider, marginHorizontal: 8, alignSelf: 'center' }} />
               {DATE_OPTIONS.map(o => (
-                <M3FilterChip
+                <LuxeFilterChip
                   key={o.id}
                   label={o.label}
                   icon={o.icon}
                   compact
                   selected={dateFilter === o.id}
-                  onPress={() => setDateFilter(o.id)}
+                  onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setDateFilter(o.id); }}
                 />
               ))}
             </View>
@@ -452,23 +465,23 @@ export default function AllEventsScreen() {
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={[
                 s.filterScrollContent,
-                { paddingHorizontal: hPad },
+                { paddingHorizontal: hPad, paddingRight: hPad + 32 },
               ]}
             >
-              <M3FilterChip
+              <LuxeFilterChip
                 label="All"
                 icon="apps"
                 selected={selectedCategory === 'All' && priceFilter === 'all'}
-                onPress={() => { setSelectedCategory('All'); setPriceFilter('all'); }}
+                onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setSelectedCategory('All'); setPriceFilter('all'); }}
               />
-              <M3FilterChip
+              <LuxeFilterChip
                 label="Free"
                 icon="gift-outline"
                 selected={priceFilter === 'free'}
-                onPress={() => setPriceFilter(priceFilter === 'free' ? 'all' : 'free')}
+                onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setPriceFilter(priceFilter === 'free' ? 'all' : 'free'); }}
               />
               {EVENT_CATEGORIES.map(c => (
-                <M3FilterChip
+                <LuxeFilterChip
                   key={c.id}
                   label={c.id}
                   icon={c.icon as keyof typeof Ionicons.glyphMap}
@@ -478,12 +491,12 @@ export default function AllEventsScreen() {
               ))}
               <View style={{ width: 1, height: 24, backgroundColor: colors.divider, marginHorizontal: 8, alignSelf: 'center' }} />
               {DATE_OPTIONS.map(o => (
-                <M3FilterChip
+                <LuxeFilterChip
                   key={o.id}
                   label={o.label}
                   icon={o.icon}
                   selected={dateFilter === o.id}
-                  onPress={() => setDateFilter(o.id)}
+                  onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setDateFilter(o.id); }}
                 />
               ))}
             </ScrollView>
@@ -525,11 +538,26 @@ export default function AllEventsScreen() {
           )}
         </View>
       {/* ── Floating Action Button (FAB) for Create Event ── */}
-      <M3FAB
-        icon="add"
+      <Pressable
         onPress={handleFabPress}
-        style={{ position: 'absolute', right: fabRight, bottom: fabBottom }}
-      />
+        style={{
+          position: 'absolute',
+          right: fabRight,
+          bottom: fabBottom,
+          width: 56,
+          height: 56,
+          borderRadius: 28,
+          backgroundColor: Luxe.colors.dark.primary,
+          alignItems: 'center',
+          justifyContent: 'center',
+          ...Platform.select({
+            ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8 },
+            android: { elevation: 6 },
+          }),
+        }}
+      >
+        <Ionicons name="add" size={28} color="#fff" />
+      </Pressable>
       </View>
     </ErrorBoundary>
   );
@@ -542,7 +570,7 @@ const fabStyle =
     ? ({
         position: 'absolute',
         zIndex: 100,
-        backgroundColor: CultureTokens.indigo,
+        backgroundColor: Luxe.colors.dark.primary,
         borderRadius: 32,
         width: 64,
         height: 64,
@@ -553,7 +581,7 @@ const fabStyle =
     : ({
         position: 'absolute',
         zIndex: 100,
-        backgroundColor: CultureTokens.indigo,
+        backgroundColor: Luxe.colors.dark.primary,
         borderRadius: 32,
         width: 64,
         height: 64,
@@ -600,17 +628,17 @@ const s = StyleSheet.create({
   filterRow:     { flexDirection: 'row', alignItems: 'center', gap: 7 },
   filterRowDate: { paddingBottom: 4 },
   clearBtn:      { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 16, borderWidth: 1 },
-  clearBtnText:  { ...TextStyles.captionSemibold, lineHeight: 17 },
+  clearBtnText:  { fontSize: 13, fontWeight: '600', lineHeight: 17 },
 
   list:          { paddingTop: 20, gap: 20 },
   listFooter:    { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 40, paddingHorizontal: 20, justifyContent: 'center' },
-  listFooterText:{ ...TextStyles.cardTitle, textTransform: 'uppercase', letterSpacing: 1, lineHeight: 20 },
+  listFooterText:{ fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1, lineHeight: 20 },
   endLine:       { flex: 1, height: 1, opacity: 0.5 },
 
   emptyState:    { alignItems: 'center', paddingVertical: 100, paddingHorizontal: 40, gap: 14 },
   emptyIcon:     { width: 80, height: 80, borderRadius: 24, alignItems: 'center', justifyContent: 'center', borderWidth: 1, marginBottom: 8 },
-  emptyTitle:    { ...TextStyles.title3, lineHeight: 24 },
-  emptyDesc:     { ...TextStyles.callout, textAlign: 'center', lineHeight: 22, opacity: 0.8 },
+  emptyTitle:    { fontSize: 20, fontWeight: '700', lineHeight: 24 },
+  emptyDesc:     { fontSize: 14, textAlign: 'center', lineHeight: 22, opacity: 0.8 },
   resetBtn:      { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 20, paddingVertical: 12, borderRadius: 14, borderWidth: 1, marginTop: 12 },
-  resetBtnText:  { ...TextStyles.cardTitle, textTransform: 'uppercase', letterSpacing: 0.5, lineHeight: 19 },
+  resetBtnText:  { fontSize: 13, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, lineHeight: 19 },
 });

@@ -3,6 +3,10 @@
  *
  * This file is only used by the Expo web build.
  * It mirrors the native Sentry setup while using the browser-compatible package.
+ *
+ * Note: The user also provided a CDN script tag for manual loading:
+ * <script src="https://js-de.sentry-cdn.com/c99b1f7bc7c59d6f5fd539e84f738c69.min.js" crossorigin="anonymous"></script>
+ * We don't use it because we initialize the SDK programmatically via @sentry/react.
  */
 import * as Sentry from '@sentry/react';
 import { Platform } from 'react-native';
@@ -19,9 +23,10 @@ export function initSentry() {
     return;
   }
 
+  // Release name must match what you create via release hook or sentry-cli in CI.
   const release =
-    Constants.expoConfig?.version ||
     process.env.EXPO_PUBLIC_RELEASE ||
+    Constants.expoConfig?.version ||
     'development';
 
   Sentry.init({

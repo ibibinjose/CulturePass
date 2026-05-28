@@ -1,18 +1,6 @@
-// Force React Native's Event implementation to win over event-target-shim
-// (from expo-notifications). Prevents "Cannot assign to read-only property 'NONE'" crash.
-import { Platform } from 'react-native';
-if (Platform.OS !== 'web') {
-  try {
-    // @ts-expect-error - intentional early polyfill ordering fix
-    global.Event = require('react-native/Libraries/Events/Event');
-  } catch {
-    try {
-      // Fallback for newer RN structure
-      // @ts-expect-error
-      global.Event = require('react-native/src/private/webapis/dom/events/Event').default;
-    } catch {}
-  }
-}
+// IMPORTANT: This must be the absolute first import in the app.
+// It forces React Native's Event before expo-notifications can pull in event-target-shim.
+import '@/lib/fix-native-event-polyfill';
 
 import "react-native-reanimated"; // <-- CRUCIAL FIX: Must be at the very top
 import { StatusBar } from "expo-status-bar";

@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { FieldValue } from 'firebase-admin/firestore';
+import { logger } from 'firebase-functions';
 import { db, isFirestoreConfigured } from '../admin';
 import { requireAuth, isAdminUser } from '../middleware/auth';
 import { moderationCheck } from '../middleware/moderation';
@@ -74,12 +75,19 @@ socialRouter.get('/notifications', requireAuth, async (req, res) => {
   const limit  = Math.min(Number(req.query.limit ?? 80), 200);
   if (!isFirestoreConfigured) return res.json([]);
   try {
-    const snap = await db.collection('notifications')
-      .where('userId', '==', userId)
-      .orderBy('createdAt', 'desc')
-      .limit(limit)
-      .get();
-    return res.json(snap.docs.map(d => normalizeNotif(d.id, d.data())));
+    const base = db.collection('notifications').where('userId', '==', userId);
+    try {
+      const snap = await base.orderBy('createdAt', 'desc').limit(limit).get();
+      return res.json(snap.docs.map(d => normalizeNotif(d.id, d.data())));
+    } catch (err: any) {
+      const isIndexError = err?.code === 9 || /index/i.test(err?.message || '');
+      if (!isIndexError) throw err;
+      logger.warn('notifications: Missing index on (userId, createdAt). Falling back to in-memory sort.');
+      const fbSnap = await base.limit(limit * 2).get();
+      const items = fbSnap.docs.map(d => normalizeNotif(d.id, d.data()));
+      items.sort((a: any, b: any) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+      return res.json(items.slice(0, limit));
+    }
   } catch (err) {
     captureRouteError(err, 'GET /api/notifications');
     return res.status(500).json({ error: 'Failed to fetch notifications' });
@@ -572,15 +580,23 @@ socialRouter.get('/social/contact-inbound', requireAuth, async (req, res) => {
     return res.json({ items: [] });
   }
   try {
-    const snap = await db
-      .collection('contactSaves')
-      .where('toUserId', '==', userId)
-      .orderBy('createdAt', 'desc')
-      .limit(limit)
-      .get();
-    const fromIds = snap.docs.map((d) => (d.data() as { fromUserId?: string }).fromUserId).filter(Boolean) as string[];
+    const base = db.collection('contactSaves').where('toUserId', '==', userId);
+    let docs: FirebaseFirestore.QueryDocumentSnapshot[];
+    try {
+      const snap = await base.orderBy('createdAt', 'desc').limit(limit).get();
+      docs = snap.docs;
+    } catch (err: any) {
+      const isIndexError = err?.code === 9 || /index/i.test(err?.message || '');
+      if (!isIndexError) throw err;
+      logger.warn('contact-inbound: Missing index on (toUserId, createdAt). Falling back.');
+      const fb = await base.limit(limit * 2).get();
+      docs = fb.docs;
+      docs.sort((a, b) => new Date(b.data().createdAt || 0).getTime() - new Date(a.data().createdAt || 0).getTime());
+      docs = docs.slice(0, limit);
+    }
+    const fromIds = docs.map((d) => (d.data() as { fromUserId?: string }).fromUserId).filter(Boolean) as string[];
     const userMap = await fetchUsersByIds(fromIds);
-    const items = snap.docs
+    const items = docs
       .map((d) => {
         const row = d.data() as { fromUserId?: string; createdAt?: string };
         const fromId = row.fromUserId;

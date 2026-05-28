@@ -54,6 +54,13 @@ const DISTRIBUTION = ['All platform users', 'Specific Communities', 'Specific Ci
 type DiscountType = (typeof DISCOUNT_TYPES)[number];
 type ApprovalWorkflow = 'Auto-approve redemptions' | 'Manual approval required';
 
+type Sponsor = {
+  id: string;
+  name: string;
+  tier: string;
+  website?: string;
+};
+
 type OfferDraft = {
   title: string;
   shortDescription: string;
@@ -85,6 +92,7 @@ type OfferDraft = {
   cities: string;
   socialTitle: string;
   socialDescription: string;
+  sponsors: Sponsor[];
 };
 
 const INITIAL_DRAFT: OfferDraft = {
@@ -118,6 +126,7 @@ const INITIAL_DRAFT: OfferDraft = {
   cities: 'Sydney',
   socialTitle: '',
   socialDescription: '',
+  sponsors: [],
 };
 
 function toggleValue(values: string[], value: string) {
@@ -448,12 +457,26 @@ export function HostspaceOfferCreateForm({ onReview }: { onReview?: () => void }
   const [draft, setDraft] = useState<OfferDraft>(INITIAL_DRAFT);
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<'draft' | 'published' | null>(null);
+  const [showSponsorForm, setShowSponsorForm] = useState(false);
+  const [newSponsor, setNewSponsor] = useState<Sponsor>({ id: '', name: '', tier: 'gold' });
   const showPreview = true;
 
   const promoPreview = useMemo(() => draft.promoCode || generatedPromoCode(draft.title), [draft.promoCode, draft.title]);
 
   const updateDraft = (patch: Partial<OfferDraft>) => {
     setDraft((prev) => ({ ...prev, ...patch }));
+  };
+
+  const addSponsor = () => {
+    if (!newSponsor.name.trim()) return;
+    const sponsorWithId = { ...newSponsor, id: Math.random().toString(36).substr(2, 9) };
+    updateDraft({ sponsors: [...draft.sponsors, sponsorWithId] });
+    setNewSponsor({ id: '', name: '', tier: 'gold' });
+    setShowSponsorForm(false);
+  };
+
+  const removeSponsor = (id: string) => {
+    updateDraft({ sponsors: draft.sponsors.filter((s) => s.id !== id) });
   };
 
   const handlePickImage = async () => {
@@ -655,6 +678,54 @@ export function HostspaceOfferCreateForm({ onReview }: { onReview?: () => void }
                 <DraftInput value={draft.location} onChangeText={(location) => updateDraft({ location })} placeholder="Map picker placeholder" accessibilityLabel="Location" />
               </Field>
             </View>
+
+            <View style={styles.divider} />
+
+            <View style={styles.teamSectionHeader}>
+              <Ionicons name="ribbon-outline" size={20} color={CultureTokens.gold} />
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Offer Sponsors</Text>
+            </View>
+
+            {draft.sponsors.map((sp) => (
+              <View key={sp.id} style={[styles.sponsorChip, { backgroundColor: colors.surfaceElevated, borderColor: colors.borderLight }]}>
+                <View style={styles.sponsorChipInfo}>
+                  <Text style={[styles.sponsorName, { color: colors.text }]}>{sp.name}</Text>
+                  <Text style={[styles.sponsorTier, { color: CultureTokens.gold }]}>{sp.tier.toUpperCase()}</Text>
+                </View>
+                <Pressable onPress={() => removeSponsor(sp.id)}>
+                  <Ionicons name="close-circle" size={20} color={colors.textTertiary} />
+                </Pressable>
+              </View>
+            ))}
+
+            {showSponsorForm ? (
+              <GlassView intensity={10} style={styles.addSponsorBox}>
+                <FormInput
+                  value={newSponsor.name}
+                  onChangeText={(name) => setNewSponsor({ ...newSponsor, name })}
+                  placeholder="Sponsor Name"
+                  style={{ marginBottom: 12 }}
+                />
+                <View style={styles.chipGrid}>
+                  {['Platinum', 'Gold', 'Silver', 'Bronze', 'Supporter'].map((t) => (
+                    <ChoiceChip
+                      key={t}
+                      label={t}
+                      selected={newSponsor.tier === t.toLowerCase()}
+                      onPress={() => setNewSponsor({ ...newSponsor, tier: t.toLowerCase() })}
+                    />
+                  ))}
+                </View>
+                <View style={[styles.twoCol, { marginTop: 12 }]}>
+                  <Button variant="outline" size="sm" style={{ flex: 1 }} onPress={() => setShowSponsorForm(false)}>Cancel</Button>
+                  <Button variant="primary" size="sm" style={{ flex: 1 }} onPress={addSponsor}>Add</Button>
+                </View>
+              </GlassView>
+            ) : (
+              <Button variant="outline" size="sm" leftIcon="add-circle-outline" onPress={() => setShowSponsorForm(true)}>
+                Add Offer Sponsor
+              </Button>
+            )}
           </Section>
 
           <Section title="Terms & Conditions" icon="document-text-outline">
@@ -1008,5 +1079,46 @@ const styles = StyleSheet.create({
     ...TextStyles.body,
     fontFamily: 'Poppins_700Bold',
     fontSize: 13,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: 'rgba(0,0,0,0.05)',
+    marginVertical: 12,
+  },
+  teamSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 14,
+  },
+  sponsorChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+    marginBottom: 8,
+  },
+  sponsorChipInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  sponsorName: {
+    fontFamily: 'Poppins_600SemiBold',
+    fontSize: 14,
+  },
+  sponsorTier: {
+    fontFamily: 'Poppins_700Bold',
+    fontSize: 10,
+    letterSpacing: 0.5,
+  },
+  addSponsorBox: {
+    padding: 16,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: CultureTokens.gold + '40',
+    backgroundColor: 'rgba(255, 215, 0, 0.05)',
   },
 });

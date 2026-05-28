@@ -151,6 +151,17 @@ miscRouter.put('/privacy/settings/:userId', requireAuth, async (req: Request, re
 miscRouter.delete('/account/:userId', requireAuth, async (req: Request, res: Response) => {
   const userId = String(req.params.userId ?? '');
   if (!isOwnerOrAdmin(req.user!, userId)) return res.status(403).json({ error: 'Forbidden' });
+
+  // Prevent admins from self-deleting their accounts (per product requirement)
+  if (req.user!.id === userId) {
+    const requesterRole = req.user!.role || 'user';
+    const ADMIN_ROLES = ['admin', 'platformAdmin', 'superAdmin'];
+    if (ADMIN_ROLES.includes(requesterRole)) {
+      return res.status(403).json({ 
+        error: 'Administrator accounts cannot be deleted through self-service. Please contact platform support.' 
+      });
+    }
+  }
   
   try {
     // 1. Delete from Firebase Auth
@@ -163,6 +174,58 @@ miscRouter.delete('/account/:userId', requireAuth, async (req: Request, res: Res
   } catch (err) {
     captureRouteError(err, 'DELETE /api/account/:userId');
     return res.status(500).json({ error: 'Failed to delete account' });
+  }
+});
+
+const emailChangeSchema = z.object({
+  newEmail: z.string().email().max(254),
+});
+
+/** POST /api/account/email-change — secure server-side step for email change */
+miscRouter.post('/account/email-change', requireAuth, async (req: Request, res: Response) => {
+  try {
+    const { newEmail } = parseBody(emailChangeSchema, req.body);
+    const normalized = newEmail.toLowerCase().trim();
+    const userId = req.user!.id;
+
+    // Defense-in-depth uniqueness check on the server
+    const existing = await db.collection('users').where('email', '==', normalized).limit(1).get();
+    if (!existing.empty && existing.docs[0].id !== userId) {
+      return res.status(409).json({ error: 'Email address is already in use by another account' });
+    }
+
+    await db.collection('users').doc(userId).update({
+      email: normalized,
+      updatedAt: nowIso(),
+    });
+
+    return res.json({ ok: true, email: normalized });
+  } catch (err: any) {
+    captureRouteError(err, 'POST /api/account/email-change');
+    if (err.name === 'RequestValidationError' || err instanceof z.ZodError) {
+      return res.status(400).json({ error: 'Please provide a valid email address' });
+    }
+    return res.status(500).json({ error: 'Failed to complete email change' });
+  }
+});
+
+/** GET /api/account/username-available — fast availability check for live username editing */
+miscRouter.get('/account/username-available', requireAuth, async (req: Request, res: Response) => {
+  try {
+    const raw = String(req.query.username ?? '').trim();
+    const normalized = raw.toLowerCase().replace(/^@/, '');
+
+    if (!/^[a-zA-Z0-9_.-]{2,30}$/.test(normalized)) {
+      return res.json({ available: false, normalized });
+    }
+
+    const snap = await db.collection('users').where('username', '==', normalized).limit(1).get();
+    const available = snap.empty;
+
+    return res.json({ available, normalized });
+  } catch (err) {
+    captureRouteError(err, 'GET /api/account/username-available');
+    return res.status(500).json({ available: false, normalized: '' });
   }
 });
 
@@ -312,20 +375,44 @@ miscRouter.get('/admin/audit-logs', requireAuth, requireRole('admin', 'superAdmi
   try {
     const limitRaw = Number(req.query.limit ?? 50);
     const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(200, Math.floor(limitRaw))) : 50;
-    const snap = await db.collection('auditLogs').orderBy('createdAt', 'desc').limit(limit).get();
-    const logs = snap.docs.map((doc) => {
-      const d = doc.data() as Record<string, unknown>;
-      return {
-        id: doc.id,
-        action: String(d.action ?? 'updated settings'),
-        userId: String(d.userId ?? ''),
-        userName: String(d.userName ?? 'System'),
-        targetId: d.targetId ? String(d.targetId) : undefined,
-        metadata: (d.metadata as Record<string, unknown>) ?? undefined,
-        createdAt: toIso(d.createdAt),
-      };
-    });
-    return res.json({ logs });
+    try {
+      const snap = await db.collection('auditLogs').orderBy('createdAt', 'desc').limit(limit).get();
+      const logs = snap.docs.map((doc) => {
+        const d = doc.data() as Record<string, unknown>;
+        return {
+          id: doc.id,
+          action: String(d.action ?? 'updated settings'),
+          userId: String(d.userId ?? ''),
+          userName: String(d.userName ?? 'System'),
+          targetId: d.targetId ? String(d.targetId) : undefined,
+          metadata: (d.metadata as Record<string, unknown>) ?? undefined,
+          createdAt: toIso(d.createdAt),
+        };
+      });
+      return res.json({ logs });
+    } catch (err: any) {
+      const isIndexError = err?.code === 9 || /index/i.test(err?.message || '');
+      if (isIndexError) {
+        captureRouteError(err, 'GET /api/admin/audit-logs (fallback)');
+        res.setHeader('X-Query-Mode', 'fallback');
+        const snap = await db.collection('auditLogs').limit(limit * 2).get();
+        const items = snap.docs.map((doc) => {
+          const d = doc.data() as Record<string, unknown>;
+          return {
+            id: doc.id,
+            action: String(d.action ?? 'updated settings'),
+            userId: String(d.userId ?? ''),
+            userName: String(d.userName ?? 'System'),
+            targetId: d.targetId ? String(d.targetId) : undefined,
+            metadata: (d.metadata as Record<string, unknown>) ?? undefined,
+            createdAt: toIso(d.createdAt),
+          };
+        });
+        items.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+        return res.json({ logs: items.slice(0, limit) });
+      }
+      throw err;
+    }
   } catch (err: unknown) {
     captureRouteError(err, 'GET /api/admin/audit-logs');
     return res.status(500).json({ error: 'Failed to load audit logs' });
@@ -338,11 +425,54 @@ miscRouter.get('/admin/reports', requireAuth, requireRole('admin', 'superAdmin',
     const status = String(req.query.status ?? 'pending') as AdminReportStatus;
     const limitRaw = Number(req.query.limit ?? 100);
     const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(200, Math.floor(limitRaw))) : 100;
+    
+    // Validate status parameter
+    if (!['pending', 'resolved', 'dismissed'].includes(status)) {
+      return res.status(400).json({ error: 'Invalid status parameter. Must be pending, resolved, or dismissed.' });
+    }
+    
     let query = db.collection('reports').orderBy('createdAt', 'desc').limit(limit);
     if (status === 'pending' || status === 'resolved' || status === 'dismissed') {
       query = query.where('status', '==', status) as FirebaseFirestore.Query<FirebaseFirestore.DocumentData>;
     }
-    const snap = await query.get();
+    
+    let snap;
+    let usedFallback = false;
+    try {
+      snap = await query.get();
+    } catch (queryErr: any) {
+      const isIndexError = queryErr?.code === 9 || /index/i.test(queryErr?.message || '');
+      if (isIndexError) {
+        usedFallback = true;
+        res.setHeader('X-Query-Mode', 'fallback');
+        // Fallback path: fetch without orderBy and sort in memory
+        let fbQuery = db.collection('reports') as FirebaseFirestore.Query;
+        if (status === 'pending' || status === 'resolved' || status === 'dismissed') {
+          fbQuery = fbQuery.where('status', '==', status);
+        }
+        const fbSnap = await fbQuery.limit(limit * 2).get();
+        const items = fbSnap.docs.map((doc) => ({ id: doc.id, ...doc.data(), createdAt: toIso(doc.data().createdAt) }));
+        items.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+        return res.json({ reports: items.slice(0, limit) });
+      }
+      // If the collection doesn't exist yet, or there are permission/initialization issues, return empty array
+      if (queryErr instanceof Error) {
+        const errorMsg = queryErr.message.toLowerCase();
+        if (errorMsg.includes('not_found') || 
+            errorMsg.includes('notfound') || 
+            errorMsg.includes('collection') && errorMsg.includes('exist') ||
+            errorMsg.includes('permission') || 
+            errorMsg.includes('unavailable') || 
+            errorMsg.includes('initialization') ||
+            errorMsg.includes('resource') && errorMsg.includes('not found')) {
+          return res.json({ reports: [] });
+        }
+      }
+      // Log the actual error for debugging purposes and return empty array instead of throwing
+      console.warn('Warning: Failed to fetch reports collection:', queryErr);
+      return res.json({ reports: [] });
+    }
+    
     const reports = snap.docs.map((doc) => ({ id: doc.id, ...doc.data(), createdAt: toIso(doc.data().createdAt) }));
     return res.json({ reports });
   } catch (err: unknown) {

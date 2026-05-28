@@ -221,7 +221,7 @@ export default function DiscoverScreen() {
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={[ds.filterScroll, { paddingHorizontal: pageSidePad }]}
+            contentContainerStyle={[ds.filterScroll, { paddingHorizontal: pageSidePad, paddingRight: pageSidePad + 32 }]}
             style={[
               { marginBottom: Spacing.sm },
               // Give a little breathing room between the subtitle

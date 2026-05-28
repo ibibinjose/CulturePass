@@ -10,6 +10,19 @@
 import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
 import { requireAuth, requireRole, isOwnerOrAdmin } from '../middleware/auth';
+import { db } from '../admin';
+import { nowIso } from './utils';
+
+function canManageProfile(user: any, profile: any): boolean {
+  if (isOwnerOrAdmin(user, profile.ownerId)) return true;
+
+  // Support multiple organizers with roles
+  const organizers = profile.organizers || [];
+  return organizers.some((o: any) => 
+    o.userId === user.id && 
+    ['lead_organizer', 'co_organizer', 'manager', 'admin'].includes(o.role)
+  );
+}
 import { slidingWindowRateLimit } from '../middleware/rateLimit';
 import { moderationCheck } from '../middleware/moderation';
 import {
@@ -147,6 +160,10 @@ profilesRouter.get(
         { page, pageSize }
       );
 
+      if (result.usedFallback) {
+        res.setHeader('X-Query-Mode', 'fallback');
+      }
+
       return res.json({
         profiles: result.items,
         total: result.total,
@@ -214,10 +231,23 @@ profilesRouter.post(
         return res.status(400).json({ error: 'Handle already taken' });
       }
 
-      // Create profile
+      // Create profile with initial organizer (the creator as lead)
+      const now = new Date().toISOString();
+      const initialOrganizers = [
+        {
+          userId: req.user!.id,
+          role: 'lead_organizer',
+          title: 'Lead Organizer',
+          addedAt: now,
+          addedBy: req.user!.id,
+        },
+        ...(body.organizers || []),
+      ];
+
       const profile = await profileService.create({
         ...body,
         ownerId: req.user!.id,
+        organizers: initialOrganizers,
         lastModifiedBy: req.user!.id,
         viewCount: 0,
         uniqueVisitorCount: 0,
@@ -258,8 +288,8 @@ profilesRouter.put(
       }
 
       // Check ownership
-      if (!isOwnerOrAdmin(req.user!, existing.ownerId)) {
-        return res.status(403).json({ error: 'Forbidden: you do not own this profile' });
+      if (!canManageProfile(req.user!, existing)) {
+        return res.status(403).json({ error: 'Forbidden: you do not own or manage this profile' });
       }
 
       // Check handle uniqueness if handle is being changed
@@ -391,8 +421,8 @@ profilesRouter.post(
       }
 
       // Check ownership
-      if (!isOwnerOrAdmin(req.user!, existing.ownerId)) {
-        return res.status(403).json({ error: 'Forbidden: you do not own this profile' });
+      if (!canManageProfile(req.user!, existing)) {
+        return res.status(403).json({ error: 'Forbidden: you do not own or manage this profile' });
       }
 
       // Determine if verification is required
@@ -583,6 +613,80 @@ profilesRouter.post(
 );
 
 // ── POST /api/profiles/:id/track-contact-click ─────────────────────────────
+
+// ────────────────────────────────────────────────────────────────────────────
+// TEAM & ORGANIZERS MANAGEMENT ENDPOINTS (Communities, Businesses, etc.)
+// Supports multiple organizers with roles + full audit logging
+// ────────────────────────────────────────────────────────────────────────────
+
+/** POST /api/profiles/:id/team — Add or update team member */
+profilesRouter.post('/profiles/:id/team', requireAuth, async (req: Request, res: Response) => {
+  const profileId = qparam(req.params.id);
+  const { userId, role, title } = req.body || {};
+
+  if (!userId || !role) return res.status(400).json({ error: 'userId and role required' });
+
+  const profile = await profileService.getById(profileId);
+  if (!profile) return res.status(404).json({ error: 'Profile not found' });
+  if (!canManageProfile(req.user!, profile)) return res.status(403).json({ error: 'Forbidden' });
+
+  const organizers = [...((profile as any).organizers || [])];
+  const idx = organizers.findIndex((o: any) => o.userId === userId);
+
+  const entry = {
+    userId,
+    role,
+    title: title || role.replace(/_/g, ' '),
+    addedAt: nowIso(),
+    addedBy: req.user!.id,
+  };
+
+  if (idx >= 0) organizers[idx] = { ...organizers[idx], ...entry };
+  else organizers.push(entry);
+
+  await profileService.update(profileId, { organizers } as any);
+
+  await db.collection('auditLogs').add({
+    action: 'team_member_added_or_updated',
+    userId: req.user!.id,
+    userName: req.user!.username || req.user!.id,
+    targetId: profileId,
+    targetType: 'profile',
+    metadata: { addedUserId: userId, role },
+    createdAt: nowIso(),
+  });
+
+  return res.json({ ok: true, organizers });
+});
+
+/** DELETE /api/profiles/:id/team/:userId — Remove team member */
+profilesRouter.delete('/profiles/:id/team/:userId', requireAuth, async (req: Request, res: Response) => {
+  const profileId = qparam(req.params.id);
+  const targetUserId = qparam(req.params.userId);
+
+  const profile = await profileService.getById(profileId);
+  if (!profile) return res.status(404).json({ error: 'Not found' });
+  if (!canManageProfile(req.user!, profile)) return res.status(403).json({ error: 'Forbidden' });
+
+  const remaining = ((profile as any).organizers || []).filter((o: any) => o.userId !== targetUserId);
+  const hasLead = remaining.some((o: any) => o.role === 'lead_organizer');
+  if (!hasLead) return res.status(400).json({ error: 'Cannot remove last lead organizer' });
+
+  await profileService.update(profileId, { organizers: remaining } as any);
+
+  await db.collection('auditLogs').add({
+    action: 'team_member_removed',
+    userId: req.user!.id,
+    userName: req.user!.username || req.user!.id,
+    targetId: profileId,
+    targetType: 'profile',
+    metadata: { removedUserId: targetUserId },
+    createdAt: nowIso(),
+  });
+
+  return res.json({ ok: true, organizers: remaining });
+});
+
 // Track a contact button click (public endpoint, no auth required)
 profilesRouter.post(
   '/profiles/:id/track-contact-click',

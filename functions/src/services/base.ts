@@ -13,4 +13,5 @@ export interface PaginatedResult<T> {
   page: number;
   pageSize: number;
   hasNextPage: boolean;
+  usedFallback?: boolean;
 }

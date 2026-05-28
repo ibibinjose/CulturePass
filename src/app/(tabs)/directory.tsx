@@ -411,7 +411,7 @@ export default function DirectoryScreen() {
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={[s.filterRow, { paddingHorizontal: hPad, gap: 8 }]}
+            contentContainerStyle={[s.filterRow, { paddingHorizontal: hPad, gap: 8, paddingRight: hPad + 32 }]}
             accessibilityRole="tablist"
             accessibilityLabel="Entity type filters"
           >
@@ -420,7 +420,7 @@ export default function DirectoryScreen() {
                 key={filter.id}
                 label={typeof filter.label === 'string' ? filter.label : filter.id}
                 selected={selectedType === filter.id}
-                onPress={() => handleFilterSelect(filter.id)}
+                onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); handleFilterSelect(filter.id); }}
                 icon={typeof filter.icon === 'string' ? filter.icon as any : undefined}
               />
             ))}

@@ -265,7 +265,7 @@ export default function FinderScreen() {
               {debounced.length < 2 ? (
                 <>
                   <Text style={[styles.groupLabel, { color: colors.textTertiary }]}>QUICK JUMP</Text>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingBottom: 24 }}>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingBottom: 24, paddingRight: 32 }}>
                     {QUICK_DESTINATIONS.map((d) => (
                       <Pressable key={d.href} onPress={() => router.push(d.href as any)}>
                         <GlassView contentStyle={{ padding: 16, alignItems: 'center', gap: 10, minWidth: 110 }}>
@@ -290,7 +290,7 @@ export default function FinderScreen() {
                 </>
               ) : (
                 <>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingBottom: 16 }}>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingBottom: 16, paddingRight: 32 }}>
                     {filterChips.map((chip) => {
                       const active = filter === chip.key;
                       return (

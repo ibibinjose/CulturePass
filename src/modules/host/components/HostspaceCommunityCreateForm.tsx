@@ -302,6 +302,9 @@ export function HostspaceCommunityCreateForm({ onReview }: { onReview?: () => vo
              </View>
              <FormField label="Host Bio">
                <FormInput value={draft.hostBio} onChangeText={(hostBio) => updateDraft({ hostBio })} placeholder="Briefly describe the organizers..." multiline />
+               <Text style={{ fontSize: 12, color: '#666', marginTop: 4 }}>
+                 You (as Lead Organizer) + additional co-organizers with different roles can be managed after creation.
+               </Text>
              </FormField>
              <FormField label="Organization (if any)">
                <FormInput value={draft.organization} onChangeText={(organization) => updateDraft({ organization })} placeholder="e.g. Jivan Club" />

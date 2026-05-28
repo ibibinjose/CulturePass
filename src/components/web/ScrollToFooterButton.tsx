@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
 
 import { LuxeText } from '@/design-system/ui';
 import { luxeDark } from '@/design-system/tokens/theme';
+import { findBestScrollableContainer } from './findBestScrollableContainer';
 
 export type FooterButtonPosition = 'bottom-right' | 'bottom-center' | 'bottom-left';
 
@@ -54,28 +54,7 @@ export function ScrollToFooterButton({
   const scrollToFooter = () => {
     if (Platform.OS !== 'web') return;
 
-    const findBestScrollable = (): HTMLElement => {
-      const allDivs = Array.from(document.querySelectorAll('div, main, section')) as HTMLElement[];
-      
-      // Prefer elements that look like main content areas
-      const scored = allDivs.map(el => {
-        const style = window.getComputedStyle(el);
-        const hasOverflow = style.overflowY === 'auto' || style.overflow === 'auto' || style.overflowY === 'scroll';
-        const height = el.scrollHeight;
-        let score = height;
-
-        if (hasOverflow) score += 10000;
-        if (el.className.includes('main') || el.className.includes('content') || el.className.includes('Flex')) score += 5000;
-        if (el.id.includes('root') || el.id.includes('app')) score -= 1000; // root usually not the scroller
-
-        return { el, score };
-      });
-
-      scored.sort((a, b) => b.score - a.score);
-      return scored[0]?.el || document.documentElement;
-    };
-
-    const container = findBestScrollable();
+    const container = findBestScrollableContainer();
     const maxScroll = container.scrollHeight - container.clientHeight;
 
     container.scrollTo({ top: maxScroll, behavior: 'smooth' });
@@ -85,10 +64,6 @@ export function ScrollToFooterButton({
         container.scrollTop = maxScroll;
       }
     }, 180);
-
-    if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
   };
 
   if (Platform.OS !== 'web' || !visible) return null;
@@ -163,26 +138,7 @@ export function ScrollToTopButton({
   const scrollToTop = () => {
     if (Platform.OS !== 'web') return;
 
-    const findBestScrollable = (): HTMLElement => {
-      const allDivs = Array.from(document.querySelectorAll('div, main, section')) as HTMLElement[];
-      
-      const scored = allDivs.map(el => {
-        const style = window.getComputedStyle(el);
-        const hasOverflow = style.overflowY === 'auto' || style.overflow === 'auto' || style.overflowY === 'scroll';
-        const height = el.scrollHeight;
-        let score = height;
-
-        if (hasOverflow) score += 10000;
-        if (el.className.includes('main') || el.className.includes('content') || el.className.includes('Flex')) score += 5000;
-
-        return { el, score };
-      });
-
-      scored.sort((a, b) => b.score - a.score);
-      return scored[0]?.el || document.documentElement;
-    };
-
-    const container = findBestScrollable();
+    const container = findBestScrollableContainer();
 
     container.scrollTo({ top: 0, behavior: 'smooth' });
 
@@ -191,8 +147,6 @@ export function ScrollToTopButton({
         container.scrollTop = 0;
       }
     }, 150);
-
-    if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
 
   if (Platform.OS !== 'web' || !visible) return null;

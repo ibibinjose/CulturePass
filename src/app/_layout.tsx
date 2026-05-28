@@ -3,8 +3,7 @@ import { StatusBar } from "expo-status-bar";
 import { Buffer } from "buffer";
 
 // Sentry - World class error & performance monitoring (initialized as early as possible)
-import { initSentry, setSentryUser, Sentry } from "@/lib/sentry";
-initSentry();
+import { initSentry } from "@/lib/sentry";
 
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { Stack } from "expo-router";
@@ -38,9 +37,9 @@ import { withAlpha } from "@/lib/withAlpha";
 import { initializeWidgets } from "@/lib/widgets/register";
 import { WidgetSync } from "@/components/WidgetSync";
 import { WebSidebar } from "@/modules/core/layout/web/WebSidebar";
-import { M3Button } from "@/design-system/ui";
 import { NavigationMetadata } from "@/components/NavigationMetadata";
 import { CulturalThemeProvider } from "@/providers/CulturalThemeProvider";
+import { Footer } from "@/components/Footer"; // Add Footer import
 
 import {
   useFonts,
@@ -56,23 +55,27 @@ import {
   PlayfairDisplay_700Bold,
 } from "@expo-google-fonts/playfair-display";
 import { Ionicons } from "@expo/vector-icons";
+initSentry();
 
-// Import LinkPreviewContextProvider if available
+// Import LinkPreviewContextProvider if available (lazy, after all static imports)
 let LinkPreviewContextProvider: any = null;
+/* eslint-disable @typescript-eslint/no-require-imports */
 try {
-  // Try importing from expo-router if available in your version
   const mod = require('expo-router/build/link/preview/LinkPreviewContext');
   if (mod && mod.LinkPreviewContextProvider) {
     LinkPreviewContextProvider = mod.LinkPreviewContextProvider;
   }
-} catch (e) {
+} catch {
   try {
     const mod = require('expo-router');
     if (mod && mod.LinkPreviewContextProvider) {
       LinkPreviewContextProvider = mod.LinkPreviewContextProvider;
     }
-  } catch (e2) {}
+  } catch {
+    // optional dependency not present
+  }
 }
+/* eslint-enable @typescript-eslint/no-require-imports */
 
 global.Buffer = Buffer;
 
@@ -99,8 +102,11 @@ SplashScreen.preventAutoHideAsync().catch(() => {});
 // ---------------------------------------------------------------------------
 function RootLayoutNav() {
   const colors = useColors();
-  const { isDesktop } = useLayout();
+  const { isDesktop, width: screenWidth } = useLayout();
   const isWeb = Platform.OS === 'web';
+
+  // Force mobile layout on small screens to prevent black screen issue
+  const shouldShowDesktopLayout = isWeb && isDesktop && screenWidth >= 768;
 
   const stackContent = (
     <Stack
@@ -184,40 +190,44 @@ function RootLayoutNav() {
     </Stack>
   );
 
-  if (isWeb && isDesktop) {
+  if (shouldShowDesktopLayout) {
     return (
-      <View
-        style={[
-          webStyles.outerContainer,
-          {
-            backgroundColor: colors.background,
-          },
-        ]}
-      >
-        <LinearGradient
-          colors={[withAlpha(CultureTokens.indigo, 0.05), 'transparent']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={webStyles.ambientMesh}
-          pointerEvents="none"
-        />
-        <WebSidebar />
-        <View style={webStyles.contentContainer}>
-          <View style={[webStyles.mainFlex, webStyles.mainFlexDesktop]}>
-            {stackContent}
+      <View style={{ flex: 1, flexDirection: 'column' }}>
+        <View
+          style={[
+            webStyles.outerContainer,
+            {
+              backgroundColor: colors.background,
+            },
+          ]}
+        >
+          <LinearGradient
+            colors={[withAlpha(CultureTokens.indigo, 0.05), 'transparent']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={webStyles.ambientMesh}
+            pointerEvents="none"
+          />
+          <WebSidebar />
+          <View style={webStyles.contentContainer}>
+            <View style={[webStyles.mainFlex, webStyles.mainFlexDesktop]}>
+              {stackContent}
+            </View>
           </View>
         </View>
+        <Footer />
       </View>
     );
   }
 
   return (
-    <>
+    <View style={{ flex: 1, flexDirection: 'column' }}>
       <NavigationMetadata />
-      <View style={{ padding: 16 }}>
+      <View style={{ flex: 1, backgroundColor: colors.background }}>
         {stackContent}
       </View>
-    </>
+      <Footer />
+    </View>
   );
 }
 

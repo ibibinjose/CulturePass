@@ -136,8 +136,8 @@ export function NationBuildersPromo({
 
   return (
     <Animated.View
-      entering={FadeInDown.duration(320)}
-      exiting={SlideOutUp.duration(220)}
+      entering={FadeInDown.duration(280)}
+      exiting={SlideOutUp.duration(200)}
       style={styles.wrapper}
     >
       <M3Card 
@@ -150,78 +150,64 @@ export function NationBuildersPromo({
           }
         ]}
       >
-        {/* Premium gradient header for visual impact */}
-        <LinearGradient
-          colors={[CultureTokens.gold, '#E8A923', CultureTokens.terracottaGlow]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0.9 }}
-          style={styles.headerGradient}
-        >
+        {/* Cleaner, more subtle banner */}
+        <View style={[styles.header, { backgroundColor: m3Colors.primaryContainer }]}>
           <View style={styles.headerRow}>
-            <View style={[styles.badge, { backgroundColor: 'rgba(255,255,255,0.92)' }]}>
-              <Ionicons name="shield-checkmark" size={15} color={CultureTokens.terracottaGlow} />
-              <Text style={[styles.badgeText, { color: '#1C1917', letterSpacing: 1.5 }]}>
+            <View style={[styles.badge, { backgroundColor: m3Colors.primary }]}>
+              <Ionicons name="shield-checkmark" size={14} color={m3Colors.onPrimary} />
+              <Text style={[styles.badgeText, { color: m3Colors.onPrimary }]}>
                 NATION BUILDERS
               </Text>
             </View>
 
             <Pressable
               onPress={handleDismiss}
-              hitSlop={12}
+              hitSlop={10}
               style={({ pressed }) => [styles.closeBtn, pressed && { opacity: 0.6 }]}
               accessibilityLabel="Dismiss Nation Builders promo"
               accessibilityRole="button"
             >
-              <Ionicons name="close" size={18} color="rgba(28,25,23,0.7)" />
+              <Ionicons name="close" size={16} color={m3Colors.onSurfaceVariant} />
             </Pressable>
           </View>
 
-          <Text style={[styles.title, { color: '#1C1917' }]}>
-            You serve Sydney.{'\n'}Now let Sydney serve you back.
+          <Text style={[styles.title, { color: m3Colors.onPrimaryContainer }]}>
+            You serve. Now let the city serve you back.
           </Text>
-        </LinearGradient>
+        </View>
 
         <View style={styles.fullContent}>
           <Text style={[styles.description, { color: m3Colors.onSurfaceVariant }]}>
-            Essential workers (hospitality, retail, transport, service &amp; more) get <Text style={{ fontWeight: '600', color: m3Colors.onSurface }}>50% off CulturePass+</Text> when their workplace becomes a Nation Builder Partner. Plus a special badge.
+            Essential workers get <Text style={{ fontWeight: '600' }}>50% off CulturePass+</Text> when their workplace joins as a Nation Builder Partner.
           </Text>
 
-          {/* Improved visual features — cleaner, higher quality */}
           <View style={styles.features}>
             <View style={[styles.featurePill, { backgroundColor: m3Colors.surfaceContainerHigh }]}>
-              <Ionicons name="ticket-outline" size={18} color={CultureTokens.gold} />
-              <Text style={[styles.featureText, { color: m3Colors.onSurface }]}>$69/yr (50% off)</Text>
+              <Ionicons name="ticket-outline" size={14} color={m3Colors.primary} />
+              <Text style={[styles.featureText, { color: m3Colors.onSurface }]}>50% off</Text>
             </View>
             <View style={[styles.featurePill, { backgroundColor: m3Colors.surfaceContainerHigh }]}>
-              <Ionicons name="gift-outline" size={18} color={CultureTokens.gold} />
-              <Text style={[styles.featureText, { color: m3Colors.onSurface }]}>Birthday gifts</Text>
-            </View>
-            <View style={[styles.featurePill, { backgroundColor: m3Colors.surfaceContainerHigh }]}>
-              <Ionicons name="star-outline" size={18} color={CultureTokens.gold} />
-              <Text style={[styles.featureText, { color: m3Colors.onSurface }]}>Exclusive access</Text>
+              <Ionicons name="gift-outline" size={14} color={m3Colors.primary} />
+              <Text style={[styles.featureText, { color: m3Colors.onSurface }]}>Gifts</Text>
             </View>
           </View>
 
-          {/* Improved CTAs — Apply Now is now the clear primary action with quality URL */}
           <View style={styles.buttonContainer}>
             <TouchableOpacity 
-              style={[styles.primaryCta, { backgroundColor: CultureTokens.terracottaGlow }]}
+              style={[styles.primaryCta, { backgroundColor: m3Colors.primary }]}
               onPress={handleApplyNow}
-              accessibilityLabel="Apply as a business or venue to become a Nation Builder Partner"
             >
-              <Text style={[styles.primaryCtaText, { color: '#FFFFFF' }]}>
-                Apply Now
+              <Text style={[styles.primaryCtaText, { color: m3Colors.onPrimary }]}>
+                Apply as Partner
               </Text>
-              <Ionicons name="arrow-forward" size={16} color="#FFFFFF" style={{ marginLeft: 6 }} />
             </TouchableOpacity>
 
             <TouchableOpacity 
               style={styles.secondaryCta}
               onPress={handleLearnMore}
-              accessibilityLabel="Learn more about the Nation Builders program"
             >
               <Text style={[styles.secondaryCtaText, { color: m3Colors.primary }]}>
-                Learn More
+                Learn more
               </Text>
             </TouchableOpacity>
           </View>
@@ -280,132 +266,105 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
 
-  // Full variant – significantly improved visuals + UX
+  // Full variant – compact & cleaner
   wrapper: {
     marginHorizontal: 16,
-    marginBottom: 12,
+    marginTop: 8,
+    marginBottom: 16,
   },
   fullCard: {
     borderRadius: Radius.lg,
     borderWidth: 1,
     overflow: 'hidden',
-    ...Platform.select({
-      web: { boxShadow: '0 8px 24px rgba(0,0,0,0.08)' },
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.08,
-        shadowRadius: 12,
-      },
-      android: {
-        elevation: 8,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-      },
-    }),
   },
-  headerGradient: {
-    paddingHorizontal: 16,
-    paddingTop: 14,
-    paddingBottom: 18,
+  header: {
+    paddingHorizontal: 14,
+    paddingTop: 10,
+    paddingBottom: 12,
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 10,
+    marginBottom: 6,
   },
   badge: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 11,
-    paddingVertical: 5,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
     borderRadius: Radius.full,
-    gap: 5,
+    gap: 4,
   },
   badgeText: {
-    ...M3Typography.labelSmall,
-    fontWeight: '700',
-    letterSpacing: 1.8,
-    textTransform: 'uppercase',
     fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
   },
   closeBtn: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.55)',
+    backgroundColor: 'rgba(0,0,0,0.06)',
   },
   title: {
-    ...M3Typography.headlineSmall,
-    fontSize: 18,
-    lineHeight: 23,
+    fontSize: 15,
+    lineHeight: 19,
     fontWeight: '700',
-    letterSpacing: -0.2,
   },
   fullContent: {
-    padding: 18,
-    paddingTop: 16,
-    gap: 14,
+    paddingHorizontal: 14,
+    paddingTop: 10,
+    paddingBottom: 12,
+    gap: 10,
   },
   description: {
-    ...M3Typography.bodyMedium,
-    lineHeight: 20,
-    fontSize: 14,
+    fontSize: 13,
+    lineHeight: 18,
   },
   features: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginTop: 2,
+    gap: 6,
   },
   featurePill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 11,
-    paddingVertical: 6,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.04)',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: Radius.sm,
   },
   featureText: {
-    ...M3Typography.bodySmall,
     fontSize: 12,
     fontWeight: '500',
   },
   buttonContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    marginTop: 4,
+    gap: 10,
+    marginTop: 2,
   },
   primaryCta: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 11,
+    paddingVertical: 9,
     borderRadius: Radius.md,
-    flex: 1,
-    minHeight: 46,
   },
   primaryCtaText: {
-    ...M3Typography.labelLarge,
+    fontSize: 13,
     fontWeight: '600',
-    fontSize: 14,
   },
   secondaryCta: {
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 8,
   },
   secondaryCtaText: {
-    ...M3Typography.labelLarge,
+    fontSize: 13,
     fontWeight: '500',
-    fontSize: 14,
   },
 });

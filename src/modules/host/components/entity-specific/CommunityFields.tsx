@@ -219,7 +219,7 @@ export function CommunityFields({
   // Derived State
   // ---------------------------------------------------------------------------
 
-  const communityData: Partial<CommunityData> = formData.communityData || {};
+  const communityData = useMemo<Partial<CommunityData>>(() => formData.communityData || {}, [formData.communityData]);
   const membershipModel = communityData.membershipModel || 'free';
   const monthlyFee = communityData.monthlyFee;
   const membershipCount = communityData.membershipCount || 0;

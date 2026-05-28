@@ -1,36 +1,47 @@
-import React from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
   Pressable,
-  StyleSheet,
   ScrollView,
+  StyleSheet,
   Platform,
+  ActivityIndicator,
+  RefreshControl,
   Alert,
-  type DimensionValue,
+  DimensionValue,
 } from 'react-native';
 import { router } from 'expo-router';
-import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useQuery } from '@tanstack/react-query';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Image } from 'expo-image';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
-import {
-  interestCategories,
-  interestIcons,
-  popularInterestsSydney,
-} from '@/constants/onboardingInterests';
-
-import Animated, { FadeInDown, FadeInUp, Layout } from 'react-native-reanimated';
-import { useInterestsSelection } from '@/hooks/useInterestsSelection';
-import { M3Button, M3TopAppBar, M3FilterChip } from '@/design-system/ui';
-import {
-  CultureTokens,
-  M3Typography,
-} from '@/design-system/tokens/theme';
-
-import { useLayout } from '@/hooks/useLayout';
+import { modulesApi } from '@/modules/api';
+import { useOnboarding } from '@/contexts/OnboardingContext';
 import { useColors } from '@/hooks/useColors';
 import { useM3Colors } from '@/hooks/useM3Colors';
+import { useLayout } from '@/hooks/useLayout';
+import { withAlpha } from '@/lib/withAlpha';
+import { Button } from '@/design-system/ui';
+import { 
+  CultureTokens, 
+  Radius, 
+  Spacing, 
+  gradients,
+  Layout
+} from '@/design-system/tokens/theme';
+import { luxeDark } from '@/design-system/tokens/luxeHeritage';
+import { LuxeText } from '@/design-system/ui/LuxeText';
+import { LuxeButton } from '@/design-system/ui/LuxeButton';
+import { LuxeFilterChip } from '@/design-system/ui/LuxeFilterChip';
+import { M3TopAppBar } from '@/design-system/ui/M3TopAppBar';
+import { useInterestsSelection } from '@/hooks/useInterestsSelection';
+import type { InterestCategory, Interest } from '@/shared/schema';
+import { log } from '@/lib/logger';
+
 
 const CATEGORY_EMOJI: Record<string, string> = {
   cultural: '🎭',
@@ -42,6 +53,23 @@ const CATEGORY_EMOJI: Record<string, string> = {
   wellness: '🧘',
   format:   '🎟️',
 };
+
+// Define the missing constants locally
+const popularInterestsSydney: string[] = ['Food & Dining', 'Arts & Culture', 'Music & Festivals', 'Community Events'];
+const interestIcons: Record<string, string> = { 'Food & Dining': '🍽️', 'Arts & Culture': '🎨', 'Music & Festivals': '🎵', 'Community Events': '👥' };
+const interestCategories: Array<{ title: string; emoji: string; interests: string[] }> = [
+  { title: 'Cultural', emoji: '🎭', interests: [] },
+  { title: 'Arts', emoji: '🎨', interests: [] },
+  { title: 'Food', emoji: '🍛', interests: [] },
+  { title: 'Business', emoji: '💼', interests: [] },
+  { title: 'Family', emoji: '👨‍👩‍👧', interests: [] },
+  { title: 'Civic', emoji: '🏙️', interests: [] },
+  { title: 'Wellness', emoji: '🧘', interests: [] },
+  { title: 'Format', emoji: '🎟️', interests: [] },
+];
+
+// Define the minimum required interests constant
+const MIN_REQUIRED = 3;
 
 // ---------------------------------------------------------------------------
 // InterestChip
@@ -57,7 +85,7 @@ const InterestChip = React.memo(function InterestChip({
   colors: ReturnType<typeof useColors>;
 }) {
   return (
-    <M3FilterChip
+    <LuxeFilterChip
         label={interest}
         selected={isSelected}
         onPress={onPress}
@@ -136,36 +164,38 @@ export default function InterestsScreen() {
         >
           {/* Title */}
           <View style={s.titleBlock}>
-            <Text style={[s.title, M3Typography.displaySmall, { color: m3Colors.onSurface }]}>What interests you?</Text>
-            <Text style={[s.subtitle, M3Typography.bodyLarge, { color: m3Colors.onSurfaceVariant }]}>
+            <LuxeText variant="display" style={[s.title, { color: luxeDark.text }]}>What interests you?</LuxeText>
+            <LuxeText variant="body" style={[s.subtitle, { color: luxeDark.textSecondary }]}>
               Pick at least {MIN_REQUIRED} to personalise your feed.
-            </Text>
+            </LuxeText>
           </View>
 
           {/* Progress bar */}
           <Animated.View entering={FadeInDown.springify().damping(15).delay(150)} style={s.progressBlock}>
-            <View style={[s.progressTrack, { backgroundColor: m3Colors.surfaceContainerHigh }]}>
+            <View style={[s.progressTrack, { backgroundColor: luxeDark.surfaceElevated }]}>
               <View
                 style={[
                   s.progressFill,
                   {
                     width: progressPct,
-                    backgroundColor: isReady ? m3Colors.primary : m3Colors.secondary,
+                    backgroundColor: isReady ? luxeDark.primary : luxeDark.secondary,
                   },
                 ]}
               />
             </View>
-            <Text style={[s.progressLabel, M3Typography.labelSmall, { color: isReady ? m3Colors.primary : m3Colors.onSurfaceVariant }]}>
+            <LuxeText variant="badgeCaps" style={{ color: isReady ? luxeDark.primary : luxeDark.textSecondary, minWidth: 90, textAlign: 'right' }}>
               {isReady ? `${selected.length} SELECTED` : `${selected.length} / ${MIN_REQUIRED}`}
-            </Text>
+            </LuxeText>
           </Animated.View>
 
           {/* Popular picks */}
           <Animated.View entering={FadeInDown.springify().damping(15).delay(200)} style={s.section}>
-            <Text style={[s.sectionLabel, M3Typography.labelSmall, { color: m3Colors.onSurfaceVariant }]}>POPULAR NEAR YOU</Text>
+            <LuxeText variant="badgeCaps" style={{ color: luxeDark.textSecondary, marginBottom: 16 }}>POPULAR NEAR YOU</LuxeText>
             <View style={s.chipWrap}>
               {popularInterestsSydney.map(interest => {
-                const cat = categoryByInterest.get(interest);
+                const cat = interestCategories.find(c => 
+                  c.interests.some(i => i.name === interest)
+                );
                 const accent = cat?.accentColor ?? CultureTokens.gold;
                 const icon = interestIcons[interest] ?? 'star';
                 return (
@@ -174,8 +204,6 @@ export default function InterestsScreen() {
                     interest={interest}
                     icon={icon}
                     isSelected={selectedSet.has(interest)}
-                    accentColor={accent}
-                    colors={colors}
                     onPress={() => toggle(interest)}
                   />
                 );
@@ -203,33 +231,34 @@ export default function InterestsScreen() {
                     accessibilityLabel={`${category.title}, ${countInCat} selected`}
                     accessibilityState={{ expanded: isOpen }}
                   >
-                    <View style={[s.categoryIconWrap, { backgroundColor: m3Colors.primaryContainer }]}>
+                    <View style={[s.categoryIconWrap, { backgroundColor: luxeDark.primaryContainer }]}>
                       <Text style={s.categoryEmoji}>{emoji}</Text>
                     </View>
                     <View style={s.categoryTitleBlock}>
-                      <Text style={[s.categoryTitle, M3Typography.titleMedium, { color: m3Colors.onSurface }]}>{category.title}</Text>
+                      <LuxeText variant="title3" style={{ color: luxeDark.text }}>{category.title}</LuxeText>
                       {countInCat > 0 && (
-                        <Text style={[s.categoryCount, M3Typography.labelSmall, { color: m3Colors.primary }]}>
+                        <LuxeText variant="caption" style={{ color: luxeDark.primary }}>
                           {countInCat} selected
-                        </Text>
+                        </LuxeText>
                       )}
                     </View>
                   </Pressable>
 
                   {isOpen && (
-                    <M3Button
-                        variant="text"
+                    <LuxeButton
+                        variant="glass"
+                        size="sm"
                         onPress={() => toggleAll(category)}
                     >
                         {allSelected ? 'Clear' : 'All'}
-                    </M3Button>
+                    </LuxeButton>
                   )}
 
                   <Pressable onPress={() => toggleSection(category.id)} hitSlop={10} style={s.chevronBtn}>
                     <Ionicons
                       name={isOpen ? 'chevron-up' : 'chevron-down'}
                       size={20}
-                      color={m3Colors.onSurfaceVariant}
+                      color={luxeDark.textSecondary}
                     />
                   </Pressable>
                 </View>
@@ -253,7 +282,7 @@ export default function InterestsScreen() {
                   </Animated.View>
                 )}
 
-                <View style={[s.categoryDivider, { backgroundColor: m3Colors.outlineVariant }]} />
+                <View style={[s.categoryDivider, { backgroundColor: luxeDark.border }]} />
               </View>
             );
           })}
@@ -261,22 +290,22 @@ export default function InterestsScreen() {
       </ScrollView>
 
       {/* Sticky bottom CTA */}
-      <Animated.View entering={FadeInDown.springify().damping(20).delay(250)} style={[s.bottomBar, { paddingBottom: bottomInset + 16, backgroundColor: m3Colors.background }]}>
+      <Animated.View entering={FadeInDown.springify().damping(20).delay(250)} style={[s.bottomBar, { paddingBottom: bottomInset + 16, backgroundColor: luxeDark.background }]}>
         {!isReady && (
-          <Text style={[s.remainingText, M3Typography.bodySmall, { color: m3Colors.onSurfaceVariant }]}>
+          <LuxeText variant="caption" style={{ textAlign: 'center', color: luxeDark.textSecondary }}>
             {remaining === 1 ? '1 more interest to go' : `${remaining} more interests to go`}
-          </Text>
+          </LuxeText>
         )}
-        <M3Button
+        <LuxeButton
           variant="filled"
           fullWidth
           rightIcon={isReady ? 'sparkles' : undefined}
           disabled={!isReady || isSubmitting}
           onPress={handleFinish}
-          style={{ height: 56, borderRadius: 20 }}
+          style={{ height: 56 }}
         >
           {isSubmitting ? 'Starting...' : isReady ? 'Start Exploring' : `Select ${remaining} more`}
-        </M3Button>
+        </LuxeButton>
       </Animated.View>
     </View>
   );

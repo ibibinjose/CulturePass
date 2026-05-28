@@ -1,5 +1,5 @@
 import { StyleSheet, Platform, type ViewStyle } from 'react-native';
-import { CultureTokens, CardTokens, FontFamily, FontSize, Spacing, webShadow } from '@/design-system/tokens/theme';
+import { CultureTokens, CardTokens, FontFamily, FontSize, Spacing, Radius, webShadow } from '@/design-system/tokens/theme';
 
 export const root = StyleSheet.create({ wrap: { flex: 1 } });
 
@@ -7,24 +7,24 @@ export const hero = StyleSheet.create({
   container: { alignItems: 'center', paddingBottom: 28, overflow: 'hidden' },
   arcOuter: {
     position: 'absolute', top: -80, right: -80,
-    width: 220, height: 220, borderRadius: 110,
+    width: 220, height: 220, borderRadius: Radius.full,
     borderWidth: 28, borderColor: CultureTokens.teal + '10',
   },
   arcInner: {
     position: 'absolute', top: -40, right: -40,
-    width: 130, height: 130, borderRadius: 65,
+    width: 130, height: 130, borderRadius: Radius.full,
     borderWidth: 18, borderColor: CultureTokens.indigo + '12',
   },
   nav: { flexDirection: 'row', alignItems: 'center', width: '100%', paddingBottom: 20 },
-  navBtn: { width: 44, height: 44, borderRadius: 22, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.08)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
+  navBtn: { width: 44, height: 44, borderRadius: Radius.full, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.08)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
   name: { fontSize: FontSize.title, fontFamily: FontFamily.bold, color: '#fff', letterSpacing: -0.4, textAlign: 'center' },
   handle: { fontSize: FontSize.body2, fontFamily: FontFamily.regular, color: 'rgba(255,255,255,0.55)', marginTop: 2, marginBottom: 14 },
   culturePills: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 6, marginBottom: 20, paddingHorizontal: 20 },
-  culturePill: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, backgroundColor: 'rgba(255,255,255,0.1)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.15)', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 50 },
+  culturePill: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, backgroundColor: 'rgba(255,255,255,0.1)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.15)', paddingHorizontal: 10, paddingVertical: 5, borderRadius: Radius.full },
   culturePillText: { fontSize: FontSize.micro, fontFamily: FontFamily.medium, color: 'rgba(255,255,255,0.85)', lineHeight: 15 },
   statsBar: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginHorizontal: 20,
-    backgroundColor: 'rgba(255,255,255,0.07)', borderRadius: 22, paddingVertical: 18, paddingHorizontal: Spacing.sm,
+    backgroundColor: 'rgba(255,255,255,0.07)', borderRadius: Radius.xl, paddingVertical: 18, paddingHorizontal: Spacing.sm,
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.07)', overflow: 'hidden', width: '88%',
     ...Platform.select<ViewStyle>({
       ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 12 },

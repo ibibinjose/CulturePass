@@ -22,7 +22,6 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  Platform,
 } from 'react-native';
 import { useColors } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
@@ -31,7 +30,6 @@ import {
   Spacing,
   Radius,
   FontFamily,
-  TextStyles,
 } from '@/design-system/tokens/theme';
 import { MediaUploadField } from '../fields/MediaUploadField';
 import type { EntityType } from '../../hooks/useFormWizard';
@@ -62,7 +60,7 @@ export function Step2Media({
   getFieldError,
 }: Step2MediaProps) {
   const colors = useColors();
-  const { isDesktop, isTablet } = useLayout();
+  const { isDesktop } = useLayout();
 
   // Generate storage path for uploads
   const storagePath = formData.id
@@ -337,3 +335,5 @@ const styles = StyleSheet.create({
     height: Spacing.xxl,
   },
 });
+
+export default Step2Media;

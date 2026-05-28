@@ -115,7 +115,10 @@ profilesRouter.get(
       const status = qstr(req.query.status).trim() || undefined;
       const ownerId = qstr(req.query.ownerId).trim() || undefined;
       const handle = qstr(req.query.handle).trim() || undefined;
+      const city = qstr(req.query.city).trim() || undefined;
+      const country = qstr(req.query.country).trim() || undefined;
       const verificationStatus = qstr(req.query.verificationStatus).trim() || undefined;
+      const q = (qstr(req.query.q) || qstr(req.query.search)).trim() || undefined;
 
       const page = Math.max(1, parseInt(qstr(req.query.page) || '1', 10) || 1);
       const pageSize = Math.min(100, Math.max(1, parseInt(qstr(req.query.pageSize) || '20', 10) || 20));
@@ -136,7 +139,10 @@ profilesRouter.get(
           status: status as any,
           ownerId,
           handle,
+          city,
+          country,
           verificationStatus: verificationStatus as any,
+          q,
         },
         { page, pageSize }
       );

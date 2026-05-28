@@ -14,6 +14,7 @@ import {
   Spacing,
   SignatureGradient,
   CardTokens,
+  luxeDark,
 } from '@/design-system/tokens/theme';
 import { M3Card } from '@/design-system/ui/M3Card';
 import { Badge } from '@/design-system/ui/Badge';
@@ -422,7 +423,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(28,25,23,0.85)',
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 999,
+    borderRadius: Radius.full,
     marginBottom: Spacing.sm,
   },
   nbBadgeText: {
@@ -430,11 +431,11 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 1,
-    color: '#1C1917',
+    color: luxeDark.textInverse,
   },
   nbHeroTitle: {
     ...TextStyles.headline,
-    color: '#1C1917',
+    color: luxeDark.textInverse,
     marginBottom: Spacing.xs,
   },
   nbHeroSubtitle: {

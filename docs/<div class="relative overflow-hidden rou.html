@@ -1,0 +1,40 @@
+<div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-rose-600 p-6 shadow-xl shadow-orange-500/20">
+  
+  <!-- Background accent -->
+  <div class="absolute inset-0 bg-[radial-gradient(at_30%_20%,rgba(255,255,255,0.25)_0%,transparent_50%)]"></div>
+  
+  <div class="relative flex items-start justify-between gap-4">
+    
+    <!-- Content -->
+    <div class="flex-1">
+      <div class="flex items-center gap-3 mb-3">
+        <div class="w-8 h-8 rounded-xl bg-white/90 flex items-center justify-center text-2xl shadow-inner">
+          🇦🇺
+        </div>
+        <div>
+          <span class="text-white/90 text-sm font-medium tracking-[1px] uppercase">Community Spotlight</span>
+          <h3 class="text-white text-xl font-semibold leading-none mt-0.5">Nation Builders</h3>
+        </div>
+      </div>
+      
+      <p class="text-white text-[17px] leading-tight font-medium max-w-md">
+        You serve Sydney.<br>
+        <span class="text-white/90">Now let Sydney serve you back.</span>
+      </p>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex flex-col items-end gap-3">
+      <button 
+        onclick="dismissBanner()"
+        class="w-8 h-8 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-all active:scale-95">
+        ✕
+      </button>
+      
+      <button 
+        class="px-6 py-2.5 bg-white text-orange-600 font-semibold rounded-xl text-sm active:scale-95 transition-all hover:shadow-lg">
+        Join the Movement
+      </button>
+    </div>
+  </div>
+</div>

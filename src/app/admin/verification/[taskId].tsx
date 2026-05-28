@@ -27,11 +27,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { adminKeys } from '@/hooks/queries/keys';
 import { createLazyComponent } from '@/lib/lazy';
+import type { VerificationTask, VerificationChecklistItem } from '@/shared/schema';
 
 const VerificationChecklist = createLazyComponent(
   () => import('@/modules/admin/components/VerificationChecklist')
 );
-import type { VerificationTask, VerificationChecklistItem } from '@/shared/schema';
 
 const ENTITY_TYPE_LABELS: Record<string, string> = {
   community: 'Community',

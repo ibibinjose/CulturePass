@@ -34,7 +34,7 @@ import { Input } from '@/design-system/ui/Input';
 import { useColors } from '@/hooks/useColors';
 import { useFieldValidation } from '@/modules/host/hooks/useFieldValidation';
 import { pastDateSchema } from '@/modules/host/schemas/profileSchema';
-import { CultureTokens, Radius, FontFamily } from '@/design-system/tokens/theme';
+import { CultureTokens, FontFamily } from '@/design-system/tokens/theme';
 
 export interface DateFieldProps {
   /**

@@ -39,12 +39,10 @@ import { ZodError } from 'zod';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import type { Profile } from '@/shared/schema';
-import type { ProfileDraft } from '@/platform/api/endpoints/createProfilesNamespace';
 import { getStepSchema } from '../schemas/profileSchema';
 import {
   serializeFormData,
   deserializeFormData,
-  calculateFormDiff,
   type PartialFormData,
 } from '../services/formStateSerializer';
 import { useAutoSave, type SaveStatus } from './useAutoSave';
@@ -389,7 +387,7 @@ export function useFormWizard({
     } finally {
       setIsInitializing(false);
     }
-  }, [entityType, existingProfile, existingDraft, user?.id, onInitialized]);
+  }, [entityType, existingProfile, existingDraft, user, onInitialized]);
 
   // Auto-initialize when dependencies are ready
   useEffect(() => {

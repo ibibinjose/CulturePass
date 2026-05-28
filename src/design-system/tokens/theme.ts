@@ -65,6 +65,8 @@ export type { ColorTheme, ShadowStyle } from './colors';
 // --- Luxe Heritage 2026 (new elevated system) ---
 export {
   Luxe,
+  luxeDark,
+  luxeLight,
   LuxeTextStyles,
   luxeGradients,
   TERRACOTTA_GLOW,

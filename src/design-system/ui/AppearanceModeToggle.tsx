@@ -28,6 +28,7 @@ export function AppearanceModeToggle({ compact }: Props) {
       onPress={onToggle}
       style={({ pressed }) => [
         styles.hit,
+        compact && styles.hitCompact,
         { backgroundColor: m3.surfaceContainerHighest },
         pressed && { opacity: 0.75 },
       ]}
@@ -36,7 +37,7 @@ export function AppearanceModeToggle({ compact }: Props) {
     >
       <Ionicons
         name={isDark ? 'moon' : 'sunny'}
-        size={iconSize}
+        size={compact ? Math.max(16, iconSize - 4) : Math.max(18, iconSize - 4)}
         color={m3.onSurfaceVariant}
       />
     </Pressable>
@@ -45,11 +46,17 @@ export function AppearanceModeToggle({ compact }: Props) {
 
 const styles = StyleSheet.create({
   hit: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 4,
+  },
+  hitCompact: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    marginRight: 2,
   },
 });

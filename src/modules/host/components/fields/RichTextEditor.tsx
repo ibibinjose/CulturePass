@@ -22,7 +22,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { useColors } from '@/hooks/useColors';
 import { M3Card } from '@/design-system/ui/M3Card';
-import { CultureTokens, Radius, FontFamily, InputTokens } from '@/design-system/tokens/theme';
+import { CultureTokens, Radius, FontFamily } from '@/design-system/tokens/theme';
 import { AIAssistButton } from './AIAssistButton';
 import { AIAssistModal } from './AIAssistModal';
 import { useAIAssist, type FieldType } from '../../hooks/useAIAssist';

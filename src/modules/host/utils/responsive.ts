@@ -12,7 +12,7 @@
  * Requirements: 22 (Mobile Responsive Design)
  */
 
-import { Platform, type ViewStyle, type TextStyle } from 'react-native';
+import { type ViewStyle, type TextStyle } from 'react-native';
 
 // ---------------------------------------------------------------------------
 // Constants

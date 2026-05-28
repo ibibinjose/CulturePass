@@ -21,9 +21,9 @@ import {
   TextStyles,
   Spacing,
   LiquidGlassTokens,
-  CultureTokens,
+  luxeDark,
 } from '@/design-system/tokens/theme';
-import { M3Button } from '@/design-system/ui';
+import { LuxeButton, LuxeText } from '@/design-system/ui';
 import { Input } from '@/design-system/ui/Input';
 import { BrandWordmark } from '@/design-system/ui/BrandWordmark';
 import { useColors } from '@/hooks/useColors';
@@ -155,15 +155,15 @@ export default function ForgotPasswordScreen() {
                   <View
                     style={[
                       styles.iconWrapper,
-                      { backgroundColor: `${CultureTokens.indigo}18`, borderColor: `${CultureTokens.indigo}30` },
+                      { backgroundColor: luxeDark.primaryContainer, borderColor: 'transparent' },
                     ]}
                   >
-                    <Ionicons name="lock-open-outline" size={28} color={CultureTokens.indigo} />
+                    <Ionicons name="lock-open-outline" size={28} color={luxeDark.onPrimaryContainer} />
                   </View>
-                  <Text style={[styles.title, { color: colors.text }]}>Reset Password</Text>
-                  <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+                  <LuxeText variant="display" style={[styles.title, { color: luxeDark.text }]}>Reset Password</LuxeText>
+                  <LuxeText variant="body" style={[styles.subtitle, { color: luxeDark.textSecondary }]}>
                     Enter your account email and we&apos;ll send a reset link straight to your inbox.
-                  </Text>
+                  </LuxeText>
                 </View>
 
                 <View style={styles.formBlock}>
@@ -181,17 +181,16 @@ export default function ForgotPasswordScreen() {
                     onSubmitEditing={handleSubmit}
                   />
 
-                  <M3Button
+                  <LuxeButton
                     variant="filled"
                     rightIcon="send"
                     loading={loading}
                     disabled={!isValid || loading}
                     onPress={handleSubmit}
                     style={styles.submitBtn}
-                    accessibilityLabel="Send password reset link"
                   >
                     Send Reset Link
-                  </M3Button>
+                  </LuxeButton>
                 </View>
 
                 <Pressable
@@ -201,8 +200,8 @@ export default function ForgotPasswordScreen() {
                   accessibilityRole="link"
                   accessibilityLabel="Back to Sign In"
                 >
-                  <Ionicons name="chevron-back" size={14} color={colors.primary} />
-                  <Text style={[styles.backText, { color: colors.primary }]}>Back to Sign In</Text>
+                  <Ionicons name="chevron-back" size={14} color={luxeDark.primary} />
+                  <LuxeText variant="bodyMedium" style={{ color: luxeDark.primary }}>Back to Sign In</LuxeText>
                 </Pressable>
               </>
             ) : (
@@ -212,28 +211,27 @@ export default function ForgotPasswordScreen() {
                   <BrandWordmark size="md" withTagline={false} centered />
                 </View>
 
-                <View style={[styles.successIconWrap, { backgroundColor: `${colors.success}18`, borderColor: `${colors.success}30` }]}>
-                  <Ionicons name="checkmark-circle" size={40} color={colors.success} />
+                <View style={[styles.successIconWrap, { backgroundColor: luxeDark.emerald + '20', borderColor: 'transparent' }]}>
+                  <Ionicons name="checkmark-circle" size={40} color={luxeDark.emerald} />
                 </View>
 
-                <Text style={[styles.successTitle, { color: colors.text }]}>Check Your Email</Text>
-                <Text style={[styles.successSub, { color: colors.textSecondary }]}>
+                <LuxeText variant="display" style={[styles.successTitle, { color: luxeDark.text }]}>Check Your Email</LuxeText>
+                <LuxeText variant="body" style={[styles.successSub, { color: luxeDark.textSecondary }]}>
                   We&apos;ve sent a reset link to:
-                </Text>
-                <Text style={[styles.emailDisplay, { color: CultureTokens.indigo }]}>{email}</Text>
-                <Text style={[styles.successHint, { color: colors.textSecondary }]}>
+                </LuxeText>
+                <LuxeText variant="title3" style={[styles.emailDisplay, { color: luxeDark.accent }]}>{email}</LuxeText>
+                <LuxeText variant="caption" style={[styles.successHint, { color: luxeDark.textTertiary }]}>
                   If you don&apos;t see it, check your spam folder. The link expires in 24 hours.
-                </Text>
+                </LuxeText>
 
-                <M3Button
+                <LuxeButton
                   variant="filled"
                   leftIcon="chevron-back"
                   onPress={() => router.replace('/(onboarding)/login')}
                   style={[styles.submitBtn, { marginTop: Spacing.lg }]}
-                  accessibilityLabel="Back to Sign In"
                 >
                   Back to Sign In
-                </M3Button>
+                </LuxeButton>
 
                 <Pressable
                   style={styles.backRow}
@@ -243,10 +241,10 @@ export default function ForgotPasswordScreen() {
                   accessibilityLabel="Resend reset email"
                   disabled={loading}
                 >
-                  <Text style={[styles.resendText, { color: colors.textSecondary }]}>
+                  <LuxeText variant="body" style={{ color: luxeDark.textSecondary, textAlign: 'center' }}>
                     Didn&apos;t get it?{' '}
-                    <Text style={{ color: colors.primary, fontFamily: FontFamily.bold }}>Resend</Text>
-                  </Text>
+                    <LuxeText variant="bodyMedium" style={{ color: luxeDark.primary }}>Resend</LuxeText>
+                  </LuxeText>
                 </Pressable>
               </View>
             )}

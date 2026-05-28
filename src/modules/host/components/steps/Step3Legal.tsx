@@ -169,7 +169,6 @@ export function Step3Legal({
 }: Step3LegalProps) {
   const colors = useColors();
   const { isDesktop } = useLayout();
-  const insets = useSafeAreaInsets();
 
   // ---------------------------------------------------------------------------
   // Field Values
@@ -239,8 +238,6 @@ export function Step3Legal({
   // ---------------------------------------------------------------------------
   // Render
   // ---------------------------------------------------------------------------
-
-  const topInset = Platform.OS === 'web' ? 0 : insets.top;
 
   return (
     <ScrollView
@@ -415,22 +412,6 @@ function getLicenceHint(entityType: EntityType): string {
 }
 
 /**
- * Get verification info text based on entity type
- */
-function getVerificationInfo(entityType: EntityType): string {
-  const requiresVerification =
-    entityType === 'business' ||
-    entityType === 'venue' ||
-    entityType === 'organiser';
-
-  if (requiresVerification) {
-    return 'Your documents will be reviewed by our team within 48 hours. You can save your profile as a draft and continue editing while verification is in progress.';
-  }
-
-  return 'Your documents will be reviewed for authenticity. This helps build trust with the CulturePass community. You can publish your profile immediately and verification will happen in the background.';
-}
-
-/**
  * Creator Trust helpers — entity-specific "what this unlocks" messaging.
  * These directly implement the livelihood impact language from the Creator Trust Playbook.
  */
@@ -462,53 +443,7 @@ function getUnlocksAfter(entityType: EntityType): string[] {
   return ['Paid membership tiers', 'Event ticketing', 'Full community tools'];
 }
 
-/**
- * Get verification status color
- */
-function getVerificationColor(status: string): string {
-  switch (status) {
-    case 'verified':
-      return CultureTokens.teal;
-    case 'pending':
-      return CultureTokens.indigo;
-    case 'rejected':
-      return CultureTokens.coral;
-    default:
-      return CultureTokens.indigo;
-  }
-}
 
-/**
- * Get verification status icon
- */
-function getVerificationIcon(status: string): any {
-  switch (status) {
-    case 'verified':
-      return 'checkmark-circle';
-    case 'pending':
-      return 'time';
-    case 'rejected':
-      return 'close-circle';
-    default:
-      return 'time';
-  }
-}
-
-/**
- * Get verification status label
- */
-function getVerificationLabel(status: string): string {
-  switch (status) {
-    case 'verified':
-      return 'Verified';
-    case 'pending':
-      return 'Pending Verification';
-    case 'rejected':
-      return 'Verification Rejected';
-    default:
-      return 'Pending';
-  }
-}
 
 // ---------------------------------------------------------------------------
 // Styles

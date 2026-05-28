@@ -142,6 +142,8 @@ export interface EventFilters {
   /** ABS LGA code — applied in memory (matches `lgaCode` or linked `councilId`) */
   lgaCode?: string;
   councilId?: string;
+  /** Search query — case-insensitive match on title/description */
+  q?: string;
 }
 
 const eventsCol = () => db.collection('events');
@@ -257,6 +259,12 @@ export const eventsService = {
           const inCouncil = cid && data.councilId === cid;
           if (!inLga && !inCouncil) matchesAdvanced = false;
         }
+        if (filters.q) {
+          const searchTerm = filters.q.toLowerCase();
+          const title = (data.title || '').toLowerCase();
+          const desc = (data.description || '').toLowerCase();
+          if (!title.includes(searchTerm) && !desc.includes(searchTerm)) matchesAdvanced = false;
+        }
 
         if (matchesAdvanced && data.latitude != null && data.longitude != null) {
           const distanceInKm = geofire.distanceBetween([data.latitude, data.longitude], center);
@@ -331,6 +339,13 @@ export const eventsService = {
             (e) => (lga && e.lgaCode === lga) || (cid && e.councilId === cid),
           );
         }
+        if (filters.q) {
+          const searchTerm = filters.q.toLowerCase();
+          memItems = memItems.filter((e) =>
+            (e.title || '').toLowerCase().includes(searchTerm) ||
+            (e.description || '').toLowerCase().includes(searchTerm)
+          );
+        }
         memItems.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
         return memItems;
       };
@@ -393,6 +408,13 @@ export const eventsService = {
         const cid = filters.councilId ? String(filters.councilId) : '';
         memItems = memItems.filter(
           (e) => (lga && e.lgaCode === lga) || (cid && e.councilId === cid),
+        );
+      }
+      if (filters.q) {
+        const searchTerm = filters.q.toLowerCase();
+        memItems = memItems.filter((e) =>
+          (e.title || '').toLowerCase().includes(searchTerm) ||
+          (e.description || '').toLowerCase().includes(searchTerm)
         );
       }
 

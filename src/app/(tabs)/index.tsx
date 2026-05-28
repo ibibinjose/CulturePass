@@ -15,7 +15,6 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import Head from 'expo-router/head';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -31,16 +30,18 @@ import {
   Vitrine,
   FontFamily,
   Spacing,
-  Luxe,
-  LuxeTextStyles,
+  luxeDark,
 } from '@/design-system/tokens/theme';
-import { LuxeButton } from '@/design-system/ui';
 import { isCultureKeralaHost } from '@/lib/domainHost';
 import { FOOTER_LINKS } from '@/lib/site-footer-links';
 import { APP_NAME, MADE_IN, SITE_ORIGIN } from '@/lib/app-meta';
 import { useOnboarding } from '@/contexts/OnboardingContext';
 import { useSearchShortcut } from '@/hooks/useSearchShortcut';
-import { M3TopAppBar, M3FilterChip, AppearanceModeToggle } from '@/design-system/ui';
+import {
+  AppearanceModeToggle,
+  CulturalTopAppBar,
+  LuxeFilterChip,
+} from '@/design-system/ui';
 import { CommunityHomeBanner } from '@/components/CommunityHomeBanner';
 
 import {
@@ -53,7 +54,6 @@ import { useKeralaScoping } from '@/modules/discover/hooks/useKeralaScoping';
 import { useReminderPopup } from '@/hooks/useReminderPopup';
 import { ReminderPopupModal } from '@/components/ReminderPopupModal';
 import { NationBuildersPromo } from '@/components/NationBuilders/NationBuildersPromo';
-import { CulturalTopAppBar, CulturalFilterChip } from '@/design-system/ui';
 
 // ─── Filter chip definitions ───────────────────────────────────────────────────
 
@@ -88,10 +88,10 @@ const DISCOVER_FILTERS: { id: DiscoverFilter; label: string; icon: keyof typeof 
   { id: 'search',     label: 'Search',     icon: 'search' },
 ];
 
-const DISCOVER_HEAD_TITLE = `Discover · ${APP_NAME}`;
-const DISCOVER_HEAD_DESC =
+const _DISCOVER_HEAD_TITLE = `Discover · ${APP_NAME}`;
+const _DISCOVER_HEAD_DESC =
   'Browse cultural events, hubs, dining, movies, and communities tailored to diaspora cities.';
-const DISCOVER_HEAD_URL = SITE_ORIGIN;
+const _DISCOVER_HEAD_URL = SITE_ORIGIN;
 
 // ─── Screen ────────────────────────────────────────────────────────────────────
 
@@ -209,9 +209,6 @@ export default function DiscoverScreen() {
         >
           <CommunityHomeBanner />
 
-          {/* Nation Builders Promo — admin flag controlled, only non CulturePass+ users, dismissible */}
-          <NationBuildersPromo variant="full" />
-
           <DiscoverHeader
             currentTime={d.currentTime}
             weatherSummary={d.weatherSummary}
@@ -220,19 +217,6 @@ export default function DiscoverScreen() {
             isAuthenticated={d.isAuthenticated}
             onRefresh={d.handleRefresh}
           />
-
-          {/* Luxe Heritage 2026 — first live usage of new premium button */}
-          <View style={{ paddingHorizontal: pageSidePad, marginBottom: Spacing.md }}>
-            <LuxeButton
-              variant="filled"
-              size="lg"
-              fullWidth
-              leftIcon="compass"
-              onPress={() => router.push('/browse')}
-            >
-              Explore Culture
-            </LuxeButton>
-          </View>
 
           <ScrollView
             horizontal
@@ -246,12 +230,13 @@ export default function DiscoverScreen() {
             ]}
           >
             {DISCOVER_FILTERS.map((f) => (
-              <CulturalFilterChip
+              <LuxeFilterChip
                 key={f.id}
                 label={f.label}
                 icon={f.icon}
                 selected={activeFilter === f.id}
                 onPress={() => handleFilterPress(f.id)}
+                compact
               />
             ))}
           </ScrollView>
@@ -261,19 +246,20 @@ export default function DiscoverScreen() {
               <View
                 style={[ds.searchBar, {
                   marginHorizontal: pageSidePad,
-                  backgroundColor: m3Colors.surfaceContainerHigh,
+                  backgroundColor: luxeDark.surfaceElevated,
                   height: 56,
                   borderRadius: 28,
                   paddingHorizontal: 16,
-                  borderWidth: 0,
+                  borderWidth: 1,
+                  borderColor: luxeDark.border,
                 }]}
               >
-                <Ionicons name="search" size={24} color={m3Colors.onSurfaceVariant} />
+                <Ionicons name="search" size={24} color={luxeDark.textSecondary} />
                 <TextInput
                   ref={searchInputRef as any}
-                  style={[ds.searchInput, { color: m3Colors.onSurface, fontSize: 16, marginLeft: 12 }]}
+                  style={[ds.searchInput, { color: luxeDark.text, fontSize: 16, marginLeft: 12 }]}
                   placeholder="Search events, places, movies..."
-                  placeholderTextColor={m3Colors.onSurfaceVariant}
+                  placeholderTextColor={luxeDark.textTertiary}
                   value={searchQuery}
                   onChangeText={setSearchQuery}
                   autoFocus
@@ -282,7 +268,7 @@ export default function DiscoverScreen() {
                 />
                 {searchQuery.length > 0 && (
                   <Pressable onPress={() => setSearchQuery('')} hitSlop={10}>
-                    <Ionicons name="close" size={24} color={m3Colors.onSurfaceVariant} />
+                    <Ionicons name="close" size={24} color={luxeDark.textSecondary} />
                   </Pressable>
                 )}
               </View>
@@ -299,6 +285,9 @@ export default function DiscoverScreen() {
             keralaDomain={keralaDomain}
             skippedOnboardingSteps={(onboardingState as any).skippedSteps ?? []}
           />
+
+          {/* Nation Builders Promo — moved to bottom, smaller + improved UI */}
+          <NationBuildersPromo variant="full" />
 
           <View style={[ds.footer, { marginHorizontal: pageSidePad, borderTopColor: m3Colors.outlineVariant }]}>
             <View style={ds.footerLinks}>

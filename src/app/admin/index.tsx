@@ -14,11 +14,10 @@ import { CultureTokens } from '@/design-system/tokens/colors';
 import { FontFamily } from '@/design-system/tokens/theme';
 import { GlassView } from '@/design-system/ui/GlassView';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
-import { M3TopAppBar, M3Button } from '@/design-system/ui';
+import { M3TopAppBar } from '@/design-system/ui';
 import { Image } from 'expo-image';
 import { useAdminStats, useAuditLogs } from '@/modules/admin/hooks/useAdminStats';
 import { useSafeBack } from '@/lib/navigation';
-import { MADE_IN } from '@/lib/app-meta';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { adminKeys } from '@/hooks/queries/keys';
@@ -29,8 +28,8 @@ export default function AdminDashboard() {
   const colors = useColors();
   const handleBack = useSafeBack('/(tabs)/my-space');
   const { hPad, isDesktop } = useLayout();
-  const { data: stats, isLoading: statsLoading } = useAdminStats();
-  const { data: logsData, isLoading: logsLoading } = useAuditLogs(8);
+  const { data: stats } = useAdminStats();
+  const { data: logsData } = useAuditLogs(8);
   const { data: healthData } = useQuery({
     queryKey: adminKeys.systemHealth(),
     queryFn: () => api.admin.systemHealth(),

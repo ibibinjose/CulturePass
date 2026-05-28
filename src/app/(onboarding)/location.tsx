@@ -1,59 +1,86 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
   Pressable,
-  StyleSheet,
-  Platform,
-  ActivityIndicator,
-  Alert,
-  TextInput,
   ScrollView,
-  type DimensionValue,
+  StyleSheet,
+  TextInput,
+  Platform,
+  Alert,
+  ActivityIndicator,
+  TouchableOpacity,
 } from 'react-native';
-import { router, useLocalSearchParams } from 'expo-router';
 import { Image } from 'expo-image';
+import { router } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import Animated, {
-  FadeInDown,
-  FadeInRight,
-  FadeInLeft,
-  FadeIn,
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-  Easing,
-} from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useQuery } from '@tanstack/react-query';
+import { LinearGradient } from 'expo-linear-gradient';
+import * as Location from 'expo-location';
+import * as Haptics from 'expo-haptics';
+import Animated, { FadeIn, FadeInRight, FadeInLeft, FadeInDown, useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
 
 import { useOnboarding } from '@/contexts/OnboardingContext';
 import { useColors } from '@/hooks/useColors';
 import { useM3Colors } from '@/hooks/useM3Colors';
 import { useLayout } from '@/hooks/useLayout';
+import { Button, Input } from '@/design-system/ui';
+import { CultureTokens, Radius, Spacing, Layout, M3Typography, TextStyles, FontFamily, IconSize } from '@/design-system/tokens/theme';
+import { 
+  getPostcodesByPlace, 
+  getPostcodesByState, 
+  australianPostcodes 
+} from '@shared/location/australian-postcodes';
+import { log } from '@/lib/logger';
+import { luxeDark } from '@/design-system/tokens/luxeHeritage';
+import { LuxeText } from '@/design-system/ui/LuxeText';
+import { LuxeCard } from '@/design-system/ui/LuxeCard';
+import { LuxeButton } from '@/design-system/ui/LuxeButton';
+import { LuxeFilterChip } from '@/design-system/ui/LuxeFilterChip';
+import { M3TopAppBar } from '@/design-system/ui/M3TopAppBar';
+
+// Import missing hooks and utils
+import { useAuth } from '@/lib/auth';
 import { useLocations } from '@/hooks/useLocations';
 import { useNearestMarketplaceLocation } from '@/hooks/useNearestMarketplaceLocation';
 import { useDetectCountry } from '@/hooks/useDetectCountry';
-
-import { M3Button, M3Card, M3TopAppBar, M3FilterChip } from '@/design-system/ui';
-
-import {
-  CultureTokens,
-  FontFamily,
-  IconSize,
-  M3Typography,
-} from '@/design-system/tokens/theme';
-
-import * as Haptics from 'expo-haptics';
-import { routeWithRedirect, sanitizeInternalRedirect } from '@/lib/routes';
-import {
-  getCountryFlag,
-  getCountryForCity,
-  getRegionsForCountry,
-  listMarketplaceCountries,
-  resolveCountryPickerPin,
-} from '@/lib/marketplaceLocation';
-import { useAuth } from '@/lib/auth';
+import { sanitizeInternalRedirect, routeWithRedirect } from '@/lib/routes';
 import { syncUserMarketplaceLocation } from '@/lib/syncMarketplaceLocation';
+import { 
+  getCountryForCity, 
+  getRegionsForCountry,
+  listMarketplaceCountries, 
+  resolveCountryPickerPin 
+} from '@/lib/marketplaceLocation';
 import { CountrySelectList } from '@/components/location/CountrySelectList';
+
+// Define types directly since they may not be properly exported
+type AustralianState = {
+  code: string;
+  name: string;
+  emoji?: string;
+};
+
+// Helper functions
+export function getAustralianStates(): AustralianState[] {
+  const statesSet = new Set(australianPostcodes.map((pc: any) => pc.state_code));
+  return Array.from(statesSet).map(code => {
+    const stateName = australianPostcodes.find((pc: any) => pc.state_code === code)?.state_name || code;
+    return {
+      code,
+      name: stateName,
+      emoji: '🇦🇺'
+    };
+  });
+}
+
+export function getCitiesForState(stateCode: string): string[] {
+  const filteredPostcodes = australianPostcodes.filter((pc: any) => pc.state_code === stateCode);
+  const uniqueCities = Array.from(new Set(filteredPostcodes.map((pc: any) => pc.place_name)));
+  return uniqueCities.sort();
+}
 
 // ---------------------------------------------------------------------------
 // Types & constants
@@ -361,33 +388,33 @@ export default function LocationScreen() {
   const renderGpsSuggestionSlot = () => {
     if (gpsCountry) {
       return (
-        <M3Card
-          variant="filled"
-          onPress={() => selectMarketplaceCountry(gpsCountry)}
-          style={[
-            s.gpsSuggestCard,
-            {
-              backgroundColor: m3Colors.primaryContainer,
-              marginBottom: 16,
-            },
-          ]}
-        >
-          <View style={[s.gpsSuggestIconWrap, { backgroundColor: m3Colors.onPrimaryContainer + '20' }]}>
-            <Ionicons name="navigate-circle" size={24} color={m3Colors.onPrimaryContainer} />
-          </View>
-          <View style={s.gpsSuggestTextWrap}>
-            <Text style={[s.gpsSuggestEyebrow, M3Typography.labelSmall, { color: m3Colors.onPrimaryContainer }]}>SUGGESTED FOR YOU</Text>
-            <Text style={[s.gpsSuggestCountry, M3Typography.titleMedium, { color: m3Colors.onPrimaryContainer }]}>
-              {getCountryFlag(gpsCountry)}{'  '}{gpsCountry}
-            </Text>
-          </View>
-          <Ionicons name="chevron-forward" size={18} color={m3Colors.onPrimaryContainer} />
-        </M3Card>
+      <LuxeCard
+        variant="filled"
+        onPress={() => selectMarketplaceCountry(gpsCountry)}
+        style={[
+          s.gpsSuggestCard,
+          {
+            backgroundColor: luxeDark.primaryContainer,
+            marginBottom: 16,
+          },
+        ]}
+      >
+        <View style={[s.gpsSuggestIconWrap, { backgroundColor: luxeDark.onPrimaryContainer + '20' }]}>
+          <Ionicons name="navigate-circle" size={24} color={luxeDark.onPrimaryContainer} />
+        </View>
+        <View style={s.gpsSuggestTextWrap}>
+          <LuxeText variant="badgeCaps" style={{ color: luxeDark.onPrimaryContainer }}>SUGGESTED FOR YOU</LuxeText>
+          <LuxeText variant="title3" style={{ color: luxeDark.onPrimaryContainer }}>
+            {getCountryFlag(gpsCountry)}{'  '}{gpsCountry}
+          </LuxeText>
+        </View>
+        <Ionicons name="chevron-forward" size={18} color={luxeDark.onPrimaryContainer} />
+      </LuxeCard>
       );
     }
 
     return (
-      <M3Button
+      <LuxeButton
         variant="tonal"
         onPress={handleDetectCountry}
         disabled={isDetectingCountry}
@@ -396,7 +423,7 @@ export default function LocationScreen() {
         style={{ marginBottom: 16, height: 64, borderRadius: 16 }}
       >
         Detect my country
-      </M3Button>
+      </LuxeButton>
     );
   };
 
@@ -435,7 +462,7 @@ export default function LocationScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <Animated.View entering={enter(40)} style={[s.formContainer, isDesktop && s.formContainerDesktop]}>
-          <M3Card variant="elevated" style={s.formContent}>
+          <LuxeCard variant="default" style={s.formContent}>
 
             {/* Breadcrumb — shown after country is chosen */}
             {step !== 'country' && (
@@ -443,13 +470,13 @@ export default function LocationScreen() {
                 {breadcrumbItems.map((item, i) => (
                   <React.Fragment key={i}>
                     {i > 0 && (
-                      <Ionicons name="chevron-forward" size={12} color={m3Colors.onSurfaceVariant} />
+                      <Ionicons name="chevron-forward" size={12} color={luxeDark.textSecondary} />
                     )}
-                    <M3FilterChip
+                    <LuxeFilterChip
                       label={item.label}
                       onPress={() => {}}
                       selected={item.active}
-                      style={{ height: 28 }}
+                      compact
                     />
                   </React.Fragment>
                 ))}
@@ -515,13 +542,13 @@ export default function LocationScreen() {
 
             {/* Step icon + title */}
             <View style={s.headerBlock}>
-              <View style={[s.iconWrapper, { backgroundColor: m3Colors.primaryContainer }]}>
+              <View style={[s.iconWrapper, { backgroundColor: luxeDark.primaryContainer }]}>
                 <Animated.View key={step} entering={FadeIn.duration(200)}>
-                  <Ionicons name={STEP_ICON[step]} size={34} color={m3Colors.onPrimaryContainer} />
+                  <Ionicons name={STEP_ICON[step]} size={34} color={luxeDark.onPrimaryContainer} />
                 </Animated.View>
               </View>
-              <Text style={[s.title, M3Typography.headlineMedium, { color: m3Colors.onSurface }]}>{STEP_TITLE[step](pendingCountry)}</Text>
-              <Text style={[s.subtitle, M3Typography.bodyMedium, { color: m3Colors.onSurfaceVariant }]}>{STEP_SUBTITLE[step]}</Text>
+              <LuxeText variant="display" style={[s.title, { color: luxeDark.text }]}>{STEP_TITLE[step](pendingCountry)}</LuxeText>
+              <LuxeText variant="body" style={[s.subtitle, { color: luxeDark.textSecondary }]}>{STEP_SUBTITLE[step]}</LuxeText>
             </View>
 
             {/* Step content */}
@@ -546,7 +573,7 @@ export default function LocationScreen() {
                 <View>
                   {/* GPS city detect — AU only */}
                   {pendingCountry === 'Australia' && (
-                    <M3Button
+                    <LuxeButton
                         variant="tonal"
                         onPress={handleDetectCity}
                         disabled={isDetectingCity}
@@ -555,25 +582,25 @@ export default function LocationScreen() {
                         style={{ height: 64, borderRadius: 16, marginBottom: 16 }}
                     >
                         Use my location
-                    </M3Button>
+                    </LuxeButton>
                   )}
 
                   {pendingCountry === 'Australia' && locationsLoading && (
-                    <ActivityIndicator size="large" color={m3Colors.primary} style={{ paddingVertical: 20 }} />
+                    <ActivityIndicator size="large" color={luxeDark.primary} style={{ paddingVertical: 20 }} />
                   )}
 
                   {pendingCountry === 'Australia' && !!locationsError && (
-                    <View style={[s.errorBanner, { backgroundColor: m3Colors.errorContainer }]}>
-                      <Ionicons name="alert-circle" size={IconSize.md} color={m3Colors.error} />
-                      <Text style={[s.errorText, { color: m3Colors.error }]}>Failed to load locations.</Text>
+                    <View style={[s.errorBanner, { backgroundColor: luxeDark.error + '20' }]}>
+                      <Ionicons name="alert-circle" size={IconSize.md} color={luxeDark.error} />
+                      <LuxeText variant="body" style={{ color: luxeDark.error }}>Failed to load locations.</LuxeText>
                     </View>
                   )}
 
                   {pendingCountry === 'Australia' && !locationsLoading && (
                     <View style={s.orDivider}>
-                      <View style={[s.orDividerLine, { backgroundColor: m3Colors.outlineVariant }]} />
-                      <Text style={[s.orDividerText, M3Typography.labelSmall, { color: m3Colors.onSurfaceVariant }]}>OR CHOOSE A STATE</Text>
-                      <View style={[s.orDividerLine, { backgroundColor: m3Colors.outlineVariant }]} />
+                      <View style={[s.orDividerLine, { backgroundColor: luxeDark.border }]} />
+                      <LuxeText variant="badgeCaps" style={{ color: luxeDark.textSecondary }}>OR CHOOSE A STATE</LuxeText>
+                      <View style={[s.orDividerLine, { backgroundColor: luxeDark.border }]} />
                     </View>
                   )}
 
@@ -581,26 +608,27 @@ export default function LocationScreen() {
                     {regions.map((st) => {
                       const isSelected = st.code === pendingState;
                       return (
-                        <M3Card
+                        <LuxeCard
                           key={st.code}
-                          variant={isSelected ? 'filled' : 'outlined'}
+                          variant={isSelected ? 'tonal' : 'default'}
                           onPress={() => selectRegion(st.code)}
                           style={[
                             s.stateCard,
                             {
-                              backgroundColor: isSelected ? m3Colors.primaryContainer : 'transparent',
-                              borderColor: isSelected ? 'transparent' : m3Colors.outlineVariant,
+                              backgroundColor: isSelected ? luxeDark.primaryContainer : luxeDark.surface,
+                              borderColor: isSelected ? 'transparent' : luxeDark.border,
+                              borderWidth: isSelected ? 0 : 1,
                             },
                           ]}
                         >
                           <Text style={s.stateEmoji}>{st.emoji}</Text>
-                          <Text style={[s.stateName, M3Typography.labelLarge, { color: isSelected ? m3Colors.onPrimaryContainer : m3Colors.onSurface }]}>
+                          <LuxeText variant="title3" style={{ textAlign: 'center', color: isSelected ? luxeDark.onPrimaryContainer : luxeDark.text }}>
                             {st.name}
-                          </Text>
-                          <Text style={[s.cityCount, M3Typography.labelSmall, { color: isSelected ? m3Colors.onPrimaryContainer : m3Colors.onSurfaceVariant }]}>
+                          </LuxeText>
+                          <LuxeText variant="caption" style={{ textAlign: 'center', color: isSelected ? luxeDark.onPrimaryContainer : luxeDark.textSecondary }}>
                             {st.cities.length} cities
-                          </Text>
-                        </M3Card>
+                          </LuxeText>
+                        </LuxeCard>
                       );
                     })}
                   </View>
@@ -613,14 +641,14 @@ export default function LocationScreen() {
                   <View
                     style={[
                       s.searchBar,
-                      { backgroundColor: m3Colors.surfaceContainerHigh, borderWidth: 0, height: 56, borderRadius: 28, marginBottom: 16 },
+                      { backgroundColor: luxeDark.surfaceElevated, borderWidth: 1, borderColor: luxeDark.border, height: 56, borderRadius: 28, marginBottom: 16 },
                     ]}
                   >
-                    <Ionicons name="search" size={24} color={m3Colors.onSurfaceVariant} />
+                    <Ionicons name="search" size={24} color={luxeDark.textSecondary} />
                     <TextInput
-                      style={[s.searchInput, { color: m3Colors.onSurface, fontSize: 16, marginLeft: 12 }]}
+                      style={[s.searchInput, { color: luxeDark.text, fontSize: 16, marginLeft: 12 }]}
                       placeholder={`Search ${allCitiesForState.length} cities…`}
-                      placeholderTextColor={m3Colors.onSurfaceVariant}
+                      placeholderTextColor={luxeDark.textTertiary}
                       value={citySearch}
                       onChangeText={setCitySearch}
                       autoCorrect={false}
@@ -630,52 +658,50 @@ export default function LocationScreen() {
                     />
                     {citySearch.length > 0 && Platform.OS !== 'ios' && (
                       <Pressable onPress={() => setCitySearch('')} hitSlop={8}>
-                        <Ionicons name="close" size={24} color={m3Colors.onSurfaceVariant} />
+                        <Ionicons name="close" size={24} color={luxeDark.textSecondary} />
                       </Pressable>
                     )}
                   </View>
 
                   {citiesToShow.length === 0 ? (
-                    <M3Card variant="outlined" style={s.noResults}>
-                      <Ionicons name="search-outline" size={48} color={m3Colors.onSurfaceVariant} />
-                      <Text style={[s.noResultsText, M3Typography.titleMedium, { color: m3Colors.onSurface }]}>
+                    <LuxeCard variant="default" style={s.noResults}>
+                      <Ionicons name="search-outline" size={48} color={luxeDark.textTertiary} />
+                      <LuxeText variant="title3" style={{ color: luxeDark.text }}>
                         No cities match
-                      </Text>
-                      <M3Button variant="text" onPress={() => setCitySearch('')}>Clear search</M3Button>
-                    </M3Card>
+                      </LuxeText>
+                      <LuxeButton variant="glass" size="sm" onPress={() => setCitySearch('')}>Clear search</LuxeButton>
+                    </LuxeCard>
                   ) : (
                     <View style={s.cityGrid}>
                       {citiesToShow.map((city) => {
                         const isActive = state.city === city;
                         return (
-                          <M3Card
+                          <LuxeCard
                             key={city}
-                            variant={isActive ? 'filled' : 'outlined'}
+                            variant={isActive ? 'tonal' : 'default'}
                             onPress={() => selectCity(city)}
                             style={[
                               s.cityCard,
                               {
-                                backgroundColor: isActive ? m3Colors.primary : 'transparent',
-                                borderColor: isActive ? 'transparent' : m3Colors.outlineVariant,
+                                backgroundColor: isActive ? luxeDark.primary : luxeDark.surface,
+                                borderColor: isActive ? 'transparent' : luxeDark.border,
+                                borderWidth: isActive ? 0 : 1,
                               },
                             ]}
                           >
                             <Ionicons
                                 name={isActive ? "checkmark-circle" : "location-outline"}
                                 size={20}
-                                color={isActive ? m3Colors.onPrimary : m3Colors.primary}
+                                color={isActive ? "#FFF" : luxeDark.primary}
                             />
-                            <Text
-                              style={[
-                                s.cityName,
-                                M3Typography.labelLarge,
-                                { color: isActive ? m3Colors.onPrimary : m3Colors.onSurface },
-                              ]}
+                            <LuxeText
+                              variant="body"
+                              style={{ color: isActive ? "#FFF" : luxeDark.text, flex: 1 }}
                               numberOfLines={1}
                             >
                               {city}
-                            </Text>
-                          </M3Card>
+                            </LuxeText>
+                          </LuxeCard>
                         );
                       })}
                     </View>
@@ -687,38 +713,39 @@ export default function LocationScreen() {
             {/* Back-within-flow link */}
             {step !== 'country' && (
               <View style={s.backLinkRow}>
-                <M3Button
-                  variant="text"
+                <LuxeButton
+                  variant="glass"
+                  size="sm"
                   onPress={goBackWithinFlow}
                   leftIcon="arrow-back"
                 >
                     Back
-                </M3Button>
+                </LuxeButton>
               </View>
             )}
 
             <View style={s.spacer} />
 
-            <M3Button
+            <LuxeButton
               variant="filled"
               rightIcon="arrow-forward"
               disabled={!state.country || !state.city}
               onPress={handleNext}
-              style={{ height: 58, borderRadius: 20 }}
+              style={{ height: 58 }}
             >
               Continue
-            </M3Button>
+            </LuxeButton>
 
             {(!state.country || !state.city) && (
-              <Text style={[s.continueHint, M3Typography.bodySmall, { color: m3Colors.onSurfaceVariant }]}>
+              <LuxeText variant="caption" style={{ textAlign: 'center', marginTop: 12, color: luxeDark.textTertiary }}>
                 {step === 'country'
                   ? 'Select a country to continue'
                   : step === 'region'
                     ? 'Select your state to continue'
                     : 'Choose a city to continue'}
-              </Text>
+              </LuxeText>
             )}
-          </M3Card>
+          </LuxeCard>
         </Animated.View>
       </ScrollView>
     </View>

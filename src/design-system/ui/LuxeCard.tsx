@@ -11,7 +11,7 @@
  */
 
 import React from 'react';
-import { View, Pressable, StyleSheet, Platform, ViewStyle } from 'react-native';
+import { View, Pressable, StyleSheet, Platform, ViewStyle, StyleProp } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 
@@ -19,7 +19,7 @@ import { Luxe } from '@/design-system/tokens/luxeHeritage';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-export type LuxeCardVariant = 'default' | 'glass' | 'tonal';
+export type LuxeCardVariant = 'default' | 'glass' | 'tonal' | 'filled';
 export type LuxeCardSize = 'sm' | 'md' | 'lg';
 
 interface LuxeCardProps {
@@ -27,7 +27,7 @@ interface LuxeCardProps {
   size?: LuxeCardSize;
   children: React.ReactNode;
   onPress?: () => void;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
   haptic?: boolean;
   disabled?: boolean;
 }
@@ -80,6 +80,7 @@ export function LuxeCard({
           ...(Platform.OS === 'web' && { backdropFilter: 'blur(20px)' }),
         };
       case 'tonal':
+      case 'filled':
         return {
           backgroundColor: isDark ? '#1F1A3D' : '#E8E0FF',
           borderWidth: 0,

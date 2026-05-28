@@ -27,13 +27,6 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Pressable } from 'react-native';
 import type { BottomTabBarProps } from 'expo-router/tabs';
-// import type { Route } from '@react-navigation/native';
-type Route<T extends string, P extends object | undefined = object | undefined> = {
-  key: string;
-  name: T;
-  params?: P;
-  path?: string;
-};
 
 import { useColors, useIsDark } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
@@ -48,6 +41,13 @@ import {
 } from '@/design-system/tokens/theme';
 import { MAIN_TAB_UI } from '@/modules/core/layout/tabs/mainTabTokens';
 import { withAlpha } from '@/lib/withAlpha';
+// import type { Route } from '@react-navigation/native';
+type Route<T extends string, P extends object | undefined = object | undefined> = {
+  key: string;
+  name: T;
+  params?: P;
+  path?: string;
+};
 
 type MainTabName = 'index' | 'calendar' | 'community' | 'city' | 'my-space';
 

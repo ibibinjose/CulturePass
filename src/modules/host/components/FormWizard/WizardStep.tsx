@@ -50,7 +50,8 @@ const LazyStep3Legal = createLazyStep(
   'Step3Legal'
 );
 const LazyStep4Location = createLazyStep(
-  () => import('../steps/Step4Location')
+  () => import('../steps/Step4Location'),
+  'Step4Location'
 );
 const LazyStep5Description = createLazyStep(
   () => import('../steps/Step5Description'),

@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
     left: Spacing.sm,
     width: 28,
     height: 28,
-    borderRadius: 14,
+    borderRadius: Radius.full,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',

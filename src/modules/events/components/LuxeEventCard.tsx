@@ -1,14 +1,19 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Pressable, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
 
 import { Luxe, luxeDark } from '@/design-system/tokens/theme';
-import { LuxeCard, LuxeText } from '@/design-system/ui';
+import { LuxeText } from '@/design-system/ui';
 import { CultureImage } from '@/design-system/ui/CultureImage';
 import { formatEventDateTime } from '@/lib/dateUtils';
 import { eventPaths } from '@/modules/events/services/navigation';
 import type { EventData } from '@/shared/schema';
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 interface LuxeEventCardProps {
   event: EventData;
@@ -19,20 +24,48 @@ export function LuxeEventCard({ event, variant = 'default' }: LuxeEventCardProps
   const attendingCount = event.attending || event.rsvpGoing || 0;
   const isVerified = (event.organizerReputationScore ?? 0) > 0 || event.isFeatured;
 
+  const scale = useSharedValue(1);
+  const imageScale = useSharedValue(1);
+
+  const cardStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  const imgStyle = useAnimatedStyle(() => ({ transform: [{ scale: imageScale.value }] }));
+
+  const handlePressIn = () => {
+    scale.value = withSpring(0.988, { damping: 20, stiffness: 300 });
+    imageScale.value = withSpring(1.03, { damping: 18, stiffness: 280 });
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+  };
+  const handlePressOut = () => {
+    scale.value = withSpring(1, { damping: 18, stiffness: 220 });
+    imageScale.value = withSpring(1, { damping: 18, stiffness: 220 });
+  };
+
   const handlePress = () => {
     router.push(eventPaths.detailRoute(event.id));
   };
 
   return (
-    <LuxeCard
-      variant={variant}
+    <AnimatedPressable
       onPress={handlePress}
-      style={styles.card}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      style={[styles.card, cardStyle]}
     >
       <View style={styles.imageContainer}>
-        <CultureImage
-          uri={event.imageUrl ?? undefined}
-          style={styles.image}
+        <Animated.View style={[styles.imageWrap, imgStyle]}>
+          <CultureImage
+            uri={event.imageUrl ?? undefined}
+            style={styles.image}
+          />
+        </Animated.View>
+
+        {/* Premium gradient for depth on event photos */}
+        <LinearGradient
+          colors={['transparent', 'rgba(0,0,0,0.28)', 'rgba(0,0,0,0.55)']}
+          locations={[0.4, 0.7, 0.95]}
+          style={styles.imageOverlay}
         />
 
         {/* Attendance Badge */}
@@ -80,7 +113,7 @@ export function LuxeEventCard({ event, variant = 'default' }: LuxeEventCardProps
           </View>
         )}
       </View>
-    </LuxeCard>
+    </AnimatedPressable>
   );
 }
 
@@ -89,15 +122,32 @@ const styles = StyleSheet.create({
     width: '100%',
     padding: 0,
     overflow: 'hidden',
+    borderRadius: 14,
+    backgroundColor: luxeDark.surfaceElevated,
   },
   imageContainer: {
     width: '100%',
     aspectRatio: 16 / 9,
     backgroundColor: luxeDark.surfaceElevated,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  imageWrap: {
+    width: '100%',
+    height: '100%',
   },
   image: {
     width: '100%',
     height: '100%',
+  },
+  // Subtle gradient overlay for luxe photo treatment
+  imageOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: '48%',
+    zIndex: 0,
   },
   badge: {
     position: 'absolute',
@@ -106,6 +156,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
+    zIndex: 2,
   },
   attendingBadge: {
     position: 'absolute',
@@ -116,6 +167,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
+    zIndex: 2,
   },
   content: {
     padding: 12,

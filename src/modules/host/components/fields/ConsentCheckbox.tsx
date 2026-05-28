@@ -45,7 +45,6 @@ import * as Haptics from 'expo-haptics';
 import { useColors } from '@/hooks/useColors';
 import {
   CultureTokens,
-  Radius,
   FontFamily,
 } from '@/design-system/tokens/theme';
 

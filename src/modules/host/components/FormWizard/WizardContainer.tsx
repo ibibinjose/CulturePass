@@ -123,7 +123,7 @@ export function WizardContainer({
     entityType,
     onSelectDraft: (draft) => {
       // Load draft into form wizard
-      console.log('[WizardContainer] Loading draft:', draft.id);
+      if (__DEV__) console.log('[WizardContainer] Loading draft:', draft.id);
       // The wizard hook will handle loading the draft via draftId prop
       // We need to trigger a re-initialization with the draft
       router.replace({
@@ -132,7 +132,7 @@ export function WizardContainer({
       });
     },
     onStartFresh: () => {
-      console.log('[WizardContainer] Starting fresh');
+      if (__DEV__) console.log('[WizardContainer] Starting fresh');
       // Continue with empty form
     },
     autoShow: !draftId && !profileId, // Only auto-show if not already loading a draft/profile
@@ -151,7 +151,7 @@ export function WizardContainer({
       onPublishSuccess?.(id);
     },
     onInitialized: () => {
-      console.log('[WizardContainer] Form initialized');
+      if (__DEV__) console.log('[WizardContainer] Form initialized');
     },
   });
 
@@ -337,7 +337,7 @@ export function WizardContainer({
         (nextAppState === 'background' || nextAppState === 'inactive')
       ) {
         if (wizard.isDirty) {
-          console.log('[WizardContainer] App backgrounded — triggering auto-save');
+          if (__DEV__) console.log('[WizardContainer] App backgrounded — triggering auto-save');
           wizard.triggerSave?.();
         }
       }

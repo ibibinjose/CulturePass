@@ -18,14 +18,21 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { useLogin } from '@/hooks/useLogin';
-import { Input } from '@/design-system/ui/Input';
-import { Checkbox } from '@/design-system/ui/Checkbox';
-import { SocialButton } from '@/design-system/ui/SocialButton';
 import { useColors } from '@/hooks/useColors';
 import { useM3Colors } from '@/hooks/useM3Colors';
 import { useLayout } from '@/hooks/useLayout';
+import {
+  M3Button,
+  M3Card,
+  M3TopAppBar,
+  LuxeButton,
+  LuxeCard,
+  LuxeText,
+  Input,
+  Checkbox,
+  SocialButton,
+} from '@/design-system/ui';
 import { BrandWordmark } from '@/design-system/ui/BrandWordmark';
-import { M3Button, M3Card, M3TopAppBar } from '@/design-system/ui';
 
 import {
   CardTokens,
@@ -39,9 +46,9 @@ import {
   TextStyles,
   Luxe,
   LuxeTextStyles,
+  luxeDark,
 } from '@/design-system/tokens/theme';
 
-import { LuxeButton, LuxeCard, LuxeText } from '@/design-system/ui';
 import { routeWithRedirect, sanitizeInternalRedirect } from '@/lib/routes';
 import { AuthAmbientBackground } from '@/components/onboarding/AuthScreenPrimitives';
 import Head from 'expo-router/head';
@@ -111,10 +118,10 @@ export default function LoginScreen() {
 
       {/* Copy */}
       <Animated.View entering={enter(70)} style={s.copyBlock}>
-        <Text style={[s.title, M3Typography.headlineMedium, { color: m3Colors.onSurface }]}>Welcome back</Text>
-        <Text style={[s.subtitle, M3Typography.bodyMedium, { color: m3Colors.onSurfaceVariant }]}>
+        <LuxeText variant="display" style={[s.title, { color: luxeDark.text }]}>Welcome back</LuxeText>
+        <LuxeText variant="body" style={[s.subtitle, { color: luxeDark.textSecondary }]}>
           Sign in to your cultural home.
-        </Text>
+        </LuxeText>
       </Animated.View>
 
       {/* Global error */}
@@ -223,7 +230,7 @@ export default function LoginScreen() {
           </Pressable>
         </View>
 
-        <M3Button
+        <LuxeButton
           variant="filled"
           fullWidth
           haptic
@@ -234,13 +241,13 @@ export default function LoginScreen() {
           style={{ marginTop: 12 }}
         >
           Sign In
-        </M3Button>
+        </LuxeButton>
       </Animated.View>
 
       {/* Biometric sign-in */}
       {Platform.OS !== 'web' && biometricAvailable && biometricEnabled ? (
         <Animated.View entering={enter(260)} style={s.biometricRow}>
-          <M3Button
+          <LuxeButton
             variant="tonal"
             onPress={handleBiometricLogin}
             disabled={loading}
@@ -248,7 +255,7 @@ export default function LoginScreen() {
             fullWidth
           >
             {biometricType === 'faceid' ? 'Sign in with Face ID' : 'Sign in with Touch ID'}
-          </M3Button>
+          </LuxeButton>
         </Animated.View>
       ) : null}
 
@@ -314,20 +321,20 @@ export default function LoginScreen() {
         {isWeb && isDesktop ? (
           <View style={s.webRow}>
             {/* Marketing column */}
-            <View style={s.webLeft}>
+            <View style={[s.webLeft, { backgroundColor: luxeDark.accentContainer }]}>
               <Animated.View entering={enter(40)} style={s.webKickerRow}>
-                <View style={[s.webDot, { backgroundColor: m3Colors.primary }]} />
-                <Text style={[M3Typography.labelSmall, s.webKickerText]}>CULTUREPASS</Text>
+                <View style={[s.webDot, { backgroundColor: luxeDark.primary }]} />
+                <LuxeText variant="badgeCaps" style={s.webKickerText}>CULTUREPASS</LuxeText>
               </Animated.View>
 
               <Animated.View entering={enter(70)}>
-                <Text style={[M3Typography.displayLarge, s.webHeadlineText]}>Connecting cultures, building belonging.</Text>
+                <LuxeText variant="displayHero" style={s.webHeadlineText}>Connecting cultures, building belonging.</LuxeText>
               </Animated.View>
 
               <Animated.View entering={enter(100)}>
-                <Text style={[M3Typography.bodyLarge, s.webLeadText]}>
+                <LuxeText variant="hero" style={s.webLeadText}>
                   A premium cultural lifestyle marketplace built for diaspora cities.
-                </Text>
+                </LuxeText>
               </Animated.View>
 
               <Animated.View entering={enter(130)} style={s.webValueGrid}>
@@ -336,36 +343,36 @@ export default function LoginScreen() {
                   { icon: 'people-outline' as const, title: 'Communities', desc: 'Join and share with your people.' },
                   { icon: 'gift-outline' as const, title: 'Perks', desc: 'Member-only rewards & offers.' },
                 ].map((item) => (
-                  <M3Card
+                  <LuxeCard
                     key={item.title}
-                    variant="filled"
+                    variant="glass"
                     style={s.webValueCard}
                   >
                     <View style={s.webValueStripe} />
-                    <View style={[s.webValueIcon, { backgroundColor: '#F8F8F8' }]}>
-                      <Ionicons name={item.icon} size={18} color="#1C1C1C" />
+                    <View style={[s.webValueIcon, { backgroundColor: luxeDark.surfaceElevated }]}>
+                      <Ionicons name={item.icon} size={18} color={luxeDark.primary} />
                     </View>
                     <View style={{ flex: 1, minWidth: 0 }}>
-                      <Text style={[M3Typography.titleSmall, s.webValueTitle]}>{item.title}</Text>
-                      <Text style={[M3Typography.bodySmall, s.webValueDesc]}>{item.desc}</Text>
+                      <LuxeText variant="title3" style={s.webValueTitle}>{item.title}</LuxeText>
+                      <LuxeText variant="caption" style={s.webValueDesc}>{item.desc}</LuxeText>
                     </View>
-                  </M3Card>
+                  </LuxeCard>
                 ))}
               </Animated.View>
             </View>
 
             {/* Form card */}
             <Animated.View entering={enterUp} style={s.cardWrap}>
-              <M3Card variant="elevated" style={{ padding: 32 }}>
+              <LuxeCard variant="default" style={{ padding: 32 }}>
                 {formContent}
-              </M3Card>
+              </LuxeCard>
             </Animated.View>
           </View>
         ) : (
           <Animated.View entering={enterUp} style={s.cardWrap}>
-            <M3Card variant="elevated" style={{ padding: 24 }}>
+            <LuxeCard variant="default" style={{ padding: 24 }}>
               {formContent}
-            </M3Card>
+            </LuxeCard>
           </Animated.View>
         )}
       </KeyboardAwareScrollViewCompat>

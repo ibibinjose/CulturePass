@@ -8,12 +8,14 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import {
   FontFamily,
-  M3Typography,
+  luxeDark,
+  Spacing,
+  Radius,
 } from '@/design-system/tokens/theme';
 import { useM3Colors } from '@/hooks/useM3Colors';
 import { useLayout } from '@/hooks/useLayout';
 import { type Step, useCultureMatch } from '@/hooks/useCultureMatch';
-import { M3TopAppBar, M3Button, M3Card, M3FilterChip } from '@/design-system/ui';
+import { M3TopAppBar, LuxeButton, LuxeText, LuxeCard, LuxeFilterChip } from '@/design-system/ui';
 import Animated, {
   FadeInRight, FadeOutLeft, FadeIn,
 } from 'react-native-reanimated';
@@ -102,14 +104,14 @@ export default function CultureMatchScreen() {
       {/* Mobile progress */}
       {!isDesktop && (
         <View style={s.mobileStepIndicator}>
-          <Text style={[s.mobileStepLabel, M3Typography.labelSmall, { color: m3Colors.onSurfaceVariant }]}>
+          <LuxeText variant="badgeCaps" style={{ color: luxeDark.textSecondary }}>
             STEP {stepIndex + 1} OF {stepCount}
-          </Text>
-          <View style={[s.mobileProgressTrack, { backgroundColor: m3Colors.surfaceContainerHigh }]}>
+          </LuxeText>
+          <View style={[s.mobileProgressTrack, { backgroundColor: luxeDark.surfaceElevated }]}>
             <View
               style={[
                 s.mobileProgressFill,
-                { width: `${((stepIndex + 1) / stepCount) * 100}%` as DimensionValue, backgroundColor: m3Colors.primary },
+                { width: `${((stepIndex + 1) / stepCount) * 100}%` as DimensionValue, backgroundColor: luxeDark.primary },
               ]}
             />
           </View>
@@ -129,8 +131,8 @@ export default function CultureMatchScreen() {
             !isDesktop && { paddingTop: 16 },
           ]}
         >
-          <M3Card
-            variant="elevated"
+          <LuxeCard
+            variant="default"
             style={[
               s.card,
               isDesktop && s.cardDesktop,
@@ -151,49 +153,46 @@ export default function CultureMatchScreen() {
                           style={[
                             s.stepperCircle,
                             isDone
-                              ? { backgroundColor: m3Colors.primary, borderColor: 'transparent' }
+                              ? { backgroundColor: luxeDark.primary, borderColor: 'transparent' }
                               : isActive
                                 ? {
-                                    borderColor: m3Colors.primary,
+                                    borderColor: luxeDark.primary,
                                     borderWidth: 2,
                                     backgroundColor: 'transparent',
                                   }
                                 : {
-                                    borderColor: m3Colors.outlineVariant,
+                                    borderColor: luxeDark.border,
                                     backgroundColor: 'transparent',
                                   },
                           ]}
                         >
                           {isDone ? (
-                            <Ionicons name="checkmark" size={14} color={m3Colors.onPrimary} />
+                            <Ionicons name="checkmark" size={14} color="#FFF" />
                           ) : (
-                            <Text
-                              style={[
-                                s.stepperNum,
-                                { color: isActive ? m3Colors.primary : m3Colors.onSurfaceVariant },
-                              ]}
+                            <LuxeText
+                              variant="bodyMedium"
+                              style={{ color: isActive ? luxeDark.primary : luxeDark.textTertiary, fontSize: 13 }}
                             >
                               {STEP_NUMBERS[st]}
-                            </Text>
+                            </LuxeText>
                           )}
                         </View>
-                        <Text
-                          style={[
-                            s.stepperName,
-                            M3Typography.labelSmall,
-                            {
-                              color: isActive ? m3Colors.onSurface : m3Colors.onSurfaceVariant,
-                            },
-                          ]}
+                        <LuxeText
+                          variant="badgeCaps"
+                          style={{
+                            marginTop: 4,
+                            color: isActive ? luxeDark.text : luxeDark.textTertiary,
+                            fontSize: 10,
+                          }}
                         >
                           {st.charAt(0).toUpperCase() + st.slice(1)}
-                        </Text>
+                        </LuxeText>
                       </View>
                       {i < arr.length - 1 && (
                         <View
                           style={[
                             s.stepperLine,
-                            { backgroundColor: isDone ? m3Colors.primary : m3Colors.outlineVariant },
+                            { backgroundColor: isDone ? luxeDark.primary : luxeDark.border },
                           ]}
                         />
                       )}
@@ -204,32 +203,32 @@ export default function CultureMatchScreen() {
 
               {/* ── Step header ── */}
               <Animated.View key={step} entering={FadeIn.duration(220)} style={s.headerBlock}>
-                <View style={[s.iconRing, { backgroundColor: m3Colors.primaryContainer }]}>
-                  <Ionicons name={STEP_ICONS[step]} size={32} color={m3Colors.onPrimaryContainer} />
+                <View style={[s.iconRing, { backgroundColor: luxeDark.primaryContainer }]}>
+                  <Ionicons name={STEP_ICONS[step]} size={32} color={luxeDark.onPrimaryContainer} />
                 </View>
-                <Text style={[s.title, M3Typography.headlineMedium, { color: m3Colors.onSurface }]}>{STEP_LABELS[step]}</Text>
-                <Text style={[s.subtitle, M3Typography.bodyMedium, { color: m3Colors.onSurfaceVariant }]}>{STEP_SUBTITLES[step]}</Text>
+                <LuxeText variant="display" style={[s.title, { color: luxeDark.text }]}>{STEP_LABELS[step]}</LuxeText>
+                <LuxeText variant="body" style={[s.subtitle, { color: luxeDark.textSecondary }]}>{STEP_SUBTITLES[step]}</LuxeText>
               </Animated.View>
 
               {/* ── Nationality step ── */}
               {step === 'nationality' && (
                 <Animated.View entering={FadeInRight.duration(260).springify().damping(22)}>
                   {/* Search */}
-                  <View style={[s.searchWrap, { backgroundColor: m3Colors.surfaceContainerHigh, borderWidth: 0, height: 56, borderRadius: 28, marginBottom: 16 }]}>
-                    <Ionicons name="search" size={24} color={m3Colors.onSurfaceVariant} />
+                  <View style={[s.searchWrap, { backgroundColor: luxeDark.surfaceElevated, borderWidth: 1, borderColor: luxeDark.border, height: 56, borderRadius: 28, marginBottom: 16 }]}>
+                    <Ionicons name="search" size={24} color={luxeDark.textSecondary} />
                     <TextInput
                       value={nationalityQuery}
                       onChangeText={setNationalityQuery}
                       placeholder="Search nationality…"
-                      placeholderTextColor={m3Colors.onSurfaceVariant}
-                      style={[s.searchInput, { color: m3Colors.onSurface, fontSize: 16, marginLeft: 12 }]}
+                      placeholderTextColor={luxeDark.textTertiary}
+                      style={[s.searchInput, { color: luxeDark.text, fontSize: 16, marginLeft: 12 }]}
                       autoCapitalize="words"
                       returnKeyType="search"
                       accessibilityLabel="Search nationality"
                     />
                     {nationalityQuery.length > 0 && (
                       <Pressable onPress={() => setNationalityQuery('')} hitSlop={8}>
-                        <Ionicons name="close" size={24} color={m3Colors.onSurfaceVariant} />
+                        <Ionicons name="close" size={24} color={luxeDark.textSecondary} />
                       </Pressable>
                     )}
                   </View>
@@ -239,30 +238,27 @@ export default function CultureMatchScreen() {
                     {filteredNationalities.map((nat) => {
                       const isSelected = selectedNationality?.id === nat.id;
                       return (
-                        <M3Card
+                        <LuxeCard
                           key={nat.id}
-                          variant={isSelected ? 'filled' : 'outlined'}
+                          variant={isSelected ? 'tonal' : 'default'}
                           onPress={() => pickNationality(nat)}
                           style={[
                             s.natCard,
                             {
-                                backgroundColor: isSelected ? m3Colors.primaryContainer : 'transparent',
-                                borderColor: isSelected ? 'transparent' : m3Colors.outlineVariant,
+                                backgroundColor: isSelected ? luxeDark.primaryContainer : luxeDark.surface,
+                                borderColor: isSelected ? 'transparent' : luxeDark.border,
                             }
                           ]}
                         >
                           <Text style={s.natEmoji}>{nat.emoji}</Text>
-                          <Text
-                            style={[
-                              s.natLabel,
-                              M3Typography.labelLarge,
-                              { color: isSelected ? m3Colors.onPrimaryContainer : m3Colors.onSurface },
-                            ]}
+                          <LuxeText
+                            variant="bodyMedium"
+                            style={{ color: isSelected ? luxeDark.onPrimaryContainer : luxeDark.text, flex: 1 }}
                             numberOfLines={2}
                           >
                             {nat.label}
-                          </Text>
-                        </M3Card>
+                          </LuxeText>
+                        </LuxeCard>
                       );
                     })}
                   </View>
@@ -277,35 +273,35 @@ export default function CultureMatchScreen() {
                 >
                   {/* Nationality context badge */}
                   {selectedNationality && (
-                    <M3Card variant="filled" style={[s.contextBadge, { backgroundColor: m3Colors.secondaryContainer, marginBottom: 16 }]}>
+                    <LuxeCard variant="tonal" style={[s.contextBadge, { marginBottom: 16 }]}>
                       <View style={{ padding: 12, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                         <Text style={s.contextBadgeEmoji}>{selectedNationality.emoji}</Text>
                         <View style={{ flex: 1 }}>
-                            <Text style={[M3Typography.labelSmall, { color: m3Colors.onSecondaryContainer }]}>YOUR NATIONALITY</Text>
-                            <Text style={[M3Typography.titleSmall, { color: m3Colors.onSecondaryContainer }]}>{selectedNationality.label}</Text>
+                            <LuxeText variant="badgeCaps" style={{ color: luxeDark.onPrimaryContainer }}>YOUR NATIONALITY</LuxeText>
+                            <LuxeText variant="title3" style={{ color: luxeDark.onPrimaryContainer }}>{selectedNationality.label}</LuxeText>
                         </View>
-                        <M3Button variant="text" onPress={goBack}>Change</M3Button>
+                        <LuxeButton variant="glass" size="sm" onPress={goBack}>Change</LuxeButton>
                       </View>
-                    </M3Card>
+                    </LuxeCard>
                   )}
 
                   {/* Culture search */}
                   {availableCultures.length > 4 && (
-                    <View style={[s.searchWrap, { backgroundColor: m3Colors.surfaceContainerHigh, borderWidth: 0, height: 56, borderRadius: 28, marginBottom: 16 }]}>
-                      <Ionicons name="search" size={24} color={m3Colors.onSurfaceVariant} />
+                    <View style={[s.searchWrap, { backgroundColor: luxeDark.surfaceElevated, borderWidth: 1, borderColor: luxeDark.border, height: 56, borderRadius: 28, marginBottom: 16 }]}>
+                      <Ionicons name="search" size={24} color={luxeDark.textSecondary} />
                       <TextInput
                         value={cultureQuery}
                         onChangeText={setCultureQuery}
                         placeholder="Search cultures…"
-                        placeholderTextColor={m3Colors.onSurfaceVariant}
-                        style={[s.searchInput, { color: m3Colors.onSurface, fontSize: 16, marginLeft: 12 }]}
+                        placeholderTextColor={luxeDark.textTertiary}
+                        style={[s.searchInput, { color: luxeDark.text, fontSize: 16, marginLeft: 12 }]}
                         autoCapitalize="words"
                         returnKeyType="search"
                         accessibilityLabel="Search cultures"
                       />
                       {cultureQuery.length > 0 && (
                         <Pressable onPress={() => setCultureQuery('')} hitSlop={8}>
-                          <Ionicons name="close" size={24} color={m3Colors.onSurfaceVariant} />
+                          <Ionicons name="close" size={24} color={luxeDark.textSecondary} />
                         </Pressable>
                       )}
                     </View>
@@ -316,7 +312,7 @@ export default function CultureMatchScreen() {
                     {filteredCultures.map((culture) => {
                       const isSelected = selectedCultureIds.includes(culture.id);
                       return (
-                        <M3FilterChip
+                        <LuxeFilterChip
                           key={culture.id}
                           label={culture.label}
                           selected={isSelected}
@@ -335,38 +331,37 @@ export default function CultureMatchScreen() {
                   exiting={FadeOutLeft}
                 >
                   {/* Helper line — explains why this matters (Cultural Passport) */}
-                  <Text
-                    style={[
-                      M3Typography.bodySmall,
-                      { color: m3Colors.onSurfaceVariant, marginBottom: 16 },
-                    ]}
+                  <LuxeText
+                    variant="body"
+                    style={{ color: luxeDark.textSecondary, marginBottom: 16 }}
                   >
                     Optional. Skip if you’d rather decide later — you can edit this anytime in your
                     profile.
-                  </Text>
+                  </LuxeText>
 
                   {/* Search */}
                   <View
                     style={[
                       s.searchWrap,
                       {
-                        backgroundColor: m3Colors.surfaceContainerHigh,
-                        borderWidth: 0,
+                        backgroundColor: luxeDark.surfaceElevated,
+                        borderWidth: 1,
+                        borderColor: luxeDark.border,
                         height: 56,
                         borderRadius: 28,
                         marginBottom: 16,
                       },
                     ]}
                   >
-                    <Ionicons name="search" size={24} color={m3Colors.onSurfaceVariant} />
+                    <Ionicons name="search" size={24} color={luxeDark.textSecondary} />
                     <TextInput
                       value={exploringQuery}
                       onChangeText={setExploringQuery}
                       placeholder="Search cultures…"
-                      placeholderTextColor={m3Colors.onSurfaceVariant}
+                      placeholderTextColor={luxeDark.textTertiary}
                       style={[
                         s.searchInput,
-                        { color: m3Colors.onSurface, fontSize: 16, marginLeft: 12 },
+                        { color: luxeDark.text, fontSize: 16, marginLeft: 12 },
                       ]}
                       autoCapitalize="words"
                       returnKeyType="search"
@@ -374,22 +369,20 @@ export default function CultureMatchScreen() {
                     />
                     {exploringQuery.length > 0 && (
                       <Pressable onPress={() => setExploringQuery('')} hitSlop={8}>
-                        <Ionicons name="close" size={24} color={m3Colors.onSurfaceVariant} />
+                        <Ionicons name="close" size={24} color={luxeDark.textSecondary} />
                       </Pressable>
                     )}
                   </View>
 
                   {/* Selected count chip */}
                   {selectedExploringCultureIds.length > 0 && (
-                    <Text
-                      style={[
-                        M3Typography.labelMedium,
-                        { color: m3Colors.primary, marginBottom: 12 },
-                      ]}
+                    <LuxeText
+                      variant="bodyMedium"
+                      style={{ color: luxeDark.primary, marginBottom: 12 }}
                     >
                       {selectedExploringCultureIds.length} culture
                       {selectedExploringCultureIds.length === 1 ? '' : 's'} on your passport
-                    </Text>
+                    </LuxeText>
                   )}
 
                   {/* Chip cloud — capped to first 60 to keep render fast on lower-end devices. */}
@@ -397,7 +390,7 @@ export default function CultureMatchScreen() {
                     {filteredExploringCultures.slice(0, 60).map((culture) => {
                       const isSelected = selectedExploringCultureIds.includes(culture.id);
                       return (
-                        <M3FilterChip
+                        <LuxeFilterChip
                           key={culture.id}
                           label={culture.label}
                           selected={isSelected}
@@ -419,7 +412,7 @@ export default function CultureMatchScreen() {
                   {selectedLanguageObjects.length > 0 && (
                     <View style={s.selectedLangRow}>
                       {selectedLanguageObjects.map((lang) => (
-                        <M3FilterChip
+                        <LuxeFilterChip
                           key={lang.id}
                           label={lang.name}
                           selected
@@ -430,21 +423,21 @@ export default function CultureMatchScreen() {
                   )}
 
                   {/* Language search */}
-                  <View style={[s.searchWrap, { backgroundColor: m3Colors.surfaceContainerHigh, borderWidth: 0, height: 56, borderRadius: 28, marginBottom: 16 }]}>
-                    <Ionicons name="search" size={24} color={m3Colors.onSurfaceVariant} />
+                  <View style={[s.searchWrap, { backgroundColor: luxeDark.surfaceElevated, borderWidth: 1, borderColor: luxeDark.border, height: 56, borderRadius: 28, marginBottom: 16 }]}>
+                    <Ionicons name="search" size={24} color={luxeDark.textSecondary} />
                     <TextInput
                       value={languageQuery}
                       onChangeText={setLanguageQuery}
                       placeholder="Search languages…"
-                      placeholderTextColor={m3Colors.onSurfaceVariant}
-                      style={[s.searchInput, { color: m3Colors.onSurface, fontSize: 16, marginLeft: 12 }]}
+                      placeholderTextColor={luxeDark.textTertiary}
+                      style={[s.searchInput, { color: luxeDark.text, fontSize: 16, marginLeft: 12 }]}
                       autoCapitalize="words"
                       returnKeyType="search"
                       accessibilityLabel="Search languages"
                     />
                     {languageQuery.length > 0 && (
                       <Pressable onPress={() => setLanguageQuery('')} hitSlop={8}>
-                        <Ionicons name="close" size={24} color={m3Colors.onSurfaceVariant} />
+                        <Ionicons name="close" size={24} color={luxeDark.textSecondary} />
                       </Pressable>
                     )}
                   </View>
@@ -452,19 +445,19 @@ export default function CultureMatchScreen() {
                   {/* Language grid */}
                   <View style={s.langGrid}>
                     {filteredLanguages.map((lang) => (
-                      <M3Card
+                      <LuxeCard
                         key={lang.id}
-                        variant="outlined"
+                        variant="default"
                         onPress={() => toggleLanguage(lang)}
                         style={s.langCard}
                       >
                         <View style={{ padding: 12 }}>
-                            <Text style={[s.langName, M3Typography.labelLarge, { color: m3Colors.onSurface }]}>{lang.name}</Text>
+                            <LuxeText variant="bodyMedium" style={{ color: luxeDark.text }}>{lang.name}</LuxeText>
                             {lang.nativeName && lang.nativeName !== lang.name && (
-                            <Text style={[s.langNative, M3Typography.bodySmall, { color: m3Colors.onSurfaceVariant }]}>{lang.nativeName}</Text>
+                            <LuxeText variant="caption" style={{ color: luxeDark.textSecondary }}>{lang.nativeName}</LuxeText>
                             )}
                         </View>
-                      </M3Card>
+                      </LuxeCard>
                     ))}
                   </View>
                 </Animated.View>
@@ -473,36 +466,36 @@ export default function CultureMatchScreen() {
               {/* ── Actions ── */}
               <View style={s.actions}>
                 {step !== 'nationality' && (
-                  <M3Button
+                  <LuxeButton
                     variant="tonal"
                     onPress={goBack}
                     leftIcon="arrow-back"
                   >
                     Back
-                  </M3Button>
+                  </LuxeButton>
                 )}
 
-                <M3Button
+                <LuxeButton
                   variant="filled"
                   onPress={goNext}
                   rightIcon={step !== 'language' ? "arrow-forward" : undefined}
                   style={{ flex: 1 }}
                 >
                   {step === 'language' ? 'Continue' : 'Next'}
-                </M3Button>{/* skip button below covers optional steps */}
+                </LuxeButton>
               </View>
 
-              <M3Button
-                variant="text"
+              <LuxeButton
+                variant="glass"
                 onPress={skipStep}
                 rightIcon="chevron-forward"
                 style={{ marginTop: 12 }}
               >
                 Skip this step
-              </M3Button>
+              </LuxeButton>
 
             </View>
-          </M3Card>
+          </LuxeCard>
         </ScrollView>
       </KeyboardAvoidingView>
     </View>

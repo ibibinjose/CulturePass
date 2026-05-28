@@ -36,7 +36,6 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -52,7 +51,6 @@ import {
   Spacing,
   Radius,
   FontFamily,
-  TextStyles,
 } from '@/design-system/tokens/theme';
 import type { EntityType } from '../../hooks/useFormWizard';
 import type { PartialFormData } from '../../services/formStateSerializer';
@@ -197,8 +195,6 @@ export function Step1Identity({
   // ---------------------------------------------------------------------------
   // Render
   // ---------------------------------------------------------------------------
-
-  const topInset = Platform.OS === 'web' ? 0 : insets.top;
 
   return (
     <ScrollView

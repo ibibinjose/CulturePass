@@ -60,6 +60,9 @@ interface AuthContextType {
   emailVerified: boolean;
   sendVerificationEmail: () => Promise<void>;
   checkEmailVerified: () => Promise<boolean>;
+  
+  // Method to update user profile and propagate changes globally
+  updateUserProfile: (updatedFields: Partial<AuthUser>) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -82,6 +85,7 @@ const AuthContext = createContext<AuthContextType>({
   emailVerified: false,
   sendVerificationEmail: async () => {},
   checkEmailVerified: async () => false,
+  updateUserProfile: async () => {},
 });
 
 export function useAuth() {
@@ -363,6 +367,60 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [!!session]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ------------------------------------------------------------------
+  // updateUserProfile() — updates user profile and propagates changes globally
+  // ------------------------------------------------------------------
+  const updateUserProfile = useCallback(async (updatedFields: Partial<AuthUser>) => {
+    if (!session?.user?.id) {
+      throw new Error('User not authenticated');
+    }
+
+    try {
+      // Update the user in the backend
+      const updatedUser = await api.users.update(session.user.id, updatedFields);
+      
+      // Update the local session with the new data
+      setSession(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          user: {
+            ...prev.user,
+            ...updatedUser,
+          },
+        };
+      });
+
+      // Invalidate relevant queries to ensure fresh data everywhere
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['/api/users'] }),
+        queryClient.invalidateQueries({ queryKey: ['/api/users/me'] }),
+        queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] }),
+        queryClient.invalidateQueries({ queryKey: ['users', session.user.id] }),
+        queryClient.invalidateQueries({ queryKey: ['user', session.user.id] }),
+      ]);
+      
+      // If avatarUrl was updated, aggressively clear image caches + add a version bump
+      if (updatedFields.avatarUrl) {
+        queryClient.removeQueries({ queryKey: ['avatar', session.user.id] });
+        // Force consumers (sidebar, public self-view, etc.) to see fresh image
+        setSession(prev => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            user: {
+              ...prev.user,
+              avatarUpdatedAt: Date.now(),
+            },
+          };
+        });
+      }
+    } catch (error) {
+      devErrorLog('updateUserProfile failed', error);
+      throw error;
+    }
+  }, [session]);
+
+  // ------------------------------------------------------------------
   // login() — kept for compatibility with manual session injection
   // ------------------------------------------------------------------
   const login = useCallback(async (newSession: AuthSession) => {
@@ -478,10 +536,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     emailVerified,
     sendVerificationEmail,
     checkEmailVerified,
+    updateUserProfile,
   }), [
     session, isLoading, isRestoring, login, logout, refreshSession,
     hasRole, isSydneyUser, isSydneyVerified, profileSyncStatus, profileSyncMessage, retryProfileSync,
-    emailVerified, sendVerificationEmail, checkEmailVerified,
+    emailVerified, sendVerificationEmail, checkEmailVerified, updateUserProfile,
   ]);
 
   return (

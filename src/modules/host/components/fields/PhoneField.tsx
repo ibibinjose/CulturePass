@@ -18,6 +18,9 @@ import { VALIDATION_TIMING } from '@/modules/host/schemas/validationRules';
 import { VerificationCodeInput } from './VerificationCodeInput';
 import { api } from '@/lib/api';
 
+// E.164 phone validation: + followed by 7-15 digits
+const PHONE_REGEX = /^\+[1-9]\d{6,14}$/;
+
 export interface CountryCode {
   code: string;
   dialCode: string;
@@ -176,9 +179,6 @@ export function PhoneField({
   const [isValidating, setIsValidating] = useState(false);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // E.164 phone validation: + followed by 7-15 digits
-  const phoneRegex = /^\+[1-9]\d{6,14}$/;
-
   const defaultHint = `Format: ${selectedCountry.dialCode} ${selectedCountry.format}`;
 
   useEffect(() => {
@@ -191,7 +191,7 @@ export function PhoneField({
       const detected = detectCountryFromValue(value);
       setSelectedCountry(detected);
     }
-  }, []); // Only on mount
+  }, [value]); // include value for correctness
 
   useEffect(() => {
     if (!value) {
@@ -213,7 +213,7 @@ export function PhoneField({
     // Debounce validation by 300ms
     debounceTimerRef.current = setTimeout(() => {
       const e164 = toE164(value);
-      const valid = phoneRegex.test(e164);
+      const valid = PHONE_REGEX.test(e164);
       setIsValid(valid);
       setHasValidated(true);
       setIsValidating(false);
@@ -232,7 +232,7 @@ export function PhoneField({
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [value, required, selectedCountry, onValidationComplete]);
+  }, [value, required, selectedCountry, onValidationComplete]); // PHONE_REGEX is module constant (stable)
 
   // Cleanup on unmount
   useEffect(() => {

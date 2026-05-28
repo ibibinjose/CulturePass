@@ -22,9 +22,9 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  Platform,
   Pressable,
   Alert,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -917,3 +917,5 @@ const styles = StyleSheet.create({
     height: Spacing.xl,
   },
 });
+
+export default Step6Review;

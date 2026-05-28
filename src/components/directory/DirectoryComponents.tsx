@@ -15,6 +15,7 @@ import * as Haptics from 'expo-haptics';
 import { useColors } from '@/hooks/useColors';
 import type { Profile, EventData } from '@/shared/schema';
 import { Button } from '@/design-system/ui/Button';
+import { M3Button } from '@/design-system/ui/M3Button';
 import { formatPrice } from '@/lib/dateUtils';
 import { routerProfileHref } from '@/lib/publicPaths';
 import { GlassView } from '@/design-system/ui/GlassView';
@@ -148,6 +149,61 @@ export function FeaturedRail({
     </View>
   );
 }
+
+export function CommunityRail({
+  communities,
+  colors,
+}: {
+  communities: Profile[];
+  colors: ReturnType<typeof useColors>;
+}) {
+  if (communities.length === 0) return null;
+
+  return (
+    <View style={fr.wrap}>
+      <View style={fr.header}>
+        <View style={fr.headerLeft}>
+          <View style={[fr.accentBar, { backgroundColor: CultureTokens.teal }]} />
+          <Text style={[fr.title, { color: colors.text }]}>Communities</Text>
+        </View>
+        <Pressable onPress={() => router.push('/communities' as any)}>
+            <Text style={{ fontSize: 13, color: colors.primary, fontFamily: FontFamily.semibold }}>See all</Text>
+        </Pressable>
+      </View>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={fr.scroll}
+      >
+        {communities.map(c => (
+          <Pressable
+            key={c.id}
+            onPress={() => router.push(routerProfileHref(c) as any)}
+            style={({ pressed }) => [
+              cr.communityItem,
+              pressed && { opacity: 0.8 },
+            ]}
+          >
+            <View style={[cr.communityIcon, { backgroundColor: colors.surfaceElevated, borderColor: colors.borderLight }]}>
+                {c.imageUrl ? (
+                    <Image source={{ uri: c.imageUrl }} style={StyleSheet.absoluteFill} contentFit="cover" />
+                ) : (
+                    <Ionicons name="people" size={24} color={colors.textTertiary} />
+                )}
+            </View>
+            <Text style={[cr.communityName, { color: colors.text }]} numberOfLines={1}>{c.name}</Text>
+          </Pressable>
+        ))}
+      </ScrollView>
+    </View>
+  );
+}
+
+const cr = StyleSheet.create({
+    communityItem: { width: 80, alignItems: 'center', gap: 8 },
+    communityIcon: { width: 64, height: 64, borderRadius: 32, overflow: 'hidden', borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+    communityName: { fontSize: 11, fontFamily: FontFamily.semibold, textAlign: 'center' },
+});
 
 const fr = StyleSheet.create({
   wrap:       { marginBottom: 12, paddingTop: 4 },
@@ -465,34 +521,32 @@ export function DirectoryEmptyState({
 }) {
   const filter = ENTITY_FILTERS.find(f => f.label === selectedType);
   const entityLabel = filter?.display ?? 'listings';
-  const icon = filter?.icon ?? 'storefront-outline';
+  const icon = filter?.icon ?? 'search';
   const cityLabel = city ? ` in ${city}` : '';
 
   return (
     <View style={s.emptyState}>
-      <GlassView
-        style={{ width: '100%', maxWidth: 360, alignSelf: 'center', backgroundColor: colors.surface }}
-        contentStyle={{ padding: 40, alignItems: 'center', gap: 20 }}
-      >
-        <View style={[s.emptyIconBox, { backgroundColor: colors.primarySoft, borderColor: colors.primary + '20' }]}>
-            <Ionicons name={icon as keyof typeof Ionicons.glyphMap} size={36} color={colors.primary} />
-        </View>
-        <View style={{ gap: 8, alignItems: 'center' }}>
-            <Text style={[s.emptyTitle, { color: colors.text }]}>
-                No {entityLabel.replace('🪃 ', '')} found{cityLabel}
-            </Text>
-            <Text style={[s.emptySubtext, { color: colors.textSecondary }]}>
-                {hasActiveFilters
-                ? 'Try a different filter or search term to widen your results.'
-                : 'Check back soon — new cultural spaces are added regularly.'}
-            </Text>
-        </View>
-        {hasActiveFilters && (
-          <Button variant="primary" size="md" onPress={onReset} style={{ marginTop: 8 }}>
-            Reset Filters
-          </Button>
-        )}
-      </GlassView>
+      <View style={[s.emptyIconBox, { backgroundColor: colors.surfaceElevated, borderColor: colors.borderLight }]}>
+        <Ionicons name={icon as any} size={40} color={CultureTokens.indigo} />
+      </View>
+      <Text style={[s.emptyTitle, { color: colors.text }]}>
+        No {entityLabel.replace('🪃 ', '').toLowerCase()} found{cityLabel}
+      </Text>
+      <Text style={[s.emptySubtext, { color: colors.textSecondary }]}>
+        {hasActiveFilters
+          ? 'Try adjusting your filters or search term to discover more cultural gems.'
+          : 'Check back soon! We are constantly adding new venues, artists, and organisations to the directory.'}
+      </Text>
+      {hasActiveFilters && (
+        <M3Button
+          variant="tonal"
+          onPress={onReset}
+          style={{ marginTop: 16 }}
+          leftIcon="refresh"
+        >
+          Reset Filters
+        </M3Button>
+      )}
     </View>
   );
 }

@@ -117,9 +117,9 @@ export const AboutLegalStrip = memo(function AboutLegalStrip() {
             <View style={styles.divider} />
             <View style={styles.pillGrid}>
               {SOCIAL_LINKS.map(s => (
-                <View key={s.label} style={styles.pillWrapper}>
+                <View key={s.key} style={styles.pillWrapper}>
                   <Pill 
-                    icon={getSocialLinkIcon(s.label)} 
+                    icon={getSocialLinkIcon(s.key)} 
                     label={s.label} 
                     onPress={() => openExternalUrl(s.url)}
                     highlight={(s as any).label === "Support"}

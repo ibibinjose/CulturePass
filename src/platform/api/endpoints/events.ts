@@ -18,7 +18,7 @@ export interface EventListParams {
   communityId?: string;
   page?: number;
   pageSize?: number;
-  search?: string;
+  q?: string;
   dateFrom?: string;
   dateTo?: string;
   eventType?: string;
@@ -43,7 +43,7 @@ export function createEventsNamespace(request: ApiRequestFn) {
       if (params.communityId) qs.set('communityId', params.communityId);
       if (params.page != null) qs.set('page', String(params.page));
       if (params.pageSize != null) qs.set('pageSize', String(params.pageSize));
-      if (params.search) qs.set('search', params.search);
+      if (params.q) qs.set('q', params.q);
       if (params.dateFrom) qs.set('dateFrom', params.dateFrom);
       if (params.dateTo) qs.set('dateTo', params.dateTo);
       if (params.eventType) qs.set('eventType', params.eventType);

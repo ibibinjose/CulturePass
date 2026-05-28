@@ -18,6 +18,9 @@ import * as Haptics from 'expo-haptics';
 
 import { useColors } from '@/hooks/useColors';
 import {
+  Footer,
+} from '@/components/Footer';
+import {
   CultureTokens,
   gradients,
   TextStyles,

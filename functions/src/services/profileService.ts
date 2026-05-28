@@ -30,7 +30,10 @@ export interface ProfileFilters {
   status?: 'draft' | 'published' | 'pending_verification' | 'suspended';
   ownerId?: string;
   handle?: string;
+  city?: string;
+  country?: string;
   verificationStatus?: 'pending' | 'verified' | 'rejected';
+  q?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -89,9 +92,21 @@ export const profileService = {
     if (filters.handle) {
       query = query.where('handle', '==', filters.handle);
     }
+    if (filters.city) {
+      query = query.where('primaryAddress.city', '==', filters.city);
+    }
+    if (filters.country) {
+      query = query.where('primaryAddress.country', '==', filters.country);
+    }
     if (filters.verificationStatus) {
       query = query.where('verificationStatus', '==', filters.verificationStatus);
     }
+
+    // Note: Firestore doesn't support full-text search.
+    // For a robust implementation, we would use Algolia/Elasticsearch.
+    // Here we implement basic search if 'q' is provided by fetching more and filtering in memory,
+    // or we can just filter the results of the query if we don't have a better way.
+    // For now, we'll fetch and filter if q is present, but this is not scalable.
 
     // Order by creation date (newest first)
     query = query.orderBy('createdAt', 'desc');
@@ -99,21 +114,80 @@ export const profileService = {
     const { page, pageSize } = pagination;
     const offset = (page - 1) * pageSize;
 
-    // Get total count (expensive, but necessary for pagination)
-    const countSnap = await query.count().get();
-    const total = countSnap.data().count;
+    if (filters.q) {
+      // If searching, we fetch a larger batch and filter in memory
+      // This is a temporary measure until a real search engine is integrated.
+      const searchTerm = filters.q.toLowerCase();
+      let snap;
+      try {
+        snap = await query.limit(500).get();
+      } catch (err: any) {
+        if (err?.code === 9 || String(err).includes('index')) {
+          console.warn('[profileService] Index missing for filtered search, falling back to all-profiles fetch');
+          snap = await profilesCol().orderBy('createdAt', 'desc').limit(500).get();
+        } else {
+          throw err;
+        }
+      }
 
-    // Get paginated results
-    const snap = await query.offset(offset).limit(pageSize).get();
-    const items = snap.docs.map(doc => ({ ...doc.data() as HostProfile, id: doc.id }));
+      let items = snap.docs.map(doc => ({ ...doc.data() as HostProfile, id: doc.id }));
 
-    return {
-      items,
-      total,
-      page,
-      pageSize,
-      hasNextPage: offset + items.length < total,
-    };
+      // Re-apply filters in memory if fallback was used or just for safety
+      if (filters.entityType) items = items.filter(i => i.entityType === filters.entityType);
+      if (filters.status) items = items.filter(i => i.status === filters.status);
+      if (filters.city) items = items.filter(i => i.primaryAddress?.city === filters.city);
+      if (filters.country) items = items.filter(i => i.primaryAddress?.country === filters.country);
+
+      items = items.filter(item =>
+        (item.officialName || item.tradingName || '').toLowerCase().includes(searchTerm) ||
+        (item.description || '').toLowerCase().includes(searchTerm) ||
+        (item.handle || '').toLowerCase().includes(searchTerm) ||
+        (item.tagline || '').toLowerCase().includes(searchTerm)
+      );
+
+      const total = items.length;
+      const paginatedItems = items.slice(offset, offset + pageSize);
+
+      return {
+        items: paginatedItems,
+        total,
+        page,
+        pageSize,
+        hasNextPage: offset + paginatedItems.length < total,
+      };
+    }
+
+    try {
+      // Get total count (expensive, but necessary for pagination)
+      const countSnap = await query.count().get();
+      const total = countSnap.data().count;
+
+      // Get paginated results
+      const snap = await query.offset(offset).limit(pageSize).get();
+      const items = snap.docs.map(doc => ({ ...doc.data() as HostProfile, id: doc.id }));
+
+      return {
+        items,
+        total,
+        page,
+        pageSize,
+        hasNextPage: offset + items.length < total,
+      };
+    } catch (err: any) {
+      if (err?.code === 9 || String(err).includes('index')) {
+        console.warn('[profileService] Index missing for paginated list, falling back to basic list');
+        const snap = await profilesCol().orderBy('createdAt', 'desc').limit(pageSize).get();
+        const items = snap.docs.map(doc => ({ ...doc.data() as HostProfile, id: doc.id }));
+        return {
+          items,
+          total: items.length,
+          page: 1,
+          pageSize,
+          hasNextPage: false,
+        };
+      }
+      throw err;
+    }
   },
 
   /**

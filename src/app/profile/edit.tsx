@@ -28,7 +28,7 @@ import { useImageUpload } from '@/hooks/useImageUpload';
 import { useColors } from '@/hooks/useColors';
 import { Button } from '@/design-system/ui/Button';
 import { CultureImage } from '@/design-system/ui/CultureImage';
-import { ImageGalleryPicker } from '@/design-system/ui';
+import { ImageGalleryPicker, M3Card, M3SectionHeader } from '@/design-system/ui';
 import { DatePickerInput, type ISODateString } from '@/design-system/ui/DatePickerInput';
 import { Skeleton } from '@/design-system/ui/Skeleton';
 import { CultureTokens, FontFamily, Radius, ScreenTokens, SignatureGradient, Spacing, gradients } from '@/design-system/tokens/theme';
@@ -146,7 +146,7 @@ function Field({
 }) {
   const colors = useColors();
   return (
-    <View style={[styles.field, multiline && styles.fieldMultiline, { backgroundColor: colors.surfaceElevated, borderColor: colors.cardBorder }]}>
+    <View style={[styles.field, multiline && styles.fieldMultiline, { backgroundColor: colors.surfaceElevated, borderColor: colors.cardBorder, borderWidth: 1 }]}>
       <Text style={[styles.fieldLabel, { color: colors.textTertiary }]}>{label}</Text>
       <TextInput
         value={value}
@@ -168,10 +168,12 @@ function Field({
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   const colors = useColors();
   return (
-    <View style={styles.section}>
-      <Text style={[styles.sectionTitle, { color: colors.textTertiary }]}>{title}</Text>
+    <M3Card variant="filled" style={[styles.sectionCard, { borderColor: colors.cardBorder }]}>
+      <View style={{ paddingHorizontal: Spacing.md, paddingTop: Spacing.xs, paddingBottom: Spacing.xs }}>
+        <M3SectionHeader title={title} />
+      </View>
       <View style={styles.sectionBody}>{children}</View>
-    </View>
+    </M3Card>
   );
 }
 
@@ -236,7 +238,7 @@ function ToggleRow({
 }) {
   const colors = useColors();
   return (
-    <View style={[styles.toggleRow, { backgroundColor: colors.surfaceElevated, borderColor: colors.cardBorder }]}>
+    <View style={[styles.toggleRow, { backgroundColor: colors.surfaceElevated, borderColor: colors.cardBorder, borderWidth: 1 }]}>
       <View style={styles.toggleCopy}>
         <Text style={[styles.toggleLabel, { color: colors.text }]}>{label}</Text>
         {sub ? <Text style={[styles.toggleSub, { color: colors.textTertiary }]}>{sub}</Text> : null}
@@ -256,7 +258,7 @@ export default function EditProfileScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const { user: authUser, userId, isRestoring } = useAuth();
+  const { user: authUser, userId, isRestoring, updateUserProfile } = useAuth();
   const { uploading } = useImageUpload();
   const bottomInset = Platform.OS === 'web' ? 24 : insets.bottom;
   const isWide = width >= 900;
@@ -328,7 +330,7 @@ export default function EditProfileScreen() {
       tiktok: socialDisplay(user.socialLinks?.tiktok, 'tiktok'),
       linkedin: socialDisplay(user.socialLinks?.linkedin, 'linkedin'),
       facebook: socialDisplay(user.socialLinks?.facebook, 'facebook'),
-      website: socialDisplay(user.website, 'website'),
+      website: socialDisplay(user?.website, 'website'),
       isPublicProfile: user.privacySettings?.profileVisible ?? true,
       showLocation: user.privacySettings?.locationVisible ?? true,
       showSocialLinks: user.privacySettings?.showSocialLinks ?? true,
@@ -356,6 +358,11 @@ export default function EditProfileScreen() {
   };
   const updateToggle = (field: keyof FormState) => (value: boolean) => {
     setForm((prev) => ({ ...prev, [field]: value }));
+    setDirty(true);
+  };
+
+  const clearSocial = (key: SocialKey) => {
+    setForm((prev) => ({ ...prev, [key]: '' }));
     setDirty(true);
   };
 
@@ -394,12 +401,12 @@ export default function EditProfileScreen() {
           privateViewingMode: form.privateViewingMode,
         },
       };
-      await api.users.update(userId, payload as Partial<User>);
+      
+      // Use the new updateUserProfile method to ensure changes propagate everywhere
+      await updateUserProfile(payload as Partial<User>);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/users/me'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+      // The query invalidation is now handled in updateUserProfile
       setDirty(false);
       if (Platform.OS !== 'web') void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       goBackOrReplace('/settings');
@@ -572,25 +579,50 @@ export default function EditProfileScreen() {
               </Section>
 
               <Section title="Social Links">
-                {SOCIAL_ROWS.map((row) => (
-                  <View key={row.key} style={[styles.socialField, { backgroundColor: colors.surfaceElevated, borderColor: colors.cardBorder }]}>
-                    <View style={[styles.socialIcon, { backgroundColor: softColor(row.color) }]}>
-                      <Ionicons name={row.icon} size={18} color={row.color} />
+                <Text style={[styles.socialHint, { color: colors.textTertiary }]}>
+                  Links appear on your public profile. Enter username or full URL.
+                </Text>
+                {SOCIAL_ROWS.map((row) => {
+                  const currentVal = form[row.key];
+                  const resolved = toPlatformUrl(currentVal, row.key);
+                  return (
+                    <View key={row.key} style={[styles.socialField, { backgroundColor: colors.surfaceElevated, borderColor: colors.cardBorder }]}>
+                      <View style={[styles.socialIcon, { backgroundColor: softColor(row.color) }]}>
+                        <Ionicons name={row.icon} size={18} color={row.color} />
+                      </View>
+                      <View style={{ flex: 1, minWidth: 0 }}>
+                        <Text style={[styles.socialLabel, { color: colors.textSecondary }]}>{row.label}</Text>
+                        <TextInput
+                          value={currentVal}
+                          onChangeText={updateField(row.key)}
+                          placeholder={row.placeholder}
+                          placeholderTextColor={colors.textTertiary}
+                          autoCapitalize="none"
+                          keyboardType={row.key === 'website' ? 'url' : 'default'}
+                          style={[styles.socialInput, { color: colors.text }]}
+                          selectionColor={colors.primary}
+                          accessibilityLabel={row.label}
+                        />
+                        {resolved ? (
+                          <Text style={[styles.socialResolved, { color: colors.primary }]} numberOfLines={1}>
+                            → {resolved.replace(/^https?:\/\//, '')}
+                          </Text>
+                        ) : null}
+                      </View>
+                      {currentVal ? (
+                        <Pressable
+                          onPress={() => clearSocial(row.key)}
+                          hitSlop={8}
+                          style={({ pressed }) => [{ opacity: pressed ? 0.5 : 1 }]}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Clear ${row.label}`}
+                        >
+                          <Ionicons name="close-circle" size={18} color={colors.textTertiary} />
+                        </Pressable>
+                      ) : null}
                     </View>
-                    <Text style={[styles.socialLabel, { color: colors.textSecondary }]}>{row.label}</Text>
-                    <TextInput
-                      value={form[row.key]}
-                      onChangeText={updateField(row.key)}
-                      placeholder={row.placeholder}
-                      placeholderTextColor={colors.textTertiary}
-                      autoCapitalize="none"
-                      keyboardType={row.key === 'website' ? 'url' : 'default'}
-                      style={[styles.socialInput, { color: colors.text }]}
-                      selectionColor={colors.primary}
-                      accessibilityLabel={row.label}
-                    />
-                  </View>
-                ))}
+                  );
+                })}
               </Section>
 
               <Section title="Privacy">
@@ -735,43 +767,46 @@ const styles = StyleSheet.create({
   grid: { gap: Spacing.md },
   gridWide: { flexDirection: 'row', alignItems: 'flex-start' },
   column: { flex: 1, minWidth: 0, gap: Spacing.md },
-  section: { gap: Spacing.sm },
-  sectionTitle: {
-    fontSize: 12,
-    fontFamily: FontFamily.bold,
-    textTransform: 'uppercase',
-    letterSpacing: 0.9,
-    paddingHorizontal: Spacing.xs,
+  sectionCard: {
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    overflow: 'hidden',
   },
-  sectionBody: { gap: Spacing.sm },
-  field: { minHeight: 68, borderWidth: 1, borderRadius: Radius.md, paddingHorizontal: Spacing.md, paddingVertical: 10, gap: 2 },
-  fieldMultiline: { minHeight: 132 },
+  section: { gap: Spacing.sm },
+  sectionBody: { gap: Spacing.sm, paddingHorizontal: Spacing.md, paddingBottom: Spacing.md },
+  field: { minHeight: 62, borderWidth: 0, borderRadius: Radius.md, paddingHorizontal: Spacing.md, paddingVertical: 8, gap: 2, backgroundColor: 'transparent' },
+  fieldMultiline: { minHeight: 122 },
   fieldLabel: { fontSize: 12, lineHeight: 16, fontFamily: FontFamily.bold, textTransform: 'uppercase', letterSpacing: 0.7 },
   input: { minHeight: 32, paddingVertical: 0, fontSize: 15, lineHeight: 21, fontFamily: FontFamily.medium },
   inputMultiline: { minHeight: 84, textAlignVertical: 'top', paddingTop: 6 },
   charCount: { marginTop: -4, textAlign: 'right', fontSize: 11, lineHeight: 15, fontFamily: FontFamily.regular },
   dateField: { minHeight: 68 },
   socialField: {
-    minHeight: 58,
-    borderWidth: 1,
+    minHeight: 52,
+    borderWidth: 0,
     borderRadius: Radius.md,
     paddingHorizontal: Spacing.md,
+    paddingVertical: 6,
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: Spacing.sm,
+    backgroundColor: 'transparent',
   },
   socialIcon: { width: 34, height: 34, borderRadius: Radius.sm, alignItems: 'center', justifyContent: 'center' },
   socialLabel: { width: 82, fontSize: 13, lineHeight: 18, fontFamily: FontFamily.semibold },
-  socialInput: { flex: 1, minWidth: 0, fontSize: 15, lineHeight: 21, fontFamily: FontFamily.medium },
+  socialInput: { flex: 1, minWidth: 0, fontSize: 15, lineHeight: 21, fontFamily: FontFamily.medium, paddingVertical: 2 },
+  socialHint: { fontSize: 12, lineHeight: 16, fontFamily: FontFamily.regular, marginBottom: 4, paddingHorizontal: 2 },
+  socialResolved: { fontSize: 11, lineHeight: 14, fontFamily: FontFamily.regular, marginTop: 2, opacity: 0.85 },
   toggleRow: {
-    minHeight: 66,
-    borderWidth: 1,
+    minHeight: 58,
+    borderWidth: 0,
     borderRadius: Radius.md,
     paddingHorizontal: Spacing.md,
-    paddingVertical: 10,
+    paddingVertical: 8,
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.md,
+    backgroundColor: 'transparent',
   },
   toggleCopy: { flex: 1, minWidth: 0, gap: 2 },
   toggleLabel: { fontSize: 15, lineHeight: 21, fontFamily: FontFamily.semibold },

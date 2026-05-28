@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -104,16 +104,16 @@ function MediaUploadField({
 
   const isGallery = type === 'gallery';
   const isVideo = type === 'video';
-  const currentValues = Array.isArray(value) ? value : value ? [value] : [];
+  const currentValues = useMemo(() => (Array.isArray(value) ? value : value ? [value] : []), [value]);
   const hasValue = currentValues.length > 0;
   const canAddMore = isGallery && currentValues.length < maxItems;
 
-  const uploadOptions: MediaUploadOptions = {
+  const uploadOptions = useMemo<MediaUploadOptions>(() => ({
     type,
     aspectRatio,
     minDimensions,
     maxSize,
-  };
+  }), [type, aspectRatio, minDimensions, maxSize]);
 
   // ---------------------------------------------------------------------------
   // Web Drag-and-Drop Handlers

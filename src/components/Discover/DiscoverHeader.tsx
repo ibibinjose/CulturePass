@@ -4,9 +4,18 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useColors } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
 import { useAuth } from '@/lib/auth';
-import { FontFamily, FontSize, LineHeight, LetterSpacing, Vitrine } from '@/design-system/tokens/theme';
+import {
+  FontFamily,
+  FontSize,
+  LineHeight,
+  LetterSpacing,
+  Vitrine,
+  Luxe,
+  LuxeTextStyles,
+} from '@/design-system/tokens/theme';
 import { useDiscoverVitrine } from '@/components/Discover/DiscoverVitrineContext';
 import { LocationPicker } from '@/modules/core/components';
+import { LuxeButton, LuxeText } from '@/design-system/ui';
 import { Ionicons } from '@expo/vector-icons';
 import { withAlpha } from '@/lib/withAlpha';
 
@@ -79,14 +88,15 @@ function DiscoverHeaderComponent({
                   {weatherSummary ? ` · ${weatherSummary}` : ''}
                 </Text>
               </LinearGradient>
-              <Text
+              <LuxeText
+                variant="display"
                 style={[styles.desktopGreeting, { color: greetingColor, fontSize: Math.min(48, greetingFontSize + 12) }]}
               >
                 {greeting}
-              </Text>
-              <Text style={[styles.desktopSub, { color: metaColor }]}>
+              </LuxeText>
+              <LuxeText variant="body" style={[styles.desktopSub, { color: metaColor }]}>
                 {`Explore festivals, communities, and events in ${city}.`}
-              </Text>
+              </LuxeText>
             </View>
           </View>
           <View style={styles.desktopActions}>
@@ -106,9 +116,13 @@ function DiscoverHeaderComponent({
               {mobileMetaLabel}
             </Text>
           </LinearGradient>
-          <Text style={[styles.mobileGreeting, { color: greetingColor, fontSize: greetingFontSize + 2 }]} numberOfLines={1}>
+          <LuxeText
+            variant="hero"
+            style={[styles.mobileGreeting, { color: greetingColor, fontSize: greetingFontSize + 2 }]}
+            numberOfLines={1}
+          >
             {greeting}
-          </Text>
+          </LuxeText>
           <View style={styles.mobileMetaRow}>
             <View style={styles.mobileMetaLocationWrap}>
               <LocationPicker variant="text" />

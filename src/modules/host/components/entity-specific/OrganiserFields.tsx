@@ -24,7 +24,7 @@
  * ```
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -102,13 +102,13 @@ export function OrganiserFields({
   // Derived Data
   // ---------------------------------------------------------------------------
 
-  const organiserData: OrganiserData = formData.organiserData ?? {
+  const organiserData = useMemo<OrganiserData>(() => formData.organiserData ?? {
     pastEvents: [],
     producerCredentials: '',
     credentialDocuments: [],
     eventsHostedCount: 0,
     totalAttendance: 0,
-  };
+  }, [formData.organiserData]);
 
   const pastEvents = organiserData.pastEvents ?? [];
   const insuranceCertificate = organiserData.insuranceCertificate;

@@ -30,8 +30,6 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Platform } from 'react-native';
-import { api } from '@/lib/api';
 import type { PrivacyLevel } from '../components/fields/PrivacyControl';
 import {
   getProfilePrivacySettings,
@@ -50,7 +48,6 @@ import {
   OPTIONAL_CONSENTS,
   type ProfilePrivacyConfig,
   type ConsentRecord,
-  type DataExportPayload,
   type DataDeletionRequest,
 } from '../services/privacyService';
 

@@ -1,21 +1,20 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  ActivityIndicator,
   ScrollView,
-  Platform,
+  ActivityIndicator,
+  Image,
 } from 'react-native';
-import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { Input } from '@/design-system/ui/Input';
-import { Button } from '@/design-system/ui';
-import { M3Card } from '@/design-system/ui/M3Card';
 import { useColors } from '@/hooks/useColors';
 import { CultureTokens, FontFamily, Radius } from '@/design-system/tokens/theme';
 import { FIELD_LIMITS, VALIDATION_TIMING } from '@/modules/host/schemas/validationRules';
 import { api } from '@/lib/api';
+import { M3Card } from '@/design-system/ui/M3Card';
+import { Button } from '@/design-system/ui/Button';
 
 export type SocialPlatform =
   | 'website'
@@ -167,7 +166,6 @@ export function SocialLinksField({
   const [isValidating, setIsValidating] = useState(false);
   const [isFetchingMetadata, setIsFetchingMetadata] = useState(false);
   const [urlError, setUrlError] = useState<string | undefined>();
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const availablePlatforms = Object.keys(PLATFORM_CONFIGS).filter(
     (platform) =>

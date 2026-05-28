@@ -26,7 +26,7 @@ import { CultureTokens, gradients, type ColorTheme } from "@/design-system/token
 import { GlassView } from "@/design-system/ui/GlassView";
 import { M3TopAppBar } from '@/design-system/ui';
 import { TextStyles } from "@/design-system/tokens/typography";
-import { APP_NAME, APP_AKA, APP_PREFIX } from "@/lib/app-meta";
+import { APP_NAME } from "@/lib/app-meta";
 import { Footer } from "@/components/Footer";
 import { goBackOrReplace } from "@/lib/navigation";
 

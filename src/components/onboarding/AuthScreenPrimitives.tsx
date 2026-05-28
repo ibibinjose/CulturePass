@@ -23,9 +23,12 @@ import {
   CultureTokens,
   ScreenTokens,
   shadows,
+  Luxe,
+  LuxeTextStyles,
 } from '@/design-system/tokens/theme';
 import { useColors } from '@/hooks/useColors';
 import { GlassView } from '@/design-system/ui/GlassView';
+import { LuxeText } from '@/design-system/ui/LuxeText';
 
 export function AuthAmbientBackground() {
   const colors = useColors();
@@ -107,7 +110,7 @@ export function AuthDesktopBackPill({ label, onPress, accessibilityLabel }: Desk
         ]}
       >
         <Ionicons name="chevron-back" size={IconSize.md - 2} color={colors.text} />
-        <Text style={[styles.desktopBackText, { color: colors.text }]}>{label}</Text>
+        <LuxeText variant="bodyMedium" style={{ color: colors.text }}>{label}</LuxeText>
       </Pressable>
     </View>
   );

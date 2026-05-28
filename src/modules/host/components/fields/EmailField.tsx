@@ -72,7 +72,7 @@ export function EmailField({
   const [isValidating, setIsValidating] = useState(false);
   const [isValid, setIsValid] = useState(false);
   const [hasValidated, setHasValidated] = useState(false);
-  const [isVerified, setIsVerified] = useState(initialVerified);
+  const [isVerified] = useState(initialVerified);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [verificationSent, setVerificationSent] = useState(false);
   const [isSending, setIsSending] = useState(false);

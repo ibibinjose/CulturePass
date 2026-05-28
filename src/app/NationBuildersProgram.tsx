@@ -12,7 +12,6 @@ import {
   Text,
   ScrollView,
   StyleSheet,
-  Linking,
   TouchableOpacity,
 } from 'react-native';
 import { router } from 'expo-router';

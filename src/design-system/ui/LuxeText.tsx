@@ -10,7 +10,7 @@
  */
 
 import React from 'react';
-import { Text, TextProps, TextStyle } from 'react-native';
+import { Text, TextProps, TextStyle, StyleProp } from 'react-native';
 
 import { LuxeTextStyles, LuxeFontFamily } from '@/design-system/tokens/luxeHeritage';
 
@@ -19,7 +19,7 @@ export type LuxeTextVariant = keyof typeof LuxeTextStyles;
 interface LuxeTextProps extends TextProps {
   variant?: LuxeTextVariant;
   children: React.ReactNode;
-  style?: TextStyle | TextStyle[];
+  style?: StyleProp<TextStyle>;
 }
 
 export function LuxeText({

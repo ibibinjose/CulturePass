@@ -229,7 +229,8 @@ export function useFieldValidation<T = string>(
     if (validateOnMount && initialValue !== undefined) {
       validate(initialValue);
     }
-  }, []); // Only run on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Intentionally only on mount - validateOnMount + initialValue are for initial trigger only
 
   /**
    * Cleanup debounce timer on unmount

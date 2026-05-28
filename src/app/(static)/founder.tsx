@@ -472,7 +472,7 @@ export default function FounderStory() {
             </View>
             <Text style={[styles.h2, { color: 'white' }]}>Technology Should Strengthen{'\n'}Real-World Connection</Text>
             <Text style={[styles.p, { color: 'rgba(255,255,255,0.75)' }]}>
-              Much of modern technology optimises for screen time, engagement addiction, and passive scrolling. CulturePass proposes a different model.
+              {'Much of modern technology optimises for screen time, engagement addiction, and passive scrolling. CulturePass proposes a different model.'}
             </Text>
 
             <View style={[styles.grid, { maxWidth: isTablet ? 920 : '100%' }]}>

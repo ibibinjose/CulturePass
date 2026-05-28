@@ -198,20 +198,6 @@ export function NameField({
     return undefined;
   };
 
-  /**
-   * Get right icon color
-   */
-  const getRightIconColor = () => {
-    if (hasValidated && value.trim()) {
-      if (isValid && !displayError) {
-        return CultureTokens.teal;
-      } else if (displayError) {
-        return colors.error;
-      }
-    }
-    return colors.textSecondary;
-  };
-
   const rightIcon = getRightIcon();
 
   return (

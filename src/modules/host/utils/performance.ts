@@ -7,7 +7,7 @@
  * Requirements: 22 (Mobile Responsive Design — Performance)
  */
 
-import React, { ComponentType, lazy, Suspense } from 'react';
+import React, { ComponentType, lazy } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 
 // ---------------------------------------------------------------------------

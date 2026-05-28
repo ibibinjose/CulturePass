@@ -125,7 +125,9 @@ function resolveApiUrl(): string {
       const host = getFirebaseEmulatorHost();
       const base = localFunctionsEmulatorApiBase(host);
       if (__DEV__) {
-        console.log('[api] Local web + emulators →', base);
+        if (__DEV__) {
+          console.log('[api] Local web + emulators →', base);
+        }
       }
       return base;
     }

@@ -387,6 +387,7 @@ export function useVersionHistory({
       // Native: use Share API (simplified — in production, write to file first)
       // For now, copy to clipboard as a fallback
       try {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
         const { Share } = require('react-native');
         Share.share({
           message: json,

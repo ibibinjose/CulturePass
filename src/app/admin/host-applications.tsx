@@ -17,7 +17,6 @@ import {
   TextInput,
   Modal,
   Linking,
-  Alert as RNAlert, // fallback only
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { router, Stack } from 'expo-router';
@@ -44,9 +43,8 @@ type ReviewAction = 'approve' | 'reject';
 
 export default function HostApplicationsAdmin() {
   const colors = useColors();
-  const { hPad, isDesktop } = useLayout();
+  const { hPad } = useLayout();
   const insets = useSafeAreaInsets();
-  const { isSuperAdmin } = useRole();
   const queryClient = useQueryClient();
 
   const [filter, setFilter] = useState<'all' | HostApplicationStatus>('pending');
@@ -62,12 +60,11 @@ export default function HostApplicationsAdmin() {
     staleTime: 20_000,
   });
 
-  const applicationsRaw: HostApplication[] = (data as any)?.applications ?? [];
-
   const applications = useMemo(() => {
+    const raw: HostApplication[] = (data as any)?.applications ?? [];
     const q = search.trim().toLowerCase();
-    if (!q) return applicationsRaw;
-    return applicationsRaw.filter((a) => {
+    if (!q) return raw;
+    return raw.filter((a) => {
       const hay = [
         a.fullName,
         a.businessName ?? '',
@@ -81,7 +78,7 @@ export default function HostApplicationsAdmin() {
         .toLowerCase();
       return hay.includes(q);
     });
-  }, [applicationsRaw, search]);
+  }, [data, search]);
 
   const reviewMutation = useMutation({
     mutationFn: async ({ id, action: act, note }: { id: string; action: ReviewAction; note?: string }) => {

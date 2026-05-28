@@ -108,7 +108,7 @@ const BOTTOM_NAV: NavItem[] = [
 ];
 
 const PROFILE_ACTIONS = [
-  { key: 'profile', label: 'View Profile', icon: 'person-outline' as const, route: '/profile/edit' },
+  { key: 'edit', label: 'Edit Profile', icon: 'create-outline' as const, route: '/profile/edit' },
   { key: 'qr', label: 'Digital ID', icon: 'qr-code-outline' as const, route: '/profile/qr' },
   { key: 'network', label: 'Network', icon: 'people-outline' as const, route: '/network' },
   { key: 'wallet', label: 'Wallet', icon: 'wallet-outline' as const, route: '/payment/wallet' },
@@ -121,17 +121,25 @@ function AvatarWithRing({
   initials,
   size = 32,
   ringWidth = 2,
+  recyclingKey,
 }: {
   avatarUrl?: string | null;
   initials: string;
   size?: number;
   ringWidth?: number;
+  /** Pass a changing value (e.g. user.updatedAt or timestamp) to force expo-image to re-fetch after avatar update */
+  recyclingKey?: string | number;
 }) {
   const colors = useColors();
   const isDark = useIsDark();
   const innerSize = size - ringWidth * 2 - 2;
-  // Theme-aware cutout so ring contrasts in both light & dark
   const cutoutBg = isDark ? withAlpha(CultureTokens.indigo, 0.08) : colors.surfaceElevated || '#F8F1E9';
+
+  // Force fresh fetch on web after profile image change (expo-image caching can be stubborn)
+  const resolvedUri = avatarUrl
+    ? (recyclingKey ? `${avatarUrl}${avatarUrl.includes('?') ? '&' : '?'}v=${recyclingKey}` : avatarUrl)
+    : null;
+
   return (
     <View style={{ width: size, height: size, borderRadius: size / 2, alignItems: 'center', justifyContent: 'center' }}>
       <LinearGradient
@@ -151,8 +159,13 @@ function AvatarWithRing({
           justifyContent: 'center',
         }}
       >
-        {avatarUrl ? (
-          <Image source={{ uri: avatarUrl }} style={{ width: innerSize, height: innerSize }} />
+        {resolvedUri ? (
+          <Image
+            source={{ uri: resolvedUri }}
+            style={{ width: innerSize, height: innerSize }}
+            recyclingKey={recyclingKey ? String(recyclingKey) : undefined}
+            cachePolicy="none"
+          />
         ) : (
           <LinearGradient colors={gradients.culturepassBrand} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill}>
             <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
@@ -435,9 +448,21 @@ function WebSidebarContent() {
         {isAuthenticated && (
            <Pressable
             style={[r.railItem, { marginBottom: 16 }]}
-            onPress={() => navigate('/profile/edit')}
+            onPress={() => {
+              const seg = user?.id
+                ? (user.handle && user.handleStatus === 'approved' ? user.handle.toLowerCase() : (user.culturePassId || user.id))
+                : null;
+              navigate(seg ? `/user/${seg}` : '/profile/edit');
+            }}
+            accessibilityLabel="View public profile"
            >
-            <AvatarWithRing avatarUrl={user?.avatarUrl} initials="CP" size={28} ringWidth={1} />
+            <AvatarWithRing
+              avatarUrl={user?.avatarUrl}
+              initials="CP"
+              size={28}
+              ringWidth={1}
+              recyclingKey={(user as any)?.updatedAt || (user as any)?.avatarUpdatedAt || Date.now()}
+            />
            </Pressable>
         )}
       </View>
@@ -632,6 +657,10 @@ function SidebarItem({ item, active, isDark, onPress, colors }: { item: NavItem;
 function SidebarProfileBlock({ user, colors, isDark, friendlyRole, onNavigate, onLogout }: any) {
   const [menuOpen, setMenuOpen] = useState(false);
   const displayName = user.displayName || user.username || 'User';
+  // Prefer the canonical /user/ path (supports CPID or clean username when handle approved)
+  const publicProfileRoute = user?.id
+    ? `/user/${user.handle && user.handleStatus === 'approved' ? user.handle.toLowerCase() : (user.culturePassId || user.id)}`
+    : '/profile/edit';
 
   return (
     <View>
@@ -644,32 +673,68 @@ function SidebarProfileBlock({ user, colors, isDark, friendlyRole, onNavigate, o
               backgroundColor: colors.surfaceElevated,
               borderWidth: 1,
               borderColor: colors.borderLight,
-              // stronger visual separation for the floating profile menu
               ...(isDark
                 ? { boxShadow: '0 8px 24px rgba(0,0,0,0.45)' }
                 : { boxShadow: '0 8px 24px rgba(0,0,0,0.12)' }),
             },
           ]}
         >
+          {/* View public profile first for quick read access */}
+          <Pressable
+            style={({ pressed, hovered }: any) => [
+              pb.menuItem,
+              hovered && { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' },
+              pressed && { opacity: 0.85 },
+            ]}
+            onPress={() => { setMenuOpen(false); onNavigate(publicProfileRoute); }}
+          >
+            <Ionicons name="person-outline" size={16} color={colors.textSecondary} />
+            <Text style={[pb.menuLabel, { color: colors.text }]}>View Public Profile</Text>
+          </Pressable>
           {PROFILE_ACTIONS.map(action => (
-            <Pressable key={action.key} style={pb.menuItem} onPress={() => { setMenuOpen(false); onNavigate(action.route); }}>
+            <Pressable
+              key={action.key}
+              style={({ pressed, hovered }: any) => [
+                pb.menuItem,
+                hovered && { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' },
+                pressed && { opacity: 0.85 },
+              ]}
+              onPress={() => { setMenuOpen(false); onNavigate(action.route); }}
+            >
               <Ionicons name={action.icon} size={16} color={colors.textSecondary} />
               <Text style={[pb.menuLabel, { color: colors.text }]}>{action.label}</Text>
             </Pressable>
           ))}
           {/* Sign out row has extra top separation for clarity */}
           <View style={[pb.menuDivider, { backgroundColor: colors.divider }]} />
-          <Pressable style={pb.menuItem} onPress={() => { setMenuOpen(false); onLogout(); }}>
+          <Pressable
+            style={({ pressed, hovered }: any) => [
+              pb.menuItem,
+              hovered && { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' },
+              pressed && { opacity: 0.85 },
+            ]}
+            onPress={() => { setMenuOpen(false); onLogout(); }}
+          >
             <Ionicons name="log-out-outline" size={16} color={CultureTokens.coral} />
             <Text style={[pb.menuLabel, { color: CultureTokens.coral, fontWeight: '600' }]}>Sign Out</Text>
           </Pressable>
         </M3Card>
       )}
       <Pressable
-        style={[pb.profileRow, { backgroundColor: colors.backgroundSecondary }]}
+        style={({ pressed, hovered }: { pressed?: boolean; hovered?: boolean }) => [
+          pb.profileRow,
+          { backgroundColor: colors.backgroundSecondary },
+          hovered && { backgroundColor: colors.surfaceElevated, borderColor: colors.borderLight, borderWidth: 1 },
+          pressed && { opacity: 0.92 },
+        ]}
         onPress={() => setMenuOpen(!menuOpen)}
       >
-        <AvatarWithRing avatarUrl={user.avatarUrl} initials={displayName[0]} size={32} />
+        <AvatarWithRing
+          avatarUrl={user.avatarUrl}
+          initials={displayName[0]}
+          size={32}
+          recyclingKey={(user as any)?.updatedAt || (user as any)?.avatarUpdatedAt || Date.now()}
+        />
         <View style={{ flex: 1 }}>
           <Text style={[pb.name, { color: colors.text }]} numberOfLines={1}>{displayName}</Text>
           <Text style={[pb.sub, { color: colors.textSecondary }]} numberOfLines={1}>{friendlyRole}</Text>
@@ -743,11 +808,18 @@ const ni = StyleSheet.create({
 });
 
 const pb = StyleSheet.create({
-  profileRow: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 8, borderRadius: Radius.md },
+  profileRow: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 8, borderRadius: Radius.md, borderWidth: 0 },
   name: { ...TextStyles.labelSemibold, fontSize: 13 },
   sub: { ...TextStyles.caption, fontSize: 11 },
   menu: { position: 'absolute', bottom: 60, left: 0, right: 0, padding: 6, borderRadius: Radius.md, zIndex: 1000, overflow: 'hidden' },
-  menuItem: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 9, paddingHorizontal: 10, borderRadius: Radius.sm },
-  menuLabel: { ...TextStyles.body, fontSize: 13 },
-  menuDivider: { height: 1, marginVertical: 4, marginHorizontal: 6 },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    borderRadius: Radius.sm,
+  },
+  menuLabel: { ...TextStyles.body, fontSize: 13, letterSpacing: 0.1 },
+  menuDivider: { height: 1, marginVertical: 5, marginHorizontal: 6 },
 });

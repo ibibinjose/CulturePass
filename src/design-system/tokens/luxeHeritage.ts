@@ -340,6 +340,13 @@ export const LuxeTextStyles = {
     lineHeight: LuxeLineHeight.body,
     ...(Platform.OS === 'android' && { includeFontPadding: false }),
   },
+  caption: {
+    fontFamily: LuxeFontFamily.regular,
+    fontWeight: weight('400'),
+    fontSize: LuxeFontSize.caption,
+    lineHeight: LuxeLineHeight.caption,
+    ...(Platform.OS === 'android' && { includeFontPadding: false }),
+  },
   bodyMedium: {
     fontFamily: LuxeFontFamily.medium,
     fontWeight: weight('500'),

@@ -14,21 +14,21 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated,
   { FadeInUp, FadeInDown, useReducedMotion } from 'react-native-reanimated';
 
-import { useColors } from '@/hooks/useColors';
 import { useM3Colors } from '@/hooks/useM3Colors';
 import { useLayout } from '@/hooks/useLayout';
 import { useSignup } from '@/hooks/useSignup';
-import { BrandWordmark } from '@/design-system/ui/BrandWordmark';
-
 import {
-  CulturalButton,
   M3Card,
   CulturalTopAppBar,
   Input,
   Checkbox,
   SocialButton,
   PasswordStrengthIndicator,
+  LuxeButton,
+  LuxeCard,
+  LuxeText,
 } from '@/design-system/ui';
+import { BrandWordmark } from '@/design-system/ui/BrandWordmark';
 
 
 import {
@@ -40,12 +40,9 @@ import {
   Spacing,
   IconSize,
   LiquidGlassTokens,
-  M3Typography,
-  Luxe,
-  LuxeTextStyles,
+  luxeDark,
 } from '@/design-system/tokens/theme';
 
-import { LuxeButton, LuxeCard, LuxeText } from '@/design-system/ui';
 import { routeWithRedirect } from '@/lib/routes';
 import Head from 'expo-router/head';
 import { APP_NAME, SITE_ORIGIN } from '@/lib/app-meta';
@@ -56,8 +53,8 @@ const SIGNUP_SEO_DESC =
 const SIGNUP_CANONICAL = `${SITE_ORIGIN}/signup`;
 
 // Luxe Heritage values
-const LUXE_TITLE = 'Create your account';
-const LUXE_SUB = 'Your cultural passport starts here.';
+const _LUXE_TITLE = 'Create your account';
+const _LUXE_SUB = 'Your cultural passport starts here.';
 
 const VALUE_PROPS = [
   { icon: 'calendar-outline' as const, title: 'Cultural Events', desc: "Discover what's on this week in your city." },
@@ -104,11 +101,10 @@ interface AccountTypeSelectorProps {
 }
 
 const AccountTypeSelector: React.FC<AccountTypeSelectorProps> = ({ enterAnimation, role, setRole, clearErrors }) => {
-  const m3Colors = useM3Colors();
   return (
     <Animated.View entering={enterAnimation(170)} style={s.accountTypeGroup}>
-      <Text style={[s.accountTypeLabel, M3Typography.labelSmall, { color: m3Colors.onSurfaceVariant }]}>ACCOUNT TYPE</Text>
-      <View style={[s.accountTypeRow, { backgroundColor: m3Colors.surfaceContainerLow, borderColor: 'transparent' }]}>
+      <LuxeText variant="badgeCaps" style={{ color: luxeDark.textSecondary }}>ACCOUNT TYPE</LuxeText>
+      <View style={[s.accountTypeRow, { backgroundColor: luxeDark.surfaceElevated, borderColor: 'transparent' }]}>
         {[
           { key: 'user' as const, label: 'User', icon: 'person-outline' as const },
           { key: 'organizer' as const, label: 'Host', icon: 'briefcase-outline' as const },
@@ -119,7 +115,7 @@ const AccountTypeSelector: React.FC<AccountTypeSelectorProps> = ({ enterAnimatio
               key={option.key}
               style={[
                 s.accountTypeOption,
-                active && { backgroundColor: m3Colors.primary },
+                active && { backgroundColor: luxeDark.primary },
               ]}
               onPress={() => {
                 setRole(option.key);
@@ -131,17 +127,14 @@ const AccountTypeSelector: React.FC<AccountTypeSelectorProps> = ({ enterAnimatio
               <Ionicons
                 name={option.icon}
                 size={18}
-                color={active ? m3Colors.onPrimary : m3Colors.primary}
+                color={active ? luxeDark.textOnBrandGradient : luxeDark.primary}
               />
-              <Text
-                style={[
-                  s.accountTypeText,
-                  M3Typography.labelLarge,
-                  { color: active ? m3Colors.onPrimary : m3Colors.onSurface },
-                ]}
+              <LuxeText
+                variant="bodyMedium"
+                style={{ color: active ? luxeDark.textOnBrandGradient : luxeDark.text }}
               >
                 {option.label}
-              </Text>
+              </LuxeText>
             </Pressable>
           );
         })}
@@ -228,29 +221,30 @@ interface TermsCheckboxProps {
 }
 
 const TermsCheckbox: React.FC<TermsCheckboxProps> = ({ enterAnimation, agreed, setAgreed, clearErrors }) => {
-  const colors = useColors();
   return (
     <Animated.View entering={enterAnimation(260)} style={s.optionsRow}>
       <Checkbox
         checked={agreed}
         onToggle={(v: boolean) => { setAgreed(v); clearErrors(); }}
         label={
-          <Text style={[s.checkText, { color: colors.text }]}>
+          <LuxeText variant="body" style={{ color: luxeDark.text, flex: 1 }}>
             I agree to the{' '}
-            <Text
-              style={s.linkText}
+            <LuxeText
+              variant="bodyMedium"
+              style={{ color: luxeDark.primary }}
               onPress={() => router.push('/(static)/legal/terms')}
             >
               Terms
-            </Text>
+            </LuxeText>
             {' & '}
-            <Text
-              style={s.linkText}
+            <LuxeText
+              variant="bodyMedium"
+              style={{ color: luxeDark.primary }}
               onPress={() => router.push('/(static)/legal/privacy')}
             >
               Privacy Policy
-            </Text>
-          </Text>
+            </LuxeText>
+          </LuxeText>
         }
       />
     </Animated.View>
@@ -263,19 +257,23 @@ interface WebMarketingPanelProps {
 
 const WebMarketingPanel: React.FC<WebMarketingPanelProps> = ({ enterAnimation }) => {
   return (
-    <View style={s.webLeft}>
+    <View style={[s.webLeft, { backgroundColor: luxeDark.accentContainer }]}>
       <Animated.View entering={enterAnimation(40)} style={s.webKickerRow}>
-        <View style={s.webDot} />
-        <Text style={[M3Typography.labelSmall, s.webKickerText]}>CULTUREPASS</Text>
+        <View style={[s.webDot, { backgroundColor: luxeDark.primary }]} />
+        <LuxeText variant="badgeCaps" style={s.webKickerText}>CULTUREPASS</LuxeText>
       </Animated.View>
 
-      <Animated.Text entering={enterAnimation(70)} style={[s.webHeadline, M3Typography.displayLarge, s.webHeadlineText]}>
-        Your cultural home,{'\n'}anywhere.
-      </Animated.Text>
+      <Animated.View entering={enterAnimation(70)}>
+        <LuxeText variant="displayHero" style={s.webHeadlineText}>
+          Your cultural home,{'\n'}anywhere.
+        </LuxeText>
+      </Animated.View>
 
-      <Animated.Text entering={enterAnimation(100)} style={[s.webLead, M3Typography.bodyLarge, s.webLeadText]}>
-        The premium marketplace for diaspora communities — events, businesses, and member perks.
-      </Animated.Text>
+      <Animated.View entering={enterAnimation(100)}>
+        <LuxeText variant="hero" style={s.webLeadText}>
+          The premium marketplace for diaspora communities — events, businesses, and member perks.
+        </LuxeText>
+      </Animated.View>
 
       <Animated.View entering={enterAnimation(130)} style={s.webValueGrid}>
         {VALUE_PROPS.map((item, index) => (
@@ -284,19 +282,19 @@ const WebMarketingPanel: React.FC<WebMarketingPanelProps> = ({ enterAnimation })
             entering={enterAnimation(160 + index * 30)}
             style={s.webValueItem}
           >
-            <M3Card
-              variant="filled"
+            <LuxeCard
+              variant="glass"
               style={s.webValueCard}
             >
                 <View style={s.webValueStripe} />
-                <View style={s.webValueIcon}>
-                <Ionicons name={item.icon} size={18} color="#1C1C1C" />
+                <View style={[s.webValueIcon, { backgroundColor: luxeDark.surfaceElevated }]}>
+                  <Ionicons name={item.icon} size={18} color={luxeDark.primary} />
                 </View>
                 <View style={s.webValueTextContent}>
-                <Text style={[s.webValueTitle, M3Typography.titleSmall]}>{item.title}</Text>
-                <Text style={[s.webValueDesc, M3Typography.bodySmall]}>{item.desc}</Text>
+                  <LuxeText variant="title3" style={s.webValueTitle}>{item.title}</LuxeText>
+                  <LuxeText variant="caption" style={s.webValueDesc}>{item.desc}</LuxeText>
                 </View>
-            </M3Card>
+            </LuxeCard>
           </Animated.View>
         ))}
       </Animated.View>
@@ -356,7 +354,7 @@ export default function SignUpScreen() {
   const bottomPadding = isWeb ? (insets.bottom > 0 ? insets.bottom : 40) : (64 + insets.bottom);
 
   const formContent = (
-    <M3Card variant="elevated" style={{ padding: isExpanded ? 32 : 24 }}>
+    <LuxeCard variant="default" style={{ padding: isExpanded ? 32 : 24 }}>
       {/* Brand — single appearance, inside the card */}
       <Animated.View entering={enter(30)} style={s.brandBlock}>
         <BrandWordmark size="md" withTagline={false} centered />
@@ -364,12 +362,12 @@ export default function SignUpScreen() {
 
       {/* Copy */}
       <Animated.View entering={enter(70)} style={s.copyBlock}>
-        <Animated.Text style={[s.title, M3Typography.headlineMedium, { color: m3Colors.onSurface }]}>
+        <LuxeText variant="display" style={[s.title, { color: luxeDark.text }]}>
           Create your account
-        </Animated.Text>
-        <Animated.Text style={[s.subtitle, M3Typography.bodyMedium, { color: m3Colors.onSurfaceVariant }]}>
+        </LuxeText>
+        <LuxeText variant="body" style={[s.subtitle, { color: luxeDark.textSecondary }]}>
           Join CulturePass — your home for events and community.
-        </Animated.Text>
+        </LuxeText>
       </Animated.View>
 
       {/* Global error */}
@@ -379,14 +377,14 @@ export default function SignUpScreen() {
           style={[
             s.errorBanner,
             {
-              backgroundColor: m3Colors.errorContainer,
-              borderColor: m3Colors.error,
+              backgroundColor: luxeDark.error + '20',
+              borderColor: luxeDark.error,
             },
           ]}
           accessibilityRole="alert"
         >
-          <Ionicons name="alert-circle" size={IconSize.md} color={m3Colors.onErrorContainer} />
-          <Text style={[s.errorText, M3Typography.bodySmall, { color: m3Colors.onErrorContainer }]}>{globalError}</Text>
+          <Ionicons name="alert-circle" size={IconSize.md} color={luxeDark.error} />
+          <LuxeText variant="caption" style={{ color: luxeDark.error, flex: 1 }}>{globalError}</LuxeText>
         </Animated.View>
       )}
 
@@ -399,9 +397,9 @@ export default function SignUpScreen() {
 
       {/* Divider */}
       <Animated.View entering={enter(150)} style={s.divider}>
-        <View style={[s.divLine, { backgroundColor: m3Colors.outlineVariant }]} />
-        <Text style={[s.divText, M3Typography.labelSmall, { color: m3Colors.onSurfaceVariant }]}>OR SIGN UP WITH EMAIL</Text>
-        <View style={[s.divLine, { backgroundColor: m3Colors.outlineVariant }]} />
+        <View style={[s.divLine, { backgroundColor: luxeDark.border }]} />
+        <LuxeText variant="badgeCaps" style={{ color: luxeDark.textSecondary }}>OR SIGN UP WITH EMAIL</LuxeText>
+        <View style={[s.divLine, { backgroundColor: luxeDark.border }]} />
       </Animated.View>
 
       <AccountTypeSelector
@@ -429,7 +427,7 @@ export default function SignUpScreen() {
 
       {/* CTA */}
       <Animated.View entering={enter(300)} style={s.ctaButtonContainer}>
-        <CulturalButton
+        <LuxeButton
           variant="filled"
           fullWidth
           haptic
@@ -440,7 +438,7 @@ export default function SignUpScreen() {
           style={s.submitButton}
         >
           Create Account
-        </CulturalButton>
+        </LuxeButton>
       </Animated.View>
 
       {/* Switch to sign in */}
@@ -452,13 +450,13 @@ export default function SignUpScreen() {
           accessibilityRole="link"
           accessibilityLabel="Sign in to existing account"
         >
-          <Text style={[s.switchText, M3Typography.bodyMedium, { color: m3Colors.onSurfaceVariant, textAlign: 'center' }]}>
+          <LuxeText variant="body" style={{ color: luxeDark.textSecondary, textAlign: 'center' }}>
             Already have an account?{' '}
-            <Text style={{ color: m3Colors.primary, fontWeight: '700' }}>Sign In</Text>
-          </Text>
+            <LuxeText variant="bodyMedium" style={{ color: luxeDark.primary }}>Sign In</LuxeText>
+          </LuxeText>
         </Pressable>
       </Animated.View>
-    </M3Card>
+    </LuxeCard>
   );
 
   return (

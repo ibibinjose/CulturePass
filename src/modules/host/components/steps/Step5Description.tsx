@@ -28,7 +28,7 @@ import { useColors } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
 import { M3Card } from '@/design-system/ui/M3Card';
 import { Input } from '@/design-system/ui/Input';
-import { CultureTokens, Spacing, Radius, FontFamily, TextStyles } from '@/design-system/tokens/theme';
+import { CultureTokens, Spacing, Radius, FontFamily } from '@/design-system/tokens/theme';
 import { SITE_ORIGIN } from '@/lib/app-meta';
 import { RichTextEditor } from '../fields/RichTextEditor';
 import type { WizardStepProps } from '../FormWizard/WizardStep';
@@ -210,8 +210,8 @@ export function Step5Description({
 
   const tagline = formData.tagline || '';
   const description = formData.description || '';
-  const selectedTags = formData.categoryTags || [];
-  const indigenousTags = formData.indigenousTags || [];
+  const selectedTags = useMemo(() => formData.categoryTags || [], [formData.categoryTags]);
+  const indigenousTags = useMemo(() => formData.indigenousTags || [], [formData.indigenousTags]);
 
   // Get available tags for this entity type
   const availableTags = useMemo(() => {
@@ -719,3 +719,5 @@ const styles = StyleSheet.create({
     height: Spacing.xl,
   },
 });
+
+export default Step5Description;

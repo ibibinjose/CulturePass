@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,8 @@ import {
   Alert,
   StyleSheet,
   Platform,
+  Linking,
+  Modal,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -35,9 +37,11 @@ import {
   profileShareTitle,
 } from '@/lib/profileShare';
 import { ErrorBoundary } from '@/modules/core/ui/ErrorBoundary';
-import { CultureTokens, SignatureGradient } from '@/design-system/tokens/theme';
+import { CultureTokens, SignatureGradient, FontFamily, Radius, Spacing } from '@/design-system/tokens/theme';
 import { openExternalUrl } from '@/lib/openExternalUrl';
 import type { User } from '@/shared/schema';
+import { useColors, useIsDark } from '@/hooks/useColors';
+import { M3Card } from '@/design-system/ui';
 
 // ─── palette ─────────────────────────────────────────────────────────────────
 const VIOLET   = CultureTokens.violet;
@@ -114,6 +118,12 @@ function UserPublicScreen() {
   const { addContact, isContactSaved } = useContacts();
   const qc = useQueryClient();
 
+  const colors = useColors();
+  const isDark = useIsDark();
+
+  // Rich multi-app Message / Call sheet (Link-in-bio style contact actions)
+  const [contactSheet, setContactSheet] = useState<null | 'message' | 'call'>(null);
+
   const { data: user, isLoading, error } = useQuery<User>({
     queryKey: ['user-public', rawId],
     queryFn: () => resolveUser(rawId),
@@ -129,7 +139,7 @@ function UserPublicScreen() {
   useEffect(() => {
     if (Platform.OS !== 'web' || isLoading || !user) return;
     if (!pathname.startsWith('/user/')) return;
-    const segment = userPublicSegment(user);
+    const segment = userPublicSegment(displayUser as any);
     const cur = pathname.replace(/\/$/, '');
     if (cur !== `/user/${segment}`) router.replace(`/user/${segment}` as never);
   }, [user, pathname, isLoading]);
@@ -138,12 +148,42 @@ function UserPublicScreen() {
   const isAdmin = isAppAdminEmail(currentUser?.email);
   const isPrivate = user?.privacySettings?.profileVisible === false && !isOwner && !isAdmin;
 
+  // When viewing your own public profile, prefer the freshest avatar from live auth session
+  // (fixes "image not updating after edit" for the /user/CP-... view)
+  const displayUser = isOwner && currentUser
+    ? { ...user, avatarUrl: currentUser.avatarUrl || user.avatarUrl }
+    : user;
+
   const followQ = useQuery<boolean>({
     queryKey: ['is-following', 'user', user?.id],
     queryFn: () => api.social.isFollowing('user', user!.id),
     enabled: !!user && !isOwner && !!currentUserId,
   });
   const isFollowing = followQ.data ?? false;
+
+  // === Security / Access Logging (anti-scraping / contact theft monitoring) ===
+  // Fires a non-blocking report when a non-owner views the public profile.
+  // These land in Admin → Reports / Audit Logs so you can see who (or what bot)
+  // is accessing CPIDs and contact details.
+  useEffect(() => {
+    const targetId = displayUser?.id;
+    if (!targetId || isOwner || !currentUserId) return;
+
+    // Fire and forget — never block rendering
+    (async () => {
+      try {
+        await api.reports?.submit?.({
+          targetType: 'user',
+          targetId,
+          reason: 'profile_view',
+          details: 'Public /user profile page loaded (possible contact scraping)',
+          userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown',
+        });
+      } catch {
+        // Silent — logging must never break the public profile experience
+      }
+    })();
+  }, [displayUser?.id, isOwner, currentUserId]);
 
   const followMut = useMutation({
     mutationFn: ({ action }: { action: 'follow' | 'unfollow' }) =>
@@ -159,25 +199,33 @@ function UserPublicScreen() {
   const handleBack = () => goBackOrReplace('/(tabs)');
 
   const handleShare = async () => {
-    if (!user) return;
-    const url = siteUrl(`/user/${userPublicSegment(user)}`);
-    const title = profileShareTitle(user);
-    const text = profileShareDescription(user);
+    if (!displayUser) return;
+    const safeDu = displayUser as any;
+    const url = siteUrl(`/user/${userPublicSegment(safeDu)}`);
+    const title = profileShareTitle(safeDu);
+    const text = profileShareDescription(safeDu);
     if (Platform.OS === 'web') {
       if (navigator.share) navigator.share({ title, text, url }).catch(() => {});
       else navigator.clipboard?.writeText(url).catch(() => {});
     } else if (Platform.OS === 'ios') {
       Share.share({ title, message: text, url }).catch(() => {});
     } else {
-      Share.share({ title, message: profileShareMessage(user) }).catch(() => {});
+      Share.share({ title, message: profileShareMessage(safeDu as any) }).catch(() => {});
     }
   };
+
+  const pageBg = colors.background;
+  const cardBg = colors.surfaceElevated || colors.card;
+  const textColor = colors.text;
+  const mutedColor = colors.textTertiary;
+  const borderColor = colors.cardBorder;
+  const primaryColor = colors.primary;
 
   // ── loading ──
   if (isLoading) {
     return (
-      <View style={[s.fill, s.center, { backgroundColor: PAGE_BG }]}>
-        <ActivityIndicator size="large" color={VIOLET} />
+      <View style={[s.fill, s.center, { backgroundColor: pageBg }]}>
+        <ActivityIndicator size="large" color={primaryColor} />
       </View>
     );
   }
@@ -185,11 +233,11 @@ function UserPublicScreen() {
   // ── not found ──
   if (error || !user) {
     return (
-      <View style={[s.fill, s.center, { backgroundColor: PAGE_BG }]}>
-        <Ionicons name="person-outline" size={48} color={MUTED} />
-        <Text style={s.emptyTitle}>Profile not found</Text>
-        <Pressable onPress={handleBack} style={s.ghostBtn}>
-          <Text style={[s.ghostBtnText, { color: VIOLET }]}>Go back</Text>
+      <View style={[s.fill, s.center, { backgroundColor: pageBg }]}>
+        <Ionicons name="person-outline" size={48} color={mutedColor} />
+        <Text style={[s.emptyTitle, { color: textColor }]}>Profile not found</Text>
+        <Pressable onPress={handleBack} style={[s.ghostBtn, { backgroundColor: primaryColor + '12' }]}>
+          <Text style={[s.ghostBtnText, { color: primaryColor }]}>Go back</Text>
         </Pressable>
       </View>
     );
@@ -198,39 +246,51 @@ function UserPublicScreen() {
   // ── private ──
   if (isPrivate) {
     return (
-      <View style={[s.fill, s.center, { backgroundColor: PAGE_BG }]}>
-        <Ionicons name="lock-closed" size={48} color={MUTED} />
-        <Text style={s.emptyTitle}>This profile is private</Text>
-        <Text style={s.emptyBody}>{"Only followers can see this user's details."}</Text>
-        <Pressable onPress={handleBack} style={s.ghostBtn}>
-          <Text style={[s.ghostBtnText, { color: VIOLET }]}>Go back</Text>
+      <View style={[s.fill, s.center, { backgroundColor: pageBg }]}>
+        <Ionicons name="lock-closed" size={48} color={mutedColor} />
+        <Text style={[s.emptyTitle, { color: textColor }]}>This profile is private</Text>
+        <Text style={[s.emptyBody, { color: mutedColor }]}>{"Only followers can see this user's details."}</Text>
+        <Pressable onPress={handleBack} style={[s.ghostBtn, { backgroundColor: primaryColor + '12' }]}>
+          <Text style={[s.ghostBtnText, { color: primaryColor }]}>Go back</Text>
         </Pressable>
       </View>
     );
   }
 
   // ── render data ──
-  const displayName = user.displayName ?? user.username ?? 'CulturePass member';
+  const du = displayUser || user!;
+  const displayName = du.displayName ?? du.username ?? 'CulturePass member';
+
+  // Contact methods for the rich Message / Call sheets
+  const phoneNumber = du.phone?.trim();
+  const emailAddress = du.email?.trim();
+
+  const openExternal = (url: string) => {
+    Linking.openURL(url).catch(() => {
+      Alert.alert('Cannot open', 'No compatible app found on this device.');
+    });
+    setContactSheet(null);
+  };
   const ini = initials(displayName);
-  const locationText = [user.city, user.country].filter(Boolean).join(', ');
-  const memberSince = memberDate(user.createdAt);
-  const cpid = user.culturePassId ?? `CP-${user.id.slice(0, 6).toUpperCase()}`;
+  const locationText = [du.city, du.country].filter(Boolean).join(', ');
+  const memberSince = memberDate(du.createdAt);
+  const cpid = du.culturePassId ?? `CP-${du.id.slice(0, 6).toUpperCase()}`;
   const alreadySaved = isContactSaved(cpid);
   const handleSaveContact = () => {
     if (alreadySaved) return;
     addContact({
       cpid,
       name: displayName,
-      username: user?.username,
-      avatarUrl: user?.avatarUrl,
-      userId: user?.id,
-      city: user?.city,
-      country: user?.country,
-      email: user?.email,
-      phone: user?.phone,
-      bio: user?.bio,
-      website: user?.website,
-      tier: user?.membership?.tier,
+      username: du?.username,
+      avatarUrl: du?.avatarUrl,
+      userId: du?.id,
+      city: du?.city,
+      country: du?.country,
+      email: du?.email,
+      phone: du?.phone,
+      bio: du?.bio,
+      website: du?.website,
+      tier: du?.membership?.tier,
     });
   };
 
@@ -264,10 +324,16 @@ function UserPublicScreen() {
     ...(user.culturalIdentity?.cultureIds ?? []),
     ...(user.languages ?? []),
   ].filter(Boolean).slice(0, 14);
-  const profileUrl = siteUrl(`/user/${userPublicSegment(user)}`);
-  const shareTitle = profileShareTitle(user);
-  const shareDescription = profileShareDescription(user);
-  const shareImage = profileShareImage(user);
+  const duForShare = displayUser || (user as any);
+  const publicSegment = userPublicSegment(duForShare);
+  const profileUrl = siteUrl(`/user/${publicSegment}`);
+  // Clean "username" style URL when handle is approved (the nice option user asked for)
+  const hasNiceHandle = !!(duForShare.handle && duForShare.handleStatus === 'approved');
+  const niceUsername = hasNiceHandle ? duForShare.handle!.toLowerCase() : null;
+  const nicePublicUrl = niceUsername ? siteUrl(`/${niceUsername}`) : profileUrl;
+  const shareTitle = profileShareTitle(duForShare);
+  const shareDescription = profileShareDescription(duForShare);
+  const shareImage = profileShareImage(duForShare);
 
   return (
     <ErrorBoundary>
@@ -290,7 +356,7 @@ function UserPublicScreen() {
         <link rel="canonical" href={profileUrl} />
       </Head>
 
-      <View style={[s.fill, { backgroundColor: PAGE_BG }]}>
+      <View style={[s.fill, { backgroundColor: pageBg }]}>
         <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={[s.scroll, { paddingBottom: insets.bottom + 48 }]}
@@ -300,7 +366,8 @@ function UserPublicScreen() {
             Hero gradient lives INSIDE this container so it stretches to 520px, not
             the full content-area width. Back/share buttons stay within the card.
           */}
-          <View style={s.page}>
+          <View style={[s.page, { backgroundColor: cardBg, borderColor }]}>
+            {/* subtle border for web/desktop separation */}
 
             {/* hero gradient — fills the page card width */}
             <LinearGradient
@@ -326,8 +393,14 @@ function UserPublicScreen() {
             {/* avatar — pulled up over the hero bottom edge */}
             <View style={s.avatarWrap}>
               <View style={s.avatarRing}>
-                {user.avatarUrl ? (
-                  <Image source={{ uri: user.avatarUrl }} style={s.avatarImg} contentFit="cover" />
+                {displayUser?.avatarUrl ? (
+                  <Image
+                    source={{ uri: displayUser.avatarUrl }}
+                    style={s.avatarImg}
+                    contentFit="cover"
+                    recyclingKey={(displayUser as any).updatedAt || (displayUser as any).avatarUpdatedAt || displayUser.id}
+                    cachePolicy="none"
+                  />
                 ) : (
                   <LinearGradient
                     colors={[VIOLET, CORAL]}
@@ -379,15 +452,28 @@ function UserPublicScreen() {
             {/* action buttons */}
             {isOwner ? (
               <Pressable style={s.editBtn} onPress={() => router.push('/profile/edit')}>
-                <Ionicons name="create-outline" size={16} color={VIOLET} />
-                <Text style={[s.actionBtnText, { color: VIOLET }]}>Edit profile</Text>
+                <Ionicons name="create-outline" size={16} color={primaryColor} />
+                <Text style={[s.actionBtnText, { color: primaryColor }]}>Edit profile</Text>
               </Pressable>
             ) : currentUserId ? (
               <View style={{ gap: 10 }}>
                 <View style={s.actionRow}> 
-                  <Pressable style={s.msgBtn} onPress={() => router.push('/network' as never)}>
+                  {/* Message - opens rich multi-app options (iMessage, WhatsApp, Email, in-app) */}
+                  <Pressable 
+                    style={s.msgBtn} 
+                    onPress={() => setContactSheet('message')}
+                  >
                     <Ionicons name="chatbubble-outline" size={15} color={TEXT} />
                     <Text style={[s.actionBtnText, { color: TEXT }]}>Message</Text>
+                  </Pressable>
+
+                  {/* New Call button with app-aware options */}
+                  <Pressable 
+                    style={[s.msgBtn, { backgroundColor: VIOLET + '10' }]} 
+                    onPress={() => setContactSheet('call')}
+                  >
+                    <Ionicons name="call-outline" size={15} color={VIOLET} />
+                    <Text style={[s.actionBtnText, { color: VIOLET }]}>Call</Text>
                   </Pressable>
 
                   <Pressable
@@ -402,17 +488,6 @@ function UserPublicScreen() {
                     />
                     <Text style={[s.actionBtnText, { color: isFollowing ? VIOLET : '#FFF' }]}> 
                       {isFollowing ? 'Following' : 'Follow'}
-                    </Text>
-                  </Pressable>
-
-                  <Pressable
-                    style={[s.followBtn, alreadySaved ? s.followBtnDone : { backgroundColor: VIOLET + '10' }]}
-                    onPress={handleSaveContact}
-                    disabled={alreadySaved}
-                  >
-                    <Ionicons name={alreadySaved ? 'checkmark' : 'person-add'} size={15} color={alreadySaved ? VIOLET : VIOLET} />
-                    <Text style={[s.actionBtnText, { color: alreadySaved ? VIOLET : VIOLET }]}> 
-                      {alreadySaved ? 'Saved' : 'Save'}
                     </Text>
                   </Pressable>
                 </View>
@@ -431,58 +506,63 @@ function UserPublicScreen() {
             ) : null}
 
             {/* stats */}
-            <View style={s.statsCard}>
+            <View style={[s.statsCard, { backgroundColor: cardBg, borderColor }]}>
               <StatItem label="Followers" value={user.followersCount ?? 0} />
-              <View style={s.statDivider} />
+              <View style={[s.statDivider, { backgroundColor: borderColor }]} />
               <StatItem label="Following" value={user.followingCount ?? 0} />
-              <View style={s.statDivider} />
+              <View style={[s.statDivider, { backgroundColor: borderColor }]} />
               <StatItem label="Events"    value={user.eventsAttended  ?? 0} />
             </View>
 
             {/* bio */}
             {user.bio ? (
-              <View style={s.card}>
-                <Text style={s.sectionLabel}>About</Text>
-                <Text style={s.bioText}>{user.bio}</Text>
+              <View style={[s.card, { backgroundColor: cardBg, borderColor }]}>
+                <Text style={[s.sectionLabel, { color: mutedColor }]}>About</Text>
+                <Text style={[s.bioText, { color: textColor }]}>{user.bio}</Text>
               </View>
             ) : null}
 
+            {/* Links & Contact section — Link-in-bio style */}
+            <View style={{ marginTop: 20, marginBottom: 4 }}>
+              <Text style={[s.sectionLabel, { color: primaryColor, fontSize: 13, letterSpacing: 1 }]}>CONNECT &amp; LINKS</Text>
+            </View>
+
             {/* website */}
             {user.website ? (
-              <Pressable style={s.linkPill} onPress={() => openExternalUrl(user.website!)}>
-                <View style={[s.linkIcon, { backgroundColor: VIOLET + '18' }]}>
-                  <Ionicons name="globe-outline" size={18} color={VIOLET} />
+              <Pressable style={[s.linkPill, { backgroundColor: cardBg, borderColor }]} onPress={() => openExternalUrl(user.website!)}>
+                <View style={[s.linkIcon, { backgroundColor: primaryColor + '18' }]}>
+                  <Ionicons name="globe-outline" size={18} color={primaryColor} />
                 </View>
-                <Text style={s.linkLabel} numberOfLines={1}>
+                <Text style={[s.linkLabel, { color: textColor }]} numberOfLines={1}>
                   {user.website.replace(/^https?:\/\//, '')}
                 </Text>
-                <Ionicons name="arrow-forward" size={15} color={MUTED} />
+                <Ionicons name="arrow-forward" size={15} color={mutedColor} />
               </Pressable>
             ) : null}
 
             {/* email */}
             {user.email ? (
-              <Pressable style={s.linkPill} onPress={() => openExternalUrl(`mailto:${user.email}`)}>
+              <Pressable style={[s.linkPill, { backgroundColor: cardBg, borderColor }]} onPress={() => openExternalUrl(`mailto:${user.email}`)}>
                 <View style={[s.linkIcon, { backgroundColor: '#00D4AA18' }]}>
                   <Ionicons name="mail-outline" size={18} color="#00D4AA" />
                 </View>
-                <Text style={s.linkLabel} numberOfLines={1}>
+                <Text style={[s.linkLabel, { color: textColor }]} numberOfLines={1}>
                   {user.email}
                 </Text>
-                <Ionicons name="arrow-forward" size={15} color={MUTED} />
+                <Ionicons name="arrow-forward" size={15} color={mutedColor} />
               </Pressable>
             ) : null}
 
             {/* phone */}
             {user.phone ? (
-              <Pressable style={s.linkPill} onPress={() => openExternalUrl(`tel:${user.phone}`)}>
-                <View style={[s.linkIcon, { backgroundColor: VIOLET + '18' }]}>
-                  <Ionicons name="call-outline" size={18} color={VIOLET} />
+              <Pressable style={[s.linkPill, { backgroundColor: cardBg, borderColor }]} onPress={() => openExternalUrl(`tel:${user.phone}`)}>
+                <View style={[s.linkIcon, { backgroundColor: primaryColor + '18' }]}>
+                  <Ionicons name="call-outline" size={18} color={primaryColor} />
                 </View>
-                <Text style={s.linkLabel} numberOfLines={1}>
+                <Text style={[s.linkLabel, { color: textColor }]} numberOfLines={1}>
                   {user.phone}
                 </Text>
-                <Ionicons name="arrow-forward" size={15} color={MUTED} />
+                <Ionicons name="arrow-forward" size={15} color={mutedColor} />
               </Pressable>
             ) : null}
 
@@ -490,30 +570,155 @@ function UserPublicScreen() {
             {activeSocials.map((def) => {
               const url = socialLinks[def.key];
               return (
-                <Pressable key={def.key} style={s.linkPill}
+                <Pressable key={def.key} style={[s.linkPill, { backgroundColor: cardBg, borderColor }]}
                   onPress={() => url && openExternalUrl(url)}>
                   <View style={[s.linkIcon, { backgroundColor: def.color + '18' }]}>
                     <Ionicons name={def.icon} size={18} color={def.color} />
                   </View>
-                  <Text style={s.linkLabel}>{def.label}</Text>
-                  <Ionicons name="arrow-forward" size={15} color={MUTED} />
+                  <Text style={[s.linkLabel, { color: textColor }]}>{def.label}</Text>
+                  <Ionicons name="arrow-forward" size={15} color={mutedColor} />
                 </Pressable>
               );
             })}
 
             {/* culture tags */}
             {tags.length > 0 ? (
-              <View style={s.card}>
-                <Text style={s.sectionLabel}>Culture signals</Text>
+              <View style={[s.card, { backgroundColor: cardBg, borderColor }]}>
+                <Text style={[s.sectionLabel, { color: mutedColor }]}>Culture signals</Text>
                 <View style={s.tagsWrap}>
                   {tags.map((tag) => (
-                    <View key={tag} style={s.tag}>
-                      <Text style={s.tagText}>{tag}</Text>
+                    <View key={tag} style={[s.tag, { backgroundColor: primaryColor + '10', borderColor: primaryColor + '25' }]}>
+                      <Text style={[s.tagText, { color: primaryColor }]}>{tag}</Text>
                     </View>
                   ))}
                 </View>
               </View>
             ) : null}
+
+            {/* Prominent public URL / username option (clean culturepass.app/username) */}
+            <M3Card variant="filled" style={[s.publicUrlCard, { backgroundColor: colors.surface, borderColor }]}>
+              <View style={s.publicUrlHeader}>
+                <Ionicons name="link-outline" size={16} color={primaryColor} />
+                <Text style={[s.publicUrlLabel, { color: mutedColor }]}>Public link</Text>
+              </View>
+              <Pressable
+                style={s.publicUrlRow}
+                onPress={() => {
+                  if (Platform.OS === 'web') {
+                    navigator.clipboard?.writeText(nicePublicUrl || '').catch(() => {});
+                  } else {
+                    Share.share({ message: nicePublicUrl || '' }).catch(() => {});
+                  }
+                }}
+              >
+                <Text style={[s.publicUrlValue, { color: textColor }]} numberOfLines={1}>
+                  {nicePublicUrl.replace(/^https?:\/\//, '')}
+                </Text>
+                <Ionicons name="copy-outline" size={18} color={primaryColor} />
+              </Pressable>
+              {niceUsername ? (
+                <Text style={[s.publicUrlHint, { color: mutedColor }]}>
+                  Also reachable as {nicePublicUrl.replace(/^https?:\/\//, '')}
+                </Text>
+              ) : (
+                <Text style={[s.publicUrlHint, { color: mutedColor }]}>
+                  Share your CPID or set a handle in Edit Profile for a cleaner link
+                </Text>
+              )}
+            </M3Card>
+
+            {/* ── Rich Contact Action Sheet (Message + Call with apps on the device) ── */}
+            <Modal
+              visible={!!contactSheet}
+              transparent
+              animationType="slide"
+              onRequestClose={() => setContactSheet(null)}
+            >
+              <Pressable 
+                style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)' }} 
+                onPress={() => setContactSheet(null)} 
+              />
+              <View style={{
+                position: 'absolute',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                backgroundColor: colors.surfaceElevated || '#fff',
+                borderTopLeftRadius: 22,
+                borderTopRightRadius: 22,
+                paddingBottom: insets.bottom + 24,
+                paddingTop: 8,
+              }}>
+                <Text style={{ 
+                  fontSize: 17, 
+                  fontFamily: FontFamily.semibold, 
+                  color: colors.text, 
+                  textAlign: 'center',
+                  paddingVertical: 14,
+                  borderBottomWidth: 1,
+                  borderColor: colors.borderLight
+                }}>
+                  {contactSheet === 'message' ? 'Choose messaging method' : 'Choose calling method'}
+                </Text>
+
+                {/* Dynamic options */}
+                {contactSheet === 'message' && (
+                  <>
+                    {currentUserId && (
+                      <Pressable onPress={() => { setContactSheet(null); router.push('/network' as never); }} style={s.contactOption}>
+                        <Ionicons name="chatbubble-ellipses-outline" size={22} color={colors.text} />
+                        <Text style={s.contactOptionText}>Message on CulturePass</Text>
+                      </Pressable>
+                    )}
+                    {phoneNumber && (
+                      <Pressable onPress={() => openExternal(`sms:${phoneNumber}`)} style={s.contactOption}>
+                        <Ionicons name="chatbubble-outline" size={22} color={colors.text} />
+                        <Text style={s.contactOptionText}>{Platform.OS === 'ios' ? 'iMessage / SMS' : 'Text Message'}</Text>
+                      </Pressable>
+                    )}
+                    {phoneNumber && (
+                      <Pressable onPress={() => openExternal(`https://wa.me/${phoneNumber.replace(/\D/g,'')}`)} style={s.contactOption}>
+                        <Ionicons name="logo-whatsapp" size={22} color="#25D366" />
+                        <Text style={s.contactOptionText}>WhatsApp</Text>
+                      </Pressable>
+                    )}
+                    {emailAddress && (
+                      <Pressable onPress={() => openExternal(`mailto:${emailAddress}`)} style={s.contactOption}>
+                        <Ionicons name="mail-outline" size={22} color={colors.text} />
+                        <Text style={s.contactOptionText}>Email</Text>
+                      </Pressable>
+                    )}
+                  </>
+                )}
+
+                {contactSheet === 'call' && (
+                  <>
+                    {phoneNumber && (
+                      <Pressable onPress={() => openExternal(`tel:${phoneNumber}`)} style={s.contactOption}>
+                        <Ionicons name="call-outline" size={22} color={colors.text} />
+                        <Text style={s.contactOptionText}>Phone Call</Text>
+                      </Pressable>
+                    )}
+                    {phoneNumber && (
+                      <Pressable onPress={() => openExternal(`https://wa.me/${phoneNumber.replace(/\D/g,'')}?call`)} style={s.contactOption}>
+                        <Ionicons name="logo-whatsapp" size={22} color="#25D366" />
+                        <Text style={s.contactOptionText}>WhatsApp Call</Text>
+                      </Pressable>
+                    )}
+                    {phoneNumber && Platform.OS === 'ios' && (
+                      <Pressable onPress={() => openExternal(`facetime:${phoneNumber}`)} style={s.contactOption}>
+                        <Ionicons name="videocam-outline" size={22} color="#007AFF" />
+                        <Text style={s.contactOptionText}>FaceTime</Text>
+                      </Pressable>
+                    )}
+                  </>
+                )}
+
+                <Pressable onPress={() => setContactSheet(null)} style={[s.contactOption, { justifyContent: 'center', marginTop: 8 }]}>
+                  <Text style={{ color: colors.textSecondary, fontSize: 16 }}>Cancel</Text>
+                </Pressable>
+              </View>
+            </Modal>
 
             {/* CulturePass ID card */}
             <LinearGradient
@@ -815,4 +1020,60 @@ const s = StyleSheet.create({
                    letterSpacing: 0.2, marginTop: 10 },
   cpidInfoMeta:  { fontFamily: FONT_MED, fontSize: 11, color: '#FF90D0',
                    letterSpacing: 0.2, marginTop: 2 },
+
+  // Public URL / username option card (new)
+  publicUrlCard: {
+    marginTop: 16,
+    marginBottom: 8,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    padding: 14,
+    gap: 8,
+  },
+  publicUrlHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  publicUrlLabel: {
+    fontFamily: FontFamily.medium,
+    fontSize: 11,
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+  },
+  publicUrlRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: 'rgba(0,0,0,0.03)',
+    borderRadius: Radius.md,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  publicUrlValue: {
+    fontFamily: FontFamily.semibold,
+    fontSize: 15,
+    flex: 1,
+  },
+  publicUrlHint: {
+    fontFamily: FontFamily.regular,
+    fontSize: 12,
+    marginTop: 2,
+  },
+
+  // Rich Message / Call action sheet options
+  contactOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 17,
+    gap: 14,
+    borderTopWidth: 1,
+    borderColor: '#00000010',
+  },
+  contactOptionText: {
+    flex: 1,
+    fontSize: 17,
+    fontFamily: FONT_REG,
+  },
 });

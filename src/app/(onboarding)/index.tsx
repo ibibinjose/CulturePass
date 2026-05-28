@@ -25,13 +25,11 @@ import Animated, {
 import {
   CultureTokens,
   Radius,
-  M3Typography,
   FontFamily,
   SignatureGradient,
-  Luxe,
-  LuxeTextStyles,
+  luxeDark,
 } from '@/design-system/tokens/theme';
-import { CulturalButton, LuxeButton, LuxeText } from '@/design-system/ui';
+import { LuxeButton, LuxeText } from '@/design-system/ui';
 import { SocialButton } from '@/design-system/ui/SocialButton';
 import { useOnboarding } from '@/contexts/OnboardingContext';
 import { useM3Colors } from '@/hooks/useM3Colors';
@@ -159,7 +157,7 @@ export default function WelcomeScreen() {
         <View style={s.iconRing}>
           <Ionicons name={item.icon} size={56} color="#FFFFFF" />
         </View>
-        <Text style={s.eyebrow}>{item.eyebrow}</Text>
+        <LuxeText variant="badgeCaps" style={[s.eyebrow, { color: 'rgba(255,255,255,0.65)' }]}>{item.eyebrow}</LuxeText>
         {/* Deep Luxe Heritage polish: stronger premium display voice + tighter hierarchy */}
         <LuxeText variant="displayHero" style={{ color: '#FFFFFF', fontSize: Platform.OS === 'web' ? 44 : 38, lineHeight: Platform.OS === 'web' ? 50 : 44, letterSpacing: -1.0 }}>
           {item.headline}
@@ -254,13 +252,14 @@ export default function WelcomeScreen() {
                 </LuxeButton>
 
                 <View style={s.divider}>
-                  <View style={[s.divLine, { backgroundColor: m3Colors.outlineVariant }]} />
-                  <Text
-                    style={[M3Typography.labelSmall, s.divLabel, { color: m3Colors.onSurfaceVariant }]}
+                  <View style={[s.divLine, { backgroundColor: luxeDark.border }]} />
+                  <LuxeText
+                    variant="caption"
+                    style={{ marginHorizontal: 12, color: luxeDark.textSecondary }}
                   >
                     or
-                  </Text>
-                  <View style={[s.divLine, { backgroundColor: m3Colors.outlineVariant }]} />
+                  </LuxeText>
+                  <View style={[s.divLine, { backgroundColor: luxeDark.border }]} />
                 </View>
 
                 <View style={s.socialRow}>
@@ -270,18 +269,18 @@ export default function WelcomeScreen() {
               </Animated.View>
             ) : (
               <View style={s.nextWrap}>
-                <CulturalButton variant="filled" fullWidth rightIcon="arrow-forward" onPress={goNext}>
+                <LuxeButton variant="filled" fullWidth rightIcon="arrow-forward" onPress={goNext}>
                   Next
-                </CulturalButton>
+                </LuxeButton>
               </View>
             )}
           </View>
 
           {/* Skip — always visible */}
           <Pressable onPress={handleSkip} style={s.skipRow} hitSlop={12}>
-            <Text style={[M3Typography.labelMedium, { color: m3Colors.onSurfaceVariant }]}>
+            <LuxeText variant="bodyMedium" style={{ color: m3Colors.onSurfaceVariant }}>
               Skip — explore as guest
-            </Text>
+            </LuxeText>
             <Ionicons name="chevron-forward" size={14} color={m3Colors.onSurfaceVariant} />
           </Pressable>
         </View>

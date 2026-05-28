@@ -17,15 +17,15 @@ import { useColors } from '@/hooks/useColors';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { withAlpha } from '@/lib/withAlpha';
-
-const HostspaceCreateWorkspace = createLazyComponent(
-  () => import('@/modules/host/components/HostspaceCreateWorkspace')
-);
 import { EntityTypeSelector, type EntityType } from '@/modules/host/components/EntityTypeSelector';
 import { WizardContainer } from '@/modules/host/components/FormWizard/WizardContainer';
 import { APP_NAME, SITE_ORIGIN } from '@/lib/app-meta';
 import { useAuth } from '@/lib/auth';
 import { modulesApi } from '@/modules/api';
+
+const HostspaceCreateWorkspace = createLazyComponent(
+  () => import('@/modules/host/components/HostspaceCreateWorkspace')
+);
 
 // =============================================================================
 // PHASE 1 UNIFICATION + CREATOR TRUST

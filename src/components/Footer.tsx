@@ -123,7 +123,7 @@ export function Footer() {
       {/* Copyright */}
       <View style={styles.copyright}>
         <Text style={styles.copyrightText}>
-          © {new Date().getFullYear()} CulturePass Pty Ltd • Made in Sydney, Australia
+          © {new Date().getFullYear()} CulturePass.App • Made in Sydney, ❤️ Australia 🇦🇺
         </Text>
       </View>
     </View>

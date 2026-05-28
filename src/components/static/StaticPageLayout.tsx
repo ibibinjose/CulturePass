@@ -35,7 +35,7 @@ interface Props {
   sections: StaticSection[];
   heroIcon?: keyof typeof Ionicons.glyphMap;
   heroColor?: string;
-  badges?: Array<{ label: string; icon: string; color: string }>;
+  badges?: { label: string; icon: string; color: string }[];
   footerContent?: React.ReactNode;
   onBack?: () => void;
   topBarDense?: boolean;

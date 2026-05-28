@@ -45,3 +45,4 @@ export { CulturalInput } from './CulturalInput';
 export { LuxeButton } from './LuxeButton';
 export { LuxeText } from './LuxeText';
 export { LuxeCard } from './LuxeCard';
+export { LuxeFilterChip } from './LuxeFilterChip';

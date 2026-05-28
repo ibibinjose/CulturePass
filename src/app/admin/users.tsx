@@ -319,12 +319,12 @@ export default function UserDirectoryScreen() {
               </Text>
             )}
           </View>
-          <View style={{ flex: 1, gap: 4 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <Text style={[styles.detailName, { color: colors.text }]}>{u.displayName || '—'}</Text>
+            <View style={{ flex: 1, gap: Spacing.xs }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
+              <Text style={[styles.detailName, { color: colors.text }]} numberOfLines={1}>{u.displayName || '—'}</Text>
               {u.isVerified && <Ionicons name="checkmark-circle" size={20} color={CultureTokens.emerald} />}
             </View>
-            <Text style={[styles.detailHandle, { color: colors.textSecondary }]}>
+            <Text style={[styles.detailHandle, { color: colors.textSecondary }]} numberOfLines={1}>
               @{u.username || u.handle || 'unknown'} {u.email ? `• ${u.email}` : ''}
             </Text>
             <View style={styles.statusRow}>
@@ -364,7 +364,7 @@ export default function UserDirectoryScreen() {
         </View>
 
         {/* Rich Metadata (E) */}
-        <View style={{ gap: 12 }}>
+        <View style={{ gap: Spacing.md }}>
           <Text style={[styles.groupTitle, { color: colors.textTertiary }]}>PROFILE METADATA</Text>
           <View style={[styles.infoSection, { backgroundColor: colors.backgroundSecondary }]}>
             <InfoRow label="Handle Status" value={u.handleStatus || 'pending'} color={u.handleStatus === 'approved' ? CultureTokens.emerald : CultureTokens.coral} colors={colors} />
@@ -1048,52 +1048,52 @@ const styles = StyleSheet.create({
   title: { fontSize: 24, fontFamily: FontFamily.bold, letterSpacing: -0.5 },
   countPill: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
 
-  searchBox: {
+    searchBox: {
     flex: 1,
     minWidth: 200,
     maxWidth: 420,
     height: 44,
-    borderRadius: 12,
+    borderRadius: Radius.md,
     backgroundColor: 'rgba(0,0,0,0.05)',
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 12,
   },
-  searchIcon: { marginRight: 8 },
+  searchIcon: { marginRight: Spacing.sm },
   searchInput: { flex: 1, fontSize: 14, fontFamily: FontFamily.medium },
 
-  body: { flex: 1, flexDirection: 'row', gap: 18 },
+  body: { flex: 1, flexDirection: 'row', gap: Spacing.lg },
   listCol: { flex: 1 },
   detailCol: { flex: 2, paddingVertical: 20 },
 
-  userItem: { padding: 12, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  userItem: { padding: Spacing.md, flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
   avatar: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
   avatarText: { fontSize: 16, fontFamily: FontFamily.bold },
   userName: { fontSize: 15, fontFamily: FontFamily.bold },
   userHandle: { fontSize: 13, fontFamily: FontFamily.medium },
-  roleBadge: { backgroundColor: 'rgba(0,0,0,0.05)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
+  roleBadge: { backgroundColor: 'rgba(0,0,0,0.05)', paddingHorizontal: Spacing.xs, paddingVertical: 2, borderRadius: Radius.xs },
   roleText: { fontSize: 9, fontFamily: FontFamily.bold, opacity: 0.6 },
 
-  detailCard: { padding: 24, gap: 24 },
-  detailHeader: { flexDirection: 'row', alignItems: 'center', gap: 20 },
+  detailCard: { padding: Spacing.lg, gap: Spacing.lg },
+  detailHeader: { flexDirection: 'row', alignItems: 'center', gap: Spacing.lg },
   largeAvatar: { width: 80, height: 80, borderRadius: 40, alignItems: 'center', justifyContent: 'center' },
   largeAvatarText: { fontSize: 32, fontFamily: FontFamily.bold },
   detailName: { fontSize: 24, fontFamily: FontFamily.bold, letterSpacing: -0.5 },
   detailHandle: { fontSize: 16, fontFamily: FontFamily.medium, marginTop: -4 },
-  statusRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 },
+  statusRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, marginTop: 4 },
   statusDot: { width: 8, height: 8, borderRadius: 4 },
   statusLabel: { fontSize: 10, fontFamily: FontFamily.bold, letterSpacing: 0.5 },
 
-  statsRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12 },
-  statCell: { alignItems: 'center', gap: 4 },
+  statsRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.md },
+  statCell: { alignItems: 'center', gap: Spacing.xs },
   statVal: { fontSize: 18, fontFamily: FontFamily.bold },
   statLabel: { fontSize: 10, fontFamily: FontFamily.bold, opacity: 0.5 },
   statDivider: { width: 1, height: 22 },
 
   controlSection: {
-    gap: 12,
-    padding: 16,
-    borderRadius: 16,
+    gap: Spacing.md,
+    padding: Spacing.md,
+    borderRadius: Radius.md,
     backgroundColor: 'rgba(0,0,0,0.02)',
     borderWidth: 1,
     borderColor: 'rgba(0,0,0,0.05)',
@@ -1106,15 +1106,15 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
 
-  infoSection: { padding: 16, borderRadius: 16, gap: 10 },
-  infoRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 12 },
+  infoSection: { padding: Spacing.md, borderRadius: Radius.md, gap: 10 },
+  infoRow: { flexDirection: 'row', justifyContent: 'space-between', gap: Spacing.md },
   infoKey: { fontSize: 12, fontFamily: FontFamily.bold },
   infoVal: { fontSize: 13, fontFamily: FontFamily.medium, flex: 1, textAlign: 'right' },
 
   groupTitle: { fontSize: 11, fontFamily: FontFamily.bold, letterSpacing: 1.2 },
-  permissionsGrid: { flexDirection: 'row', gap: 12 },
+  permissionsGrid: { flexDirection: 'row', gap: Spacing.md },
 
-  dangerZone: { flexDirection: 'row', gap: 12, marginTop: 8, paddingTop: 16, borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,0.05)' },
+  dangerZone: { flexDirection: 'row', gap: Spacing.md, marginTop: 8, paddingTop: 16, borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,0.05)' },
 
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 60, opacity: 0.5 },
   emptyDesktop: { paddingTop: 24 },

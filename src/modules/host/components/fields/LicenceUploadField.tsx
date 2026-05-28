@@ -100,7 +100,7 @@ export function LicenceUploadField({
 }: LicenceUploadFieldProps) {
   const colors = useColors();
   const [isUploading, setIsUploading] = useState(false);
-  const [editingLicenceId, setEditingLicenceId] = useState<string | null>(null);
+  const [editingLicenceId] = useState<string | null>(null);
   const [showTypeSelector, setShowTypeSelector] = useState<string | null>(null);
 
   const handlePickDocument = async () => {

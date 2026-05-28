@@ -18,11 +18,11 @@ import { useLayout } from '@/hooks/useLayout';
 import {
   CultureTokens,
   FontFamily,
-  M3Typography,
+  luxeDark,
 } from '@/design-system/tokens/theme';
 import { sanitizeInternalRedirect } from '@/lib/routes';
 import { HOST_TYPE_OPTIONS, type HostType } from '@/shared/schema';
-import { M3Button, M3TopAppBar } from '@/design-system/ui';
+import { M3TopAppBar, LuxeButton, LuxeText } from '@/design-system/ui';
 import { useOnboarding } from '@/contexts/OnboardingContext';
 import { captureEvent } from '@/lib/analytics';
 
@@ -116,10 +116,10 @@ export default function OnboardingHostApplicationScreen() {
       >
         <Animated.View entering={FadeInUp.springify().damping(16).delay(100)}>
           <View style={s.titleBlock}>
-            <Text style={[s.title, M3Typography.displaySmall, { color: m3Colors.onSurface }]}>Are you a creator{'\n'}or organizer?</Text>
-            <Text style={[s.subtitle, M3Typography.bodyLarge, { color: m3Colors.onSurfaceVariant }]}>
+            <LuxeText variant="display" style={[s.title, { color: luxeDark.text }]}>Are you a creator{'\n'}or organizer?</LuxeText>
+            <LuxeText variant="body" style={[s.subtitle, { color: luxeDark.textSecondary }]}>
               Join the CulturePass Host Program to list events, sell tickets, and grow your community.
-            </Text>
+            </LuxeText>
           </View>
 
           <View style={s.grid}>
@@ -132,7 +132,7 @@ export default function OnboardingHostApplicationScreen() {
                     onPress={() => toggleType(opt.id)}
                     style={({ pressed }) => [
                       s.typeCard,
-                      { backgroundColor: m3Colors.surfaceContainerLow, borderColor: active ? ac : m3Colors.outlineVariant },
+                      { backgroundColor: luxeDark.surfaceSecondary, borderColor: active ? ac : luxeDark.border },
                       active && { borderWidth: 2 },
                       pressed && { opacity: 0.8 },
                     ]}
@@ -141,10 +141,10 @@ export default function OnboardingHostApplicationScreen() {
                       <Ionicons name={opt.icon as any} size={24} color={ac} />
                     </View>
                     <View style={s.cardBody}>
-                        <Text style={[s.cardLabel, M3Typography.titleSmall, { color: m3Colors.onSurface }]}>{opt.label}</Text>
-                        <Text style={[s.cardDesc, M3Typography.bodySmall, { color: m3Colors.onSurfaceVariant }]} numberOfLines={2}>{opt.desc}</Text>
+                        <LuxeText variant="title3" style={{ color: luxeDark.text }}>{opt.label}</LuxeText>
+                        <LuxeText variant="caption" style={{ color: luxeDark.textSecondary }} numberOfLines={2}>{opt.desc}</LuxeText>
                     </View>
-                    <View style={[s.check, { borderColor: active ? ac : m3Colors.outline, backgroundColor: active ? ac : 'transparent' }]}>
+                    <View style={[s.check, { borderColor: active ? ac : luxeDark.border, backgroundColor: active ? ac : 'transparent' }]}>
                         {active && <Ionicons name="checkmark" size={12} color="#fff" />}
                     </View>
                   </Pressable>
@@ -157,17 +157,17 @@ export default function OnboardingHostApplicationScreen() {
                     onPress={selectAll}
                     style={({ pressed }) => [
                         s.typeCard,
-                        { backgroundColor: m3Colors.surfaceContainerLow, borderColor: selectedTypes.length === HOST_TYPE_OPTIONS.length ? m3Colors.primary : m3Colors.outlineVariant },
+                        { backgroundColor: luxeDark.surfaceSecondary, borderColor: selectedTypes.length === HOST_TYPE_OPTIONS.length ? luxeDark.primary : luxeDark.border },
                         selectedTypes.length === HOST_TYPE_OPTIONS.length && { borderWidth: 2 },
                         pressed && { opacity: 0.8 },
                     ]}
                 >
-                    <View style={[s.iconWrap, { backgroundColor: m3Colors.primaryContainer }]}>
-                        <Ionicons name="grid-outline" size={24} color={m3Colors.onPrimaryContainer} />
+                    <View style={[s.iconWrap, { backgroundColor: luxeDark.primaryContainer }]}>
+                        <Ionicons name="grid-outline" size={24} color={luxeDark.onPrimaryContainer} />
                     </View>
                     <View style={s.cardBody}>
-                        <Text style={[s.cardLabel, M3Typography.titleSmall, { color: m3Colors.onSurface }]}>All of the above</Text>
-                        <Text style={[s.cardDesc, M3Typography.bodySmall, { color: m3Colors.onSurfaceVariant }]}>I manage multiple cultural roles.</Text>
+                        <LuxeText variant="title3" style={{ color: luxeDark.text }}>All of the above</LuxeText>
+                        <LuxeText variant="caption" style={{ color: luxeDark.textSecondary }}>I manage multiple cultural roles.</LuxeText>
                     </View>
                 </Pressable>
             </Animated.View>
@@ -175,21 +175,21 @@ export default function OnboardingHostApplicationScreen() {
         </Animated.View>
       </ScrollView>
 
-      <Animated.View entering={FadeInDown.springify().damping(20).delay(300)} style={[s.bottomBar, { paddingBottom: bottomInset + 16, backgroundColor: m3Colors.background }]}>
-        <M3Button
+      <Animated.View entering={FadeInDown.springify().damping(20).delay(300)} style={[s.bottomBar, { paddingBottom: bottomInset + 16, backgroundColor: luxeDark.background }]}>
+        <LuxeButton
           variant="filled"
           fullWidth
           onPress={handleFinish}
           style={{ height: 56, borderRadius: 20 }}
         >
           {selectedTypes.length > 0 ? 'Continue to Application' : 'Start Exploring'}
-        </M3Button>
-        <M3Button
-            variant="text"
+        </LuxeButton>
+        <LuxeButton
+            variant="glass"
             onPress={handleSkip}
         >
             Skip for now
-        </M3Button>
+        </LuxeButton>
       </Animated.View>
     </View>
   );

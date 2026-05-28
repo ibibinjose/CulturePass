@@ -18,7 +18,7 @@
  * Requirements: 17
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -177,7 +177,7 @@ export function ProfessionalFields({
   // Data Accessors
   // ---------------------------------------------------------------------------
 
-  const professionalData = formData.professionalData || {
+  const professionalData = useMemo(() => formData.professionalData || {
     credentials: [],
     credentialsVerified: false,
     expertiseAreas: [],
@@ -185,7 +185,7 @@ export function ProfessionalFields({
     rateCard: [],
     currency: 'AUD' as Currency,
     responseTime: '24-hours' as ResponseTime,
-  };
+  }, [formData.professionalData]);
 
   const credentials = professionalData.credentials || [];
   const influencerLicence = professionalData.influencerLicence;

@@ -530,3 +530,4 @@ const styles = StyleSheet.create({
     height: Spacing.xl,
   },
 });
+

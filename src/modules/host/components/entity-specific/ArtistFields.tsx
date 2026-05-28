@@ -161,17 +161,17 @@ export function ArtistFields({
   // Data Accessors
   // ---------------------------------------------------------------------------
 
-  const artistData: Partial<ArtistData> = formData.artistData || {
+  const artistData = useMemo<Partial<ArtistData>>(() => formData.artistData || {
     portfolio: [],
     genres: [],
     availabilityCalendar: [],
     bookingLeadTime: 7,
-  };
+  }, [formData.artistData]);
 
-  const portfolio = artistData.portfolio || [];
-  const genres = artistData.genres || [];
+  const portfolio = useMemo(() => artistData.portfolio || [], [artistData.portfolio]);
+  const genres = useMemo(() => artistData.genres || [], [artistData.genres]);
   const representation = artistData.representation;
-  const availabilityCalendar = artistData.availabilityCalendar || [];
+  const availabilityCalendar = useMemo(() => artistData.availabilityCalendar || [], [artistData.availabilityCalendar]);
   const bookingLeadTime = artistData.bookingLeadTime ?? 7;
 
   // ---------------------------------------------------------------------------

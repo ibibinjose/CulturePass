@@ -287,6 +287,7 @@ export function createEventsRouter() {
       const tag = qstr(req.query.tag).trim() || undefined;
       const lgaCode = qstr(req.query.lgaCode).trim() || undefined;
       const councilId = qstr(req.query.councilId).trim() || undefined;
+      const q = qstr(req.query.q).trim() || undefined;
 
       const centerLatStr  = qstr(req.query.centerLat).trim();
       const centerLngStr  = qstr(req.query.centerLng).trim();
@@ -330,6 +331,7 @@ export function createEventsRouter() {
           tag,
           lgaCode,
           councilId,
+          q,
         },
         { page, pageSize },
       );

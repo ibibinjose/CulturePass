@@ -28,6 +28,7 @@ export interface CommunitiesListParams {
   country?: string;
   nationalityId?: string;
   cultureId?: string;
+  limit?: number;
 }
 
 // ─── Hooks ────────────────────────────────────────────────────────────────────

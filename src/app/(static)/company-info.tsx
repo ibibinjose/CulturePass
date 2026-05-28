@@ -5,8 +5,9 @@ import { Link } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { useColors } from '@/hooks/useColors';
-import { CultureTokens, gradients, TextStyles, Radius, Spacing } from '@/design-system/tokens/theme';
+import { CultureTokens, gradients, TextStyles, Radius } from '@/design-system/tokens/theme';
 import { StaticPageLayout } from '@/components/static/StaticPageLayout';
+import { Footer } from '@/components/Footer';
 import companyData from '@/data/static/company-info.json';
 import { goBackOrReplace } from '@/lib/navigation';
 
@@ -14,6 +15,7 @@ export default function CompanyInfoScreen() {
   const colors = useColors();
 
   return (
+    <>
     <StaticPageLayout
       title={companyData.title}
       intro={companyData.heroSub}
@@ -21,6 +23,7 @@ export default function CompanyInfoScreen() {
       heroColor={CultureTokens.indigo}
       sections={companyData.sections}
       onBack={() => goBackOrReplace('/menu')}
+      footerContent={<Footer />}
     >
       <View style={styles.customContent}>
         <View style={[styles.valuesStrip, { backgroundColor: colors.surface, borderColor: colors.borderLight }]}>
@@ -55,6 +58,8 @@ export default function CompanyInfoScreen() {
         </View>
       </View>
     </StaticPageLayout>
+    <Footer />
+    </>
   );
 }
 

@@ -15,7 +15,7 @@ import { EventCardSkeleton } from '@/modules/events/components/EventCardSkeleton
 import { ErrorBoundary } from '@/modules/core/ui/ErrorBoundary';
 import type { EventData, PaginatedEventsResponse } from '@/shared/schema';
 import { CultureTokens, TextStyles } from '@/design-system/tokens/theme';
-import { M3TopAppBar, M3Button, M3FilterChip, M3FAB } from '@/design-system/ui';
+import { M3TopAppBar, M3Button, M3FilterChip, M3FAB, Input } from '@/design-system/ui';
 import {
   EVENT_CATEGORIES,
   type EventCategory,
@@ -158,30 +158,35 @@ const ListEmpty = React.memo(function ListEmpty({
   locationLabel,
   colors,
   onClearFilters,
+  searchQuery,
 }: {
   filtersActive: boolean;
   locationLabel: string;
   colors: ReturnType<typeof useColors>;
   onClearFilters: () => void;
+  searchQuery: string;
 }) {
   return (
     <View style={s.emptyState}>
       <View style={[s.emptyIcon, { backgroundColor: colors.surfaceElevated, borderColor: colors.borderLight }]}>
-        <Ionicons name="search-outline" size={28} color={colors.textTertiary} />
+        <Ionicons name={searchQuery ? "search-outline" : "calendar-outline"} size={32} color={CultureTokens.indigo} />
       </View>
-      <Text style={[s.emptyTitle, { color: colors.text }]}>No events found</Text>
+      <Text style={[s.emptyTitle, { color: colors.text }]}>
+        {searchQuery ? `No results for "${searchQuery}"` : "No events found"}
+      </Text>
       <Text style={[s.emptyDesc, { color: colors.textSecondary }]}>
         {filtersActive
-          ? 'Try adjusting your filters or expanding the date range.'
-          : `No events yet in ${locationLabel}.`}
+          ? 'Try adjusting your filters, searching for something else, or expanding the date range.'
+          : `We couldn't find any upcoming events in ${locationLabel}.`}
       </Text>
       {filtersActive && (
         <M3Button
           variant="tonal"
           leftIcon="refresh-outline"
           onPress={onClearFilters}
+          style={{ marginTop: 8 }}
         >
-          Reset filters
+          Clear all filters
         </M3Button>
       )}
     </View>
@@ -229,6 +234,13 @@ export default function AllEventsScreen() {
   const [selectedCategory, setSelectedCategory] = useState<string>(initialCategory);
   const [dateFilter, setDateFilter]             = useState<DateFilter>('all');
   const [priceFilter, setPriceFilter]           = useState<PriceFilter>('all');
+  const [searchQuery, setSearchQuery]           = useState<string>('');
+  const [debouncedSearch, setDebouncedSearch]   = useState<string>('');
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 400);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   useEffect(() => {
     if (categoryParam && EVENT_CATEGORY_IDS.has(categoryParam as EventCategory)) {
@@ -249,8 +261,9 @@ export default function AllEventsScreen() {
       today,
       lgaCodeParam,
       councilIdParam,
+      debouncedSearch,
     ],
-    [state.country, state.city, selectedCategory, dateFilter, priceFilter, today, lgaCodeParam, councilIdParam],
+    [state.country, state.city, selectedCategory, dateFilter, priceFilter, today, lgaCodeParam, councilIdParam, debouncedSearch],
   );
 
   const {
@@ -271,6 +284,7 @@ export default function AllEventsScreen() {
         dateTo,
         lgaCode: lgaCodeParam,
         councilId: councilIdParam,
+        q: debouncedSearch || undefined,
       });
     },
     initialPageParam: 1,
@@ -287,7 +301,8 @@ export default function AllEventsScreen() {
     selectedCategory !== 'All' ||
     dateFilter !== 'all' ||
     priceFilter !== 'all' ||
-    councilFilterActive;
+    councilFilterActive ||
+    searchQuery.length > 0;
 
   const handleEndReached = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) fetchNextPage();
@@ -313,6 +328,7 @@ export default function AllEventsScreen() {
     setSelectedCategory('All');
     setDateFilter('all');
     setPriceFilter('all');
+    setSearchQuery('');
   }, []);
 
   // ── Calendar export ────────────────────────────────────────────────────────
@@ -349,9 +365,10 @@ export default function AllEventsScreen() {
         locationLabel={locationLabel}
         colors={colors}
         onClearFilters={clearFilters}
+        searchQuery={searchQuery}
       />
     ),
-    [filtersActive, locationLabel, colors, clearFilters],
+    [filtersActive, locationLabel, colors, clearFilters, searchQuery],
   );
 
   const fabRight = isDesktop ? hPad + 32 : 24;
@@ -367,15 +384,28 @@ export default function AllEventsScreen() {
           onBack={handleBack}
           variant={isWeb ? 'small' : windowSizeClass === 'expanded' ? 'large' : 'medium'}
           denseWeb={isWeb}
-          actions={
-            filtersActive
-              ? [{ icon: 'close-circle-outline', onPress: clearFilters }]
-              : undefined
-          }
+          actions={[
+            { icon: 'map-outline' as any, onPress: () => router.push('/map') },
+            ...(filtersActive
+              ? [{ icon: 'close-circle-outline' as any, onPress: clearFilters }]
+              : [])
+          ]}
         />
 
         {/* ── Centred content shell ── */}
         <View style={[s.shell, isDesktop && s.shellDesktop]}>
+
+          {/* ── Search Bar ── */}
+          <View style={{ paddingHorizontal: hPad, paddingTop: 12, paddingBottom: 4 }}>
+            <Input
+              placeholder="Search events, venues, or communities..."
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              leftIcon="search-outline"
+              rightIcon={searchQuery.length > 0 ? 'close-circle-outline' : undefined}
+              onRightIconPress={() => setSearchQuery('')}
+            />
+          </View>
 
           {/* ── Filter row — single line ── */}
           {isDesktop ? (

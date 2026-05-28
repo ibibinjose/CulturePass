@@ -23,6 +23,7 @@ import * as Haptics from 'expo-haptics';
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { profileKeys, eventKeys, councilKeys } from '@/hooks/queries/keys';
+import { communityKeys } from '@/modules/communities/hooks/useCommunities';
 import { queryClient } from '@/lib/query-client';
 import type { Profile, EventData } from '@/shared/schema';
 import { modulesApi,  type CouncilData } from '@/modules/api';
@@ -41,6 +42,7 @@ import {
   DirectoryCard,
   DirectoryEmptyState,
   FeaturedRail,
+  CommunityRail,
   ENTITY_FILTERS,
   getDirectoryListingType,
   isWeb,
@@ -84,10 +86,20 @@ export default function DirectoryScreen() {
 
   const [selectedType, setSelectedType] = useState('All');
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [searchFocused, setSearchFocused] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 400);
+    return () => clearTimeout(timer);
+  }, [search]);
+
   const { data: allProfilesRaw, isLoading } = useQuery<Profile[] | { profiles?: Profile[] }>({
-    queryKey: profileKeys.lists(),
-    queryFn: () => modulesApi.profiles.list(),
+    queryKey: profileKeys.list({ city: onboardingState.city ?? undefined, country: onboardingState.country ?? undefined }),
+    queryFn: () => modulesApi.profiles.list({
+      city: onboardingState.city ?? undefined,
+      country: onboardingState.country ?? undefined,
+    }),
   });
 
   const { data: eventsData } = useQuery({
@@ -108,6 +120,15 @@ export default function DirectoryScreen() {
       : (allProfilesRaw?.profiles ?? [])),
     [allProfilesRaw],
   );
+
+  const { data: communitiesData } = useQuery({
+    queryKey: communityKeys.list({ city: onboardingState.city ?? undefined, limit: 10 }),
+    queryFn: () => modulesApi.communities.list({ city: onboardingState.city ?? undefined }),
+  });
+
+  const featuredCommunities = useMemo(() => {
+    return (Array.isArray(communitiesData) ? communitiesData : (communitiesData as any)?.communities ?? []).slice(0, 10);
+  }, [communitiesData]);
 
   const { data: councilListData } = useQuery({
     queryKey: councilKeys.list({ pageSize: 2000, sortBy: 'name', sortDir: 'asc' }),
@@ -260,8 +281,15 @@ export default function DirectoryScreen() {
   );
 
   const listHeader = useMemo(
-    () => featuredProfiles.length > 0 ? <FeaturedRail profiles={featuredProfiles} colors={colors} /> : null,
-    [featuredProfiles, colors],
+    () => (
+      <View style={{ gap: 20, paddingBottom: 16 }}>
+        {featuredProfiles.length > 0 && <FeaturedRail profiles={featuredProfiles} colors={colors} />}
+        {featuredCommunities.length > 0 && selectedType === 'All' && !search && (
+            <CommunityRail communities={featuredCommunities} colors={colors} />
+        )}
+      </View>
+    ),
+    [featuredProfiles, featuredCommunities, colors, selectedType, search],
   );
 
   const listEmpty = useMemo(
@@ -315,7 +343,9 @@ export default function DirectoryScreen() {
         {/* ── Header ── */}
         <M3TopAppBar
             title="Directory"
-            variant="small"
+            onBack={() => router.push('/(tabs)')}
+            variant={isDesktop ? 'small' : 'medium'}
+            denseWeb={isWeb}
             titleLeading={
               <Image
                 source={require('@/assets/images/culturepass-logo.png')}
@@ -324,11 +354,18 @@ export default function DirectoryScreen() {
               />
             }
             actions={[
+                { icon: 'map-outline', onPress: () => router.push('/map') },
                 { icon: 'refresh', onPress: handleRefresh }
             ]}
         />
 
         <View style={{ paddingHorizontal: hPad, paddingTop: 16 }}>
+            <View style={[dirStyles.locationRow, { marginBottom: 8 }]}>
+                <Ionicons name="location" size={14} color={m3Colors.primary} />
+                <Text style={[dirStyles.locationText, { color: m3Colors.onSurfaceVariant }]}>
+                  {onboardingState.city || 'Global'} • {onboardingState.country || 'All Regions'}
+                </Text>
+            </View>
             <View
               style={[
                 dirStyles.searchBar,
@@ -501,6 +538,18 @@ const dirStyles = StyleSheet.create({
     fontFamily: FontFamily.medium,
     height: '100%',
     padding: 0,
+  },
+  locationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingLeft: 4,
+  },
+  locationText: {
+    fontSize: 12,
+    fontFamily: FontFamily.semibold,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   iconBtn: {
     width: 44,

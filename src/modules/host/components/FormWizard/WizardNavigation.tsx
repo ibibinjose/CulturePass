@@ -110,10 +110,7 @@ export const WizardNavigation = memo(function WizardNavigation({
 
   if (layout.isDesktop) {
     return (
-      <View style={styles.desktopContainer} accessibilityRole="toolbar" accessibilityLabel="Wizard navigation">
-        {/* Left: Cancel */}
-        <View style={styles.leftSection}>
-          <LuxeButton
+      <View style={styles.desktopContainer} accessibilityRole="toolbar" accessibilityLabel="Wizard navigation"><View style={styles.leftSection}><LuxeButton
             variant="outlined"
             size="md"
             onPress={onCancel}
@@ -121,12 +118,7 @@ export const WizardNavigation = memo(function WizardNavigation({
             accessibilityLabel={navigationButtonLabel('cancel')}
           >
             Cancel
-          </LuxeButton>
-        </View>
-
-        {/* Right: Back + Next/Publish */}
-        <View style={styles.rightSection}>
-          {!isFirstStep && (
+          </LuxeButton></View><View style={styles.rightSection}>{!isFirstStep && (
             <LuxeButton
               variant="tonal"
               size="md"
@@ -137,9 +129,7 @@ export const WizardNavigation = memo(function WizardNavigation({
             >
               Back
             </LuxeButton>
-          )}
-
-          {isLastStep ? (
+          )}{isLastStep ? (
             <LuxeButton
               variant="filled"
               size="md"
@@ -162,9 +152,7 @@ export const WizardNavigation = memo(function WizardNavigation({
             >
               Next
             </LuxeButton>
-          )}
-        </View>
-      </View>
+          )}</View></View>
     );
   }
 
@@ -173,9 +161,7 @@ export const WizardNavigation = memo(function WizardNavigation({
   // ---------------------------------------------------------------------------
 
   return (
-    <View style={styles.mobileContainer} accessibilityRole="toolbar" accessibilityLabel="Wizard navigation">
-      {/* Primary Action: Next or Publish — lg size for 54pt height */}
-      {isLastStep ? (
+    <View style={styles.mobileContainer} accessibilityRole="toolbar" accessibilityLabel="Wizard navigation">{isLastStep ? (
         <LuxeButton
           variant="filled"
           size="lg"
@@ -202,11 +188,7 @@ export const WizardNavigation = memo(function WizardNavigation({
         >
           Next
         </LuxeButton>
-      )}
-
-      {/* Secondary Actions Row */}
-      <View style={styles.mobileSecondaryRow}>
-        {!isFirstStep && (
+      )}<View style={styles.mobileSecondaryRow}>{!isFirstStep && (
           <LuxeButton
             variant="tonal"
             size="md"
@@ -218,9 +200,7 @@ export const WizardNavigation = memo(function WizardNavigation({
           >
             Back
           </LuxeButton>
-        )}
-
-        <LuxeButton
+        )}<LuxeButton
           variant="outlined"
           size="md"
           onPress={onCancel}
@@ -229,9 +209,7 @@ export const WizardNavigation = memo(function WizardNavigation({
           accessibilityLabel={navigationButtonLabel('cancel')}
         >
           Cancel
-        </LuxeButton>
-      </View>
-    </View>
+        </LuxeButton></View></View>
   );
 });
 

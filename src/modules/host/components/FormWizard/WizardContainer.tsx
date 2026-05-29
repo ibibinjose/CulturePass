@@ -472,15 +472,13 @@ export function WizardContainer({
           totalSteps: wizard.totalSteps,
           stepLabel: getStepLabels(wizard.entityType)[wizard.currentStep - 1],
         })}
-      >
-        <WizardProgress
+      ><WizardProgress
           currentStep={wizard.currentStep}
           totalSteps={wizard.totalSteps}
           completedSteps={wizard.completedSteps}
           stepLabels={getStepLabels(wizard.entityType)}
           onStepClick={handleStepClick}
-        />
-      </View>
+        /></View>
 
       {/* Step Content */}
       <ScrollView
@@ -495,9 +493,7 @@ export function WizardContainer({
         ]}
         keyboardShouldPersistTaps="handled"
         accessibilityLabel={`Step ${wizard.currentStep}: ${getStepLabels(wizard.entityType)[wizard.currentStep - 1]}`}
-      >
-        <View ref={stepContentRef}>
-          <WizardStep
+      ><View ref={stepContentRef}><WizardStep
             step={wizard.currentStep}
             entityType={wizard.entityType}
             formData={wizard.formData}
@@ -510,9 +506,7 @@ export function WizardContainer({
             onPublish={handlePublish}
             isPublishing={wizard.isPublishing}
             isSavingDraft={wizard.isSavingDraft}
-          />
-        </View>
-      </ScrollView>
+          /></View></ScrollView>
 
       {/* Navigation Buttons */}
       <View
@@ -524,8 +518,7 @@ export function WizardContainer({
             borderTopColor: colors.border,
           },
         ]}
-      >
-        <WizardNavigation
+      ><WizardNavigation
           currentStep={wizard.currentStep}
           totalSteps={wizard.totalSteps}
           isFirstStep={isFirstStep}
@@ -536,8 +529,7 @@ export function WizardContainer({
           onNext={handleNext}
           onCancel={handleCancel}
           onPublish={handlePublish}
-        />
-      </View>
+        /></View>
 
       {/* Auto-Save Indicator */}
       <AutoSaveIndicator

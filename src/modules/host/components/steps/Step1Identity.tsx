@@ -203,29 +203,14 @@ export function Step1Identity({
       keyboardShouldPersistTaps="handled"
     >
       {/* Header */}
-      <View style={styles.header}>
-        <View style={[styles.iconContainer, { backgroundColor: colors.surfaceElevated }]}>
-          <Ionicons
+      <View style={styles.header}><View style={[styles.iconContainer, { backgroundColor: colors.surfaceElevated }]}><Ionicons
             name="person-outline"
             size={28}
             color={Luxe.colors.dark.accent}
-          />
-        </View>
-
-        <Text style={[styles.title, { color: colors.text }]}>
-          Basic Identity
-        </Text>
-
-        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-          {`Let's start with the essential information about your ${getEntityTypeDisplayName(entityType).toLowerCase()}. This will help people find and recognize you on CulturePass.`}
-        </Text>
-      </View>
+          /></View><Text style={[styles.title, { color: colors.text }]}>Basic Identity</Text><Text style={[styles.subtitle, { color: colors.textSecondary }]}>{`Let's start with the essential information about your ${getEntityTypeDisplayName(entityType).toLowerCase()}. This will help people find and recognize you on CulturePass.`}</Text></View>
 
       {/* Form Fields */}
-      <View style={styles.form}>
-        {/* Official Name */}
-        <View style={styles.fieldGroup}>
-          <NameField
+      <View style={styles.form}><View style={styles.fieldGroup}><NameField
             value={officialName}
             onChange={handleOfficialNameChange}
             label="Official Name"
@@ -233,52 +218,26 @@ export function Step1Identity({
             hint="The legal or registered name of your entity"
             required
             error={getFieldError('officialName')}
-          />
-        </View>
-
-        {/* Handle */}
-        <View style={styles.fieldGroup}>
-          <HandleField
+          /></View><View style={styles.fieldGroup}><HandleField
             value={handle}
             onChange={handleHandleChange}
             suggestedHandle={suggestedHandle}
             error={getFieldError('handle')}
-          />
-          
-          {/* Handle Preview */}
-          {handle && (
-            <View style={[styles.previewBanner, { backgroundColor: colors.surfaceElevated }]}>
-              <Ionicons
+          />{handle && (
+            <View style={[styles.previewBanner, { backgroundColor: colors.surfaceElevated }]}><Ionicons
                 name="link-outline"
                 size={16}
                 color={Luxe.colors.dark.accent}
                 style={styles.previewIcon}
-              />
-              <Text style={[styles.previewLabel, { color: colors.textSecondary }]}>
-                Your profile URL:
-              </Text>
-              <Text style={[styles.previewUrl, { color: Luxe.colors.dark.accent }]}>
-                {SITE_ORIGIN.replace(/^https?:\/\//, '')}/@{handle}
-              </Text>
-            </View>
-          )}
-        </View>
-
-        {/* Founding Date */}
-        <View style={styles.fieldGroup}>
-          <DateField
+              /><Text style={[styles.previewLabel, { color: colors.textSecondary }]}>Your profile URL:</Text><Text style={[styles.previewUrl, { color: Luxe.colors.dark.accent }]}>{SITE_ORIGIN.replace(/^https?:\/\//, '')}/@{handle}</Text></View>
+          )}</View><View style={styles.fieldGroup}><DateField
             value={foundingDate}
             onChange={handleFoundingDateChange}
             label="Founding Date"
             hint="When was your entity established?"
             required
             error={getFieldError('foundingDate')}
-          />
-        </View>
-
-        {/* Trading Name (Optional) */}
-        <View style={styles.fieldGroup}>
-          <NameField
+          /></View><View style={styles.fieldGroup}><NameField
             value={tradingName}
             onChange={handleTradingNameChange}
             label="Trading Name"
@@ -286,29 +245,16 @@ export function Step1Identity({
             hint="Optional: A different name you operate under"
             required={false}
             error={getFieldError('tradingName')}
-          />
-        </View>
-      </View>
+          /></View></View>
 
-      {/* Info Banner */}
-      <View style={[styles.infoBanner, { backgroundColor: colors.surfaceElevated }]}>
-        <Ionicons
+      <View style={[styles.infoBanner, { backgroundColor: colors.surfaceElevated }]}><Ionicons
           name="information-circle-outline"
           size={20}
           color={Luxe.colors.dark.accent}
           style={styles.infoIcon}
-        />
-        <View style={styles.infoContent}>
-          <Text style={[styles.infoTitle, { color: colors.text }]}>
-            Why do we need this?
-          </Text>
-          <Text style={[styles.infoText, { color: colors.textSecondary }]}>
-            Your official name and handle are used to create your unique profile
+        /><View style={styles.infoContent}><Text style={[styles.infoTitle, { color: colors.text }]}>Why do we need this?</Text><Text style={[styles.infoText, { color: colors.textSecondary }]}>Your official name and handle are used to create your unique profile
             on CulturePass. The handle becomes your permanent URL and cannot be
-            changed later, so choose carefully!
-          </Text>
-        </View>
-      </View>
+            changed later, so choose carefully!</Text></View></View>
 
       {/* Bottom Padding */}
       <View style={styles.bottomPadding} />

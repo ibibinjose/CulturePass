@@ -202,9 +202,7 @@ export const WizardProgress = memo(function WizardProgress({
     const progress = (currentStep / totalSteps) * 100;
 
     return (
-      <View style={styles.mobileContainer}>
-        {/* Current Step Label — tappable to show step list */}
-        <Pressable
+      <View style={styles.mobileContainer}><Pressable
           onPress={() => {
             if (Platform.OS !== 'web') {
               void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -215,25 +213,13 @@ export const WizardProgress = memo(function WizardProgress({
           accessibilityRole="button"
           accessibilityLabel={`Step ${currentStep} of ${totalSteps}: ${stepLabels[currentStep - 1]}. Tap to see all steps.`}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <View style={styles.mobileHeaderRow}>
-            <Text style={[styles.mobileStepLabel, { color: colors.textSecondary }]}>
+        ><View style={styles.mobileHeaderRow}><Text style={[styles.mobileStepLabel, { color: colors.textSecondary }]}>
               Step {currentStep} of {totalSteps}
-            </Text>
-            <Ionicons
+            </Text><Ionicons
               name={showStepList ? 'chevron-up' : 'chevron-down'}
               size={16}
               color={colors.textSecondary}
-            />
-          </View>
-          <Text style={[styles.mobileStepTitle, { color: colors.text }]}>
-            {stepLabels[currentStep - 1]}
-          </Text>
-        </Pressable>
-
-        {/* Step Dots — compact navigation */}
-        <View style={styles.mobileDotsRow}>
-          {Array.from({ length: totalSteps }, (_, i) => i + 1).map((step) => {
+            /></View><Text style={[styles.mobileStepTitle, { color: colors.text }]}>{stepLabels[currentStep - 1]}</Text></Pressable><View style={styles.mobileDotsRow}>{Array.from({ length: totalSteps }, (_, i) => i + 1).map((step) => {
             const isActive = step === currentStep;
             const isCompleted = completedSteps.has(step);
             const isClickable = isCompleted || step < currentStep;
@@ -267,12 +253,7 @@ export const WizardProgress = memo(function WizardProgress({
                 hitSlop={{ top: 10, bottom: 10, left: 6, right: 6 }}
               />
             );
-          })}
-        </View>
-
-        {/* Progress Bar */}
-        <View style={[styles.progressBar, { backgroundColor: colors.border }]}>
-          <View
+          })}</View><View style={[styles.progressBar, { backgroundColor: colors.border }]}><View
             style={[
               styles.progressFill,
               {
@@ -280,13 +261,8 @@ export const WizardProgress = memo(function WizardProgress({
                 backgroundColor: Luxe.colors.dark.accent,
               },
             ]}
-          />
-        </View>
-
-        {/* Expandable Step List (dropdown) */}
-        {showStepList && (
-          <View style={[styles.mobileStepList, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-            {Array.from({ length: totalSteps }, (_, i) => i + 1).map((step) => {
+          /></View>{showStepList && (
+          <View style={[styles.mobileStepList, { backgroundColor: colors.surface, borderColor: colors.border }]}>{Array.from({ length: totalSteps }, (_, i) => i + 1).map((step) => {
               const isActive = step === currentStep;
               const isCompleted = completedSteps.has(step);
               const isClickable = isCompleted || step < currentStep;
@@ -312,8 +288,7 @@ export const WizardProgress = memo(function WizardProgress({
                   accessibilityRole="button"
                   accessibilityLabel={`Go to step ${step}: ${stepLabels[step - 1]}`}
                   accessibilityState={{ selected: isActive, disabled: !isClickable }}
-                >
-                  <View
+                ><View
                     style={[
                       styles.stepListDot,
                       {
@@ -324,12 +299,9 @@ export const WizardProgress = memo(function WizardProgress({
                           : colors.border,
                       },
                     ]}
-                  >
-                    {isCompleted && (
+                  >{isCompleted && (
                       <Ionicons name="checkmark" size={10} color="#FFFFFF" />
-                    )}
-                  </View>
-                  <Text
+                    )}</View><Text
                     style={[
                       styles.stepListLabel,
                       {
@@ -341,20 +313,12 @@ export const WizardProgress = memo(function WizardProgress({
                         fontWeight: isActive ? '600' : '400',
                       },
                     ]}
-                  >
-                    {stepLabels[step - 1]}
-                  </Text>
-                  {isActive && (
-                    <View style={[styles.currentBadge, { backgroundColor: Luxe.colors.dark.accent }]}>
-                      <Text style={styles.currentBadgeText}>Current</Text>
-                    </View>
-                  )}
-                </Pressable>
+                  >{stepLabels[step - 1]}</Text>{isActive && (
+                    <View style={[styles.currentBadge, { backgroundColor: Luxe.colors.dark.accent }]}><Text style={styles.currentBadgeText}>Current</Text></View>
+                  )}</Pressable>
               );
-            })}
-          </View>
-        )}
-      </View>
+            })}</View>
+        )}</View>
     );
   }
 
@@ -363,11 +327,9 @@ export const WizardProgress = memo(function WizardProgress({
   // ---------------------------------------------------------------------------
 
   return (
-    <View style={styles.desktopContainer}>
-      {Array.from({ length: totalSteps }, (_, i) => i + 1).map((step) =>
+    <View style={styles.desktopContainer}>{Array.from({ length: totalSteps }, (_, i) => i + 1).map((step) =>
         renderStepIndicator(step)
-      )}
-    </View>
+      )}</View>
   );
 });
 

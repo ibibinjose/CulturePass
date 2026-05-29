@@ -454,25 +454,17 @@ export function Step6Review({
   const renderField = (field: ReviewField) => {
     if (field.type === 'list' && Array.isArray(field.value)) {
       return (
-        <View style={styles.fieldListContainer}>
-          {field.value.map((item, index) => (
+        <View style={styles.fieldListContainer}>{field.value.map((item, index) => (
             <View
               key={index}
               style={[styles.fieldListItem, { backgroundColor: colors.surfaceElevated }]}
-            >
-              <Text style={[styles.fieldListItemText, { color: colors.text }]}>
-                {item}
-              </Text>
-            </View>
-          ))}
-        </View>
+            ><Text style={[styles.fieldListItemText, { color: colors.text }]}>{item}</Text></View>
+          ))}</View>
       );
     }
 
     return (
-      <Text style={[styles.fieldValue, { color: colors.text }]}>
-        {field.value || 'Not provided'}
-      </Text>
+      <Text style={[styles.fieldValue, { color: colors.text }]}>{field.value || 'Not provided'}</Text>
     );
   };
 
@@ -571,39 +563,17 @@ export function Step6Review({
         showsVerticalScrollIndicator={false}
       >
       {/* Header */}
-      <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.text }]}>
-          Review & Publish
-        </Text>
-        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-          Review all your information before publishing your profile. You can edit any section by clicking the Edit button.
-        </Text>
-      </View>
+      <View style={styles.header}><Text style={[styles.title, { color: colors.text }]}>Review & Publish</Text><Text style={[styles.subtitle, { color: colors.textSecondary }]}>Review all your information before publishing your profile. You can edit any section by clicking the Edit button.</Text></View>
 
       {/* Validation Summary */}
       {!isReadyToPublish && (
-        <View style={[styles.validationBanner, { backgroundColor: Luxe.colors.dark.primary + '15' }]}>
-          <Ionicons name="alert-circle" size={20} color={Luxe.colors.dark.primary} />
-          <View style={styles.validationContent}>
-            <Text style={[styles.validationTitle, { color: Luxe.colors.dark.primary }]}>
-              Incomplete Sections
-            </Text>
-            <Text style={[styles.validationText, { color: colors.text }]}>
-              Please complete the following sections before publishing:
-            </Text>
-            {incompleteSections.map((section) => (
+        <View style={[styles.validationBanner, { backgroundColor: Luxe.colors.dark.primary + '15' }]}><Ionicons name="alert-circle" size={20} color={Luxe.colors.dark.primary} /><View style={styles.validationContent}><Text style={[styles.validationTitle, { color: Luxe.colors.dark.primary }]}>Incomplete Sections</Text><Text style={[styles.validationText, { color: colors.text }]}>Please complete the following sections before publishing:</Text>{incompleteSections.map((section) => (
               <Pressable
                 key={section.title}
                 onPress={() => handleEditSection(section.step)}
                 style={styles.validationItem}
-              >
-                <Text style={[styles.validationItemText, { color: Luxe.colors.dark.primary }]}>
-                  • {section.title}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-        </View>
+              ><Text style={[styles.validationItemText, { color: Luxe.colors.dark.primary }]}>• {section.title}</Text></Pressable>
+            ))}</View></View>
       )}
 
       {/* Review Sections */}
@@ -695,17 +665,7 @@ export function Step6Review({
 
       {/* Info Banner */}
       {isReadyToPublish && (
-        <View style={[styles.infoBanner, { backgroundColor: colors.surfaceElevated }]}>
-          <Ionicons name="information-circle-outline" size={20} color={Luxe.colors.dark.accent} />
-          <View style={styles.infoContent}>
-            <Text style={[styles.infoTitle, { color: colors.text }]}>
-              Ready to Publish
-            </Text>
-            <Text style={[styles.infoText, { color: colors.textSecondary }]}>
-              Your profile is complete and ready to be published. Once published, it will be visible to all CulturePass users. You can edit your profile anytime after publishing.
-            </Text>
-          </View>
-        </View>
+        <View style={[styles.infoBanner, { backgroundColor: colors.surfaceElevated }]}><Ionicons name="information-circle-outline" size={20} color={Luxe.colors.dark.accent} /><View style={styles.infoContent}><Text style={[styles.infoTitle, { color: colors.text }]}>Ready to Publish</Text><Text style={[styles.infoText, { color: colors.textSecondary }]}>Your profile is complete and ready to be published. Once published, it will be visible to all CulturePass users. You can edit your profile anytime after publishing.</Text></View></View>
       )}
 
       {/* Bottom Spacing */}

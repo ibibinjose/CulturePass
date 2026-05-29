@@ -541,42 +541,13 @@ export function Step5Description({
       </View>
 
       {/* SEO Preview Section */}
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <View style={styles.sectionTitleRow}>
-            <Ionicons 
+      <View style={styles.section}><View style={styles.sectionHeader}><View style={styles.sectionTitleRow}><Ionicons
               name="search" 
               size={20} 
               color={Luxe.colors.dark.accent} 
-            />
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>
-              SEO Preview
-            </Text>
-          </View>
-          <Text style={[styles.sectionDescription, { color: colors.textSecondary }]}>
-            How your profile will appear in search results
-          </Text>
-        </View>
-
-        <LuxeCard style={[styles.seoPreview, { backgroundColor: colors.card }]}>
-          <Text style={[styles.seoTitle, { color: Luxe.colors.dark.accent }]}>
-            {formData.officialName || 'Your Profile Name'}
-          </Text>
-          <Text style={[styles.seoUrl, { color: Luxe.colors.dark.emerald }]}>
-            {SITE_ORIGIN.replace(/^https?:\/\//, '')}/@{formData.handle || 'yourhandle'}
-          </Text>
-          <Text style={[styles.seoDescription, { color: colors.textSecondary }]}>
-            {tagline || 'Your tagline will appear here'}
-            {description && description.length > 0 && (
-              <Text>
-                {' — '}
-                {description.substring(0, 100)}
-                {description.length > 100 ? '...' : ''}
-              </Text>
-            )}
-          </Text>
-        </LuxeCard>
-      </View>
+            /><Text style={[styles.sectionTitle, { color: colors.text }]}>SEO Preview</Text></View><Text style={[styles.sectionDescription, { color: colors.textSecondary }]}>How your profile will appear in search results</Text></View><LuxeCard variant="default" style={styles.seoPreview}><Text style={[styles.seoTitle, { color: Luxe.colors.dark.accent }]}>{formData.officialName || 'Your Profile Name'}</Text><Text style={[styles.seoUrl, { color: Luxe.colors.dark.emerald }]}>{SITE_ORIGIN.replace(/^https?:\/\//, '')}/@{formData.handle || 'yourhandle'}</Text><Text style={[styles.seoDescription, { color: colors.textSecondary }]}>{tagline || 'Your tagline will appear here'}{description && description.length > 0 && (
+              <Text>{' — '}{description.substring(0, 100)}{description.length > 100 ? '...' : ''}</Text>
+            )}</Text></LuxeCard></View>
 
       {/* Bottom Spacing */}
       <View style={styles.bottomSpacer} />

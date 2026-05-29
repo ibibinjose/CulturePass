@@ -186,19 +186,14 @@ export const AutoSaveIndicator = memo(function AutoSaveIndicator({
       ]}
       {...liveRegionProps('polite')}
       accessibilityLabel={content.text}
-    >
-      <Ionicons name={content.icon} size={16} color={content.color} />
-      <Text
+    ><Ionicons name={content.icon} size={16} color={content.color} /><Text
         style={[
           styles.text,
           {
             color: content.color,
           },
         ]}
-      >
-        {content.text}
-      </Text>
-    </Animated.View>
+      >{content.text}</Text></Animated.View>
   );
 });
 

@@ -209,26 +209,74 @@ export function DraftRecoveryModal({
           showsVerticalScrollIndicator={true}
         >
           {drafts.map((draft) => (
-            <DraftCard
-              key={draft.id}
-              draft={draft}
-              onSelect={() => {
-                // Trust signal: creator chose to continue a draft
-                const completion = calculateDraftCompletion(draft);
-                trackDraftRecoveryUsed(
-                  {
-                    sessionId: `draft-${Date.now()}`,
-                    userId: 'current',
-                    entityType: draft.entityType as any,
-                    device: { platform: Platform.OS === 'ios' ? 'ios' : Platform.OS === 'android' ? 'android' : 'web' },
-                  } as any,
-                  draft.id,
-                  completion,
-                );
-                onSelectDraft(draft.id);
-              }}
-              colors={colors}
-            />
+      <LuxeCard
+        key={draft.id}
+        variant="outlined"
+        onPress={onSelect}
+        style={[
+          styles.draftCard,
+          {
+            backgroundColor: colors.background,
+            borderColor: colors.border,
+          },
+        ]}
+        accessibilityRole="button"
+        accessibilityLabel={`Continue ${entityConfig.label} draft — ${completion}% complete. Last worked on ${age}. Tap to resume.`}
+      ><View style={styles.draftHeader}><View
+          style={[
+            styles.entityBadge,
+            { backgroundColor: entityConfig.color + '20' },
+          ]}
+        ><Ionicons
+            name={entityConfig.icon}
+            size={16}
+            color={entityConfig.color}
+          /><Text
+            style={[
+              TextStyles.caption,
+              { color: entityConfig.color, fontWeight: '600' },
+            ]}
+          >{entityConfig.label}</Text></View><Text style={[TextStyles.caption, { color: colors.textTertiary }]}>{age}</Text></View>{(() => {
+        const data = draft.formData as Record<string, unknown>;
+        const name = (data.officialName || data.name || data.displayName || data.title) as string | undefined;
+        if (!name) return null;
+        return (
+          <Text
+            style={[
+              TextStyles.callout,
+              { color: colors.text, marginTop: Spacing.xs },
+            ]}
+            numberOfLines={1}
+          >{name}</Text>
+        );
+      })()}<Text
+        style={[
+          TextStyles.caption,
+          { color: colors.textSecondary, marginTop: Spacing.xs },
+        ]}
+      >On: {currentStepLabel}</Text><View style={styles.progressContainer}><View
+          style={[
+            styles.progressBar,
+            { backgroundColor: colors.borderLight },
+          ]}
+        ><View
+            style={[
+              styles.progressFill,
+              {
+                width: `${completion}%`,
+                backgroundColor: entityConfig.color,
+              },
+            ]}
+          /></View><Text
+          style={[
+            TextStyles.captionStrong,
+            { color: entityConfig.color, minWidth: 36, textAlign: 'right' },
+          ]}
+        >{completion}%</Text></View><View style={styles.continueIcon}><Ionicons
+          name="arrow-forward-circle"
+          size={24}
+          color={CultureTokens.violet}
+        /></View></LuxeCard>
           ))}
         </ScrollView>
 

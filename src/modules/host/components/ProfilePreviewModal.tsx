@@ -177,74 +177,22 @@ export function ProfilePreviewModal({
           )}
 
           {/* Profile Header */}
-          <View style={styles.profileHeader}>
-            <View style={styles.profileTitleRow}>
-              <View style={styles.profileTitleContent}>
-                <Text style={[styles.profileName, { color: colors.text }]}>
-                  {formData.officialName || 'Profile Name'}
-                </Text>
-                <Text style={[styles.profileHandle, { color: colors.textSecondary }]}>
-                  @{formData.handle || 'handle'}
-                </Text>
-              </View>
-              <View style={[styles.entityTypeBadge, { backgroundColor: CultureTokens.indigo + '20' }]}>
-                <Text style={[styles.entityTypeBadgeText, { color: CultureTokens.indigo }]}>
-                  {getEntityTypeDisplayName(entityType)}
-                </Text>
-              </View>
-            </View>
-
-            {/* Tagline */}
-            {formData.tagline && (
-              <Text style={[styles.tagline, { color: colors.textSecondary }]}>
-                {formData.tagline}
-              </Text>
-            )}
-
-            {/* Meta Info */}
-            <View style={styles.metaInfo}>
-              {formData.foundingDate && (
-                <View style={styles.metaItem}>
-                  <Ionicons name="calendar-outline" size={16} color={colors.textSecondary} />
-                  <Text style={[styles.metaText, { color: colors.textSecondary }]}>
-                    Since {formatDate(formData.foundingDate)}
-                  </Text>
-                </View>
-              )}
-              {formData.primaryAddress && !formData.isOnlineOnly && (
-                <View style={styles.metaItem}>
-                  <Ionicons name="location-outline" size={16} color={colors.textSecondary} />
-                  <Text style={[styles.metaText, { color: colors.textSecondary }]}>
-                    {formData.primaryAddress.city}, {formData.primaryAddress.state}
-                  </Text>
-                </View>
-              )}
-              {formData.isOnlineOnly && (
-                <View style={styles.metaItem}>
-                  <Ionicons name="globe-outline" size={16} color={colors.textSecondary} />
-                  <Text style={[styles.metaText, { color: colors.textSecondary }]}>
-                    Online Only
-                  </Text>
-                </View>
-              )}
-            </View>
-
-            {/* Category Tags */}
-            {formData.categoryTags && formData.categoryTags.length > 0 && (
-              <View style={styles.tagsContainer}>
-                {formData.categoryTags.map((tag, index) => (
+          <View style={styles.profileHeader}><View style={styles.profileTitleRow}><View style={styles.profileTitleContent}><Text style={[styles.profileName, { color: colors.text }]}>{formData.officialName || 'Profile Name'}</Text><Text style={[styles.profileHandle, { color: colors.textSecondary }]}>@{formData.handle || 'handle'}</Text></View><View style={[styles.entityTypeBadge, { backgroundColor: CultureTokens.indigo + '20' }]}><Text style={[styles.entityTypeBadgeText, { color: CultureTokens.indigo }]}>{getEntityTypeDisplayName(entityType)}</Text></View></View>{formData.tagline && (
+              <Text style={[styles.tagline, { color: colors.textSecondary }]}>{formData.tagline}</Text>
+            )}<View style={styles.metaInfo}>{formData.foundingDate && (
+                <View style={styles.metaItem}><Ionicons name="calendar-outline" size={16} color={colors.textSecondary} /><Text style={[styles.metaText, { color: colors.textSecondary }]}>Since {formatDate(formData.foundingDate)}</Text></View>
+              )}{formData.primaryAddress && !formData.isOnlineOnly && (
+                <View style={styles.metaItem}><Ionicons name="location-outline" size={16} color={colors.textSecondary} /><Text style={[styles.metaText, { color: colors.textSecondary }]}>{formData.primaryAddress.city}, {formData.primaryAddress.state}</Text></View>
+              )}{formData.isOnlineOnly && (
+                <View style={styles.metaItem}><Ionicons name="globe-outline" size={16} color={colors.textSecondary} /><Text style={[styles.metaText, { color: colors.textSecondary }]}>Online Only</Text></View>
+              )}</View>{formData.categoryTags && formData.categoryTags.length > 0 && (
+              <View style={styles.tagsContainer}>{formData.categoryTags.map((tag, index) => (
                   <View
                     key={index}
                     style={[styles.tag, { backgroundColor: colors.surfaceElevated }]}
-                  >
-                    <Text style={[styles.tagText, { color: colors.text }]}>
-                      {tag}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            )}
-          </View>
+                  ><Text style={[styles.tagText, { color: colors.text }]}>{tag}</Text></View>
+                ))}</View>
+            )}</View>
 
           {/* Description Section */}
           {formData.description && (
@@ -260,63 +208,30 @@ export function ProfilePreviewModal({
 
           {/* Contact Section */}
           {(formData.publicEmail || formData.phoneNumber || formData.socialLinks?.length) && (
-            <M3Card style={[styles.section, { backgroundColor: colors.card }]}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                Contact
-              </Text>
-              <View style={styles.contactList}>
-                {formData.publicEmail && (
-                  <View style={styles.contactItem}>
-                    <Ionicons name="mail-outline" size={20} color={CultureTokens.indigo} />
-                    <Text style={[styles.contactText, { color: colors.text }]}>
-                      {formData.publicEmail}
-                    </Text>
-                  </View>
-                )}
-                {formData.phoneNumber && (
-                  <View style={styles.contactItem}>
-                    <Ionicons name="call-outline" size={20} color={CultureTokens.indigo} />
-                    <Text style={[styles.contactText, { color: colors.text }]}>
-                      {formData.phoneNumber}
-                    </Text>
-                  </View>
-                )}
-                {formData.socialLinks && formData.socialLinks.length > 0 && (
-                  <View style={styles.socialLinks}>
-                    {formData.socialLinks.map((link, index) => (
+            <M3Card style={[styles.section, { backgroundColor: colors.card }]}><Text style={[styles.sectionTitle, { color: colors.text }]}>Contact</Text><View style={styles.contactList}>{formData.publicEmail && (
+                  <View style={styles.contactItem}><Ionicons name="mail-outline" size={20} color={CultureTokens.indigo} /><Text style={[styles.contactText, { color: colors.text }]}>{formData.publicEmail}</Text></View>
+                )}{formData.phoneNumber && (
+                  <View style={styles.contactItem}><Ionicons name="call-outline" size={20} color={CultureTokens.indigo} /><Text style={[styles.contactText, { color: colors.text }]}>{formData.phoneNumber}</Text></View>
+                )}{formData.socialLinks && formData.socialLinks.length > 0 && (
+                  <View style={styles.socialLinks}>{formData.socialLinks.map((link, index) => (
                       <View
                         key={index}
                         style={[styles.socialLink, { backgroundColor: colors.surfaceElevated }]}
-                      >
-                        <Ionicons name="link-outline" size={16} color={CultureTokens.indigo} />
-                        <Text style={[styles.socialLinkText, { color: colors.text }]}>
-                          {link.platform}
-                        </Text>
-                      </View>
-                    ))}
-                  </View>
-                )}
-              </View>
-            </M3Card>
+                      ><Ionicons name="link-outline" size={16} color={CultureTokens.indigo} /><Text style={[styles.socialLinkText, { color: colors.text }]}>{link.platform}</Text></View>
+                    ))}</View>
+                )}</View></M3Card>
           )}
 
           {/* Gallery Section */}
           {formData.galleryImages && formData.galleryImages.length > 0 && (
-            <M3Card style={[styles.section, { backgroundColor: colors.card }]}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                Gallery
-              </Text>
-              <View style={styles.gallery}>
-                {formData.galleryImages.map((imageUrl, index) => (
+            <M3Card style={[styles.section, { backgroundColor: colors.card }]}><Text style={[styles.sectionTitle, { color: colors.text }]}>Gallery</Text><View style={styles.gallery}>{formData.galleryImages.map((imageUrl, index) => (
                   <Image
                     key={index}
                     source={{ uri: imageUrl }}
                     style={styles.galleryImage}
                     resizeMode="cover"
                   />
-                ))}
-              </View>
-            </M3Card>
+                ))}</View></M3Card>
           )}
 
           {/* Preview Notice */}

@@ -893,9 +893,8 @@ export function createEventsRouter() {
   router.post('/events/:id/ticket-click', async (req: Request, res: Response) => {
     const eventId = qparam(req.params.id);
     try {
-      const { db } = await import('../admin');
       await db.collection('events').doc(eventId).update({
-        ticketClickCount: (await import('firebase-admin/firestore')).FieldValue.increment(1),
+        ticketClickCount: FieldValue.increment(1),
       });
       return res.json({ ok: true });
     } catch {
@@ -952,7 +951,6 @@ export function createEventsRouter() {
     const eventId = qparam(req.params.id);
     const userId = req.user!.id;
     try {
-      const { db } = await import('../admin');
       const snap = await db.collection('rsvps').doc(`${eventId}_${userId}`).get();
       if (!snap.exists) return res.json({ status: null });
       return res.json({ status: (snap.data() as any).status ?? null });
@@ -1018,8 +1016,7 @@ export function createEventsRouter() {
     }
 
     try {
-      const { db } = await import('../admin');
-      const { FieldValue } = await import('firebase-admin/firestore');
+
       const rsvpRef  = db.collection('rsvps').doc(`${eventId}_${userId}`);
       const eventRef = db.collection('events').doc(eventId);
       const counterKey: Record<string, string> = { going: 'rsvpGoing', maybe: 'rsvpMaybe', not_going: 'rsvpNotGoing' };

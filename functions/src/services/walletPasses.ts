@@ -363,18 +363,18 @@ export async function createGoogleBusinessCardSaveUrl(user: WalletPassUser): Pro
 
 async function renderBrandAsset(width: number, height: number): Promise<Buffer> {
   const fontSize = Math.max(14, Math.round(Math.min(width, height) * 0.35));
-  const svg = `
-  <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0%" stop-color="#4F46E5"/>
-        <stop offset="60%" stop-color="#FFCC00"/>
-        <stop offset="100%" stop-color="#FF5E5B"/>
-      </linearGradient>
-    </defs>
-    <rect x="0" y="0" width="${width}" height="${height}" rx="${Math.floor(width * 0.2)}" fill="url(#g)" />
-    <text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" font-size="${fontSize}" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#FFFFFF">CP</text>
-  </svg>`;
+  const svg =
+    '<svg width="' + width + '" height="' + height + '" xmlns="http://www.w3.org/2000/svg">' +
+    '<defs>' +
+    '<linearGradient id="g" x1="0" y1="0" x2="1" y2="1">' +
+    '<stop offset="0%" stop-color="#4F46E5"/>' +
+    '<stop offset="60%" stop-color="#FFCC00"/>' +
+    '<stop offset="100%" stop-color="#FF5E5B"/>' +
+    '</linearGradient>' +
+    '</defs>' +
+    '<rect x="0" y="0" width="' + width + '" height="' + height + '" rx="' + Math.floor(width * 0.2) + '" fill="url(#g)" />' +
+    '<text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" font-size="' + fontSize + '" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#FFFFFF">CP</text>' +
+    '</svg>';
 
   try {
     return await sharp(Buffer.from(svg)).png().toBuffer();

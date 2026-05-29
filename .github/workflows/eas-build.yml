@@ -22,29 +22,34 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           fetch-depth: 0  # Needed for commit linking with Sentry later
 
+
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
         with:
           node-version: 22
           cache: 'npm'
+
 
       - name: Install dependencies
         run: npm ci
 
       - name: Setup EAS
-        uses: expo/expo-github-action@v8
+        uses: expo/expo-github-action@c7b66a9c327a43a8fa7c0158e7f30d6040d2481e # v8
         with:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
 
+
       - name: Build with EAS
         id: eas-build
+        env:
+          INPUT_PROFILE: ${{ github.event.inputs.profile }}
         run: |
-          PROFILE="${{ github.event.inputs.profile || 'production' }}"
+          PROFILE="${INPUT_PROFILE:-production}"
           # Run build and capture JSON output for reliable build metadata
           BUILD_JSON=$(eas build --platform all --profile "$PROFILE" --non-interactive --wait --json 2>/dev/null || echo '[]')
           echo "build_json<<EOF" >> $GITHUB_ENV
@@ -56,11 +61,15 @@ jobs:
           echo "EAS_FIRST_BUILD_ID=$FIRST_BUILD_ID" >> $GITHUB_ENV
           echo "Captured EAS build ID: $FIRST_BUILD_ID"
 
+
       - name: Generate rich release version (aggressively prefer EAS build number)
         id: version
+        env:
+          INPUT_PROFILE: ${{ github.event.inputs.profile }}
         run: |
           BASE_VERSION=$(node -p "require('./app.config.js').expo.version || require('./package.json').version")
-          PROFILE="${{ github.event.inputs.profile || 'production' }}"
+          PROFILE="${INPUT_PROFILE:-production}"
+
 
           # Prefer the exact build ID captured from the just-completed EAS build
           BUILD_ID="${EAS_FIRST_BUILD_ID:-}"
@@ -118,4 +127,7 @@ jobs:
       environment: ${{ github.event.inputs.profile || 'production' }}
       upload_sourcemaps: true
       platform: ${{ matrix.platform }}
-    secrets: inherit
+    secrets:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      SENTRY_RELEASE_HOOK_URL: ${{ secrets.SENTRY_RELEASE_HOOK_URL }}
+      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}

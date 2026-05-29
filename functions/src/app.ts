@@ -54,21 +54,7 @@ const CORS_EXTRA = (process.env.CORS_EXTRA_ORIGINS ?? '')
   .map((s) => s.trim())
   .filter((s) => s.length > 0);
 
-function escapeRegExp(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
 const firebaseProjectId = getFirebaseProjectId();
-const firebaseHostingOrigins: RegExp[] = firebaseProjectId
-  ? [
-      new RegExp(`^https://${escapeRegExp(firebaseProjectId)}\\.web\\.app$`),
-      new RegExp(`^https://${escapeRegExp(firebaseProjectId)}\\.firebaseapp\\.com$`),
-      new RegExp(`^https://[\\w-]+--${escapeRegExp(firebaseProjectId)}\\.web\\.app$`), // Firebase preview channels
-    ]
-  : [
-      /^https:\/\/[\w-]+\.web\\.app$/,
-      /^https:\/\/[\w-]+\.firebaseapp\.com$/,
-    ];
 
 const ALLOWED_ORIGINS: (string | RegExp)[] = [
   // Production
@@ -84,7 +70,6 @@ const ALLOWED_ORIGINS: (string | RegExp)[] = [
   /^https:\/\/[\w-]+\.vercel\.app$/,
   /^https:\/\/[\w-]+\.netlify\.app$/,
   /^https:\/\/[\w-]+\.ngrok(-free)?\.app$/,
-  ...firebaseHostingOrigins,
   // Local development (allow any port on localhost/127.0.0.1 for E2E/dev)
   /^https?:\/\/localhost(:\d+)?$/,
   /^https?:\/\/127\.0\.0\.1(:\d+)?$/,
@@ -104,6 +89,38 @@ const ALLOWED_ORIGINS: (string | RegExp)[] = [
 
 function isAllowedOrigin(origin: string | undefined): boolean {
   if (!origin) return true; // non-browser clients (Postman, React Native native)
+
+  // 1. Check dynamic Firebase Hosting origins securely without dynamic RegExps
+  if (firebaseProjectId) {
+    if (origin === `https://${firebaseProjectId}.web.app` ||
+        origin === `https://${firebaseProjectId}.firebaseapp.com`) {
+      return true;
+    }
+    // Check Firebase preview channels: https://[something-here]--project-id.web.app
+    if (origin.startsWith('https://') && origin.endsWith(`--${firebaseProjectId}.web.app`)) {
+      const host = origin.substring(8); // Remove "https://"
+      const prefix = host.substring(0, host.length - `--${firebaseProjectId}.web.app`.length);
+      // Ensure prefix only contains safe sub-domain characters [\w-]+
+      if (/^[a-zA-Z0-9_-]+$/.test(prefix)) {
+        return true;
+      }
+    }
+  } else {
+    // Suffix check if projectId is not configured
+    if (origin.startsWith('https://')) {
+      const host = origin.substring(8);
+      if (host.endsWith('.web.app')) {
+        const prefix = host.substring(0, host.length - '.web.app'.length);
+        if (/^[a-zA-Z0-9_-]+$/.test(prefix)) return true;
+      }
+      if (host.endsWith('.firebaseapp.com')) {
+        const prefix = host.substring(0, host.length - '.firebaseapp.com'.length);
+        if (/^[a-zA-Z0-9_-]+$/.test(prefix)) return true;
+      }
+    }
+  }
+
+  // 2. Check general allowed origins
   return ALLOWED_ORIGINS.some(allowed =>
     typeof allowed === 'string' ? allowed === origin : allowed.test(origin),
   );

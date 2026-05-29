@@ -22,6 +22,14 @@ on:
         required: false
         default: 'all'
         type: string
+    secrets:
+      EXPO_TOKEN:
+        required: false
+      SENTRY_RELEASE_HOOK_URL:
+        required: false
+      SENTRY_AUTH_TOKEN:
+        required: false
+
 
   workflow_dispatch:
     inputs:
@@ -43,20 +51,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+
 
       - name: Notify Sentry via Release Hook (lightweight)
         if: ${{ secrets.SENTRY_RELEASE_HOOK_URL != '' }}
         env:
           SENTRY_RELEASE_HOOK_URL: ${{ secrets.SENTRY_RELEASE_HOOK_URL }}
+          INPUT_VERSION: ${{ inputs.version }}
         run: |
-          echo "Notifying Sentry release via hook: ${{ inputs.version }}"
-          ./scripts/notify-sentry-release.sh "${{ inputs.version }}" || echo "Hook notification failed (non-fatal)"
+          echo "Notifying Sentry release via hook: $INPUT_VERSION"
+          ./scripts/notify-sentry-release.sh "$INPUT_VERSION" || echo "Hook notification failed (non-fatal)"
+
 
       - name: Setup Node (for sentry-cli)
         if: inputs.upload_sourcemaps == true
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
         with:
+
           node-version: 22
 
       - name: Install dependencies (for sentry-cli)
@@ -65,8 +77,12 @@ jobs:
 
       - name: Download EAS build artifacts (for native Hermes sourcemaps)
         if: inputs.upload_sourcemaps == true && (inputs.platform == 'ios' || inputs.platform == 'android')
+        env:
+          INPUT_PLATFORM: ${{ inputs.platform }}
+          INPUT_ENVIRONMENT: ${{ inputs.environment }}
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
-          PLATFORM="${{ inputs.platform }}"
+          PLATFORM="$INPUT_PLATFORM"
           echo "Downloading EAS artifact for platform: $PLATFORM (this may take a while)..."
 
           mkdir -p ./artifacts
@@ -74,7 +90,7 @@ jobs:
           # Download the latest successful build for this platform + profile
           eas build:download \
             --platform "$PLATFORM" \
-            --profile "${{ inputs.environment }}" \
+            --profile "$INPUT_ENVIRONMENT" \
             --output "./artifacts/${PLATFORM}" \
             --latest \
             --non-interactive || {
@@ -85,15 +101,19 @@ jobs:
 
           echo "Artifact saved to ./artifacts/${PLATFORM}"
 
+
       - name: Extract & Upload Native Hermes Sourcemaps
         if: inputs.upload_sourcemaps == true && (inputs.platform == 'ios' || inputs.platform == 'android')
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ORG: ${{ vars.SENTRY_ORG || 'culturepass' }}
           SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT || 'culturepass' }}
+          INPUT_VERSION: ${{ inputs.version }}
+          INPUT_PLATFORM: ${{ inputs.platform }}
         run: |
-          VERSION="${{ inputs.version }}"
-          PLATFORM="${{ inputs.platform }}"
+          VERSION="$INPUT_VERSION"
+          PLATFORM="$INPUT_PLATFORM"
+
           ARTIFACT_PATH="./artifacts/${PLATFORM}"
 
           echo "Attempting Hermes sourcemap extraction + upload for $PLATFORM..."
@@ -129,9 +149,12 @@ jobs:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ORG: ${{ vars.SENTRY_ORG || 'culturepass' }}
           SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT || 'culturepass' }}
+          INPUT_VERSION: ${{ inputs.version }}
+          INPUT_ENVIRONMENT: ${{ inputs.environment }}
         run: |
-          VERSION="${{ inputs.version }}"
-          ENV="${{ inputs.environment }}"
+          VERSION="$INPUT_VERSION"
+          ENV="$INPUT_ENVIRONMENT"
+
 
           echo "Creating Sentry release: $VERSION"
 

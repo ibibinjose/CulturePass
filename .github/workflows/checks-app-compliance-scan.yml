@@ -34,7 +34,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+
 
       - name: Verify Google Checks secrets
         env:
@@ -99,7 +100,8 @@ jobs:
           ls -la "$out"
 
       - name: Checks App Compliance Scan
-        uses: google-checks/checks-app-scan-github-action@v1.0.3
+        uses: google-checks/checks-app-scan-github-action@84cba6b290ffc71b87f2d9976a35f30a3fa0c8d4 # v1.0.3
+
         with:
           account_id: ${{ secrets.CHECKS_ACCOUNT_ID }}
           app_id: ${{ secrets.CHECKS_APP_ID }}

@@ -10,6 +10,7 @@
 import { type Request, type Response, type NextFunction } from 'express';
 import { randomBytes } from 'node:crypto';
 import { setCorrelationId } from '../lib/logger';
+import * as Sentry from '@sentry/node';
 
 function generateRequestId(): string {
   return `req_${Date.now().toString(36)}_${randomBytes(6).toString('hex')}`;
@@ -35,9 +36,6 @@ export function requestIdMiddleware(req: Request, _res: Response, next: NextFunc
   // Also set as Sentry tag for this request scope
   // (Sentry will automatically include it in events from this request)
   try {
-    // Dynamic import to avoid issues if Sentry not initialized in some contexts
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const Sentry = require('@sentry/node');
     Sentry.setTag('request_id', requestId);
   } catch {
     // Sentry not available or not initialized — safe to ignore

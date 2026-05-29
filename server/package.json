@@ -12,19 +12,19 @@
     "generate:brand-assets": "node ../scripts/generate-app-images.mjs && node ../scripts/generate-native-splash.mjs"
   },
   "dependencies": {
-    "cors": "^2.8.6",
-    "dotenv": "^17.4.2",
-    "express": "^5.2.1",
-    "firebase-admin": "^13.9.0",
+    "cors": "2.8.6",
+    "dotenv": "17.4.2",
+    "express": "5.2.1",
+    "firebase-admin": "13.9.0",
     "helmet": "8.1.0",
-    "sharp": "^0.34.5"
+    "sharp": "0.34.5"
   },
   "devDependencies": {
-    "@types/cors": "^2.8.19",
-    "@types/express": "^5.0.6",
-    "@types/node": "^25.6.2",
-    "nodemon": "^3.1.14",
-    "tsx": "^4.21.0",
-    "typescript": "~6.0.3"
+    "@types/cors": "2.8.19",
+    "@types/express": "5.0.6",
+    "@types/node": "25.6.2",
+    "nodemon": "3.1.14",
+    "tsx": "4.21.0",
+    "typescript": "6.0.3"
   }
 }

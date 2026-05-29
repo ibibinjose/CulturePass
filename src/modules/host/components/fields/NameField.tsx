@@ -216,32 +216,16 @@ export function NameField({
         accessibilityLabel={label}
         accessibilityHint={`Enter ${label.toLowerCase()} (${minLength}-${maxLength} characters)`}
         rightIcon={rightIcon}
-      />
-
-      {/* Character count */}
-      {showCharCount && (
-        <View style={styles.footer}>
-          <Text style={[styles.charCount, { color: getCharCountColor() }]}>
-            {value.length}/{maxLength} characters{getCharCountStatus()}
-          </Text>
-        </View>
-      )}
-
-      {/* Validation success message */}
-      {hasValidated && isValid && !displayError && value.trim() && (
-        <View style={styles.successContainer}>
-          <Ionicons
+      />{showCharCount && (
+        <View style={styles.footer}><Text style={[styles.charCount, { color: getCharCountColor() }]}>{value.length}/{maxLength} characters{getCharCountStatus()}</Text></View>
+      )}{hasValidated && isValid && !displayError && value.trim() && (
+        <View style={styles.successContainer}><Ionicons
             name="checkmark-circle"
             size={14}
             color={CultureTokens.teal}
             style={styles.successIcon}
-          />
-          <Text style={[styles.successText, { color: CultureTokens.teal }]}>
-            Valid name
-          </Text>
-        </View>
-      )}
-    </View>
+          /><Text style={[styles.successText, { color: CultureTokens.teal }]}>Valid name</Text></View>
+      )}</View>
   );
 }
 

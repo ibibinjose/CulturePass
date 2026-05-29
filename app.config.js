@@ -26,7 +26,7 @@ export default function(appConfig) {
     [
       "expo-router",
       {
-        origin: "https://culturepass.co"
+        origin: "https://culturepass.app"
       }
     ],
     "expo-font",
@@ -239,9 +239,9 @@ export default function(appConfig) {
           // Key moved to react-native-maps plugin props
         },
         associatedDomains: [
-          "applinks:culturepass.co",
-          "applinks:www.culturepass.co",
-          "webcredentials:culturepass.co"
+          "applinks:culturepass.app",
+          "applinks:www.culturepass.app",
+          "webcredentials:culturepass.app"
         ],
         privacyManifests: {
           NSPrivacyAccessedAPITypes: [
@@ -274,7 +274,7 @@ export default function(appConfig) {
             data: [
               {
                 scheme: "https",
-                host: "culturepass.co",
+                host: "culturepass.app",
                 pathPrefix: "/"
               }
             ],
@@ -333,7 +333,7 @@ export default function(appConfig) {
       },
       extra: {
         router: {
-          origin: "https://culturepass.co"
+          origin: "https://culturepass.app"
         },
         eas: {
           projectId: "9dc511ee-ee3e-4798-ae29-30efc8f5343e"

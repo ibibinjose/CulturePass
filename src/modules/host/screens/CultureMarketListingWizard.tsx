@@ -526,7 +526,7 @@ function CreateListingInner({
                 />
                 <Text style={[ss.typeLinkNoteText, embedded && { color: colors.textSecondary }]}>
                   Every listing gets a shareable URL at{' '}
-                  <Text style={{ color: CultureTokens.violet }}>culturepass.co/s/[id]</Text>
+                  <Text style={{ color: CultureTokens.violet }}>culturepass.app/s/[id]</Text>
                 </Text>
               </View>
             </Animated.View>
@@ -912,9 +912,9 @@ function CreateListingInner({
               </Text>
               <Text style={[ss.deepLinkSub, { color: colors.textSecondary }]}>
                 Once published:{' '}
-                <Text style={{ color: CultureTokens.violet }}>culturepass.co/CultureMarket/[id]</Text>
+                <Text style={{ color: CultureTokens.violet }}>culturepass.app/CultureMarket/[id]</Text>
                 {' '}and the short form{' '}
-                <Text style={{ color: CultureTokens.violet }}>culturepass.co/s/[id]</Text>
+                <Text style={{ color: CultureTokens.violet }}>culturepass.app/s/[id]</Text>
                 {' '}— share on social media, in emails, or embed on your site.
               </Text>
             </View>

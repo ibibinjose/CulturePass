@@ -246,40 +246,16 @@ export function Step3Legal({
       keyboardShouldPersistTaps="handled"
     >
       {/* Header */}
-      <View style={styles.header}>
-        <View style={[styles.iconContainer, { backgroundColor: colors.surfaceElevated }]}>
-          <Ionicons
+      <View style={styles.header}><View style={[styles.iconContainer, { backgroundColor: colors.surfaceElevated }]}><Ionicons
             name="shield-checkmark-outline"
             size={28}
             color={Luxe.colors.dark.accent}
-          />
-        </View>
+          /></View><Text style={[styles.title, { color: colors.text }]}>Legal & Compliance</Text><Text style={[styles.subtitle, { color: colors.textSecondary }]}>{getStepDescription(entityType)}</Text>{entityType === 'business' && (
+          <View style={[styles.verificationNote, { backgroundColor: colors.surfaceElevated, borderLeftColor: Luxe.colors.dark.accent }]}><Ionicons name="information-circle-outline" size={16} color={Luxe.colors.dark.accent} /><Text style={[styles.verificationNoteText, { color: colors.textSecondary }]}>Business profiles require verification (ABN + identity docs) to build trust with customers and enable paid features. Your main profile info has been pre-filled to speed things up.</Text></View>
+        )}</View>
 
-        <Text style={[styles.title, { color: colors.text }]}>
-          Legal & Compliance
-        </Text>
-
-        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-          {getStepDescription(entityType)}
-        </Text>
-
-        {/* Phase 1 Business Migration: Enhanced verification context */}
-        {entityType === 'business' && (
-          <View style={[styles.verificationNote, { backgroundColor: colors.surfaceElevated, borderLeftColor: Luxe.colors.dark.accent }]}>
-            <Ionicons name="information-circle-outline" size={16} color={Luxe.colors.dark.accent} />
-            <Text style={[styles.verificationNoteText, { color: colors.textSecondary }]}>
-              Business profiles require verification (ABN + identity docs) to build trust with customers and enable paid features. Your main profile info has been pre-filled to speed things up.
-            </Text>
-          </View>
-        )}
-      </View>
-
-      {/* Form Fields */}
-      <View style={styles.form}>
-        {/* ABN Field (conditional) */}
-        {showABN && (
-          <View style={styles.fieldGroup}>
-            <ABNField
+      <View style={styles.form}>{showABN && (
+          <View style={styles.fieldGroup}><ABNField
               value={abn}
               onChange={handleABNChange}
               required={abnRequired}
@@ -290,37 +266,25 @@ export function Step3Legal({
                   ? 'Required if you plan to create paid events'
                   : 'Enter your 11-digit ABN'
               }
-            />
-          </View>
-        )}
-
-        {/* Tax Status (conditional) */}
-        {showTaxStatus && (
-          <View style={styles.fieldGroup}>
-            <TaxStatusField
+            /></View>
+        )}{showTaxStatus && (
+          <View style={styles.fieldGroup}><TaxStatusField
               taxStatus={gstRegistered ? 'registered' : 'not-registered'}
               gstId={gstId}
               onTaxStatusChange={(status) => handleGstRegisteredChange(status === 'registered')}
               onGstIdChange={handleGstIdChange}
               error={getFieldError('gstId')}
-            />
-          </View>
-        )}
-
-        {/* Licences & Permits */}
-        {showLicences && (
-          <View style={styles.fieldGroup}>
-            <LicenceUploadField
+            /></View>
+        )}{showLicences && (
+          <View style={styles.fieldGroup}><LicenceUploadField
               value={licences}
               onChange={handleLicencesChange}
               label="Licences & Permits"
               hint={getLicenceHint(entityType)}
               error={getFieldError('licences')}
               maxFiles={5}
-            />
-          </View>
-        )}
-      </View>
+            /></View>
+        )}</View>
 
       {/* Creator Trust: Prominent Verification Status Banner (replaces old info + status card) */}
       <View style={styles.verificationHeader}>

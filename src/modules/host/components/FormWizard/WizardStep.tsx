@@ -173,21 +173,18 @@ export function WizardStep({
     const isTeamEntity = entityType === 'community' || entityType === 'business';
 
     if (isTeamEntity) {
-      // Community / Business get an extra "Team & Organizers" step
       switch (step) {
         case 1: return <LazyStep1Identity {...stepProps} />;
         case 2: return <LazyStep2Media {...stepProps} />;
         case 3: return <LazyStep3Legal {...stepProps} />;
         case 4: return <LazyStep4Location {...stepProps} />;
         case 5: return <LazyTeamOrganizersStep {...stepProps} />;
-        case 6: return <LazyStep5Description {...stepProps} />;   // shifted
-        case 7: return <LazyStep6Review {...stepProps} />;       // shifted
-        default:
-          return <View style={styles.errorContainer}><Text style={styles.errorText}>Invalid step: {step}</Text></View>;
+        case 6: return <LazyStep5Description {...stepProps} />;
+        case 7: return <LazyStep6Review {...stepProps} />;
+        default: return <View style={styles.errorContainer}><Text style={styles.errorText}>Invalid step: {step}</Text></View>;
       }
     }
 
-    // Default 6-step flow for other entity types
     switch (step) {
       case 1: return <LazyStep1Identity {...stepProps} />;
       case 2: return <LazyStep2Media {...stepProps} />;
@@ -195,17 +192,12 @@ export function WizardStep({
       case 4: return <LazyStep4Location {...stepProps} />;
       case 5: return <LazyStep5Description {...stepProps} />;
       case 6: return <LazyStep6Review {...stepProps} />;
-      default:
-        return <View style={styles.errorContainer}><Text style={styles.errorText}>Invalid step: {step}</Text></View>;
+      default: return <View style={styles.errorContainer}><Text style={styles.errorText}>Invalid step: {step}</Text></View>;
     }
   };
 
   return (
-    <View style={[styles.stepContainer, { gap: responsiveSectionGap(layout.isMobile) }]}>
-      <Suspense fallback={<StepLoadingFallback />}>
-        <View style={{ flex: 1 }}>{renderStep()}</View>
-      </Suspense>
-    </View>
+    <View style={[styles.stepContainer, { gap: responsiveSectionGap(layout.isMobile) }]}><Suspense fallback={<StepLoadingFallback />}><View style={{ flex: 1 }}>{renderStep()}</View></Suspense></View>
   );
 }
 

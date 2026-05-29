@@ -546,6 +546,27 @@ profilesRouter.post(
   }
 );
 
+// ── GET /api/profiles/handles/available ────────────────────────────────────
+// Check handle availability (normalized across profiles + users.username)
+profilesRouter.get(
+  '/profiles/handles/available',
+  slidingWindowRateLimit(60000, 100),
+  async (req: Request, res: Response) => {
+    try {
+      const handle = qstr(req.query.handle).trim().replace(/^@/, '').toLowerCase();
+      if (!handle || handle.length < 3) {
+        return res.status(400).json({ available: false, reason: 'Handle too short' });
+      }
+
+      const result = await validationService.checkHandleAvailability(handle);
+      return res.json(result);
+    } catch (err) {
+      captureRouteError(err, 'GET /api/profiles/handles/available');
+      return res.status(500).json({ error: 'Failed to check handle availability' });
+    }
+  }
+);
+
 // ── POST /api/profiles/validate-abn ────────────────────────────────────────
 // Validate ABN format and lookup business details
 profilesRouter.post(

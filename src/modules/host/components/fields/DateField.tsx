@@ -302,31 +302,16 @@ export function DateField({
   };
 
   return (
-    <View style={styles.container}>
-      {Platform.OS === 'web' ? renderWebInput() : renderNativeInput()}
-
-      {/* Validation success message */}
-      {hasValidated && isValid && !displayError && value && (
-        <View style={styles.successContainer}>
-          <Ionicons
+    <View style={styles.container}>{Platform.OS === 'web' ? renderWebInput() : renderNativeInput()}{hasValidated && isValid && !displayError && value && (
+        <View style={styles.successContainer}><Ionicons
             name="checkmark-circle"
             size={14}
             color={CultureTokens.teal}
             style={styles.successIcon}
-          />
-          <Text style={[styles.successText, { color: CultureTokens.teal }]}>
-            Valid date
-          </Text>
-        </View>
-      )}
-
-      {/* Helper text for date format */}
-      {!displayError && !hint && Platform.OS === 'web' && (
-        <Text style={[styles.helperText, { color: colors.textTertiary }]}>
-          Format: YYYY-MM-DD (e.g., 2020-01-15)
-        </Text>
-      )}
-    </View>
+          /><Text style={[styles.successText, { color: CultureTokens.teal }]}>Valid date</Text></View>
+      )}{!displayError && !hint && Platform.OS === 'web' && (
+        <Text style={[styles.helperText, { color: colors.textTertiary }]}>Format: YYYY-MM-DD (e.g., 2020-01-15)</Text>
+      )}</View>
   );
 }
 

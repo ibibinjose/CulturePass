@@ -74,10 +74,7 @@ const ALLOWED_ORIGINS: (string | RegExp)[] = [
   // Production
   'https://culturepass.app',
   'https://www.culturepass.app',
-  'https://culturepass.co',
-  'https://www.culturepass.co',
   /^https:\/\/[\w-]+\.culturepass\.app$/,          // preview/staging subdomains
-  /^https:\/\/[\w-]+\.culturepass\.co$/,           // alternate production domain
   'https://culturekerala.com',
   'https://www.culturekerala.com',
   /^https:\/\/[\w-]+\.culturekerala\.com$/,

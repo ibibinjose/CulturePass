@@ -25,8 +25,8 @@ export const LEGACY_ROUTE_REMAPS = [
 ] as const;
 
 const TRUSTED_DEEP_LINK_HOSTS = new Set([
-  'culturepass.co',
-  'www.culturepass.co',
+  'culturepass.app',
+  'www.culturepass.app',
   'culturekerala.com',
   'www.culturekerala.com',
 ]);

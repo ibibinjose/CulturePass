@@ -338,9 +338,7 @@ export function HandleField({
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.inputWrapper}>
-        <Input
+    <View style={styles.container}><View style={styles.inputWrapper}><Input
           label={required ? `${label} *` : label}
           value={value}
           onChangeText={handleChange}
@@ -355,61 +353,30 @@ export function HandleField({
           maxLength={30}
           accessibilityLabel={label}
           accessibilityHint="Enter a unique handle for your profile"
-        />
-        
-        {/* Right icon overlay */}
-        <View style={styles.rightIconContainer}>
-          {getRightIcon()}
-        </View>
-      </View>
-
-      {/* Character count */}
-      <View style={styles.footer}>
-        <Text style={[styles.charCount, { color: getCharCountColor() }]}>
-          {value.length}/30 characters
-        </Text>
-      </View>
-
-      {/* Suggested handle */}
-      {showSuggestion && suggestedHandle && !value && (
+        /><View style={styles.rightIconContainer}>{getRightIcon()}</View></View><View style={styles.footer}><Text style={[styles.charCount, { color: getCharCountColor() }]}>{value.length}/30 characters</Text></View>{showSuggestion && suggestedHandle && !value && (
         <Pressable
           onPress={applySuggestion}
           style={[styles.suggestion, { backgroundColor: colors.surfaceElevated }]}
           accessibilityRole="button"
           accessibilityLabel={`Use suggested handle: ${suggestedHandle}`}
-        >
-          <Ionicons
+        ><Ionicons
             name="bulb-outline"
             size={16}
             color={CultureTokens.indigo}
             style={styles.suggestionIcon}
-          />
-          <Text style={[styles.suggestionText, { color: colors.text }]}>
-            Suggested: <Text style={styles.suggestionHandle}>@{suggestedHandle}</Text>
-          </Text>
-          <Ionicons
+          /><Text style={[styles.suggestionText, { color: colors.text }]}>Suggested: <Text style={styles.suggestionHandle}>@{suggestedHandle}</Text></Text><Ionicons
             name="arrow-forward"
             size={16}
             color={colors.textSecondary}
-          />
-        </Pressable>
-      )}
-
-      {/* Availability status */}
-      {hasValidated && value && !displayError && isValid && (
-        <View style={[styles.statusBanner, { backgroundColor: colors.surfaceElevated }]}>
-          <Ionicons
+          /></Pressable>
+      )}{hasValidated && value && !displayError && isValid && (
+        <View style={[styles.statusBanner, { backgroundColor: colors.surfaceElevated }]}><Ionicons
             name="checkmark-circle"
             size={16}
             color={CultureTokens.teal}
             style={styles.statusIcon}
-          />
-          <Text style={[styles.statusText, { color: CultureTokens.teal }]}>
-            @{value} is available
-          </Text>
-        </View>
-      )}
-    </View>
+          /><Text style={[styles.statusText, { color: CultureTokens.teal }]}>@{value} is available</Text></View>
+      )}</View>
   );
 }
 

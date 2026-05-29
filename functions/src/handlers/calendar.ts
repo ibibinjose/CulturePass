@@ -51,7 +51,7 @@ function generateIcsFeed(city: string, siteOrigin: string, events: any[]): strin
   ];
 
   for (const e of events) {
-    const uid = `${e.id}@culturepass.co`;
+    const uid = `${e.id}@culturepass.app`;
     const dtstamp = e.createdAt ? e.createdAt.replace(/[^0-9]/g, '').slice(0, 15) + 'Z' : '20260527T000000Z';
     const dtstart = formatDateToIcsString(e.date, e.time);
     const dtend = getIcsEndString(e.date, e.time, e.endDate, e.endTime);
@@ -94,7 +94,7 @@ calendarRouter.get('/calendar/city.ics', async (req: Request, res: Response) => 
     }
 
     const originHeader = req.headers.host;
-    let siteOrigin = 'https://culturepass.co';
+    let siteOrigin = 'https://culturepass.app';
     if (originHeader) {
       if (originHeader.includes('culturekerala.com')) {
         siteOrigin = 'https://culturekerala.com';

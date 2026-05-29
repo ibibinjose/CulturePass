@@ -89,23 +89,11 @@ export function Step2Media({
   // ---------------------------------------------------------------------------
 
   const renderSectionHeader = (title: string, subtitle?: string, required?: boolean) => (
-    <View style={styles.sectionHeader}>
-      <View style={styles.sectionTitleRow}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>
-          {title}
-        </Text>
-        {required && (
-          <View style={[styles.requiredBadge, { backgroundColor: Luxe.colors.dark.primary }]}>
-            <Text style={styles.requiredBadgeText}>Required</Text>
-          </View>
-        )}
-      </View>
-      {subtitle && (
-        <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
-          {subtitle}
-        </Text>
-      )}
-    </View>
+    <View style={styles.sectionHeader}><View style={styles.sectionTitleRow}><Text style={[styles.sectionTitle, { color: colors.text }]}>{title}</Text>{required && (
+          <View style={[styles.requiredBadge, { backgroundColor: Luxe.colors.dark.primary }]}><Text style={styles.requiredBadgeText}>Required</Text></View>
+        )}</View>{subtitle && (
+        <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>{subtitle}</Text>
+      )}</View>
   );
 
   // ---------------------------------------------------------------------------
@@ -122,15 +110,8 @@ export function Step2Media({
       showsVerticalScrollIndicator={false}
     >
       {/* Header */}
-      <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.text }]}>
-          Media & Branding
-        </Text>
-        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-          Upload professional images to make your profile stand out. High-quality visuals
-          attract more attention and build trust with your audience.
-        </Text>
-      </View>
+      <View style={styles.header}><Text style={[styles.title, { color: colors.text }]}>Media & Branding</Text><Text style={[styles.subtitle, { color: colors.textSecondary }]}>Upload professional images to make your profile stand out. High-quality visuals
+          attract more attention and build trust with your audience.</Text></View>
 
       {/* Logo Upload */}
       <View style={styles.section}>
@@ -214,28 +195,7 @@ export function Step2Media({
       </View>
 
       {/* Tips Section */}
-      <View style={[styles.tipsContainer, { backgroundColor: colors.card }]}>
-        <Text style={[styles.tipsTitle, { color: colors.text }]}>
-          📸 Photography Tips
-        </Text>
-        <View style={styles.tipsList}>
-          <Text style={[styles.tipItem, { color: colors.textSecondary }]}>
-            • Use high-resolution images with good lighting
-          </Text>
-          <Text style={[styles.tipItem, { color: colors.textSecondary }]}>
-            • Ensure your logo has a transparent or solid background
-          </Text>
-          <Text style={[styles.tipItem, { color: colors.textSecondary }]}>
-            • Choose a cover image that represents your brand identity
-          </Text>
-          <Text style={[styles.tipItem, { color: colors.textSecondary }]}>
-            • Gallery images should showcase your best work or space
-          </Text>
-          <Text style={[styles.tipItem, { color: colors.textSecondary }]}>
-            • Keep videos short and engaging (30-90 seconds ideal)
-          </Text>
-        </View>
-      </View>
+      <View style={[styles.tipsContainer, { backgroundColor: colors.card }]}><Text style={[styles.tipsTitle, { color: colors.text }]}>📸 Photography Tips</Text><View style={styles.tipsList}><Text style={[styles.tipItem, { color: colors.textSecondary }]}>• Use high-resolution images with good lighting</Text><Text style={[styles.tipItem, { color: colors.textSecondary }]}>• Ensure your logo has a transparent or solid background</Text><Text style={[styles.tipItem, { color: colors.textSecondary }]}>• Choose a cover image that represents your brand identity</Text><Text style={[styles.tipItem, { color: colors.textSecondary }]}>• Gallery images should showcase your best work or space</Text><Text style={[styles.tipItem, { color: colors.textSecondary }]}>• Keep videos short and engaging (30-90 seconds ideal)</Text></View></View>
 
       {/* Bottom spacing for mobile navigation */}
       <View style={styles.bottomSpacer} />

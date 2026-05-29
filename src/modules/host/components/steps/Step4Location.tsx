@@ -183,21 +183,9 @@ export default function Step4Location({
       showsVerticalScrollIndicator={false}
     >
       {/* Header */}
-      <View style={styles.header}>
-        <View style={[styles.iconContainer, { backgroundColor: `${Luxe.colors.dark.emerald}15` }]}>
-          <Ionicons name="location" size={28} color={Luxe.colors.dark.emerald} />
-        </View>
-        <View style={styles.headerText}>
-          <Text style={[styles.title, { color: colors.text }]}>
-            Location & Operations
-          </Text>
-          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-            {requirePhysicalAddress
+      <View style={styles.header}><View style={[styles.iconContainer, { backgroundColor: `${Luxe.colors.dark.emerald}15` }]}><Ionicons name="location" size={28} color={Luxe.colors.dark.emerald} /></View><View style={styles.headerText}><Text style={[styles.title, { color: colors.text }]}>Location & Operations</Text><Text style={[styles.subtitle, { color: colors.textSecondary }]}>{requirePhysicalAddress
               ? 'Provide your physical address and accessibility information'
-              : 'Specify where you operate from'}
-          </Text>
-        </View>
-      </View>
+              : 'Specify where you operate from'}</Text></View></View>
 
       {/* Online-Only Option */}
       {showOnlineOnlyOption && (
@@ -213,10 +201,7 @@ export default function Step4Location({
                 : colors.borderLight,
             },
           ]}
-        >
-          <View style={styles.onlineOnlyContent}>
-            <View style={styles.onlineOnlyLeft}>
-              <View
+        ><View style={styles.onlineOnlyContent}><View style={styles.onlineOnlyLeft}><View
                 style={[
                   styles.onlineOnlyIcon,
                   {
@@ -225,103 +210,45 @@ export default function Step4Location({
                       : colors.surfaceElevated,
                   },
                 ]}
-              >
-                <Ionicons
+              ><Ionicons
                   name="globe-outline"
                   size={24}
                   color={isOnlineOnly ? Luxe.colors.dark.accent : colors.textSecondary}
-                />
-              </View>
-              <View style={styles.onlineOnlyText}>
-                <Text style={[styles.onlineOnlyLabel, { color: colors.text }]}>
-                  Online Only
-                </Text>
-                <Text style={[styles.onlineOnlyDescription, { color: colors.textSecondary }]}>
-                  I operate exclusively online without a physical location
-                </Text>
-              </View>
-            </View>
-            <Checkbox checked={isOnlineOnly} onToggle={handleOnlineOnlyToggle} />
-          </View>
-        </LuxeCard>
+                /></View><View style={styles.onlineOnlyText}><Text style={[styles.onlineOnlyLabel, { color: colors.text }]}>Online Only</Text><Text style={[styles.onlineOnlyDescription, { color: colors.textSecondary }]}>I operate exclusively online without a physical location</Text></View></View><Checkbox checked={isOnlineOnly} onToggle={handleOnlineOnlyToggle} /></View></LuxeCard>
       )}
 
       {/* Address Section */}
       {!isOnlineOnly && (
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>
-              Primary Address
-            </Text>
-            <View style={styles.requiredBadge}>
-              <Text style={styles.requiredText}>Required</Text>
-            </View>
-          </View>
-
-          <LocationField
+        <View style={styles.section}><View style={styles.sectionHeader}><Text style={[styles.sectionTitle, { color: colors.text }]}>Primary Address</Text><View style={styles.requiredBadge}><Text style={styles.requiredText}>Required</Text></View></View><LocationField
             value={currentAddress}
             onChange={handleAddressChange}
             requirePhysical={requirePhysicalAddress}
             error={getFieldError('primaryAddress')}
             label="Address"
-          />
-
-          {/* Address Info */}
-          <View
+          /><View
             style={[
               styles.infoBox,
               { backgroundColor: colors.surfaceElevated, borderColor: colors.borderLight },
             ]}
-          >
-            <Ionicons name="information-circle" size={16} color={Luxe.colors.dark.accent} />
-            <Text style={[styles.infoText, { color: colors.textSecondary }]}>
-              {requirePhysicalAddress
+          ><Ionicons name="information-circle" size={16} color={Luxe.colors.dark.accent} /><Text style={[styles.infoText, { color: colors.textSecondary }]}>{requirePhysicalAddress
                 ? 'Physical address required. PO Boxes are not allowed for venues.'
-                : 'Start typing to search for your address. Your location will be used for local searches and proximity filtering.'}
-            </Text>
-          </View>
-        </View>
+                : 'Start typing to search for your address. Your location will be used for local searches and proximity filtering.'}</Text></View></View>
       )}
 
       {/* Accessibility Section (Venues Only) */}
       {showAccessibilityChecklist && !isOnlineOnly && (
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>
-              Accessibility Features
-            </Text>
-            <View style={[styles.optionalBadge, { backgroundColor: colors.surfaceElevated }]}>
-              <Text style={[styles.optionalText, { color: colors.textSecondary }]}>
-                Optional
-              </Text>
-            </View>
-          </View>
-
-          <Text style={[styles.sectionDescription, { color: colors.textSecondary }]}>
-            Select all accessibility features available at your venue. This helps users with
-            disabilities find suitable spaces.
-          </Text>
-
-          <AccessibilityChecklistField
+        <View style={styles.section}><View style={styles.sectionHeader}><Text style={[styles.sectionTitle, { color: colors.text }]}>Accessibility Features</Text><View style={[styles.optionalBadge, { backgroundColor: colors.surfaceElevated }]}><Text style={[styles.optionalText, { color: colors.textSecondary }]}>Optional</Text></View></View><Text style={[styles.sectionDescription, { color: colors.textSecondary }]}>Select all accessibility features available at your venue. This helps users with
+            disabilities find suitable spaces.</Text><AccessibilityChecklistField
             value={currentAccessibility}
             onChange={handleAccessibilityChange}
             showScore={true}
-          />
-
-          {/* Accessibility Benefits */}
-          <View
+          /><View
             style={[
               styles.benefitsBox,
               { backgroundColor: `${Luxe.colors.dark.emerald}10`, borderColor: Luxe.colors.dark.emerald },
             ]}
-          >
-            <Ionicons name="star" size={16} color={Luxe.colors.dark.emerald} />
-            <Text style={[styles.benefitsText, { color: colors.text }]}>
-              Higher accessibility scores improve visibility in accessibility-focused searches
-              and demonstrate your commitment to inclusive spaces.
-            </Text>
-          </View>
-        </View>
+          ><Ionicons name="star" size={16} color={Luxe.colors.dark.emerald} /><Text style={[styles.benefitsText, { color: colors.text }]}>Higher accessibility scores improve visibility in accessibility-focused searches
+              and demonstrate your commitment to inclusive spaces.</Text></View></View>
       )}
 
       {/* LGA Information (if available) */}
@@ -331,20 +258,7 @@ export default function Step4Location({
             styles.lgaBox,
             { backgroundColor: colors.surfaceElevated, borderColor: colors.borderLight },
           ]}
-        >
-          <View style={styles.lgaHeader}>
-            <Ionicons name="map" size={18} color={Luxe.colors.dark.accent} />
-            <Text style={[styles.lgaTitle, { color: colors.text }]}>
-              Local Government Area
-            </Text>
-          </View>
-          <Text style={[styles.lgaCode, { color: colors.textSecondary }]}>
-            LGA Code: {currentAddress.lgaCode}
-          </Text>
-          <Text style={[styles.lgaDescription, { color: colors.textTertiary }]}>
-            Automatically determined from your address for local event discovery
-          </Text>
-        </View>
+        ><View style={styles.lgaHeader}><Ionicons name="map" size={18} color={Luxe.colors.dark.accent} /><Text style={[styles.lgaTitle, { color: colors.text }]}>Local Government Area</Text></View><Text style={[styles.lgaCode, { color: colors.textSecondary }]}>LGA Code: {currentAddress.lgaCode}</Text><Text style={[styles.lgaDescription, { color: colors.textTertiary }]}>Automatically determined from your address for local event discovery</Text></View>
       )}
 
       {/* Bottom Spacing */}

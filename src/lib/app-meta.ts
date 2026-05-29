@@ -19,13 +19,13 @@ export const APP_FULL_BRANDING = `${APP_NAME} (AKA ${APP_AKA})`;
 export const APP_NAME_AU = `${APP_NAME} AU`;
 
 /** Hostname only (no scheme) — matches Android intent host & universal links. */
-export const APP_DOMAIN = 'culturepass.co';
+export const APP_DOMAIN = 'culturepass.app';
 
 /** Canonical site origin — matches `expo-router` `origin` in app.json. */
 export const SITE_ORIGIN = `https://${APP_DOMAIN}`;
 
 /** Optional apex alias for schema.org `sameAs` / marketing. */
-export const SITE_ORIGIN_WWW = 'https://www.culturepass.co';
+export const SITE_ORIGIN_WWW = 'https://www.culturepass.app';
 
 /** Web `<title>` / Open Graph primary title. */
 export const APP_WEB_TITLE = `${APP_AKA} — Belong anywhere.`;
@@ -62,10 +62,10 @@ export const FOUNDER_PAGE_KEYWORDS =
   `${APP_AKA} founder, Bibin, diaspora discovery, Google Maps of Culture, CultureOS, cultural platform, belonging, founder story`;
 
 /** Public contact addresses (product domain — align with SITE_ORIGIN). */
-export const EMAIL_LEGAL = 'hello@culturepass.co';
-export const EMAIL_PRIVACY = 'hello@culturepass.co';
-export const EMAIL_SUPPORT = 'hello@culturepass.co';
-export const EMAIL_BUGS = 'hello@culturepass.co';
+export const EMAIL_LEGAL = 'hello@culturepass.app';
+export const EMAIL_PRIVACY = 'hello@culturepass.app';
+export const EMAIL_SUPPORT = 'hello@culturepass.app';
+export const EMAIL_BUGS = 'hello@culturepass.app';
 
 export const CONTACT_PHONE = '+614 693 04 711';
 export const CONTACT_PHONE_DISPLAY = '+614 693 04 711';

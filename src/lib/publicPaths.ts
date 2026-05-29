@@ -10,7 +10,7 @@ import type { User } from '@/shared/schema/user';
 import { getCommunityProfilePathId } from '@/lib/community';
 
 export const SITE_ORIGIN =
-  (typeof process !== 'undefined' && process.env.EXPO_PUBLIC_SITE_ORIGIN) || 'https://culturepass.co';
+  (typeof process !== 'undefined' && process.env.EXPO_PUBLIC_SITE_ORIGIN) || 'https://culturepass.app';
 
 export function siteUrl(path: string): string {
   const p = path.startsWith('/') ? path : `/${path}`;

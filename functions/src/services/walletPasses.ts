@@ -39,8 +39,13 @@ const TRANSPARENT_PNG_BUFFER = Buffer.from(TRANSPARENT_PNG_BASE64, 'base64');
 const GOOGLE_OAUTH_TOKEN_URL = 'https://oauth2.googleapis.com/token';
 const GOOGLE_WALLET_BASE_URL = 'https://walletobjects.googleapis.com/walletobjects/v1';
 
+function getEnvVal(name: string): string {
+  const envMap = new Map(Object.entries(process.env));
+  return envMap.get(name) ?? '';
+}
+
 function envRequired(name: string): string {
-  const value = String(process.env[name] ?? '').trim();
+  const value = getEnvVal(name).trim();
   if (!value) {
     throw new Error(`Missing required env var: ${name}`);
   }
@@ -68,7 +73,7 @@ function normalizePem(value: string): string {
 }
 
 function envOptional(name: string): string | undefined {
-  const value = String(process.env[name] ?? '').trim();
+  const value = getEnvVal(name).trim();
   return value || undefined;
 }
 
@@ -782,11 +787,11 @@ export function getWalletPassReadiness(): {
   /** Includes Generic class id required for the member business card save URL. */
   googleBusinessCard: { ready: boolean; missing: string[] };
 } {
-  const appleMissing = APPLE_WALLET_REQUIRED.filter((k) => !String(process.env[k] ?? '').trim());
-  const googleCoreMissing = GOOGLE_WALLET_CORE.filter((k) => !String(process.env[k] ?? '').trim());
+  const appleMissing = APPLE_WALLET_REQUIRED.filter((k) => !getEnvVal(k).trim());
+  const googleCoreMissing = GOOGLE_WALLET_CORE.filter((k) => !getEnvVal(k).trim());
   const googleBusinessMissing = [
     ...googleCoreMissing,
-    ...GOOGLE_WALLET_BUSINESS_CARD_EXTRA.filter((k) => !String(process.env[k] ?? '').trim()),
+    ...GOOGLE_WALLET_BUSINESS_CARD_EXTRA.filter((k) => !getEnvVal(k).trim()),
   ];
   return {
     apple: { ready: appleMissing.length === 0, missing: appleMissing },

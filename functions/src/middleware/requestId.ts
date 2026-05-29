@@ -10,7 +10,7 @@
 import { type Request, type Response, type NextFunction } from 'express';
 import { randomBytes } from 'node:crypto';
 import { setCorrelationId } from '../lib/logger';
-import * as Sentry from '@sentry/node';
+import Sentry = require('@sentry/node');
 
 function generateRequestId(): string {
   return `req_${Date.now().toString(36)}_${randomBytes(6).toString('hex')}`;

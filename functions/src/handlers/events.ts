@@ -1019,7 +1019,6 @@ export function createEventsRouter() {
 
       const rsvpRef  = db.collection('rsvps').doc(`${eventId}_${userId}`);
       const eventRef = db.collection('events').doc(eventId);
-      const counterKey: Record<string, string> = { going: 'rsvpGoing', maybe: 'rsvpMaybe', not_going: 'rsvpNotGoing' };
       const now = nowIso();
 
       // Transaction prevents race conditions where concurrent requests both read
@@ -1036,13 +1035,32 @@ export function createEventsRouter() {
           createdAt: prevSnap.exists ? (prevSnap.data() as any).createdAt : now,
         });
 
-        const counterUpdate: Record<string, unknown> = {};
+        let rsvpGoingDiff = 0;
+        let rsvpMaybeDiff = 0;
+        let rsvpNotGoingDiff = 0;
+
         if (prevStatus && prevStatus !== status) {
-          counterUpdate[counterKey[prevStatus]] = FieldValue.increment(-1);
+          if (prevStatus === 'going') rsvpGoingDiff--;
+          else if (prevStatus === 'maybe') rsvpMaybeDiff--;
+          else if (prevStatus === 'not_going') rsvpNotGoingDiff--;
         }
         if (!prevStatus || prevStatus !== status) {
-          counterUpdate[counterKey[status!]] = FieldValue.increment(1);
+          if (status === 'going') rsvpGoingDiff++;
+          else if (status === 'maybe') rsvpMaybeDiff++;
+          else if (status === 'not_going') rsvpNotGoingDiff++;
         }
+
+        const counterUpdate: Record<string, unknown> = {};
+        if (rsvpGoingDiff !== 0) {
+          counterUpdate.rsvpGoing = FieldValue.increment(rsvpGoingDiff);
+        }
+        if (rsvpMaybeDiff !== 0) {
+          counterUpdate.rsvpMaybe = FieldValue.increment(rsvpMaybeDiff);
+        }
+        if (rsvpNotGoingDiff !== 0) {
+          counterUpdate.rsvpNotGoing = FieldValue.increment(rsvpNotGoingDiff);
+        }
+
         if (Object.keys(counterUpdate).length > 0) {
           txn.update(eventRef, counterUpdate);
         }

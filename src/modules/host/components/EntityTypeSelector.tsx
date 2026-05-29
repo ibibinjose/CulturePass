@@ -1,9 +1,10 @@
-import React from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useState } from 'react';
+import { Platform, Pressable, ScrollView, StyleSheet, Text, View, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
 
 import { useColors } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
@@ -107,6 +108,9 @@ export function EntityTypeSelector({ onSelect, existingProfiles = [], intent }: 
 
   const topInset = Platform.OS === 'web' ? 0 : insets.top;
   const isNationBuilder = intent === 'nation-builder';
+
+  // Mobile quick actions bottom sheet
+  const [showMobileQuick, setShowMobileQuick] = useState(false);
 
   // Group entity types by category
   const groupedTypes = React.useMemo(() => {
@@ -279,9 +283,134 @@ export function EntityTypeSelector({ onSelect, existingProfiles = [], intent }: 
           </View>
         ))}
 
+        {/* Quick Content Section — prominent on web for fast publishing without full profiles */}
+        {isDesktop && (
+          <View style={styles.quickSection}>
+            <Text style={[styles.categoryLabel, { color: colors.textSecondary }]}>
+              Or publish something quickly
+            </Text>
+            <View style={styles.quickGrid}>
+              {[
+                { label: 'Event', icon: 'calendar-outline', route: '/event/create' as const },
+                { label: 'Listing', icon: 'pricetag-outline', route: '/culture-shop/create' as const },
+                { label: 'Offer', icon: 'gift-outline', route: '/offers/create' as const },
+                { label: 'Activity', icon: 'flash-outline', route: '/activities/create' as const },
+              ].map((action, idx) => (
+                <Pressable
+                  key={idx}
+                  onPress={() => router.push(action.route)}
+                  style={({ pressed }) => [
+                    styles.quickCard,
+                    { backgroundColor: colors.surfaceElevated, borderColor: colors.borderLight },
+                    pressed && { opacity: 0.85 },
+                  ]}
+                >
+                  <Ionicons name={action.icon as any} size={22} color={Luxe.colors.dark.accent} />
+                  <Text style={[styles.quickLabel, { color: colors.text }]}>{action.label}</Text>
+                </Pressable>
+              ))}
+            </View>
+            <Text style={[styles.quickHint, { color: colors.textTertiary }]}>
+              These publish under one of your existing profiles (you can choose which one).
+            </Text>
+          </View>
+        )}
+
+        {/* Start with a template / Import inspiration */}
+        <View style={styles.templatesSection}>
+          <Text style={[styles.categoryLabel, { color: colors.textSecondary, marginBottom: Spacing.sm }]}>
+            Start with a template
+          </Text>
+          <View style={styles.templatesGrid}>
+            {[
+              { title: 'Diaspora Festival', desc: 'Pre-filled for event organisers', icon: 'calendar' },
+              { title: 'Indie Venue', desc: 'For spaces & stages', icon: 'location' },
+              { title: 'Cultural Creator', desc: 'Artist or maker profile', icon: 'person' },
+            ].map((tpl, i) => (
+              <Pressable
+                key={i}
+                onPress={() => {
+                  // Future: prefill wizard formData with template values
+                  router.push(`/hostspace/create?profileType=organiser` as any);
+                }}
+                style={[styles.templateCard, { backgroundColor: colors.surfaceElevated }]}
+              >
+                <Ionicons name={`${tpl.icon}-outline` as any} size={22} color={Luxe.colors.dark.accent} />
+                <Text style={[styles.templateTitle, { color: colors.text }]}>{tpl.title}</Text>
+                <Text style={[styles.templateDesc, { color: colors.textSecondary }]}>{tpl.desc}</Text>
+              </Pressable>
+            ))}
+          </View>
+          <Text style={styles.templateNote}>More templates coming soon. Or import data from an existing profile.</Text>
+        </View>
+
+        {/* Mobile Quick Actions - Bottom sheet style */}
+        {!isDesktop && (
+          <View style={styles.mobileQuickSection}>
+            <Pressable
+              onPress={() => setShowMobileQuick(true)}
+              style={[styles.mobileQuickButton, { backgroundColor: colors.surfaceElevated, borderColor: Luxe.colors.dark.accent + '30' }]}
+            >
+              <Ionicons name="flash-outline" size={20} color={Luxe.colors.dark.accent} />
+              <Text style={[styles.mobileQuickText, { color: colors.text }]}>Quick publish (Event, Listing, Offer...)</Text>
+              <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+            </Pressable>
+          </View>
+        )}
+
         {/* Bottom spacing */}
         <View style={{ height: Spacing.xxl }} />
       </ScrollView>
+
+      {/* Mobile Quick Actions Bottom Sheet */}
+      <Modal
+        visible={showMobileQuick}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setShowMobileQuick(false)}
+      >
+        <Pressable style={styles.sheetOverlay} onPress={() => setShowMobileQuick(false)}>
+          <View style={[styles.sheetContainer, { backgroundColor: colors.surface }]}>
+            <View style={styles.sheetHandle} />
+            <Text style={[styles.sheetTitle, { color: colors.text }]}>Quick publish</Text>
+            <Text style={[styles.sheetSubtitle, { color: colors.textSecondary }]}>
+              Publish fast under an existing profile
+            </Text>
+
+            {[
+              { label: 'New Event', icon: 'calendar-outline', route: '/event/create' as const, desc: 'Festivals, workshops, gigs' },
+              { label: 'New Marketplace Listing', icon: 'pricetag-outline', route: '/culture-shop/create' as const, desc: 'Products, services, tickets' },
+              { label: 'New Offer / Perk', icon: 'gift-outline', route: '/offers/create' as const, desc: 'Discounts, experiences' },
+              { label: 'New Activity', icon: 'flash-outline', route: '/activities/create' as const, desc: 'Pop-ups, meetups' },
+            ].map((item, i) => (
+              <Pressable
+                key={i}
+                onPress={() => {
+                  setShowMobileQuick(false);
+                  router.push(item.route);
+                }}
+                style={({ pressed }) => [
+                  styles.sheetOption,
+                  { backgroundColor: pressed ? colors.surfaceElevated : 'transparent' },
+                ]}
+              >
+                <View style={styles.sheetIconWrap}>
+                  <Ionicons name={item.icon as any} size={24} color={Luxe.colors.dark.accent} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.sheetOptionLabel, { color: colors.text }]}>{item.label}</Text>
+                  <Text style={[styles.sheetOptionDesc, { color: colors.textTertiary }]}>{item.desc}</Text>
+                </View>
+                <Ionicons name="arrow-forward" size={18} color={colors.textSecondary} />
+              </Pressable>
+            ))}
+
+            <Pressable onPress={() => setShowMobileQuick(false)} style={styles.sheetCancel}>
+              <Text style={{ color: colors.textSecondary, fontWeight: '600' }}>Cancel</Text>
+            </Pressable>
+          </View>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -334,12 +463,13 @@ const styles = StyleSheet.create({
   cardsGridDesktop: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    gap: Spacing.md,
   },
   cardWrapper: {
     width: '100%',
   },
   cardWrapperDesktop: {
-    width: '48%' as unknown as import('react-native').DimensionValue,
+    width: '31.5%' as unknown as import('react-native').DimensionValue,
   },
   cardWrapperCompact: {
     width: '100%',
@@ -456,5 +586,147 @@ const styles = StyleSheet.create({
     color: Luxe.colors.dark.accent,
     fontWeight: '600',
     fontSize: 10,
+  },
+
+  // Quick publish actions (web only, for fast creation without full profile wizard)
+  quickSection: {
+    marginTop: Spacing.lg,
+    paddingTop: Spacing.lg,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0,0,0,0.06)',
+  },
+  quickGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.sm,
+  },
+  quickCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    minWidth: 140,
+  },
+  quickLabel: {
+    ...TextStyles.callout,
+    fontWeight: '600',
+  },
+  quickHint: {
+    ...TextStyles.caption,
+    marginTop: Spacing.sm,
+    fontSize: 12,
+  },
+
+  // Mobile quick actions
+  mobileQuickSection: {
+    marginTop: Spacing.lg,
+    paddingHorizontal: Spacing.xs,
+  },
+  mobileQuickButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    padding: Spacing.md,
+    borderRadius: Radius.lg,
+    borderWidth: 1.5,
+  },
+  mobileQuickText: {
+    ...TextStyles.callout,
+    fontWeight: '600',
+    flex: 1,
+  },
+
+  // Bottom sheet styles
+  sheetOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  sheetContainer: {
+    borderTopLeftRadius: Radius.xl,
+    borderTopRightRadius: Radius.xl,
+    padding: Spacing.lg,
+    paddingBottom: Spacing.xxl,
+  },
+  sheetHandle: {
+    width: 36,
+    height: 4,
+    backgroundColor: 'rgba(120,120,128,0.4)',
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginBottom: Spacing.md,
+  },
+  sheetTitle: {
+    ...TextStyles.title3,
+    textAlign: 'center',
+  },
+  sheetSubtitle: {
+    ...TextStyles.caption,
+    textAlign: 'center',
+    marginBottom: Spacing.lg,
+  },
+  sheetOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: Spacing.md,
+    borderRadius: Radius.md,
+    marginBottom: Spacing.xs,
+    gap: Spacing.md,
+  },
+  sheetIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: Radius.md,
+    backgroundColor: Luxe.colors.dark.accent + '12',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sheetOptionLabel: {
+    ...TextStyles.callout,
+    fontWeight: '600',
+  },
+  sheetOptionDesc: {
+    ...TextStyles.caption,
+    marginTop: 2,
+  },
+  sheetCancel: {
+    marginTop: Spacing.md,
+    padding: Spacing.md,
+    alignItems: 'center',
+  },
+
+  // Templates / Import inspiration
+  templatesSection: {
+    marginTop: Spacing.xl,
+    paddingHorizontal: Spacing.xs,
+  },
+  templatesGrid: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    flexWrap: 'wrap',
+  },
+  templateCard: {
+    flex: 1,
+    minWidth: 140,
+    padding: Spacing.md,
+    borderRadius: Radius.lg,
+    alignItems: 'flex-start',
+    gap: 6,
+  },
+  templateTitle: {
+    ...TextStyles.callout,
+    fontWeight: '700',
+  },
+  templateDesc: {
+    ...TextStyles.caption,
+  },
+  templateNote: {
+    ...TextStyles.caption,
+    fontSize: 11,
+    marginTop: Spacing.sm,
+    fontStyle: 'italic',
   },
 });

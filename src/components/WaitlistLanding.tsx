@@ -154,15 +154,14 @@ export function WaitlistLanding() {
               entering={FadeInDown.delay(120).duration(700)}
               style={[styles.heroTitle, { color: colors.text }]}
             >
-              Connecting cultures, building belonging.
+              The home for diaspora cultures.
             </Animated.Text>
 
             <Animated.Text
               entering={FadeInDown.delay(220).duration(700)}
               style={[styles.heroSubtitle, { color: colors.textSecondary }]}
             >
-              The home for diaspora communities. Discover festivals, join circles that matter,
-              and build real belonging — offline and online.
+              Discover festivals, join circles that matter, and build real belonging — online and in the real world.
             </Animated.Text>
 
             <Animated.View

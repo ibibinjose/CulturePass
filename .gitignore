@@ -48,9 +48,6 @@ google-services.json
 google-play-service-account.json
 
 # Firebase deploy cache
-
-# Local backups created by `npm run backup`
-backups/
 .firebase/
 
 # iOS local env

@@ -3,7 +3,7 @@
 # Usage: npm run backup
 #
 # Creates a timestamped backup of the project with date and time.
-# Backups are stored in the ./backups/ folder.
+# Backups are stored in /Users/cultureos/Dev230526/CulturePassBackup (sibling to the project).
 
 set -e
 
@@ -16,8 +16,8 @@ fi
 
 cd "$PROJECT_ROOT"
 
-# Configuration
-BACKUP_DIR="backups"
+# Configuration - Backup location is one folder above the project root
+BACKUP_DIR="$(dirname "$PROJECT_ROOT")/CulturePassBackup"
 TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
 ARCHIVE_NAME="CulturePass_${TIMESTAMP}.tar.gz"
 ARCHIVE_PATH="${BACKUP_DIR}/${ARCHIVE_NAME}"
@@ -27,6 +27,7 @@ mkdir -p "$BACKUP_DIR"
 
 echo "==> CulturePass Backup System"
 echo "    Project   : $PROJECT_ROOT"
+echo "    Backup Dir: $BACKUP_DIR"
 echo "    Timestamp : $TIMESTAMP"
 echo "    Output    : $ARCHIVE_PATH"
 echo ""
@@ -41,7 +42,6 @@ tar -czf "$ARCHIVE_PATH" \
     --exclude='./.expo' \
     --exclude='./web/node_modules' \
     --exclude='./functions/node_modules' \
-    --exclude='./backups' \
     --exclude='./*.log' \
     --exclude='./.DS_Store' \
     .

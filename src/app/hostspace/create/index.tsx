@@ -13,7 +13,7 @@ import { VerificationStatusBanner } from '@/modules/host/components/Verification
 import { trackPostPublishActivation } from '@/modules/host/services/formAnalyticsService';
 import { Button } from '@/design-system/ui/Button';
 import { CultureTokens } from '@/design-system/tokens/theme';
-import { Spacing, Radius } from '@/design-system/tokens/spacing';
+import { Spacing, Radius } from '@/design-system/tokens/theme';
 import { useColors } from '@/hooks/useColors';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -127,13 +127,13 @@ export default function HostspaceCreateIndex() {
                 style={[StyleSheet.absoluteFill, { height: 400 }]}
               />
               <View style={{ alignItems: 'center', marginBottom: Spacing.xl, paddingTop: Spacing.xl * 2 }}>
-                <View style={{ backgroundColor: CultureTokens.success + '20', padding: 20, borderRadius: 100, marginBottom: Spacing.lg }}>
+                <View style={{ backgroundColor: CultureTokens.success + '15', padding: 20, borderRadius: 999, marginBottom: Spacing.lg }}>
                   <Ionicons name="sparkles" size={48} color={CultureTokens.success} />
                 </View>
                 <Text style={{ fontSize: 32, fontFamily: 'Poppins_700Bold', color: colors.text, textAlign: 'center', letterSpacing: -0.5 }}>
                   It&apos;s official.
                 </Text>
-                <Text style={{ fontSize: 18, color: colors.textSecondary, marginTop: Spacing.sm, textAlign: 'center', maxWidth: 400 }}>
+                <Text style={{ fontSize: 18, color: colors.textSecondary, marginTop: Spacing.sm, textAlign: 'center', maxWidth: 420 }}>
                   Your cultural profile is live and ready to connect with the diaspora.
                 </Text>
               </View>

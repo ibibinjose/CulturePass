@@ -60,17 +60,18 @@ function HostspaceGateScreen({ intent = 'hub' }: { intent?: HostspaceGateIntent 
   const insets = useSafeAreaInsets();
   const topInset = Platform.OS === 'web' ? 0 : insets.top;
   const { isAuthenticated } = useAuth();
+  const { isDesktop } = useLayout();
 
   const badgeLabel =
     intent === 'creationLab' ? 'Host sign-in required' : 'Host account required';
   const title =
     intent === 'creationLab'
-      ? 'Creation Lab is for\napproved hosts'
-      : `Join as a${'\n'}Cultural Host`;
+      ? 'Creation Lab is for approved hosts'
+      : `Join as a Cultural Host`;
   const body =
     intent === 'creationLab'
-      ? 'Listing studio, CultureMarket, and directory profiles are available once your account has host access (organizer role). Most apps are reviewed within 24h. Some profiles (venues, ABN businesses, professionals) require a quick extra verification step after you create them.'
-      : 'CulturePass hosts create events, list products and services, build communities, and reach thousands of diaspora members across Australia and New Zealand. Applications are usually approved within 24 hours.';
+      ? 'Listing studio, CultureMarket, and directory profiles are available once your account has host access (organizer role). Most apps are reviewed within 24h.'
+      : 'CulturePass hosts create events, list products and services, build communities, and reach thousands of diaspora members. Applications are usually approved within 24 hours.';
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -79,239 +80,149 @@ function HostspaceGateScreen({ intent = 'hub' }: { intent?: HostspaceGateIntent 
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}
       >
-        <View style={{ paddingHorizontal: hPad, paddingTop: topInset + Spacing.lg, paddingBottom: 64 }}>
-          {/* Enhanced Premium Background */}
+        {/* Compact top section with reduced height */}
+        <View 
+          style={{ 
+            paddingHorizontal: hPad, 
+            paddingTop: topInset + (isDesktop ? Spacing.sm : Spacing.md), 
+            paddingBottom: isDesktop ? Spacing.md : 32 
+          }}
+        >
           <LinearGradient
-            colors={[CultureTokens.indigo + '33', CultureTokens.violet + '22', 'transparent']}
+            colors={[CultureTokens.indigo + '22', CultureTokens.violet + '15', 'transparent']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={StyleSheet.absoluteFill}
             pointerEvents="none"
           />
-          
-          <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.background, opacity: 0.4 }]} pointerEvents="none" />
 
-          <Animated.View
-            entering={FadeInDown.delay(40).springify()}
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: 24,
-            }}
-          >
+          {/* Compact nav */}
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <Pressable
-              onPress={() =>
-                router.canGoBack() ? router.back() : router.replace('/(tabs)' as never)
-              }
-              style={{ width: 40, height: 40, alignItems: 'center', justifyContent: 'center', borderRadius: 20, backgroundColor: colors.surfaceElevated }}
-              accessibilityRole="button"
-              accessibilityLabel="Go back"
+              onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)' as never)}
+              style={{ width: 36, height: 36, alignItems: 'center', justifyContent: 'center', borderRadius: 18, backgroundColor: colors.surfaceElevated }}
             >
-              <Ionicons name="chevron-back" size={24} color={colors.text} />
+              <Ionicons name="chevron-back" size={22} color={colors.text} />
             </Pressable>
-            <Text style={{ fontFamily: FontFamily.bold, fontSize: 15, color: colors.text }}>HostSpace</Text>
-            <View style={{ width: 40 }} />
-          </Animated.View>
+            <Text style={{ fontFamily: FontFamily.bold, fontSize: 14, color: colors.text }}>HostSpace</Text>
+            <View style={{ width: 36 }} />
+          </View>
 
-          <Animated.View entering={FadeInDown.delay(80).springify()}>
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 6,
-                backgroundColor: CultureTokens.gold + '22',
-                borderRadius: 999,
-                paddingHorizontal: 12,
-                paddingVertical: 6,
-                alignSelf: 'flex-start',
-                marginBottom: 18,
-              }}
-            >
-              <Ionicons name="lock-closed" size={14} color={CultureTokens.gold} />
-              <Text
-                style={{
-                  fontFamily: FontFamily.semibold,
-                  fontSize: 12,
-                  color: CultureTokens.gold,
-                  letterSpacing: 0.3,
-                }}
-              >
-                {badgeLabel}
-              </Text>
-            </View>
-            <Text
-              style={{
-                fontFamily: FontFamily.bold,
-                fontSize: Platform.OS === 'web' ? 46 : 34,
-                letterSpacing: -0.8,
-                lineHeight: Platform.OS === 'web' ? 52 : 40,
-                color: colors.text,
-                marginBottom: 16,
-              }}
-            >
-              {title}
-            </Text>
-            <Text
-              style={{
-                fontFamily: FontFamily.regular,
-                fontSize: 16,
-                lineHeight: 24,
-                color: colors.textSecondary,
-                maxWidth: 520,
-                marginBottom: 32,
-              }}
-            >
-              {body}
-            </Text>
-
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
-              <Pressable
-                onPress={() => router.push('/hostspace/apply' as never)}
-                style={({ pressed }) => ({
-                  height: 50,
-                  borderRadius: 999,
-                  paddingHorizontal: 28,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 8,
-                  overflow: 'hidden',
-                  minWidth: 200,
-                  opacity: pressed ? 0.9 : 1,
-                })}
-                accessibilityRole="button"
-                accessibilityLabel="Apply to become a host"
-              >
-                <LinearGradient
-                  colors={SignatureGradient}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={StyleSheet.absoluteFill}
-                />
-                <Ionicons name="rocket-outline" size={18} color="#fff" />
-                <Text style={{ fontFamily: FontFamily.semibold, fontSize: 15, color: '#fff' }}>
-                  Apply to become a host
-                </Text>
-              </Pressable>
-
-              {!isAuthenticated && (
-                <Pressable
-                  onPress={() => router.push('/(onboarding)/login' as never)}
-                  style={({ pressed }) => ({
-                    height: 50,
-                    borderRadius: 999,
-                    paddingHorizontal: 24,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    borderWidth: 1.5,
-                    borderColor: 'rgba(255,255,255,0.25)',
-                    opacity: pressed ? 0.8 : 1,
-                  })}
-                  accessibilityRole="button"
-                  accessibilityLabel="Sign in"
-                >
-                  <Text style={{ fontFamily: FontFamily.semibold, fontSize: 15, color: 'rgba(255,255,255,0.8)' }}>
-                    Sign in
-                  </Text>
-                </Pressable>
-              )}
-            </View>
-          </Animated.View>
-        </View>
-
-        <View
-          style={{
-            paddingHorizontal: hPad,
-            backgroundColor: colors.background,
-            paddingTop: Spacing.xl,
-            paddingBottom: Spacing.xl,
-          }}
-        >
-          <Text
-            style={{
-              fontFamily: FontFamily.bold,
-              fontSize: Platform.OS === 'web' ? 20 : 18,
-              letterSpacing: -0.3,
-              color: colors.text,
-              marginBottom: Spacing.md,
-            }}
-          >
-            What you can do as a host
-          </Text>
-          {HOST_PERKS.map((perk, i) => (
-            <Animated.View key={perk.icon} entering={FadeInDown.delay(260 + i * 80).springify()}>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'flex-start',
-                  gap: 14,
-                  padding: Spacing.md,
-                  borderRadius: Radius.lg,
-                  borderWidth: 1,
-                  borderColor: colors.borderLight,
-                  backgroundColor: colors.surface,
-                  marginBottom: 12,
-                  shadowColor: colors.text,
-                  shadowOffset: { width: 0, height: 4 },
-                  shadowOpacity: 0.05,
-                  shadowRadius: 8,
-                  elevation: 2,
-                }}
-              >
-                <View
-                  style={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: Radius.md,
-                    backgroundColor: perk.color + '1A',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <Ionicons name={perk.icon} size={22} color={perk.color} />
+          {isDesktop ? (
+            // Desktop side-by-side
+            <View style={{ flexDirection: 'row', gap: 40, alignItems: 'flex-start' }}>
+              {/* Left column: Info + CTAs (reduced height) */}
+              <View style={{ flex: 1, maxWidth: 480 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: CultureTokens.gold + '22', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4, alignSelf: 'flex-start', marginBottom: 12 }}>
+                  <Ionicons name="lock-closed" size={12} color={CultureTokens.gold} />
+                  <Text style={{ fontFamily: FontFamily.semibold, fontSize: 11, color: CultureTokens.gold }}>{badgeLabel}</Text>
                 </View>
-                <View style={{ flex: 1 }}>
-                  <Text
-                    style={{
-                      fontFamily: FontFamily.bold,
-                      fontSize: 15,
-                      color: colors.text,
-                      marginBottom: 3,
-                    }}
+
+                <Text style={{ fontFamily: FontFamily.bold, fontSize: 30, letterSpacing: -0.5, color: colors.text, marginBottom: 10, lineHeight: 36 }}>
+                  {title}
+                </Text>
+
+                <Text style={{ fontFamily: FontFamily.regular, fontSize: 15, lineHeight: 22, color: colors.textSecondary, marginBottom: 20 }}>
+                  {body}
+                </Text>
+
+                <View style={{ flexDirection: 'row', gap: 10, flexWrap: 'wrap' }}>
+                  <Pressable
+                    onPress={() => router.push('/hostspace/apply' as never)}
+                    style={({ pressed }) => ({ height: 44, borderRadius: 999, paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: CultureTokens.indigo, opacity: pressed ? 0.9 : 1 })}
                   >
-                    {perk.title}
-                  </Text>
-                  <Text
-                    style={{
-                      fontFamily: FontFamily.regular,
-                      fontSize: 13,
-                      lineHeight: 19,
-                      color: colors.textSecondary,
-                    }}
-                  >
-                    {perk.desc}
-                  </Text>
+                    <Ionicons name="rocket-outline" size={16} color="#fff" />
+                    <Text style={{ color: '#fff', fontFamily: FontFamily.semibold, fontSize: 14 }}>Apply to become a host</Text>
+                  </Pressable>
+
+                  {!isAuthenticated && (
+                    <Pressable
+                      onPress={() => router.push('/(onboarding)/login' as never)}
+                      style={({ pressed }) => ({ height: 44, borderRadius: 999, paddingHorizontal: 18, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: colors.border, backgroundColor: colors.surface, opacity: pressed ? 0.85 : 1 })}
+                    >
+                      <Text style={{ fontFamily: FontFamily.semibold, fontSize: 14, color: colors.text }}>Sign in</Text>
+                    </Pressable>
+                  )}
                 </View>
               </View>
-            </Animated.View>
-          ))}
 
-          <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, paddingTop: Spacing.md }}>
-            <Ionicons name="shield-checkmark-outline" size={14} color={colors.textTertiary} />
-            <Text
-              style={{
-                fontFamily: FontFamily.regular,
-                fontSize: 12,
-                lineHeight: 18,
-                color: colors.textTertiary,
-                flex: 1,
-              }}
-            >
-              Host accounts are reviewed by the CulturePass team. Most applications are approved within 24 hours.
-            </Text>
-          </View>
+              {/* Right column: What you can do (side by side) */}
+              <View style={{ flex: 1, maxWidth: 380 }}>
+                <Text style={{ fontFamily: FontFamily.bold, fontSize: 16, color: colors.text, marginBottom: 12 }}>What you can do as a host</Text>
+                {HOST_PERKS.map((perk) => (
+                  <View key={perk.icon} style={{ flexDirection: 'row', gap: 10, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: colors.borderLight }}>
+                    <View style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: perk.color + '1A', alignItems: 'center', justifyContent: 'center', marginTop: 2 }}>
+                      <Ionicons name={perk.icon} size={16} color={perk.color} />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontFamily: FontFamily.semibold, fontSize: 14, color: colors.text }}>{perk.title}</Text>
+                      <Text style={{ fontSize: 12, color: colors.textSecondary, lineHeight: 16 }}>{perk.desc}</Text>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            </View>
+          ) : (
+            // Mobile: compact stacked, reduced top height
+            <>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: CultureTokens.gold + '22', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4, alignSelf: 'flex-start', marginBottom: 10 }}>
+                <Ionicons name="lock-closed" size={12} color={CultureTokens.gold} />
+                <Text style={{ fontFamily: FontFamily.semibold, fontSize: 11, color: CultureTokens.gold }}>{badgeLabel}</Text>
+              </View>
+
+              <Text style={{ fontFamily: FontFamily.bold, fontSize: 26, letterSpacing: -0.5, color: colors.text, marginBottom: 8 }}>
+                {title}
+              </Text>
+
+              <Text style={{ fontFamily: FontFamily.regular, fontSize: 15, lineHeight: 21, color: colors.textSecondary, marginBottom: 18 }}>
+                {body}
+              </Text>
+
+              <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
+                <Pressable
+                  onPress={() => router.push('/hostspace/apply' as never)}
+                  style={({ pressed }) => ({ height: 44, borderRadius: 999, paddingHorizontal: 18, flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: CultureTokens.indigo, opacity: pressed ? 0.9 : 1 })}
+                >
+                  <Ionicons name="rocket-outline" size={16} color="#fff" />
+                  <Text style={{ color: '#fff', fontFamily: FontFamily.semibold, fontSize: 14 }}>Apply to become a host</Text>
+                </Pressable>
+
+                {!isAuthenticated && (
+                  <Pressable
+                    onPress={() => router.push('/(onboarding)/login' as never)}
+                    style={({ pressed }) => ({ height: 44, borderRadius: 999, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: colors.border, backgroundColor: colors.surface, opacity: pressed ? 0.85 : 1 })}
+                  >
+                    <Text style={{ fontFamily: FontFamily.semibold, fontSize: 14, color: colors.text }}>Sign in</Text>
+                  </Pressable>
+                )}
+              </View>
+            </>
+          )}
         </View>
+
+        {/* Perks section (only on mobile, since desktop has it side-by-side above) */}
+        {!isDesktop && (
+          <View style={{ paddingHorizontal: hPad, backgroundColor: colors.background, paddingTop: Spacing.lg, paddingBottom: Spacing.xl }}>
+            <Text style={{ fontFamily: FontFamily.bold, fontSize: 17, color: colors.text, marginBottom: Spacing.md }}>
+              What you can do as a host
+            </Text>
+            {HOST_PERKS.map((perk) => (
+              <View key={perk.icon} style={{ flexDirection: 'row', gap: 12, padding: Spacing.md, borderRadius: Radius.lg, borderWidth: 1, borderColor: colors.borderLight, backgroundColor: colors.surface, marginBottom: 10 }}>
+                <View style={{ width: 40, height: 40, borderRadius: Radius.md, backgroundColor: perk.color + '1A', alignItems: 'center', justifyContent: 'center' }}>
+                  <Ionicons name={perk.icon} size={20} color={perk.color} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontFamily: FontFamily.semibold, fontSize: 14, color: colors.text, marginBottom: 2 }}>{perk.title}</Text>
+                  <Text style={{ fontSize: 13, color: colors.textSecondary, lineHeight: 18 }}>{perk.desc}</Text>
+                </View>
+              </View>
+            ))}
+            <View style={{ flexDirection: 'row', gap: 6, paddingTop: 8 }}>
+              <Ionicons name="shield-checkmark-outline" size={13} color={colors.textTertiary} />
+              <Text style={{ fontSize: 12, color: colors.textTertiary, flex: 1 }}>Host accounts are reviewed. Most applications approved within 24 hours.</Text>
+            </View>
+          </View>
+        )}
       </ScrollView>
     </View>
   );

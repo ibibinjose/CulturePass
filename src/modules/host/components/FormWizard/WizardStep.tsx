@@ -203,7 +203,9 @@ export function WizardStep({
   return (
     <View style={[styles.stepContainer, { gap: responsiveSectionGap(layout.isMobile) }]}>
       <Suspense fallback={<StepLoadingFallback />}>
-        {renderStep()}
+        <View style={{ flex: 1 }}>
+          {renderStep()}
+        </View>
       </Suspense>
     </View>
   );

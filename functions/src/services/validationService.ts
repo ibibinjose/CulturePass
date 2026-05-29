@@ -22,25 +22,27 @@ const profilesCol = () => db.collection('hostProfiles');
 
 export const validationService = {
   /**
-   * Check if a handle already exists
+   * Check if a handle already exists across profiles and users
    */
   async checkHandleExists(handle: string, excludeProfileId?: string): Promise<boolean> {
-    if (isReservedHandle(handle)) {
+    const normalized = handle.toLowerCase().trim().replace(/^@/, '');
+    if (isReservedHandle(normalized)) {
       return true;
     }
 
-    // Check if handle exists in database
-    let query = profilesCol().where('handle', '==', handle) as FirebaseFirestore.Query;
+    // 1. Check if handle exists in profiles
+    const profileSnap = await db.collection('hostProfiles').where('handle', '==', normalized).limit(excludeProfileId ? 2 : 1).get();
+    const profileConflict = excludeProfileId
+      ? profileSnap.docs.some(doc => doc.id !== excludeProfileId)
+      : !profileSnap.empty;
 
-    if (excludeProfileId) {
-      // Exclude the current profile when checking (for updates)
-      const snap = await query.get();
-      const exists = snap.docs.some(doc => doc.id !== excludeProfileId);
-      return exists;
-    }
+    if (profileConflict) return true;
 
-    const snap = await query.limit(1).get();
-    return !snap.empty;
+    // 2. Check if username exists in users
+    const userSnap = await db.collection('users').where('username', '==', normalized).limit(1).get();
+    if (!userSnap.empty) return true;
+
+    return false;
   },
 
   /**

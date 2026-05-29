@@ -24,6 +24,16 @@
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 		F31AC1E122304CC78BCB7B69 /* CultureNearYouWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5B45C0390964285B9D11288 /* CultureNearYouWidget.swift */; };
 		FFBB74EC8B32335BE0B2383A /* libPods-CulturePass.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 663F2D04595A81DDCDE3D617 /* libPods-CulturePass.a */; };
+		7EA951995B504A8F92F99911 /* index.swift in Sources */ = {isa = PBXBuildFile; fileRef = 632C58DA64174776982D3D92 /* index.swift */; };
+		BE7413BF7AA440AA97EC3EF7 /* CultureSpotlightWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = C183E2C8954E4B0090581187 /* CultureSpotlightWidget.swift */; };
+		2DCF5E42DBBE4A37809515C4 /* CultureNearYouWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5437344377A84C948E526F2D /* CultureNearYouWidget.swift */; };
+		5E01D1FDF9954593966FBDB4 /* CultureIdentityQRWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C0646648B4A4AD088ACAFCB /* CultureIdentityQRWidget.swift */; };
+		800B9EE0B73543CBB4D80670 /* CultureUpcomingTicketWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7348F0179F41407DB0390901 /* CultureUpcomingTicketWidget.swift */; };
+		DDB74FE75FD34F6294683D28 /* CulturePassWatchWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1633F80B2B543C98467F52E /* CulturePassWatchWidget.swift */; };
+		4340FD490F0642B1987DFA66 /* CultureMembershipWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF91BC782745458A8B53C5E2 /* CultureMembershipWidget.swift */; };
+		1B1568F1AD254E7DA0982202 /* ExpoWidgetsTarget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B0CDA5C83F714F57BAA65A92 /* ExpoWidgetsTarget.appex */; };
+		9C06B964DAE94482A2D92D41 /* ExpoWidgetsTarget.entitlements in Resources */ = {isa = PBXBuildFile; fileRef = D8949715B36343F29865EFAB /* ExpoWidgetsTarget.entitlements */; };
+		54C6084E5F6A4386A5F407B5 /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 9B241C6A7E0A4888A26346D1 /* Info.plist */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -32,6 +42,13 @@
 			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = AE3B2F46899048FF8AF82457;
+			remoteInfo = ExpoWidgetsTarget;
+		};
+		3B1B6D22D40145C9B993C052 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 43304600AF8B44CC961A57DD;
 			remoteInfo = ExpoWidgetsTarget;
 		};
 /* End PBXContainerItemProxy section */
@@ -44,9 +61,20 @@
 			dstSubfolderSpec = 13;
 			files = (
 				AE80F7599E3B470C9788685A /* ExpoWidgetsTarget.appex in Embed Foundation Extensions */,
+				1B1568F1AD254E7DA0982202 /* ExpoWidgetsTarget.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
+		};
+		EB500A11904D4C5A9EB2EF44 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			name = "Embed Foundation Extensions";
+			dstPath = "";
+			dstSubfolderSpec = 13;
 		};
 /* End PBXCopyFilesBuildPhase section */
 
@@ -78,6 +106,16 @@
 		F0F021B67CD94BCB8A7BE6A5 /* CultureUpcomingTicketWidget.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = CultureUpcomingTicketWidget.swift; path = CultureUpcomingTicketWidget.swift; sourceTree = "<group>"; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = CulturePass/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* CulturePass-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "CulturePass-Bridging-Header.h"; path = "CulturePass/CulturePass-Bridging-Header.h"; sourceTree = "<group>"; };
+		B0CDA5C83F714F57BAA65A92 /* ExpoWidgetsTarget.appex */ = {isa = PBXFileReference; name = "ExpoWidgetsTarget.appex"; path = "ExpoWidgetsTarget.appex"; sourceTree = BUILT_PRODUCTS_DIR; fileEncoding = undefined; lastKnownFileType = undefined; explicitFileType = wrapper.app-extension; includeInIndex = 0; };
+		632C58DA64174776982D3D92 /* index.swift */ = {isa = PBXFileReference; name = "index.swift"; path = "/Users/cultureos/Dev230526/CulturePass/ios/ExpoWidgetsTarget/index.swift"; sourceTree = "<group>"; fileEncoding = 4; lastKnownFileType = sourcecode.swift; explicitFileType = undefined; includeInIndex = 0; };
+		C183E2C8954E4B0090581187 /* CultureSpotlightWidget.swift */ = {isa = PBXFileReference; name = "CultureSpotlightWidget.swift"; path = "/Users/cultureos/Dev230526/CulturePass/ios/ExpoWidgetsTarget/CultureSpotlightWidget.swift"; sourceTree = "<group>"; fileEncoding = 4; lastKnownFileType = sourcecode.swift; explicitFileType = undefined; includeInIndex = 0; };
+		5437344377A84C948E526F2D /* CultureNearYouWidget.swift */ = {isa = PBXFileReference; name = "CultureNearYouWidget.swift"; path = "/Users/cultureos/Dev230526/CulturePass/ios/ExpoWidgetsTarget/CultureNearYouWidget.swift"; sourceTree = "<group>"; fileEncoding = 4; lastKnownFileType = sourcecode.swift; explicitFileType = undefined; includeInIndex = 0; };
+		6C0646648B4A4AD088ACAFCB /* CultureIdentityQRWidget.swift */ = {isa = PBXFileReference; name = "CultureIdentityQRWidget.swift"; path = "/Users/cultureos/Dev230526/CulturePass/ios/ExpoWidgetsTarget/CultureIdentityQRWidget.swift"; sourceTree = "<group>"; fileEncoding = 4; lastKnownFileType = sourcecode.swift; explicitFileType = undefined; includeInIndex = 0; };
+		7348F0179F41407DB0390901 /* CultureUpcomingTicketWidget.swift */ = {isa = PBXFileReference; name = "CultureUpcomingTicketWidget.swift"; path = "/Users/cultureos/Dev230526/CulturePass/ios/ExpoWidgetsTarget/CultureUpcomingTicketWidget.swift"; sourceTree = "<group>"; fileEncoding = 4; lastKnownFileType = sourcecode.swift; explicitFileType = undefined; includeInIndex = 0; };
+		C1633F80B2B543C98467F52E /* CulturePassWatchWidget.swift */ = {isa = PBXFileReference; name = "CulturePassWatchWidget.swift"; path = "/Users/cultureos/Dev230526/CulturePass/ios/ExpoWidgetsTarget/CulturePassWatchWidget.swift"; sourceTree = "<group>"; fileEncoding = 4; lastKnownFileType = sourcecode.swift; explicitFileType = undefined; includeInIndex = 0; };
+		EF91BC782745458A8B53C5E2 /* CultureMembershipWidget.swift */ = {isa = PBXFileReference; name = "CultureMembershipWidget.swift"; path = "/Users/cultureos/Dev230526/CulturePass/ios/ExpoWidgetsTarget/CultureMembershipWidget.swift"; sourceTree = "<group>"; fileEncoding = 4; lastKnownFileType = sourcecode.swift; explicitFileType = undefined; includeInIndex = 0; };
+		D8949715B36343F29865EFAB /* ExpoWidgetsTarget.entitlements */ = {isa = PBXFileReference; name = "ExpoWidgetsTarget.entitlements"; path = "/Users/cultureos/Dev230526/CulturePass/ios/ExpoWidgetsTarget/ExpoWidgetsTarget.entitlements"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		9B241C6A7E0A4888A26346D1 /* Info.plist */ = {isa = PBXFileReference; name = "Info.plist"; path = "/Users/cultureos/Dev230526/CulturePass/ios/ExpoWidgetsTarget/Info.plist"; sourceTree = "<group>"; fileEncoding = 4; lastKnownFileType = text.plist.xml; explicitFileType = undefined; includeInIndex = 0; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -94,6 +132,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				24D47AFD8B9F65D2F3D8582D /* libPods-ExpoWidgetsTarget.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		62055D9A08B946D19A9E809A /* Embed Foundation Extensions */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -170,6 +215,7 @@
 				BCC0497A2B52420CB2C7452E /* ExpoWidgetsTarget */,
 				168B536820659A98ECC21742 /* Pods */,
 				8386CC31E938B357A39B2342 /* ExpoModulesProviders */,
+				E37DF305AC8341AF90A418B4 /* ExpoWidgetsTarget */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -181,6 +227,7 @@
 			children = (
 				13B07F961A680F5B00A75B9A /* CulturePass.app */,
 				E902D4FE476F4947BFA0029F /* ExpoWidgetsTarget.appex */,
+				B0CDA5C83F714F57BAA65A92 /* ExpoWidgetsTarget.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -219,6 +266,24 @@
 			path = ExpoWidgetsTarget;
 			sourceTree = "<group>";
 		};
+		E37DF305AC8341AF90A418B4 /* ExpoWidgetsTarget */ = {
+			isa = PBXGroup;
+			children = (
+				D8949715B36343F29865EFAB /* ExpoWidgetsTarget.entitlements */,
+				9B241C6A7E0A4888A26346D1 /* Info.plist */,
+				632C58DA64174776982D3D92 /* index.swift */,
+				C183E2C8954E4B0090581187 /* CultureSpotlightWidget.swift */,
+				5437344377A84C948E526F2D /* CultureNearYouWidget.swift */,
+				6C0646648B4A4AD088ACAFCB /* CultureIdentityQRWidget.swift */,
+				7348F0179F41407DB0390901 /* CultureUpcomingTicketWidget.swift */,
+				C1633F80B2B543C98467F52E /* CulturePassWatchWidget.swift */,
+				EF91BC782745458A8B53C5E2 /* CultureMembershipWidget.swift */,
+				CFC53A7705A74EA2AAFEE3D3 /* ExpoWidgetsTarget.entitlements */,
+			);
+			name = ExpoWidgetsTarget;
+			path = ExpoWidgetsTarget;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -236,11 +301,14 @@
 				3B3CD57E277B42B692BFBD44 /* [Expo Dev Launcher] Strip Local Network Keys for Release */,
 				BE29CDAE4A2D45568E54DE57 /* Embed Foundation Extensions */,
 				02018170070F883817327B73 /* [CP] Embed Pods Frameworks */,
+				E0369CBB121441479718F507 /* Upload Debug Symbols to Sentry */,
+				EB500A11904D4C5A9EB2EF44 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 				16866CE0941645BEAC418B55 /* PBXTargetDependency */,
+				C701989E52DB4ABF9221345F /* PBXTargetDependency */,
 			);
 			name = CulturePass;
 			productName = CulturePass;
@@ -266,6 +334,22 @@
 			productReference = E902D4FE476F4947BFA0029F /* ExpoWidgetsTarget.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
+		43304600AF8B44CC961A57DD /* ExpoWidgetsTarget */ = {
+			isa = PBXNativeTarget;
+			name = ExpoWidgetsTarget;
+			productName = ExpoWidgetsTarget;
+			productReference = B0CDA5C83F714F57BAA65A92;
+			productType = "com.apple.product-type.app-extension";
+			buildConfigurationList = F2C751D8B22848B997D9A788;
+			buildPhases = (
+				42A8597F8399410AB1BAE765 /* Embed Foundation Extensions */,
+				62055D9A08B946D19A9E809A /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -278,6 +362,9 @@
 						LastSwiftMigration = 1250;
 					};
 					AE3B2F46899048FF8AF82457 = {
+						LastSwiftMigration = 1250;
+					};
+					43304600AF8B44CC961A57DD = {
 						LastSwiftMigration = 1250;
 					};
 				};
@@ -297,6 +384,7 @@
 			targets = (
 				13B07F861A680F5B00A75B9A /* CulturePass */,
 				AE3B2F46899048FF8AF82457 /* ExpoWidgetsTarget */,
+				43304600AF8B44CC961A57DD /* ExpoWidgetsTarget */,
 			);
 		};
 /* End PBXProject section */
@@ -331,7 +419,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "if [[ -f \"$PODS_ROOT/../.xcode.env\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env\"\nfi\nif [[ -f \"$PODS_ROOT/../.xcode.env.local\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.local\"\nfi\n\n# The project root by default is one level up from the ios directory\nexport PROJECT_ROOT=\"$PROJECT_DIR\"/..\n\nif [[ \"$CONFIGURATION\" = *Debug* ]]; then\n  export SKIP_BUNDLING=1\nfi\nif [[ -z \"$ENTRY_FILE\" ]]; then\n  # Set the entry JS file using the bundler's entry resolution.\n  export ENTRY_FILE=\"$(\"$NODE_BINARY\" -e \"require('expo/scripts/resolveAppEntry')\" \"$PROJECT_ROOT\" ios absolute | tail -n 1)\"\nfi\n\nif [[ -z \"$CLI_PATH\" ]]; then\n  # Use Expo CLI\n  export CLI_PATH=\"$(\"$NODE_BINARY\" --print \"require.resolve('@expo/cli', { paths: [require.resolve('expo/package.json')] })\")\"\nfi\nif [[ -z \"$BUNDLE_COMMAND\" ]]; then\n  # Default Expo CLI command for bundling\n  export BUNDLE_COMMAND=\"export:embed\"\nfi\n\n# Source .xcode.env.updates if it exists to allow\n# SKIP_BUNDLING to be unset if needed\nif [[ -f \"$PODS_ROOT/../.xcode.env.updates\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.updates\"\nfi\n# Source local changes to allow overrides\n# if needed\nif [[ -f \"$PODS_ROOT/../.xcode.env.local\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.local\"\nfi\n\n`\"$NODE_BINARY\" --print \"require('path').dirname(require.resolve('react-native/package.json')) + '/scripts/react-native-xcode.sh'\"`\n\n";
+			shellScript = "if [[ -f \"$PODS_ROOT/../.xcode.env\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env\"\nfi\nif [[ -f \"$PODS_ROOT/../.xcode.env.local\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.local\"\nfi\n\n# The project root by default is one level up from the ios directory\nexport PROJECT_ROOT=\"$PROJECT_DIR\"/..\n\nif [[ \"$CONFIGURATION\" = *Debug* ]]; then\n  export SKIP_BUNDLING=1\nfi\nif [[ -z \"$ENTRY_FILE\" ]]; then\n  # Set the entry JS file using the bundler's entry resolution.\n  export ENTRY_FILE=\"$(\"$NODE_BINARY\" -e \"require('expo/scripts/resolveAppEntry')\" \"$PROJECT_ROOT\" ios absolute | tail -n 1)\"\nfi\n\nif [[ -z \"$CLI_PATH\" ]]; then\n  # Use Expo CLI\n  export CLI_PATH=\"$(\"$NODE_BINARY\" --print \"require.resolve('@expo/cli', { paths: [require.resolve('expo/package.json')] })\")\"\nfi\nif [[ -z \"$BUNDLE_COMMAND\" ]]; then\n  # Default Expo CLI command for bundling\n  export BUNDLE_COMMAND=\"export:embed\"\nfi\n\n# Source .xcode.env.updates if it exists to allow\n# SKIP_BUNDLING to be unset if needed\nif [[ -f \"$PODS_ROOT/../.xcode.env.updates\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.updates\"\nfi\n# Source local changes to allow overrides\n# if needed\nif [[ -f \"$PODS_ROOT/../.xcode.env.local\" ]]; then\n  source \"$PODS_ROOT/../.xcode.env.local\"\nfi\n\n/bin/sh `\"$NODE_BINARY\" --print \"require('path').dirname(require.resolve('@sentry/react-native/package.json')) + '/scripts/sentry-xcode.sh'\"` `\"$NODE_BINARY\" --print \"require('path').dirname(require.resolve('react-native/package.json')) + '/scripts/react-native-xcode.sh'\"`\n\n";
 		};
 		02018170070F883817327B73 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -585,6 +673,20 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
+		E0369CBB121441479718F507 /* Upload Debug Symbols to Sentry */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			name = "Upload Debug Symbols to Sentry";
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			shellPath = /bin/sh;
+			shellScript = "/bin/sh `${NODE_BINARY:-node} --print \"require('path').dirname(require.resolve('@sentry/react-native/package.json')) + '/scripts/sentry-xcode-debug-files.sh'\"`";
+		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -612,6 +714,20 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		42A8597F8399410AB1BAE765 /* Embed Foundation Extensions */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7EA951995B504A8F92F99911 /* index.swift in Sources */,
+				BE7413BF7AA440AA97EC3EF7 /* CultureSpotlightWidget.swift in Sources */,
+				2DCF5E42DBBE4A37809515C4 /* CultureNearYouWidget.swift in Sources */,
+				5E01D1FDF9954593966FBDB4 /* CultureIdentityQRWidget.swift in Sources */,
+				800B9EE0B73543CBB4D80670 /* CultureUpcomingTicketWidget.swift in Sources */,
+				DDB74FE75FD34F6294683D28 /* CulturePassWatchWidget.swift in Sources */,
+				4340FD490F0642B1987DFA66 /* CultureMembershipWidget.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -619,6 +735,11 @@
 			isa = PBXTargetDependency;
 			target = AE3B2F46899048FF8AF82457 /* ExpoWidgetsTarget */;
 			targetProxy = EA2466DE0B9D4A82814A83BA /* PBXContainerItemProxy */;
+		};
+		C701989E52DB4ABF9221345F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 43304600AF8B44CC961A57DD /* ExpoWidgetsTarget */;
+			targetProxy = 3B1B6D22D40145C9B993C052 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -652,7 +773,7 @@
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
 				PRODUCT_BUNDLE_IDENTIFIER = au.culturepass.app;
-				PRODUCT_NAME = CulturePass;
+				PRODUCT_NAME = "CulturePass";
 				SWIFT_OBJC_BRIDGING_HEADER = "CulturePass/CulturePass-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -685,7 +806,7 @@
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
 				PRODUCT_BUNDLE_IDENTIFIER = au.culturepass.app;
-				PRODUCT_NAME = CulturePass;
+				PRODUCT_NAME = "CulturePass";
 				SWIFT_OBJC_BRIDGING_HEADER = "CulturePass/CulturePass-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -873,6 +994,48 @@
 			};
 			name = Release;
 		};
+		43DE698540914B90B7C79E08 /* Debug */ = {
+			name = Debug;
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				INFOPLIST_FILE = ExpoWidgetsTarget/Info.plist;
+				CURRENT_PROJECT_VERSION = "27";
+				IPHONEOS_DEPLOYMENT_TARGET = "16.2";
+				PRODUCT_BUNDLE_IDENTIFIER = "au.culturepass.app.widgets";
+				GENERATE_INFOPLIST_FILE = "YES";
+				INFOPLIST_KEY_CFBundleDisplayName = ExpoWidgetsTarget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				MARKETING_VERSION = "1.3.0";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				CODE_SIGN_ENTITLEMENTS = "ExpoWidgetsTarget/ExpoWidgetsTarget.entitlements";
+				APPLICATION_EXTENSION_API_ONLY = "YES";
+				DEVELOPMENT_TEAM = 26WGXSNG58;
+			};
+		};
+		AF8F559288F04FA694659C1F /* Release */ = {
+			name = Release;
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				INFOPLIST_FILE = ExpoWidgetsTarget/Info.plist;
+				CURRENT_PROJECT_VERSION = "27";
+				IPHONEOS_DEPLOYMENT_TARGET = "16.2";
+				PRODUCT_BUNDLE_IDENTIFIER = "au.culturepass.app.widgets";
+				GENERATE_INFOPLIST_FILE = "YES";
+				INFOPLIST_KEY_CFBundleDisplayName = ExpoWidgetsTarget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				MARKETING_VERSION = "1.3.0";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				CODE_SIGN_ENTITLEMENTS = "ExpoWidgetsTarget/ExpoWidgetsTarget.entitlements";
+				APPLICATION_EXTENSION_API_ONLY = "YES";
+				DEVELOPMENT_TEAM = 26WGXSNG58;
+			};
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -899,6 +1062,15 @@
 			buildConfigurations = (
 				94EE8AAAD4B84BDCA9584794 /* Debug */,
 				CCF85B760B14461A9428CEEA /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		F2C751D8B22848B997D9A788 /* Build configuration list for PBXNativeTarget "ExpoWidgetsTarget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				43DE698540914B90B7C79E08 /* Debug */,
+				AF8F559288F04FA694659C1F /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

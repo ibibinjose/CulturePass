@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontFamily: FontFamily.regular,
-    fontSize: FontSize.body2,
+    fontSize: FontSize?.body2 ?? 14,
   },
 });
 

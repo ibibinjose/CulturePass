@@ -77,7 +77,7 @@ export function CreateMenuSheet({ visible, onClose, availableProfiles = [], onCr
           <Text style={[styles.title, { color: colors.text }]}>What would you like to create?</Text>
 
           {options.map((opt, i) => (
-            <Pressable key={i} style={styles.option} onPress={() => handlePress(opt.route)}>
+            <Pressable key={i} style={styles.option} onPress={() => handlePress((opt as any).route ?? (opt as any).onPress)}>
               <View style={[styles.iconWrap, { backgroundColor: CultureTokens.indigo + '15' }]}>
                 <Ionicons name={opt.icon as any} size={22} color={CultureTokens.indigo} />
               </View>

@@ -26,7 +26,7 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 import { Pressable } from 'react-native';
-import type { BottomTabBarProps } from 'expo-router/tabs';
+import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 
 import { useColors, useIsDark } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';

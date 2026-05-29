@@ -126,7 +126,7 @@ export default function ModerationScreen() {
         This is temporary — the page will recover automatically once the index is ready (usually 5-30 minutes).
       </Text>
       {reportsQuery.error && (
-        <Text style={{ color: '#78350F', fontSize: 12, marginTop: 6, fontFamily: FontFamily.mono }}>
+        <Text style={{ color: '#78350F', fontSize: 12, marginTop: 6, fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace' }}>
           {reportsQuery.error.message}
         </Text>
       )}

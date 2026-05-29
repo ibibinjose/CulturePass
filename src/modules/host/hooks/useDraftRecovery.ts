@@ -225,8 +225,9 @@ export function formatDraftAge(updatedAt: string): string {
  * @returns Completion percentage (0-100)
  */
 export function calculateDraftCompletion(draft: ProfileDraft): number {
-  const totalSteps = 6;
-  const completedSteps = draft.completedSteps.length;
+  // Community and business now have 7 steps (see useFormWizard.getTotalSteps)
+  const totalSteps = (draft.entityType === 'community' || draft.entityType === 'business') ? 7 : 6;
+  const completedSteps = draft.completedSteps?.length ?? 0;
   return Math.round((completedSteps / totalSteps) * 100);
 }
 
@@ -236,14 +237,15 @@ export function calculateDraftCompletion(draft: ProfileDraft): number {
  * @param step - Step number (1-6)
  * @returns Step label
  */
-export function getDraftStepLabel(step: number): string {
-  const labels: Record<number, string> = {
+export function getDraftStepLabel(step: number, entityType?: string): string {
+  const baseLabels: Record<number, string> = {
     1: 'Basic Identity',
     2: 'Media & Branding',
     3: 'Legal & Compliance',
     4: 'Location & Operations',
     5: 'Rich Description',
     6: 'Review & Publish',
+    7: 'Final Review', // 7th step for community/business
   };
-  return labels[step] || `Step ${step}`;
+  return baseLabels[step] || `Step ${step}`;
 }

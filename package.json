@@ -134,9 +134,10 @@
     "zustand": "4.5.7"
   },
   "devDependencies": {
-    "@babel/core": "7.20.0",
+    "@babel/core": "^7.29.7",
     "@playwright/test": "1.60.0",
     "@react-native/jest-preset": "0.85.3",
+    "@sentry/cli": "2.58.4",
     "@testing-library/react-native": "13.3.3",
     "@types/jest": "29.5.14",
     "@types/node": "20.11.16",
@@ -155,8 +156,7 @@
     "jest-expo": "55.0.0",
     "nodemon": "3.1.14",
     "typescript": "6.0.3",
-    "typescript-eslint": "8.59.4",
-    "@sentry/cli": "2.58.4"
+    "typescript-eslint": "8.59.4"
   },
   "private": true,
   "engines": {

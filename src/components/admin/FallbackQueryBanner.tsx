@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, Platform } from 'react-native';
 import { FontFamily } from '@/design-system/tokens/theme';
 
 /**
@@ -48,7 +48,7 @@ export function FallbackQueryBanner({
         This is temporary — the page recovers automatically once the index is ready.
       </Text>
       {detail && (
-        <Text style={{ color: '#78350F', fontSize: 12, marginTop: 6, fontFamily: FontFamily.mono }}>
+        <Text style={{ color: '#78350F', fontSize: 12, marginTop: 6, fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace' }}>
           {detail}
         </Text>
       )}

@@ -32,6 +32,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LuxeCard } from '@/design-system/ui/LuxeCard';
 import { Checkbox } from '@/design-system/ui/Checkbox';
 import { useColors } from '@/hooks/useColors';
+import { TextStyles } from '@/design-system/tokens/theme';
 import { Luxe } from '@/design-system/tokens/luxeHeritage';
 import { FontFamily, Radius, Spacing } from '@/design-system/tokens/theme';
 import LocationField from '../fields/LocationField';

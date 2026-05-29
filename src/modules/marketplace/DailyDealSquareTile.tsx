@@ -27,7 +27,7 @@ function accentFromDeal(deal: DailyDeal): string {
       return Luxe.colors.dark.accent;
     case 'indigo':
     default:
-      return Luxe.colors.dark.richIndigo;
+      return Luxe.colors.indigo;
   }
 }
 
@@ -84,7 +84,7 @@ export function DailyDealSquareTile({ deal, size, isPlus, onPress }: Props) {
             </View>
           ) : (
             <View style={styles.plusPill}>
-              <Ionicons name="star" size={12} color={Luxe.colors.dark.heritageGold} />
+              <Ionicons name="star" size={12} color={Luxe.colors.gold} />
               <Text style={styles.plusText}>Plus</Text>
             </View>
           )
@@ -144,7 +144,7 @@ const styles = StyleSheet.create({
   plusText: {
     fontFamily: FontFamily.semibold,
     fontSize: 11,
-    color: Luxe.colors.dark.heritageGold,
+    color: Luxe.colors.gold,
   },
   lockChip: {
     position: 'absolute',

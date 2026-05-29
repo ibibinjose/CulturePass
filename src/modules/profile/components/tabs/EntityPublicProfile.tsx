@@ -500,7 +500,7 @@ export function EntityPublicProfile({ profile, isOwner, insets, colors }: Entity
         onClose={() => setShowTeamModal(false)}
         profileId={profile.id}
         currentOrganizers={(profile as any).organizers || []}
-        currentUserId={currentUserId}
+        currentUserId={null as any}
         onTeamUpdated={() => {
           // The query invalidation inside the modal will refresh data
           setShowTeamModal(false);

@@ -2,6 +2,7 @@ import React from 'react';
 import { View, ScrollView, Platform, StyleSheet, RefreshControlProps } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
+import { useLayout } from '@/hooks/useLayout';
 import { useBrowseData } from '@/hooks/useBrowseData';
 import { FilterChipRow } from '@/modules/core/components';
 import { CultureTokens } from '@/design-system/tokens/theme';

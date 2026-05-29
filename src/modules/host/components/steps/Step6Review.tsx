@@ -29,6 +29,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 
 import { useColors } from '@/hooks/useColors';
+import { M3Button as Button } from '@/design-system/ui';
 import { useLayout } from '@/hooks/useLayout';
 import { LuxeCard } from '@/design-system/ui/LuxeCard';
 import { LuxeButton } from '@/design-system/ui/LuxeButton';
@@ -624,7 +625,7 @@ export function Step6Review({
       {/* Action Buttons */}
       <View style={styles.actions}>
         <Button
-          variant="outline"
+          variant="outlined"
           onPress={handlePreview}
           style={styles.actionButton}
           accessibilityLabel="Preview profile"
@@ -636,7 +637,7 @@ export function Step6Review({
         </Button>
 
         <Button
-          variant="outline"
+          variant="outlined"
           onPress={handleSaveDraft}
           loading={isSavingDraft}
           disabled={isSavingDraft || isPublishing}
@@ -650,7 +651,7 @@ export function Step6Review({
         </Button>
 
         <Button
-          variant="primary"
+          variant="filled"
           onPress={handlePublish}
           disabled={!isReadyToPublish || isPublishing}
           loading={isPublishing}

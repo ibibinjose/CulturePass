@@ -983,7 +983,7 @@ const ss = StyleSheet.create({
     paddingBottom: Spacing.md,
     ...Platform.select({
       web: {
-        position: 'sticky',
+        position: 'absolute',
         top: 0,
         zIndex: 100,
       },
@@ -1251,7 +1251,7 @@ const ss = StyleSheet.create({
     paddingTop: 12,
     ...Platform.select({
       web: {
-        position: 'sticky',
+        position: 'absolute',
         bottom: 0,
         marginTop: 'auto',
       },

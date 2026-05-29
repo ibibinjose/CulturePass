@@ -56,6 +56,32 @@ jest.mock('react-native-worklets', () => ({
   useWorklet: jest.fn(),
 }));
 
+// Mock expo-glass-effect (Liquid Glass / new glassmorphism native module)
+// This prevents "Cannot find native module 'ExpoGlassEffect'" errors in Jest
+jest.mock('expo-glass-effect', () => ({
+  isLiquidGlassAvailable: jest.fn(() => false),
+  GlassView: require('react-native').View,
+  __esModule: true,
+  default: {
+    isLiquidGlassAvailable: jest.fn(() => false),
+    GlassView: require('react-native').View,
+  },
+}));
+
+// Also mock the internal native module lookup that expo-glass-effect + expo-router use
+try {
+  const expoModulesCore = require('expo-modules-core');
+  const originalRequireNativeModule = expoModulesCore.requireNativeModule;
+  expoModulesCore.requireNativeModule = (name: string) => {
+    if (name === 'ExpoGlassEffect' || name.includes('GlassEffect')) {
+      return { isLiquidGlassAvailable: false, default: {} };
+    }
+    return originalRequireNativeModule(name);
+  };
+} catch (e) {
+  // expo-modules-core not present or not resolvable in this env — ignore
+}
+
 // Mock @react-native-community/datetimepicker (not installed as a dependency)
 jest.mock('@react-native-community/datetimepicker', () => {
   const React = require('react');

@@ -311,7 +311,7 @@ describe('Property 22: Open Graph Meta Tag Generation', () => {
         expect(meta.image.length).toBeGreaterThan(0);
         expect(meta.description.length).toBeGreaterThan(0);
         // Default image should be the CulturePass OG default
-        expect(meta.image).toBe('https://culturepass.co/og-default.png');
+        expect(meta.image).toBe('https://culturepass.app/og-default.png');
       }),
       { numRuns: 20 }
     );

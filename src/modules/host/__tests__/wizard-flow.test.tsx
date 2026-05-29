@@ -177,10 +177,11 @@ describe('useFormWizard Integration - Complete Wizard Flows', () => {
 
         expect(result.current.currentStep).toBe(1);
         expect(result.current.entityType).toBe(entityType);
-        expect(result.current.totalSteps).toBe(6);
+        const expectedTotal = (entityType === 'community' || entityType === 'business') ? 7 : 6;
+        expect(result.current.totalSteps).toBe(expectedTotal);
       });
 
-      it(`should navigate through all 6 steps for "${entityType}"`, async () => {
+      it(`should navigate through all steps for "${entityType}"`, async () => {
         const wrapper = createWrapper();
         const { result } = renderHook(
           () => useFormWizard({ entityType }),

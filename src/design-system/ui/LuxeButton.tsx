@@ -47,6 +47,8 @@ interface LuxeButtonProps {
   style?: any;
   children: React.ReactNode;
   onPress?: () => void;
+  accessibilityLabel?: string;
+  accessibilityRole?: 'button' | 'link' | 'image' | 'text' | 'none';
 }
 
 const sizeTokens = {

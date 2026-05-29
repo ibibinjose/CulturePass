@@ -322,8 +322,8 @@ describe('DraftRecoveryModal Integration - Draft Recovery', () => {
         />
       );
 
-      // communityDraft has 2 completed steps out of 6 = 33%
-      expect(getByText('33%')).toBeTruthy();
+      // communityDraft (7-step entity) has 2 completed steps out of 7 ≈ 29%
+      expect(getByText('29%')).toBeTruthy();
     });
   });
 
@@ -454,9 +454,9 @@ describe('DraftRecoveryModal Integration - Draft Recovery', () => {
         />
       );
 
-      // communityDraft: 2/6 = 33%
-      expect(getByText('33%')).toBeTruthy();
-      // venueDraft: 3/6 = 50%
+      // communityDraft (7-step): 2/7 ≈ 29%
+      expect(getByText('29%')).toBeTruthy();
+      // venueDraft (6-step): 3/6 = 50%
       expect(getByText('50%')).toBeTruthy();
     });
   });
@@ -699,18 +699,18 @@ describe('Draft Recovery Utility Functions', () => {
       expect(calculateDraftCompletion(draft)).toBe(0);
     });
 
-    it('should return 17% for draft with 1 completed step', () => {
-      const draft = createMockDraft({ completedSteps: [1] });
-      expect(calculateDraftCompletion(draft)).toBe(17);
+    it('should return ~14% for community draft with 1 completed step (7-step entity)', () => {
+      const draft = createMockDraft({ entityType: 'community', completedSteps: [1] });
+      expect(calculateDraftCompletion(draft)).toBe(14);
     });
 
-    it('should return 50% for draft with 3 completed steps', () => {
-      const draft = createMockDraft({ completedSteps: [1, 2, 3] });
-      expect(calculateDraftCompletion(draft)).toBe(50);
+    it('should return ~43% for community draft with 3 completed steps (7-step entity)', () => {
+      const draft = createMockDraft({ entityType: 'community', completedSteps: [1, 2, 3] });
+      expect(calculateDraftCompletion(draft)).toBe(43);
     });
 
-    it('should return 100% for draft with all 6 steps completed', () => {
-      const draft = createMockDraft({ completedSteps: [1, 2, 3, 4, 5, 6] });
+    it('should return 100% for venue draft with all 6 steps completed (6-step entity)', () => {
+      const draft = createMockDraft({ entityType: 'venue', completedSteps: [1, 2, 3, 4, 5, 6] });
       expect(calculateDraftCompletion(draft)).toBe(100);
     });
   });
@@ -723,11 +723,15 @@ describe('Draft Recovery Utility Functions', () => {
       expect(getDraftStepLabel(4)).toBe('Location & Operations');
       expect(getDraftStepLabel(5)).toBe('Rich Description');
       expect(getDraftStepLabel(6)).toBe('Review & Publish');
+      expect(getDraftStepLabel(7, 'community')).toBe('Final Review');
     });
 
     it('should return fallback for invalid step numbers', () => {
       expect(getDraftStepLabel(0)).toBe('Step 0');
-      expect(getDraftStepLabel(7)).toBe('Step 7');
+    });
+
+    it('should return label for step 7 when entity uses 7 steps', () => {
+      expect(getDraftStepLabel(7, 'community')).toBe('Final Review');
     });
   });
 });

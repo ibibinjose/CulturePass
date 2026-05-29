@@ -159,7 +159,7 @@ export function EntityTypeSelector({ onSelect, existingProfiles = [], intent }: 
               { backgroundColor: colors.surface, borderColor: alreadyCreated ? Luxe.colors.dark.emerald + '44' : colors.borderLight },
               alreadyCreated && styles.cardExisting,
             ]}
-            variant={alreadyCreated ? 'outlined' : 'elevated'}
+            variant={alreadyCreated ? 'tonal' : 'default'}
           >
             {/* Icon with colored background */}
             <View style={[styles.iconContainer, { backgroundColor: entity.color + '18' }]}>

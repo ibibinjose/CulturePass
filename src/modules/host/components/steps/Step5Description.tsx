@@ -25,6 +25,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 
 import { useColors } from '@/hooks/useColors';
+import { Luxe } from '@/design-system/tokens/luxeHeritage';
 import { useLayout } from '@/hooks/useLayout';
 import { LuxeCard } from '@/design-system/ui/LuxeCard';
 import { Input } from '@/design-system/ui/Input';

@@ -40,6 +40,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useColors } from '@/hooks/useColors';
 import { CultureTokens, Spacing, Radius } from '@/design-system/tokens/theme';
 import { TextStyles } from '@/design-system/tokens/typography';
+import { LuxeCard } from '@/design-system/ui/LuxeCard';
 import type { ProfileDraft } from '@/platform/api/endpoints/createProfilesNamespace';
 import {
   formatDraftAge,
@@ -136,6 +137,19 @@ export function DraftRecoveryModal({
   const colors = useColors();
   const hasTrackedShown = useRef(false);
 
+  // Entity type visual config (used per-draft)
+  const getEntityConfig = (entityType: string) => {
+    const map: Record<string, { label: string; color: string; icon: string }> = {
+      community: { label: 'Community', color: CultureTokens.violet, icon: 'people-outline' },
+      business: { label: 'Business', color: CultureTokens.indigo, icon: 'business-outline' },
+      venue: { label: 'Venue', color: CultureTokens.teal, icon: 'location-outline' },
+      artist: { label: 'Artist', color: CultureTokens.coral, icon: 'mic-outline' },
+      organiser: { label: 'Organiser', color: CultureTokens.emeraldHarmony || CultureTokens.teal, icon: 'calendar-outline' },
+      professional: { label: 'Professional', color: CultureTokens.gold, icon: 'person-outline' },
+    };
+    return map[entityType] || map.community;
+  };
+
   useEffect(() => {
     if (visible && drafts.length > 0 && !hasTrackedShown.current) {
       // Trust signal: we are proactively surfacing saved work
@@ -208,76 +222,80 @@ export function DraftRecoveryModal({
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={true}
         >
-          {drafts.map((draft) => (
-      <LuxeCard
-        key={draft.id}
-        variant="outlined"
-        onPress={onSelect}
-        style={[
-          styles.draftCard,
-          {
-            backgroundColor: colors.background,
-            borderColor: colors.border,
-          },
-        ]}
-        accessibilityRole="button"
-        accessibilityLabel={`Continue ${entityConfig.label} draft — ${completion}% complete. Last worked on ${age}. Tap to resume.`}
-      ><View style={styles.draftHeader}><View
-          style={[
-            styles.entityBadge,
-            { backgroundColor: entityConfig.color + '20' },
-          ]}
-        ><Ionicons
-            name={entityConfig.icon}
-            size={16}
-            color={entityConfig.color}
-          /><Text
-            style={[
-              TextStyles.caption,
-              { color: entityConfig.color, fontWeight: '600' },
-            ]}
-          >{entityConfig.label}</Text></View><Text style={[TextStyles.caption, { color: colors.textTertiary }]}>{age}</Text></View>{(() => {
-        const data = draft.formData as Record<string, unknown>;
-        const name = (data.officialName || data.name || data.displayName || data.title) as string | undefined;
-        if (!name) return null;
-        return (
-          <Text
-            style={[
-              TextStyles.callout,
-              { color: colors.text, marginTop: Spacing.xs },
-            ]}
-            numberOfLines={1}
-          >{name}</Text>
-        );
-      })()}<Text
-        style={[
-          TextStyles.caption,
-          { color: colors.textSecondary, marginTop: Spacing.xs },
-        ]}
-      >On: {currentStepLabel}</Text><View style={styles.progressContainer}><View
-          style={[
-            styles.progressBar,
-            { backgroundColor: colors.borderLight },
-          ]}
-        ><View
-            style={[
-              styles.progressFill,
-              {
-                width: `${completion}%`,
-                backgroundColor: entityConfig.color,
-              },
-            ]}
-          /></View><Text
-          style={[
-            TextStyles.captionStrong,
-            { color: entityConfig.color, minWidth: 36, textAlign: 'right' },
-          ]}
-        >{completion}%</Text></View><View style={styles.continueIcon}><Ionicons
-          name="arrow-forward-circle"
-          size={24}
-          color={CultureTokens.violet}
-        /></View></LuxeCard>
-          ))}
+          {drafts.map((draft) => {
+            const config = getEntityConfig(draft.entityType);
+            const draftAge = formatDraftAge(draft.updatedAt);
+            const draftCompletion = calculateDraftCompletion(draft);
+            const stepLabel = getDraftStepLabel(draft.currentStep, draft.entityType);
+
+            const data = draft.formData as Record<string, unknown>;
+            const displayName = (data.officialName || data.name || data.displayName || data.title) as string | undefined;
+
+            return (
+              <LuxeCard
+                key={draft.id}
+                variant="default"
+                onPress={() => onSelectDraft?.(draft.id)}
+                style={[
+                  styles.draftCard,
+                  {
+                    backgroundColor: colors.background,
+                    borderColor: colors.border,
+                  },
+                ]}
+                accessibilityLabel={`Continue ${config.label} draft — ${draftCompletion}% complete. Last worked on ${draftAge}. Tap to resume.`}
+              >
+                <View style={styles.draftHeader}>
+                  <View style={[styles.entityBadge, { backgroundColor: config.color + '20' }]}>
+                    <Ionicons name={config.icon as any} size={16} color={config.color} />
+                    <Text style={[TextStyles.caption, { color: config.color, fontWeight: '600' }]}>
+                      {config.label}
+                    </Text>
+                  </View>
+                  <Text style={[TextStyles.caption, { color: colors.textTertiary }]}>{draftAge}</Text>
+                </View>
+
+                {displayName && (
+                  <Text
+                    style={[TextStyles.callout, { color: colors.text, marginTop: Spacing.xs }]}
+                    numberOfLines={1}
+                  >
+                    {displayName}
+                  </Text>
+                )}
+
+                <Text style={[TextStyles.caption, { color: colors.textSecondary, marginTop: Spacing.xs }]}>
+                  On: {stepLabel}
+                </Text>
+
+                <View style={styles.progressContainer}>
+                  <View style={[styles.progressBar, { backgroundColor: colors.borderLight }]}>
+                    <View
+                      style={[
+                        styles.progressFill,
+                        {
+                          width: `${draftCompletion}%`,
+                          backgroundColor: config.color,
+                        },
+                      ]}
+                    />
+                  </View>
+                  <Text
+                    style={[
+                      TextStyles.captionStrong,
+                      { color: config.color, minWidth: 36, textAlign: 'right' },
+                    ]}
+                  >
+                    {draftCompletion}%
+                  </Text>
+                </View>
+
+                <View style={styles.continueIcon}>
+                  <Ionicons name="arrow-forward-circle" size={24} color={CultureTokens.violet} />
+                </View>
+              </LuxeCard>
+            );
+          })}
         </ScrollView>
 
         {/* Actions */}

@@ -47,6 +47,7 @@ interface AuthContextType {
   login: (session: AuthSession) => Promise<void>;
   logout: (redirect?: string) => Promise<void>;
   refreshSession: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 
   hasRole: (...roles: UserRole[]) => boolean;
 
@@ -76,6 +77,7 @@ const AuthContext = createContext<AuthContextType>({
   logout: async () => {},
   refreshSession: async () => {},
   hasRole: () => false,
+  refreshUser: async () => {},
   isSydneyUser: false,
   isSydneyVerified: false,
   showSydneyWelcome: false,
@@ -537,6 +539,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     sendVerificationEmail,
     checkEmailVerified,
     updateUserProfile,
+    refreshUser: async () => {},
   }), [
     session, isLoading, isRestoring, login, logout, refreshSession,
     hasRole, isSydneyUser, isSydneyVerified, profileSyncStatus, profileSyncMessage, retryProfileSync,

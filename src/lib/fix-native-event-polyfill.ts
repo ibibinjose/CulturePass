@@ -22,12 +22,11 @@
 if (process.env.EXPO_OS !== 'web') {
   try {
     // Primary path in current RN
-    // @ts-expect-error - intentional global override
+    // intentional global override
     global.Event = require('react-native/Libraries/Events/Event');
   } catch {
     try {
       // Fallback for newer private webapis path
-      // @ts-expect-error
       global.Event = require('react-native/src/private/webapis/dom/events/Event').default;
     } catch (err) {
       if (__DEV__) {

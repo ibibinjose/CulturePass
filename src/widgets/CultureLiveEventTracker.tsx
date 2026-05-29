@@ -168,7 +168,7 @@ const CultureLiveEventTrackerLayout = (props: CultureLiveEventTrackerProps) => {
 const CultureLiveEventTracker = Platform.OS === 'ios'
   ? createLiveActivity<CultureLiveEventTrackerProps>(
       'WidgetLiveActivity',
-      CultureLiveEventTrackerLayout
+      ((p: any) => CultureLiveEventTrackerLayout(p ?? {})) as any
     )
   : ({} as any);
 

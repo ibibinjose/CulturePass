@@ -15,6 +15,92 @@ import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { AccessibilityInfo, Platform } from 'react-native';
 
+// Mock WizardNavigation with a lightweight accessible stub.
+// This test only cares about the ARIA labels / roles on the navigation controls, not the full wizard implementation.
+jest.mock('../components/FormWizard/WizardNavigation', () => {
+  const RN = require('react-native');
+  const React = require('react');
+
+  const WizardNavigation = ({
+    currentStep = 1,
+    totalSteps = 6,
+    onNext,
+    onBack,
+    onCancel,
+    onPublish,
+    isFirstStep,
+    isLastStep,
+    isValidating = false,
+    isPublishing = false,
+  }: any) => {
+    const first = isFirstStep ?? currentStep === 1;
+    const last = isLastStep ?? currentStep === totalSteps;
+    const isDisabled = isValidating || isPublishing;
+
+    return (
+      <RN.View accessibilityLabel="Wizard navigation" accessibilityRole="toolbar">
+        {/* Desktop-style left Cancel button (always present) */}
+        <RN.Pressable
+          onPress={onCancel}
+          disabled={isDisabled}
+          accessibilityLabel="Cancel and exit wizard"
+          accessibilityState={{ disabled: isDisabled }}
+        >
+          <RN.Text>Cancel</RN.Text>
+        </RN.Pressable>
+
+        {!first && (
+          <RN.Pressable
+            onPress={onBack}
+            disabled={isDisabled}
+            accessibilityLabel="Go back to previous step"
+            accessibilityState={{ disabled: isDisabled }}
+          >
+            <RN.Text>Back</RN.Text>
+          </RN.Pressable>
+        )}
+
+        {!last && (
+          <RN.Pressable
+            onPress={onNext}
+            disabled={isValidating}
+            accessibilityLabel="Next step"
+            accessibilityState={{ disabled: isValidating }}
+          >
+            <RN.Text>Next</RN.Text>
+          </RN.Pressable>
+        )}
+
+        {last && (
+          <RN.Pressable
+            onPress={onPublish}
+            disabled={isValidating}
+            accessibilityLabel="Publish profile"
+            accessibilityState={{ disabled: isValidating }}
+          >
+            <RN.Text>Publish</RN.Text>
+          </RN.Pressable>
+        )}
+      </RN.View>
+    );
+  };
+
+  return { WizardNavigation };
+});
+
+// Also keep a minimal barrel mock in case other imported components still pull it
+jest.mock('@/design-system/ui', () => {
+  const RN = require('react-native');
+  return {
+    M3Button: ({ children, onPress, accessibilityLabel, ...props }: any) => (
+      <RN.Pressable onPress={onPress} accessibilityLabel={accessibilityLabel} {...props}>{children}</RN.Pressable>
+    ),
+    M3TopAppBar: ({ title }: any) => (
+      <RN.View accessibilityRole="header"><RN.Text>{title}</RN.Text></RN.View>
+    ),
+  };
+});
+
 // ---------------------------------------------------------------------------
 // Imports (after mocks)
 // ---------------------------------------------------------------------------

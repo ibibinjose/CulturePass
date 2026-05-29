@@ -69,6 +69,11 @@ export default function CommunityTabScreen() {
   const [selectedLocation, setSelectedLocation] = useState<'all' | 'near-you'>('near-you');
   const [sortMode, setSortMode] = useState<'activity' | 'size' | 'name'>('activity');
 
+  // Stubs for Slice 2 / refactored feed + location UI (to be wired properly)
+  const [cityName, setCity] = useState<string>(userCity);
+  const [segment, setSegment] = useState<'discover' | 'feed'>('discover');
+  const isAuthenticated = !!user;
+
   const numColumns = windowSizeClass === 'expanded' ? 3 : 2;
 
   const { data: allCommunities = [] } = useCommunities();
@@ -201,6 +206,15 @@ export default function CommunityTabScreen() {
   };
 
   // Enhanced FeedPostCard with better luxe treatment
+  type FeedPost = {
+    id?: string;
+    authorName?: string;
+    authorAvatar?: string;
+    authorInitial?: string;
+    locationLabel?: string;
+    onPress?: () => void;
+    [key: string]: any;
+  };
   const FeedPostCard = ({ post }: { post: FeedPost }) => {
     const scale = useSharedValue(1);
     const [liked, setLiked] = useState(false);

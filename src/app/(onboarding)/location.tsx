@@ -109,7 +109,7 @@ const STEP_SUBTITLE: Record<LocStep, string> = {
 export default function LocationScreen() {
   const colors = useColors();
   const m3Colors = useM3Colors();
-  const { isDesktop, windowSizeClass } = useLayout();
+  const { isDesktop, windowSizeClass, hPad = 16 } = useLayout();
   const searchParams = useLocalSearchParams();
   const redirectTo = sanitizeInternalRedirect(searchParams.redirectTo ?? searchParams.redirect);
   const isExpanded = windowSizeClass === 'expanded';

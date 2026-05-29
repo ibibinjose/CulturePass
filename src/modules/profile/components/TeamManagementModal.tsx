@@ -28,6 +28,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { useColors } from '@/hooks/useColors';
+import { api } from '@/lib/api';
 import { CultureTokens, FontFamily, Radius, Spacing } from '@/design-system/tokens/theme';
 import { M3Button, M3Card } from '@/design-system/ui';
 import { modulesApi } from '@/modules/api';
@@ -103,7 +104,7 @@ export function TeamManagementModal({
     setSearchLoading(true);
     try {
       // Use the platform search for users/profiles
-      const res = await modulesApi.search?.search?.({ q: search, type: 'user', limit: 6 }) ?? { results: [] };
+      const res = await (((api as any).search?.query?.({ q: search, type: 'user', limit: 6 }) as any) || { results: [] }) ?? { results: [] };
       const users = (res.results || res.hits || []).filter((r: any) => r.type === 'user' || r.entityType === 'user');
       setSearchResults(users.slice(0, 5));
     } catch {
@@ -252,7 +253,7 @@ export function TeamManagementModal({
           </View>
 
           <View style={styles.footer}>
-            <M3Button variant="outline" onPress={onClose} fullWidth>
+            <M3Button variant="outlined" onPress={onClose} fullWidth>
               Done
             </M3Button>
           </View>

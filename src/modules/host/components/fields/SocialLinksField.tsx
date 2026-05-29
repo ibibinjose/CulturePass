@@ -13,6 +13,7 @@ import { useColors } from '@/hooks/useColors';
 import { Luxe } from '@/design-system/tokens/luxeHeritage';
 import { LuxeCard } from '@/design-system/ui/LuxeCard';
 import { LuxeButton } from '@/design-system/ui/LuxeButton';
+import { FontFamily, Radius } from '@/design-system/tokens/theme';
 import { FIELD_LIMITS } from '@/modules/host/schemas/validationRules';
 import { api } from '@/lib/api';
 
@@ -367,7 +368,7 @@ export function SocialLinksField({
                     leftIcon={platformConfig.icon}
                     onPress={() => setEditingPlatform(platform)}
                     accessibilityLabel={`${platformConfig.name}${isSelected ? ', selected' : ''}`}
-                    accessibilityRole="radio"
+                    accessibilityRole="button"
                     style={styles.platformChipButton}
                   >
                     {platformConfig.name}
@@ -591,7 +592,7 @@ export function SocialLinksField({
                   leftIcon={option.icon}
                   onPress={() => onPrimaryContactMethodChange?.(option.key)}
                   accessibilityLabel={`${option.label}${isSelected ? ', selected' : ''}`}
-                  accessibilityRole="radio"
+                  accessibilityRole="button"
                   style={styles.contactMethodButton}
                 >
                   {option.label}

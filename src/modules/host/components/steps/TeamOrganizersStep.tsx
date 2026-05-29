@@ -21,6 +21,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 
 import { useColors } from '@/hooks/useColors';
+import { api } from '@/lib/api';
 import { CultureTokens, FontFamily, Radius, Spacing } from '@/design-system/tokens/theme';
 import { M3Button, M3Card } from '@/design-system/ui';
 import { modulesApi } from '@/modules/api';
@@ -54,7 +55,7 @@ export function TeamOrganizersStep({ formData, updateFormData }: WizardStepProps
     if (!search.trim()) return;
     setLoading(true);
     try {
-      const res = await modulesApi.search?.search?.({ q: search, type: 'user', limit: 6 }) ?? { results: [] };
+      const res = await (((api as any).search?.query?.({ q: search, type: 'user', limit: 6 }) as any) || { results: [] }) ?? { results: [] };
       const users = (res.results || []).filter((r: any) => r.type === 'user');
       setSearchResults(users.slice(0, 5));
     } catch {

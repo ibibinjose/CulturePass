@@ -128,7 +128,7 @@ describe('useCalendarSync.native', () => {
       } as unknown as EventData;
 
       const ics = buildICS(event);
-      expect(ics).toContain('UID:culturepass-123@culturepass.co');
+      expect(ics).toContain('UID:culturepass-123@culturepass.app');
       expect(ics).toContain('SUMMARY:Test Event');
       expect(ics).not.toContain('LOCATION:');
       expect(ics).not.toContain('DESCRIPTION:');

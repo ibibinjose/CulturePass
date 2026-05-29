@@ -8,6 +8,7 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useColors } from '@/hooks/useColors';
+import { Spacing, Radius, CultureTokens, TextStyles } from '@/design-system/tokens/theme';
 import type { MarketplaceTile } from '@/shared/schema';
 import { Luxe } from '@/design-system/tokens/luxeHeritage';
 import { FontFamily } from '@/design-system/tokens/theme';

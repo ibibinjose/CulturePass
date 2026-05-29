@@ -185,9 +185,9 @@ describe('DraftRecoveryModal', () => {
       />
     );
 
-    // Draft 1: 1 completed step out of 6 = 17%
-    expect(getByText('17%')).toBeTruthy();
-    // Draft 2: 3 completed steps out of 6 = 50%
+    // Draft 1 (community, 7-step): 1/7 ≈ 14%
+    expect(getByText('14%')).toBeTruthy();
+    // Draft 2 (venue, 6-step): 3/6 = 50%
     expect(getByText('50%')).toBeTruthy();
   });
 

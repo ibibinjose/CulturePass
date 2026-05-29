@@ -31,8 +31,8 @@ const ACCENT: Record<string, [string, string]> = {
   coral:  [Luxe.colors.dark.primary + 'EE', Luxe.colors.dark.primary + '44'],
   violet: [Luxe.colors.dark.accent + 'EE', Luxe.colors.dark.accent + '44'],
   teal:   [Luxe.colors.dark.emerald + 'EE', Luxe.colors.dark.emerald + '44'],
-  gold:   [Luxe.colors.dark.heritageGold + 'EE', Luxe.colors.dark.heritageGold + '44'],
-  indigo: [Luxe.colors.dark.richIndigo + 'EE', Luxe.colors.dark.richIndigo + '44'],
+  gold:   [Luxe.colors.gold + 'EE', Luxe.colors.gold + '44'],
+  indigo: [Luxe.colors.indigo + 'EE', Luxe.colors.indigo + '44'],
 };
 
 function accentGrad(l: ShopListing): [string, string] {
@@ -216,4 +216,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     zIndex: 10,
   },
+  // Added for JSX references (incomplete migration)
+  logoBox: { width: 64, height: 64, borderRadius: 12, overflow: 'hidden' },
+  logoShell: { width: 64, height: 64, backgroundColor: '#222', borderRadius: 12 },
+  body: { padding: 12, gap: 4 },
 });

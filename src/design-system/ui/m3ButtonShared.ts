@@ -76,7 +76,7 @@ export function resolveM3ButtonVisuals(
 
 export const m3ButtonLayout = {
   buttonHeight: ButtonTokens.height.md,
-  radius: MaterialExpressive.shape.full,
+  radius: MaterialExpressive?.shape?.full ?? 999,
 };
 
 export const getM3ButtonSize = (size: 'sm' | 'md' | 'lg' = 'md') => {

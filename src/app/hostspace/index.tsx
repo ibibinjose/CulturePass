@@ -109,6 +109,7 @@ async function fetchHostspaceSummary(userId: string): Promise<HostspaceSummary> 
   return {
     profiles,
     events: dedupeEvents(eventResponses.flatMap((response) => response.events ?? [])),
+    listings: [],
   };
 }
 
@@ -638,11 +639,6 @@ function HostspaceWorkspace() {
             contentFit="contain"
           />
         }
-        rightAction={{
-          icon: 'add-circle',
-          onPress: () => setShowCreateMenu(true),
-          accessibilityLabel: 'Create something new',
-        }}
         actions={[
           { icon: 'add-circle-outline', onPress: () => router.push('/hostspace/create' as never) },
           { icon: 'scan-outline', onPress: () => router.push('/scanner' as never) },
@@ -1355,5 +1351,25 @@ const styles = StyleSheet.create({
     fontFamily: FontFamily.semibold,
     fontSize: 13,
     color: '#fff',
+  },
+  // Stubs for insights bar (referenced in JSX, migration in progress)
+  insightsBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+    marginTop: 8,
+  },
+  insightsContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flex: 1,
+  },
+  insightsText: {
+    fontSize: 13,
+    flex: 1,
   },
 });

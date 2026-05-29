@@ -438,19 +438,24 @@ describe('calculateDraftCompletion', () => {
     expect(calculateDraftCompletion(draft)).toBe(0);
   });
 
-  it('returns correct percentage for partial completion', () => {
-    const draft = createMockDraft({ completedSteps: [1, 2, 3] });
-    expect(calculateDraftCompletion(draft)).toBe(50);
+  it('returns correct percentage for partial completion (community = 7 steps)', () => {
+    const draft = createMockDraft({ entityType: 'community', completedSteps: [1, 2, 3] });
+    expect(calculateDraftCompletion(draft)).toBe(43);
   });
 
-  it('returns 100% for all steps completed', () => {
-    const draft = createMockDraft({ completedSteps: [1, 2, 3, 4, 5, 6] });
+  it('returns ~86% for 6/7 steps on community', () => {
+    const draft = createMockDraft({ entityType: 'community', completedSteps: [1, 2, 3, 4, 5, 6] });
+    expect(calculateDraftCompletion(draft)).toBe(86);
+  });
+
+  it('returns 100% for all steps on a 6-step entity (venue)', () => {
+    const draft = createMockDraft({ entityType: 'venue', completedSteps: [1, 2, 3, 4, 5, 6] });
     expect(calculateDraftCompletion(draft)).toBe(100);
   });
 
-  it('returns 17% for one completed step', () => {
-    const draft = createMockDraft({ completedSteps: [1] });
-    expect(calculateDraftCompletion(draft)).toBe(17);
+  it('returns ~14% for one completed step on community', () => {
+    const draft = createMockDraft({ entityType: 'community', completedSteps: [1] });
+    expect(calculateDraftCompletion(draft)).toBe(14);
   });
 });
 
@@ -464,8 +469,12 @@ describe('getDraftStepLabel', () => {
     expect(getDraftStepLabel(6)).toBe('Review & Publish');
   });
 
+  it('returns correct label for step 7 on 7-step entities', () => {
+    expect(getDraftStepLabel(7, 'community')).toBe('Final Review');
+  });
+
   it('returns fallback for unknown step numbers', () => {
-    expect(getDraftStepLabel(7)).toBe('Step 7');
     expect(getDraftStepLabel(0)).toBe('Step 0');
+    expect(getDraftStepLabel(99)).toBe('Step 99');
   });
 });

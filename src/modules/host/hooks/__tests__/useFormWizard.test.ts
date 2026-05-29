@@ -123,7 +123,7 @@ describe('useFormWizard', () => {
       });
 
       expect(result.current.currentStep).toBe(1);
-      expect(result.current.totalSteps).toBe(6);
+      expect(result.current.totalSteps).toBe(7); // community uses 7 steps
       expect(result.current.entityType).toBe('community');
       expect(result.current.formData.entityType).toBe('community');
       expect(result.current.completedSteps.size).toBe(0);

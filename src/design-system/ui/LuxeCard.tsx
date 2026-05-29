@@ -30,6 +30,7 @@ interface LuxeCardProps {
   style?: StyleProp<ViewStyle>;
   haptic?: boolean;
   disabled?: boolean;
+  accessibilityLabel?: string;
 }
 
 const sizeTokens = {
@@ -46,6 +47,8 @@ export function LuxeCard({
   style,
   haptic = true,
   disabled = false,
+  accessibilityLabel,
+  ...rest
 }: LuxeCardProps) {
   const scale = useSharedValue(1);
 
@@ -116,13 +119,15 @@ export function LuxeCard({
         onPressOut={handlePressOut}
         disabled={disabled}
         style={[styles.base, animatedStyle]}
+        accessibilityLabel={accessibilityLabel}
+        {...rest}
       >
         {content}
       </AnimatedPressable>
     );
   }
 
-  return <View style={styles.base}>{content}</View>;
+  return <View style={styles.base} accessibilityLabel={accessibilityLabel} {...rest}>{content}</View>;
 }
 
 const styles = StyleSheet.create({

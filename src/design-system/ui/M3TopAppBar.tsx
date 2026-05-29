@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
   },
   content: {
-    height: HeaderTokens.height,
+    height: HeaderTokens?.height ?? 44,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 4,

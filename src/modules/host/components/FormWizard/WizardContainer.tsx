@@ -26,11 +26,13 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   View,
+  Text,
   StyleSheet,
   ScrollView,
   Platform,
   Alert,
   AppState,
+  ActivityIndicator,
   type AppStateStatus,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -429,7 +431,10 @@ export function WizardContainer({
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.loadingContainer}>
-          {/* loading placeholder */}
+          <ActivityIndicator size="large" color={colors.textSecondary} />
+          <Text style={{ marginTop: 12, color: colors.textSecondary, fontSize: 14 }}>
+            Preparing your creation experience...
+          </Text>
         </View>
       </View>
     );
@@ -451,7 +456,8 @@ export function WizardContainer({
         onSelectDraft={draftRecovery.handleSelectDraft}
         onStartFresh={draftRecovery.handleStartFresh}
         onDismiss={draftRecovery.handleDismiss}
-      />      {/* Progress Indicator */}
+      />
+      {/* Progress Indicator */}
       <View
         style={[
           styles.progressContainer,

@@ -50,6 +50,7 @@ import { TaxStatusField } from '../fields/TaxStatusField';
 import { LicenceUploadField } from '../fields/LicenceUploadField';
 import type { Licence } from '../fields/LicenceUploadField';
 import { Luxe } from '@/design-system/tokens/luxeHeritage';
+import { FontFamily, Radius, Spacing } from '@/design-system/tokens/theme';
 import type { EntityType } from '../../hooks/useFormWizard';
 import type { PartialFormData } from '../../services/formStateSerializer';
 

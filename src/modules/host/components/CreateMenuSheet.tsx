@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, Pressable, StyleSheet, Modal } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, Pressable, StyleSheet, Modal, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
@@ -10,6 +10,8 @@ import { CultureTokens, Spacing, Radius } from '@/design-system/tokens/theme';
 interface CreateMenuSheetProps {
   visible: boolean;
   onClose: () => void;
+  availableProfiles?: Array<{ id: string; name: string; entityType: string }>;
+  onCreateUnderProfile?: (profileId: string, type: 'event' | 'listing') => void;
 }
 
 /**
@@ -17,13 +19,46 @@ interface CreateMenuSheetProps {
  * Replaces fragmented entry points.
  * One tap from Hostspace main screen.
  */
-export function CreateMenuSheet({ visible, onClose }: CreateMenuSheetProps) {
+export function CreateMenuSheet({ visible, onClose, availableProfiles = [], onCreateUnderProfile }: CreateMenuSheetProps) {
   const colors = useColors();
+  const [selectedParent, setSelectedParent] = React.useState<string | null>(null);
+
+  const hasProfiles = availableProfiles.length > 0;
 
   const options = [
-    { label: 'New Profile', icon: 'person-add-outline', route: '/hostspace/create' as const, desc: 'Community, Business, Artist, Venue...' },
-    { label: 'New Event', icon: 'calendar-outline', route: '/hostspace/create?category=event' as const, desc: 'Festival, workshop, gathering' },
-    { label: 'New Listing', icon: 'pricetag-outline', route: '/hostspace/create?category=market' as const, desc: 'Sell products or services' },
+    { 
+      label: 'New Profile', 
+      icon: 'person-add-outline' as const, 
+      desc: 'Community, Business, Artist, Venue...',
+      onPress: () => handlePress('/hostspace/create' as const)
+    },
+    { 
+      label: 'New Event', 
+      icon: 'calendar-outline' as const, 
+      desc: hasProfiles ? 'Under one of your profiles' : 'Festival, workshop, gathering',
+      onPress: () => {
+        if (hasProfiles && onCreateUnderProfile) {
+          // Smart default: pre-select first profile or let user choose
+          const defaultProfile = availableProfiles[0];
+          onCreateUnderProfile(defaultProfile.id, 'event');
+        } else {
+          handlePress('/hostspace/create?category=event' as const);
+        }
+      }
+    },
+    { 
+      label: 'New Listing', 
+      icon: 'pricetag-outline' as const, 
+      desc: 'Sell products or services on CultureMarket',
+      onPress: () => {
+        if (hasProfiles && onCreateUnderProfile) {
+          const defaultProfile = availableProfiles[0];
+          onCreateUnderProfile(defaultProfile.id, 'listing');
+        } else {
+          handlePress('/hostspace/create?category=market' as const);
+        }
+      }
+    },
   ];
 
   const handlePress = (route: string) => {

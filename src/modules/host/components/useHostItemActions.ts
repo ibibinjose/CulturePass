@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { HostItemAction } from './HostItemActionSheet';
-import type { Profile, EventData } from '@/shared/schema';
+import type { Profile, EventData, ShopListing } from '@/shared/schema';
 
 /**
  * Hook that returns standard actions for host-created items.
@@ -103,8 +103,54 @@ export function useHostItemActions() {
     },
   ];
 
+  const getListingActions = (listing: ShopListing): HostItemAction[] => [
+    {
+      key: 'view',
+      label: 'View Listing',
+      icon: 'eye-outline',
+      onPress: () => router.push(`/CultureMarket/${listing.id}` as never),
+    },
+    {
+      key: 'edit',
+      label: 'Edit Listing',
+      icon: 'create-outline',
+      onPress: () => {
+        router.push(`/hostspace/create/listing?listingId=${listing.id}` as never);
+      },
+    },
+    {
+      key: 'share',
+      label: 'Share Listing',
+      icon: 'share-outline',
+      onPress: () => {
+        const url = `${window.location.origin}/CultureMarket/${listing.id}`; // or use canonical path
+        // Parent will handle opening UniversalShareSheet
+        console.log('Share listing', listing.id, url);
+      },
+    },
+    {
+      key: 'analytics',
+      label: 'Listing Performance',
+      icon: 'bar-chart-outline',
+      onPress: () => {
+        // Future: specific listing analytics
+        router.push('/hostspace/dashboard' as never);
+      },
+    },
+    {
+      key: 'delete',
+      label: 'Delete Listing',
+      icon: 'trash-outline',
+      destructive: true,
+      onPress: () => {
+        console.warn('Delete listing:', listing.id);
+      },
+    },
+  ];
+
   return {
     getProfileActions,
     getEventActions,
+    getListingActions,
   };
 }

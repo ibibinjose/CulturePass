@@ -30,7 +30,7 @@ import { hostApi } from '@/modules/host/api';
 import { canonicalEventPath, canonicalProfilePath } from '@/lib/publicPaths';
 import { formatCompactDate } from '@/lib/format';
 import { APP_NAME, SITE_ORIGIN } from '@/lib/app-meta';
-import type { EventData, Profile, HostApplication } from '@/shared/schema';
+import type { EventData, Profile, HostApplication, ShopListing } from '@/shared/schema';
 import type { ProfileDraft } from '@/platform/api/endpoints/createProfilesNamespace';
 
 // Creator Trust: Ongoing verification status visibility in HostSpace dashboard
@@ -38,10 +38,12 @@ import { VerificationStatusBanner } from '@/modules/host/components/Verification
 import { HostItemActionSheet } from '@/modules/host/components/HostItemActionSheet';
 import { useHostItemActions } from '@/modules/host/components/useHostItemActions';
 import { CreateMenuSheet } from '@/modules/host/components/CreateMenuSheet';
+import { UniversalShareSheet } from '@/modules/host/components/UniversalShareSheet';
 
 type HostspaceSummary = {
   events: EventData[];
   profiles: Profile[];
+  listings: ShopListing[];
 };
 
 // Personalized greeting for hosts
@@ -498,7 +500,46 @@ function HostspaceWorkspace() {
   // Fast Create Menu
   const [showCreateMenu, setShowCreateMenu] = useState(false);
 
+  // Universal Share Sheet state (for Profile + Event + future Listings)
+  const [shareItem, setShareItem] = useState<{
+    title: string;
+    url: string;
+  } | null>(null);
+
   const { getProfileActions, getEventActions } = useHostItemActions();
+
+  // Wrappers that replace the placeholder share behavior with the real UniversalShareSheet
+  const getProfileActionsWithShare = (profile: Profile) => {
+    const baseActions = getProfileActions(profile);
+    return baseActions.map(action => 
+      action.key === 'share' 
+        ? {
+            ...action,
+            onPress: () => {
+              const url = `${SITE_ORIGIN}/profile/${profile.handle || profile.id}`;
+              setShareItem({ title: profile.name, url });
+              setActionSheetItem(null); // close action sheet first
+            }
+          }
+        : action
+    );
+  };
+
+  const getEventActionsWithShare = (event: EventData) => {
+    const baseActions = getEventActions(event);
+    return baseActions.map(action => 
+      action.key === 'share' 
+        ? {
+            ...action,
+            onPress: () => {
+              const url = canonicalEventPath(event);
+              setShareItem({ title: event.title || 'Event', url });
+              setActionSheetItem(null);
+            }
+          }
+        : action
+    );
+  };
 
   // Fetch workspace summary (profiles + events)
   const { data, isLoading, isRefetching, refetch } = useQuery({
@@ -719,25 +760,7 @@ function HostspaceWorkspace() {
           </View>
         </View>
 
-        {/* Lightweight HostSpace navigation chips for power users */}
-        <View style={styles.hostNavChips}>
-          <Pressable onPress={() => { /* already on overview */ }} style={[styles.hostChip, styles.hostChipActive]}>
-            <Text style={styles.hostChipTextActive}>Overview</Text>
-          </Pressable>
-          <Pressable onPress={() => router.push('/hostspace/dashboard' as never)} style={styles.hostChip}>
-            <Text style={styles.hostChipText}>Analytics</Text>
-          </Pressable>
-          <Pressable onPress={() => router.push('/scanner' as never)} style={styles.hostChip}>
-            <Text style={styles.hostChipText}>Scanner</Text>
-          </Pressable>
-          <Pressable onPress={() => router.push('/hostspace/create' as never)} style={styles.hostChip}>
-            <Text style={styles.hostChipText}>Create Lab</Text>
-          </Pressable>
-        </View>
-
-        {/* Create New Profile CTA */}
-        <CreateProfileCTA />
-
+        {/* Consolidated Performance Overview (merged stats + insights) */}
         {/* Elevated Host Stats — at-a-glance command center metrics */}
         <View style={styles.statsRow}>
           <StatCard
@@ -804,7 +827,7 @@ function HostspaceWorkspace() {
               {[1, 2, 3].map((item) => <Skeleton key={item} width={isDesktop ? '31%' : '100%'} height={214} borderRadius={24} />)}
             </View>
           ) : communities.length === 0 ? (
-            <EmptyState title="No communities yet." action="Create Community" onPress={() => router.push('/hostspace/create/community' as never)} />
+            <EmptyState title="No communities yet." action="Create" onPress={() => setShowCreateMenu(true)} />
           ) : (
             <View style={styles.grid}>
               {communities.map((profile, index) => (
@@ -824,16 +847,14 @@ function HostspaceWorkspace() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>Events you manage</Text>
-            <M3Button variant="text" size="sm" leftIcon="add" onPress={() => router.push('/hostspace/create/event' as never)}>
-              Event
-            </M3Button>
+            {/* Removed duplicate "Event" button — use the main + in top bar instead for unified creation */}
           </View>
           {isLoading ? (
             <View style={styles.grid}>
               {[1, 2, 3].map((item) => <Skeleton key={item} width={isDesktop ? '31%' : '100%'} height={214} borderRadius={24} />)}
             </View>
           ) : events.length === 0 ? (
-            <EmptyState title="No events yet." action="Create Event" onPress={() => router.push('/hostspace/create/event' as never)} />
+            <EmptyState title="No events yet." action="Create" onPress={() => setShowCreateMenu(true)} />
           ) : (
             <View style={styles.grid}>
               {events.map((event, index) => (
@@ -853,16 +874,14 @@ function HostspaceWorkspace() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>Listings and profiles</Text>
-            <M3Button variant="text" size="sm" leftIcon="add" onPress={() => router.push('/hostspace/create' as never)}>
-              Listing
-            </M3Button>
+            {/* Removed duplicate "Listing" button — main + Create button in header is the single entry point */}
           </View>
           {isLoading ? (
             <View style={styles.grid}>
               {[1, 2].map((item) => <Skeleton key={item} width={isDesktop ? '31%' : '100%'} height={214} borderRadius={24} />)}
             </View>
           ) : otherProfiles.length === 0 ? (
-            <EmptyState title="No listings or profiles yet." action="Create Listing" onPress={() => router.push('/hostspace/create' as never)} />
+            <EmptyState title="No listings or profiles yet." action="Create" onPress={() => setShowCreateMenu(true)} />
           ) : (
             <View style={styles.grid}>
               {otherProfiles.map((profile, index) => (
@@ -901,8 +920,8 @@ function HostspaceWorkspace() {
           onClose={() => setActionSheetItem(null)}
           actions={
             actionSheetItem.type === 'profile'
-              ? getProfileActions(actionSheetItem.data as Profile)
-              : getEventActions(actionSheetItem.data as EventData)
+              ? getProfileActionsWithShare(actionSheetItem.data as Profile)
+              : getEventActionsWithShare(actionSheetItem.data as EventData)
           }
         />
       )}
@@ -911,7 +930,31 @@ function HostspaceWorkspace() {
       <CreateMenuSheet 
         visible={showCreateMenu} 
         onClose={() => setShowCreateMenu(false)} 
+        availableProfiles={profiles.map(p => ({ id: p.id, name: p.name, entityType: p.entityType }))}
+        onCreateUnderProfile={(profileId, type) => {
+          setShowCreateMenu(false);
+          if (type === 'event') {
+            router.push(`/hostspace/create/event?parentProfile=${profileId}` as never);
+          } else {
+            router.push(`/hostspace/create/listing?parentProfile=${profileId}` as never);
+          }
+        }}
       />
+
+      {/* Universal Share Sheet - now properly used from ActionSheet (no more placeholder routes) */}
+      {shareItem && (
+        <UniversalShareSheet
+          visible={!!shareItem}
+          title={shareItem.title}
+          url={shareItem.url}
+          onClose={() => setShareItem(null)}
+        />
+      )}
+
+      {/* Mobile FAB for super fast creation (iOS/Android) */}
+      {!isDesktop && (
+        <CreateFAB onPress={() => setShowCreateMenu(true)} />
+      )}
     </View>
   );
 }
@@ -923,6 +966,36 @@ export default function HostspaceIndexScreen() {
         <HostspaceWorkspace />
       </HostspaceAccessGate>
     </ErrorBoundary>
+  );
+}
+
+// Mobile-friendly FAB for fast creation (iOS/Android)
+function CreateFAB({ onPress }: { onPress: () => void }) {
+  const colors = useColors();
+  return (
+    <Pressable
+      onPress={onPress}
+      style={{
+        position: 'absolute',
+        bottom: 24,
+        right: 20,
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        backgroundColor: CultureTokens.indigo,
+        alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 8,
+        zIndex: 100,
+      }}
+      accessibilityLabel="Create new"
+    >
+      <Ionicons name="add" size={28} color="#fff" />
+    </Pressable>
   );
 }
 

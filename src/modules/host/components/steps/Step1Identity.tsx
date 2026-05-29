@@ -47,6 +47,7 @@ import { HandleField } from '../fields/HandleField';
 import { NameField } from '../fields/NameField';
 import { DateField } from '../fields/DateField';
 import { Luxe } from '@/design-system/tokens/luxeHeritage';
+import { FontFamily, Radius, Spacing } from '@/design-system/tokens/theme';
 import type { EntityType } from '../../hooks/useFormWizard';
 import type { PartialFormData } from '../../services/formStateSerializer';
 
@@ -216,9 +217,7 @@ export function Step1Identity({
         </Text>
 
         <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-          Let&apos;s start with the essential information about your{' '}
-          {getEntityTypeDisplayName(entityType).toLowerCase()}. This will help
-          people find and recognize you on CulturePass.
+          {`Let's start with the essential information about your ${getEntityTypeDisplayName(entityType).toLowerCase()}. This will help people find and recognize you on CulturePass.`}
         </Text>
       </View>
 

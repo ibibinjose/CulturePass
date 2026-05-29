@@ -45,9 +45,9 @@ import { M3TopAppBar } from '@/design-system/ui';
 
 const PHONE_DISPLAY = CONTACT_PHONE_DISPLAY;
 const PHONE_URI = `tel:${CONTACT_PHONE.replace(/\s+/g, '')}`;
-const EMAIL_PRESS = 'hello@culturepass.co';
-const EMAIL_PARTNERSHIPS = 'hello@culturepass.co';
-const EMAIL_ORGANISERS = 'hello@culturepass.co';
+const EMAIL_PRESS = 'hello@culturepass.app';
+const EMAIL_PARTNERSHIPS = 'hello@culturepass.app';
+const EMAIL_ORGANISERS = 'hello@culturepass.app';
 
 const OFFICE_LINES = [
   APP_NAME,

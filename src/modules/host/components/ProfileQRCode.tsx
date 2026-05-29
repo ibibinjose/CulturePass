@@ -14,7 +14,7 @@
  * Usage:
  * ```tsx
  * <ProfileQRCode
- *   profileUrl="https://culturepass.co/my-venue"
+ *   profileUrl="https://culturepass.app/my-venue"
  *   profileName="My Venue"
  *   size={200}
  *   onDownload={(format) => handleDownload(format)}

@@ -400,7 +400,7 @@ export default function FinderScreen() {
                     <GlassView contentStyle={{ padding: 24, gap: 20 }}>
                         <View style={{ gap: 6 }}>
                             <Text style={{ fontSize: 18, fontFamily: FontFamily.bold, color: colors.text }}>{selectedState?.label} · {selectedLanguage?.name}</Text>
-                            <Text style={{ fontSize: 13, fontFamily: FontFamily.medium, color: colors.primary }}>culturepass.co{previewUrl}</Text>
+                            <Text style={{ fontSize: 13, fontFamily: FontFamily.medium, color: colors.primary }}>culturepass.app{previewUrl}</Text>
                         </View>
                         <Button variant="primary" size="lg" fullWidth onPress={() => router.push(previewUrl)} leftIcon="rocket-outline">
                             Open Hub Page

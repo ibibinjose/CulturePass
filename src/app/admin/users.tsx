@@ -205,7 +205,7 @@ export default function UserDirectoryScreen() {
   };
 
   const handleCopyLink = async (user: User) => {
-    const url = `https://culturepass.co/profile/${user.handle || user.username || user.id}`;
+    const url = `https://culturepass.app/profile/${user.handle || user.username || user.id}`;
     await Clipboard.setStringAsync(url);
     Alert.alert('Copied', 'Profile link copied to clipboard');
   };

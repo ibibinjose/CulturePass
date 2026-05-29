@@ -77,7 +77,7 @@ export default function PaymentSuccessScreen() {
     const message = eventDate
       ? `I just got tickets to ${eventTitle} on ${eventDate} via CulturePass! 🎉`
       : `I just got tickets to ${eventTitle} via CulturePass! 🎉`;
-    await Share.share({ message, url: 'https://culturepass.co' });
+    await Share.share({ message, url: 'https://culturepass.app' });
   };
 
   return (

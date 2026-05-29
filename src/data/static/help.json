@@ -9,7 +9,7 @@
       "items": [
         {
           "q": "What is CulturePass?",
-          "a": "CulturePass is a lifestyle and community platform for cultural diaspora communities across Australia, New Zealand, UAE, UK, and Canada. Use the app or culturepass.co to discover cultural events, join communities, access perks, and connect with people who share your heritage."
+          "a": "CulturePass is a lifestyle and community platform for cultural diaspora communities across Australia, New Zealand, UAE, UK, and Canada. Use the app or culturepass.app to discover cultural events, join communities, access perks, and connect with people who share your heritage."
         },
         {
           "q": "How do I create an account?",
@@ -42,7 +42,7 @@
     {
       "icon": "mail",
       "label": "Email Support",
-      "sub": "hello@culturepass.co",
+      "sub": "hello@culturepass.app",
       "color": "#6366F1"
     },
     {

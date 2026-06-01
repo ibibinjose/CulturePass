@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useColors } from '@/hooks/useColors';
+import { useM3Colors } from '@/hooks/useM3Colors';
 import { TextStyles } from '@/design-system/tokens/typography';
 import { Skeleton } from '@/design-system/ui/Skeleton';
 import { BrowseCard } from './BrowseCard';
@@ -38,14 +38,14 @@ export function BrowseLayout({
   onClearFilter,
   renderItemExtra,
 }: BrowseLayoutProps) {
-  const colors = useColors();
+  const m3Colors = useM3Colors();
   const isGrid = layout === 'grid';
 
   if (isLoading) {
     return (
       <View style={styles.listSection}>
         {[0, 1, 2, 3].map((k) => (
-          <View key={k} style={[styles.skeletonCard, { backgroundColor: colors.surface, borderColor: colors.borderLight }]}>
+          <View key={k} style={[styles.skeletonCard, { backgroundColor: m3Colors.surface, borderColor: m3Colors.outlineVariant }]}>
             <Skeleton width={80} height={80} borderRadius={16} />
             <View style={{ flex: 1, gap: 8 }}>
               <Skeleton width="80%" height={16} borderRadius={8} />
@@ -65,10 +65,10 @@ export function BrowseLayout({
   if (items.length === 0) {
     return (
       <View style={styles.emptyWrap} accessibilityLiveRegion="polite">
-        <View style={[styles.emptyIconBg, { backgroundColor: colors.surface }]}>
-          <Ionicons name={emptyIcon as keyof typeof Ionicons.glyphMap} size={48} color="rgba(255,255,255,0.4)" />
+        <View style={[styles.emptyIconBg, { backgroundColor: m3Colors.surface }]}>
+          <Ionicons name={emptyIcon as keyof typeof Ionicons.glyphMap} size={48} color={m3Colors.onSurfaceVariant} />
         </View>
-        <Text style={[TextStyles.bodyMedium, { color: colors.textSecondary }]}>
+        <Text style={[TextStyles.bodyMedium, { color: m3Colors.onSurfaceVariant }]}>
           {selectedCat !== 'All' ? `No ${title.toLowerCase()} in "${selectedCat}"` : emptyMessage}
         </Text>
         {selectedCat !== 'All' && (
@@ -87,7 +87,7 @@ export function BrowseLayout({
   return (
     <View style={styles.listSection}>
       <View style={styles.listHeaderRow}>
-        <Text style={[styles.resultCount, { color: colors.textTertiary }]}>
+        <Text style={[styles.resultCount, { color: m3Colors.onSurfaceVariant }]}>
           {items.length} {title.toLowerCase()} found
         </Text>
       </View>

@@ -16,27 +16,29 @@ import { useLayout } from '@/hooks/useLayout';
 import { useDiscoverRailInsets } from '@/components/Discover/discoverLayout';
 import { TextStyles } from '@/design-system/tokens/typography';
 import { CultureTokens } from '@/design-system/tokens/theme';
+import { luxeDark, RICH_INDIGO, EMERALD_HARMONY } from '@/design-system/tokens/luxeHeritage';
 import SectionHeader from './SectionHeader';
 import { Skeleton } from '@/design-system/ui/Skeleton';
 import { RailErrorBanner } from './RailErrorBanner';
 import { DiscoverRailErrorBoundary } from './DiscoverRailErrorBoundary';
 import { useFeaturedCities, cityGradient, type FeaturedCityData } from '@/hooks/useFeaturedCities';
+import { normalizeRemoteImageUri } from '@/lib/mediaUrls';
 
 const goCitiesHub = () => {
   router.push('/cities');
 };
 
 // ---------------------------------------------------------------------------
-// Improved Color Palette
+// New Luxe Color Palette (heritage 2026) — applied across Discover
 // ---------------------------------------------------------------------------
 
-const CITY_RAIL_TITLE_COLOR = '#6B4EFF';        // Vibrant premium violet
-const CITY_RAIL_SUBTITLE_COLOR = '#22E6C9';     // Bright saturated teal
-const CITY_CARD_NAME_COLOR = '#E0D4FF';         // Soft glowing lavender
-const CITY_CARD_COUNTRY_COLOR = '#A3F0E0';      // Fresh light teal
+const CITY_RAIL_TITLE_COLOR = RICH_INDIGO;           // Sophisticated cultural depth (excellent contrast on light + dark)
+const CITY_RAIL_SUBTITLE_COLOR = EMERALD_HARMONY;     // Vibrant teal – highly readable on white backgrounds
+const CITY_CARD_NAME_COLOR = '#F5F0E6';               // Premium warm luxe cream – excellent contrast + subtle warmth
+const CITY_CARD_COUNTRY_COLOR = '#7FD8C2';            // Brighter emerald harmony – vibrant yet readable on dark overlays
 
-const CARD_OVERLAY = 'rgba(15, 10, 35, 0.72)';  // Richer, deeper overlay
-const CARD_FALLBACK_BG = '#1A0F2E';
+const CARD_OVERLAY = 'rgba(10, 8, 20, 0.78)';         // Richer dark luxe overlay for vibrant text contrast
+const CARD_FALLBACK_BG = luxeDark.surfaceSecondary;
 
 // ---------------------------------------------------------------------------
 // City card — shared between native grid and web rail
@@ -78,7 +80,7 @@ function CityCard({
       {city.imageUrl && !imageFailed ? (
         <Image
           key={city.imageUrl}
-          source={{ uri: city.imageUrl }}
+          source={{ uri: normalizeRemoteImageUri(city.imageUrl) }}
           style={StyleSheet.absoluteFill}
           contentFit="cover"
           transition={300}
@@ -177,6 +179,7 @@ function CityRailComponent() {
             keyExtractor={(item) => item.id}
             numColumns={2}
             scrollEnabled={false}
+            removeClippedSubviews={false}
             contentContainerStyle={[s.grid, { paddingHorizontal: hPad }]}
             columnWrapperStyle={s.row}
             renderItem={({ item }) => <CityCard city={item} width={cardWidth} />}
@@ -216,6 +219,7 @@ function CityRailComponent() {
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => <CityCard city={item} width={cardWidth} />}
           showsHorizontalScrollIndicator={false}
+          removeClippedSubviews={false}
           contentContainerStyle={[scrollPadStyle, { gap: 12 }]}
           snapToInterval={cardWidth + 12}
           snapToAlignment="start"

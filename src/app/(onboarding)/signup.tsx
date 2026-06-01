@@ -6,7 +6,7 @@ import {
   StyleSheet,
   Platform,
 } from 'react-native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Image } from 'expo-image';
 import { KeyboardAwareScrollViewCompat } from '@/modules/core/components';
 import { Ionicons } from '@expo/vector-icons';
@@ -41,6 +41,7 @@ import {
   IconSize,
   LiquidGlassTokens,
   luxeDark,
+  Radius,
 } from '@/design-system/tokens/theme';
 
 import { routeWithRedirect } from '@/lib/routes';
@@ -60,6 +61,12 @@ const VALUE_PROPS = [
   { icon: 'calendar-outline' as const, title: 'Cultural Events', desc: "Discover what's on this week in your city." },
   { icon: 'people-outline' as const, title: 'Your Community', desc: 'Connect with people who share your culture.' },
   { icon: 'gift-outline' as const, title: 'Member Perks', desc: 'Exclusive rewards from local businesses.' },
+] as const;
+
+const HOST_VALUE_PROPS = [
+  { icon: 'calendar-outline' as const, title: 'Create Events', desc: 'Publish ticketed or free events and manage bookings easily.' },
+  { icon: 'storefront-outline' as const, title: 'List on CultureMarket', desc: 'Sell products, services, or list your cultural business.' },
+  { icon: 'people-outline' as const, title: 'Build Communities', desc: 'Create groups, cultural associations, and member circles.' },
 ] as const;
 
 // --- Sub-components for better modularity ---
@@ -253,47 +260,54 @@ const TermsCheckbox: React.FC<TermsCheckboxProps> = ({ enterAnimation, agreed, s
 
 interface WebMarketingPanelProps {
   enterAnimation: (delay: number) => any;
+  isHost?: boolean;
 }
 
-const WebMarketingPanel: React.FC<WebMarketingPanelProps> = ({ enterAnimation }) => {
+const WebMarketingPanel: React.FC<WebMarketingPanelProps> = ({ enterAnimation, isHost }) => {
+  const marketingProps = isHost ? HOST_VALUE_PROPS : VALUE_PROPS;
   return (
     <View style={[s.webLeft, { backgroundColor: luxeDark.accentContainer }]}>
       <Animated.View entering={enterAnimation(40)} style={s.webKickerRow}>
         <View style={[s.webDot, { backgroundColor: luxeDark.primary }]} />
-        <LuxeText variant="badgeCaps" style={s.webKickerText}>CULTUREPASS</LuxeText>
+        <LuxeText variant="badgeCaps" style={s.webKickerText}>
+          {isHost ? 'CREATOR HUB' : 'CULTUREPASS'}
+        </LuxeText>
       </Animated.View>
 
       <Animated.View entering={enterAnimation(70)}>
         <LuxeText variant="displayHero" style={s.webHeadlineText}>
-          Your cultural home,{'\n'}anywhere.
+          {isHost ? 'Empower your diaspora.' : 'Your cultural home,\nanywhere.'}
         </LuxeText>
       </Animated.View>
 
       <Animated.View entering={enterAnimation(100)}>
         <LuxeText variant="hero" style={s.webLeadText}>
-          The premium marketplace for diaspora communities — events, businesses, and member perks.
+          {isHost
+            ? 'Publish ticketed or free events, sell products/services, build communities, and reach diaspora members.'
+            : 'The premium marketplace for diaspora communities — events, businesses, and member perks.'}
         </LuxeText>
       </Animated.View>
 
       <Animated.View entering={enterAnimation(130)} style={s.webValueGrid}>
-        {VALUE_PROPS.map((item, index) => (
+        {marketingProps.map((item, index) => (
           <Animated.View
             key={item.title}
             entering={enterAnimation(160 + index * 30)}
             style={s.webValueItem}
           >
-            <LuxeCard
-              variant="glass"
-              style={s.webValueCard}
-            >
-                <View style={s.webValueStripe} />
-                <View style={[s.webValueIcon, { backgroundColor: luxeDark.surfaceElevated }]}>
-                  <Ionicons name={item.icon} size={18} color={luxeDark.primary} />
-                </View>
-                <View style={s.webValueTextContent}>
-                  <LuxeText variant="title3" style={s.webValueTitle}>{item.title}</LuxeText>
-                  <LuxeText variant="caption" style={s.webValueDesc}>{item.desc}</LuxeText>
-                </View>
+            <LuxeCard variant="glass" style={s.webValueCard}>
+              <View style={s.webValueStripe} />
+              <View style={[s.webValueIcon, { backgroundColor: luxeDark.surfaceElevated }]}>
+                <Ionicons name={item.icon} size={18} color={luxeDark.primary} />
+              </View>
+              <View style={s.webValueTextContent}>
+                <LuxeText variant="title3" style={s.webValueTitle}>
+                  {item.title}
+                </LuxeText>
+                <LuxeText variant="caption" style={s.webValueDesc}>
+                  {item.desc}
+                </LuxeText>
+              </View>
             </LuxeCard>
           </Animated.View>
         ))}
@@ -310,6 +324,9 @@ export default function SignUpScreen() {
   const insets = useSafeAreaInsets();
   const reducedMotion = useReducedMotion();
   const isExpanded = windowSizeClass === 'expanded';
+
+  const searchParams = useLocalSearchParams();
+  const isHostIntent = searchParams.intent === 'host' || searchParams.role === 'organizer';
 
   const {
     name,
@@ -363,12 +380,37 @@ export default function SignUpScreen() {
       {/* Copy */}
       <Animated.View entering={enter(70)} style={s.copyBlock}>
         <LuxeText variant="display" style={[s.title, { color: luxeDark.text }]}>
-          Create your account
+          {isHostIntent ? 'Join as a Host' : 'Create your account'}
         </LuxeText>
         <LuxeText variant="body" style={[s.subtitle, { color: luxeDark.textSecondary }]}>
-          Join CulturePass — your home for events and community.
+          {isHostIntent
+            ? 'Setup your Host Hub workspace to start creating.'
+            : 'Join CulturePass — your home for events and community.'}
         </LuxeText>
       </Animated.View>
+
+      {/* Mobile-only info card (What is Host Hub) */}
+      {isHostIntent && (
+        <Animated.View entering={enter(80)} style={s.hostHubInfoCard}>
+          <LuxeText variant="bodyMedium" style={[s.hostHubInfoTitle, { color: luxeDark.text }]}>What is Host Hub?</LuxeText>
+          <LuxeText variant="caption" style={[s.hostHubInfoDesc, { color: luxeDark.textSecondary }]}>
+            CulturePass Host Hub allows you to publish events, sell products/services, and build communities.
+          </LuxeText>
+          <View style={s.hostHubPerksList}>
+            {HOST_VALUE_PROPS.map((item) => (
+              <View key={item.title} style={s.hostHubPerkItem}>
+                <View style={[s.hostHubPerkIconWrap, { backgroundColor: luxeDark.surfaceElevated }]}>
+                  <Ionicons name={item.icon} size={14} color={luxeDark.primary} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <LuxeText variant="bodyMedium" style={[s.hostHubPerkTitle, { color: luxeDark.text }]}>{item.title}</LuxeText>
+                  <LuxeText variant="caption" style={[s.hostHubPerkDesc, { color: luxeDark.textSecondary }]}>{item.desc}</LuxeText>
+                </View>
+              </View>
+            ))}
+          </View>
+        </Animated.View>
+      )}
 
       {/* Global error */}
       {Boolean(globalError) && (
@@ -498,7 +540,7 @@ export default function SignUpScreen() {
       >
         {isWeb && isDesktop ? (
           <View style={s.webRow}>
-            <WebMarketingPanel enterAnimation={enter} />
+            <WebMarketingPanel enterAnimation={enter} isHost={isHostIntent} />
             <Animated.View entering={fadeInUp} style={[s.cardWrap, s.cardWrapDesktop]}>
               {formContent}
             </Animated.View>
@@ -719,4 +761,48 @@ const s = StyleSheet.create({
     marginTop: 2,
   },
   topAppBarImage: { width: 40, height: 40, borderRadius: 20, marginLeft: 8 },
+  hostHubInfoCard: {
+    padding: 16,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    marginBottom: 20,
+    alignSelf: 'stretch',
+  },
+  hostHubInfoTitle: {
+    fontSize: 15,
+    fontFamily: FontFamily.semibold,
+    marginBottom: 4,
+  },
+  hostHubInfoDesc: {
+    fontSize: 13,
+    fontFamily: FontFamily.regular,
+    lineHeight: 18,
+    marginBottom: 16,
+  },
+  hostHubPerksList: {
+    gap: 12,
+  },
+  hostHubPerkItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  hostHubPerkIconWrap: {
+    width: 28,
+    height: 28,
+    borderRadius: Radius.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  hostHubPerkTitle: {
+    fontSize: 13,
+    fontFamily: FontFamily.semibold,
+  },
+  hostHubPerkDesc: {
+    fontSize: 11,
+    fontFamily: FontFamily.regular,
+    lineHeight: 15,
+  },
 });

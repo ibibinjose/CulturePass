@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import { useQuery } from '@tanstack/react-query';
 import { Image as ExpoImage } from 'expo-image';
 import { modulesApi } from '@/modules/api';
@@ -171,9 +171,9 @@ const MovieCard = React.memo(function MovieCard({
 // ─── Main screen ──────────────────────────────────────────────────────────────
 
 export default function MoviesScreen() {
-  const insets = useSafeAreaInsets();
-  const topInset = Platform.OS === 'web' ? 0 : insets.top;
-  const bottomInset = Platform.OS === 'web' ? 0 : insets.bottom;
+  const safeInsets = useSafeAreaInsetsWeb();
+  const topInset = safeInsets.top;
+  const bottomInset = safeInsets.bottom;
   const colors = useColors();
   const { state } = useOnboarding();
   const { isDesktop, hPad } = useLayout();

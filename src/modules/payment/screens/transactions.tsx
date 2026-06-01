@@ -1,6 +1,6 @@
 import { View, Text, Pressable, StyleSheet, FlatList, Platform, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import { router, usePathname } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth';
@@ -72,10 +72,10 @@ function TransactionItem({ item, styles: s }: TxItemProps & { styles: ReturnType
 export default function TransactionsScreen() {
   const colors = useColors();
   const styles = getStyles(colors);
-  const insets      = useSafeAreaInsets();
   const pathname = usePathname();
-  const topInset    = Platform.OS === 'web' ? 0 : insets.top;
-  const bottomInset = Platform.OS === 'web' ? 34 : insets.bottom;
+  const safeInsets = useSafeAreaInsetsWeb();
+  const topInset    = safeInsets.top;
+  const bottomInset = safeInsets.bottom;
   const { userId, isAuthenticated } = useAuth();
 
   const { data: transactions = [], isLoading } = useQuery<WalletTransaction[]>({

@@ -41,6 +41,7 @@ export function SuperAppLinks() {
         horizontal
         nestedScrollEnabled
         showsHorizontalScrollIndicator={false}
+        removeClippedSubviews={false}
         contentContainerStyle={[
           styles.row,
           {

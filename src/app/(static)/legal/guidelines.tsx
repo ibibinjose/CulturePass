@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, ScrollView, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import { useColors } from '@/hooks/useColors';
 import { CultureTokens, gradients, TextStyles } from '@/design-system/tokens/theme';
 import { M3TopAppBar } from '@/design-system/ui';
@@ -33,8 +33,8 @@ const RULES = [
 export default function CommunityGuidelinesScreen() {
   const colors = useColors();
   const styles = getStyles(colors);
-  const insets = useSafeAreaInsets();
-  const topInset = Platform.OS === 'web' ? 0 : insets.top;
+  const safeInsets = useSafeAreaInsetsWeb();
+  const topInset = safeInsets.top;
 
   return (
     <View style={styles.container}>
@@ -48,7 +48,7 @@ export default function CommunityGuidelinesScreen() {
         <View style={{ height: 8 }} />
       </LinearGradient>
 
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: insets.bottom + 40, paddingTop: 10 }}>
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: safeInsets.bottom + 40, paddingTop: 10 }}>
         <Text style={styles.lead}> 
           These rules help keep CulturePass safe, welcoming, and useful for everyone.
         </Text>

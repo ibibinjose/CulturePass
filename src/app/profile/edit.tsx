@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { Stack, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useMutation, useQuery } from '@tanstack/react-query';
@@ -32,7 +32,7 @@ import { ImageGalleryPicker, M3Card, M3SectionHeader } from '@/design-system/ui'
 import { DatePickerInput, type ISODateString } from '@/design-system/ui/DatePickerInput';
 import { Skeleton } from '@/design-system/ui/Skeleton';
 import { CultureTokens, FontFamily, Radius, ScreenTokens, SignatureGradient, Spacing, gradients } from '@/design-system/tokens/theme';
-import type { User } from '@/shared/schema';
+import type { User, FamilyMember, FamilyRelation } from '@/shared/schema';
 
 type SocialKey = 'instagram' | 'twitter' | 'youtube' | 'tiktok' | 'linkedin' | 'facebook' | 'website';
 
@@ -62,6 +62,7 @@ type FormState = {
   showInterests: boolean;
   showCulturalIdentity: boolean;
   privateViewingMode: boolean;
+  showFamily: boolean;
 };
 
 const SOCIAL_ROWS: {
@@ -256,13 +257,13 @@ function ToggleRow({
 
 export default function EditProfileScreen() {
   const colors = useColors();
-  const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const { user: authUser, userId, isRestoring, updateUserProfile } = useAuth();
   const { uploading } = useImageUpload();
-  const bottomInset = Platform.OS === 'web' ? 24 : insets.bottom;
+  const safeInsets = useSafeAreaInsetsWeb();
+  const bottomInset = safeInsets.bottom;
   const isWide = width >= 900;
-  const topInset = Platform.OS === 'web' ? 0 : insets.top;
+  const topInset = safeInsets.top;
 
   const {
     data: serverUser,
@@ -306,8 +307,12 @@ export default function EditProfileScreen() {
     showInterests: user?.privacySettings?.showInterests ?? true,
     showCulturalIdentity: user?.privacySettings?.showCulturalIdentity ?? true,
     privateViewingMode: user?.privacySettings?.privateViewingMode ?? false,
+    showFamily: user?.privacySettings?.showFamily ?? true,
   });
   const [dirty, setDirty] = useState(false);
+  const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
+  const [editingFamily, setEditingFamily] = useState<Partial<FamilyMember> | null>(null); // for add/edit modal
+  const [familyModalVisible, setFamilyModalVisible] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -338,7 +343,9 @@ export default function EditProfileScreen() {
       showInterests: user.privacySettings?.showInterests ?? true,
       showCulturalIdentity: user.privacySettings?.showCulturalIdentity ?? true,
       privateViewingMode: user.privacySettings?.privateViewingMode ?? false,
+      showFamily: user.privacySettings?.showFamily ?? true,
     });
+    setFamilyMembers(user.familyMembers ?? []);
     setDirty(false);
   }, [user]);
 
@@ -359,6 +366,62 @@ export default function EditProfileScreen() {
   const updateToggle = (field: keyof FormState) => (value: boolean) => {
     setForm((prev) => ({ ...prev, [field]: value }));
     setDirty(true);
+  };
+
+  // Family helpers
+  const openAddFamily = () => {
+    setEditingFamily({ id: Date.now().toString(), relation: 'child', name: '' });
+    setFamilyModalVisible(true);
+  };
+
+  const openEditFamily = (member: FamilyMember) => {
+    setEditingFamily({ ...member });
+    setFamilyModalVisible(true);
+  };
+
+  const saveFamilyMember = () => {
+    if (!editingFamily || !editingFamily.name?.trim()) {
+      Alert.alert('Name required', 'Please enter a name for the family member.');
+      return;
+    }
+    const member: FamilyMember = {
+      id: editingFamily.id || Date.now().toString(),
+      relation: (editingFamily.relation as FamilyRelation) || 'child',
+      name: editingFamily.name.trim(),
+      userId: editingFamily.userId,
+      avatarUrl: editingFamily.avatarUrl,
+      note: editingFamily.note?.trim() || undefined,
+    };
+
+    setFamilyMembers((prev) => {
+      const exists = prev.some(m => m.id === member.id);
+      if (exists) {
+        return prev.map(m => m.id === member.id ? member : m);
+      }
+      return [...prev, member];
+    });
+    setDirty(true);
+    setFamilyModalVisible(false);
+    setEditingFamily(null);
+  };
+
+  const deleteFamilyMember = (id: string) => {
+    Alert.alert('Remove family member', 'Are you sure?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Remove',
+        style: 'destructive',
+        onPress: () => {
+          setFamilyMembers(prev => prev.filter(m => m.id !== id));
+          setDirty(true);
+        },
+      },
+    ]);
+  };
+
+  const cancelFamilyModal = () => {
+    setFamilyModalVisible(false);
+    setEditingFamily(null);
   };
 
   const clearSocial = (key: SocialKey) => {
@@ -399,7 +462,9 @@ export default function EditProfileScreen() {
           showInterests: form.showInterests,
           showCulturalIdentity: form.showCulturalIdentity,
           privateViewingMode: form.privateViewingMode,
+          showFamily: form.showFamily,
         },
+        familyMembers: familyMembers.length > 0 ? familyMembers : undefined,
       };
       
       // Use the new updateUserProfile method to ensure changes propagate everywhere
@@ -625,6 +690,48 @@ export default function EditProfileScreen() {
                 })}
               </Section>
 
+              <Section title="Family">
+                <Text style={[styles.sectionHint, { color: colors.textSecondary }]}>
+                  Add mother, father, children and other family members to your cultural profile.
+                </Text>
+
+                {familyMembers.length === 0 ? (
+                  <Pressable
+                    onPress={openAddFamily}
+                    style={[styles.addButton, { backgroundColor: colors.primarySoft, borderColor: colors.primary }]}
+                  >
+                    <Ionicons name="people-outline" size={18} color={colors.primary} />
+                    <Text style={[styles.addButtonText, { color: colors.primary }]}>Add family member</Text>
+                  </Pressable>
+                ) : (
+                  <View style={styles.familyList}>
+                    {familyMembers.map((member) => (
+                      <View key={member.id} style={[styles.familyRow, { backgroundColor: colors.surfaceElevated, borderColor: colors.cardBorder }]}>
+                        <View style={styles.familyInfo}>
+                          <Text style={[styles.familyName, { color: colors.text }]}>{member.name}</Text>
+                          <Text style={[styles.familyRelation, { color: colors.textTertiary }]}>
+                            {member.relation.charAt(0).toUpperCase() + member.relation.slice(1)}
+                            {member.note ? ` • ${member.note}` : ''}
+                          </Text>
+                        </View>
+                        <View style={styles.familyActions}>
+                          <Pressable onPress={() => openEditFamily(member)} hitSlop={8}>
+                            <Ionicons name="pencil-outline" size={18} color={colors.primary} />
+                          </Pressable>
+                          <Pressable onPress={() => deleteFamilyMember(member.id)} hitSlop={8} style={{ marginLeft: 12 }}>
+                            <Ionicons name="trash-outline" size={18} color={colors.error} />
+                          </Pressable>
+                        </View>
+                      </View>
+                    ))}
+                    <Pressable onPress={openAddFamily} style={styles.addMoreButton}>
+                      <Ionicons name="add" size={16} color={colors.primary} />
+                      <Text style={[styles.addMoreText, { color: colors.primary }]}>Add another</Text>
+                    </Pressable>
+                  </View>
+                )}
+              </Section>
+
               <Section title="Privacy">
                 <ToggleRow label="Public profile" sub="Allow people to find your public profile." value={form.isPublicProfile} onValueChange={updateToggle('isPublicProfile')} />
                 <ToggleRow label="Show city" value={form.showLocation} onValueChange={updateToggle('showLocation')} />
@@ -632,12 +739,75 @@ export default function EditProfileScreen() {
                 <ToggleRow label="Show communities" value={form.showCommunities} onValueChange={updateToggle('showCommunities')} />
                 <ToggleRow label="Show interests" value={form.showInterests} onValueChange={updateToggle('showInterests')} />
                 <ToggleRow label="Show cultural identity" value={form.showCulturalIdentity} onValueChange={updateToggle('showCulturalIdentity')} />
+                <ToggleRow label="Show family" value={form.showFamily} onValueChange={updateToggle('showFamily')} />
                 <ToggleRow label="Private viewing" sub="Browse profiles without showing activity status." value={form.privateViewingMode} onValueChange={updateToggle('privateViewingMode')} />
               </Section>
             </View>
           </View>
         </View>
       </ScrollView>
+
+      {/* Family Member Modal */}
+      {familyModalVisible && editingFamily && (
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalCard, { backgroundColor: colors.background, borderColor: colors.cardBorder }]}>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>
+              {editingFamily.id && familyMembers.some(m => m.id === editingFamily.id) ? 'Edit Family Member' : 'Add Family Member'}
+            </Text>
+
+            {/* Relation selector - simple chips */}
+            <Text style={[styles.modalLabel, { color: colors.textSecondary }]}>Relation</Text>
+            <View style={styles.relationChips}>
+              {(['mother','father','son','daughter','child','spouse','partner','sibling'] as const).map((rel) => (
+                <Pressable
+                  key={rel}
+                  onPress={() => setEditingFamily(prev => ({ ...prev!, relation: rel }))}
+                  style={[
+                    styles.relationChip,
+                    editingFamily.relation === rel && { backgroundColor: colors.primary, borderColor: colors.primary }
+                  ]}
+                >
+                  <Text style={[
+                    styles.relationChipText,
+                    editingFamily.relation === rel ? { color: '#fff' } : { color: colors.text }
+                  ]}>
+                    {rel.charAt(0).toUpperCase() + rel.slice(1)}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+
+            <Text style={[styles.modalLabel, { color: colors.textSecondary, marginTop: 12 }]}>Name</Text>
+            <TextInput
+              value={editingFamily.name || ''}
+              onChangeText={(text) => setEditingFamily(prev => ({ ...prev!, name: text }))}
+              placeholder="Full name"
+              placeholderTextColor={colors.textTertiary}
+              style={[styles.modalInput, { color: colors.text, backgroundColor: colors.surfaceElevated, borderColor: colors.cardBorder }]}
+              autoCapitalize="words"
+            />
+
+            <Text style={[styles.modalLabel, { color: colors.textSecondary, marginTop: 12 }]}>Short note (optional)</Text>
+            <TextInput
+              value={editingFamily.note || ''}
+              onChangeText={(text) => setEditingFamily(prev => ({ ...prev!, note: text }))}
+              placeholder="e.g. Loves traditional recipes"
+              placeholderTextColor={colors.textTertiary}
+              style={[styles.modalInput, { color: colors.text, backgroundColor: colors.surfaceElevated, borderColor: colors.cardBorder }]}
+              maxLength={120}
+            />
+
+            <View style={styles.modalActions}>
+              <Pressable onPress={cancelFamilyModal} style={styles.modalCancel}>
+                <Text style={{ color: colors.textSecondary }}>Cancel</Text>
+              </Pressable>
+              <Pressable onPress={saveFamilyMember} style={[styles.modalSave, { backgroundColor: colors.primary }]}>
+                <Text style={{ color: '#fff', fontWeight: '600' }}>Save</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      )}
 
       <View
         style={[
@@ -824,4 +994,89 @@ const styles = StyleSheet.create({
   saveCopy: { flex: 1, minWidth: 0 },
   saveTitle: { fontSize: 14, lineHeight: 20, fontFamily: FontFamily.bold },
   saveSub: { fontSize: 12, lineHeight: 17, fontFamily: FontFamily.regular },
+
+  // Family section
+  sectionHint: { fontSize: 13, fontFamily: FontFamily.regular, marginBottom: Spacing.sm },
+  addButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 12,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+  },
+  addButtonText: { fontSize: 15, fontFamily: FontFamily.semibold },
+  familyList: { gap: 8 },
+  familyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+  },
+  familyInfo: { flex: 1 },
+  familyName: { fontSize: 16, fontFamily: FontFamily.semibold },
+  familyRelation: { fontSize: 13, fontFamily: FontFamily.regular, marginTop: 2 },
+  familyActions: { flexDirection: 'row', alignItems: 'center' },
+  addMoreButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 8,
+    alignSelf: 'flex-start',
+  },
+  addMoreText: { fontSize: 14, fontFamily: FontFamily.semibold },
+
+  // Simple family modal
+  modalOverlay: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'flex-end',
+    zIndex: 100,
+  },
+  modalCard: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    borderWidth: 1,
+  },
+  modalTitle: { fontSize: 18, fontFamily: FontFamily.bold, marginBottom: 12 },
+  modalLabel: { fontSize: 13, fontFamily: FontFamily.semibold, marginBottom: 6 },
+  relationChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  relationChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#ccc',
+  },
+  relationChipText: { fontSize: 13, fontFamily: FontFamily.medium },
+  modalInput: {
+    borderWidth: 1,
+    borderRadius: Radius.md,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 16,
+    fontFamily: FontFamily.regular,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 12,
+    marginTop: 20,
+  },
+  modalCancel: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+  },
+  modalSave: {
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    borderRadius: Radius.md,
+  },
 });

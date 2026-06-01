@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, Pressable } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useColors } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
@@ -9,11 +9,26 @@ import { AuthGuard } from '@/modules/core/auth/AuthGuard';
 import { api } from '@/lib/api';
 import { Ionicons } from '@expo/vector-icons';
 import { HeaderTokens } from '@/design-system/tokens/theme';
+import { router } from 'expo-router';
+import { useAuth } from '@/lib/auth';
 
 export default function PerksTabScreen() {
   const colors = useColors();
   const { hPad } = useLayout();
   
+  const { user } = useAuth();
+  const userTier = user?.subscriptionTier || 'free';
+
+  const rank: Record<string, number> = {
+    free: 0,
+    basic: 1,
+    plus: 2,
+    elite: 3,
+    pro: 4,
+    premium: 5,
+    vip: 6
+  };
+
   const { data: perks, isLoading, isError, refetch } = useQuery({
     queryKey: ['perks'],
     queryFn: () => api.perks.list({}),
@@ -53,26 +68,45 @@ export default function PerksTabScreen() {
               </View>
             ) : perks && perks.length > 0 ? (
               <View style={styles.perksList}>
-                {perks.map((perk: { id?: string; title?: string; description?: string; discountPercent?: number; partnerName?: string }, index: number) => (
-                  <GlassView key={perk.id || index} contentStyle={styles.perkCard}>
-                    <View style={styles.perkHeader}>
-                      <Text style={[styles.perkTitle, { color: colors.text }]}>{perk.title}</Text>
-                      <View style={[styles.perkBadge, { backgroundColor: colors.primarySoft }]}>
-                        <Text style={[styles.perkBadgeText, { color: colors.primary }]}>
-                          {perk.discountPercent ? `${perk.discountPercent}% OFF` : 'SPECIAL'}
+                {perks.map((perk: any, index: number) => {
+                  const requiredTier = perk.requiredMembershipTier || (perk.isMembershipRequired ? 'plus' : 'free');
+                  const isLocked = requiredTier !== 'free' && (rank[userTier] ?? 0) < (rank[requiredTier] ?? 0);
+
+                  return (
+                    <Pressable
+                      key={perk.id || index}
+                      onPress={() => router.push(`/perks/${perk.id}`)}
+                      style={({ pressed }) => [{ opacity: pressed ? 0.9 : 1 }]}
+                    >
+                      <GlassView contentStyle={styles.perkCard}>
+                        {isLocked && (
+                          <View style={styles.lockedContainer}>
+                            <Ionicons name="lock-closed" size={14} color={colors.textSecondary} style={{ marginRight: 2 }} />
+                            <Text style={[styles.lockedText, { color: colors.textSecondary }]}>
+                              {requiredTier.toUpperCase()} REQUIRED
+                            </Text>
+                          </View>
+                        )}
+                        <View style={styles.perkHeader}>
+                          <Text style={[styles.perkTitle, { color: colors.text, opacity: isLocked ? 0.6 : 1 }]}>{perk.title}</Text>
+                          <View style={[styles.perkBadge, { backgroundColor: isLocked ? colors.borderLight : colors.primarySoft }]}>
+                            <Text style={[styles.perkBadgeText, { color: isLocked ? colors.textSecondary : colors.primary }]}>
+                              {isLocked ? 'LOCKED' : (perk.discountPercent ? `${perk.discountPercent}% OFF` : 'SPECIAL')}
+                            </Text>
+                          </View>
+                        </View>
+                        <Text style={[styles.perkDescription, { color: colors.textSecondary, opacity: isLocked ? 0.5 : 1 }]} numberOfLines={2}>
+                          {perk.description}
                         </Text>
-                      </View>
-                    </View>
-                    <Text style={[styles.perkDescription, { color: colors.textSecondary }]} numberOfLines={2}>
-                      {perk.description}
-                    </Text>
-                    {perk.partnerName && (
-                      <Text style={[styles.perkPartner, { color: colors.textTertiary }]}>
-                        {perk.partnerName}
-                      </Text>
-                    )}
-                  </GlassView>
-                ))}
+                        {perk.partnerName && (
+                          <Text style={[styles.perkPartner, { color: colors.textTertiary, opacity: isLocked ? 0.5 : 1 }]}>
+                            {perk.partnerName}
+                          </Text>
+                        )}
+                      </GlassView>
+                    </Pressable>
+                  );
+                })}
               </View>
             ) : (
               <View style={styles.emptyState}>
@@ -164,5 +198,15 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: 'Poppins_500Medium',
     marginTop: 4,
+  },
+  lockedContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  lockedText: {
+    fontSize: 10,
+    fontFamily: 'Poppins_700Bold',
+    letterSpacing: 0.5,
   },
 });

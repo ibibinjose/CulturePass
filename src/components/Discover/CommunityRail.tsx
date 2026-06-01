@@ -77,7 +77,7 @@ function CommunityRailComponent({
         initialNumToRender={4}
         maxToRenderPerBatch={4}
         windowSize={5}
-        removeClippedSubviews={Platform.OS === 'android'}
+        removeClippedSubviews={false}
         getItemLayout={(_, index) => ({
           length: cardWidth + cardGap,
           offset: (cardWidth + cardGap) * index,

@@ -11,10 +11,36 @@ export function createStripeNamespace(request: ApiRequestFn) {
       totalPriceCents?: number;
       currency?: string;
       promoCode?: string;
+      redeemPoints?: number;
     }) =>
-      request<{ checkoutUrl: string; ticketId: string; sessionId: string }>(
+      request<{ checkoutUrl?: string; ticketId: string; sessionId?: string; directConfirmation?: boolean }>(
         'POST',
         'api/stripe/create-checkout-session',
+        { ticketData },
+      ),
+
+    createPaymentIntent: (ticketData: {
+      eventId: string;
+      eventTitle?: string;
+      eventDate?: string;
+      tierName?: string;
+      quantity?: number;
+      totalPriceCents?: number;
+      currency?: string;
+      promoCode?: string;
+      redeemPoints?: number;
+    }) =>
+      request<{
+        paymentIntent?: string;
+        ephemeralKey?: string;
+        customer?: string;
+        publishableKey?: string;
+        ticketId: string;
+        paymentIntentId?: string;
+        directConfirmation?: boolean;
+      }>(
+        'POST',
+        'api/stripe/create-payment-intent',
         { ticketData },
       ),
 

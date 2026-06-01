@@ -10,7 +10,7 @@ import {
 import { Stack, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 
 import { ErrorBoundary } from '@/modules/core/ui/ErrorBoundary';
 import { GlassView } from '@/design-system/ui/GlassView';
@@ -134,7 +134,7 @@ const SOLUTION_BLOCKS: { title: string; body: string; bullets: string[] }[] = [
 
 export default function AssociationCommunityPlatformScreen() {
   const colors = useColors();
-  const insets = useSafeAreaInsets();
+  const safeInsets = useSafeAreaInsetsWeb();
   const { hPad, contentWidth, isDesktop, tabBarHeight } = useLayout();
   const maxProse = 720;
   const bottomPad = Math.max(tabBarHeight, 28);
@@ -156,7 +156,7 @@ export default function AssociationCommunityPlatformScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
             paddingBottom: bottomPad + 40,
-            paddingTop: (Platform.OS === 'web' ? 0 : insets.top) + 16,
+            paddingTop: (safeInsets.top) + 16,
           }}
         >
           <View

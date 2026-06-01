@@ -206,13 +206,20 @@ export const getStyles = (colors: ReturnType<typeof useColors>) => StyleSheet.cr
   detailDivider: { height: 1, backgroundColor: CP.bg, marginVertical: 16, marginLeft: 60 },
 
   cpidCard: {
-    borderRadius: 24, padding: 24, overflow: 'hidden',
-    shadowColor: CP.purple,
-    shadowOffset: { width: 0, height: 14 },
-    shadowOpacity: 0.35, shadowRadius: 28, elevation: 14,
+    borderRadius: 24,
+    padding: 22,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.32, shadowRadius: 24, elevation: 11,
   },
-  cpidAccentEdge: {
-    position: 'absolute', top: 0, left: 0, right: 0, height: 2.5,
+  cpidAccentGold: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 3,
+    backgroundColor: '#D4AF37',
   },
   cpidDotsWm: {
     position: 'absolute', bottom: 22, right: 20,
@@ -255,6 +262,58 @@ export const getStyles = (colors: ReturnType<typeof useColors>) => StyleSheet.cr
     fontFamily: 'Poppins_500Medium', fontSize: 11, color: CP.muted, letterSpacing: 0.3,
   },
 
+  // Solid single-color premium version (used on public profile cards)
+  cpidCenterSolid: {
+    alignItems: 'flex-start',
+    marginBottom: 18,
+  },
+  cpidLabelSolid: {
+    fontFamily: 'Poppins_500Medium',
+    fontSize: 9,
+    color: '#A8C5FF',
+    letterSpacing: 2.5,
+    textTransform: 'uppercase' as const,
+    marginBottom: 4,
+  },
+  cpidValueSolid: {
+    fontFamily: 'Poppins_700Bold',
+    fontSize: 22,
+    color: '#D4AF37',
+    letterSpacing: 2,
+  },
+  cpidMetaSolid: {
+    flexDirection: 'row',
+    gap: 24,
+    marginBottom: 18,
+  },
+  cpidMetaLabelSolid: {
+    fontFamily: 'Poppins_400Regular',
+    fontSize: 10,
+    color: '#8FA8D9',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase' as const,
+    marginBottom: 3,
+  },
+  cpidMetaValueSolid: {
+    fontFamily: 'Poppins_600SemiBold',
+    fontSize: 13,
+    color: '#E8E4D9',
+  },
+  cpidFooterSolid: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.12)',
+    paddingTop: 14,
+  },
+  cpidFooterTextSolid: {
+    fontFamily: 'Poppins_500Medium',
+    fontSize: 12,
+    color: '#B8C9E8',
+    letterSpacing: 0.3,
+  },
+
   viewQrBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 14,
     backgroundColor: CP.surface, borderRadius: 18, padding: 16, marginTop: 12,
@@ -266,4 +325,73 @@ export const getStyles = (colors: ReturnType<typeof useColors>) => StyleSheet.cr
   },
   viewQrText: { fontFamily: 'Poppins_600SemiBold', fontSize: 15, color: CP.text },
   viewQrSub:  { fontFamily: 'Poppins_400Regular', fontSize: 12, color: CP.muted, marginTop: 1 },
+
+  // Modern Public Profile Card (consistent with user CPU card)
+  publicProfileCard: {
+    marginTop: 20,
+    borderRadius: 20,
+    borderWidth: 1,
+    padding: 18,
+    gap: 14,
+  },
+  publicHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  entityPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+  },
+  entityPillText: {
+    fontFamily: 'Poppins_600SemiBold',
+    fontSize: 11,
+    letterSpacing: 0.3,
+  },
+  publicContent: {
+    flexDirection: 'row',
+    gap: 14,
+    alignItems: 'flex-start',
+  },
+  qrBox: {
+    padding: 8,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+  },
+  publicLinkRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 12,
+    padding: 12,
+    gap: 10,
+  },
+  publicLink: {
+    fontFamily: 'Poppins_600SemiBold',
+    fontSize: 14,
+    flex: 1,
+  },
+  publicActions: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 6,
+  },
+  publicAction: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+    backgroundColor: colors.backgroundSecondary,
+  },
+  publicActionText: {
+    fontFamily: 'Poppins_500Medium',
+    fontSize: 12,
+    color: colors.textSecondary,
+  },
 });

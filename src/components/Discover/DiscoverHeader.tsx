@@ -80,21 +80,36 @@ function DiscoverHeaderComponent({
                 colors={discoverMetaGradient}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
-                style={[styles.metaBadge, { backgroundColor: discoverMetaBadgeBg }]}
+                style={[
+                  styles.metaBadge,
+                  {
+                    backgroundColor: discoverMetaBadgeBg,
+                    borderColor: withAlpha(accentColor, 0.28),
+                    borderWidth: 1,
+                  },
+                ]}
               >
                 <Ionicons name="sparkles" size={12} color={accentColor} />
-                <Text style={[styles.desktopMeta, { color: accentColor, fontWeight: '700', marginBottom: 0 }]}>
+                <Text style={[styles.desktopMeta, { color: accentColor, fontFamily: FontFamily.semibold, marginBottom: 0 }]}>
                   {currentTime}
                   {weatherSummary ? ` · ${weatherSummary}` : ''}
                 </Text>
               </LinearGradient>
               <LuxeText
                 variant="display"
-                style={[styles.desktopGreeting, { color: greetingColor, fontSize: Math.min(48, greetingFontSize + 12) }]}
+                style={[
+                  styles.desktopGreeting,
+                  {
+                    color: greetingColor,
+                    fontSize: Math.min(48, greetingFontSize + 12),
+                    fontFamily: FontFamily.bold,
+                    letterSpacing: -1.5,
+                  },
+                ]}
               >
                 {greeting}
               </LuxeText>
-              <LuxeText variant="body" style={[styles.desktopSub, { color: metaColor }]}>
+              <LuxeText variant="body" style={[styles.desktopSub, { color: metaColor, fontFamily: FontFamily.regular, opacity: 0.9 }]}>
                 {`Explore festivals, communities, and events in ${city}.`}
               </LuxeText>
             </View>
@@ -109,16 +124,31 @@ function DiscoverHeaderComponent({
             colors={discoverMetaGradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
-            style={[styles.metaBadge, { backgroundColor: discoverMetaBadgeBg }]}
+            style={[
+              styles.metaBadge,
+              {
+                backgroundColor: discoverMetaBadgeBg,
+                borderColor: withAlpha(accentColor, 0.28),
+                borderWidth: 1,
+              },
+            ]}
           >
             <Ionicons name="time" size={12} color={accentColor} />
-            <Text style={[styles.mobileMetaLabel, { color: accentColor }]} numberOfLines={1}>
+            <Text style={[styles.mobileMetaLabel, { color: accentColor, fontFamily: FontFamily.semibold }]} numberOfLines={1}>
               {mobileMetaLabel}
             </Text>
           </LinearGradient>
           <LuxeText
             variant="hero"
-            style={[styles.mobileGreeting, { color: greetingColor, fontSize: greetingFontSize + 2 }]}
+            style={[
+              styles.mobileGreeting,
+              {
+                color: greetingColor,
+                fontSize: greetingFontSize + 2,
+                fontFamily: FontFamily.bold,
+                letterSpacing: -0.8,
+              },
+            ]}
             numberOfLines={1}
           >
             {greeting}

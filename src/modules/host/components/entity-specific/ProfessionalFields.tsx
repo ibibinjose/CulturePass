@@ -187,11 +187,11 @@ export function ProfessionalFields({
     responseTime: '24-hours' as ResponseTime,
   }, [formData.professionalData]);
 
-  const credentials = professionalData.credentials || [];
+  const credentials = useMemo(() => professionalData.credentials || [], [professionalData.credentials]);
   const influencerLicence = professionalData.influencerLicence;
-  const expertiseAreas = professionalData.expertiseAreas || [];
+  const expertiseAreas = useMemo(() => professionalData.expertiseAreas || [], [professionalData.expertiseAreas]);
   const availabilityStatus = professionalData.availabilityStatus || 'available';
-  const rateCard = professionalData.rateCard || [];
+  const rateCard = useMemo(() => professionalData.rateCard || [], [professionalData.rateCard]);
   const currency = professionalData.currency || 'AUD';
   const responseTime = professionalData.responseTime || '24-hours';
 
@@ -240,7 +240,7 @@ export function ProfessionalFields({
 
   const handleRemoveCredential = useCallback(
     (index: number) => {
-      const updated = credentials.filter((_, i) => i !== index);
+      const updated = credentials.filter((_: string, i: number) => i !== index);
       updateProfessionalData({ credentials: updated });
     },
     [credentials, updateProfessionalData]
@@ -280,7 +280,7 @@ export function ProfessionalFields({
   const handleToggleExpertise = useCallback(
     (area: string) => {
       const updated = expertiseAreas.includes(area)
-        ? expertiseAreas.filter((a) => a !== area)
+        ? expertiseAreas.filter((a: string) => a !== area)
         : [...expertiseAreas, area];
       updateProfessionalData({ expertiseAreas: updated });
     },
@@ -311,7 +311,7 @@ export function ProfessionalFields({
   const handleAddRateCardTier = useCallback(
     (type: RateCardType) => {
       // Don't add duplicate tier types
-      if (rateCard.some((tier) => tier.type === type)) return;
+      if (rateCard.some((tier: RateCardTier) => tier.type === type)) return;
       const newTier: RateCardTier = { type, rate: 0 };
       updateProfessionalData({ rateCard: [...rateCard, newTier] });
     },
@@ -320,7 +320,7 @@ export function ProfessionalFields({
 
   const handleUpdateRateCardTier = useCallback(
     (index: number, updates: Partial<RateCardTier>) => {
-      const updated = rateCard.map((tier, i) =>
+      const updated = rateCard.map((tier: RateCardTier, i: number) =>
         i === index ? { ...tier, ...updates } : tier
       );
       updateProfessionalData({ rateCard: updated });
@@ -330,7 +330,7 @@ export function ProfessionalFields({
 
   const handleRemoveRateCardTier = useCallback(
     (index: number) => {
-      const updated = rateCard.filter((_, i) => i !== index);
+      const updated = rateCard.filter((_: RateCardTier, i: number) => i !== index);
       updateProfessionalData({ rateCard: updated });
     },
     [rateCard, updateProfessionalData]
@@ -395,7 +395,7 @@ export function ProfessionalFields({
         {/* Uploaded credentials list */}
         {credentials.length > 0 && (
           <View style={styles.credentialsList}>
-            {credentials.map((url, index) => (
+            {credentials.map((url: string, index: number) => (
               <View
                 key={`credential-${index}`}
                 style={[styles.credentialItem, { backgroundColor: colors.surfaceElevated }]}
@@ -848,7 +848,7 @@ export function ProfessionalFields({
 
         {/* Rate card tiers */}
         <View style={styles.rateCardTiers}>
-          {rateCard.map((tier, index) => (
+          {rateCard.map((tier: RateCardTier, index: number) => (
             <View
               key={`tier-${tier.type}-${index}`}
               style={[styles.rateCardTier, { backgroundColor: colors.surfaceElevated }]}
@@ -913,7 +913,7 @@ export function ProfessionalFields({
         {/* Add tier buttons */}
         <View style={styles.addTierRow}>
           {RATE_CARD_TYPES.filter(
-            (type) => !rateCard.some((tier) => tier.type === type.value)
+            (type) => !rateCard.some((tier: RateCardTier) => tier.type === type.value)
           ).map((type) => (
             <Pressable
               key={type.value}

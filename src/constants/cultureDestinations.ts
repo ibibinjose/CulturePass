@@ -60,7 +60,7 @@ export const CULTURE_DESTINATIONS: Record<string, CultureDestinationDefinition> 
     languages: ['Malayalam', 'English', 'Hindi'],
     originCountryHint: 'India',
     originKeywords: ['kerala', 'malayalam', 'malayali', 'malayalee', 'thiruvananthapuram', 'kochi'],
-    publicPath: '/kerala',
+    publicPath: '/culturehub/kerala',
     metaDescription:
       'Discover Kerala and Malayalee events worldwide — filter by country and state, or browse the full diaspora hub.',
   },
@@ -89,7 +89,7 @@ export const CULTURE_DESTINATIONS: Record<string, CultureDestinationDefinition> 
     languages: ['Gujarati', 'Hindi', 'English'],
     originCountryHint: 'India',
     originKeywords: ['gujarat', 'gujarati', 'ahmedabad', 'surat', 'vadodara'],
-    publicPath: '/culture/gujarati',
+    publicPath: '/culturehub/gujarati',
     metaDescription:
       'Gujarati culture, language, and community events — search one country or the worldwide hub.',
   },
@@ -120,7 +120,7 @@ export const CULTURE_DESTINATIONS: Record<string, CultureDestinationDefinition> 
     languages: ['Punjabi', 'Hindi', 'English'],
     originCountryHint: 'India',
     originKeywords: ['punjab', 'punjabi', 'sikh', 'amritsar', 'bhangra'],
-    publicPath: '/culture/punjabi',
+    publicPath: '/culturehub/punjabi',
     metaDescription: 'Punjabi and Sikh community events worldwide — by country, state, or full diaspora.',
   },
 
@@ -147,7 +147,7 @@ export const CULTURE_DESTINATIONS: Record<string, CultureDestinationDefinition> 
     languages: ['Tamil', 'English'],
     originCountryHint: 'India',
     originKeywords: ['tamil', 'chennai', 'tamil nadu', 'pongal'],
-    publicPath: '/culture/tamil',
+    publicPath: '/culturehub/tamil',
     metaDescription: 'Tamil language and culture events — filter by your country or browse globally.',
   },
 
@@ -174,7 +174,7 @@ export const CULTURE_DESTINATIONS: Record<string, CultureDestinationDefinition> 
     languages: ['Telugu', 'English', 'Hindi'],
     originCountryHint: 'India',
     originKeywords: ['telugu', 'hyderabad', 'telangana', 'andhra'],
-    publicPath: '/culture/telugu',
+    publicPath: '/culturehub/telugu',
     metaDescription: 'Telugu community events and festivals — scoped to your country or worldwide.',
   },
 
@@ -201,7 +201,7 @@ export const CULTURE_DESTINATIONS: Record<string, CultureDestinationDefinition> 
     languages: ['Bengali', 'Bangla', 'English'],
     originCountryHint: 'India',
     originKeywords: ['bengali', 'bangla', 'kolkata', 'durga puja'],
-    publicPath: '/culture/bengali',
+    publicPath: '/culturehub/bengali',
     metaDescription: 'Bengali and Bangla cultural events — by region or full diaspora search.',
   },
 
@@ -226,7 +226,7 @@ export const CULTURE_DESTINATIONS: Record<string, CultureDestinationDefinition> 
     languages: ['Marathi', 'Hindi', 'English'],
     originCountryHint: 'India',
     originKeywords: ['marathi', 'maharashtra', 'mumbai', 'pune'],
-    publicPath: '/culture/marathi',
+    publicPath: '/culturehub/marathi',
     metaDescription: 'Marathi culture and events worldwide — filter by country and state.',
   },
 
@@ -253,7 +253,7 @@ export const CULTURE_DESTINATIONS: Record<string, CultureDestinationDefinition> 
     languages: ['Kannada', 'English'],
     originCountryHint: 'India',
     originKeywords: ['kannada', 'karnataka', 'bengaluru', 'bangalore'],
-    publicPath: '/culture/kannada',
+    publicPath: '/culturehub/kannada',
     metaDescription: 'Kannada language and Karnataka-rooted events — local scope or diaspora hub.',
   },
 
@@ -268,7 +268,7 @@ export const CULTURE_DESTINATIONS: Record<string, CultureDestinationDefinition> 
     languages: ['Odia', 'Oriya', 'English'],
     originCountryHint: 'India',
     originKeywords: ['odia', 'odisha', 'oriya', 'bhubaneswar'],
-    publicPath: '/culture/odia',
+    publicPath: '/culturehub/odia',
     metaDescription: 'Odia culture and community events — search your country or the world.',
   },
 
@@ -296,7 +296,7 @@ export const CULTURE_DESTINATIONS: Record<string, CultureDestinationDefinition> 
     languages: ['Hindi', 'Urdu', 'English'],
     originCountryHint: 'India',
     originKeywords: ['hindi', 'bollywood', 'delhi', 'diwali'],
-    publicPath: '/culture/hindi',
+    publicPath: '/culturehub/hindi',
     metaDescription: 'Hindi-language and North Indian cultural events — scoped to you or worldwide.',
   },
 
@@ -322,7 +322,7 @@ export const CULTURE_DESTINATIONS: Record<string, CultureDestinationDefinition> 
     languages: ['Tagalog', 'Filipino', 'English'],
     originCountryHint: 'Philippines',
     originKeywords: ['filipino', 'pinoy', 'philippines', 'tagalog'],
-    publicPath: '/culture/filipino',
+    publicPath: '/culturehub/filipino',
     metaDescription: 'Filipino community events — all across your country or the global hub.',
   },
 
@@ -347,7 +347,7 @@ export const CULTURE_DESTINATIONS: Record<string, CultureDestinationDefinition> 
     languages: ['Vietnamese', 'English'],
     originCountryHint: 'Vietnam',
     originKeywords: ['vietnamese', 'vietnam', 'tet', 'saigon'],
-    publicPath: '/culture/vietnamese',
+    publicPath: '/culturehub/vietnamese',
     metaDescription: 'Vietnamese cultural events — filter by country and region or browse worldwide.',
   },
 
@@ -362,7 +362,7 @@ export const CULTURE_DESTINATIONS: Record<string, CultureDestinationDefinition> 
     languages: ['Korean', 'English'],
     originCountryHint: 'South Korea',
     originKeywords: ['korean', 'korea', 'seoul', 'hallyu'],
-    publicPath: '/culture/korean',
+    publicPath: '/culturehub/korean',
     metaDescription: 'Korean culture and community events — your country first or global listings.',
   },
 
@@ -377,7 +377,7 @@ export const CULTURE_DESTINATIONS: Record<string, CultureDestinationDefinition> 
     languages: ['Arabic', 'English', 'French'],
     originCountryHint: 'Lebanon',
     originKeywords: ['lebanese', 'lebanon', 'beirut', 'arabic'],
-    publicPath: '/culture/lebanese',
+    publicPath: '/culturehub/lebanese',
     metaDescription: 'Lebanese and Levant-rooted events — narrow to your area or open worldwide.',
   },
 
@@ -392,7 +392,7 @@ export const CULTURE_DESTINATIONS: Record<string, CultureDestinationDefinition> 
     languages: ['Persian', 'Farsi', 'English'],
     originCountryHint: 'Iran',
     originKeywords: ['persian', 'iranian', 'farsi', 'nowruz'],
-    publicPath: '/culture/persian',
+    publicPath: '/culturehub/persian',
     metaDescription: 'Persian-language and Iranian cultural events — by country or diaspora-wide.',
   },
 
@@ -407,7 +407,7 @@ export const CULTURE_DESTINATIONS: Record<string, CultureDestinationDefinition> 
     languages: ['Somali', 'English', 'Arabic'],
     originCountryHint: 'Somalia',
     originKeywords: ['somali', 'somalia', 'mogadishu'],
-    publicPath: '/culture/somali',
+    publicPath: '/culturehub/somali',
     metaDescription: 'Somali community and cultural events — scoped locally or worldwide.',
   },
 
@@ -433,7 +433,7 @@ export const CULTURE_DESTINATIONS: Record<string, CultureDestinationDefinition> 
     languages: ['Amharic', 'Tigrinya', 'English'],
     originCountryHint: 'Ethiopia',
     originKeywords: ['ethiopian', 'habesha', 'amharic', 'addis'],
-    publicPath: '/culture/ethiopian',
+    publicPath: '/culturehub/ethiopian',
     metaDescription: 'Ethiopian and Eritrean cultural events — filter by host country or browse all.',
   },
 
@@ -460,7 +460,7 @@ export const CULTURE_DESTINATIONS: Record<string, CultureDestinationDefinition> 
     languages: ['English', 'Yoruba', 'Igbo', 'Hausa'],
     originCountryHint: 'Nigeria',
     originKeywords: ['nigerian', 'nigeria', 'lagos', 'yoruba', 'igbo'],
-    publicPath: '/culture/nigerian',
+    publicPath: '/culturehub/nigerian',
     metaDescription: 'Nigerian and West African events — your country or full diaspora listings.',
   },
 
@@ -489,7 +489,7 @@ export const CULTURE_DESTINATIONS: Record<string, CultureDestinationDefinition> 
     languages: ['Mandarin', 'Cantonese', 'English'],
     originCountryHint: 'China',
     originKeywords: ['mandarin', 'chinese', 'shanghai', 'beijing'],
-    publicPath: '/culture/mandarin',
+    publicPath: '/culturehub/mandarin',
     metaDescription: 'Mandarin and Chinese community events — by country, region, or worldwide hub.',
   },
 
@@ -504,7 +504,7 @@ export const CULTURE_DESTINATIONS: Record<string, CultureDestinationDefinition> 
     languages: ['Japanese', 'English'],
     originCountryHint: 'Japan',
     originKeywords: ['japanese', 'japan', 'tokyo', 'nihongo'],
-    publicPath: '/culture/japanese',
+    publicPath: '/culturehub/japanese',
     metaDescription: 'Japanese cultural events — local to your country or global.',
   },
 
@@ -531,7 +531,7 @@ export const CULTURE_DESTINATIONS: Record<string, CultureDestinationDefinition> 
     languages: ['Spanish', 'English'],
     originCountryHint: 'Mexico',
     originKeywords: ['mexican', 'mexico', 'chicano', 'cdmx'],
-    publicPath: '/culture/mexican',
+    publicPath: '/culturehub/mexican',
     metaDescription: 'Mexican and Chicano cultural events — filter by host country or browse widely.',
   },
 
@@ -546,7 +546,7 @@ export const CULTURE_DESTINATIONS: Record<string, CultureDestinationDefinition> 
     languages: ['Greek', 'English'],
     originCountryHint: 'Greece',
     originKeywords: ['greek', 'greece', 'athens', 'hellenic'],
-    publicPath: '/culture/greek',
+    publicPath: '/culturehub/greek',
     metaDescription: 'Greek and Cypriot community events — scoped to you or diaspora-wide.',
   },
 
@@ -561,7 +561,7 @@ export const CULTURE_DESTINATIONS: Record<string, CultureDestinationDefinition> 
     languages: ['Italian', 'English'],
     originCountryHint: 'Italy',
     originKeywords: ['italian', 'italy', 'rome', 'sicilian'],
-    publicPath: '/culture/italian',
+    publicPath: '/culturehub/italian',
     metaDescription: 'Italian cultural events — by country and region or full hub.',
   },
 
@@ -576,10 +576,20 @@ export const CULTURE_DESTINATIONS: Record<string, CultureDestinationDefinition> 
     languages: ['Ukrainian', 'English'],
     originCountryHint: 'Ukraine',
     originKeywords: ['ukrainian', 'ukraine', 'kyiv'],
-    publicPath: '/culture/ukrainian',
+    publicPath: '/culturehub/ukrainian',
     metaDescription: 'Ukrainian community and cultural events — local scope or worldwide.',
   },
 };
+
+// Ensure all culture hub publicPaths are consistently under the new /culturehub/ structure.
+// This makes the gallery + deep links resilient even if individual entries are edited.
+Object.values(CULTURE_DESTINATIONS).forEach((def) => {
+  if (!def.publicPath.startsWith('/culturehub/') && def.publicPath !== '/culturehub') {
+    // Convert legacy top-level paths like '/kerala' or '/culture/xxx' → '/culturehub/xxx'
+    const slug = def.slug || def.publicPath.replace(/^\//, '').split('/').pop();
+    def.publicPath = `/culturehub/${slug}`;
+  }
+});
 
 export function getCultureDestination(slug: string): CultureDestinationDefinition | null {
   const key = slug.trim().toLowerCase();

@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, ScrollView, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import { useColors } from '@/hooks/useColors';
 import { CultureTokens, gradients, TextStyles } from '@/design-system/tokens/theme';
 import { goBackOrReplace } from '@/lib/navigation';
@@ -18,8 +18,8 @@ const SECTIONS = [
 export default function EventListingTermsScreen() {
   const colors = useColors();
   const styles = getStyles(colors);
-  const insets = useSafeAreaInsets();
-  const topInset = Platform.OS === 'web' ? 0 : insets.top;
+  const safeInsets = useSafeAreaInsetsWeb();
+  const topInset = safeInsets.top;
 
   return (
     <View style={[styles.container, { paddingTop: topInset, backgroundColor: colors.background }]}>
@@ -32,7 +32,7 @@ export default function EventListingTermsScreen() {
       />
       <M3TopAppBar title="Event Listing Terms" onBack={() => goBackOrReplace('/settings')} denseWeb webChromeless />
 
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 40 + (Platform.OS === 'web' ? 34 : insets.bottom), paddingTop: 10 }} showsVerticalScrollIndicator={false}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 40 + (Platform.OS === 'web' ? 34 : safeInsets.bottom), paddingTop: 10 }} showsVerticalScrollIndicator={false}>
         <View style={styles.intro}>
           <View style={styles.iconWrap}>
             <Ionicons name="document-text" size={28} color={CultureTokens.indigo} />

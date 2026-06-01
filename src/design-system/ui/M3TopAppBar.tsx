@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, Text, Pressable, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import { useM3Colors } from '@/hooks/useM3Colors';
 import { M3Typography } from '@/design-system/tokens/typography';
 import { HeaderTokens, ScreenTokens } from '@/design-system/tokens/theme';
@@ -39,9 +39,9 @@ export function M3TopAppBar({
   webBorderColor,
 }: M3TopAppBarProps) {
   const colors = useM3Colors();
-  const insets = useSafeAreaInsets();
+  const insets = useSafeAreaInsetsWeb();
   const isWeb = Platform.OS === 'web';
-  const topPadding = (Platform.OS === 'web' ? 0 : insets.top) + ScreenTokens.topOffset;
+  const topPadding = insets.top + ScreenTokens.topOffset;
 
   const isCenterAligned = variant === 'center-aligned' || centerTitle;
   const showExpandedTitle = (variant === 'medium' || variant === 'large') && !isWeb;

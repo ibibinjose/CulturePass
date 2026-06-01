@@ -5,6 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Colors } from '@/design-system/tokens/theme';
 import { useColors } from '@/hooks/useColors';
 import { TextStyles } from '@/design-system/tokens/typography';
+import { normalizeRemoteImageUri } from '@/lib/mediaUrls';
 
 const CITY_IMAGES: Record<string, string> = {
   // Australian metro areas (used by default in FEATURED_CITIES)
@@ -63,7 +64,7 @@ function CityCard({ city, onPress, width, height }: CityCardProps) {
       accessibilityLabel={`Explore ${city.name}, ${city.country}`}
     >
       <Image
-        source={{ uri: imageUri }}
+        source={{ uri: normalizeRemoteImageUri(imageUri) ?? undefined }}
         style={StyleSheet.absoluteFill}
         contentFit="cover"
         transition={200}

@@ -23,10 +23,10 @@ import {
   Pressable,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import Animated, { FadeInDown, useReducedMotion } from 'react-native-reanimated';
 
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import { useColors } from '@/hooks/useColors';
 import { CultureTokens, FontFamily } from '@/design-system/tokens/theme';
 import { GlassView } from '@/design-system/ui/GlassView';
@@ -116,9 +116,9 @@ export function NotificationPreferences({
   saving = false,
 }: NotificationPreferencesProps) {
   const colors = useColors();
-  const insets = useSafeAreaInsets();
+  const safeInsets = useSafeAreaInsetsWeb();
   const reducedMotion = useReducedMotion();
-  const topInset = Platform.OS === 'web' ? 0 : insets.top;
+  const topInset = safeInsets.top;
 
   const [preferences, setPreferences] = useState<HostNotificationPreferences>(
     initialPreferences || getDefaultPreferences(userId)
@@ -219,7 +219,7 @@ export function NotificationPreferences({
       style={[styles.container, { backgroundColor: colors.background }]}
       contentContainerStyle={[
         styles.content,
-        { paddingTop: topInset + 16, paddingBottom: insets.bottom + 80 },
+        { paddingTop: topInset + 16, paddingBottom: safeInsets.bottom + 80 },
       ]}
       showsVerticalScrollIndicator={false}
       accessibilityRole="scrollbar"

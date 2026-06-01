@@ -5,7 +5,7 @@ import {
 import helpData from '@/data/static/help.json';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import { useColors } from '@/hooks/useColors';
 import { CultureTokens, gradients, LayoutRules, LiquidGlassTokens, CategoryColors, TextStyles } from '@/design-system/tokens/theme';
 import { router } from 'expo-router';
@@ -52,7 +52,7 @@ const QUICK_LINKS = [
 
 export default function HelpScreen() {
   const colors = useColors();
-  const insets = useSafeAreaInsets();
+  const safeInsets = useSafeAreaInsetsWeb();
   const styles = getStyles(colors);
   const appVersion = getAppVersion();
 
@@ -77,7 +77,7 @@ export default function HelpScreen() {
 
   const totalResults = filteredCategories.reduce((n, c) => n + c.items.length, 0);
 
-  const topInset = Platform.OS === 'web' ? 0 : insets.top;
+  const topInset = safeInsets.top;
 
   return (
     <View style={[styles.container, { paddingTop: topInset, backgroundColor: colors.background }]}>
@@ -92,7 +92,7 @@ export default function HelpScreen() {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 40 + (isWeb ? 34 : insets.bottom), paddingTop: 8 }}
+        contentContainerStyle={{ paddingBottom: 40 + (isWeb ? 34 : safeInsets.bottom), paddingTop: 8 }}
         keyboardShouldPersistTaps="handled"
       >
         {/* Hero */}

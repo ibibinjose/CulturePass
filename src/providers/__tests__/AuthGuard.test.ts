@@ -61,7 +61,7 @@ describe('AuthGuard', () => {
     test('should accept valid internal paths', () => {
       expect(sanitizeInternalRedirect('/profile')).toBe('/profile');
       expect(sanitizeInternalRedirect('/tickets/123')).toBe('/tickets/123');
-      expect(sanitizeInternalRedirect('/hostspace/apply')).toBe('/hostspace/apply');
+      expect(sanitizeInternalRedirect('/hostspace/create')).toBe('/hostspace/create');
     });
 
     test('should handle array inputs correctly', () => {
@@ -263,7 +263,7 @@ describe('AuthGuard', () => {
   });
 
   describe('Hostspace/apply route handling', () => {
-    test('should protect /hostspace/apply route for unauthenticated users', () => {
+    test('should protect /hostspace/create route for unauthenticated users', () => {
       (useAuth as jest.Mock).mockReturnValue({
         user: null,
         isRestoring: false,
@@ -295,7 +295,7 @@ describe('AuthGuard', () => {
       expect(isProtected).toBe(true);
     });
 
-    test('should allow authenticated users to access /hostspace/apply', () => {
+    test('should allow authenticated users to access /hostspace/create', () => {
       (useAuth as jest.Mock).mockReturnValue({
         user: { id: 'user123' },
         isRestoring: false,

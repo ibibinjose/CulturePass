@@ -75,7 +75,7 @@ export const ProfileLinksSection = React.memo(({
   const quickLinks: RowItem[] = [
     ...(isAdmin ? [{ id: 'admin', icon: 'shield-checkmark-outline' as const, label: 'Admin Console', path: '/admin', accent: m3.error }] : []),
     { id: 'network', icon: 'git-network-outline' as const, label: 'My Circle', path: '/network?tab=followers', accent: m3.primary },
-    { id: 'saved', icon: 'bookmark-outline' as const, label: 'Saved events', path: '/saved', accent: CultureTokens.violet },
+    { id: 'saved', icon: 'heart-outline' as const, label: 'Favorites & Stamps', path: '/saved', accent: CultureTokens.coral },
     { id: 'community', icon: 'people-outline' as const, label: 'My communities', path: '/communities', accent: CultureTokens.teal },
     { id: 'perksLink', icon: 'gift-outline' as const, label: 'Perks & rewards', path: '/perks', accent: CultureTokens.gold },
     { id: 'payment', icon: 'card-outline' as const, label: 'Payment methods', path: '/payment/methods', accent: m3.primary },
@@ -104,31 +104,35 @@ export const ProfileLinksSection = React.memo(({
         <M3ListCard rows={attendeeRows} onPress={nav} />
       </View>
 
-      {/* Prominent Host Studio entry for organizers - elevated discoverability */}
-      {isOrganizer && (
-        <View style={[styles.section, { paddingHorizontal: hPad }]}>
-          <Pressable
-            onPress={() => nav('/hostspace')}
-            style={({ pressed }) => [
-              styles.hostStudioBanner,
-              { backgroundColor: m3.primaryContainer, opacity: pressed ? 0.9 : 1 }
-            ]}
-            accessibilityRole="button"
-            accessibilityLabel="Enter Host Studio"
-          >
-            <View style={styles.hostStudioContent}>
-              <View style={styles.hostStudioIcon}>
-                <Ionicons name="briefcase-outline" size={22} color={m3.onPrimaryContainer} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.hostStudioTitle, { color: m3.onPrimaryContainer }]}>Host Studio</Text>
-                <Text style={[styles.hostStudioSub, { color: m3.onPrimaryContainer }]}>Create, manage events &amp; scan tickets</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color={m3.onPrimaryContainer} />
+      {/* Prominent Host Studio entry for all users (Sandbox Mode for non-organizers) */}
+      <View style={[styles.section, { paddingHorizontal: hPad }]}>
+        <Pressable
+          onPress={() => nav('/hostspace')}
+          style={({ pressed }) => [
+            styles.hostStudioBanner,
+            { backgroundColor: m3.primaryContainer, opacity: pressed ? 0.9 : 1 }
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel={isOrganizer ? "Enter Host Studio" : "Enter Host Studio (Sandbox)"}
+        >
+          <View style={styles.hostStudioContent}>
+            <View style={styles.hostStudioIcon}>
+              <Ionicons name="briefcase-outline" size={22} color={m3.onPrimaryContainer} />
             </View>
-          </Pressable>
-        </View>
-      )}
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.hostStudioTitle, { color: m3.onPrimaryContainer }]}>
+                {isOrganizer ? 'Host Studio' : 'Host Studio (Sandbox)'}
+              </Text>
+              <Text style={[styles.hostStudioSub, { color: m3.onPrimaryContainer }]}>
+                {isOrganizer 
+                  ? 'Create, manage events & scan tickets'
+                  : 'Draft profiles & events, apply to publish'}
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={m3.onPrimaryContainer} />
+          </View>
+        </Pressable>
+      </View>
 
       <View style={[styles.section, { paddingHorizontal: hPad }]}>
         <M3SectionHeader

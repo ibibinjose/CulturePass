@@ -16,8 +16,8 @@ export const ProfileDraftSchema = z.object({
   userId: z.string(), // Firebase Auth UID
   entityType: HostEntityTypeSchema,
   formData: HostProfileFormDataSchema, // Incomplete profile data
-  currentStep: z.number().int().min(1).max(6),
-  completedSteps: z.array(z.number().int().min(1).max(6)).default([]),
+  currentStep: z.number().int().min(1).max(10),
+  completedSteps: z.array(z.number().int().min(1).max(10)).default([]),
   createdAt: z.string(), // ISO 8601 timestamp
   updatedAt: z.string(), // ISO 8601 timestamp
   expiresAt: z.string(), // ISO 8601 timestamp (90 days from last update)

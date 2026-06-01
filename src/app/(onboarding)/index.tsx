@@ -12,7 +12,7 @@ import { router, usePathname } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Image } from 'expo-image';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import * as Haptics from 'expo-haptics';
 import Animated, {
   useSharedValue,
@@ -96,9 +96,9 @@ function tap(style: Haptics.ImpactFeedbackStyle = Haptics.ImpactFeedbackStyle.Li
 
 export default function WelcomeScreen() {
   const m3Colors = useM3Colors();
-  const insets = useSafeAreaInsets();
+  const safeInsets = useSafeAreaInsetsWeb();
   const { width } = useWindowDimensions();
-  const topInset = Platform.OS === 'web' ? 0 : insets.top;
+  const topInset = safeInsets.top;
   const { completeOnboarding } = useOnboarding();
   const pathname = usePathname();
 
@@ -116,7 +116,7 @@ export default function WelcomeScreen() {
       setTimeout(() => setShowSplash(false), 900);
     }, 1100);
     return () => clearTimeout(t);
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- reanimated shared values (splashOpacity, contentOpacity) are stable refs by design; adding them would be incorrect
 
   const splashStyle = useAnimatedStyle(() => ({ opacity: splashOpacity.value }));
   const contentStyle = useAnimatedStyle(() => ({ flex: 1, opacity: contentOpacity.value }));
@@ -209,7 +209,7 @@ export default function WelcomeScreen() {
             s.sheet,
             {
               backgroundColor: m3Colors.surface,
-              paddingBottom: insets.bottom + 20,
+              paddingBottom: safeInsets.bottom + 20,
             },
           ]}
         >

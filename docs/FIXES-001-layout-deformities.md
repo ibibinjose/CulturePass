@@ -69,7 +69,7 @@ While the app has excellent functional test coverage, strong TypeScript, and a m
 Other files flagged for later passes (not in this PR stack unless time allows):
 - `src/modules/host/components/steps/Step3Legal.tsx`
 - `src/modules/host/components/DraftRecoveryModal.tsx`
-- `src/app/hostspace/apply.tsx`
+- `/hostspace/apply` fully removed (consolidated into `/hostspace/create`)
 - Marketplace square/daily-deal tiles
 - Profile tab styles
 

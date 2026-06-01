@@ -116,10 +116,8 @@ async function determineLgaCode(
   longitude: number
 ): Promise<string | undefined> {
   try {
-    // The backend should have a nearest-council endpoint; for now return undefined
-    // In production: api.council.nearest({ latitude, longitude })
-    await api.council.list({ state: undefined });
-    return undefined;
+    const res = await api.council.nearest({ latitude, longitude });
+    return res?.council?.lgaCode || undefined;
   } catch {
     return undefined;
   }

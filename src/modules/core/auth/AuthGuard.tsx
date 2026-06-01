@@ -3,7 +3,7 @@ import { View, Text, Pressable, StyleSheet, Platform, ScrollView } from 'react-n
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { router, usePathname } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import { useAuth } from '@/lib/auth';
 import { useColors } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
@@ -35,10 +35,10 @@ export function AuthGuard({
   showBack = true,
 }: AuthGuardProps) {
   const { userId, isLoading } = useAuth();
-  const insets = useSafeAreaInsets();
   const pathname = usePathname();
   const colors = useColors();
   const { hPad } = useLayout();
+  const safeInsets = useSafeAreaInsetsWeb();
 
   if (isLoading) {
     return null;
@@ -48,8 +48,8 @@ export function AuthGuard({
     return <>{children}</>;
   }
 
-  const topPad = Platform.OS === 'web' ? 0 : insets.top;
-  const botPad = Platform.OS === 'web' ? 32 : insets.bottom + 24;
+  const topPad = safeInsets.top;
+  const botPad = safeInsets.bottom + 24;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>

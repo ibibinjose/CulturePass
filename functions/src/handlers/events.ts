@@ -8,7 +8,8 @@
 
 import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
-import { requireAuth, requireRole, isOwnerOrAdmin } from '../middleware/auth';
+import { requireAuth, requireRole, isOwnerOrAdmin, requireRevocationCheck } from '../middleware/auth';
+import { sendToUsers } from '../services/fcmService';
 import { slidingWindowRateLimit } from '../middleware/rateLimit';
 import { moderationCheck } from '../middleware/moderation';
 import {
@@ -1002,6 +1003,67 @@ export function createEventsRouter() {
     } catch (err) {
       captureRouteError(err, 'GET /api/events/:id/attendees');
       return res.status(500).json({ error: 'Failed to fetch attendees' });
+    }
+  });
+
+  // ── POST /api/events/:id/message ──────────────────────────────────────────
+  router.post('/events/:id/message', requireAuth, requireRevocationCheck, async (req: Request, res: Response) => {
+    const eventId = qparam(req.params.id);
+    const { title, body } = req.body;
+
+    if (!title || !body) {
+      return res.status(400).json({ error: 'Title and body are required' });
+    }
+
+    try {
+      const event = await eventsService.getById(eventId);
+      if (!event) {
+        return res.status(404).json({ error: 'Event not found' });
+      }
+
+      // Check if user is the organizer of the event, or an admin
+      const isOrganizer = event.organizerId === req.user!.id;
+      const isAdmin = req.user!.role === 'admin';
+      
+      if (!isOrganizer && !isAdmin) {
+        return res.status(403).json({ error: 'You are not authorized to message attendees of this event' });
+      }
+
+      // Fetch all attendees of the event from tickets collection
+      const ticketsSnap = await db.collection('tickets')
+        .where('eventId', '==', eventId)
+        .where('status', '==', 'confirmed')
+        .get();
+
+      const userIds = [...new Set(ticketsSnap.docs.map(doc => doc.data().userId))].filter(Boolean) as string[];
+
+      if (userIds.length > 0) {
+        // Send push notifications via FCM
+        await sendToUsers(userIds, { title, body }, { eventId, type: 'event_announcement' });
+
+        // Add to in-app notifications collection
+        const batch = db.batch();
+        const now = nowIso();
+        userIds.forEach(uid => {
+          const notifRef = db.collection('notifications').doc();
+          batch.set(notifRef, {
+            id: notifRef.id,
+            userId: uid,
+            title,
+            message: body,
+            type: 'event_announcement',
+            isRead: false,
+            createdAt: now,
+            metadata: { eventId },
+          });
+        });
+        await batch.commit();
+      }
+
+      return res.json({ ok: true, recipientsCount: userIds.length });
+    } catch (err) {
+      captureRouteError(err, 'POST /api/events/:id/message');
+      return res.status(500).json({ error: 'Failed to send message to attendees' });
     }
   });
 

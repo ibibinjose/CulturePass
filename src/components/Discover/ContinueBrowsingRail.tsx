@@ -13,6 +13,7 @@ import { router } from 'expo-router';
 import { useContinueBrowsing } from '@/hooks/discover/useContinueBrowsing';
 import { useColors } from '@/hooks/useColors';
 import { useDiscoverRailInsets } from '@/components/Discover/discoverLayout';
+import { normalizeRemoteImageUri } from '@/lib/mediaUrls';
 import SectionHeader from './SectionHeader';
 import { FontFamily, Radius, Spacing } from '@/design-system/tokens/theme';
 import type { RecentVisit } from '@/lib/storage';
@@ -66,6 +67,7 @@ export default function ContinueBrowsingRail({ onSeeAll }: ContinueBrowsingRailP
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
+        removeClippedSubviews={false}
         contentContainerStyle={[scrollPadStyle, { gap: 12 }]}
       >
         {items.map((visit) => (
@@ -82,7 +84,7 @@ export default function ContinueBrowsingRail({ onSeeAll }: ContinueBrowsingRailP
           >
             {visit.imageUrl ? (
               <Image
-                source={{ uri: visit.imageUrl }}
+                source={{ uri: normalizeRemoteImageUri(visit.imageUrl) ?? undefined }}
                 style={styles.thumb}
                 contentFit="cover"
               />

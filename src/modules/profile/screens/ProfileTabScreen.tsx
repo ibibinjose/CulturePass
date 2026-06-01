@@ -13,7 +13,7 @@ import {
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import { useEffectiveMainTabTopInset } from '@/hooks/useEffectiveMainTabTopInset';
 import { router } from 'expo-router';
 import Head from 'expo-router/head';
@@ -57,7 +57,7 @@ function MySpaceHead() {
 }
 
 export default function ProfileScreen() {
-  const insets = useSafeAreaInsets();
+  const safeInsets = useSafeAreaInsetsWeb();
   const effectiveTop = useEffectiveMainTabTopInset();
   const colors = useColors();
   const m3 = useM3Colors();
@@ -134,7 +134,7 @@ export default function ProfileScreen() {
     );
   }
 
-  const bottomInset = Platform.OS === 'web' ? 0 : insets.bottom;
+  const bottomInset = safeInsets.bottom;
   const handle = displayUser?.handle ?? displayUser?.username;
 
   return (
@@ -168,7 +168,7 @@ export default function ProfileScreen() {
           }
         >
           {/* ── PROFILE HEADER — compact, bigger logo + title ────────── */}
-          <View style={[sc.profileBar, { paddingTop: (Platform.OS === 'web' ? 0 : insets.top) + 16 }]}>
+          <View style={[sc.profileBar, { paddingTop: safeInsets.top + 16 }]}>
             <View style={sc.profileBarRow}>
               {/* Brand lockup */}
               <Image

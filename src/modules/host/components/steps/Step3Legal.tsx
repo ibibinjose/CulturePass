@@ -175,7 +175,7 @@ export function Step3Legal({
   const gstId = formData.gstId || '';
   
   // Convert schema licences to UI licences (add missing fields)
-  const licences: Licence[] = (formData.licences || []).map((licence, index) => ({
+  const licences: Licence[] = (formData.licences || []).map((licence: any, index: number) => ({
     id: `licence_${index}`,
     type: licence.type,
     number: licence.number,

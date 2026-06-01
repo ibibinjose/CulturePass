@@ -13,7 +13,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import * as Haptics from 'expo-haptics';
@@ -228,8 +228,8 @@ function CommunityLivePreview({
 export default function ListingCreateScreen() {
   const colors = useColors();
   const s = getStyles(colors);
-  const insets = useSafeAreaInsets();
-  const topInset = Platform.OS === 'web' ? 0 : insets.top;
+  const safeInsets = useSafeAreaInsetsWeb();
+  const topInset = safeInsets.top;
   const { isDesktop, hPad } = useLayout();
   const { user, userId, isAuthenticated } = useAuth();
   const { state: onboarding } = useOnboarding();
@@ -724,7 +724,7 @@ export default function ListingCreateScreen() {
           style={{ flex: 1 }}
           contentContainerStyle={{
             paddingTop: 16,
-            paddingBottom: insets.bottom + 120,
+            paddingBottom: safeInsets.bottom + 120,
             maxWidth: isDesktop && !isCommunityCreate ? 720 : undefined,
             alignSelf: isDesktop ? 'center' : undefined,
             width: isDesktop ? '100%' : undefined,
@@ -748,7 +748,7 @@ export default function ListingCreateScreen() {
       <View
         style={{
           paddingHorizontal: hPad,
-          paddingBottom: (Platform.OS === 'web' ? 0 : insets.bottom) + 8,
+          paddingBottom: (safeInsets.bottom) + 8,
           paddingTop: 8,
           borderTopWidth: 1,
           borderTopColor: colors.borderLight,

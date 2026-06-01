@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, Share, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useColors } from '@/hooks/useColors';
 import { TextStyles } from '@/design-system/tokens/theme';
@@ -18,7 +18,7 @@ export default function PaymentSuccessScreen() {
   const { isAuthenticated } = useAuth();
   const colors = useColors();
   const styles = getStyles(colors);
-  const insets = useSafeAreaInsets();
+  const safeInsets = useSafeAreaInsetsWeb();
   const params = useLocalSearchParams<{ ticketId?: string | string[] }>();
   const ticketId = Array.isArray(params.ticketId) ? params.ticketId[0] : params.ticketId;
   const purchaseLoggedRef = useRef(false);
@@ -86,8 +86,8 @@ export default function PaymentSuccessScreen() {
         styles.container,
         {
           backgroundColor: colors.background,
-          paddingTop: (Platform.OS === 'web' ? 0 : insets.top) + 24,
-          paddingBottom: insets.bottom + 24,
+          paddingTop: safeInsets.top + 24,
+          paddingBottom: safeInsets.bottom + 24,
         },
       ]}
     >

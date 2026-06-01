@@ -25,13 +25,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ticket } from '@shared/schema';
 import { LinearGradient } from 'expo-linear-gradient';
 import { CultureTokens } from '@/design-system/tokens/colors';
-import { FontFamily } from '@/design-system/tokens/theme';
+import { FontFamily, Radius } from '@/design-system/tokens/theme';
 import { AppHeaderBar } from '@/modules/core/ui/AppHeaderBar';
 import { useLayout } from '@/hooks/useLayout';
-import { useColors } from '@/hooks/useColors';
+import { useColors, useIsDark } from '@/hooks/useColors';
 import { Skeleton } from '@/design-system/ui/Skeleton';
 import { GlassView } from '@/design-system/ui/GlassView';
-
+import { Modal, TextInput, KeyboardAvoidingView } from 'react-native';
+import { M3Button } from '@/design-system/ui';
 
 function parseWalletApiError(err: ApiError): string {
   const raw = err.message.replace(/^\d{3}:\s*/, '');
@@ -93,6 +94,7 @@ async function getCachedTicketQr(ticketId: string): Promise<string | null> {
 export default function TicketDetailScreen() {
   const { isAuthenticated } = useAuth();
   const colors = useColors();
+  const isDark = useIsDark();
   const s = getStyles(colors);
   const { isDesktop, hPad, isWeb } = useLayout();
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -108,6 +110,14 @@ export default function TicketDetailScreen() {
   const bottomInset = isWeb ? 34 : insets.bottom;
 
   const [cachedQr, setCachedQr] = useState<string | null>(null);
+  
+  const [assignVisible, setAssignVisible] = useState(false);
+  const [guestName, setGuestName] = useState('');
+  const [assignLoading, setAssignLoading] = useState(false);
+
+  const [transferVisible, setTransferVisible] = useState(false);
+  const [transferEmail, setTransferEmail] = useState('');
+  const [transferLoading, setTransferLoading] = useState(false);
 
   const { data: ticket, isLoading } = useQuery<Ticket>({
     queryKey: ['/api/ticket', id],
@@ -222,6 +232,67 @@ export default function TicketDetailScreen() {
     ]);
   }, [ticket, isWeb]);
 
+  const handleAssignSubmit = useCallback(async () => {
+    if (!ticket) return;
+    const name = guestName.trim();
+    setAssignLoading(true);
+    try {
+      await modulesApi.tickets.assign(ticket.id, {
+        familyMemberName: name || undefined,
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/ticket', id] });
+      queryClient.invalidateQueries({ queryKey: ['/api/tickets'] });
+      setAssignVisible(false);
+      if (!isWeb) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Alert.alert('Success', name ? `Ticket assigned to ${name}.` : 'Ticket assignment removed.');
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Failed to assign ticket';
+      Alert.alert('Error', msg);
+    } finally {
+      setAssignLoading(false);
+    }
+  }, [ticket, guestName, id, isWeb]);
+
+  const handleTransferSubmit = useCallback(async () => {
+    if (!ticket) return;
+    const email = transferEmail.trim().toLowerCase();
+    setTransferLoading(true);
+    try {
+      await modulesApi.tickets.transfer(ticket.id, { email });
+      queryClient.invalidateQueries({ queryKey: ['/api/ticket', id] });
+      queryClient.invalidateQueries({ queryKey: ['/api/tickets'] });
+      setTransferVisible(false);
+      if (!isWeb) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Alert.alert('Success', `Ticket has been successfully transferred to ${email}.`);
+      router.replace('/tickets/index');
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Failed to transfer ticket';
+      Alert.alert('Error', msg);
+    } finally {
+      setTransferLoading(false);
+    }
+  }, [ticket, transferEmail, id, isWeb]);
+
+  const handleTransferConfirm = useCallback(() => {
+    const email = transferEmail.trim().toLowerCase();
+    if (!email) {
+      Alert.alert('Error', 'Please enter a valid email address.');
+      return;
+    }
+    Alert.alert(
+      'Confirm Transfer',
+      `Are you sure you want to transfer this ticket to ${email}? This action is permanent and you will lose ownership of this ticket.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Transfer',
+          style: 'destructive',
+          onPress: handleTransferSubmit,
+        },
+      ]
+    );
+  }, [transferEmail, handleTransferSubmit]);
+
   if (isLoading) {
     return (
       <View style={s.container}>
@@ -329,6 +400,15 @@ export default function TicketDetailScreen() {
                   <Ionicons name="finger-print" size={16} color={colors.primary} />
                   <Text style={[s.cpidText, { color: colors.primary }]}>ID: {ticket.culturePassId || ticket.cpTicketId || ticket.id}</Text>
                 </View>
+
+                {ticket.familyMemberId && (
+                  <View style={s.familyBadge}>
+                    <Ionicons name="people" size={16} color={colors.primary} />
+                    <Text style={[s.familyBadgeText, { color: colors.text }]}>
+                      Pass for: <Text style={{ fontFamily: FontFamily.bold }}>{ticket.familyMemberId}</Text>
+                    </Text>
+                  </View>
+                )}
 
                 <View style={s.infoGrid}>
                   {ticket.eventDate && (
@@ -463,6 +543,38 @@ export default function TicketDetailScreen() {
                 <Ionicons name="chevron-forward" size={18} color={colors.textTertiary} />
               </Pressable>
 
+              {isActive && (
+                <>
+                  <Pressable 
+                    style={({pressed}) => [s.actionBtn, { borderBottomColor: colors.borderLight }, pressed && { backgroundColor: colors.primarySoft }]}
+                    onPress={() => {
+                      setGuestName(ticket.familyMemberId || '');
+                      setAssignVisible(true);
+                    }}
+                  >
+                    <View style={[s.actionIcon, { backgroundColor: colors.primarySoft }]}>
+                      <Ionicons name="people-outline" size={20} color={colors.primary} />
+                    </View>
+                    <Text style={[s.actionText, { color: colors.text }]}>Assign to Family / Guest</Text>
+                    <Ionicons name="chevron-forward" size={18} color={colors.textTertiary} />
+                  </Pressable>
+
+                  <Pressable 
+                    style={({pressed}) => [s.actionBtn, { borderBottomColor: colors.borderLight }, pressed && { backgroundColor: colors.primarySoft }]}
+                    onPress={() => {
+                      setTransferEmail('');
+                      setTransferVisible(true);
+                    }}
+                  >
+                    <View style={[s.actionIcon, { backgroundColor: colors.primarySoft }]}>
+                      <Ionicons name="swap-horizontal-outline" size={20} color={colors.primary} />
+                    </View>
+                    <Text style={[s.actionText, { color: colors.text }]}>Transfer to Another User</Text>
+                    <Ionicons name="chevron-forward" size={18} color={colors.textTertiary} />
+                  </Pressable>
+                </>
+              )}
+
               {(isActive || isScanned) && (
                 <Pressable 
                    style={({pressed}) => [s.actionBtn, { borderBottomColor: colors.borderLight }, pressed && { backgroundColor: colors.primarySoft }]}
@@ -492,6 +604,123 @@ export default function TicketDetailScreen() {
           </ScrollView>
         </View>
       </View>
+
+      {/* Assign Modal */}
+      <Modal
+        visible={assignVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setAssignVisible(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={s.modalBackdrop}
+        >
+          <GlassView intensity={70} style={s.modalSheet}>
+            <View style={s.modalHeader}>
+              <Text style={[s.modalTitle, { color: colors.text }]}>Assign Ticket</Text>
+              <Pressable onPress={() => setAssignVisible(false)} hitSlop={12}>
+                <Ionicons name="close" size={24} color={colors.textSecondary} />
+              </Pressable>
+            </View>
+
+            <View style={s.modalBody}>
+              <Text style={[s.modalDesc, { color: colors.textSecondary }]}>
+                Personalize this ticket with the name of the family member or guest who will be attending.
+              </Text>
+
+              <Text style={[s.modalLabel, { color: colors.textSecondary }]}>Guest Name</Text>
+              <TextInput
+                style={[s.modalInput, { color: colors.text, borderColor: colors.borderLight, backgroundColor: colors.surface }]}
+                value={guestName}
+                onChangeText={setGuestName}
+                placeholder="Enter guest or family member name"
+                placeholderTextColor={colors.textTertiary}
+                autoFocus
+              />
+            </View>
+
+            <View style={s.modalActions}>
+              <M3Button
+                variant="outlined"
+                onPress={() => setAssignVisible(false)}
+                style={{ flex: 1 }}
+              >
+                Cancel
+              </M3Button>
+              <M3Button
+                variant="filled"
+                onPress={handleAssignSubmit}
+                loading={assignLoading}
+                disabled={assignLoading}
+                style={{ flex: 1.5 }}
+              >
+                Save
+              </M3Button>
+            </View>
+          </GlassView>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* Transfer Modal */}
+      <Modal
+        visible={transferVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setTransferVisible(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={s.modalBackdrop}
+        >
+          <GlassView intensity={70} style={s.modalSheet}>
+            <View style={s.modalHeader}>
+              <Text style={[s.modalTitle, { color: colors.text }]}>Transfer Ticket</Text>
+              <Pressable onPress={() => setTransferVisible(false)} hitSlop={12}>
+                <Ionicons name="close" size={24} color={colors.textSecondary} />
+              </Pressable>
+            </View>
+
+            <View style={s.modalBody}>
+              <Text style={[s.modalDesc, { color: colors.textSecondary }]}>
+                Transfer ownership of this ticket to another CulturePass user. Enter their email address below.
+              </Text>
+
+              <Text style={[s.modalLabel, { color: colors.textSecondary }]}>Recipient Email Address</Text>
+              <TextInput
+                style={[s.modalInput, { color: colors.text, borderColor: colors.borderLight, backgroundColor: colors.surface }]}
+                value={transferEmail}
+                onChangeText={setTransferEmail}
+                placeholder="user@culturepass.com"
+                placeholderTextColor={colors.textTertiary}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                autoFocus
+              />
+            </View>
+
+            <View style={s.modalActions}>
+              <M3Button
+                variant="outlined"
+                onPress={() => setTransferVisible(false)}
+                style={{ flex: 1 }}
+              >
+                Cancel
+              </M3Button>
+              <M3Button
+                variant="filled"
+                onPress={handleTransferConfirm}
+                loading={transferLoading}
+                disabled={transferLoading}
+                style={{ flex: 1.5 }}
+              >
+                Transfer
+              </M3Button>
+            </View>
+          </GlassView>
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   );
 }
@@ -579,4 +808,71 @@ const getStyles = (colors: ReturnType<typeof useColors>) => StyleSheet.create({
   actionBtn:      { flexDirection: 'row', alignItems: 'center', gap: 16, padding: 18, borderBottomWidth: 1 },
   actionIcon:     { width: 40, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   actionText:     { flex: 1, fontSize: 15, fontFamily: FontFamily.semibold },
+  familyBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 10,
+    backgroundColor: colors.primarySoft,
+    marginBottom: 24,
+  },
+  familyBadgeText: {
+    fontSize: 13,
+    fontFamily: FontFamily.medium,
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalSheet: {
+    width: '100%',
+    maxWidth: 440,
+    padding: 24,
+    borderRadius: Radius.xl,
+    overflow: 'hidden',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontFamily: FontFamily.bold,
+  },
+  modalBody: {
+    marginBottom: 24,
+    gap: 12,
+  },
+  modalDesc: {
+    fontSize: 14,
+    fontFamily: FontFamily.regular,
+    lineHeight: 20,
+    marginBottom: 8,
+  },
+  modalLabel: {
+    fontSize: 12,
+    fontFamily: FontFamily.bold,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  modalInput: {
+    height: 52,
+    borderWidth: 1,
+    borderRadius: Radius.md,
+    paddingHorizontal: 16,
+    fontSize: 16,
+    fontFamily: FontFamily.regular,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 12,
+  },
 });

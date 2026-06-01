@@ -53,6 +53,7 @@ function ComingSoonRailComponent({
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
+        removeClippedSubviews={false}
         contentContainerStyle={[styles.scrollContent, { paddingHorizontal: hPad }]}
       >
         {placeholders.map((i) => (

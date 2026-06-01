@@ -10,7 +10,7 @@ import { Buffer } from "buffer";
 import { initSentry } from "@/lib/sentry";
 
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
-import { Stack } from "expo-router";
+import { Stack, usePathname } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { PostHogProvider } from 'posthog-react-native';
 import posthogClient from '@/lib/analytics';
@@ -20,6 +20,7 @@ import {
   View,
   Text as RNText,
   StyleSheet,
+  Pressable,
 } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
@@ -40,11 +41,16 @@ import { AuthGuard, AuthSyncBanner, DataSync } from "@/providers";
 import { withAlpha } from "@/lib/withAlpha";
 import { initializeWidgets } from "@/lib/widgets/register";
 import { WidgetSync } from "@/components/WidgetSync";
-import { WebSidebar } from "@/modules/core/layout/web/WebSidebar";
-import { NavigationMetadata } from "@/components/NavigationMetadata";
+// Lazy load NavigationMetadata (web-only metadata injection, keeps it out of main entry on native)
+const NavigationMetadata = React.lazy(() =>
+  import("@/components/NavigationMetadata").then((mod) => ({ default: mod.NavigationMetadata }))
+);
+
+// Lazy load the heavy WebSidebar to keep it out of the main entry chunk on web
+const WebSidebar = React.lazy(() =>
+  import("@/modules/core/layout/web/WebSidebar").then((mod) => ({ default: mod.WebSidebar }))
+);
 import { CulturalThemeProvider } from "@/providers/CulturalThemeProvider";
-import { Footer } from "@/components/Footer";
-import { ScrollToFooterButton, ScrollToTopButton } from "@/components/web/ScrollToFooterButton";
 
 import {
   useFonts,
@@ -109,6 +115,12 @@ function RootLayoutNav() {
   const colors = useColors();
   const { isDesktop, width: screenWidth } = useLayout();
   const isWeb = Platform.OS === 'web';
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const pathname = usePathname();
+
+  useEffect(() => {
+    setIsDrawerOpen(false);
+  }, [pathname]);
 
   // Force mobile layout on small screens to prevent black screen issue
   const shouldShowDesktopLayout = isWeb && isDesktop && screenWidth >= 768;
@@ -213,37 +225,121 @@ function RootLayoutNav() {
             style={webStyles.ambientMesh}
             pointerEvents="none"
           />
-          <WebSidebar />
+          <React.Suspense fallback={null}>
+            <WebSidebar />
+          </React.Suspense>
           <View style={webStyles.contentContainer}>
             <View style={[webStyles.mainFlex, webStyles.mainFlexDesktop]}>
               {stackContent}
             </View>
           </View>
         </View>
-        <Footer />
-        <ScrollToFooterButton 
-          position="bottom-right" 
-          label="" 
-          alwaysVisible={true} 
-        />
-        <ScrollToTopButton position="bottom-left" />
       </View>
     );
   }
 
-  return (
-    <View style={{ flex: 1, flexDirection: 'column' }}>
-      <NavigationMetadata />
+  // Mobile Web Browser Layout (Burger Menu + Sidebar Drawer, No global Footer)
+  if (isWeb) {
+    return (
       <View style={{ flex: 1, backgroundColor: colors.background }}>
-        {stackContent}
+        <React.Suspense fallback={null}>
+          <NavigationMetadata />
+        </React.Suspense>
+        
+        {/* Mobile Header */}
+        <View
+          style={[
+            webStyles.mobileHeader,
+            {
+              backgroundColor: colors.surface,
+              borderBottomColor: colors.borderLight,
+            },
+          ]}
+        >
+          <Pressable
+            onPress={() => setIsDrawerOpen(true)}
+            style={({ pressed }) => [
+              webStyles.burgerBtn,
+              pressed && { opacity: 0.7 },
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel="Open navigation menu"
+          >
+            <Ionicons name="menu-outline" size={24} color={colors.text} />
+          </Pressable>
+          <RNText style={[webStyles.mobileHeaderTitle, { color: colors.text }]}>
+            CulturePass
+          </RNText>
+          {/* Layout balance spacer */}
+          <View style={{ width: 40 }} />
+        </View>
+
+        {/* Main Content */}
+        <View style={{ flex: 1 }}>
+          {stackContent}
+        </View>
+
+        {/* Drawer Slide-out Sidebar Overlay */}
+        {isDrawerOpen && (
+          <View style={StyleSheet.absoluteFill}>
+            {/* Backdrop */}
+            <Pressable
+              style={webStyles.drawerBackdrop}
+              onPress={() => setIsDrawerOpen(false)}
+            />
+            
+            {/* Drawer WebSidebar container */}
+            <View
+              style={[
+                webStyles.drawerContent,
+                {
+                  backgroundColor: colors.surface,
+                  borderRightColor: colors.borderLight,
+                },
+              ]}
+            >
+              <View
+                style={[
+                  webStyles.drawerHeader,
+                  {
+                    borderBottomColor: colors.borderLight,
+                  },
+                ]}
+              >
+                <RNText style={[webStyles.drawerTitle, { color: colors.text }]}>
+                  Navigation
+                </RNText>
+                <Pressable
+                  onPress={() => setIsDrawerOpen(false)}
+                  style={({ pressed }) => [
+                    webStyles.closeBtn,
+                    pressed && { opacity: 0.7 },
+                  ]}
+                  accessibilityRole="button"
+                  accessibilityLabel="Close menu"
+                >
+                  <Ionicons name="close" size={22} color={colors.text} />
+                </Pressable>
+              </View>
+              <View style={{ flex: 1 }}>
+                <React.Suspense fallback={null}>
+                  <WebSidebar />
+                </React.Suspense>
+              </View>
+            </View>
+          </View>
+        )}
       </View>
-      <Footer />
-      <ScrollToFooterButton 
-        position="bottom-right" 
-        label="" 
-        alwaysVisible={true} 
-      />
-      <ScrollToTopButton position="bottom-left" />
+    );
+  }
+
+  // Native Mobile App Layout (Direct stack, no web chrome / footer)
+  return (
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <React.Suspense fallback={null}>
+        <NavigationMetadata />
+      </React.Suspense>
+      {stackContent}
     </View>
   );
 }
@@ -288,7 +384,7 @@ function RootLayoutContent() {
     }, FONT_TIMEOUT_MS);
     
     return () => clearTimeout(timeoutId);
-  }, [fontsLoaded]);
+  }, [fontsLoaded, FONT_TIMEOUT_MS]);
 
   // Log font loading errors for debugging
   useEffect(() => {
@@ -457,6 +553,73 @@ const webStyles = StyleSheet.create({
   mainFlexDesktop: {
     maxWidth: 1200,
     alignSelf: 'center',
+  },
+  mobileHeader: {
+    height: 56,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    ...Platform.select({
+      web: {
+        position: 'sticky',
+        top: 0,
+        zIndex: 100,
+      } as any,
+      default: {},
+    }),
+  },
+  burgerBtn: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 20,
+  },
+  mobileHeaderTitle: {
+    fontFamily: 'Poppins_700Bold',
+    fontSize: 16,
+    letterSpacing: -0.5,
+  },
+  drawerBackdrop: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    zIndex: 999,
+  },
+  drawerContent: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    bottom: 0,
+    width: 230,
+    borderRightWidth: 1,
+    zIndex: 1000,
+    ...Platform.select({
+      web: {
+        boxShadow: '4px 0 16px rgba(0,0,0,0.15)',
+      } as any,
+      default: {},
+    }),
+  },
+  drawerHeader: {
+    height: 56,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+  },
+  drawerTitle: {
+    fontFamily: 'Poppins_600SemiBold',
+    fontSize: 14,
+  },
+  closeBtn: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 18,
   },
 });
 

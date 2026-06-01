@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { Platform } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { auth as firebaseAuth, FIREBASE_CLIENT_DISABLED_MESSAGE } from '@/lib/firebase';
@@ -21,12 +21,19 @@ import { HapticManager } from '@/lib/haptics';
 export function useSignup() {
   const searchParams = useLocalSearchParams();
   const redirectTo = sanitizeInternalRedirect(searchParams.redirectTo ?? searchParams.redirect);
+  const isHostIntent = searchParams.intent === 'host' || searchParams.role === 'organizer';
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [agreed, setAgreed] = useState(false);
-  const [role, setRole] = useState<'user' | 'organizer'>('user');
+  const [role, setRole] = useState<'user' | 'organizer'>(isHostIntent ? 'organizer' : 'user');
+
+  useEffect(() => {
+    if (isHostIntent) {
+      setRole('organizer');
+    }
+  }, [isHostIntent]);
 
   const [nameError, setNameError] = useState('');
   const [emailError, setEmailError] = useState('');

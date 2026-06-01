@@ -6,6 +6,7 @@ import {
   resolveFeaturedCityImageUrl,
 } from '@/constants/cityHeroImages';
 import { CultureTokens } from '@/design-system/tokens/theme';
+import { luxeDark, RICH_INDIGO, DEEP_SAFFRON, HERITAGE_GOLD, DEEP_PLUM, EMERALD_HARMONY, TERRACOTTA_GLOW } from '@/design-system/tokens/luxeHeritage';
 
 export type { FeaturedCityData };
 
@@ -14,14 +15,14 @@ export type { FeaturedCityData };
  * Keyed by countryCode; unknown countries fall back to the default pair.
  */
 export const CITY_GRADIENTS: Record<string, [string, string]> = {
-  AU: ['#FF8C42', '#1B0F2E'],   // saffron → midnight
-  NZ: ['#22C55E', '#0F2A1A'],   // green → dark green
-  AE: ['#FFC857', '#6B0F0F'],   // gold → deep red
-  GB: ['#3B82F6', '#0F1E3F'],   // blue → navy
-  CA: ['#EF4444', '#2D0A0A'],   // red → dark red
-  US: ['#6366F1', '#0F0F2E'],   // indigo → deep indigo
-  SG: ['#F43F5E', '#1A0F1A'],   // rose → deep plum
-  DEFAULT: [CultureTokens.indigo, '#000000'], // brand indigo → jet black
+  AU: [DEEP_SAFFRON, '#1A0F0A'],                           // warm saffron → deep bronze luxe
+  NZ: [EMERALD_HARMONY, '#0A211C'],                        // vibrant emerald → deep forest luxe
+  AE: [HERITAGE_GOLD, DEEP_PLUM],                          // prestige gold → deep plum
+  GB: [RICH_INDIGO, '#0D1626'],                            // rich indigo → midnight navy luxe
+  CA: [TERRACOTTA_GLOW, '#2A1212'],                        // terracotta energy → dark
+  US: [RICH_INDIGO, '#0A0A14'],                            // strong indigo → deep luxe night
+  SG: [DEEP_SAFFRON, '#2A0F2A'],                           // saffron pop → deep plum night
+  DEFAULT: [RICH_INDIGO, luxeDark.background],             // premium indigo → true luxe black
 };
 
 export function cityGradient(countryCode: string): [string, string] {

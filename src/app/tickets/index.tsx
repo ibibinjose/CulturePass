@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -178,6 +178,7 @@ export default function TicketsScreen() {
   const insets = useSafeAreaInsets();
   const { userId } = useAuth();
   const bottomInset = IS_WEB ? 20 : insets.bottom;
+  const [activeTab, setActiveTab] = useState<'my' | 'family'>('my');
 
   const {
     data: tickets = [],
@@ -204,16 +205,34 @@ export default function TicketsScreen() {
   });
 
   const grouped = useMemo(() => {
-    const upcoming: Ticket[] = [];
-    const past: Ticket[] = [];
-    const cancelled: Ticket[] = [];
+    const myUpcoming: Ticket[] = [];
+    const myPast: Ticket[] = [];
+    const myCancelled: Ticket[] = [];
+
+    const familyUpcoming: Ticket[] = [];
+    const familyPast: Ticket[] = [];
+    const familyCancelled: Ticket[] = [];
+
+    // Simple grouping: tickets with familyMemberId are "Family Tickets"
     for (const t of tickets) {
       const s = ticketState(t);
-      if (s === 'upcoming') upcoming.push(t);
-      else if (s === 'past') past.push(t);
-      else cancelled.push(t);
+      const isFamily = !!t.familyMemberId;
+
+      if (isFamily) {
+        if (s === 'upcoming') familyUpcoming.push(t);
+        else if (s === 'past') familyPast.push(t);
+        else familyCancelled.push(t);
+      } else {
+        if (s === 'upcoming') myUpcoming.push(t);
+        else if (s === 'past') myPast.push(t);
+        else myCancelled.push(t);
+      }
     }
-    return { upcoming, past, cancelled };
+
+    return {
+      my: { upcoming: myUpcoming, past: myPast, cancelled: myCancelled },
+      family: { upcoming: familyUpcoming, past: familyPast, cancelled: familyCancelled },
+    };
   }, [tickets]);
 
   const askCancel = (ticket: Ticket) => {
@@ -304,38 +323,116 @@ export default function TicketsScreen() {
               </View>
             ) : (
               <>
-                {grouped.upcoming.length > 0 ? (
-                  <View style={styles.section}>
-                    <Text style={[styles.sectionLabel, { color: colors.textTertiary }]}>
-                      Upcoming ({grouped.upcoming.length})
+                <View style={styles.tabContainer}>
+                  <Pressable
+                    style={[styles.tab, activeTab === 'my' && styles.activeTab, { borderBottomColor: activeTab === 'my' ? colors.primary : 'transparent' }]}
+                    onPress={() => setActiveTab('my')}
+                  >
+                    <Text style={[styles.tabText, { color: activeTab === 'my' ? colors.primary : colors.textSecondary }, activeTab === 'my' && styles.activeTabText]}>
+                      My Passes
                     </Text>
-                    {grouped.upcoming.map((t) => (
-                      <TicketCard key={t.id} ticket={t} onCancel={askCancel} />
-                    ))}
-                  </View>
-                ) : null}
+                  </Pressable>
+                  <Pressable
+                    style={[styles.tab, activeTab === 'family' && styles.activeTab, { borderBottomColor: activeTab === 'family' ? colors.primary : 'transparent' }]}
+                    onPress={() => setActiveTab('family')}
+                  >
+                    <Text style={[styles.tabText, { color: activeTab === 'family' ? colors.primary : colors.textSecondary }, activeTab === 'family' && styles.activeTabText]}>
+                      Family & Guests
+                    </Text>
+                  </Pressable>
+                </View>
 
-                {grouped.past.length > 0 ? (
-                  <View style={styles.section}>
-                    <Text style={[styles.sectionLabel, { color: colors.textTertiary }]}>
-                      Past ({grouped.past.length})
-                    </Text>
-                    {grouped.past.map((t) => (
-                      <TicketCard key={t.id} ticket={t} onCancel={askCancel} />
-                    ))}
-                  </View>
-                ) : null}
+                {activeTab === 'my' ? (
+                  <>
+                    {grouped.my.upcoming.length > 0 ? (
+                      <View style={styles.section}>
+                        <Text style={[styles.sectionLabel, { color: colors.textTertiary }]}>
+                          Upcoming ({grouped.my.upcoming.length})
+                        </Text>
+                        {grouped.my.upcoming.map((t: Ticket) => (
+                          <TicketCard key={t.id} ticket={t} onCancel={askCancel} />
+                        ))}
+                      </View>
+                    ) : null}
 
-                {grouped.cancelled.length > 0 ? (
-                  <View style={styles.section}>
-                    <Text style={[styles.sectionLabel, { color: colors.textTertiary }]}>
-                      Cancelled ({grouped.cancelled.length})
-                    </Text>
-                    {grouped.cancelled.map((t) => (
-                      <TicketCard key={t.id} ticket={t} onCancel={askCancel} />
-                    ))}
-                  </View>
-                ) : null}
+                    {grouped.my.past.length > 0 ? (
+                      <View style={styles.section}>
+                        <Text style={[styles.sectionLabel, { color: colors.textTertiary }]}>
+                          Past ({grouped.my.past.length})
+                        </Text>
+                        {grouped.my.past.map((t: Ticket) => (
+                          <TicketCard key={t.id} ticket={t} onCancel={askCancel} />
+                        ))}
+                      </View>
+                    ) : null}
+
+                    {grouped.my.cancelled.length > 0 ? (
+                      <View style={styles.section}>
+                        <Text style={[styles.sectionLabel, { color: colors.textTertiary }]}>
+                          Cancelled ({grouped.my.cancelled.length})
+                        </Text>
+                        {grouped.my.cancelled.map((t: Ticket) => (
+                          <TicketCard key={t.id} ticket={t} onCancel={askCancel} />
+                        ))}
+                      </View>
+                    ) : null}
+
+                    {grouped.my.upcoming.length === 0 && grouped.my.past.length === 0 && grouped.my.cancelled.length === 0 ? (
+                      <View style={styles.emptyTabState}>
+                        <Ionicons name="ticket-outline" size={48} color={colors.textTertiary} style={{ marginBottom: 12 }} />
+                        <Text style={[styles.emptyTabTitle, { color: colors.text }]}>No personal tickets</Text>
+                        <Text style={[styles.emptyTabSub, { color: colors.textSecondary }]}>
+                          You don&apos;t have any personal tickets in your wallet.
+                        </Text>
+                      </View>
+                    ) : null}
+                  </>
+                ) : (
+                  <>
+                    {grouped.family.upcoming.length > 0 ? (
+                      <View style={styles.section}>
+                        <Text style={[styles.sectionLabel, { color: colors.textTertiary }]}>
+                          Upcoming ({grouped.family.upcoming.length})
+                        </Text>
+                        {grouped.family.upcoming.map((t: Ticket) => (
+                          <TicketCard key={t.id} ticket={t} onCancel={askCancel} />
+                        ))}
+                      </View>
+                    ) : null}
+
+                    {grouped.family.past.length > 0 ? (
+                      <View style={styles.section}>
+                        <Text style={[styles.sectionLabel, { color: colors.textTertiary }]}>
+                          Past ({grouped.family.past.length})
+                        </Text>
+                        {grouped.family.past.map((t: Ticket) => (
+                          <TicketCard key={t.id} ticket={t} onCancel={askCancel} />
+                        ))}
+                      </View>
+                    ) : null}
+
+                    {grouped.family.cancelled.length > 0 ? (
+                      <View style={styles.section}>
+                        <Text style={[styles.sectionLabel, { color: colors.textTertiary }]}>
+                          Cancelled ({grouped.family.cancelled.length})
+                        </Text>
+                        {grouped.family.cancelled.map((t: Ticket) => (
+                          <TicketCard key={t.id} ticket={t} onCancel={askCancel} />
+                        ))}
+                      </View>
+                    ) : null}
+
+                    {grouped.family.upcoming.length === 0 && grouped.family.past.length === 0 && grouped.family.cancelled.length === 0 ? (
+                      <View style={styles.emptyTabState}>
+                        <Ionicons name="people-outline" size={48} color={colors.textTertiary} style={{ marginBottom: 12 }} />
+                        <Text style={[styles.emptyTabTitle, { color: colors.text }]}>No family tickets assigned</Text>
+                        <Text style={[styles.emptyTabSub, { color: colors.textSecondary }]}>
+                          When you buy multiple tickets, you can personalize and assign them to your family or guests here.
+                        </Text>
+                      </View>
+                    ) : null}
+                  </>
+                )}
               </>
             )}
           </ScrollView>
@@ -459,6 +556,45 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 22,
     maxWidth: 280,
+    opacity: 0.8,
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    marginBottom: 24,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.08)',
+  },
+  tab: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+  },
+  activeTab: {},
+  tabText: {
+    fontSize: 14,
+    fontFamily: FontFamily.medium,
+  },
+  activeTabText: {
+    fontFamily: FontFamily.bold,
+  },
+  emptyTabState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 48,
+    paddingHorizontal: 24,
+  },
+  emptyTabTitle: {
+    fontSize: 18,
+    fontFamily: FontFamily.bold,
+    marginBottom: 8,
+  },
+  emptyTabSub: {
+    fontSize: 14,
+    fontFamily: FontFamily.regular,
+    textAlign: 'center',
+    lineHeight: 20,
     opacity: 0.8,
   },
 });

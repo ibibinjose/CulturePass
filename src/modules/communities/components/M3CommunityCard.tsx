@@ -61,7 +61,7 @@ export function M3CommunityCard({ community, variant = 'filled' }: M3CommunityCa
             {members.toLocaleString()} members
           </Text>
         </View>
-        {community.city && (
+        {!!community.city && (
           <View style={styles.metaRow}>
             <Ionicons name="location-outline" size={14} color={colors.onSurfaceVariant} />
             <Text style={[M3Typography.bodySmall, { color: colors.onSurfaceVariant }]} numberOfLines={1}>

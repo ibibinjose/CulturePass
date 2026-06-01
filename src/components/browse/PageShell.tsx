@@ -9,7 +9,7 @@
 import React from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import { ErrorBoundary } from '@/modules/core/ui/ErrorBoundary';
 import { useColors } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
@@ -39,8 +39,8 @@ export function PageShell({
 }: PageShellProps) {
   const colors = useColors();
   const { isDesktop } = useLayout();
-  const insets = useSafeAreaInsets();
-  const topInset = (Platform.OS === 'web' ? 0 : insets.top) + ScreenTokens.topOffset;
+  const insets = useSafeAreaInsetsWeb();
+  const topInset = insets.top + ScreenTokens.topOffset;
 
   return (
     <ErrorBoundary>

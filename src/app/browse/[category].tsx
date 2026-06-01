@@ -1,13 +1,15 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
+import { View, TextInput, Pressable, RefreshControl } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
-import { RefreshControl } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 import { BrowsePage, type BrowseItem, type CategoryFilter } from '@/modules/core/components';
 import { modulesApi } from '@/modules/api';
 import { useOnboarding } from '@/contexts/OnboardingContext';
 import { EVENT_CATEGORIES } from '@/constants/eventCategories';
 import { CategoryColors, CultureTokens } from '@/design-system/tokens/theme';
+import { useM3Colors } from '@/hooks/useM3Colors';
 import { ErrorBoundary } from '@/modules/core/ui/ErrorBoundary';
 
 /**
@@ -19,7 +21,9 @@ import { ErrorBoundary } from '@/modules/core/ui/ErrorBoundary';
  */
 export default function BrowseCategoryScreen() {
   const { category: categorySlug = 'All' } = useLocalSearchParams<{ category: string }>();
+  const m3Colors = useM3Colors();
   const { state: onboarding } = useOnboarding();
+  const [searchQuery, setSearchQuery] = useState('');
 
   // 1. Prepare categories for the filter row
   const categories: CategoryFilter[] = useMemo(() => {
@@ -46,11 +50,11 @@ export default function BrowseCategoryScreen() {
     staleTime: 5 * 60 * 1000
   });
 
-  // 3. Map results to unified BrowseItem format
+  // 3. Map results to unified BrowseItem format + client search
   const items: BrowseItem[] = useMemo(() => {
     if (!data) return [];
     
-    const browseItems: BrowseItem[] = [];
+    let browseItems: BrowseItem[] = [];
 
     // Map Events
     if (data.events) {
@@ -96,8 +100,18 @@ export default function BrowseCategoryScreen() {
       });
     }
 
+    // Client-side search for better UX
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      browseItems = browseItems.filter(item =>
+        item.title.toLowerCase().includes(q) ||
+        (item.subtitle && item.subtitle.toLowerCase().includes(q)) ||
+        (item.description && item.description.toLowerCase().includes(q))
+      );
+    }
+
     return browseItems;
-  }, [data]);
+  }, [data, searchQuery]);
 
   // 4. Handle item press - navigate to details
   const handleItemPress = (item: BrowseItem) => {
@@ -114,9 +128,37 @@ export default function BrowseCategoryScreen() {
 
   return (
     <ErrorBoundary>
+      {/* Reimagined search bar for vibrant, consistent UX on /browse/All */}
+      <View style={{ paddingHorizontal: 16, paddingTop: 12, backgroundColor: m3Colors.background }}>
+        <View style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          backgroundColor: m3Colors.surface,
+          borderRadius: 24,
+          borderWidth: 1,
+          borderColor: m3Colors.outlineVariant,
+          paddingHorizontal: 16,
+          height: 48,
+        }}>
+          <Ionicons name="search" size={20} color={m3Colors.onSurfaceVariant} />
+          <TextInput
+            style={{ flex: 1, marginLeft: 12, fontSize: 16, color: m3Colors.onSurface }}
+            placeholder="Search events, movies, communities..."
+            placeholderTextColor={m3Colors.onSurfaceVariant}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+          {searchQuery.length > 0 && (
+            <Pressable onPress={() => setSearchQuery('')}>
+              <Ionicons name="close-circle" size={20} color={m3Colors.onSurfaceVariant} />
+            </Pressable>
+          )}
+        </View>
+      </View>
+
       <BrowsePage
-        title={categorySlug === 'All' ? 'Browse Categories' : categorySlug}
-        tagline="Discover culture, community, and events"
+        title={categorySlug === 'All' ? 'Discover Everything' : categorySlug}
+        tagline="Culture, communities, events & more — all in one place"
         accentColor={activeCategory.color}
         accentIcon={activeCategory.icon}
         categories={categories}

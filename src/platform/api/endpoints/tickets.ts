@@ -30,6 +30,7 @@ export function createTicketsNamespace(request: ApiRequestFn) {
       tierId?: string;
       quantity?: number;
       promoCode?: string;
+      familyMemberId?: string;
     }) => request<Ticket>('POST', 'api/tickets', data),
 
     cancel: (id: string) => request<{ success: boolean }>('PUT', `api/tickets/${id}/cancel`),
@@ -46,5 +47,11 @@ export function createTicketsNamespace(request: ApiRequestFn) {
 
     walletGoogle: (ticketId: string) =>
       request<WalletPassLinkResponse>('GET', `api/tickets/${ticketId}/wallet/google`),
+
+    assign: (id: string, data: { familyMemberName?: string; attendeeEmail?: string }) =>
+      request<Ticket>('PUT', `api/tickets/${id}/assign`, data),
+
+    transfer: (id: string, data: { email: string }) =>
+      request<Ticket>('POST', `api/tickets/${id}/transfer`, data),
   };
 }

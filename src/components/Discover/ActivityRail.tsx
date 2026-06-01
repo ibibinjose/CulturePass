@@ -81,7 +81,7 @@ function ActivityRailComponent({ title, subtitle, data, isLoading, onSeeAll, err
         initialNumToRender={4}
         maxToRenderPerBatch={4}
         windowSize={5}
-        removeClippedSubviews={Platform.OS === 'android'}
+        removeClippedSubviews={false}
       />
       )}
     </View>

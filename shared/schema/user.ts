@@ -129,6 +129,8 @@ export interface User {
   membership?: Membership;
   role?: UserRole;
   privacySettings?: PrivacySettings;
+  /** Family members linked to this personal account (mother, father, children, etc.) */
+  familyMembers?: FamilyMember[];
   /** Server-set when user completes their first paid CulturePass+ subscription checkout (intro pricing consumed). */
   premiumIntroDiscountUsedAt?: string;
   /** Admin-granted: may publish CultureShop Daily Deals (organiser tier + flag). */
@@ -173,7 +175,26 @@ export interface PrivacySettings {
   dataSharing?: boolean;
   /** Browse other profiles without revealing identity (LinkedIn style) */
   privateViewingMode?: boolean;
+  showFamily?: boolean;
   [key: string]: boolean | undefined;
+}
+
+export type FamilyRelation =
+  | 'mother' | 'father'
+  | 'son' | 'daughter' | 'child'
+  | 'spouse' | 'partner'
+  | 'brother' | 'sister' | 'sibling'
+  | 'grandmother' | 'grandfather' | 'grandparent'
+  | 'other';
+
+export interface FamilyMember {
+  id: string;
+  relation: FamilyRelation;
+  name: string;
+  /** Optional link to another CulturePass user account */
+  userId?: string;
+  avatarUrl?: string;
+  note?: string; // e.g. "Loves cooking traditional recipes"
 }
 
 export interface MembershipSummary {

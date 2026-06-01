@@ -361,6 +361,7 @@ ticketsRouter.post('/tickets', requireAuth, slidingWindowRateLimit(60000, 20), a
         history:         [{ action: 'ticket_created', timestamp: nowIso(), actorId: 'system' }],
         createdAt:       nowIso(),
         updatedAt:       nowIso(),
+        familyMemberId:  req.body?.familyMemberId || null,
         // Denormalized for performance
         eventTitle: event.title,
         eventDate:  event.date,
@@ -411,3 +412,101 @@ ticketsRouter.post('/tickets', requireAuth, slidingWindowRateLimit(60000, 20), a
     return res.status(500).json({ error: 'Failed to purchase ticket' });
   }
 });
+
+// ---------------------------------------------------------------------------
+// PUT /api/tickets/:id/assign — assign ticket to a family member or guest
+// ---------------------------------------------------------------------------
+ticketsRouter.put('/tickets/:id/assign', requireAuth, async (req: Request, res: Response) => {
+  try {
+    const ticketId = qparam(req.params.id);
+    const ticket = await ticketsService.getById(ticketId);
+    if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
+    if (!isOwnerOrAdmin(req.user!, ticket.userId)) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    const { familyMemberName, attendeeEmail } = req.body;
+    let attendeeUserId = null;
+
+    if (attendeeEmail && typeof attendeeEmail === 'string' && attendeeEmail.trim()) {
+      const email = attendeeEmail.toLowerCase().trim();
+      const userSnap = await db.collection('users').where('email', '==', email).limit(1).get();
+      if (!userSnap.empty) {
+        attendeeUserId = userSnap.docs[0].id;
+      }
+    }
+
+    const updates = {
+      familyMemberId: familyMemberName || null,
+      attendeeUserId: attendeeUserId || null,
+      updatedAt: nowIso(),
+    };
+
+    await ticketsService.update(ticketId, updates);
+
+    // Save history
+    const note = `Assigned to ${familyMemberName || attendeeEmail || 'Guest'}`;
+    const historyEntry = { action: 'ticket_assigned', timestamp: nowIso(), actorId: req.user!.id, note };
+    await db.collection('tickets').doc(ticketId).update({
+      history: firestore.FieldValue.arrayUnion(historyEntry),
+    });
+
+    const updatedTicket = { ...ticket, ...updates };
+    return res.json(updatedTicket);
+  } catch (err) {
+    captureRouteError(err, 'PUT /api/tickets/:id/assign');
+    return res.status(500).json({ error: 'Failed to assign ticket' });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// POST /api/tickets/:id/transfer — transfer ticket ownership to another user
+// ---------------------------------------------------------------------------
+ticketsRouter.post('/tickets/:id/transfer', requireAuth, async (req: Request, res: Response) => {
+  try {
+    const ticketId = qparam(req.params.id);
+    const ticket = await ticketsService.getById(ticketId);
+    if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
+    if (!isOwnerOrAdmin(req.user!, ticket.userId)) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    if (ticket.status === 'used' || ticket.status === 'cancelled') {
+      return res.status(400).json({ error: 'Cannot transfer used or cancelled tickets' });
+    }
+
+    const email = String(req.body?.email ?? '').toLowerCase().trim();
+    if (!email) return res.status(400).json({ error: 'Email is required' });
+
+    const userSnap = await db.collection('users').where('email', '==', email).limit(1).get();
+    if (userSnap.empty) {
+      return res.status(404).json({ error: 'User with this email does not exist on CulturePass. Ask them to join first!' });
+    }
+
+    const recipientId = userSnap.docs[0].id;
+
+    if (recipientId === ticket.userId) {
+      return res.status(400).json({ error: 'Cannot transfer a ticket to yourself' });
+    }
+
+    const updates = {
+      userId: recipientId,
+      updatedAt: nowIso(),
+    };
+
+    await ticketsService.update(ticketId, updates);
+
+    // Save history
+    const note = `Transferred from ${req.user!.email} to ${email}`;
+    const historyEntry = { action: 'ticket_transferred', timestamp: nowIso(), actorId: req.user!.id, note };
+    await db.collection('tickets').doc(ticketId).update({
+      history: firestore.FieldValue.arrayUnion(historyEntry),
+    });
+
+    const updatedTicket = { ...ticket, ...updates };
+    return res.json(updatedTicket);
+  } catch (err) {
+    captureRouteError(err, 'POST /api/tickets/:id/transfer');
+    return res.status(500).json({ error: 'Failed to transfer ticket' });
+  }
+});
+

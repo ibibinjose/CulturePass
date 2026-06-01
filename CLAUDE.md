@@ -63,7 +63,9 @@ import { useColors } from '@/hooks/useColors';
 ### Layout & Platform Insets
 ```ts
 // ✅ CORRECT — always
-const topInset = Platform.OS === 'web' ? 0 : insets.top;
+// Use the web-aware hook for proper iOS Safari / Dynamic Island support on mobile web
+const insets = useSafeAreaInsetsWeb();
+const topInset = insets.top;
 
 // ❌ WRONG — never hardcode the old 67px top bar value
 ```
@@ -111,9 +113,9 @@ const { value: showV2 } = useFlagOverride('eventcard-v2');
 - Test on iOS, Android, **and** Web before opening a PR.
 
 ### Layout Rules (Web vs Native)
-- Desktop ≥ 1024px: 240px left `WebSidebar`, `topInset = 0`.
-- Tablet 768–1023px: Bottom tab bar, `topInset = 0`.
-- Mobile native: Bottom tab bar + safe area.
+- Desktop ≥ 1100px: 240px left `WebSidebar`.
+- Tablet / iPad: Bottom tab bar (safe areas respected via `useSafeAreaInsetsWeb()`).
+- Mobile web (iPhone/Android): Bottom tab bar + proper Dynamic Island / home indicator via CSS `env(safe-area-inset-*)`.
 
 Visible bottom tabs: Discover · Calendar · Community · City · My Space (Perks also present in current layout).
 

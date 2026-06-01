@@ -88,7 +88,7 @@ export function NationBuildersPromo({
     // For business acquisition goal: Prefer routing business owners toward the host/business creation flow.
     // Staff can still discover the program page for the staff-side story.
     // We pass an intent so future flows can show Nation Builder Partner messaging.
-    router.push('/hostspace/apply?intent=nation-builder' as any);
+    router.push('/hostspace/create?intent=nation-builder' as any);
   };
 
   // Gate: only non CulturePass+ users + admin flag controlled

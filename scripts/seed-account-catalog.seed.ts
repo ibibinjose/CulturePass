@@ -17,6 +17,10 @@ export const SEED_EVENT_NAMES = [
   'Latin Heritage Dance Social',
   'Middle Eastern Music Circle',
   'Pacific Islands Community Day',
+  'Community Yoga & Meditation Session',
+  'Classic Tango Dance Class',
+  'Cardio Workout & Fitness Class',
+  'Hip Hop Dance Workshop',
 ] as const;
 
 export const SEED_COUNTS = {

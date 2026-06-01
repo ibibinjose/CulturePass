@@ -1,0 +1,8 @@
+{
+  "android": {
+    "package": "com.culturestudios.web"
+  },
+  "ios": {
+    "bundleIdentifier": "com.culturestudios.web"
+  }
+}

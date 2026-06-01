@@ -1,12 +1,12 @@
 import { useState, useCallback, useMemo } from 'react';
 import { Platform } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { useOnboarding } from '@/contexts/OnboardingContext';
 import { useAuth } from '@/lib/auth';
 import { syncUserMarketplaceLocation } from '@/lib/syncMarketplaceLocation';
 import { useLocations } from '@/hooks/useLocations';
 import { useNearestMarketplaceLocation } from '@/hooks/useNearestMarketplaceLocation';
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import {
   getCountryFlag,
   getCountryForCity,
@@ -14,8 +14,6 @@ import {
   listMarketplaceCountries,
   resolveCountryPickerPin,
 } from '@/lib/marketplaceLocation';
-
-const isWeb = Platform.OS === 'web';
 
 export type LocationPickerStep = 'country' | 'region' | 'city';
 
@@ -32,10 +30,11 @@ export function useLocationPickerFlow() {
   const [pendingState, setPendingState] = useState('');
   const [citySearch, setCitySearch] = useState('');
 
-  const insets = useSafeAreaInsets();
-  const topInset = isWeb ? 0 : insets.top;
-  const bottomInsetNative = isWeb ? 0 : Math.max(insets.bottom, 12);
-  const listPadBottom = isWeb ? 80 : bottomInsetNative + 28;
+  // Proper safe area handling across web + native (iOS Safari friendly)
+  const safeInsets = useSafeAreaInsetsWeb();
+  const topInset = safeInsets.top;
+  const bottomInsetNative = Math.max(safeInsets.bottom, 12);
+  const listPadBottom = bottomInsetNative + 28;
 
   const scrollCommon = useMemo(
     () => ({

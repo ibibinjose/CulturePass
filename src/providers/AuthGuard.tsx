@@ -47,8 +47,7 @@ export function AuthGuard() {
           segments[1] === 'my-space' ||
           segments[1] === 'perks' ||
           segments[1] === 'calendar')) ||
-      (segments[0] === 'event' && segments[1] === 'create') ||
-      (segments[0] === 'hostspace' && segments[1] === 'apply');
+      (segments[0] === 'event' && segments[1] === 'create');
 
     const inOnboardingGroup = segments[0] === '(onboarding)';
     const currentOnboardingScreen = segments[1] ?? 'index';

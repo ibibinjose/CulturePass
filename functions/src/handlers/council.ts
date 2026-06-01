@@ -231,7 +231,7 @@ councilRouter.get('/council/nearest', async (req: Request, res: Response) => {
     if (!result) {
       const hit = await findCouncilByCityState(city || undefined, state || undefined);
       if (hit) {
-        result = { doc: hit, distanceKm: 0 };
+        result = { doc: hit, distanceKm: 0 }; // distance not meaningful for city-state fallback
         matchMethod = 'city-state';
       }
     }
@@ -263,7 +263,8 @@ councilRouter.get('/council/nearest', async (req: Request, res: Response) => {
 
     return res.json({
       council: councilData,
-      distanceKm: result.distanceKm,
+      // Only include distanceKm when we actually used coordinates
+      ...(matchMethod === 'coordinate' ? { distanceKm: result.distanceKm } : {}),
       matchMethod,
       confidence,
     });

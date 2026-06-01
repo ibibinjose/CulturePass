@@ -116,6 +116,15 @@ function EventDisplayCard({ event }: { event: EventData }) {
             <Text style={[styles.miniMetricText, { color: colors.textTertiary }]}>{event.attending ?? 0}</Text>
           </View>
           <View style={styles.cardActions}>
+            <Button
+              variant="ghost"
+              size="sm"
+              style={[styles.smallIconBtn, { marginRight: 4 }]}
+              onPress={() => router.push({ pathname: '/dashboard/event-analytics/[eventId]', params: { eventId: event.id } })}
+              accessibilityLabel="View event analytics"
+            >
+              <Ionicons name="analytics-outline" size={16} color={colors.textSecondary} />
+            </Button>
             <Button variant="ghost" size="sm" style={styles.smallIconBtn} onPress={() => router.push({ pathname: '/event/create', params: { editId: event.id } })}>
               <Ionicons name="create-outline" size={16} color={colors.textSecondary} />
             </Button>

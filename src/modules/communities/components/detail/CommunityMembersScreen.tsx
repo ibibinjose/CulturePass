@@ -14,7 +14,7 @@ import {
 import Head from 'expo-router/head';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
@@ -149,9 +149,9 @@ export default function CommunityMembersScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const m3Colors = useM3Colors();
   const { isDesktop, hPad, windowSizeClass } = useLayout();
-  const insets = useSafeAreaInsets();
-  const topInset = Platform.OS === 'web' ? 0 : insets.top;
-  const bottomInset = Platform.OS === 'web' ? 30 : insets.bottom;
+  const safeInsets = useSafeAreaInsetsWeb();
+  const topInset = safeInsets.top;
+  const bottomInset = Math.max(safeInsets.bottom, 30);
   const [search, setSearch] = useState('');
   const isExpanded = windowSizeClass === 'expanded';
 

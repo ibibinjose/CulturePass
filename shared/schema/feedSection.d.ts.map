@@ -1,0 +1,1 @@
+{"version":3,"file":"feedSection.d.ts","sourceRoot":"","sources":["feedSection.ts"],"names":[],"mappings":"AAAA,MAAM,WAAW,WAAW;IAC1B,EAAE,EAAE,MAAM,CAAC;IACX,KAAK,EAAE,MAAM,CAAC;IACd,IAAI,EAAE,MAAM,CAAC;IACb,MAAM,CAAC,EAAE,MAAM,CAAC;IAChB,KAAK,EAAE,MAAM,EAAE,CAAC;IAChB,SAAS,EAAE,MAAM,CAAC;CACnB"}

@@ -20,7 +20,7 @@ import {
 } from 'react-native';
 import { router, type Href } from 'expo-router';
 import Head from 'expo-router/head';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import { useQuery } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -508,8 +508,8 @@ function SectionHeader({
 // ─── Main screen ──────────────────────────────────────────────────────────────
 
 function CultureMarketScreenInner() {
-  const insets = useSafeAreaInsets();
-  const topInset = Platform.OS === 'web' ? 0 : insets.top;
+  const safeInsets = useSafeAreaInsetsWeb();
+  const topInset = safeInsets.top;
   const colors = useColors();
   const { isDesktop, isTablet, hPad, contentWidth, columnGap } = useLayout();
   const { user } = useAuth();
@@ -662,7 +662,7 @@ function CultureMarketScreenInner() {
       <ScrollView
         ref={marketScrollRef}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}
+        contentContainerStyle={{ paddingBottom: safeInsets.bottom + 40 }}
         refreshControl={
           <RefreshControl
             refreshing={allQuery.isFetching || featuredQuery.isFetching}

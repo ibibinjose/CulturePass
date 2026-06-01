@@ -149,6 +149,7 @@ export function DiscoverShopRail({
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
+          removeClippedSubviews={false}
           contentContainerStyle={[styles.scroll, { paddingHorizontal: hPad }]}
           scrollEnabled={false}
         >
@@ -162,6 +163,7 @@ export function DiscoverShopRail({
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
+          removeClippedSubviews={false}
           contentContainerStyle={[styles.scroll, { paddingHorizontal: hPad }]}
           decelerationRate="fast"
           snapToInterval={CARD_W + 12}

@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import { router, usePathname } from 'expo-router';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import Animated, {
@@ -340,11 +340,11 @@ const pc = StyleSheet.create({
 // ─── Main screen ──────────────────────────────────────────────────────────────
 
 export default function UpgradeScreen() {
-  const insets     = useSafeAreaInsets();
   const pathname   = usePathname();
   const handleBack = useSafeBack('/(tabs)/my-space');
   const { hPad } = useLayout();
-  const topInset = Platform.OS === 'web' ? 0 : insets.top;
+  const safeInsets = useSafeAreaInsetsWeb();
+  const topInset = safeInsets.top;
 
   const scrollY = useSharedValue(0);
   const onScroll = useAnimatedScrollHandler(e => { scrollY.value = e.contentOffset.y; });
@@ -406,7 +406,7 @@ export default function UpgradeScreen() {
     page.content,
     {
       paddingTop: topInset + 72,
-      paddingBottom: insets.bottom + 48,
+      paddingBottom: safeInsets.bottom + 48,
       paddingHorizontal: hPad,
     },
   ];

@@ -16,12 +16,8 @@ import { useMemo, useState, useCallback } from 'react';
 import * as Haptics from 'expo-haptics';
 import { useQuery, useQueries, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import {
-  getCommunityAccent,
-  getCommunityHeadline,
-  getCommunityMemberCount,
-} from '@/lib/community';
-import type { Community, EventData } from '@/shared/schema';
+import { useAuth } from '@/lib/auth';
+import type { EventData, Ticket } from '@/shared/schema';
 import { AuthGuard } from '@/modules/core/auth/AuthGuard';
 import { CultureTokens } from '@/design-system/tokens/colors';
 import { FontFamily, Radius, shadows } from '@/design-system/tokens/theme';
@@ -30,13 +26,12 @@ import { useColors } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
 import { Skeleton } from '@/design-system/ui/Skeleton';
 import { M3TopAppBar, M3Button, GlassView } from '@/design-system/ui';
+import Svg, { Rect, Circle, Ellipse, Path, Text as SvgText, G } from 'react-native-svg';
 
 const IS_WEB = Platform.OS === 'web';
-
-type TabKey = 'events' | 'communities' | 'hubs';
+type TabKey = 'favorites' | 'stamps';
 
 const EVENTS_CATALOG_KEY = ['events', 'list', 'saved-catalog'] as const;
-const COMMUNITIES_LIST_KEY = ['/api/communities'] as const;
 
 function formatDate(dateStr: string): string {
   const [year, month, day] = dateStr.split('-').map(Number);
@@ -57,22 +52,228 @@ function eventImageUri(e: EventData): string | undefined {
   return u?.trim() || undefined;
 }
 
-function eventKindLabel(e: EventData): string {
-  const cat = e.category?.trim();
-  if (cat) return cat;
-  if (e.eventType) return e.eventType.replace(/_/g, ' ');
-  const tag = e.cultureTag?.[0] ?? e.cultureTags?.[0];
-  if (tag) return tag;
-  return 'Event';
+// ── CUSTOM RETRO VINTAGE STAMP COMPONENT ───────────────────────────
+interface RetroStampProps {
+  hostName: string;
+  date?: string;
+  size?: number;
 }
 
-function formatEventPrice(e: EventData): string {
-  if (e.priceLabel?.trim()) return e.priceLabel.trim();
-  if (e.isFree) return 'Free';
-  if (e.priceCents != null && e.priceCents > 0) {
-    return `$${(e.priceCents / 100).toFixed(0)}+`;
+export function RetroStamp({ hostName, date = '2025', size = 130 }: RetroStampProps) {
+  const hash = useMemo(() => {
+    let h = 0;
+    for (let i = 0; i < hostName.length; i++) {
+      h = hostName.charCodeAt(i) + ((h << 5) - h);
+    }
+    return Math.abs(h);
+  }, [hostName]);
+
+  const shapeIndex = hash % 5;
+  const colorIndex = (hash >> 2) % 6;
+
+  const palettes = [
+    { text: '#065F46', border: '#059669', bg: '#ECFDF5', fill: '#D1FAE5' }, // Green/Emerald
+    { text: '#991B1B', border: '#DC2626', bg: '#FEF2F2', fill: '#FEE2E2' }, // Red/Coral
+    { text: '#1E40AF', border: '#3B82F6', bg: '#EFF6FF', fill: '#DBEAFE' }, // Blue/Indigo
+    { text: '#9D174D', border: '#EC4899', bg: '#FDF2F8', fill: '#FCE7F3' }, // Pink/Rose
+    { text: '#115E59', border: '#0D9488', bg: '#F0FDFA', fill: '#CCFBF1' }, // Cyan/Teal
+    { text: '#9A3412', border: '#F97316', bg: '#FFF7ED', fill: '#FFEDD5' }, // Orange/Amber
+  ];
+
+  const color = palettes[colorIndex];
+
+  const nameParts = useMemo(() => {
+    const cleaned = hostName.toUpperCase().replace(/AND/g, '&');
+    const words = cleaned.split(' ');
+    if (words.length <= 2) return [cleaned];
+    if (words.length === 3) return [`${words[0]} ${words[1]}`, words[2]];
+    const mid = Math.ceil(words.length / 2);
+    return [
+      words.slice(0, mid).join(' '),
+      words.slice(mid).join(' ')
+    ];
+  }, [hostName]);
+
+  const renderShape = () => {
+    switch (shapeIndex) {
+      case 0: // Oval
+        return (
+          <G>
+            <Ellipse cx="75" cy="55" rx="70" ry="46" fill={color.bg} stroke={color.border} strokeWidth="3" />
+            <Ellipse cx="75" cy="55" rx="64" ry="40" fill="none" stroke={color.border} strokeWidth="1" strokeDasharray="3,3" />
+            <SvgText x="75" y="40" fontSize="9" fontFamily={FontFamily.bold} fill={color.text} textAnchor="middle">
+              CULTURAL PASS
+            </SvgText>
+            <SvgText x="75" y="55" fontSize="10.5" fontFamily={FontFamily.bold} fill={color.text} textAnchor="middle">
+              {nameParts[0]}
+            </SvgText>
+            {nameParts[1] ? (
+              <SvgText x="75" y="68" fontSize="9.5" fontFamily={FontFamily.bold} fill={color.text} textAnchor="middle">
+                {nameParts[1]}
+              </SvgText>
+            ) : null}
+            <SvgText x="75" y="85" fontSize="9" fontFamily={FontFamily.medium} fill={color.border} textAnchor="middle">
+              ★ {date} ★
+            </SvgText>
+          </G>
+        );
+      case 1: // Circle
+        return (
+          <G>
+            <Circle cx="75" cy="75" r="68" fill={color.bg} stroke={color.border} strokeWidth="3" />
+            <Circle cx="75" cy="75" r="62" fill="none" stroke={color.border} strokeWidth="1" strokeDasharray="4,3" />
+            <Circle cx="75" cy="75" r="58" fill="none" stroke={color.border} strokeWidth="0.8" />
+            <SvgText x="75" y="52" fontSize="9" fontFamily={FontFamily.bold} fill={color.border} textAnchor="middle" letterSpacing="1">
+              CULTURAL PASS
+            </SvgText>
+            <SvgText x="75" y="72" fontSize="10.5" fontFamily={FontFamily.bold} fill={color.text} textAnchor="middle">
+              {nameParts[0]}
+            </SvgText>
+            {nameParts[1] ? (
+              <SvgText x="75" y="85" fontSize="9.5" fontFamily={FontFamily.bold} fill={color.text} textAnchor="middle">
+                {nameParts[1]}
+              </SvgText>
+            ) : null}
+            <SvgText x="75" y="104" fontSize="10" fontFamily={FontFamily.bold} fill={color.text} textAnchor="middle">
+              ★ {date} ★
+            </SvgText>
+          </G>
+        );
+      case 2: // Ticket/Coupon Shape
+        return (
+          <G>
+            <Path
+              d="M 12 15 A 8 8 0 0 0 20 23 L 130 23 A 8 8 0 0 0 138 15 L 138 95 A 8 8 0 0 0 130 87 L 20 87 A 8 8 0 0 0 12 95 Z"
+              fill={color.bg}
+              stroke={color.border}
+              strokeWidth="3"
+            />
+            <Path
+              d="M 15 18 L 135 18 M 15 92 L 135 92"
+              stroke={color.border}
+              strokeWidth="1"
+              strokeDasharray="2,2"
+            />
+            <SvgText x="75" y="42" fontSize="9" fontFamily={FontFamily.bold} fill={color.border} textAnchor="middle" letterSpacing="0.5">
+              CULTURAL PASS {date}
+            </SvgText>
+            <SvgText x="75" y="60" fontSize="10.5" fontFamily={FontFamily.bold} fill={color.text} textAnchor="middle">
+              {nameParts[0]}
+            </SvgText>
+            {nameParts[1] ? (
+              <SvgText x="75" y="74" fontSize="9.5" fontFamily={FontFamily.bold} fill={color.text} textAnchor="middle">
+                {nameParts[1]}
+              </SvgText>
+            ) : null}
+            <SvgText x="75" y="88" fontSize="8" fill={color.text} textAnchor="middle">
+              ★★★★★
+            </SvgText>
+          </G>
+        );
+      case 3: // Octagon/Arch
+        return (
+          <G>
+            <Path
+              d="M 25 15 L 125 15 L 140 30 L 140 80 L 125 95 L 25 95 L 10 80 L 10 30 Z"
+              fill={color.bg}
+              stroke={color.border}
+              strokeWidth="3"
+            />
+            <Path
+              d="M 28 18 L 122 18 L 137 32 L 137 78 L 122 92 L 28 92 L 13 78 L 13 32 Z"
+              fill="none"
+              stroke={color.border}
+              strokeWidth="1"
+              strokeDasharray="3,3"
+            />
+            <SvgText x="75" y="40" fontSize="9" fontFamily={FontFamily.bold} fill={color.border} textAnchor="middle">
+              OFFICIAL ENTRY
+            </SvgText>
+            <SvgText x="75" y="58" fontSize="10.5" fontFamily={FontFamily.bold} fill={color.text} textAnchor="middle">
+              {nameParts[0]}
+            </SvgText>
+            {nameParts[1] ? (
+              <SvgText x="75" y="71" fontSize="9.5" fontFamily={FontFamily.bold} fill={color.text} textAnchor="middle">
+                {nameParts[1]}
+              </SvgText>
+            ) : null}
+            <SvgText x="75" y="85" fontSize="9" fontFamily={FontFamily.medium} fill={color.text} textAnchor="middle">
+              PASSPORT · {date}
+            </SvgText>
+          </G>
+        );
+      default: // Double Border Rectangle
+        return (
+          <G>
+            <Rect x="10" y="15" width="130" height="80" rx="6" fill={color.bg} stroke={color.border} strokeWidth="3" />
+            <Rect x="15" y="20" width="120" height="70" rx="3" fill="none" stroke={color.border} strokeWidth="1" strokeDasharray="3,2" />
+            <SvgText x="75" y="40" fontSize="10.5" fontFamily={FontFamily.bold} fill={color.text} textAnchor="middle">
+              {nameParts[0]}
+            </SvgText>
+            {nameParts[1] ? (
+              <SvgText x="75" y="54" fontSize="9.5" fontFamily={FontFamily.bold} fill={color.text} textAnchor="middle">
+                {nameParts[1]}
+              </SvgText>
+            ) : null}
+            <SvgText x="75" y="70" fontSize="9" fontFamily={FontFamily.medium} fill={color.border} textAnchor="middle">
+              CULTURAL PASS
+            </SvgText>
+            <SvgText x="75" y="84" fontSize="10" fontFamily={FontFamily.bold} fill={color.text} textAnchor="middle">
+              ★ {date} ★
+            </SvgText>
+          </G>
+        );
+    }
+  };
+
+  const height = shapeIndex === 1 ? size : Math.round(size * 0.77);
+
+  return (
+    <View style={{ width: size, height, alignItems: 'center', justifyContent: 'center', margin: 10 }}>
+      <Svg width={size} height={height} viewBox={shapeIndex === 1 ? "0 0 150 150" : "0 0 150 110"}>
+        {renderShape()}
+      </Svg>
+    </View>
+  );
+}
+
+// ── GROUP SAVED EVENTS BY CALENDAR DATE RANGE ─────────────────────
+function groupEventsByDate(events: EventData[]) {
+  const groups: { [key: string]: EventData[] } = {};
+  const today = new Date();
+  const todayStr = today.toISOString().split('T')[0];
+
+  const startOfWeek = new Date(today);
+  startOfWeek.setDate(today.getDate() - today.getDay());
+  startOfWeek.setHours(0, 0, 0, 0);
+
+  const endOfWeek = new Date(startOfWeek);
+  endOfWeek.setDate(startOfWeek.getDate() + 6);
+  endOfWeek.setHours(23, 59, 59, 999);
+
+  for (const e of events) {
+    if (!e.date) continue;
+    const eventDate = new Date(e.date);
+    if (Number.isNaN(eventDate.getTime())) {
+      if (!groups['Upcoming']) groups['Upcoming'] = [];
+      groups['Upcoming'].push(e);
+      continue;
+    }
+
+    if (e.date === todayStr) {
+      if (!groups['Today']) groups['Today'] = [];
+      groups['Today'].push(e);
+    } else if (eventDate >= startOfWeek && eventDate <= endOfWeek) {
+      if (!groups['This Week']) groups['This Week'] = [];
+      groups['This Week'].push(e);
+    } else {
+      const monthYear = eventDate.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+      if (!groups[monthYear]) groups[monthYear] = [];
+      groups[monthYear].push(e);
+    }
   }
-  return '';
+
+  return groups;
 }
 
 export default function SavedScreen() {
@@ -80,30 +281,21 @@ export default function SavedScreen() {
   const colors = useColors();
   const { hPad, isDesktop } = useLayout();
   const queryClient = useQueryClient();
+  const { isAuthenticated, userId } = useAuth();
 
   const bottomInset = IS_WEB ? 26 : insets.bottom;
 
-  const [activeTab, setActiveTab] = useState<TabKey>('events');
+  const [activeTab, setActiveTab] = useState<TabKey>('favorites');
   const [refreshing, setRefreshing] = useState(false);
+  
   const {
     savedEvents,
-    joinedCommunities,
-    savedCommunityBookmarks,
-    savedHubs,
     toggleSaveEvent,
-    toggleJoinCommunity,
-    toggleSaveCommunityBookmark,
-    toggleSaveHub,
   } = useSaved();
 
   const savedCount = savedEvents.length;
-  const joinedCount = joinedCommunities.length;
-  const bookmarkCount = savedCommunityBookmarks.length;
-  const communitiesTabTotal = useMemo(
-    () => new Set([...joinedCommunities, ...savedCommunityBookmarks]).size,
-    [joinedCommunities, savedCommunityBookmarks],
-  );
 
+  // 1. Fetch entire events catalog to look up saved event records
   const eventsQuery = useQuery({
     queryKey: EVENTS_CATALOG_KEY,
     queryFn: async () => {
@@ -117,6 +309,7 @@ export default function SavedScreen() {
   const catalogEvents = useMemo(() => eventsQuery.data ?? [], [eventsQuery.data]);
   const catalogFetched = eventsQuery.isFetched;
 
+  // 2. Fetch specific missing events by ID if not in catalog cache
   const missingEventIds = useMemo(() => {
     if (savedCount === 0 || !catalogFetched) return [];
     const catIds = new Set(catalogEvents.map((e) => e.id));
@@ -137,42 +330,44 @@ export default function SavedScreen() {
     eventDetailQueries.length === missingEventIds.length &&
     eventDetailQueries.every((q) => q.isPending);
 
-  const communitiesQuery = useQuery({
-    queryKey: COMMUNITIES_LIST_KEY,
-    queryFn: () => api.communities.list(),
-    enabled: joinedCount > 0 || bookmarkCount > 0,
-    staleTime: 60 * 1000,
+  // 3. Fetch User Tickets to calculate attendance / check-in stamps
+  const ticketsQuery = useQuery({
+    queryKey: ['tickets', 'user', userId],
+    queryFn: () => api.tickets.forUser(userId || ''),
+    enabled: !!userId && isAuthenticated,
+    staleTime: 30 * 1000,
   });
 
-  const allCommunities = useMemo(() => communitiesQuery.data ?? [], [communitiesQuery.data]);
+  const myTickets = useMemo(() => ticketsQuery.data ?? [], [ticketsQuery.data]);
+  const attendedTickets = useMemo(() => {
+    return myTickets.filter(t => t.checkedIn || t.status === 'used');
+  }, [myTickets]);
 
-  const bookmarkOnlyIds = useMemo(
-    () => savedCommunityBookmarks.filter((id) => !joinedCommunities.includes(id)),
-    [savedCommunityBookmarks, joinedCommunities],
-  );
-
-  const missingCommunityIds = useMemo(() => {
-    if (!communitiesQuery.isFetched || bookmarkOnlyIds.length === 0) return [];
-    const have = new Set(allCommunities.map((c) => c.id));
-    return bookmarkOnlyIds.filter((id) => !have.has(id)).slice(0, 30);
-  }, [communitiesQuery.isFetched, bookmarkOnlyIds, allCommunities]);
-
-  const communityDetailQueries = useQueries({
-    queries: missingCommunityIds.map((id) => ({
-      queryKey: ['communities', 'detail', id] as const,
-      queryFn: () => api.communities.get(id),
-      enabled:
-        (joinedCount > 0 || bookmarkCount > 0) &&
-        communitiesQuery.isFetched &&
-        missingCommunityIds.includes(id),
-      staleTime: 60_000,
-    })),
-  });
-
-  const communityDetailsStillLoading =
-    missingCommunityIds.length > 0 &&
-    communityDetailQueries.length === missingCommunityIds.length &&
-    communityDetailQueries.every((q) => q.isPending);
+  // Compute host statistics (attended out of total catalog)
+  const hostStats = useMemo(() => {
+    const statsMap = new Map<string, { total: number; attended: Set<string> }>();
+    
+    // Total events per host in catalog
+    for (const e of catalogEvents) {
+      const key = e.hostName || e.venue || e.organizerId || 'Unknown Host';
+      if (!statsMap.has(key)) {
+        statsMap.set(key, { total: 0, attended: new Set() });
+      }
+      statsMap.get(key)!.total += 1;
+    }
+    
+    // Attended events per host from tickets
+    for (const t of attendedTickets) {
+      const matchingEvent = catalogEvents.find(e => e.id === t.eventId);
+      const key = matchingEvent?.hostName || matchingEvent?.venue || matchingEvent?.organizerId || t.eventVenue || 'Unknown Host';
+      if (!statsMap.has(key)) {
+        statsMap.set(key, { total: 1, attended: new Set() });
+      }
+      statsMap.get(key)!.attended.add(t.eventId);
+    }
+    
+    return statsMap;
+  }, [catalogEvents, attendedTickets]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -181,21 +376,16 @@ export default function SavedScreen() {
       if (savedCount > 0) {
         tasks.push(queryClient.invalidateQueries({ queryKey: EVENTS_CATALOG_KEY }));
       }
-      if (joinedCount > 0 || bookmarkCount > 0) {
-        tasks.push(queryClient.invalidateQueries({ queryKey: COMMUNITIES_LIST_KEY }));
-      }
-      if (savedCount > 0) {
-        tasks.push(queryClient.invalidateQueries({ queryKey: ['events', 'detail'] }));
-      }
-      if (bookmarkCount > 0) {
-        tasks.push(queryClient.invalidateQueries({ queryKey: ['communities', 'detail'] }));
+      if (userId) {
+        tasks.push(queryClient.invalidateQueries({ queryKey: ['tickets', 'user', userId] }));
       }
       await Promise.all(tasks);
     } finally {
       setRefreshing(false);
     }
-  }, [queryClient, savedCount, joinedCount, bookmarkCount]);
+  }, [queryClient, savedCount, userId]);
 
+  // Filter and sort saved event models
   const savedEventItems = useMemo(() => {
     if (savedCount === 0) return [];
     const merged = new Map<string, EventData>();
@@ -203,6 +393,7 @@ export default function SavedScreen() {
     for (const q of eventDetailQueries) {
       if (q.data) merged.set(q.data.id, q.data);
     }
+    
     const now = Date.now();
     return savedEvents
       .map((id) => merged.get(id))
@@ -219,72 +410,79 @@ export default function SavedScreen() {
       .map((x) => x.e);
   }, [catalogEvents, eventDetailQueries, savedEvents, savedCount]);
 
-  const joinedCommunityItems = useMemo(() => {
-    if (!allCommunities.length || joinedCount === 0) return [];
-    const idSet = new Set(joinedCommunities);
-    return allCommunities.filter((c) => idSet.has(c.id));
-  }, [allCommunities, joinedCommunities, joinedCount]);
-
-  const bookmarkCommunityItems = useMemo(() => {
-    if (bookmarkOnlyIds.length === 0) return [];
-    const byId = new Map<string, Community>();
-    for (const c of allCommunities) byId.set(c.id, c);
-    for (const q of communityDetailQueries) {
-      if (q.data) byId.set(q.data.id, q.data);
+  // Unique host list for Stamps Tab
+  const attendedHosts = useMemo(() => {
+    const hostsSet = new Set<string>();
+    for (const t of attendedTickets) {
+      const matchingEvent = catalogEvents.find(e => e.id === t.eventId);
+      const hostName = matchingEvent?.hostName || matchingEvent?.venue || t.eventVenue || t.eventName || 'Host';
+      if (hostName && hostName !== 'Host' && hostName.trim().length > 0) {
+        hostsSet.add(hostName.trim());
+      }
     }
-    return bookmarkOnlyIds.map((id) => byId.get(id)).filter((c): c is Community => c != null);
-  }, [bookmarkOnlyIds, allCommunities, communityDetailQueries]);
+    return Array.from(hostsSet);
+  }, [attendedTickets, catalogEvents]);
 
-  const tabs: { key: TabKey; label: string; icon: keyof typeof Ionicons.glyphMap; count: number }[] = [
-    { key: 'events', label: 'Events', icon: 'bookmark', count: savedCount },
-    { key: 'communities', label: 'Communities', icon: 'people', count: communitiesTabTotal },
-    { key: 'hubs', label: 'Hubs', icon: 'earth', count: savedHubs.length },
+  // Grouped favorites for UI Sections
+  const groupedFavorites = useMemo(() => {
+    return groupEventsByDate(savedEventItems);
+  }, [savedEventItems]);
+
+  const groupKeysOrdered = useMemo(() => {
+    const keys = Object.keys(groupedFavorites);
+    const order = ['Today', 'This Week'];
+    const timeKeys = keys.filter(k => !order.includes(k)).sort((a, b) => {
+      const da = Date.parse(a);
+      const db = Date.parse(b);
+      return da - db;
+    });
+    return [...order.filter(k => keys.includes(k)), ...timeKeys];
+  }, [groupedFavorites]);
+
+  const tabs = [
+    { key: 'favorites' as const, label: 'Favorites', icon: 'heart-outline' as const },
+    { key: 'stamps' as const, label: 'Stamps', icon: 'ribbon-outline' as const },
   ];
 
   const loadingEvents =
-    activeTab === 'events' && savedCount > 0 && (eventsQuery.isPending || eventDetailsStillLoading);
-  const loadingCommunities =
-    activeTab === 'communities' &&
-    (joinedCount > 0 || bookmarkCount > 0) &&
-    (communitiesQuery.isPending || communityDetailsStillLoading);
-  const showListSkeleton = loadingEvents || loadingCommunities;
+    activeTab === 'favorites' && savedCount > 0 && (eventsQuery.isPending || eventDetailsStillLoading);
+  const showListSkeleton = loadingEvents;
 
-  const eventsError = activeTab === 'events' && savedCount > 0 && eventsQuery.isError;
-  const communitiesError =
-    activeTab === 'communities' &&
-    (joinedCount > 0 || bookmarkCount > 0) &&
-    communitiesQuery.isError;
+  const headerActions = [
+    {
+      icon: 'close-outline' as const,
+      onPress: () => (router.canGoBack() ? router.back() : router.replace('/(tabs)/my-space')),
+      label: 'Close',
+    },
+  ];
 
   return (
     <AuthGuard
-      icon="bookmark-outline"
-      title="My Saved"
-      message="Sign in to revisit your bookmarks, memberships and cultural hub shortcuts."
+      icon="heart-outline"
+      title="Favorites & Stamps"
+      message="Sign in to view your favorited events and collected check-in stamps."
     >
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <Stack.Screen options={{ headerShown: false }} />
         <LinearGradient
-            colors={[`${colors.primary}08`, 'transparent']}
-            style={StyleSheet.absoluteFill}
-            pointerEvents="none"
+          colors={[`${colors.primary}05`, 'transparent']}
+          style={StyleSheet.absoluteFill}
+          pointerEvents="none"
         />
 
         <M3TopAppBar
-          title="Saved"
+          title="Favorites & Stamps"
           onBack={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)/my-space'))}
-          titleLeading={
-            <Image
-              source={require('@/assets/images/culturepass-logo.png')}
-              style={{ width: 40, height: 40, borderRadius: 20, marginLeft: 8 }}
-              contentFit="contain"
-            />
-          }
+          actions={headerActions}
+          variant="center-aligned"
         />
 
         <View style={[styles.shell, isDesktop && styles.desktopShell, { paddingHorizontal: hPad }]}>
+          {/* Unified segment tabs in center */}
           <GlassView intensity={15} style={[styles.tabRail, { backgroundColor: colors.backgroundSecondary + '80', borderColor: colors.borderLight }]}>
             {tabs.map((tab) => {
               const isActive = activeTab === tab.key;
+              const count = tab.key === 'favorites' ? savedCount : attendedHosts.length;
               return (
                 <Pressable
                   key={tab.key}
@@ -301,7 +499,7 @@ export default function SavedScreen() {
                   accessibilityState={{ selected: isActive }}
                 >
                   <Ionicons
-                    name={tab.icon as any}
+                    name={tab.icon}
                     size={16}
                     color={isActive ? colors.primary : colors.textTertiary}
                   />
@@ -311,14 +509,14 @@ export default function SavedScreen() {
                   >
                     {tab.label}
                   </Text>
-                  {tab.count > 0 ? (
+                  {count > 0 ? (
                     <View
                       style={[
                         styles.countBadge,
                         { backgroundColor: isActive ? colors.primary : colors.primarySoft },
                       ]}
                     >
-                      <Text style={[styles.countText, { color: isActive ? '#FFFFFF' : colors.primary }]}>{tab.count}</Text>
+                      <Text style={[styles.countText, { color: isActive ? '#FFFFFF' : colors.primary }]}>{count}</Text>
                     </View>
                   ) : null}
                 </Pressable>
@@ -337,18 +535,6 @@ export default function SavedScreen() {
               flexGrow: 1,
             }}
           >
-            {eventsError || communitiesError ? (
-              <GlassView contentStyle={{ padding: 24, alignItems: 'center', gap: 16 }}>
-                <Ionicons name="cloud-offline" size={32} color={colors.error} />
-                <Text style={{ color: colors.textSecondary, textAlign: 'center', fontFamily: FontFamily.medium }}>
-                  Could not load your saved list. Tap below to retry.
-                </Text>
-                <M3Button variant="tonal" onPress={() => void onRefresh()} style={{ height: 36 }}>
-                  Retry
-                </M3Button>
-              </GlassView>
-            ) : null}
-
             {showListSkeleton ? (
               <View style={{ gap: 16 }}>
                 {[0, 1, 2].map((k) => (
@@ -365,199 +551,143 @@ export default function SavedScreen() {
               </View>
             ) : null}
 
-            {!showListSkeleton && activeTab === 'events' && (
+            {/* ── TAB CONTENT: FAVORITES ───────────────────────────────── */}
+            {!showListSkeleton && activeTab === 'favorites' && (
               <>
                 {savedCount === 0 ? (
                   <EmptyBlock
                     colors={colors}
-                    icon="bookmark"
-                    title="No saved events yet"
-                    description="Save events you're interested in from the discovery feed and they'll appear here."
+                    icon="heart-outline"
+                    title="No favorites yet"
+                    description="Tap the heart icon on any event to build your personalized list."
                     ctaLabel="Browse events"
                     onCta={() => router.push('/(tabs)')}
                   />
                 ) : (
-                  <>
-                    <View style={styles.sectionHead}>
-                      <View style={[styles.sectionAccent, { backgroundColor: CultureTokens.indigo }]} />
-                      <Text style={[styles.sectionTitle, { color: colors.textTertiary }]}>UPCOMING EVENTS</Text>
-                    </View>
-                    {savedEventItems.map((event) => {
-                      const img = eventImageUri(event);
-                      const price = formatEventPrice(event);
-                      return (
-                        <GlassView key={event.id} style={styles.itemOuter} contentStyle={{ padding: 0 }}>
-                          <Pressable
-                            style={({ pressed }) => [styles.itemPress, pressed && { opacity: 0.9, transform: [{ scale: 0.99 }] }]}
-                            onPress={() => router.push({ pathname: '/e/[id]', params: { id: event.id } })}
-                          >
-                            {img ? (
-                              <Image source={{ uri: img }} style={styles.itemImage} contentFit="cover" transition={200} />
-                            ) : (
-                              <View style={[styles.itemImage, { backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center' }]}>
-                                <Ionicons name="calendar" size={32} color={colors.primary} />
-                              </View>
-                            )}
-                            <View style={styles.itemInfo}>
-                              <View style={[styles.typeBadge, { backgroundColor: colors.primarySoft, borderColor: colors.primary + '15' }]}>
-                                <Text style={[styles.typeBadgeText, { color: colors.primary }]}>
-                                  {eventKindLabel(event).toUpperCase()}
-                                </Text>
-                              </View>
-                              <Text style={[styles.itemTitle, { color: colors.text }]} numberOfLines={2}>
-                                {event.title}
-                              </Text>
-                              <View style={{ gap: 4 }}>
-                                <View style={styles.metaRow}>
-                                  <Ionicons name="calendar-outline" size={13} color={colors.textTertiary} />
-                                  <Text style={[styles.metaText, { color: colors.textSecondary }]}>
-                                    {formatDate(event.date)}
-                                  </Text>
+                  groupKeysOrdered.map((key) => {
+                    const groupEvents = groupedFavorites[key] ?? [];
+                    if (groupEvents.length === 0) return null;
+                    return (
+                      <View key={key} style={{ marginBottom: 20 }}>
+                        <View style={styles.sectionHead}>
+                          <View style={[styles.sectionAccent, { backgroundColor: CultureTokens.indigo }]} />
+                          <Text style={[styles.sectionTitle, { color: colors.textTertiary }]}>{key.toUpperCase()}</Text>
+                        </View>
+                        
+                        {groupEvents.map((event) => {
+                          const img = eventImageUri(event);
+                          const hostKey = event.hostName || event.venue || event.organizerId || 'Unknown Host';
+                          const stats = hostStats.get(hostKey);
+                          const total = stats?.total ?? 1;
+                          const attended = stats?.attended?.size ?? 0;
+                          
+                          return (
+                            <GlassView key={event.id} style={styles.itemOuter} contentStyle={{ padding: 0 }}>
+                              <Pressable
+                                style={({ pressed }) => [styles.itemPress, pressed && { opacity: 0.9, transform: [{ scale: 0.99 }] }]}
+                                onPress={() => router.push({ pathname: '/e/[id]', params: { id: event.id } })}
+                              >
+                                {/* Left image with heart icon absolute positioned */}
+                                <View style={{ position: 'relative', width: 120, height: 150 }}>
+                                  {img ? (
+                                    <Image source={{ uri: img }} style={styles.itemImage} contentFit="cover" transition={200} />
+                                  ) : (
+                                    <View style={[styles.itemImage, { backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center' }]}>
+                                      <Ionicons name="calendar" size={32} color={colors.primary} />
+                                    </View>
+                                  )}
+                                  
+                                  {/* Heart overlay */}
+                                  <Pressable
+                                    style={({ pressed }) => [
+                                      styles.heartBadge,
+                                      { backgroundColor: 'rgba(255, 255, 255, 0.9)' },
+                                      pressed && { opacity: 0.7 }
+                                    ]}
+                                    onPress={() => {
+                                      if (!IS_WEB) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                      toggleSaveEvent(event.id);
+                                    }}
+                                  >
+                                    <Ionicons name="heart" size={17} color={CultureTokens.coral} />
+                                  </Pressable>
                                 </View>
-                                {event.venue && (
-                                  <View style={styles.metaRow}>
-                                    <Ionicons name="location-outline" size={13} color={colors.textTertiary} />
-                                    <Text style={[styles.metaText, { color: colors.textSecondary }]} numberOfLines={1}>
-                                      {event.venue}
+
+                                {/* Right information block */}
+                                <View style={styles.itemInfo}>
+                                  <Text style={[styles.itemTitle, { color: colors.text }]} numberOfLines={2}>
+                                    {event.title}
+                                  </Text>
+                                  
+                                  <View style={{ gap: 4, marginTop: 4 }}>
+                                    <View style={styles.metaRow}>
+                                      <Ionicons name="location-outline" size={13} color={colors.textTertiary} />
+                                      <Text style={[styles.metaText, { color: colors.textSecondary }]} numberOfLines={1}>
+                                        {event.venue || event.address || 'Venue'}
+                                      </Text>
+                                    </View>
+                                    
+                                    <View style={styles.metaRow}>
+                                      <Ionicons name="calendar-outline" size={13} color={colors.textTertiary} />
+                                      <Text style={[styles.metaText, { color: colors.textSecondary }]}>
+                                        {formatDate(event.date)}
+                                      </Text>
+                                    </View>
+
+                                    {event.time && (
+                                      <View style={styles.metaRow}>
+                                        <Ionicons name="time-outline" size={13} color={colors.textTertiary} />
+                                        <Text style={[styles.metaText, { color: colors.textSecondary }]}>
+                                          {event.time}
+                                        </Text>
+                                      </View>
+                                    )}
+                                  </View>
+
+                                  {/* Progress label: X of Y attended */}
+                                  <View style={[styles.progressBadge, { backgroundColor: colors.backgroundSecondary }]}>
+                                    <Ionicons name="square" size={8} color={colors.textTertiary} style={{ transform: [{ rotate: '45deg' }] }} />
+                                    <Text style={[styles.progressText, { color: colors.textSecondary }]}>
+                                      {attended} of {total} attended
                                     </Text>
                                   </View>
-                                )}
-                              </View>
-                              {price && (
-                                <Text style={[styles.itemPrice, { color: CultureTokens.teal }]}>{price}</Text>
-                              )}
-                            </View>
-                          </Pressable>
-                          <Pressable
-                            style={({ pressed }) => [styles.bookmarkBtn, { backgroundColor: colors.surface + 'B3', borderColor: colors.borderLight }, pressed && { opacity: 0.7 }]}
-                            onPress={() => {
-                              if (!IS_WEB) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                              toggleSaveEvent(event.id);
-                            }}
-                          >
-                            <Ionicons name="bookmark" size={18} color={colors.primary} />
-                          </Pressable>
-                        </GlassView>
-                      );
-                    })}
-                  </>
+                                </View>
+                              </Pressable>
+                            </GlassView>
+                          );
+                        })}
+                      </View>
+                    );
+                  })
                 )}
               </>
             )}
 
-            {!showListSkeleton && activeTab === 'communities' && (
+            {/* ── TAB CONTENT: STAMPS ──────────────────────────────────── */}
+            {!showListSkeleton && activeTab === 'stamps' && (
               <>
-                {communitiesTabTotal === 0 ? (
+                {attendedHosts.length === 0 ? (
                   <EmptyBlock
                     colors={colors}
-                    icon="people"
-                    title="No communities yet"
-                    description="Join communities or bookmark cultural hubs to keep track of your diaspora circles."
-                    ctaLabel="Explore communities"
-                    onCta={() => router.push('/(tabs)/community')}
+                    icon="ribbon-outline"
+                    title="No stamps collected yet"
+                    description="Collect a stamp for each cultural event you attend! Book a ticket and get checked in at the door."
+                    ctaLabel="Browse events"
+                    onCta={() => router.push('/(tabs)')}
                   />
                 ) : (
-                  <>
-                    {[...joinedCommunityItems, ...bookmarkCommunityItems].map((community) => {
-                      const accent = getCommunityAccent(community, colors.primary);
-                      const isMember = joinedCommunities.includes(community.id);
-                      return (
-                        <GlassView key={community.id} style={styles.itemOuter} contentStyle={{ padding: 0 }}>
-                          <Pressable
-                            style={({ pressed }) => [styles.itemPress, pressed && { opacity: 0.94 }]}
-                            onPress={() => router.push({ pathname: '/c/[id]', params: { id: community.id } })}
-                          >
-                            <View style={[styles.commAvatar, { backgroundColor: accent + '15', borderColor: accent + '25' }]}>
-                                {community.iconEmoji ? (
-                                    <Text style={{ fontSize: 24 }}>{community.iconEmoji}</Text>
-                                ) : (
-                                    <Ionicons name="people" size={24} color={accent} />
-                                )}
-                            </View>
-                            <View style={styles.itemInfo}>
-                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                                    <Text style={[styles.itemTitle, { color: colors.text }]} numberOfLines={1}>
-                                        {community.name}
-                                    </Text>
-                                    {isMember && (
-                                        <View style={[styles.memberBadge, { backgroundColor: CultureTokens.teal + '15', borderColor: CultureTokens.teal + '30' }]}>
-                                            <Text style={{ color: CultureTokens.teal, fontSize: 8, fontFamily: FontFamily.bold }}>MEMBER</Text>
-                                        </View>
-                                    )}
-                                </View>
-                                <Text style={[styles.commHeadline, { color: colors.textSecondary }]} numberOfLines={2}>
-                                    {getCommunityHeadline(community)}
-                                </Text>
-                                <View style={styles.metaRow}>
-                                    <Ionicons name="people-outline" size={12} color={colors.textTertiary} />
-                                    <Text style={[styles.metaText, { color: colors.textSecondary }]}>
-                                        {getCommunityMemberCount(community)} members
-                                    </Text>
-                                </View>
-                            </View>
-                          </Pressable>
-                          <Pressable
-                            style={({ pressed }) => [styles.bookmarkBtn, { backgroundColor: colors.surface + 'B3', borderColor: colors.borderLight }, pressed && { opacity: 0.7 }]}
-                            onPress={() => {
-                              if (!IS_WEB) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                              if (isMember) toggleJoinCommunity(community.id);
-                              else toggleSaveCommunityBookmark(community.id);
-                            }}
-                          >
-                            <Ionicons name={isMember ? "exit-outline" : "bookmark"} size={18} color={isMember ? colors.textTertiary : colors.primary} />
-                          </Pressable>
-                        </GlassView>
-                      );
-                    })}
-                  </>
-                )}
-              </>
-            )}
-
-            {!showListSkeleton && activeTab === 'hubs' && (
-              <>
-                {savedHubs.length === 0 ? (
-                  <EmptyBlock
-                    colors={colors}
-                    icon="earth"
-                    title="No saved hubs"
-                    description="Visit a cultural hub page and tap the save icon to add it to your shortcuts."
-                    ctaLabel="CultureX Hubs"
-                    onCta={() => router.push('/explore')}
-                  />
-                ) : (
-                  savedHubs.map((hub) => (
-                    <GlassView key={hub.id} style={styles.itemOuter} contentStyle={{ padding: 0 }}>
-                      <Pressable
-                        style={({ pressed }) => [styles.itemPress, pressed && { opacity: 0.92 }]}
-                        onPress={() => router.push(hub.href as any)}
-                      >
-                        <View style={[styles.commAvatar, { backgroundColor: colors.primarySoft, borderColor: colors.primary + '15' }]}>
-                          <Ionicons name="earth" size={24} color={colors.primary} />
+                  <View style={styles.stampsContainer}>
+                    <Text style={[styles.stampsSubtitle, { color: colors.textSecondary }]}>
+                      Collect a stamp for each event you attend along the way.
+                    </Text>
+                    <View style={styles.stampsGrid}>
+                      {attendedHosts.map((host, idx) => (
+                        <View key={host + idx} style={styles.stampCard}>
+                          <RetroStamp hostName={host} date="2025" size={135} />
                         </View>
-                        <View style={styles.itemInfo}>
-                          <Text style={[styles.itemTitle, { color: colors.text }]} numberOfLines={2}>
-                            {hub.title}
-                          </Text>
-                          <Text style={[styles.commHeadline, { color: colors.textSecondary }]} numberOfLines={1}>
-                            {hub.subtitle || 'Global Diaspora Hub'}
-                          </Text>
-                          <Text style={{ color: colors.primary, fontSize: 11, fontFamily: FontFamily.bold, marginTop: 4 }} numberOfLines={1}>
-                            {hub.href.replace('https://', '')}
-                          </Text>
-                        </View>
-                      </Pressable>
-                      <Pressable
-                        style={({ pressed }) => [styles.bookmarkBtn, { backgroundColor: colors.surface + 'B3', borderColor: colors.borderLight }, pressed && { opacity: 0.7 }]}
-                        onPress={() => {
-                          if (!IS_WEB) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                          toggleSaveHub(hub);
-                        }}
-                      >
-                        <Ionicons name="bookmark" size={18} color={colors.primary} />
-                      </Pressable>
-                    </GlassView>
-                  ))
+                      ))}
+                    </View>
+                  </View>
                 )}
               </>
             )}
@@ -587,14 +717,14 @@ function EmptyBlock({
     <View style={styles.emptyWrap}>
       <GlassView style={{ width: '100%' }} contentStyle={{ padding: 40, alignItems: 'center', gap: 20 }}>
         <View style={[styles.emptyIconWrap, { backgroundColor: colors.primarySoft }]}>
-            <Ionicons name={icon as any} size={40} color={colors.primary} />
+          <Ionicons name={icon} size={40} color={colors.primary} />
         </View>
         <View style={{ gap: 8, alignItems: 'center' }}>
-            <Text style={[styles.emptyTitle, { color: colors.text }]}>{title}</Text>
-            <Text style={[styles.emptySub, { color: colors.textSecondary }]}>{description}</Text>
+          <Text style={[styles.emptyTitle, { color: colors.text }]}>{title}</Text>
+          <Text style={[styles.emptySub, { color: colors.textSecondary }]}>{description}</Text>
         </View>
         <M3Button variant="filled" style={{ marginTop: 8, minWidth: 200 }} onPress={onCta}>
-            {ctaLabel}
+          {ctaLabel}
         </M3Button>
       </GlassView>
     </View>
@@ -624,8 +754,8 @@ const styles = StyleSheet.create({
   },
   tabBtnActive: {
     ...Platform.select({
-        ios: shadows.small,
-        web: { boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }
+      ios: shadows.small,
+      web: { boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }
     })
   },
   tabLabel: { fontSize: 13 },
@@ -638,30 +768,41 @@ const styles = StyleSheet.create({
 
   itemOuter: { marginBottom: 16 },
   itemPress: { flexDirection: 'row', alignItems: 'stretch' },
-  itemImage: { width: 120, minHeight: 150 },
-  itemInfo: { flex: 1, padding: 18, gap: 8, justifyContent: 'center', paddingRight: 56 },
-  typeBadge: { alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, borderWidth: 1 },
-  typeBadgeText: { fontSize: 9, fontFamily: FontFamily.bold, letterSpacing: 0.8 },
-  itemTitle: { fontSize: 17, fontFamily: FontFamily.bold, letterSpacing: -0.2, lineHeight: 22 },
-  itemPrice: { fontSize: 15, fontFamily: FontFamily.bold, marginTop: 4 },
-
-  commAvatar: { width: 64, height: 64, borderRadius: 18, alignItems: 'center', justifyContent: 'center', margin: 18, marginRight: 0, borderWidth: 1 },
-  commHeadline: { fontSize: 13, fontFamily: FontFamily.medium, lineHeight: 18, opacity: 0.9 },
-  memberBadge: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, borderWidth: 1 },
+  itemImage: { width: 120, height: 150 },
+  itemInfo: { flex: 1, padding: 14, gap: 4, justifyContent: 'center' },
+  itemTitle: { fontSize: 16, fontFamily: FontFamily.bold, letterSpacing: -0.2, lineHeight: 20 },
 
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  metaText: { fontSize: 13, fontFamily: FontFamily.medium },
+  metaText: { fontSize: 12, fontFamily: FontFamily.medium },
 
-  bookmarkBtn: {
+  heartBadge: {
     position: 'absolute',
-    right: 12,
-    top: 12,
-    width: 38,
-    height: 38,
-    borderRadius: 12,
+    top: 8,
+    left: 8,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
+    ...Platform.select({
+      ios: shadows.small,
+      web: { boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }
+    })
+  },
+
+  progressBadge: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    marginTop: 8,
+  },
+  progressText: {
+    fontSize: 11,
+    fontFamily: FontFamily.bold,
   },
 
   emptyWrap: { paddingTop: 40, paddingHorizontal: 4 },
@@ -670,4 +811,27 @@ const styles = StyleSheet.create({
   emptySub: { fontSize: 15, fontFamily: FontFamily.medium, textAlign: 'center', lineHeight: 22, maxWidth: 300, opacity: 0.8 },
 
   skeletonCard: { flexDirection: 'row', borderRadius: 20, borderWidth: 1, overflow: 'hidden', marginBottom: 16 },
+
+  stampsContainer: {
+    padding: 10,
+    gap: 16,
+  },
+  stampsSubtitle: {
+    fontSize: 14,
+    fontFamily: FontFamily.medium,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginHorizontal: 16,
+  },
+  stampsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-evenly',
+    gap: 12,
+    paddingBottom: 20,
+  },
+  stampCard: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });

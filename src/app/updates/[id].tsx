@@ -2,7 +2,7 @@ import { View, Text, ScrollView, Pressable, StyleSheet, Platform } from 'react-n
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import { modulesApi } from '@/modules/api';
 import type { AppUpdate, UpdateCategory } from '@/modules/api';
 import { useColors } from '@/hooks/useColors';
@@ -26,8 +26,8 @@ const CATEGORY_CONFIG: Record<UpdateCategory, { label: string; color: string; ic
 function UpdateDetailContent() {
   const colors = useColors();
   const { hPad } = useLayout();
-  const insets = useSafeAreaInsets();
-  const topInset = Platform.OS === 'web' ? 0 : insets.top;
+  const safeInsets = useSafeAreaInsetsWeb();
+  const topInset = safeInsets.top;
   const { id } = useLocalSearchParams<{ id: string }>();
 
   const { data: update, isLoading } = useQuery<AppUpdate>({
@@ -101,7 +101,7 @@ function UpdateDetailContent() {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.content, { paddingHorizontal: hPad, paddingBottom: insets.bottom + 40 }]}
+        contentContainerStyle={[styles.content, { paddingHorizontal: hPad, paddingBottom: safeInsets.bottom + 40 }]}
       >
         <View style={styles.metaRow}>
           <View style={[styles.catBadge, { backgroundColor: cat.color + '18' }]}>

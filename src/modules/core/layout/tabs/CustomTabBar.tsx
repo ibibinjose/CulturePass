@@ -26,10 +26,16 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 import { Pressable } from 'react-native';
-import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+
+type BottomTabBarProps = {
+  state: any;
+  navigation: any;
+  insets: any;
+};
 
 import { useColors, useIsDark } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import {
   CultureTokens,
   FontFamily,
@@ -212,8 +218,9 @@ export function CustomTabBar({ state, navigation, insets }: BottomTabBarProps) {
   const activeRouteKey = state?.routes && state?.index !== undefined
     ? state.routes[state.index]?.key
     : undefined;
+  const webInsets = useSafeAreaInsetsWeb();
   const bottomInset = Math.max(
-    insets.bottom,
+    Platform.OS === 'web' ? webInsets.bottom : insets.bottom,
     Platform.OS === 'android' ? Spacing.sm : Spacing.xs,
   );
   const minTouchTarget = Platform.OS === 'android' ? 48 : MAIN_TAB_UI.minTouchTarget;

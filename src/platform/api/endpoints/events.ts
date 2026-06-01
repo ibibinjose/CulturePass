@@ -106,6 +106,8 @@ export function createEventsNamespace(request: ApiRequestFn) {
       request<{ requestId?: string; success: boolean }>('POST', `api/events/${eventId}/contact-organizer`, payload),
     getAnalytics: (eventId: string) =>
       request<EventAnalyticsData>('GET', `api/events/${eventId}/analytics`),
+    messageAttendees: (eventId: string, title: string, body: string) =>
+      request<{ ok: boolean; recipientsCount: number }>('POST', `api/events/${eventId}/message`, { title, body }),
   };
 }
 

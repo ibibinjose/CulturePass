@@ -31,6 +31,17 @@ const TRUSTED_DEEP_LINK_HOSTS = new Set([
   'www.culturekerala.com',
 ]);
 
+function isTrustedHost(host: string): boolean {
+  const h = host.toLowerCase().trim();
+  if (TRUSTED_DEEP_LINK_HOSTS.has(h)) return true;
+  if (h === 'localhost' || h === '127.0.0.1') return true;
+  if (h.endsWith('.local')) return true;
+  if (/^192\.168\./.test(h)) return true;
+  if (/^10\./.test(h)) return true;
+  if (/^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(h)) return true;
+  return false;
+}
+
 type RedirectValue = string | string[] | null | undefined;
 
 export function remapLegacyPath(path: string): string {
@@ -75,7 +86,7 @@ export function normalizeSystemPath(path: string, initial = false): string {
       const hostAsPath = parsed.hostname ? `/${parsed.hostname}` : '';
       pathToNormalize = `${hostAsPath}${parsed.pathname}${parsed.search}`;
     } else if (protocol === 'https' || protocol === 'http') {
-      pathToNormalize = TRUSTED_DEEP_LINK_HOSTS.has(parsed.hostname)
+      pathToNormalize = isTrustedHost(parsed.hostname)
         ? `${parsed.pathname}${parsed.search}`
         : '/';
     }

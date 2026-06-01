@@ -10,11 +10,12 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import { useQuery } from '@tanstack/react-query';
 import * as Haptics from 'expo-haptics';
 import type { User, Membership } from '@shared/schema';
 import { LinearGradient } from 'expo-linear-gradient';
+import QRCode from 'react-native-qrcode-svg';
 import { useColors } from '@/hooks/useColors';
 import { gradients } from '@/design-system/tokens/theme';
 import { modulesApi } from '@/modules/api';
@@ -46,9 +47,9 @@ export default function PublicProfileScreen() {
   const colors = useColors();
   const styles = getStyles(colors);
   
-  const insets = useSafeAreaInsets();
-  const topInset    = Platform.OS === 'web' ? 0 : insets.top;
-  const bottomInset = Platform.OS === 'web' ? 34 : insets.bottom;
+  const safeInsets = useSafeAreaInsetsWeb();
+  const topInset    = safeInsets.top;
+  const bottomInset = safeInsets.bottom;
 
   const { userId: authUserId, isRestoring } = useAuth();
 
@@ -76,6 +77,18 @@ export default function PublicProfileScreen() {
   const locationText = useMemo(() => formatLocationLabel(user?.city, user?.country, ''), [user?.city, user?.country]);
   const memberSince  = useMemo(() => formatMemberDate(user?.createdAt), [user?.createdAt]);
   const hasDetails   = !!(locationText || user?.website || user?.phone);
+
+  // Hoisted for the modern public profile card (QR + link row) and share sheet
+  const shareUser = useMemo(() => ({
+    id: userId || user?.id || '',
+    displayName,
+    username: user?.username,
+    handle: user?.handle,
+    handleStatus: user?.handleStatus,
+    culturePassId: user?.culturePassId,
+    bio: user?.bio,
+    avatarUrl: user?.avatarUrl,
+  }), [userId, user?.id, displayName, user?.username, user?.handle, user?.handleStatus, user?.culturePassId, user?.bio, user?.avatarUrl]);
 
   const handleShare = useCallback(async () => {
     if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -110,7 +123,7 @@ export default function PublicProfileScreen() {
         await Share.share({ title: shareTitle, message: shareMessage });
       }
     } catch { /* noop */ }
-  }, [displayName, userId, user?.culturePassId, user?.handle, user?.handleStatus]);
+  }, [displayName, userId, user?.id, user?.username, user?.bio, user?.avatarUrl, user?.culturePassId, user?.handle, user?.handleStatus]);
 
   const handleOpenSocial = useCallback((key: string) => {
     if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -311,53 +324,98 @@ export default function PublicProfileScreen() {
           <View style={styles.section}>
             <SectionHeader title="Digital ID" />
 
-            <LinearGradient
-              colors={['#2A1B3D', '#1A0B2E']}
-              start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-              style={styles.cpidCard}
-            >
-              <LinearGradient colors={[CP.purple, CP.teal]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.cpidAccentEdge} />
-
-              <View style={[styles.cpidDotsWm, { pointerEvents: 'none' }]}>
-                <BrandDots size={16} opacity={0.15} />
-              </View>
+            {/* CulturePass Member ID card — clean single-color premium treatment */}
+            <View style={[styles.cpidCard, { backgroundColor: '#162B6B' }]}>
+              <View style={styles.cpidAccentGold} />
 
               <View style={styles.cpidTop}>
                 <View style={styles.cpidLogoRow}>
-                  <LinearGradient colors={[CP.teal, CP.purple]} style={styles.cpidLogoIcon}>
-                    <Text style={{ fontFamily: 'Poppins_700Bold', color: colors.textInverse, fontSize: 13 }}>CP</Text>
-                  </LinearGradient>
+                  <View style={[styles.cpidLogoIcon, { backgroundColor: 'rgba(212,175,55,0.18)' }]}>
+                    <Text style={{ fontFamily: 'Poppins_700Bold', color: '#D4AF37', fontSize: 13 }}>CP</Text>
+                  </View>
                   <Text style={styles.cpidLogoText}>CulturePass</Text>
                 </View>
                 {user.isVerified && (
                   <View style={styles.cpidVerifiedIcon}>
-                    <Ionicons name="shield-checkmark" size={16} color={CP.teal} />
+                    <Ionicons name="shield-checkmark" size={16} color="#D4AF37" />
                   </View>
                 )}
               </View>
 
-              <View style={styles.cpidCenter}>
-                <Text style={styles.cpidLabel}>MEMBER ID</Text>
-                <Text style={styles.cpidValue}>{user.culturePassId.toUpperCase()}</Text>
-                <LinearGradient colors={[CP.teal + '00', CP.teal, CP.teal + '00']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.cpidUnderline} />
+              <View style={styles.cpidCenterSolid}>
+                <Text style={styles.cpidLabelSolid}>CULTUREPASS ID</Text>
+                <Text style={styles.cpidValueSolid}>{user.culturePassId.toUpperCase()}</Text>
               </View>
 
-              <View style={styles.cpidMeta}>
+              <View style={styles.cpidMetaSolid}>
                 <View style={styles.cpidMetaItem}>
-                  <Text style={styles.cpidMetaLabel}>Status</Text>
-                  <Text style={[styles.cpidMetaValue, { color: CP.teal }]}>Active</Text>
+                  <Text style={styles.cpidMetaLabelSolid}>Tier</Text>
+                  <Text style={[styles.cpidMetaValueSolid, { color: '#D4AF37' }]}>{tierConf.label}</Text>
                 </View>
                 <View style={styles.cpidMetaItem}>
-                  <Text style={styles.cpidMetaLabel}>Tier</Text>
-                  <Text style={styles.cpidMetaValue}>{tierConf.label}</Text>
+                  <Text style={styles.cpidMetaLabelSolid}>Member since</Text>
+                  <Text style={styles.cpidMetaValueSolid}>{formatMemberDate(user.createdAt)}</Text>
                 </View>
               </View>
 
-              <View style={styles.cpidFooter}>
-                <Text style={styles.cpidFooterText}>{displayName}</Text>
-                <Text style={styles.cpidFooterText}>+{user.handle ?? user.username}</Text>
+              <View style={styles.cpidFooterSolid}>
+                <Text style={styles.cpidFooterTextSolid}>{displayName}</Text>
+                <Text style={styles.cpidFooterTextSolid}>@{user.handle ?? user.username}</Text>
               </View>
-            </LinearGradient>
+            </View>
+
+            {/* ── Modern Branded Public Profile Card (with QR preview) ───────────── */}
+            <View style={[styles.publicProfileCard, { backgroundColor: colors.surface, borderColor: colors.borderLight }]}>
+              <View style={styles.publicHeader}>
+                <View style={[styles.entityPill, { backgroundColor: CP.teal + '15' }]}>
+                  <Ionicons name="link-outline" size={13} color={CP.teal} />
+                  <Text style={[styles.entityPillText, { color: CP.teal }]}>Public Profile</Text>
+                </View>
+              </View>
+
+              <View style={styles.publicContent}>
+                <View style={styles.qrBox}>
+                  <QRCode
+                    value={profileShareUrl(shareUser)}
+                    size={72}
+                    color={colors.text}
+                    backgroundColor={colors.surface}
+                  />
+                </View>
+
+                <View style={{ flex: 1, gap: 6 }}>
+                  <Pressable
+                    style={[styles.publicLinkRow, { backgroundColor: colors.backgroundSecondary }]}
+                    onPress={async () => {
+                      const url = profileShareUrl(shareUser);
+                      if (Platform.OS === 'web') {
+                        await navigator.clipboard?.writeText(url).catch(() => {});
+                      } else {
+                        await Share.share({ message: url }).catch(() => {});
+                      }
+                    }}
+                  >
+                    <Text style={[styles.publicLink, { color: colors.text }]} numberOfLines={1}>
+                      {profileShareUrl(shareUser).replace(/^https?:\/\//, '')}
+                    </Text>
+                    <Ionicons name="copy-outline" size={16} color={CP.teal} />
+                  </Pressable>
+
+                  <View style={styles.publicActions}>
+                    <Pressable style={styles.publicAction} onPress={handleShare}>
+                      <Ionicons name="share-outline" size={15} color={colors.textSecondary} />
+                      <Text style={styles.publicActionText}>Share</Text>
+                    </Pressable>
+                    {authUserId === userId && (
+                      <Pressable style={styles.publicAction} onPress={() => router.push('/profile/edit')}>
+                        <Ionicons name="create-outline" size={15} color={colors.textSecondary} />
+                        <Text style={styles.publicActionText}>Edit</Text>
+                      </Pressable>
+                    )}
+                  </View>
+                </View>
+              </View>
+            </View>
 
             <Pressable
               style={styles.viewQrBtn}
@@ -370,8 +428,8 @@ export default function PublicProfileScreen() {
                 <Ionicons name="qr-code-outline" size={20} color={CP.teal} />
               </LinearGradient>
               <View style={{ flex: 1 }}>
-                <Text style={styles.viewQrText}>View QR Code</Text>
-                <Text style={styles.viewQrSub}>Scan to share your profile</Text>
+                <Text style={styles.viewQrText}>View Full QR Code</Text>
+                <Text style={styles.viewQrSub}>For printing or larger displays</Text>
               </View>
               <Ionicons name="chevron-forward" size={18} color={CP.muted} />
             </Pressable>

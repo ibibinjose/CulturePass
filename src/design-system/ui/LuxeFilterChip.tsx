@@ -4,7 +4,8 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 
-import { Luxe, luxeDark } from '@/design-system/tokens/luxeHeritage';
+import { Luxe, luxeDark, luxeLight } from '@/design-system/tokens/luxeHeritage';
+import { useIsDark } from '@/hooks/useColors';
 
 interface LuxeFilterChipProps {
   label: string;
@@ -43,11 +44,14 @@ export function LuxeFilterChip({ label, selected, onPress, icon, style, compact 
     scale.value = withSpring(1, Luxe.spring.smooth);
   };
 
-  const activeBg = luxeDark.primaryContainer;
-  const activeContent = luxeDark.onPrimaryContainer;
-  const inactiveBg = luxeDark.surfaceElevated;
-  const inactiveContent = luxeDark.textSecondary;
-  const inactiveBorder = luxeDark.border;
+  const isDark = useIsDark();
+  const theme = isDark ? luxeDark : luxeLight;
+
+  const activeBg = theme.primaryContainer;
+  const activeContent = theme.onPrimaryContainer;
+  const inactiveBg = theme.surfaceElevated;
+  const inactiveContent = theme.textSecondary;
+  const inactiveBorder = theme.border;
 
   return (
     <AnimatedPressable
@@ -90,7 +94,7 @@ export function LuxeFilterChip({ label, selected, onPress, icon, style, compact 
           Luxe.typography.styles.bodyMedium,
           {
             fontSize: compact ? 13 : 14,
-            color: selected ? activeContent : luxeDark.text,
+            color: selected ? activeContent : theme.text,
             fontWeight: selected ? '600' : '500',
           },
         ]}

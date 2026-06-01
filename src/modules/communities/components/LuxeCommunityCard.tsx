@@ -120,7 +120,7 @@ export function LuxeCommunityCard({ community, variant = 'default', size = 'defa
               {members.toLocaleString()}
             </LuxeText>
 
-            {community.city && (
+            {!!community.city && (
               <>
                 <LuxeText variant="caption" style={{ color: 'rgba(255,255,255,0.45)', marginHorizontal: 6 }}>·</LuxeText>
                 <LuxeText variant="caption" style={{ color: 'rgba(255,255,255,0.88)' }} numberOfLines={1}>

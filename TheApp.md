@@ -136,9 +136,10 @@ For the full directory map see [`AGENTS.md`](AGENTS.md). For architecture decisi
 | Mobile native | Bottom tab bar standard (49-64px + safe area), `topInset = insets.top` |
 
 ```ts
-// CORRECT — always
-const topInset = Platform.OS === 'web' ? 0 : insets.top;
-// WRONG — never hardcode the old 67px top bar value
+// Recommended
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
+const insets = useSafeAreaInsetsWeb();
+const topInset = insets.top;
 ```
 
 ---
@@ -302,9 +303,12 @@ councils/{councilId}  name, suburb, state, lgaCode — seeded from AllCouncilsLi
 ## Roadmap (post-launch, May–June 2026)
 
 **In progress:**
+- None (Phase 1 completed)
+
+**Completed:**
+- Android polish round (`removeClippedSubviews` + image-URI normalization)
 - GeoHash backfill — geocode events missing `latitude` / `longitude` / `geoHash`
 - Council LGA auto-select from GPS on onboarding (`/api/councils/nearest`)
-- Android polish round (`removeClippedSubviews` + image-URI normalization)
 
 **Near-term:**
 - [ ] Promotional code system (`promoCodes/` collection + checkout validation)

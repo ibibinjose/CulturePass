@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -7,8 +7,11 @@ import {
   ActivityIndicator,
   Pressable,
   Platform,
+  TextInput,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useColors } from '@/hooks/useColors';
@@ -23,6 +26,33 @@ interface EventAnalyticsDashboardProps {
 export function EventAnalyticsDashboard({ eventId }: EventAnalyticsDashboardProps) {
   const colors = useColors();
   const { isDesktop } = useLayout();
+
+  const [broadcastTitle, setBroadcastTitle] = useState('');
+  const [broadcastBody, setBroadcastBody] = useState('');
+  const [sendingBroadcast, setSendingBroadcast] = useState(false);
+
+  const handleSendBroadcast = async () => {
+    if (!broadcastTitle.trim() || !broadcastBody.trim()) return;
+    setSendingBroadcast(true);
+    if (Platform.OS !== 'web') void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+    try {
+      const res = await api.events.messageAttendees(eventId, broadcastTitle.trim(), broadcastBody.trim());
+      if (res.ok) {
+        Alert.alert(
+          'Message Sent',
+          `Successfully sent broadcast to ${res.recipientsCount} attendee(s).`,
+          [{ text: 'OK', onPress: () => { setBroadcastTitle(''); setBroadcastBody(''); } }]
+        );
+      } else {
+        Alert.alert('Error', 'Failed to send message. Please try again.');
+      }
+    } catch (err) {
+      Alert.alert('Error', err instanceof Error ? err.message : 'An error occurred.');
+    } finally {
+      setSendingBroadcast(false);
+    }
+  };
 
   const { data: analytics, isLoading, error, refetch } = useQuery({
     queryKey: ['event-analytics', eventId],
@@ -135,6 +165,55 @@ export function EventAnalyticsDashboard({ eventId }: EventAnalyticsDashboardProp
         <TrafficRow label="Social" count={trafficSources.social} total={totals.views} color={CultureTokens.violet} colors={colors} />
         <TrafficRow label="Referral" count={trafficSources.referral} total={totals.views} color={CultureTokens.coral} colors={colors} />
       </View>
+
+      <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.borderLight }]}>
+        <Text style={[styles.cardTitle, { color: colors.text }]}>Broadcast Announcement</Text>
+        <Text style={[styles.cardSubtitle, { color: colors.textSecondary }]}>
+          Send a push notification and in-app message to all {totals.ticketSales} ticketholders.
+        </Text>
+        <TextInput
+          style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.borderLight }]}
+          placeholder="Announcement Title (e.g. Venue change)"
+          placeholderTextColor={colors.textTertiary}
+          value={broadcastTitle}
+          onChangeText={setBroadcastTitle}
+          accessibilityLabel="Announcement Title"
+        />
+        <TextInput
+          style={[styles.input, styles.textArea, { backgroundColor: colors.background, color: colors.text, borderColor: colors.borderLight }]}
+          placeholder="Write your announcement details here..."
+          placeholderTextColor={colors.textTertiary}
+          value={broadcastBody}
+          onChangeText={setBroadcastBody}
+          multiline
+          numberOfLines={4}
+          accessibilityLabel="Announcement Message"
+        />
+        <Pressable
+          onPress={() => void handleSendBroadcast()}
+          disabled={sendingBroadcast || !broadcastTitle.trim() || !broadcastBody.trim()}
+          style={({ pressed }) => [
+            styles.broadcastBtn,
+            {
+              backgroundColor: (sendingBroadcast || !broadcastTitle.trim() || !broadcastBody.trim())
+                ? colors.borderLight
+                : CultureTokens.violet,
+              opacity: pressed ? 0.9 : 1
+            }
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel="Send broadcast to attendees"
+        >
+          {sendingBroadcast ? (
+            <ActivityIndicator size="small" color="#FFFFFF" />
+          ) : (
+            <View style={styles.btnContent}>
+              <Ionicons name="send-outline" size={16} color="#FFFFFF" />
+              <Text style={styles.btnText}>Send to {totals.ticketSales} Attendees</Text>
+            </View>
+          )}
+        </Pressable>
+      </View>
     </ScrollView>
   );
 }
@@ -208,4 +287,39 @@ const styles = StyleSheet.create({
   progressFill: { height: '100%', borderRadius: 3 },
   errorText: { ...TextStyles.title3, marginTop: 16 },
   retryBtn: { marginTop: 12, padding: 8 },
+  input: {
+    height: 52,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    paddingHorizontal: 16,
+    ...TextStyles.body,
+    marginTop: 8,
+  },
+  textArea: {
+    height: 120,
+    paddingTop: 12,
+    paddingBottom: 12,
+    textAlignVertical: 'top',
+  },
+  broadcastBtn: {
+    height: 52,
+    borderRadius: Radius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: Spacing.sm,
+  },
+  btnContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  btnText: {
+    color: '#FFFFFF',
+    fontFamily: 'Manrope_600SemiBold',
+    fontSize: 15,
+  },
+  cardSubtitle: {
+    ...TextStyles.bodyMedium,
+    marginTop: -Spacing.xs,
+  },
 });

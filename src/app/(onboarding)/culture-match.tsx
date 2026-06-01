@@ -2,15 +2,12 @@ import React from 'react';
 import {
   View, Text, Pressable, StyleSheet, ScrollView, Platform,
   TextInput, KeyboardAvoidingView,
-  type DimensionValue,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import {
   FontFamily,
   luxeDark,
-  Spacing,
-  Radius,
 } from '@/design-system/tokens/theme';
 import { useM3Colors } from '@/hooks/useM3Colors';
 import { useLayout } from '@/hooks/useLayout';
@@ -19,6 +16,7 @@ import { M3TopAppBar, LuxeButton, LuxeText, LuxeCard, LuxeFilterChip } from '@/d
 import Animated, {
   FadeInRight, FadeOutLeft, FadeIn,
 } from 'react-native-reanimated';
+import { OnboardingProgressHeader } from '@/components/onboarding/OnboardingProgressHeader';
 
 // ---------------------------------------------------------------------------
 // Per-step design tokens
@@ -62,7 +60,7 @@ export default function CultureMatchScreen() {
   const isExpanded = windowSizeClass === 'expanded';
 
   const {
-    step, stepIndex, stepCount,
+    step, stepIndex,
     nationalityQuery, setNationalityQuery,
     cultureQuery, setCultureQuery,
     exploringQuery, setExploringQuery,
@@ -84,6 +82,7 @@ export default function CultureMatchScreen() {
     goBack,
     goNext,
     skipStep,
+    redirectTo,
   } = useCultureMatch();
 
   return (
@@ -101,22 +100,7 @@ export default function CultureMatchScreen() {
         }
       />
 
-      {/* Mobile progress */}
-      {!isDesktop && (
-        <View style={s.mobileStepIndicator}>
-          <LuxeText variant="badgeCaps" style={{ color: luxeDark.textSecondary }}>
-            STEP {stepIndex + 1} OF {stepCount}
-          </LuxeText>
-          <View style={[s.mobileProgressTrack, { backgroundColor: luxeDark.surfaceElevated }]}>
-            <View
-              style={[
-                s.mobileProgressFill,
-                { width: `${((stepIndex + 1) / stepCount) * 100}%` as DimensionValue, backgroundColor: luxeDark.primary },
-              ]}
-            />
-          </View>
-        </View>
-      )}
+      <OnboardingProgressHeader currentStep="culture-match" redirectTo={redirectTo} />
 
       <KeyboardAvoidingView
         style={s.flex}
@@ -132,7 +116,7 @@ export default function CultureMatchScreen() {
           ]}
         >
           <LuxeCard
-            variant="default"
+            variant="glass"
             style={[
               s.card,
               isDesktop && s.cardDesktop,
@@ -233,8 +217,8 @@ export default function CultureMatchScreen() {
                     )}
                   </View>
 
-                  {/* Nationality grid */}
-                  <View style={s.natGrid}>
+                  {/* Nationality — vertical list, top to bottom (same pattern) */}
+                  <View style={s.natList}>
                     {filteredNationalities.map((nat) => {
                       const isSelected = selectedNationality?.id === nat.id;
                       return (
@@ -242,22 +226,21 @@ export default function CultureMatchScreen() {
                           key={nat.id}
                           variant={isSelected ? 'tonal' : 'default'}
                           onPress={() => pickNationality(nat)}
-                          style={[
-                            s.natCard,
-                            {
-                                backgroundColor: isSelected ? luxeDark.primaryContainer : luxeDark.surface,
-                                borderColor: isSelected ? 'transparent' : luxeDark.border,
-                            }
-                          ]}
+                          style={s.natCard}
                         >
-                          <Text style={s.natEmoji}>{nat.emoji}</Text>
-                          <LuxeText
-                            variant="bodyMedium"
-                            style={{ color: isSelected ? luxeDark.onPrimaryContainer : luxeDark.text, flex: 1 }}
-                            numberOfLines={2}
-                          >
-                            {nat.label}
-                          </LuxeText>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', padding: 14, gap: 14 }}>
+                            <Text style={{ fontSize: 26 }}>{nat.emoji}</Text>
+                            <LuxeText
+                              variant="bodyMedium"
+                              style={{ color: isSelected ? luxeDark.onPrimaryContainer : luxeDark.text, flex: 1 }}
+                              numberOfLines={2}
+                            >
+                              {nat.label}
+                            </LuxeText>
+                            {isSelected && (
+                              <Ionicons name="checkmark-circle" size={22} color={luxeDark.onPrimaryContainer} />
+                            )}
+                          </View>
                         </LuxeCard>
                       );
                     })}
@@ -307,17 +290,32 @@ export default function CultureMatchScreen() {
                     </View>
                   )}
 
-                  {/* Culture chips */}
-                  <View style={s.chipWrap}>
+                  {/* Culture selection — vertical list top to bottom */}
+                  <View style={s.choiceList}>
                     {filteredCultures.map((culture) => {
                       const isSelected = selectedCultureIds.includes(culture.id);
                       return (
-                        <LuxeFilterChip
+                        <LuxeCard
                           key={culture.id}
-                          label={culture.label}
-                          selected={isSelected}
+                          variant={isSelected ? "tonal" : "default"}
                           onPress={() => toggleCulture(culture)}
-                        />
+                          style={s.choiceCard}
+                        >
+                          <View style={{ flexDirection: 'row', alignItems: 'center', padding: 14, gap: 14 }}>
+                            <LuxeText 
+                              variant="bodyMedium" 
+                              style={{ 
+                                color: isSelected ? luxeDark.onPrimaryContainer : luxeDark.text,
+                                flex: 1
+                              }}
+                            >
+                              {culture.label}
+                            </LuxeText>
+                            {isSelected && (
+                              <Ionicons name="checkmark-circle" size={20} color={luxeDark.onPrimaryContainer} />
+                            )}
+                          </View>
+                        </LuxeCard>
                       );
                     })}
                   </View>
@@ -385,17 +383,32 @@ export default function CultureMatchScreen() {
                     </LuxeText>
                   )}
 
-                  {/* Chip cloud — capped to first 60 to keep render fast on lower-end devices. */}
-                  <View style={s.chipWrap}>
+                  {/* Exploring cultures — vertical list top to bottom */}
+                  <View style={s.choiceList}>
                     {filteredExploringCultures.slice(0, 60).map((culture) => {
                       const isSelected = selectedExploringCultureIds.includes(culture.id);
                       return (
-                        <LuxeFilterChip
+                        <LuxeCard
                           key={culture.id}
-                          label={culture.label}
-                          selected={isSelected}
+                          variant={isSelected ? "tonal" : "default"}
                           onPress={() => toggleExploringCulture(culture)}
-                        />
+                          style={s.choiceCard}
+                        >
+                          <View style={{ flexDirection: 'row', alignItems: 'center', padding: 14, gap: 14 }}>
+                            <LuxeText 
+                              variant="bodyMedium" 
+                              style={{ 
+                                color: isSelected ? luxeDark.onPrimaryContainer : luxeDark.text,
+                                flex: 1
+                              }}
+                            >
+                              {culture.label}
+                            </LuxeText>
+                            {isSelected && (
+                              <Ionicons name="checkmark-circle" size={20} color={luxeDark.onPrimaryContainer} />
+                            )}
+                          </View>
+                        </LuxeCard>
                       );
                     })}
                   </View>
@@ -442,23 +455,35 @@ export default function CultureMatchScreen() {
                     )}
                   </View>
 
-                  {/* Language grid */}
-                  <View style={s.langGrid}>
-                    {filteredLanguages.map((lang) => (
-                      <LuxeCard
-                        key={lang.id}
-                        variant="default"
-                        onPress={() => toggleLanguage(lang)}
-                        style={s.langCard}
-                      >
-                        <View style={{ padding: 12 }}>
-                            <LuxeText variant="bodyMedium" style={{ color: luxeDark.text }}>{lang.name}</LuxeText>
-                            {lang.nativeName && lang.nativeName !== lang.name && (
-                            <LuxeText variant="caption" style={{ color: luxeDark.textSecondary }}>{lang.nativeName}</LuxeText>
+                  {/* Language list — vertical top to bottom */}
+                  <View style={s.choiceList}>
+                    {filteredLanguages.map((lang) => {
+                      const isSelected = selectedLanguageObjects.some((l) => l.id === lang.id);
+                      return (
+                        <LuxeCard
+                          key={lang.id}
+                          variant={isSelected ? "tonal" : "default"}
+                          onPress={() => toggleLanguage(lang)}
+                          style={s.choiceCard}
+                        >
+                          <View style={{ flexDirection: 'row', alignItems: 'center', padding: 14, gap: 14 }}>
+                            <View style={{ flex: 1 }}>
+                              <LuxeText variant="bodyMedium" style={{ color: isSelected ? luxeDark.onPrimaryContainer : luxeDark.text }}>
+                                {lang.name}
+                              </LuxeText>
+                              {lang.nativeName && lang.nativeName !== lang.name && (
+                                <LuxeText variant="caption" style={{ color: isSelected ? luxeDark.onPrimaryContainer : luxeDark.textSecondary }}>
+                                  {lang.nativeName}
+                                </LuxeText>
+                              )}
+                            </View>
+                            {isSelected && (
+                              <Ionicons name="checkmark-circle" size={20} color={luxeDark.onPrimaryContainer} />
                             )}
-                        </View>
-                      </LuxeCard>
-                    ))}
+                          </View>
+                        </LuxeCard>
+                      );
+                    })}
                   </View>
                 </Animated.View>
               )}
@@ -598,38 +623,30 @@ const s = StyleSheet.create({
     height: 56,
   },
 
-  // ── Nationality grid ──
-  natGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  // Nationality vertical list (top to bottom, full width)
+  natList: { gap: 10 },
   natCard: {
-    width: '48.2%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    padding: 16,
-    minHeight: 64,
+    width: '100%',
+    borderRadius: 16,
   },
-  natEmoji:  { fontSize: 28 },
-  natLabel:  { flex: 1 },
 
   // ── Culture context badge ──
   contextBadge: {
   },
   contextBadgeEmoji:       { fontSize: 28 },
 
-  // ── Culture chips ──
+  // ── Culture chips (selected pills) ──
   chipWrap:     { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
 
   // ── Selected language pills ──
   selectedLangRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 16 },
 
-  // ── Language grid ──
-  langGrid:  { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-  langCard:  {
-    width: '48.2%',
-    minHeight: 56,
+  // Vertical choice lists (Nationality / Culture / Exploring / Language) — top to bottom, consistent with States/City
+  choiceList: { gap: 10 },
+  choiceCard: {
+    width: '100%',
+    borderRadius: 16,
   },
-  langName:   {},
-  langNative: { marginTop: 2 },
 
   // ── Actions ──
   actions: { flexDirection: 'row', gap: 12, marginTop: 32 },

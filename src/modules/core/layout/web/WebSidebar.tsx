@@ -1,12 +1,14 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
-import { View, Text, Pressable, StyleSheet, ScrollView, Platform, TextInput } from 'react-native';
-import { usePathname, router, useRootNavigationState } from 'expo-router';
+import { View, Text, Pressable, StyleSheet, ScrollView, Platform, TextInput, Linking } from 'react-native';
+import { usePathname, router, useRootNavigationState, Link } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '@/lib/auth';
 import { useRole } from '@/hooks/useRole';
 import { useCouncil } from '@/hooks/useCouncil';
 import { useProfileImage } from '@/hooks/useProfileImage';
+import { useLayout } from '@/hooks/useLayout';
+import { SOCIAL_LINKS } from '@/lib/site-footer-links';
 import { CultureTokens, gradients, Radius, Spacing, Layout } from '@/design-system/tokens/theme';
 import { TextStyles } from '@/design-system/tokens/typography';
 import { useColors, useIsDark } from '@/hooks/useColors';
@@ -291,6 +293,7 @@ function WebSidebarContent() {
   const isVenue = role === 'business';
   const isSponsor = role === 'sponsor';
   const { data: councilData } = useCouncil();
+  const { isDesktop } = useLayout();
 
   const friendlyRole = useMemo(() => {
     if (isSuperAdmin) return 'Platform Admin';
@@ -304,6 +307,7 @@ function WebSidebarContent() {
   }, [isSuperAdmin, isAdmin, role, isOrganizer]);
 
   const [collapsed, setCollapsed] = useState(false);
+  const isSidebarCollapsed = collapsed && isDesktop;
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
@@ -384,7 +388,8 @@ function WebSidebarContent() {
   };
 
   const bg = colors.surface;
-  const border = colors.borderLight;
+  const border = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)';
+  const sidebarWidth = isDesktop ? SIDEBAR_WIDTH : '100%';
   const mutedColor = withAlpha(colors.textSecondary, isDark ? 0.48 : 0.52);
   const myCouncil = councilData?.council;
 
@@ -399,8 +404,18 @@ function WebSidebarContent() {
     return items.filter(i => i.label.toLowerCase().includes(q));
   }, [searchQuery]);
 
+  // Safe computed value to avoid complex inline expressions that can cause render issues on web
+  const hasNoSearchResults = React.useMemo(() => {
+    if (!searchQuery.trim()) return false;
+    const allNavGroups = [
+      MAIN_NAV, ATTENDEE_NAV, BROWSE_NAV, hostHubNav,
+      VENUE_NAV, SPONSOR_NAV, ADMIN_NAV, SUPERADMIN_NAV, BOTTOM_NAV
+    ];
+    return allNavGroups.every(group => filterNav(group as NavItem[]).length === 0);
+  }, [searchQuery, hostHubNav, filterNav]);
+
   // ── Collapsed rail ──────────────────────────────────────────────────────────
-  if (collapsed) {
+  if (isSidebarCollapsed) {
     return (
       <View style={[r.rail, { backgroundColor: bg, borderRightColor: border }]}>
         <Pressable
@@ -473,45 +488,47 @@ function WebSidebarContent() {
 
   // ── Expanded sidebar ────────────────────────────────────────────────────────
   return (
-    <View style={[s.sidebar, { backgroundColor: bg, borderRightColor: border }]}>
+    <View style={[s.sidebar, { width: sidebarWidth, backgroundColor: bg, borderRightColor: border }]}>
 
-      {/* Brand header */}
+      {/* Brand header - direct cleaner layout */}
       <View style={s.brandHeader}>
         <Pressable
-          style={({ pressed, hovered }: { pressed?: boolean; hovered?: boolean }) => [
-            s.brandCardPress,
-            hovered && { opacity: 0.96 },
-            pressed && { opacity: 0.88 },
+          style={({ pressed, hovered }: any) => [
+            s.brandHeaderPress,
+            hovered && { backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.035)' },
+            pressed && { opacity: 0.88, transform: [{ scale: 0.98 }] },
+            Platform.select({
+              web: {
+                transition: 'all 0.2s ease-in-out',
+              } as any,
+              default: {},
+            }),
           ]}
           onPress={() => navigate('/(tabs)')}
         >
-          <GlassView intensity={10} tone={isDark ? 'dark' : 'light'} style={s.brandCard}>
-            <View style={s.brandCardInner}>
-              <SidebarLogoMark size={39
-              } borderRadius={10} />
-              <View style={s.brandTextBlock}>
-                <Text style={[s.brandName, { color: colors.text }]}>{APP_NAME}</Text>
-                <Text style={[s.brandTagline, { color: colors.textSecondary }]} numberOfLines={1}>
-                  {APP_WEB_TAGLINE}
-                </Text>
-              </View>
-            </View>
-          </GlassView>
+          <SidebarLogoMark size={38} borderRadius={11} />
+          <View style={s.brandTextBlock}>
+            <Text style={[s.brandName, { color: colors.text }]}>{APP_NAME}</Text>
+            <Text style={[s.brandTagline, { color: colors.textSecondary }]} numberOfLines={1}>
+              {APP_WEB_TAGLINE}
+            </Text>
+          </View>
         </Pressable>
 
-        <View style={[s.metaStrip, { backgroundColor: colors.backgroundSecondary, borderColor: border }]}>
+        <View style={s.metaRow}>
           <View style={s.metaTimeBlock}>
             <Text style={[s.metaTime, { color: colors.text }]}>{timeLabel}</Text>
-            <Text style={[s.metaSub, { color: colors.textSecondary }]}>{dateLabel}</Text>
+            <Text style={[s.metaSub, { color: mutedColor }]}>{dateLabel}</Text>
           </View>
 
           <View style={s.headerActions}>
-            <AppearanceModeToggle />
+            <AppearanceModeToggle compact />
             <Pressable
               onPress={collapseSidebar}
               style={s.collapseBtn}
+              hitSlop={6}
             >
-              <Ionicons name="chevron-back" size={16} color={colors.textSecondary} />
+              <Ionicons name="chevron-back" size={15} color={colors.textTertiary} />
             </Pressable>
           </View>
         </View>
@@ -543,23 +560,18 @@ function WebSidebarContent() {
         contentContainerStyle={s.scrollContent}
       >
         <NavGroup label="Discover" items={filterNav(MAIN_NAV)} isActive={isActive} navigate={navigate} colors={colors} isDark={isDark} />
-
         <NavGroup label="Attendee" items={filterNav(ATTENDEE_NAV)} isActive={isActive} navigate={navigate} colors={colors} isDark={isDark} />
-
         <NavGroup label="Browse" items={filterNav(BROWSE_NAV)} isActive={isActive} navigate={navigate} colors={colors} isDark={isDark} />
-
         <NavGroup label={hostHubLabel} items={filterNav(hostHubNav)} isActive={isActive} navigate={navigate} colors={colors} isDark={isDark} />
 
         {isVenue && <NavGroup label="Venue" items={filterNav(VENUE_NAV)} isActive={isActive} navigate={navigate} colors={colors} isDark={isDark} />}
-
         {isSponsor && <NavGroup label="Sponsor" items={filterNav(SPONSOR_NAV)} isActive={isActive} navigate={navigate} colors={colors} isDark={isDark} />}
-
         {isAdmin && <NavGroup label="Admin" items={filterNav(ADMIN_NAV)} isActive={isActive} navigate={navigate} colors={colors} isDark={isDark} />}
-
         {isSuperAdmin && <NavGroup label="SuperAdmin" items={filterNav(SUPERADMIN_NAV)} isActive={isActive} navigate={navigate} colors={colors} isDark={isDark} />}
 
         <NavGroup label="Support" items={filterNav(BOTTOM_NAV)} isActive={isActive} navigate={navigate} colors={colors} isDark={isDark} />
 
+        {/* Council card only when not searching */}
         {myCouncil && !searchQuery && (
           <M3Card
             variant="filled"
@@ -575,6 +587,20 @@ function WebSidebarContent() {
             </View>
             <Ionicons name="chevron-forward" size={14} color={mutedColor} />
           </M3Card>
+        )}
+
+        {/* Nice empty state when search has no matches */}
+        {hasNoSearchResults && (
+          <View style={s.searchEmpty}>
+            <Ionicons name="search-outline" size={18} color={mutedColor} />
+            <Text style={[s.searchEmptyText, { color: colors.textSecondary }]}>
+              No matches for “{searchQuery}”
+            </Text>
+          </View>
+        )}
+
+        {!searchQuery && (
+          <SidebarFooter colors={colors} border={border} mutedColor={mutedColor} />
         )}
       </ScrollView>
 
@@ -750,64 +776,130 @@ function SidebarProfileBlock({ user, colors, isDark, friendlyRole, onNavigate, o
 
 const s = StyleSheet.create({
   sidebar: {
-    width: SIDEBAR_WIDTH,
     height: '100%',
-    borderRightWidth: 1,
+    borderRightWidth: Platform.OS === 'web' ? 0 : 1,
     ...Platform.select({ web: { position: 'sticky', top: 0 } as any, default: {} }),
   },
-  brandHeader: { paddingTop: Spacing.md + 4, paddingHorizontal: Spacing.md, paddingBottom: Spacing.sm, gap: Spacing.md },
-  brandCardPress: { borderRadius: Radius.lg },
-  brandCard: { borderRadius: Radius.lg, overflow: 'hidden' },
-  brandCardInner: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, padding: Spacing.sm },
+  brandHeader: { paddingTop: Spacing.md + 4, paddingHorizontal: Spacing.md + 4, paddingBottom: Spacing.sm, gap: Spacing.sm + 2 },
+  brandHeaderPress: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    borderRadius: Radius.md,
+  },
   brandTextBlock: { flex: 1, gap: 2 },
-  brandName: { ...TextStyles.title3, fontSize: 16, fontFamily: 'Poppins_700Bold', letterSpacing: -0.6 },
-  brandTagline: { ...TextStyles.caption, fontSize: 10, fontFamily: 'Poppins_500Medium', letterSpacing: -0.2, marginTop: -2 },
-  metaStrip: {
+  brandName: {
+    fontSize: 16,
+    fontFamily: 'Poppins_700Bold',
+    letterSpacing: -0.4,
+    lineHeight: 20,
+  },
+  brandTagline: {
+    fontSize: 10.5,
+    fontFamily: 'Poppins_500Medium',
+    letterSpacing: 0.1,
+    lineHeight: 14,
+    opacity: 0.8,
+  },
+
+  // Cleaner meta row (time + actions)
+  metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    borderRadius: Radius.md,
-    borderWidth: 1,
+    paddingTop: 6,
+    paddingBottom: 2,
   },
   metaTimeBlock: {
-    gap: 3,
-    paddingRight: Spacing.sm,
+    gap: 1,
   },
-  metaTime: { ...TextStyles.captionSemibold, fontSize: 12, lineHeight: 15 },
-  metaSub: { ...TextStyles.caption, fontSize: 10, lineHeight: 13 },
-  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  collapseBtn: { width: 28, height: 28, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  metaTime: { ...TextStyles.captionSemibold, fontSize: 11, lineHeight: 14 },
+  metaSub: { ...TextStyles.caption, fontSize: 9, lineHeight: 12 },
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  collapseBtn: { width: 26, height: 26, borderRadius: 7, alignItems: 'center', justifyContent: 'center' },
   searchContainer: { paddingHorizontal: Spacing.md, marginBottom: Spacing.sm },
-  searchBar: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, height: 36, borderRadius: 18, borderWidth: 1 },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 13,
+    height: 38,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
   searchInput: { flex: 1, fontSize: 13, padding: 0, outlineStyle: 'none' } as any,
-  scrollContent: { paddingBottom: 20 },
-  section: { paddingHorizontal: Spacing.md, marginTop: Spacing.md },
-  sectionLabel: { ...TextStyles.captionSemibold, fontSize: 10, letterSpacing: 1, marginBottom: 8, marginLeft: 8 },
+  scrollContent: { paddingBottom: 24, paddingTop: 4 },
+  section: { paddingHorizontal: Spacing.md, marginTop: Spacing.md + 2 },
+  sectionLabel: {
+    ...TextStyles.captionSemibold,
+    fontSize: 9,
+    letterSpacing: 1.2,
+    marginBottom: 6,
+    marginLeft: 4,
+    opacity: 0.75,
+  },
   councilCard: { marginHorizontal: Spacing.md, marginTop: Spacing.lg, padding: Spacing.sm, flexDirection: 'row', alignItems: 'center', gap: 10 },
   councilIconWrap: { width: 32, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   councilEyebrow: { ...TextStyles.captionSemibold, fontSize: 9 },
   councilName: { ...TextStyles.labelSemibold, fontSize: 12 },
+
+  // Search empty state
+  searchEmpty: {
+    marginHorizontal: Spacing.md,
+    marginTop: Spacing.lg,
+    paddingVertical: 18,
+    alignItems: 'center',
+    gap: 8,
+    opacity: 0.7,
+  },
+  searchEmptyText: {
+    ...TextStyles.caption,
+    fontSize: 12,
+    textAlign: 'center',
+  },
+
   pinnedFooter: { padding: Spacing.md, borderTopWidth: 1, gap: Spacing.sm },
 });
 
 const r = StyleSheet.create({
-  rail: { width: RAIL_WIDTH, height: '100%', borderRightWidth: 1, alignItems: 'center', paddingTop: 20 },
-  railTop: { marginBottom: 20 },
-  divider: { height: 1, width: 32, marginBottom: 12 },
-  railIcons: { gap: 8 },
-  railItem: { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  railActiveBar: { position: 'absolute', left: 0, top: 12, bottom: 12, width: 3, borderRadius: 2 },
+  rail: {
+    width: RAIL_WIDTH,
+    height: '100%',
+    borderRightWidth: Platform.OS === 'web' ? 0 : 1,
+    alignItems: 'center',
+    paddingTop: 18,
+  },
+  railTop: { marginBottom: 16 },
+  divider: { height: 1, width: 28, marginBottom: 10 },
+  railIcons: { gap: 6 },
+  railItem: {
+    width: 42,
+    height: 42,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  railActiveBar: { position: 'absolute', left: 0, top: 10, bottom: 10, width: 3, borderRadius: 2 },
 });
 
 const ni = StyleSheet.create({
-  item: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8, paddingHorizontal: 12, borderRadius: Radius.md, marginBottom: 2, position: 'relative' },
-  activeBar: { position: 'absolute', left: 0, top: 10, bottom: 10, width: 3, borderRadius: 2 },
+  item: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 11,
+    paddingVertical: 9,
+    paddingHorizontal: 11,
+    borderRadius: Radius.md,
+    marginBottom: 1,
+    position: 'relative',
+  },
+  activeBar: { position: 'absolute', left: 0, top: 9, bottom: 9, width: 3, borderRadius: 2 },
   label: { ...TextStyles.body, fontSize: 13, flex: 1 },
   labelActive: { fontWeight: '600' },
   badge: { backgroundColor: CultureTokens.coral, paddingHorizontal: 6, borderRadius: 10 },
-  badgeText: { color: '#fff', fontSize: 10, fontWeight: '700' }, // keep white for contrast on colored badges; could pull from tokens if needed later
+  badgeText: { color: '#fff', fontSize: 10, fontWeight: '700' },
 });
 
 const pb = StyleSheet.create({
@@ -826,3 +918,100 @@ const pb = StyleSheet.create({
   menuLabel: { ...TextStyles.body, fontSize: 13, letterSpacing: 0.1 },
   menuDivider: { height: 1, marginVertical: 5, marginHorizontal: 6 },
 });
+
+function SidebarFooter({ colors, border, mutedColor }: { colors: any; border: string; mutedColor: string }) {
+  const openSocialLink = (url: string) => {
+    if (Platform.OS === 'web') {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    } else {
+      Linking.openURL(url);
+    }
+  };
+
+  return (
+    <View style={[sf.container, { borderTopColor: border }]}>
+      {/* Acknowledgment of Country (Brief) */}
+      <Text style={[sf.ackText, { color: colors.textTertiary }]}>
+        We acknowledge the Traditional Custodians of Country throughout Australia and pay respects to Elders past and present.
+      </Text>
+
+      {/* Grid of Legal/Info links in 2 columns */}
+      <View style={sf.linksGrid}>
+        <View style={sf.gridCol}>
+          <Link href="/about" style={[sf.linkText, { color: colors.textSecondary }]}>About</Link>
+          <Link href="/founder" style={[sf.linkText, { color: colors.textSecondary }]}>Our Story</Link>
+          <Link href="/help" style={[sf.linkText, { color: colors.textSecondary }]}>Help Centre</Link>
+          <Link href="/contact" style={[sf.linkText, { color: colors.textSecondary }]}>Contact</Link>
+        </View>
+        <View style={sf.gridCol}>
+          <Link href="/legal/terms" style={[sf.linkText, { color: colors.textSecondary }]}>Terms</Link>
+          <Link href="/legal/privacy" style={[sf.linkText, { color: colors.textSecondary }]}>Privacy</Link>
+          <Link href="/legal/community" style={[sf.linkText, { color: colors.textSecondary }]}>Guidelines</Link>
+          <Link href="/legal/cookies" style={[sf.linkText, { color: colors.textSecondary }]}>Cookies</Link>
+        </View>
+      </View>
+
+      {/* Social links row */}
+      <View style={sf.socialRow}>
+        {SOCIAL_LINKS.slice(0, 5).map((social, index) => (
+          <Pressable
+            key={index}
+            onPress={() => openSocialLink(social.url)}
+            style={[sf.socialIcon, { backgroundColor: colors.surface, borderColor: border }]}
+          >
+            <Ionicons name={social.icon as any} size={14} color={colors.textSecondary} />
+          </Pressable>
+        ))}
+      </View>
+
+      {/* Copyright */}
+      <Text style={[sf.copyright, { color: colors.textTertiary }]}>
+        © {new Date().getFullYear()} CulturePass.App — Made in Sydney
+      </Text>
+    </View>
+  );
+}
+
+const sf = StyleSheet.create({
+  container: {
+    marginTop: Spacing.lg,
+    paddingTop: Spacing.md,
+    borderTopWidth: 1,
+    gap: 12,
+    paddingHorizontal: 4,
+  },
+  ackText: {
+    fontSize: 10,
+    fontFamily: 'Poppins_400Regular',
+    lineHeight: 14,
+  },
+  linksGrid: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  gridCol: {
+    flex: 1,
+    gap: 6,
+  },
+  linkText: {
+    fontSize: 11,
+    fontFamily: 'Poppins_400Regular',
+  },
+  socialRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  socialIcon: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  copyright: {
+    fontSize: 10,
+    fontFamily: 'Poppins_400Regular',
+  },
+});
+

@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import {
   Spacing,
   IconSize,
@@ -127,8 +127,8 @@ type AuthMobileHeaderProps = {
 
 export function AuthMobileHeader({ variant, onPress }: AuthMobileHeaderProps) {
   const colors = useColors();
-  const insets = useSafeAreaInsets();
-  const topInset = Platform.OS === 'web' ? 0 : insets.top;
+  const safeInsets = useSafeAreaInsetsWeb();
+  const topInset = safeInsets.top;
   const padTop = topInset + ScreenTokens.topOffset;
 
   const isBack = variant === 'back-only';

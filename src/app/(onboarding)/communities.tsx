@@ -8,6 +8,7 @@ import {
   KeyboardAvoidingView,
   Alert,
 } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Image } from 'expo-image';
 import { useOnboarding } from '@/contexts/OnboardingContext';
@@ -17,14 +18,14 @@ import {
   LuxeButton,
   LuxeCard,
   LuxeText,
-  LuxeFilterChip,
 } from '@/design-system/ui';
 import * as Haptics from 'expo-haptics';
-import { useColors } from '@/hooks/useColors';
+import { Ionicons } from '@expo/vector-icons';
 import { useM3Colors } from '@/hooks/useM3Colors';
 import { useLayout } from '@/hooks/useLayout';
 import { luxeDark } from '@/design-system/tokens/theme';
 import { routeWithRedirect, sanitizeInternalRedirect } from '@/lib/routes';
+import { OnboardingProgressHeader } from '@/components/onboarding/OnboardingProgressHeader';
 
 export default function CommunitiesScreen() {
   const m3Colors = useM3Colors();
@@ -75,6 +76,8 @@ export default function CommunitiesScreen() {
         }
       />
 
+      <OnboardingProgressHeader currentStep="communities" redirectTo={redirectTo} />
+
       <KeyboardAvoidingView
         style={styles.keyboardAvoid}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -87,13 +90,17 @@ export default function CommunitiesScreen() {
             isDesktop && styles.scrollContentDesktop,
           ]}
         >
-          <LuxeCard
-            variant="default"
-            style={[
-              styles.formContainer,
-              isDesktop && styles.formContainerDesktop,
-            ]}
+          <Animated.View
+            entering={FadeInDown.springify().damping(20).stiffness(120).delay(100)}
+            style={{ width: '100%' }}
           >
+            <LuxeCard
+              variant="glass"
+              style={[
+                styles.formContainer,
+                isDesktop && styles.formContainerDesktop,
+              ]}
+            >
             {/* Hero Header */}
             <View style={styles.header}>
               <View style={styles.emojiCircle}>
@@ -126,20 +133,32 @@ export default function CommunitiesScreen() {
                     </LuxeText>
                   </View>
 
-                  <View style={styles.chipContainer}>
+                  {/* Vertical list — top to bottom, one card per line (same pattern as States & City) */}
+                  <View style={styles.groupList}>
                     {group.members.map((community) => {
                       const isSelected = selected.includes(community);
                       const flag = communityFlags[community] ?? '🌐';
 
                       return (
-                        <LuxeFilterChip
+                        <LuxeCard
                           key={community}
-                          label={community}
-                          selected={isSelected}
+                          variant={isSelected ? "tonal" : "default"}
                           onPress={() => toggle(community)}
-                          icon={flag as any}
-                          style={styles.chip}
-                        />
+                          style={styles.groupCard}
+                        >
+                          <View style={{ flexDirection: 'row', alignItems: 'center', padding: 14, gap: 14 }}>
+                            <Text style={{ fontSize: 20 }}>{flag}</Text>
+                            <LuxeText 
+                              variant="bodyMedium" 
+                              style={{ color: isSelected ? luxeDark.onPrimaryContainer : luxeDark.text, flex: 1 }}
+                            >
+                              {community}
+                            </LuxeText>
+                            {isSelected && (
+                              <Ionicons name="checkmark-circle" size={20} color={luxeDark.onPrimaryContainer} />
+                            )}
+                          </View>
+                        </LuxeCard>
                       );
                     })}
                   </View>
@@ -159,6 +178,7 @@ export default function CommunitiesScreen() {
               Continue
             </LuxeButton>
           </LuxeCard>
+        </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
     </View>
@@ -253,5 +273,14 @@ const styles = StyleSheet.create({
 
   footerSpacer: {
     height: 48,
+  },
+
+  // Vertical list for community groups (top to bottom, full-width cards — same as States/City)
+  groupList: {
+    gap: 10,
+  },
+  groupCard: {
+    width: '100%',
+    borderRadius: 16,
   },
 });

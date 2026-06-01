@@ -14,7 +14,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { router } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 
 import { api, ApiError } from '@/lib/api';
 import { useColors } from '@/hooks/useColors';
@@ -31,8 +31,8 @@ import {
 } from '@/design-system/tokens/theme';
 
 export default function CultureShopManageScreen() {
-  const insets = useSafeAreaInsets();
-  const topInset = Platform.OS === 'web' ? 0 : insets.top;
+  const safeInsets = useSafeAreaInsetsWeb();
+  const topInset = safeInsets.top;
   const colors = useColors();
   const { hPad } = useLayout();
 
@@ -94,7 +94,7 @@ export default function CultureShopManageScreen() {
         <View style={{ width: 40 }} />
       </View>
 
-      <ScrollView contentContainerStyle={{ paddingHorizontal: hPad, paddingBottom: insets.bottom + 24, gap: Spacing.md }}>
+      <ScrollView contentContainerStyle={{ paddingHorizontal: hPad, paddingBottom: safeInsets.bottom + 24, gap: Spacing.md }}>
         <Text style={[styles.help, { color: colors.textSecondary }]}>
           Visible to everyone on CultureShop. Set Plus-only to show the destination but keep navigation gated until upgrade.
         </Text>

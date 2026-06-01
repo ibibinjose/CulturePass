@@ -131,7 +131,7 @@ export function useCultureDestinationData(def: CultureDestinationDefinition, opt
       ...eventQueries.map((q) => q.refetch()),
       ...venueQueries.map((q) => q.refetch()),
     ]);
-  }, [countriesKey, def.slug]);
+  }, [eventQueries, venueQueries]);
 
   return { allEvents, venues, isLoading, refetch, countriesQueried: countries };
 }

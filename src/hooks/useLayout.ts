@@ -9,9 +9,9 @@
  *   const { isDesktop, numColumns, hPad, tabBarHeight, sidebarWidth } = useLayout();
  *
  * Web layout model:
- *   Mobile  (<768px)  → bottom tab bar, full-width content, 16px h-padding
- *   Tablet  (768-1023) → bottom tab bar, full-width content, 24px h-padding
- *   Desktop (≥1024px) → left sidebar (240px) + main content, 32px h-padding
+ *   Mobile  (<768px)   → bottom tab bar
+ *   Tablet  (768-1099px) → bottom tab bar (preferred on iPad landscape too)
+ *   Desktop (≥1100px)  → left sidebar (240px) + main content (large tablets + desktop)
  *
  * On desktop web, the sidebar occupies 240px on the left. Components that
  * need to compute absolute widths must subtract sidebarWidth.
@@ -20,6 +20,7 @@
 
 import { Platform, useWindowDimensions } from 'react-native';
 import { Breakpoints, TabBarTokens } from '@/design-system/tokens/theme';
+import { useSafeAreaInsetsWeb } from './useSafeAreaInsetsWeb';
 
 /** Width of the desktop web left-nav sidebar in pixels */
 export const SIDEBAR_WIDTH = 240;
@@ -75,11 +76,15 @@ export interface LayoutState {
   sidebarWidth: number;
 
   /**
-   * Top padding needed to clear any fixed navigation overlay.
-   * 0 on web (sidebar layout has no top bar).
-   * insets.top equivalent is handled per-screen with useSafeAreaInsets().
+   * Safe area top inset. On mobile web this respects iOS Dynamic Island/notch
+   * via CSS `env(safe-area-inset-top)`.
    */
-  webTopInset: 0;
+  safeAreaTop: number;
+
+  /**
+   * Safe area bottom inset. On mobile web this respects the home indicator.
+   */
+  safeAreaBottom: number;
 
   // Helpers
   /**
@@ -107,7 +112,8 @@ export function useLayout(): LayoutState {
   const isAndroid = Platform.OS === 'android';
 
   const isDesktop = isWeb && width >= Breakpoints.desktop;
-  const isTablet  = width >= Breakpoints.tablet && !isDesktop;
+  // Treat iPad landscape (and similar tablets) as "tablet" for navigation (bottom tabs preferred over full desktop sidebar)
+  const isTablet  = width >= Breakpoints.tablet && width < 1100;
   const isMobile  = !isDesktop && !isTablet;
 
   // Material 3 Window Size Classes (dp equivalent for React Native)
@@ -118,6 +124,11 @@ export function useLayout(): LayoutState {
 
   // Sidebar (desktop web only)
   const sidebarWidth = isDesktop ? SIDEBAR_WIDTH : 0;
+
+  // Safe areas (web-aware) — must come before tabBarHeight
+  const webSafeInsets = useSafeAreaInsetsWeb();
+  const safeAreaTop = webSafeInsets.top;
+  const safeAreaBottom = webSafeInsets.bottom;
 
   // Grid columns
   const numColumns     = isDesktop ? 3 : 2;
@@ -131,7 +142,7 @@ export function useLayout(): LayoutState {
   // Navigation
   const tabBarHeight = isDesktop
     ? 0  // no tab bar on desktop — sidebar handles navigation
-    : TabBarTokens.heightMobile;
+    : TabBarTokens.heightMobile + safeAreaBottom;
 
   // Usable content width (subtract sidebar on desktop, cap at 1200 for web center)
   const baseAreaWidth = width - sidebarWidth;
@@ -167,7 +178,8 @@ export function useLayout(): LayoutState {
     columnGap,
     tabBarHeight,
     sidebarWidth,
-    webTopInset: 0,
+    safeAreaTop,
+    safeAreaBottom,
     columnWidth,
     contentWidth,
   };

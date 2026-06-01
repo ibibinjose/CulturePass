@@ -11,7 +11,9 @@
   "dependencies": {
     "next": "16.2.6",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "expo": "~56.0.7",
+    "react-native": "0.85.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "4.0.0",

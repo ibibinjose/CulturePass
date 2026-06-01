@@ -8,6 +8,7 @@ import { M3Button } from '@/design-system/ui';
 import { useM3Colors } from '@/hooks/useM3Colors';
 import { useLayout } from '@/hooks/useLayout';
 import { CultureTokens, FontFamily, M3Typography } from '@/design-system/tokens/theme';
+import { Luxe } from '@/design-system/tokens/luxeHeritage';
 import { getCommunityLabel } from '@/lib/community';
 import type { Community } from '@/shared/schema';
 
@@ -46,7 +47,7 @@ function HeroIdentity({
   webLayout: boolean;
 }) {
   const m3Colors = useM3Colors();
-  const { hPad } = useLayout();
+  const { hPad, isDesktop } = useLayout();
   const showHeadline = headline !== community.description;
 
   const body = (

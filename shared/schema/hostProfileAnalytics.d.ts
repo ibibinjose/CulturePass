@@ -9,9 +9,9 @@ export type KeywordMetric = z.infer<typeof KeywordMetricSchema>;
 export declare const ProfileAnalyticsSchema: z.ZodObject<{
     profileId: z.ZodString;
     period: z.ZodEnum<{
-        daily: "daily";
         weekly: "weekly";
         monthly: "monthly";
+        daily: "daily";
         "all-time": "all-time";
     }>;
     startDate: z.ZodString;
@@ -44,9 +44,9 @@ export type ProfileAnalytics = z.infer<typeof ProfileAnalyticsSchema>;
 export declare const ProfileAnalyticsQuerySchema: z.ZodObject<{
     profileId: z.ZodString;
     period: z.ZodDefault<z.ZodEnum<{
-        daily: "daily";
         weekly: "weekly";
         monthly: "monthly";
+        daily: "daily";
         "all-time": "all-time";
     }>>;
     startDate: z.ZodOptional<z.ZodString>;
@@ -56,17 +56,17 @@ export type ProfileAnalyticsQuery = z.infer<typeof ProfileAnalyticsQuerySchema>;
 export declare const ProfileAnalyticsComparisonSchema: z.ZodObject<{
     profileId: z.ZodString;
     period: z.ZodEnum<{
-        daily: "daily";
         weekly: "weekly";
         monthly: "monthly";
+        daily: "daily";
         "all-time": "all-time";
     }>;
     currentMetrics: z.ZodObject<{
         profileId: z.ZodString;
         period: z.ZodEnum<{
-            daily: "daily";
             weekly: "weekly";
             monthly: "monthly";
+            daily: "daily";
             "all-time": "all-time";
         }>;
         startDate: z.ZodString;
@@ -104,3 +104,4 @@ export declare const ProfileAnalyticsComparisonSchema: z.ZodObject<{
     percentile: z.ZodNumber;
 }, z.core.$strip>;
 export type ProfileAnalyticsComparison = z.infer<typeof ProfileAnalyticsComparisonSchema>;
+//# sourceMappingURL=hostProfileAnalytics.d.ts.map

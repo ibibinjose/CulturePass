@@ -13,6 +13,9 @@ export function firestoreCategoryValuesForFilter(filterCategory: string): string
   if (f === LEGACY_CHILDREN_FAMILY_CATEGORY) {
     return ['Kids & Youth', 'Family', LEGACY_CHILDREN_FAMILY_CATEGORY];
   }
+  if (f === 'classes') {
+    return ['Classes', 'Wellness', 'Fitness', 'Workouts', 'Dance', 'Yoga', 'Tango', 'Meditation', 'Gym', 'Sports', 'activities', 'workshop'];
+  }
   return [f];
 }
 

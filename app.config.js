@@ -29,9 +29,17 @@ export default function(appConfig) {
         origin: "https://culturepass.app"
       }
     ],
+    [
+      "@stripe/stripe-react-native",
+      {
+        merchantIdentifier: "merchant.au.culturepass.app",
+        androidPayMode: "test"
+      }
+    ],
     "expo-font",
     "expo-web-browser",
     "expo-apple-authentication",
+    "expo-status-bar", // Added for SDK 56 compatibility (status bar configuration on web/native)
     [
       "@react-native-google-signin/google-signin/app.plugin.js",
       {

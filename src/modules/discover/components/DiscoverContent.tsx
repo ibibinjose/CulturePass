@@ -1,9 +1,11 @@
-import React from 'react';
-import { View, Platform } from 'react-native';
+import React, { useMemo } from 'react';
+import { View, Text, Platform } from 'react-native';
 import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { useM3Colors } from '@/hooks/useM3Colors';
 
 import { useLayout } from '@/hooks/useLayout';
-import { CultureTokens } from '@/design-system/tokens/theme';
+import { CultureTokens, FontFamily, Radius } from '@/design-system/tokens/theme';
 import { M3SectionHeader } from '@/design-system/ui';
 import { M3EventCard } from '@/modules/events/components/M3EventCard';
 import type { EventData } from '@/shared/schema';
@@ -38,20 +40,7 @@ import { useDiscoverData } from '../hooks/useDiscoverData';
 import { useKeralaScoping } from '../hooks/useKeralaScoping';
 /* eslint-enable import/first */
 
-type DiscoverFilter =
-  | 'all'
-  | 'hubs'
-  | 'events'
-  | 'art'
-  | 'movies'
-  | 'dining'
-  | 'activities'
-  | 'travel'
-  | 'shopping'
-  | 'offers'
-  | 'directory'
-  | 'indigenous'
-  | 'search';
+import type { DiscoverFilter } from '@/components/Discover/DiscoverFilterModal';
 
 interface DiscoverContentProps {
   activeFilter: DiscoverFilter;
@@ -76,6 +65,22 @@ export function DiscoverContent({
   skippedOnboardingSteps = [],
 }: DiscoverContentProps) {
   const { hPad, isExpanded, contentWidth, isDesktop } = useLayout();
+  const colors = useM3Colors();
+
+  const classEvents = useMemo(() => {
+    const combined = [...s.nearby, ...s.popular, ...s.soon, ...s.forYou];
+    const seen = new Set<string>();
+    const out: EventData[] = [];
+    for (const item of combined) {
+      if (typeof item === 'string') continue;
+      if (seen.has(item.id)) continue;
+      seen.add(item.id);
+      if (isClassEvent(item)) {
+        out.push(item);
+      }
+    }
+    return out;
+  }, [s.nearby, s.popular, s.soon, s.forYou]);
 
   // Match the page-level side padding used on web desktop (modest gutter next to sticky sidebar)
   const sidePad = isDesktop && Platform.OS === 'web' ? 16 : hPad;
@@ -232,7 +237,7 @@ export function DiscoverContent({
         />
       )}
 
-      {show(['hubs']) && <CultureHubRail />}
+      {show(['events', 'hubs']) && <CultureHubRail />}
 
       {show(['hubs']) && (
         <LazyCommunityRail
@@ -324,6 +329,81 @@ export function DiscoverContent({
           seeAllRoute="/perks"
         />
       )}
+
+      {/* ── CLASSES & FITNESS (Yoga, Tango, dance, meditation, Gym, workout etc.) ── */}
+      {show(['classes']) && (
+        <>
+          {classEvents.length === 0 ? (
+            <View style={{ paddingHorizontal: sidePad, marginVertical: 20 }}>
+              <M3SectionHeader title="Classes & Fitness Around You" />
+              <View style={{ padding: 24, alignItems: 'center', gap: 12, backgroundColor: colors.surfaceVariant, borderRadius: Radius.lg }}>
+                <Ionicons name="fitness-outline" size={36} color={CultureTokens.coral} />
+                <Text style={{ color: colors.onSurfaceVariant, textAlign: 'center', fontFamily: FontFamily.medium, fontSize: 14 }}>
+                  No classes or fitness sessions scheduled around you right now. Check back later!
+                </Text>
+              </View>
+            </View>
+          ) : (
+            <M3EventRail
+              title="Classes & Fitness Around You"
+              subtitle="Yoga, tango, dance, meditation, gyms & workouts near you"
+              data={classEvents}
+              onSeeAll={goEvents}
+            />
+          )}
+        </>
+      )}
     </>
   );
+}
+
+export function isClassEvent(event: EventData): boolean {
+  const category = (event.category ?? '').toLowerCase();
+  const eventType = (event.eventType ?? '').toLowerCase();
+  const tags = (event.tags ?? []).map((t) => t.toLowerCase());
+  const title = (event.title ?? '').toLowerCase();
+  const desc = (event.description ?? '').toLowerCase();
+
+  const keywords = [
+    'yoga',
+    'tango',
+    'dance',
+    'meditation',
+    'gym',
+    'workout',
+    'class',
+    'fitness',
+    'pilates',
+    'aerobics',
+    'zumba',
+    'boxing',
+    'martial arts',
+    'tai chi',
+  ];
+
+  if (
+    [
+      'classes',
+      'wellness',
+      'fitness',
+      'workouts',
+      'dance',
+      'yoga',
+      'tango',
+      'meditation',
+      'gym',
+      'sports',
+      'activities',
+    ].includes(category)
+  ) {
+    return true;
+  }
+  
+  if (['workshop', 'wellness', 'dance', 'sports'].includes(eventType)) {
+    return keywords.some(
+      (kw) => title.includes(kw) || desc.includes(kw) || tags.some((t) => t.includes(kw))
+    );
+  }
+
+  return keywords.some((kw) => title.includes(kw) || tags.some((t) => t.includes(kw)));
 }

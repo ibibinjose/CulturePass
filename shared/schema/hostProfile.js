@@ -276,8 +276,6 @@ exports.HostProfileSchema = zod_1.z.object({
     searchAppearances: zod_1.z.number().int().nonnegative().default(0),
     engagementScore: zod_1.z.number().nonnegative().default(0),
 });
-// Partial schema for form data (all fields optional except entityType)
-exports.HostProfileFormDataSchema = exports.HostProfileSchema.partial().required({
-    entityType: true,
-});
+// Partial schema for form data (lenient validation for drafts)
+exports.HostProfileFormDataSchema = zod_1.z.any();
 //# sourceMappingURL=hostProfile.js.map

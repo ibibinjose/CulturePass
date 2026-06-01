@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, Pressable, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useColors } from '@/hooks/useColors';
 import { TextStyles } from '@/design-system/tokens/theme';
@@ -20,7 +20,7 @@ export default function PaymentCancelScreen() {
     }
   }, [isAuthenticated]);
   const styles = getStyles(colors);
-  const insets = useSafeAreaInsets();
+  const safeInsets = useSafeAreaInsetsWeb();
   useLocalSearchParams<{ ticketId: string }>();
 
   useEffect(() => {
@@ -28,7 +28,7 @@ export default function PaymentCancelScreen() {
   }, []);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: (Platform.OS === 'web' ? 0 : insets.top) + 16, paddingBottom: insets.bottom + 24 }]}>
+    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: safeInsets.top + 16, paddingBottom: safeInsets.bottom + 24 }]}>
       <View style={[styles.iconCircle, { backgroundColor: colors.error + '15' }]}>
         <Ionicons name="close-circle" size={80} color={colors.error} />
       </View>

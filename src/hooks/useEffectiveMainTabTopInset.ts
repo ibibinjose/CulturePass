@@ -1,9 +1,11 @@
-import { Platform } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsetsWeb } from './useSafeAreaInsetsWeb';
 
-/** Top safe inset for tab screens (native). Web Discover shell uses 0. */
+/**
+ * Top safe inset for main tab screens.
+ * On mobile web (iPhone/iPad Safari), this now correctly returns the Dynamic Island / notch inset
+ * instead of hardcoding 0.
+ */
 export function useEffectiveMainTabTopInset(): number {
-  const insets = useSafeAreaInsets();
-  if (Platform.OS === 'web') return 0;
+  const insets = useSafeAreaInsetsWeb();
   return insets.top;
 }

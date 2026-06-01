@@ -2,7 +2,7 @@
  * DeepLinkResolver — Resilient deep link resolution with fallback logic,
  * auth gate destination persistence, and Open Graph meta generation.
  *
- * Handles all short link prefixes: /e/, /c/, /b/, /v/, /u/, /o/, /t/
+ * Handles all short link prefixes: /e/, /c/, /b/, /v/, /CPU/ (preferred for users), /u/, /o/, /t/
  *
  * Usage:
  *   import { deepLinkResolver } from '@/lib/deep-link-resolver';
@@ -74,7 +74,13 @@ const ROUTE_MAP: Record<DeepLinkEntityType, (id: string) => string> = {
   community: (id) => `/community/${encodeURIComponent(id)}`,
   business: (id) => `/business/${encodeURIComponent(id)}`,
   venue: (id) => `/venue/${encodeURIComponent(id)}`,
-  user: (id) => `/user/${encodeURIComponent(id)}`,
+  user: (id) => {
+    // Prefer branded CPU path for CulturePass User IDs
+    if (/^CP-[A-Z0-9]{6,}$/i.test(id)) {
+      return `/CPU/${encodeURIComponent(id)}`;
+    }
+    return `/user/${encodeURIComponent(id)}`;
+  },
   organisation: (id) => `/organiser/${encodeURIComponent(id)}`,
   ticket: (id) => `/tickets/${encodeURIComponent(id)}`,
 };

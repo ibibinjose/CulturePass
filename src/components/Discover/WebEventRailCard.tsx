@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import type { EventData } from '@shared/schema';
 import { formatEventDateTimeBadge } from '@/lib/dateUtils';
+import { normalizeRemoteImageUri } from '@/lib/mediaUrls';
 
 interface WebEventRailCardProps {
   event: EventData;
@@ -28,7 +29,7 @@ function WebEventRailCard({ event }: WebEventRailCardProps) {
       accessibilityRole="button"
       accessibilityLabel={`${event.title}${event.date ? `, ${event.date}` : ''}${event.venue ? `, ${event.venue}` : ''}`}
     >
-      <Image source={{ uri: event.imageUrl }} style={styles.webRailImage} contentFit="cover" />
+      <Image source={{ uri: normalizeRemoteImageUri(event.imageUrl) ?? undefined }} style={styles.webRailImage} contentFit="cover" />
       <LinearGradient
         colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.25)', 'rgba(0,0,0,0.88)']}
         locations={[0.3, 0.6, 1]}

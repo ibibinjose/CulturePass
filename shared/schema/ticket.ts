@@ -18,7 +18,11 @@ export interface Ticket {
   ticketCode?: string;
   eventId: string;
   bookingId?: string;
-  userId: string;
+  userId: string; // Purchaser / main account holder
+  /** For family tickets: the specific family member this ticket is for */
+  familyMemberId?: string;
+  /** If the family member has their own CulturePass account */
+  attendeeUserId?: string;
   tierName?: string;
   quantity?: number;
   seatNumber?: string;
@@ -39,6 +43,12 @@ export interface Ticket {
   cashbackCents?: number;
   rewardPointsEarned?: number;
   rewardPointsAwardedAt?: string;
+
+  // Points redemption (CulturePass wallet)
+  pointsRedeemed?: number;
+  pointsDiscountCents?: number;
+  pointsRedeemedDeductedAt?: string;
+
   refundStatus?: 'pending' | 'approved' | 'rejected' | 'completed';
   refundAmountCents?: number;
   refundedAt?: string;

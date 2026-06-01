@@ -7,10 +7,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useMutation, useQuery } from '@tanstack/react-query';
 
 import { useLayout } from '@/hooks/useLayout';
-import { CultureTokens, M3Typography, Radius } from '@/design-system/tokens/theme';
+import { CultureTokens, M3Typography, Radius, FontFamily } from '@/design-system/tokens/theme';
 import { profileApi } from '@/modules/profile/api';
 import { useAuth } from '@/lib/auth';
-import { FontFamily } from '@/design-system/tokens/theme';
 import { useM3Colors } from '@/hooks/useM3Colors';
 import { goBackOrReplace } from '@/lib/navigation';
 import { M3TopAppBar, M3Button, M3Card, M3FilterChip, M3SectionHeader } from '@/design-system/ui';

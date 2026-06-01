@@ -208,7 +208,7 @@ function HeroCarouselComponent({ events }: HeroCarouselProps) {
         initialNumToRender={2}
         maxToRenderPerBatch={2}
         windowSize={3}
-        removeClippedSubviews={Platform.OS === 'android'}
+        removeClippedSubviews={false}
         getItemLayout={(_, index) => ({
           length: heroSnapInterval,
           offset: heroSnapInterval * index,

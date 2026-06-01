@@ -9,7 +9,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 
 import { Button } from '@/design-system/ui';
 import {
@@ -82,8 +82,8 @@ const FLOW_SCREENS: readonly FlowScreen[] = [
 export default function SignupFlowCanvasScreen() {
   const colors = useColors();
   const layout = useLayout();
-  const insets = useSafeAreaInsets();
-  const topInset = Platform.OS === 'web' ? 0 : insets.top;
+  const safeInsets = useSafeAreaInsetsWeb();
+  const topInset = safeInsets.top;
   const canvasBack = useSafeBack();
   const isWideCanvas = layout.isDesktop || layout.width >= 900;
 
@@ -100,7 +100,7 @@ export default function SignupFlowCanvasScreen() {
         {
           paddingTop: topInset + (layout.isDesktop ? 48 : 28),
           paddingHorizontal: layout.hPad,
-          paddingBottom: insets.bottom + 48,
+          paddingBottom: safeInsets.bottom + 48,
         },
       ]}
       showsVerticalScrollIndicator={false}

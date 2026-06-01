@@ -65,7 +65,7 @@ export function serializeFormData(
       cleanData[key] = value.map((item) => {
         if (item instanceof Date) return item.toISOString();
         if (typeof item === 'object' && item !== null) {
-          return serializeObject(item);
+          return serializeObject(item as Record<string, unknown>);
         }
         return item;
       });
@@ -74,7 +74,7 @@ export function serializeFormData(
 
     // Handle nested objects
     if (typeof value === 'object' && value !== null) {
-      cleanData[key] = serializeObject(value);
+      cleanData[key] = serializeObject(value as Record<string, unknown>);
       continue;
     }
 

@@ -85,6 +85,21 @@ html, body, #root { height: 100%; width: 100%; max-width: 100%; overflow-x: hidd
 body { margin: 0; overscroll-behavior-x: none; }
 #root { display: flex; flex-direction: column; flex: 1; min-height: 100%; }
 :root { color-scheme: dark light; }
+
+/* Mobile web safe area support (especially iOS Safari) */
+:root {
+  --safe-area-inset-top: env(safe-area-inset-top, 0px);
+  --safe-area-inset-right: env(safe-area-inset-right, 0px);
+  --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-inset-left: env(safe-area-inset-left, 0px);
+}
+
+/* Extra padding for iOS standalone/PWA mode (when added to home screen) */
+@media (display-mode: standalone) {
+  :root {
+    --safe-area-inset-top: max(env(safe-area-inset-top, 0px), 44px);
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

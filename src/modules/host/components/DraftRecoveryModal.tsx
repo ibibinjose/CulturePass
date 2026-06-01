@@ -167,7 +167,7 @@ export function DraftRecoveryModal({
     if (!visible) {
       hasTrackedShown.current = false;
     }
-  }, [visible, drafts.length]);
+  }, [visible, drafts]);
 
   if (!visible) return null;
 

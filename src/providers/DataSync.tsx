@@ -67,8 +67,8 @@ export function DataSync() {
       }
     }
     syncOnboarding();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
+    user,
     user?.id,
     user?.city,
     user?.country,
@@ -76,6 +76,18 @@ export function DataSync() {
     user?.communities,
     user?.subscriptionTier,
     state.isComplete,
+    state.city,
+    state.country,
+    state.interests,
+    state.communities,
+    state.subscriptionTier,
+    setCity,
+    setCountry,
+    setInterests,
+    setCommunities,
+    setSubscriptionTier,
+    completeOnboarding,
+    resetOnboarding,
   ]);
 
   return null;

@@ -10,7 +10,7 @@ import React from 'react';
 import { View, Text, Pressable, StyleSheet, ScrollView, Platform } from 'react-native';
 import { Stack, router, usePathname } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import { useColors } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
 import { useRole } from '@/hooks/useRole';
@@ -38,7 +38,9 @@ const ADMIN_NAV = [
   { label: 'Discovery & Curation', icon: 'sparkles', route: '/admin/discover' },
   { label: 'Community Banner', icon: 'home', route: '/admin/community-banner' },
   { label: 'Audit Logs', icon: 'list', route: '/admin/audit-logs' },
+  { label: 'AI Timesheet & Logs', icon: 'time', route: '/admin/timesheet' },
   { label: 'Team Monitoring', icon: 'people-circle', route: '/admin/team-monitoring' },
+  { label: 'Member Monitoring', icon: 'analytics', route: '/admin/member-monitoring' },
   { label: 'Indexes Health', icon: 'analytics', route: '/admin/indexes-health' },
   { label: 'System Health', icon: 'pulse', route: '/admin/platform' },
   { label: 'Compliance', icon: 'lock-closed', route: '/admin/data-compliance' },
@@ -56,8 +58,8 @@ export default function AdminLayout() {
   const hasAdminAccess = isAdmin || isSuperAdmin;
   const { isDesktop } = useLayout();
   const pathname = usePathname();
-  const insets = useSafeAreaInsets();
-  const topInset = Platform.OS === 'web' ? 0 : insets.top;
+  const safeInsets = useSafeAreaInsetsWeb();
+  const topInset = safeInsets.top;
   const mobileBack = useSafeBack();
   const { data: moderationQueue } = useQuery({
     queryKey: adminKeys.complianceSummary(),
@@ -206,7 +208,9 @@ export default function AdminLayout() {
             <Stack.Screen name="community-banner" />
             <Stack.Screen name="notifications" />
             <Stack.Screen name="audit-logs" />
+            <Stack.Screen name="timesheet" />
             <Stack.Screen name="team-monitoring" />
+            <Stack.Screen name="member-monitoring" />
             <Stack.Screen name="indexes-health" />
             <Stack.Screen name="platform" />
             <Stack.Screen name="data-compliance" />

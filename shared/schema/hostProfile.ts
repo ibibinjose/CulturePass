@@ -338,9 +338,7 @@ export const HostProfileSchema = z.object({
 
 export type HostProfile = z.infer<typeof HostProfileSchema>;
 
-// Partial schema for form data (all fields optional except entityType)
-export const HostProfileFormDataSchema = HostProfileSchema.partial().required({
-  entityType: true,
-});
+// Partial schema for form data (lenient validation for drafts)
+export const HostProfileFormDataSchema = z.any();
 
 export type HostProfileFormData = z.infer<typeof HostProfileFormDataSchema>;

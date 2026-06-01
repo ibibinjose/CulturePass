@@ -227,5 +227,6 @@ export function useCultureMatch() {
     goBack,
     goNext,
     skipStep,
+    redirectTo,
   };
 }

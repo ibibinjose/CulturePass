@@ -1,4 +1,4 @@
-import { sanitizeInternalRedirect, routeWithRedirect } from '../routes';
+import { sanitizeInternalRedirect, routeWithRedirect, normalizeSystemPath } from '../routes';
 
 describe('Route Utilities', () => {
   describe('sanitizeInternalRedirect', () => {
@@ -31,7 +31,7 @@ describe('Route Utilities', () => {
     test('should return safe internal paths beginning with /', () => {
       expect(sanitizeInternalRedirect('/profile')).toBe('/profile');
       expect(sanitizeInternalRedirect('/tickets/123')).toBe('/tickets/123');
-      expect(sanitizeInternalRedirect('/hostspace/apply')).toBe('/hostspace/apply');
+      expect(sanitizeInternalRedirect('/hostspace/create')).toBe('/hostspace/create');
       expect(sanitizeInternalRedirect('/membership/plans')).toBe('/membership/plans');
     });
 
@@ -70,11 +70,47 @@ describe('Route Utilities', () => {
     });
 
     test('should handle complex redirect paths', () => {
-      const result = routeWithRedirect('/login', '/hostspace/apply?initialTypes=creator');
+      const result = routeWithRedirect('/login', '/hostspace/create?profileType=creator');
       expect(result).toEqual({
         pathname: '/login',
-        params: { redirectTo: '/hostspace/apply?initialTypes=creator' }
+        params: { redirectTo: '/hostspace/create?profileType=creator' }
       });
+    });
+  });
+
+  describe('normalizeSystemPath', () => {
+    test('should allow trusted production deep links', () => {
+      expect(normalizeSystemPath('https://culturepass.app/culturehub/kerala?country=Australia&scope=single&state=NSW')).toBe(
+        '/culturehub/kerala?country=Australia&scope=single&state=NSW'
+      );
+      expect(normalizeSystemPath('https://culturekerala.com/culturehub/kerala?country=Australia&scope=single&state=NSW')).toBe(
+        '/culturehub/kerala?country=Australia&scope=single&state=NSW'
+      );
+    });
+
+    test('should allow local development deep links', () => {
+      expect(normalizeSystemPath('http://localhost:8081/culturehub/kerala?country=Australia&scope=single&state=NSW')).toBe(
+        '/culturehub/kerala?country=Australia&scope=single&state=NSW'
+      );
+      expect(normalizeSystemPath('http://127.0.0.1:8081/culturehub/kerala?country=Australia&scope=single&state=NSW')).toBe(
+        '/culturehub/kerala?country=Australia&scope=single&state=NSW'
+      );
+      expect(normalizeSystemPath('http://192.168.1.105:8081/culturehub/kerala?country=Australia&scope=single&state=NSW')).toBe(
+        '/culturehub/kerala?country=Australia&scope=single&state=NSW'
+      );
+      expect(normalizeSystemPath('http://myphone.local:8081/culturehub/kerala?country=Australia&scope=single&state=NSW')).toBe(
+        '/culturehub/kerala?country=Australia&scope=single&state=NSW'
+      );
+    });
+
+    test('should block untrusted deep links', () => {
+      expect(normalizeSystemPath('https://evil.com/culturehub/kerala?country=Australia&scope=single&state=NSW')).toBe('/');
+    });
+
+    test('should fall back to raw path for non-url strings', () => {
+      expect(normalizeSystemPath('/culturehub/kerala?country=Australia&scope=single&state=NSW')).toBe(
+        '/culturehub/kerala?country=Australia&scope=single&state=NSW'
+      );
     });
   });
 });

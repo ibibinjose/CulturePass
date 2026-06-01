@@ -29,6 +29,7 @@ import SectionHeader from './SectionHeader';
 
 import type { PreviewItem } from '@/shared/schema/browse';
 export type { PreviewItem } from '@/shared/schema/browse';
+import { normalizeRemoteImageUri } from '@/lib/mediaUrls';
 
 interface PreviewRailProps {
   title: string;
@@ -94,7 +95,7 @@ function PreviewCard({
       <View style={[styles.cardImg, isPortrait ? styles.cardImgPortrait : styles.cardImgLandscape]}>
         {item.imageUrl ? (
           <Image
-            source={{ uri: item.imageUrl }}
+            source={{ uri: normalizeRemoteImageUri(item.imageUrl) ?? undefined }}
             style={StyleSheet.absoluteFill}
             contentFit="cover"
           />
@@ -174,6 +175,7 @@ function PreviewRailComponent({
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
+        removeClippedSubviews={false}
         contentContainerStyle={[styles.scroll, { paddingHorizontal: pad, paddingRight: padEnd }]}
       >
         {displayItems.map((item, idx) =>

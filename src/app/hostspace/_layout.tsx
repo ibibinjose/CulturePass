@@ -4,8 +4,9 @@
  * Auth + role gating is handled per-screen:
  *  - index.tsx          → HostspaceAccessGate (signed-in + organizer)
  *  - create/*           → HostspaceAccessGate (same; blocks anonymous browsing)
- *  - apply.tsx          → always accessible (it IS the path to become a host)
  *  - dashboard/index    → protected by HostspaceCreateWorkspace
+ *
+ * Note: The old /hostspace/apply flow was fully consolidated into /hostspace/create.
  */
 import { Stack } from 'expo-router';
 
@@ -16,7 +17,6 @@ export default function HostspaceLayout() {
 
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" />
-        <Stack.Screen name="apply" />
         <Stack.Screen name="create" />
         <Stack.Screen name="dashboard/index" />
       </Stack>

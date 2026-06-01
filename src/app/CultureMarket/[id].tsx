@@ -16,7 +16,7 @@ import {
 import { router, useLocalSearchParams } from 'expo-router';
 import { goBackOrReplace } from '@/lib/navigation';
 import Head from 'expo-router/head';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -113,8 +113,8 @@ function HeroHostMark({ listing }: { listing: ShopListing }) {
 
 function ListingDetailInner() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const insets = useSafeAreaInsets();
-  const topInset = Platform.OS === 'web' ? 0 : insets.top;
+  const safeInsets = useSafeAreaInsetsWeb();
+  const topInset = safeInsets.top;
   const colors = useColors();
   const { hPad, isDesktop, contentWidth, isMobile } = useLayout();
   const wideListingChrome = Platform.OS === 'web' && !isMobile;
@@ -277,7 +277,7 @@ function ListingDetailInner() {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: insets.bottom + 120 }}
+        contentContainerStyle={{ paddingBottom: safeInsets.bottom + 120 }}
       >
         {/* Hero image */}
         <View style={[styles.heroImg, { height: imageH }]}>
@@ -321,7 +321,7 @@ function ListingDetailInner() {
             <Text style={[styles.category, { color: CultureTokens.teal }]}>
               {categoryLabel(listing.category)}
             </Text>
-            {listing.city && (
+            {!!listing.city && (
               <View style={styles.metaDot}>
                 <Text style={[styles.metaText, { color: colors.textTertiary }]}>· {listing.city}</Text>
               </View>
@@ -429,7 +429,7 @@ function ListingDetailInner() {
         style={[
           styles.ctaBar,
           {
-            paddingBottom: insets.bottom + 12,
+            paddingBottom: safeInsets.bottom + 12,
             backgroundColor: colors.surface,
             borderTopColor: colors.borderLight,
           },

@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, ScrollView, Platform, Switch, Alert, TextInput, ActivityIndicator, Pressable } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import { router, Stack } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useState } from 'react';
@@ -83,10 +83,10 @@ function TrashIcon({ color }: { color: string }) {
 
 export default function PrivacySettingsScreen() {
   const colors = useColors();
-  const insets = useSafeAreaInsets();
   const reducedMotion = useReducedMotion();
-  const topInset = Platform.OS === 'web' ? 0 : insets.top;
-  const bottomInset = Platform.OS === 'web' ? 34 : insets.bottom;
+  const safeInsets = useSafeAreaInsetsWeb();
+  const topInset = safeInsets.top;
+  const bottomInset = safeInsets.bottom;
 
   const { user, logout } = useAuth();
   const queryClient = useQueryClient();

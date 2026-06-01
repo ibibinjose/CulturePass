@@ -1,7 +1,7 @@
 /**
  * Canonical public URL segments for CulturePass (SEO, sharing, deep links).
- * Short prefixes: /u /c /b /e /a /v /t /o /r /m /s /p
- * — users, communities, brands, events, activities, venues, talent (artist),
+ * Short prefixes: /CPU (preferred for users), /u, /c, /b, /e, /a, /v, /t, /o, /r, /m, /s, /p
+ * — CulturePass Users (CPU), communities, brands, events, activities, venues, talent (artist),
  *   organisers, restaurants, movies, shopping, perks.
  */
 import type { EventData } from '@/shared/schema/event';
@@ -94,7 +94,18 @@ export function canonicalCommunityPath(
 }
 
 export function canonicalUserPath(u: Pick<User, 'id' | 'handle' | 'handleStatus'> & { culturePassId?: string | null }): string {
-  return `/user/${userPublicSegment(u)}`;
+  const seg = userPublicSegment(u);
+  // Prefer branded CPU path for CulturePass User IDs
+  if (/^CP-[A-Z0-9]{6,}$/i.test(seg)) {
+    return `/CPU/${seg}`;
+  }
+  return `/user/${seg}`;
+}
+
+/** Branded CulturePass User (CPU) path – preferred for sharing CPIDs */
+export function canonicalCPUPath(u: Pick<User, 'id' | 'handle' | 'handleStatus'> & { culturePassId?: string | null }): string {
+  const seg = userPublicSegment(u);
+  return `/CPU/${seg}`;
 }
 
 export function canonicalActivityPath(id: string): string {
@@ -150,6 +161,13 @@ export function routeEvent(
 }
 
 export function routeUser(
+  u: Pick<User, 'id' | 'handle' | 'handleStatus'> & { culturePassId?: string | null },
+): { pathname: '/user/[id]'; params: { id: string } } {
+  return { pathname: '/user/[id]', params: { id: userPublicSegment(u) } };
+}
+
+/** Preferred route helper for branded CPU links */
+export function routeCPUUser(
   u: Pick<User, 'id' | 'handle' | 'handleStatus'> & { culturePassId?: string | null },
 ): { pathname: '/user/[id]'; params: { id: string } } {
   return { pathname: '/user/[id]', params: { id: userPublicSegment(u) } };

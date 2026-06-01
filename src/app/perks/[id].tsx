@@ -2,7 +2,7 @@ import { View, Text, Pressable, StyleSheet, ScrollView, Platform, Alert, Share, 
 import Head from 'expo-router/head';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import { useColors } from '@/hooks/useColors';
 import { log } from '@/lib/logger';
 import { goBackOrReplace } from '@/lib/navigation';
@@ -34,9 +34,9 @@ import { PerkCouponModal } from '@/components/perks/PerkCouponModal';
 export default function PerkDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const colors = useColors();
-  const insets = useSafeAreaInsets();
-  const topInset = Platform.OS === 'web' ? 0 : insets.top;
-  const bottomInset = Platform.OS === 'web' ? 34 : insets.bottom;
+  const safeInsets = useSafeAreaInsetsWeb();
+  const topInset = safeInsets.top;
+  const bottomInset = safeInsets.bottom;
   const styles = getStyles(colors);
   const { userId } = useAuth();
   const [showCoupon, setShowCoupon] = useState(false);
@@ -130,8 +130,21 @@ export default function PerkDetailScreen() {
   }
 
   const typeInfo = PERK_TYPE_INFO[perk.perkType] || PERK_TYPE_INFO.discount_percent;
+  const requiredTier = perk.requiredMembershipTier || (perk.isMembershipRequired ? 'plus' : 'free');
+  const userTier = membership?.tier || 'free';
+  const rank: Record<string, number> = {
+    free: 0,
+    basic: 1,
+    plus: 2,
+    elite: 3,
+    pro: 4,
+    premium: 5,
+    vip: 6
+  };
+  const isTierLocked = requiredTier !== 'free' && (rank[userTier] ?? 0) < (rank[requiredTier] ?? 0);
+
   const canRedeem = (() => {
-    if (perk.isMembershipRequired && (!membership?.tier || membership.tier === 'free')) return false;
+    if (isTierLocked) return false;
     if (perk.usageLimit && (perk.usedCount || 0) >= perk.usageLimit) return false;
     return true;
   })();
@@ -152,7 +165,7 @@ export default function PerkDetailScreen() {
 
   const handleRedeem = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    if (!canRedeem && perk.isMembershipRequired) {
+    if (isTierLocked) {
       captureEvent('perk_upgrade_prompted', {
         perk_id: perk.id,
         perk_type: perk.perkType,
@@ -263,28 +276,28 @@ export default function PerkDetailScreen() {
         <View style={[styles.bottomBar, { paddingBottom: bottomInset + 14 }]}>
           <Pressable
             onPress={handleRedeem}
-            disabled={(!canRedeem && !perk.isMembershipRequired) || redeemMutation.isPending}
+            disabled={(!canRedeem && !isTierLocked) || redeemMutation.isPending}
             style={({ pressed }) => [
               styles.redeemBtn,
-              !canRedeem && !perk.isMembershipRequired && styles.redeemBtnDisabled,
-              !canRedeem && perk.isMembershipRequired && { backgroundColor: colors.info + '12', borderColor: colors.info },
+              !canRedeem && !isTierLocked && styles.redeemBtnDisabled,
+              isTierLocked && { backgroundColor: colors.info + '12', borderColor: colors.info },
               pressed && { opacity: 0.8, transform: [{ scale: 0.97 }] },
             ]}
             accessibilityRole="button"
-            accessibilityLabel={canRedeem ? 'Redeem perk' : (perk.isMembershipRequired ? 'Upgrade to CulturePass+' : 'Fully Redeemed')}
+            accessibilityLabel={canRedeem ? 'Redeem perk' : (isTierLocked ? `Upgrade to ${requiredTier.toUpperCase()}` : 'Fully Redeemed')}
           >
             <Ionicons
-              name={canRedeem ? 'gift' : (perk.isMembershipRequired ? 'star' : 'lock-closed')}
+              name={canRedeem ? 'gift' : (isTierLocked ? 'star' : 'lock-closed')}
               size={20}
-              color={canRedeem ? colors.textInverse : (perk.isMembershipRequired ? colors.info : colors.textSecondary)}
+              color={canRedeem ? colors.textInverse : (isTierLocked ? colors.info : colors.textSecondary)}
             />
             <Text style={[
               styles.redeemBtnText,
-              !canRedeem && !perk.isMembershipRequired && styles.redeemBtnTextDisabled,
-              !canRedeem && perk.isMembershipRequired && { color: colors.info },
+              !canRedeem && !isTierLocked && styles.redeemBtnTextDisabled,
+              isTierLocked && { color: colors.info },
               canRedeem && { color: colors.textInverse },
             ]}>
-              {redeemMutation.isPending ? 'Redeeming...' : !canRedeem ? (perk.isMembershipRequired ? 'Upgrade to CulturePass+' : 'Fully Redeemed') : 'Redeem Now'}
+              {redeemMutation.isPending ? 'Redeeming...' : !canRedeem ? (isTierLocked ? `Upgrade to ${requiredTier.toUpperCase()}` : 'Fully Redeemed') : 'Redeem Now'}
             </Text>
           </Pressable>
         </View>

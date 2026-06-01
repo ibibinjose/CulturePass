@@ -39,7 +39,7 @@ export function HostspaceCreateVerifyCard({
         <View style={{ flex: 1 }}>
           <Text style={[styles.verifyTitle, { color: colors.text }]}>Verify host setup</Text>
           <Text style={[styles.verifySub, { color: colors.textSecondary }]}>
-            Exported from your CulturePass account and host application. Confirm this is correct before creating.
+            Exported from your CulturePass account and host profile details. Confirm this is correct before creating.
           </Text>
         </View>
         <Pressable

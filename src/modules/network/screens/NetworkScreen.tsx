@@ -13,7 +13,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Image } from 'expo-image';
@@ -49,10 +49,10 @@ function avatarLetters(name: string): string {
 export default function NetworkScreen() {
   const colors = useColors();
   const goBack = useSafeBack();
-  const insets = useSafeAreaInsets();
+  const safeInsets = useSafeAreaInsetsWeb();
   const reducedMotion = useReducedMotion();
-  const topInset = Platform.OS === 'web' ? 0 : insets.top;
-  const bottomInset = Platform.OS === 'web' ? 26 : insets.bottom;
+  const topInset = safeInsets.top;
+  const bottomInset = Platform.OS === 'web' ? 26 : safeInsets.bottom;
   const { tab } = useLocalSearchParams<{ tab?: string | string[] }>();
   const [segment, setSegment] = useState<Segment>('followers');
   const queryClient = useQueryClient();

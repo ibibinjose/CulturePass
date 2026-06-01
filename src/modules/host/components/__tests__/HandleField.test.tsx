@@ -322,18 +322,20 @@ describe('HandleField', () => {
     it('shows error when API call fails', async () => {
       api.profiles.handleAvailable.mockRejectedValue(new Error('Network error'));
 
-      const { getByTestId, findByText } = render(
+      const { getByTestId, findByText, rerender } = render(
         <HandleField value="" onChange={mockOnChange} />
       );
 
       const input = getByTestId('handle-input');
       fireEvent.changeText(input, 'some-handle');
 
+      rerender(<HandleField value="some-handle" onChange={mockOnChange} />);
+
       await act(async () => {
         jest.advanceTimersByTime(300);
       });
 
-      const error = await findByText('Unable to verify handle availability. Please try again.');
+      const error = await findByText("Couldn't verify availability right now. We'll double-check when you continue.");
       expect(error).toBeTruthy();
     });
   });

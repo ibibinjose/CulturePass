@@ -3,7 +3,7 @@ import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 
 import { M3Button, M3Card, M3FilterChip, M3SectionHeader, M3TopAppBar } from '@/design-system/ui';
 import { Skeleton } from '@/design-system/ui/Skeleton';
@@ -31,8 +31,8 @@ const showUnavailableProfileNotice = showUnavailableMemberProfileNotice;
 
 export function DetailSkeleton() {
   const colors = useColors();
-  const insets = useSafeAreaInsets();
-  const topInset = Platform.OS === 'web' ? 0 : insets.top;
+  const safeInsets = useSafeAreaInsetsWeb();
+  const topInset = safeInsets.top;
   const goBack = useSafeBack('/(tabs)/community');
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>

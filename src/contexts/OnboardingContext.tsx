@@ -235,7 +235,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     waitForHydration,
     getSnapshot,
   }), [
-    state, isLoading, setCountry, setCity, setCommunities, setNationalityId,
+    state, isLoading, setCountry, setCity, setCouncil, setCommunities, setNationalityId,
     setCultureIds, setExploringCultureIds, setLanguageIds, setDiasporaGroupIds, setEthnicityText,
     setLanguages, setInterests, setSubscriptionTier, completeOnboarding,
     restartOnboarding, resetOnboarding, updateLocation, skipStep, completeStep,

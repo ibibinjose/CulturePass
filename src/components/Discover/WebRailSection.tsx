@@ -36,7 +36,7 @@ export default function WebRailSection({
           </Pressable>
         ) : null}
       </View>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.webRailScroll}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} removeClippedSubviews={false} contentContainerStyle={styles.webRailScroll}>
         {events.map((event) => (
           <WebEventRailCard key={event.id} event={event} />
         ))}

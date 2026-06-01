@@ -112,13 +112,14 @@ const stripeCheckoutSchema = z.object({
     eventTitle:      z.string().optional(),
     eventDate:       z.string().optional(),
     eventTime:       z.string().optional(),
-	    eventVenue:      z.string().optional(),
-	    tierName:        z.string().optional(),
-	    quantity:        z.coerce.number().int().positive().optional(),
-	    currency:        z.string().optional(),
-	    imageColor:      z.string().optional(),
-      promoCode:       z.string().max(64).optional(),
-	  }),
+    eventVenue:      z.string().optional(),
+    tierName:        z.string().optional(),
+    quantity:        z.coerce.number().int().positive().optional(),
+    currency:        z.string().optional(),
+    imageColor:      z.string().optional(),
+    promoCode:       z.string().max(64).optional(),
+    redeemPoints:    z.coerce.number().int().nonnegative().optional(),
+  }),
 });
 
 const stripeRefundSchema = z.object({
@@ -170,6 +171,91 @@ export function createStripeRouter() {
     if (event.capacity != null && (event.attending ?? 0) + pricing.quantity > event.capacity) {
       return res.status(400).json({ error: 'Not enough tickets available for this quantity', code: 'NOT_ENOUGH_CAPACITY' });
     }
+
+    let appliedPoints = 0;
+    let pointsDiscountCents = 0;
+    const requestedPoints = Number(td.redeemPoints ?? 0);
+    if (requestedPoints > 0) {
+      const wallet = await walletsService.getOrCreate(req.user!.id);
+      const userPoints = wallet?.points ?? 0;
+      if (requestedPoints > userPoints) {
+        return res.status(400).json({ error: 'Insufficient rewards points balance', code: 'INSUFFICIENT_POINTS' });
+      }
+      appliedPoints = Math.min(requestedPoints, pricing.totalPriceCents);
+      pointsDiscountCents = appliedPoints; // 100 points = $1 AUD (100 cents) => 1 point = 1 cent
+    }
+
+    const finalPriceCents = pricing.totalPriceCents - pointsDiscountCents;
+
+    if (finalPriceCents <= 0) {
+      const draftId = randomUUID();
+      const createdAt = nowIso();
+      const ticketCode = generateSecureId('CP-T-');
+      const walletRef = db.collection('wallets').doc(req.user!.id);
+
+      try {
+        await db.runTransaction(async (transaction) => {
+          const walletSnap = await transaction.get(walletRef);
+          const currentPoints = walletSnap.data()?.points ?? 0;
+          if (currentPoints < appliedPoints) {
+            throw new Error('Insufficient points balance during transaction');
+          }
+          transaction.update(walletRef, {
+            points: currentPoints - appliedPoints
+          });
+
+          const ticketDoc = {
+            id:              draftId,
+            userId:          req.user!.id,
+            eventId:         event.id,
+            eventTitle:      event.title,
+            eventDate:       event.date,
+            eventTime:       event.time,
+            eventVenue:      event.venue,
+            tierName:        pricing.tierName,
+            quantity:        pricing.quantity,
+            priceCents:      pricing.unitPriceCents,
+            totalPriceCents: 0,
+            pointsRedeemed:  appliedPoints,
+            pointsDiscountCents,
+            pointsRedeemedDeductedAt: createdAt,
+            promoCode:       pricing.promoCode ?? null,
+            discountCents:   pricing.discountCents ?? 0,
+            currency:        'AUD',
+            status:          'confirmed' as TicketStatus,
+            paymentStatus:   'paid' as const,
+            priority:        'normal' as TicketPriority,
+            imageColor:      td.imageColor ?? undefined,
+            createdAt,
+            updatedAt:       createdAt,
+            qrCode:          ticketCode,
+            cpTicketId:      ticketCode,
+            ticketCode,
+            history:         [
+              { at: createdAt, status: 'confirmed' as TicketStatus, note: 'Direct confirmation via points redemption' },
+              { action: 'checkout_completed', timestamp: createdAt, actorId: req.user!.id }
+            ]
+          };
+
+          transaction.set(db.collection('tickets').doc(draftId), ticketDoc);
+        });
+
+        // Increment event attendance
+        await db.collection('events').doc(event.id).update({
+          attending: firestore.FieldValue.increment(pricing.quantity || 1)
+        }).catch(err => console.error(`[stripe] failed to increment attending:`, err));
+
+        return res.json({
+          ticketId: draftId,
+          directConfirmation: true,
+          message: 'Ticket confirmed successfully via rewards points deduction.'
+        });
+      } catch (err: any) {
+        console.error('[stripe] direct checkout transaction error:', err);
+        return res.status(500).json({ error: 'Failed to process points deduction checkout' });
+      }
+    }
+
     const draftId  = randomUUID();
     const createdAt = nowIso();
     const draft = {
@@ -183,7 +269,9 @@ export function createStripeRouter() {
       tierName:        pricing.tierName,
       quantity:        pricing.quantity,
       priceCents:      pricing.unitPriceCents,
-      totalPriceCents: pricing.totalPriceCents,
+      totalPriceCents: finalPriceCents,
+      pointsRedeemed:  appliedPoints,
+      pointsDiscountCents,
       promoCode:       pricing.promoCode ?? null,
       discountCents:   pricing.discountCents ?? 0,
       currency:        'AUD',
@@ -286,6 +374,271 @@ export function createStripeRouter() {
       console.error('[stripe] checkout session error:', (err as Error).message);
       await db.collection('tickets').doc(draft.id).delete();
       return res.status(500).json({ error: 'Failed to create checkout session' });
+    }
+  });
+
+  // ── POST /api/stripe/create-payment-intent ──────────────────────────────────
+  router.post('/stripe/create-payment-intent', requireAuth, requireRevocationCheck, async (req: Request, res: Response) => {
+    let payload: z.infer<typeof stripeCheckoutSchema>;
+    try {
+      payload = parseBody(stripeCheckoutSchema, req.body);
+    } catch (err) {
+      return res.status(400).json({ error: err instanceof Error ? err.message : 'Invalid checkout payload' });
+    }
+
+    const user = await usersService.getById(req.user!.id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    let stripeCustomerId = user.stripeCustomerId;
+    if (!stripeCustomerId) {
+      if (!stripeClient) {
+        return res.status(503).json({ error: 'Payment service unavailable', code: 'STRIPE_NOT_CONFIGURED' });
+      }
+      try {
+        const customer = await stripeClient.customers.create({
+          email: user.email,
+          name: user.displayName ?? user.username ?? undefined,
+          metadata: { userId: user.id },
+        });
+        stripeCustomerId = customer.id;
+        await usersService.upsert(user.id, { stripeCustomerId });
+      } catch (custErr) {
+        console.error('[stripe] failed to create Stripe customer:', custErr);
+        return res.status(500).json({ error: 'Failed to initialize payment customer' });
+      }
+    }
+
+    const td = payload.ticketData;
+    const event = await eventsService.getById(td.eventId);
+    if (!event) {
+      return res.status(404).json({ error: 'Event not found' });
+    }
+
+    let pricing;
+    try {
+      pricing = await resolveTicketOrderPricingWithPromo(event, {
+        quantity: td.quantity,
+        tierName: td.tierName,
+        promoCode: td.promoCode,
+      });
+    } catch (err) {
+      if (err instanceof TicketPricingError || err instanceof PromoCodeError) {
+        return res.status(400).json({ error: err.message, code: err.code });
+      }
+      throw err;
+    }
+
+    if (pricing.totalPriceCents <= 0) {
+      return res.status(400).json({ error: 'Free events do not require Stripe checkout', code: 'FREE_EVENT' });
+    }
+
+    if (event.capacity != null && (event.attending ?? 0) + pricing.quantity > event.capacity) {
+      return res.status(400).json({ error: 'Not enough tickets available for this quantity', code: 'NOT_ENOUGH_CAPACITY' });
+    }
+
+    let appliedPoints = 0;
+    let pointsDiscountCents = 0;
+    const requestedPoints = Number(td.redeemPoints ?? 0);
+    if (requestedPoints > 0) {
+      const wallet = await walletsService.getOrCreate(req.user!.id);
+      const userPoints = wallet?.points ?? 0;
+      if (requestedPoints > userPoints) {
+        return res.status(400).json({ error: 'Insufficient rewards points balance', code: 'INSUFFICIENT_POINTS' });
+      }
+      appliedPoints = Math.min(requestedPoints, pricing.totalPriceCents);
+      pointsDiscountCents = appliedPoints; // 100 points = $1 AUD (100 cents) => 1 point = 1 cent
+    }
+
+    const finalPriceCents = pricing.totalPriceCents - pointsDiscountCents;
+
+    if (finalPriceCents <= 0) {
+      const draftId = randomUUID();
+      const createdAt = nowIso();
+      const ticketCode = generateSecureId('CP-T-');
+      const walletRef = db.collection('wallets').doc(req.user!.id);
+
+      try {
+        await db.runTransaction(async (transaction) => {
+          const walletSnap = await transaction.get(walletRef);
+          const currentPoints = walletSnap.data()?.points ?? 0;
+          if (currentPoints < appliedPoints) {
+            throw new Error('Insufficient points balance during transaction');
+          }
+          transaction.update(walletRef, {
+            points: currentPoints - appliedPoints
+          });
+
+          const ticketDoc = {
+            id:              draftId,
+            userId:          req.user!.id,
+            eventId:         event.id,
+            eventTitle:      event.title,
+            eventDate:       event.date,
+            eventTime:       event.time,
+            eventVenue:      event.venue,
+            tierName:        pricing.tierName,
+            quantity:        pricing.quantity,
+            priceCents:      pricing.unitPriceCents,
+            totalPriceCents: 0,
+            pointsRedeemed:  appliedPoints,
+            pointsDiscountCents,
+            pointsRedeemedDeductedAt: createdAt,
+            promoCode:       pricing.promoCode ?? null,
+            discountCents:   pricing.discountCents ?? 0,
+            currency:        'AUD',
+            status:          'confirmed' as TicketStatus,
+            paymentStatus:   'paid' as const,
+            priority:        'normal' as TicketPriority,
+            imageColor:      td.imageColor ?? undefined,
+            createdAt,
+            updatedAt:       createdAt,
+            qrCode:          ticketCode,
+            cpTicketId:      ticketCode,
+            ticketCode,
+            history:         [
+              { at: createdAt, status: 'confirmed' as TicketStatus, note: 'Direct confirmation via points redemption' },
+              { action: 'checkout_completed', timestamp: createdAt, actorId: req.user!.id }
+            ]
+          };
+
+          transaction.set(db.collection('tickets').doc(draftId), ticketDoc);
+        });
+
+        // Increment event attendance
+        await db.collection('events').doc(event.id).update({
+          attending: firestore.FieldValue.increment(pricing.quantity || 1)
+        }).catch(err => console.error(`[stripe] failed to increment attending:`, err));
+
+        return res.json({
+          ticketId: draftId,
+          directConfirmation: true,
+          message: 'Ticket confirmed successfully via rewards points deduction.'
+        });
+      } catch (err: any) {
+        console.error('[stripe] direct checkout transaction error:', err);
+        return res.status(500).json({ error: 'Failed to process points deduction checkout' });
+      }
+    }
+
+    const draftId  = randomUUID();
+    const createdAt = nowIso();
+    const draft = {
+      id:              draftId,
+      userId:          req.user!.id,
+      eventId:         event.id,
+      eventTitle:      event.title,
+      eventDate:       event.date,
+      eventTime:       event.time,
+      eventVenue:      event.venue,
+      tierName:        pricing.tierName,
+      quantity:        pricing.quantity,
+      priceCents:      pricing.unitPriceCents,
+      totalPriceCents: finalPriceCents,
+      pointsRedeemed:  appliedPoints,
+      pointsDiscountCents,
+      promoCode:       pricing.promoCode ?? null,
+      discountCents:   pricing.discountCents ?? 0,
+      currency:        'AUD',
+      status:          'confirmed' as TicketStatus,
+      paymentStatus:   'pending' as const,
+      priority:        'normal' as TicketPriority,
+      imageColor:      td.imageColor ?? undefined,
+      createdAt,
+      ticketCode:      generateSecureId('CP-T-'),
+      history:         [{ at: createdAt, status: 'confirmed' as TicketStatus, note: 'Draft created, awaiting payment' }],
+    };
+
+    await db.collection('tickets').doc(draftId).set({
+      ...draft,
+      qrCode:     draft.ticketCode,
+      cpTicketId: draft.ticketCode,
+      priceCents: draft.priceCents,
+      updatedAt:  createdAt,
+      history:    [{ action: 'checkout_started', timestamp: createdAt, actorId: req.user!.id }],
+    });
+
+    if (!stripeClient) {
+      console.error('[stripe] STRIPE_SECRET_KEY not configured');
+      return res.status(503).json({
+        error: 'Payment service unavailable. Please contact support.',
+        code: 'STRIPE_NOT_CONFIGURED',
+      });
+    }
+
+    try {
+      const sessionMetadata: Record<string, string> = {
+        ticketId: draft.id,
+        userId: draft.userId,
+        eventId: draft.eventId,
+      };
+      if (pricing.promoCode) sessionMetadata.promoCode = pricing.promoCode;
+
+      let transferOptions: {
+        application_fee_amount?: number;
+        transfer_data?: { destination: string };
+      } = {};
+
+      try {
+        const eventDoc = await eventsService.getById(draft.eventId);
+        const pubId = eventDoc?.publisherProfileId?.trim();
+        if (pubId) {
+          const sellerProfile = await profilesService.getById(pubId);
+          const acct = sellerProfile?.stripeConnectAccountId?.trim();
+          const payoutsOk = sellerProfile?.payoutsEnabled === true;
+          if (acct && payoutsOk) {
+            const acc = await stripeClient.accounts.retrieve(acct);
+            if (acc.charges_enabled) {
+              const bps = getConnectPlatformFeeBps();
+              const fee = computeApplicationFeeCents(draft.totalPriceCents, bps);
+              if (fee < draft.totalPriceCents) {
+                transferOptions = {
+                  application_fee_amount: fee,
+                  transfer_data: { destination: acct },
+                };
+                sessionMetadata.publisherProfileId = pubId;
+                sessionMetadata.stripeConnectAccountId = acct;
+              }
+            }
+          }
+        }
+      } catch (connectErr) {
+        if (process.env.NODE_ENV !== 'production') {
+          console.warn('[stripe] Connect routing skipped for PaymentIntent:', (connectErr as Error).message);
+        }
+      }
+
+      const paymentIntent = await stripeClient.paymentIntents.create({
+        amount: draft.totalPriceCents,
+        currency: draft.currency.toLowerCase(),
+        customer: stripeCustomerId,
+        metadata: sessionMetadata,
+        ...transferOptions,
+        automatic_payment_methods: {
+          enabled: true,
+        },
+      });
+
+      const ephemeralKey = await stripeClient.ephemeralKeys.create(
+        { customer: stripeCustomerId },
+        { apiVersion: '2022-11-15' }
+      );
+
+      await ticketsService.update(draft.id, { stripePaymentIntentId: paymentIntent.id });
+
+      return res.json({
+        paymentIntent: paymentIntent.client_secret,
+        ephemeralKey: ephemeralKey.secret,
+        customer: stripeCustomerId,
+        publishableKey: process.env.STRIPE_PUBLISHABLE_KEY ?? '',
+        ticketId: draft.id,
+        paymentIntentId: paymentIntent.id,
+      });
+    } catch (err: unknown) {
+      console.error('[stripe] payment intent error:', (err as Error).message);
+      await db.collection('tickets').doc(draft.id).delete();
+      return res.status(500).json({ error: 'Failed to create payment intent' });
     }
   });
 
@@ -469,11 +822,32 @@ export function createStripeRouter() {
             (eventType === 'checkout.session.completed' && obj.mode === 'payment') ||
             eventType === 'payment_intent.succeeded'
           ) {
+            const ticketDoc = await db.collection('tickets').doc(ticketId).get();
+            const ticketData = ticketDoc.data();
+            const pointsRedeemed = Number(ticketData?.pointsRedeemed ?? 0);
+
             const updatedTicket = await ticketsService.update(ticketId, {
               status: 'confirmed',
               paymentStatus: 'paid',
               stripePaymentIntentId: String(obj.payment_intent ?? obj.id ?? ''),
             });
+
+            if (pointsRedeemed > 0 && !ticketData?.pointsRedeemedDeductedAt) {
+              const walletRef = db.collection('wallets').doc(ticketData!.userId);
+              try {
+                await db.runTransaction(async (transaction) => {
+                  const walletSnap = await transaction.get(walletRef);
+                  const currentPoints = walletSnap.data()?.points ?? 0;
+                  const newPoints = Math.max(0, currentPoints - pointsRedeemed);
+                  transaction.update(walletRef, { points: newPoints });
+                });
+                await ticketsService.update(ticketId, {
+                  pointsRedeemedDeductedAt: nowIso()
+                });
+              } catch (deductErr) {
+                console.error(`[stripe] failed to deduct points for ticket ${ticketId}:`, deductErr);
+              }
+            }
 
             // Increment event attendance
             if (updatedTicket?.eventId && updatedTicket?.quantity) {

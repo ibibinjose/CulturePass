@@ -3,7 +3,7 @@ import { View, Text, ScrollView, Pressable, StyleSheet, Platform } from 'react-n
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { useCouncil } from '@/hooks/useCouncil';
@@ -31,8 +31,8 @@ type HubLink = {
 
 export default function MyCouncilScreen() {
   const colors = useColors();
-  const insets = useSafeAreaInsets();
-  const topInset = Platform.OS === 'web' ? 0 : insets.top;
+  const safeInsets = useSafeAreaInsetsWeb();
+  const topInset = safeInsets.top;
   const { hPad, isDesktop } = useLayout();
   const { state } = useOnboarding();
   const { council, councilId, lgaCode, isLoading: councilLoading, isAuthenticated } = useCouncil();

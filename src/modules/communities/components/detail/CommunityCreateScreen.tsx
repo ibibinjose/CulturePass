@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { ErrorBoundary } from '@/modules/core/ui/ErrorBoundary';
@@ -122,9 +122,9 @@ export default function CommunityCreateScreen() {
   const colors = useColors();
   const { hPad, contentWidth, isDesktop, isWeb } = useLayout();
   const joinStacked = contentWidth < 360;
-  const insets = useSafeAreaInsets();
-  const topInset = Platform.OS === 'web' ? 0 : insets.top;
-  const bottomInset = Platform.OS === 'web' ? 30 : insets.bottom;
+  const safeInsets = useSafeAreaInsetsWeb();
+  const topInset = safeInsets.top;
+  const bottomInset = safeInsets.bottom;
   const { state: onboarding } = useOnboarding();
   const createCommunity = useCreateCommunity();
   const scrollRef = useRef<ScrollView>(null);

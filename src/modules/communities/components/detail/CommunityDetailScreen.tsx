@@ -1,10 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Platform, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { Platform, RefreshControl, ScrollView, Text, View, Pressable, Share } from 'react-native';
 import Head from 'expo-router/head';
 import { router, useLocalSearchParams, usePathname } from 'expo-router';
 import { useSafeBack } from '@/lib/navigation';
 import { Ionicons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useBottomInset } from '@/hooks/useSafeAreaInsetsWeb';
 import { ErrorBoundary } from '@/modules/core/ui/ErrorBoundary';
 import { HomeLogoMark } from '@/modules/core/layout/tabs/TabHeaderChrome';
 import { M3Button, M3TopAppBar } from '@/design-system/ui';
@@ -36,6 +36,7 @@ import {
 } from '@/lib/community';
 import { ApiError } from '@/modules/communities/api';
 import { canonicalCommunityPath, routeCommunityMembers, siteUrl } from '@/lib/publicPaths';
+import QRCode from 'react-native-qrcode-svg';
 import {
   communityDetailHaptic,
   communityTabQuerySuffix,
@@ -69,9 +70,8 @@ export default function CommunityDetailScreen() {
   const colors = useColors();
   const m3Colors = useM3Colors();
   const { isDesktop, hPad, windowSizeClass } = useLayout();
-  const insets = useSafeAreaInsets();
+  const bottomInset = useBottomInset(28);
   const isWeb = Platform.OS === 'web';
-  const bottomInset = Platform.OS === 'web' ? 28 : insets.bottom;
   const { user } = useAuth();
   const isExpanded = windowSizeClass === 'expanded';
 
@@ -339,6 +339,74 @@ export default function CommunityDetailScreen() {
             ) : (
               tabContent
             )}
+
+            {/* Modern Public Profile Card (consistent with user CPU treatment) */}
+            <View style={{
+              marginTop: 20,
+              backgroundColor: colors.surface,
+              borderColor: colors.borderLight,
+              borderWidth: 1,
+              borderRadius: 20,
+              padding: 18,
+              gap: 14,
+            }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <View style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 5,
+                  backgroundColor: accent + '15',
+                  paddingHorizontal: 10,
+                  paddingVertical: 4,
+                  borderRadius: 999,
+                }}>
+                  <Ionicons name="link-outline" size={13} color={accent} />
+                  <Text style={{ fontFamily: 'Poppins_600SemiBold', fontSize: 11, color: accent, letterSpacing: 0.3 }}>Public Profile</Text>
+                </View>
+              </View>
+
+              <View style={{ flexDirection: 'row', gap: 14, alignItems: 'flex-start' }}>
+                <View style={{
+                  padding: 8,
+                  backgroundColor: '#FFFFFF',
+                  borderRadius: 12,
+                  borderWidth: 1,
+                  borderColor: colors.borderLight,
+                }}>
+                  <QRCode
+                    value={siteUrl(canonicalCommunityPath(community))}
+                    size={68}
+                    color={colors.text}
+                    backgroundColor={colors.surface}
+                  />
+                </View>
+                <View style={{ flex: 1, gap: 6 }}>
+                  <Pressable
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      backgroundColor: colors.backgroundSecondary,
+                      borderRadius: 12,
+                      padding: 12,
+                      gap: 10,
+                    }}
+                    onPress={() => {
+                      const url = siteUrl(canonicalCommunityPath(community));
+                      if (Platform.OS === 'web') {
+                        navigator.clipboard?.writeText(url).catch(() => {});
+                      } else {
+                        Share.share({ message: url }).catch(() => {});
+                      }
+                    }}
+                  >
+                    <Text style={{ fontFamily: 'Poppins_600SemiBold', fontSize: 14, color: colors.text, flex: 1 }} numberOfLines={1}>
+                      {siteUrl(canonicalCommunityPath(community)).replace(/^https?:\/\//, '')}
+                    </Text>
+                    <Ionicons name="copy-outline" size={16} color={accent} />
+                  </Pressable>
+                </View>
+              </View>
+            </View>
           </View>
         </ScrollView>
       </View>

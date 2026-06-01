@@ -5,7 +5,7 @@ import {
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as Haptics from 'expo-haptics';
@@ -266,13 +266,13 @@ export default function CreateEventScreen() {
   const venueProfileIdPrefill = asStringParam(searchParams.venueProfileId);
   const colors = useColors();
   const s = getStyles(colors);
-  const insets = useSafeAreaInsets();
+  const safeInsets = useSafeAreaInsetsWeb();
   const { userId } = useAuth();
   const queryClient = useQueryClient();
   const { state: onboardingState } = useOnboarding();
 
   const isDesktop = Platform.OS === 'web' && typeof window !== 'undefined' && window.innerWidth >= 1024;
-  const topInset = Platform.OS === 'web' ? 0 : insets.top;
+  const topInset = safeInsets.top;
 
   const [form, setForm] = useState<FormData>({
     ...defaultForm,
@@ -756,7 +756,7 @@ export default function CreateEventScreen() {
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top + 8 : 0}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? safeInsets.top + 8 : 0}
       >
         <ScrollView
           showsVerticalScrollIndicator={false}

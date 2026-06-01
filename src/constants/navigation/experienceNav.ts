@@ -86,8 +86,7 @@ export const PROFILE_HOST_ORGANIZER_ROWS: ProfileToolRow[] = [
 ];
 
 export const PROFILE_HOST_ASPIRING_ROWS: ProfileToolRow[] = [
-  { id: 'create', label: 'Start Creating', sub: 'Events, communities, and listings (apply to publish)', path: CREATE_HUB_ROUTE, icon: 'add-circle-outline', accent: CultureTokens.teal },
-  { id: 'assoc', label: 'Become a Host', sub: 'Join the creator program and reach the diaspora', path: '/hostspace/apply', icon: 'rocket-outline', accent: CultureTokens.indigo },
+  { id: 'create', label: 'Start Creating', sub: 'Events, communities, listings & more in HostSpace', path: CREATE_HUB_ROUTE, icon: 'add-circle-outline', accent: CultureTokens.teal },
   { id: 'help', label: 'Host help', sub: 'FAQs, payouts, and getting verified', path: '/help', icon: 'help-circle-outline', accent: CultureTokens.gold },
 ];
 
@@ -136,7 +135,6 @@ export const SIDEBAR_HOST_HUB_LINKS: SidebarNavLink[] = [
 
 export const SIDEBAR_HOST_ASPIRING_LINKS: SidebarNavLink[] = [
   { label: 'Start Creating', icon: 'add-circle-outline', iconActive: 'add-circle', route: CREATE_HUB_ROUTE },
-  { label: 'Become a Host', icon: 'rocket-outline', iconActive: 'rocket', route: '/hostspace/apply' },
   { label: 'Host help', icon: 'help-circle-outline', iconActive: 'help-circle', route: '/help' },
 ];
 
@@ -180,7 +178,6 @@ export function menuHostHubSection(isOrganizer: boolean): ExperienceMenuSection 
     title: 'Host Studio',
     items: [
       { id: 'host-create-all', label: 'Start Creating', icon: 'add-circle-outline', route: CREATE_HUB_ROUTE, color: CultureTokens.teal },
-      { id: 'host-assoc', label: 'Become a Host', icon: 'rocket-outline', route: '/hostspace/apply', color: CultureTokens.indigo },
       { id: 'host-help', label: 'Host help', icon: 'help-circle-outline', route: '/help', color: CultureTokens.gold },
     ],
   };

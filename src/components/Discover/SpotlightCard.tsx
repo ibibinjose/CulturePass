@@ -15,6 +15,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { CultureTokens, CardTokens } from '@/design-system/tokens/theme';
+import { normalizeRemoteImageUri } from '@/lib/mediaUrls';
 
 // ─── UI UX Pro Max: Modern Dark (Cinema Mobile) design system
 // Style: Deep backgrounds, ambient glow, BlurView glassmorphism,
@@ -149,7 +150,7 @@ function SpotlightCard({
       >
         {/* Hero image — expo-image for disk caching (CLAUDE.md rule) */}
         <Image
-          source={{ uri: item.imageUrl }}
+          source={{ uri: normalizeRemoteImageUri(item.imageUrl) ?? undefined }}
           style={styles.fill}
           contentFit="cover"
           transition={200}

@@ -428,7 +428,7 @@ export function useFormWizard({
       if (step <= currentStep) return true;
       return completedSteps.has(step - 1);
     },
-    [currentStep, completedSteps]
+    [currentStep, completedSteps, entityType]
   );
 
   const goToStep = useCallback(
@@ -471,7 +471,7 @@ export function useFormWizard({
       setCurrentStep((prev) => Math.min(prev + 1, getTotalSteps(entityType)));
       setValidationErrors({});
     }
-  }, [currentStep, validateCurrentStep]);
+  }, [currentStep, validateCurrentStep, entityType]);
 
   const goToPreviousStep = useCallback(() => {
     if (currentStep > 1) {
@@ -485,7 +485,7 @@ export function useFormWizard({
   // ---------------------------------------------------------------------------
 
   const updateFormData = useCallback((data: Partial<PartialFormData>) => {
-    setFormData((prev) => {
+    setFormData((prev: PartialFormData) => {
       const updated = { ...prev, ...data };
       setIsDirty(true);
       return updated;
@@ -585,7 +585,7 @@ export function useFormWizard({
     }
 
     await publishMutation.mutateAsync();
-  }, [validateCurrentStep, publishMutation]);
+  }, [validateCurrentStep, publishMutation, entityType]);
 
   // ---------------------------------------------------------------------------
   // Cleanup

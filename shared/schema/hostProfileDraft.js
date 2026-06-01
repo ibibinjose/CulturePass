@@ -17,8 +17,8 @@ exports.ProfileDraftSchema = zod_1.z.object({
     userId: zod_1.z.string(), // Firebase Auth UID
     entityType: hostTypes_1.HostEntityTypeSchema,
     formData: hostProfile_1.HostProfileFormDataSchema, // Incomplete profile data
-    currentStep: zod_1.z.number().int().min(1).max(6),
-    completedSteps: zod_1.z.array(zod_1.z.number().int().min(1).max(6)).default([]),
+    currentStep: zod_1.z.number().int().min(1).max(10),
+    completedSteps: zod_1.z.array(zod_1.z.number().int().min(1).max(10)).default([]),
     createdAt: zod_1.z.string(), // ISO 8601 timestamp
     updatedAt: zod_1.z.string(), // ISO 8601 timestamp
     expiresAt: zod_1.z.string(), // ISO 8601 timestamp (90 days from last update)

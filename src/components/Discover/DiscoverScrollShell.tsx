@@ -43,7 +43,7 @@ export function DiscoverScrollShell({
         style={[styles.scrollTransparent, Platform.OS === 'web' && styles.scrollTransparentWeb]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
-        removeClippedSubviews={Platform.OS === 'android'}
+        removeClippedSubviews={false}
         scrollEventThrottle={16}
         refreshControl={refreshControl}
         contentContainerStyle={[{ paddingBottom: scrollBottomPad }, contentContainerStyle]}

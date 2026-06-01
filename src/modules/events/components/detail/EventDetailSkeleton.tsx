@@ -1,14 +1,13 @@
-import { View, Platform, ScrollView } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { View, ScrollView } from 'react-native';
+import { useTopInset } from '@/hooks/useSafeAreaInsetsWeb';
 import { useColors } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
 import { Skeleton } from '@/design-system/ui/Skeleton';
 
 export function EventDetailSkeleton() {
   const colors = useColors();
-  const insets = useSafeAreaInsets();
+  const topInset = useTopInset();
   const { isDesktop } = useLayout();
-  const topInset = Platform.OS === 'web' ? 0 : insets.top;
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>

@@ -178,8 +178,18 @@ export function useEventTicketing({
       purchaseFreeTicket(body);
       return;
     }
-    purchaseMutation.mutate(body);
-  }, [buyMode, effectiveQty, event, pathname, purchaseFreeTicket, purchaseMutation, selectedTier, totalPrice, userId]);
+    
+    setTicketModalVisible(false);
+    router.push({
+      pathname: '/checkout',
+      params: {
+        eventId: event.id,
+        tierName: ticketLabel,
+        quantity: String(effectiveQty),
+        priceCents: String(selectedTier.priceCents ?? 0),
+      },
+    });
+  }, [buyMode, effectiveQty, event, pathname, purchaseFreeTicket, selectedTier, totalPrice, userId, setTicketModalVisible]);
 
   return {
     eventTiers,

@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 
 import { useColors } from '@/hooks/useColors';
@@ -46,15 +46,15 @@ const RULES = [
 export default function CommunityGuidelinesScreen() {
   const colors = useColors();
   const styles = getStyles(colors);
-  const insets = useSafeAreaInsets();
+  const safeInsets = useSafeAreaInsetsWeb();
   // Ensure we follow the Top Inset Rule from AGENTS.md
-  const topInset = Platform.OS === 'web' ? 0 : insets.top;
+  const topInset = safeInsets.top;
 
   return (
     <View style={styles.container}>
       <M3TopAppBar title="Community Guidelines" onBack={() => goBackOrReplace('/menu')} denseWeb webChromeless />
       <ScrollView 
-        contentContainerStyle={{ paddingBottom: insets.bottom + 60 }}
+        contentContainerStyle={{ paddingBottom: safeInsets.bottom + 60 }}
         showsVerticalScrollIndicator={false}
       >
         <Animated.View entering={FadeIn.duration(800)}>

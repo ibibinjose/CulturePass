@@ -13,12 +13,12 @@ import { Image } from 'expo-image';
 import { router, useLocalSearchParams, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import * as Haptics from 'expo-haptics';
 import { useColors } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
 import { useCalendarSync } from '@/hooks/useCalendarSync';
-import { CultureTokens, gradients, FontFamily } from '@/design-system/tokens/theme';
+import { CultureTokens, gradients, FontFamily, M3Typography, Radius } from '@/design-system/tokens/theme';
 import { TextStyles } from '@/design-system/tokens/typography';
 import { GlassView } from '@/design-system/ui/GlassView';
 import EventCard from '@/components/Discover/EventCard';
@@ -37,7 +37,6 @@ import { useSaved } from '@/contexts/SavedContext';
 import type { EventData, Profile } from '@/shared/schema';
 import { CULTUREX_EXPLORES_CULTURE_TAG } from '@/shared/schema';
 import { Footer } from '@/components/Footer';
-import { M3Typography, Radius } from '@/design-system/tokens/theme';
 import { M3Card } from '@/design-system/ui';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -164,8 +163,8 @@ export default function CityScreen() {
   const { name, country } = useLocalSearchParams<{ name: string; country?: string }>();
   const colors = useColors();
   const { isDesktop, contentWidth, width, hPad } = useLayout();
-  const insets = useSafeAreaInsets();
-  const topInset = Platform.OS === 'web' ? 0 : insets.top;
+  const safeInsets = useSafeAreaInsetsWeb();
+  const topInset = safeInsets.top;
   const { state: onboarding } = useOnboarding();
   const { isAuthenticated } = useAuth();
   const scrollRef   = useRef<ScrollView>(null);

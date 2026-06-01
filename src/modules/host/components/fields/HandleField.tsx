@@ -199,6 +199,7 @@ export function HandleField({
 }: HandleFieldProps) {
   const colors = useColors();
   const [showSuggestion, setShowSuggestion] = useState(false);
+  const [lastCheckFailed, setLastCheckFailed] = useState(false);
 
   /**
    * Async validator for handle uniqueness
@@ -210,17 +211,24 @@ export function HandleField({
     }
 
     // Check uniqueness via API
+    let response;
     try {
-      const response = await api.profiles.handleAvailable(handle);
-      if (!response.available) {
-        throw new Error(response.reason || 'Handle is already taken');
-      }
+      response = await api.profiles.handleAvailable(handle);
+      setLastCheckFailed(false);
     } catch (err: any) {
-      // If API call fails, throw a generic error
-      if (err.message && err.message.includes('already taken')) {
-        throw err;
+      // Transient failure (network, emulator not running, server error, etc.).
+      // Do NOT block the user with a hard error — this is best-effort.
+      // The final publish step performs authoritative server-side checks.
+      setLastCheckFailed(true);
+      if (__DEV__) {
+        console.warn('[HandleField] handleAvailable failed (non-fatal, continuing):', err?.message || err);
       }
-      throw new Error('Unable to verify handle availability. Please try again.');
+      // Return without throwing so format-only validation can still pass.
+      return;
+    }
+
+    if (!response.available) {
+      throw new Error(response.reason || 'Handle is already taken');
     }
   };
 
@@ -246,6 +254,7 @@ export function HandleField({
   const handleChange = (text: string) => {
     const formatted = formatHandle(text);
     onChange(formatted);
+    setLastCheckFailed(false); // reset transient failure state on new input
     
     // Only validate if there's a value
     if (formatted) {
@@ -369,14 +378,25 @@ export function HandleField({
             size={16}
             color={colors.textSecondary}
           /></Pressable>
-      )}{hasValidated && value && !displayError && isValid && (
+      )}{hasValidated && value && !displayError && isValid && !lastCheckFailed && (
         <View style={[styles.statusBanner, { backgroundColor: colors.surfaceElevated }]}><Ionicons
             name="checkmark-circle"
             size={16}
             color={CultureTokens.teal}
             style={styles.statusIcon}
           /><Text style={[styles.statusText, { color: CultureTokens.teal }]}>@{value} is available</Text></View>
-      )}</View>
+      )}
+
+      {/* Soft non-blocking warning when availability check couldn't reach the server (common in local dev without emulators) */}
+      {lastCheckFailed && value && !displayError && (
+        <View style={[styles.warningBanner, { backgroundColor: colors.surfaceElevated, borderColor: colors.borderLight }]}>
+          <Ionicons name="cloud-offline-outline" size={16} color={colors.textSecondary} />
+          <Text style={[styles.warningText, { color: colors.textSecondary }]}>
+            Couldn&apos;t verify availability right now. We&apos;ll double-check when you continue.
+          </Text>
+        </View>
+      )}
+    </View>
   );
 }
 
@@ -442,6 +462,22 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: 12,
     fontFamily: FontFamily.semibold,
+  },
+
+  // Soft warning for transient check failures (non-blocking)
+  warningBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    padding: 10,
+    borderRadius: Radius.sm,
+    borderWidth: 1,
+    marginTop: 4,
+  },
+  warningText: {
+    flex: 1,
+    fontSize: 12,
+    fontFamily: FontFamily.medium,
   },
 });
 

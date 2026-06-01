@@ -19,6 +19,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useColors } from '@/hooks/useColors';
 import { useM3Colors } from '@/hooks/useM3Colors';
 import { useLayout } from '@/hooks/useLayout';
+import { useRole } from '@/hooks/useRole';
 import { useAuth } from '@/lib/auth';
 import { api } from '@/lib/api';
 import { CultureTokens, TextStyles, M3Typography, Radius, Spacing, FontFamily } from '@/design-system/tokens/theme';
@@ -490,6 +491,7 @@ function HostspaceWorkspace() {
   const m3Colors = useM3Colors();
   const { hPad, isDesktop, windowSizeClass } = useLayout();
   const { userId, user } = useAuth();
+  const { isOrganizer } = useRole();
   const [showDraftModal, setShowDraftModal] = useState(false);
 
   // Action Sheet state for unified Edit/Share/Analytics/Team/Delete
@@ -691,6 +693,49 @@ function HostspaceWorkspace() {
           <DraftRecoveryBanner drafts={drafts} onResume={handleResumeDraft} />
         )}
 
+        {/* Sandbox mode banner for users who haven't applied yet */}
+        {!isOrganizer && !myApplication && (
+          <View style={{ marginBottom: 16 }}>
+            <GlassView
+              intensity={25}
+              style={[
+                styles.statusBanner,
+                {
+                  borderColor: CultureTokens.violet + '60',
+                  backgroundColor: 'rgba(124, 58, 237, 0.08)',
+                },
+              ]}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
+                <Ionicons
+                  name="shield-half-outline"
+                  size={24}
+                  color={CultureTokens.violet}
+                  style={{ marginTop: 2 }}
+                />
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.statusTitle, { color: colors.text }]}>
+                    Welcome to HostSpace (Sandbox Mode)
+                  </Text>
+                  <Text style={[styles.statusSub, { color: colors.textSecondary, marginTop: 4, lineHeight: 18 }]}>
+                    Create profiles, events, and listings as drafts under your name. Apply to become a host to publish them live and sell tickets.
+                  </Text>
+                  <Pressable
+                    onPress={() => router.push('/hostspace/create' as any)}
+                    style={({ pressed }) => [
+                      styles.bannerCta,
+                      { opacity: pressed ? 0.9 : 1, backgroundColor: CultureTokens.indigo, marginTop: 10 }
+                    ]}
+                  >
+                    <Text style={styles.bannerCtaText}>Apply to become a Host</Text>
+                    <Ionicons name="arrow-forward" size={14} color="#fff" />
+                  </Pressable>
+                </View>
+              </View>
+            </GlassView>
+          </View>
+        )}
+
         {/* Application Status + Celebration for newly approved hosts */}
         {myApplication && (
           <View style={{ marginBottom: 16 }}>
@@ -704,21 +749,34 @@ function HostspaceWorkspace() {
                 },
               ]}
             >
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
                 <Ionicons
                   name={myApplication.status === 'approved' ? 'trophy' : myApplication.status === 'rejected' ? 'close-circle' : 'time'}
                   size={24}
                   color={myApplication.status === 'approved' ? '#10B981' : myApplication.status === 'rejected' ? CultureTokens.coral : CultureTokens.gold}
+                  style={{ marginTop: 2 }}
                 />
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.statusTitle, { color: colors.text }]}>
-                    {myApplication.status === 'approved' ? '🎉 You are now a Host!' : `Host Application: ${myApplication.status.toUpperCase()}`}
+                    {myApplication.status === 'approved' ? '🎉 You are now a Host!' : `Host Request: ${myApplication.status.toUpperCase()}`}
                   </Text>
-                  <Text style={[styles.statusSub, { color: colors.textSecondary }]}>
-                    {myApplication.status === 'pending' && 'Your application is under review. We usually respond within 24–48 hours.'}
+                  <Text style={[styles.statusSub, { color: colors.textSecondary, marginTop: 4, lineHeight: 18 }]}>
+                    {myApplication.status === 'pending' && 'Your host profile request is pending review. We usually respond within 24–48 hours. In the meantime, you can continue creating and editing your drafts in Sandbox Mode.'}
                     {myApplication.status === 'approved' && 'Welcome to the Host community. Your full Host Studio, creation tools, and ticket scanner are unlocked.'}
-                    {myApplication.status === 'rejected' && (myApplication.reviewNote || 'You can re-apply after addressing the feedback.')}
+                    {myApplication.status === 'rejected' && `Your request needs updates: "${myApplication.reviewNote || 'Please update your details and re-submit.'}" You can still build drafts in Sandbox Mode.`}
                   </Text>
+                  {myApplication.status === 'rejected' && (
+                    <Pressable
+                      onPress={() => router.push('/hostspace/create' as any)}
+                      style={({ pressed }) => [
+                        styles.bannerCta,
+                        { opacity: pressed ? 0.9 : 1, backgroundColor: CultureTokens.indigo, marginTop: 10 }
+                      ]}
+                    >
+                      <Text style={styles.bannerCtaText}>Update Application</Text>
+                      <Ionicons name="create-outline" size={14} color="#fff" />
+                    </Pressable>
+                  )}
                 </View>
               </View>
             </GlassView>
@@ -745,7 +803,7 @@ function HostspaceWorkspace() {
               label="New Community"
               icon="people"
               color={CultureTokens.violet}
-              onPress={() => router.push('/hostspace/create/community' as never)}
+              onPress={() => router.push('/hostspace/create?profileType=community' as never)}
             />
             <QuickAction
               label="Create Listing"
@@ -814,7 +872,7 @@ function HostspaceWorkspace() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>Communities you manage</Text>
-            <M3Button variant="text" size="sm" leftIcon="add" onPress={() => router.push('/hostspace/create/community' as never)}>
+            <M3Button variant="text" size="sm" leftIcon="add" onPress={() => router.push('/hostspace/create?profileType=community' as never)}>
               Community
             </M3Button>
           </View>
@@ -1371,5 +1429,19 @@ const styles = StyleSheet.create({
   insightsText: {
     fontSize: 13,
     flex: 1,
+  },
+  bannerCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  bannerCtaText: {
+    color: '#fff',
+    fontFamily: FontFamily.semibold,
+    fontSize: 13,
   },
 });

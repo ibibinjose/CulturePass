@@ -8,6 +8,7 @@ import * as Haptics from 'expo-haptics';
 import { useColors } from '@/hooks/useColors';
 import { CultureTokens, Colors, TextStyles } from '@/design-system/tokens/theme';
 import type { FeedItem } from '@/shared/schema/feedItem';
+import { normalizeRemoteImageUri } from '@/lib/mediaUrls';
 
 interface FeedCardProps {
   item: FeedItem;
@@ -65,7 +66,7 @@ export default function FeedCard({ item }: FeedCardProps) {
               <View style={styles.headerLeft}>
                 <View style={[styles.avatarBox, { backgroundColor: CultureTokens.indigo + '20' }]}>
                   {payload.authorAvatar ? (
-                    <Image source={{ uri: payload.authorAvatar }} style={StyleSheet.absoluteFill} />
+                    <Image source={{ uri: normalizeRemoteImageUri(payload.authorAvatar) ?? undefined }} style={StyleSheet.absoluteFill} />
                   ) : (
                     <Ionicons name="calendar" size={16} color={CultureTokens.indigo} />
                   )}
@@ -78,7 +79,7 @@ export default function FeedCard({ item }: FeedCardProps) {
             </View>
             <View style={styles.mediaContainer}>
               {payload.imageUrl ? (
-                <Image source={{ uri: payload.imageUrl }} style={StyleSheet.absoluteFill} contentFit="cover" />
+                <Image source={{ uri: normalizeRemoteImageUri(payload.imageUrl) ?? undefined }} style={StyleSheet.absoluteFill} contentFit="cover" />
               ) : (
                 <LinearGradient
                   colors={[CultureTokens.indigo, '#EBF5FF']}
@@ -121,7 +122,7 @@ export default function FeedCard({ item }: FeedCardProps) {
               <View style={styles.headerLeft}>
                 <View style={[styles.avatarBox, { backgroundColor: CultureTokens.teal + '20' }]}>
                   {payload.authorAvatar ? (
-                    <Image source={{ uri: payload.authorAvatar }} style={StyleSheet.absoluteFill} />
+                    <Image source={{ uri: normalizeRemoteImageUri(payload.authorAvatar) ?? undefined }} style={StyleSheet.absoluteFill} />
                   ) : (
                     <Ionicons name="megaphone" size={16} color={CultureTokens.teal} />
                   )}
@@ -151,7 +152,7 @@ export default function FeedCard({ item }: FeedCardProps) {
               <View style={styles.headerLeft}>
                 <View style={[styles.avatarBox, { backgroundColor: colors.accent + '20' }]}> 
                   {payload.authorAvatar ? (
-                    <Image source={{ uri: payload.authorAvatar }} style={StyleSheet.absoluteFill} />
+                    <Image source={{ uri: normalizeRemoteImageUri(payload.authorAvatar) ?? undefined }} style={StyleSheet.absoluteFill} />
                   ) : (
                     <Ionicons name="gift" size={16} color={colors.accent} />
                   )}
@@ -203,7 +204,7 @@ export default function FeedCard({ item }: FeedCardProps) {
                 </View>
               </View>
               {payload.imageUrl ? (
-                <Image source={{ uri: payload.imageUrl }} style={styles.reminderThumb} contentFit="cover" />
+                <Image source={{ uri: normalizeRemoteImageUri(payload.imageUrl) ?? undefined }} style={styles.reminderThumb} contentFit="cover" />
               ) : null}
             </View>
           </View>

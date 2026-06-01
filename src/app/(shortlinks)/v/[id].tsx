@@ -13,7 +13,7 @@ import {
 } from "react-native";
 import Head from "expo-router/head";
 import { useLocalSearchParams, router, useNavigation } from "expo-router";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -81,11 +81,11 @@ export default function VenueDetailScreen() {
   const m3Colors = useM3Colors();
   const styles = getStyles(colors);
   const { id } = useLocalSearchParams<{ id: string }>();
-  const insets = useSafeAreaInsets();
+  const safeInsets = useSafeAreaInsetsWeb();
   const { windowSizeClass } = useLayout();
-  const topInset = Platform.OS === "web" ? 0 : insets.top;
+  const topInset = safeInsets.top;
   const navigation = useNavigation();
-  const bottomInset = Platform.OS === "web" ? 34 : insets.bottom;
+  const bottomInset = safeInsets.bottom;
   const isWeb = Platform.OS === "web";
   const isExpanded = windowSizeClass === "expanded";
 

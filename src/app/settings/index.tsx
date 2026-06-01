@@ -1,9 +1,10 @@
 import React, { useCallback, useMemo } from 'react';
-import { Alert, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Alert, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Stack, router } from 'expo-router';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
+import { useLayout } from '@/hooks/useLayout';
 import * as Haptics from 'expo-haptics';
 
 import { useAuth } from '@/lib/auth';
@@ -82,7 +83,11 @@ function Row({ row, isLast }: { row: SettingsRow; isLast: boolean }) {
   const getPressableStyle = ({ pressed }: { pressed: boolean }) => [
     styles.row,
     { backgroundColor: pressed && isActionable ? colors.primarySoft : 'transparent' },
-    Platform.OS === 'web' && isActionable && { cursor: 'pointer' as never },
+    Platform.OS === 'web' && isActionable && {
+      cursor: 'pointer' as never,
+      // @ts-ignore - web only
+      transition: 'background-color 80ms ease',
+    },
   ];
 
   return (
@@ -144,17 +149,20 @@ function fromNavItem(item: {
 
 export default function SettingsScreen() {
   const colors = useColors();
-  const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
+  const layout = useLayout();
   const { user, isAuthenticated, logout } = useAuth();
   const { resetOnboarding } = useOnboarding();
   const { isOrganizer, isAdmin, hasMinRole } = useRole();
   const goBack = useSafeBack('/(tabs)/my-space');
 
-  const isWide = width >= 900;
-  const topInset = Platform.OS === 'web' ? 0 : insets.top;
-  const pageTopPadding = topInset + ScreenTokens.topOffset;
-  const pageBottomPadding = (Platform.OS === 'web' ? Spacing.xl : insets.bottom + Spacing.xl);
+  const safeInsets = useSafeAreaInsetsWeb();
+  const pageTopPadding = safeInsets.top + ScreenTokens.topOffset;
+  const pageBottomPadding = safeInsets.bottom + Spacing.xl;
+
+  // Responsive behavior using project layout system
+  const isDesktop = layout.isDesktop || layout.isExpanded;
+  const isTablet = layout.isTablet || layout.isMedium;
+  const useTwoColumns = isDesktop || isTablet;
   const displayName = user?.displayName || 'CulturePass Member';
   const username = user?.username || user?.handle || displayName.toLowerCase().replace(/\s+/g, '') || 'member';
   const appVersion = getAppVersion();
@@ -284,11 +292,11 @@ export default function SettingsScreen() {
           {
             paddingTop: pageTopPadding,
             paddingBottom: pageBottomPadding,
-            paddingHorizontal: isWide ? Spacing.xl : Spacing.md,
+            paddingHorizontal: useTwoColumns ? layout.hPad : Spacing.md,
           },
         ]}
       >
-        <View style={[styles.shell, { maxWidth: isWide ? 920 : 720 }]}>
+        <View style={[styles.shell, { maxWidth: useTwoColumns ? 1080 : 680 }]}>
           <View style={styles.header}>
             <Pressable
               onPress={goBack}
@@ -306,6 +314,11 @@ export default function SettingsScreen() {
               <Text style={[styles.eyebrow, { color: colors.textTertiary }]}>Settings</Text>
               <Text style={[styles.title, { color: colors.text }]}>Profile & app control</Text>
             </View>
+            {useTwoColumns && (
+              <View style={{ display: 'flex' as any }}>
+                <Text style={[styles.desktopHintText, { color: colors.textTertiary }]}>All settings in one view</Text>
+              </View>
+            )}
           </View>
 
           {isAuthenticated && user ? <Pressable
@@ -314,11 +327,12 @@ export default function SettingsScreen() {
               styles.hero,
               { backgroundColor: colors.card, borderColor: colors.cardBorder, opacity: pressed ? 0.88 : 1 },
               Platform.OS === 'web' && { cursor: 'pointer' as never },
+              useTwoColumns && { padding: Spacing.xl },
             ]}
             accessibilityRole="button"
             accessibilityLabel="Edit profile"
           >
-            <View style={[styles.avatarWrap, { backgroundColor: colors.primarySoft }]}>
+            <View style={[styles.avatarWrap, { backgroundColor: colors.primarySoft, borderColor: colors.borderLight }]}>
               {user?.avatarUrl ? (
                 <Image source={{ uri: user.avatarUrl }} style={styles.avatar} contentFit="cover" />
               ) : (
@@ -338,8 +352,8 @@ export default function SettingsScreen() {
               <Ionicons name="create-outline" size={20} color={colors.primary} />
             </View>
           </Pressable> : (
-            <View style={[styles.hero, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-              <View style={[styles.avatarWrap, { backgroundColor: colors.primarySoft }]}>
+            <View style={[styles.hero, { backgroundColor: colors.card, borderColor: colors.cardBorder }, useTwoColumns && { padding: Spacing.xl }]}>
+              <View style={[styles.avatarWrap, { backgroundColor: colors.primarySoft, borderColor: colors.borderLight }]}>
                 <Ionicons name="person-circle-outline" size={46} color={colors.primary} />
               </View>
               <View style={styles.heroCopy}>
@@ -351,7 +365,7 @@ export default function SettingsScreen() {
             </View>
           )}
 
-          <View style={[styles.grid, isWide && styles.gridWide]}>
+          <View style={[styles.grid, useTwoColumns && styles.gridWide]}>
             <View style={styles.column}>
               {isAuthenticated ? <Section title="Account Suite" rows={coreRows} /> : <Section title="Account" rows={guestRows} />}
               {isAuthenticated ? <Section title="Membership & Payments" rows={membershipRows} /> : null}
@@ -401,7 +415,7 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1 },
   scroll: { flexGrow: 1 },
-  shell: { width: '100%', alignSelf: 'center', gap: Spacing.md },
+  shell: { width: '100%', alignSelf: 'center', gap: Spacing.lg },
   header: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
   iconButton: {
     width: 44,
@@ -412,11 +426,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   headerCopy: { flex: 1, minWidth: 0 },
-  eyebrow: { fontSize: 12, fontFamily: FontFamily.bold, textTransform: 'uppercase', letterSpacing: 0.8 },
-  title: { fontSize: 24, lineHeight: 30, fontFamily: FontFamily.bold, letterSpacing: 0 },
+  eyebrow: { fontSize: 11, fontFamily: FontFamily.bold, textTransform: 'uppercase', letterSpacing: 1.2 },
+  title: { fontSize: 22, lineHeight: 28, fontFamily: FontFamily.bold, letterSpacing: -0.2 },
+  desktopHint: { display: 'none' as any }, // shown only on wide via inline style when needed
+  desktopHintText: { fontSize: 12, fontFamily: FontFamily.regular, fontStyle: 'italic' },
+
   hero: {
-    minHeight: 120,
-    borderRadius: Radius.lg,
+    borderRadius: Radius.xl,
     borderWidth: 1,
     padding: Spacing.lg,
     flexDirection: 'row',
@@ -424,59 +440,72 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
   },
   avatarWrap: {
-    width: 72,
-    height: 72,
+    width: 68,
+    height: 68,
     borderRadius: Radius.full,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: 'rgba(0,0,0,0.06)',
   },
-  avatar: { width: 72, height: 72 },
-  avatarInitial: { fontSize: 28, fontFamily: FontFamily.bold },
-  heroCopy: { flex: 1, minWidth: 0, gap: 3 },
-  heroName: { fontSize: 20, lineHeight: 26, fontFamily: FontFamily.bold, letterSpacing: 0 },
-  heroMeta: { fontSize: 14, lineHeight: 20, fontFamily: FontFamily.medium },
-  heroSub: { fontSize: 13, lineHeight: 18, fontFamily: FontFamily.regular },
+  avatar: { width: 68, height: 68 },
+  avatarInitial: { fontSize: 26, fontFamily: FontFamily.bold },
+  heroCopy: { flex: 1, minWidth: 0, gap: 2 },
+  heroName: { fontSize: 19, lineHeight: 24, fontFamily: FontFamily.bold, letterSpacing: -0.1 },
+  heroMeta: { fontSize: 14, lineHeight: 18, fontFamily: FontFamily.medium },
+  heroSub: { fontSize: 13, lineHeight: 17, fontFamily: FontFamily.regular },
   tierBadge: {
     alignSelf: 'flex-start',
-    marginTop: 6,
+    marginTop: 5,
     borderWidth: 1,
     borderRadius: Radius.full,
-    paddingHorizontal: 9,
-    paddingVertical: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
+    gap: 4,
   },
-  tierText: { fontSize: 11, lineHeight: 14, fontFamily: FontFamily.bold, textTransform: 'capitalize' },
-  heroAction: { width: 42, height: 42, borderRadius: Radius.full, alignItems: 'center', justifyContent: 'center' },
+  tierText: { fontSize: 10, lineHeight: 13, fontFamily: FontFamily.bold, textTransform: 'capitalize' },
+  heroAction: { width: 40, height: 40, borderRadius: Radius.full, alignItems: 'center', justifyContent: 'center' },
+
   grid: { gap: Spacing.md },
-  gridWide: { flexDirection: 'row', alignItems: 'flex-start' },
+  gridWide: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.lg },
   column: { flex: 1, gap: Spacing.md, minWidth: 0 },
-  section: { gap: Spacing.sm },
+
+  section: { gap: Spacing.xs },
   sectionTitle: {
-    fontSize: 12,
+    fontSize: 11,
     fontFamily: FontFamily.bold,
     textTransform: 'uppercase',
-    letterSpacing: 0.9,
+    letterSpacing: 1.4,
     paddingHorizontal: Spacing.xs,
+    marginBottom: 2,
   },
   card: { borderRadius: Radius.lg, borderWidth: 1, overflow: 'hidden' },
+
   row: {
-    minHeight: 68,
+    minHeight: 60,
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.md,
     paddingHorizontal: Spacing.md,
     paddingVertical: 10,
   },
-  iconTile: { width: 40, height: 40, borderRadius: Radius.sm, alignItems: 'center', justifyContent: 'center' },
-  rowCopy: { flex: 1, minWidth: 0, gap: 2 },
-  rowLabel: { fontSize: 15, lineHeight: 21, fontFamily: FontFamily.semibold, letterSpacing: 0 },
-  rowSub: { fontSize: 13, lineHeight: 18, fontFamily: FontFamily.regular },
+  iconTile: {
+    width: 36,
+    height: 36,
+    borderRadius: Radius.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rowCopy: { flex: 1, minWidth: 0, gap: 1 },
+  rowLabel: { fontSize: 15, lineHeight: 20, fontFamily: FontFamily.semibold, letterSpacing: 0 },
+  rowSub: { fontSize: 12.5, lineHeight: 17, fontFamily: FontFamily.regular },
   rowRight: { fontSize: 13, fontFamily: FontFamily.medium, flexShrink: 0 },
-  divider: { position: 'absolute', left: 72, right: 0, bottom: 0, height: StyleSheet.hairlineWidth },
-  footer: { alignItems: 'center', gap: 4, paddingTop: Spacing.md, paddingBottom: Spacing.md },
-  footerText: { fontSize: 13, fontFamily: FontFamily.medium },
-  footerMeta: { fontSize: 12, fontFamily: FontFamily.regular, opacity: 0.82 },
+  divider: { position: 'absolute', left: 70, right: 0, bottom: 0, height: StyleSheet.hairlineWidth },
+
+  footer: { alignItems: 'center', gap: 3, paddingTop: Spacing.md, paddingBottom: Spacing.sm },
+  footerText: { fontSize: 12, fontFamily: FontFamily.medium },
+  footerMeta: { fontSize: 11, fontFamily: FontFamily.regular, opacity: 0.75 },
 });

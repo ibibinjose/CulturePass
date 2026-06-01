@@ -24,7 +24,7 @@ import {
   Platform,
 } from 'react-native';
 import { Image } from 'expo-image';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useColors } from '@/hooks/useColors';
@@ -104,13 +104,13 @@ export function ProfilePreviewModal({
 }: ProfilePreviewModalProps) {
   const colors = useColors();
   const { isDesktop } = useLayout();
-  const insets = useSafeAreaInsets();
 
   // ---------------------------------------------------------------------------
   // Render
   // ---------------------------------------------------------------------------
 
-  const topInset = Platform.OS === 'web' ? 0 : insets.top;
+  const safeInsets = useSafeAreaInsetsWeb();
+  const topInset = safeInsets.top;
 
   return (
     <Modal
@@ -186,7 +186,7 @@ export function ProfilePreviewModal({
               )}{formData.isOnlineOnly && (
                 <View style={styles.metaItem}><Ionicons name="globe-outline" size={16} color={colors.textSecondary} /><Text style={[styles.metaText, { color: colors.textSecondary }]}>Online Only</Text></View>
               )}</View>{formData.categoryTags && formData.categoryTags.length > 0 && (
-              <View style={styles.tagsContainer}>{formData.categoryTags.map((tag, index) => (
+              <View style={styles.tagsContainer}>{formData.categoryTags.map((tag: any, index: number) => (
                   <View
                     key={index}
                     style={[styles.tag, { backgroundColor: colors.surfaceElevated }]}
@@ -213,7 +213,7 @@ export function ProfilePreviewModal({
                 )}{formData.phoneNumber && (
                   <View style={styles.contactItem}><Ionicons name="call-outline" size={20} color={CultureTokens.indigo} /><Text style={[styles.contactText, { color: colors.text }]}>{formData.phoneNumber}</Text></View>
                 )}{formData.socialLinks && formData.socialLinks.length > 0 && (
-                  <View style={styles.socialLinks}>{formData.socialLinks.map((link, index) => (
+                  <View style={styles.socialLinks}>{formData.socialLinks.map((link: any, index: number) => (
                       <View
                         key={index}
                         style={[styles.socialLink, { backgroundColor: colors.surfaceElevated }]}
@@ -224,7 +224,7 @@ export function ProfilePreviewModal({
 
           {/* Gallery Section */}
           {formData.galleryImages && formData.galleryImages.length > 0 && (
-            <M3Card style={[styles.section, { backgroundColor: colors.card }]}><Text style={[styles.sectionTitle, { color: colors.text }]}>Gallery</Text><View style={styles.gallery}>{formData.galleryImages.map((imageUrl, index) => (
+            <M3Card style={[styles.section, { backgroundColor: colors.card }]}><Text style={[styles.sectionTitle, { color: colors.text }]}>Gallery</Text><View style={styles.gallery}>{formData.galleryImages.map((imageUrl: any, index: number) => (
                   <Image
                     key={index}
                     source={{ uri: imageUrl }}

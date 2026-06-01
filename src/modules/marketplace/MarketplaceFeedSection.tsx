@@ -6,13 +6,12 @@ import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
 import { router, type Href } from 'expo-router';
 
 import { useColors } from '@/hooks/useColors';
-import { Spacing, CultureTokens } from '@/design-system/tokens/theme';
+import { Spacing, CultureTokens, FontFamily } from '@/design-system/tokens/theme';
 import { useLayout } from '@/hooks/useLayout';
 import type { MarketplaceSection, MarketplaceTile } from '@/shared/schema';
 import { MarketplaceSquareTile } from '@/modules/marketplace/MarketplaceSquareTile';
 import { LuxeText } from '@/design-system/ui/LuxeText';
 import { Luxe } from '@/design-system/tokens/luxeHeritage';
-import { FontFamily } from '@/design-system/tokens/theme';
 
 type Props = {
   section: MarketplaceSection;

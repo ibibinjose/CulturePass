@@ -24,6 +24,7 @@ import { LuxeText } from '@/design-system/ui/LuxeText';
 import { LuxeCard } from '@/design-system/ui/LuxeCard';
 import { FontFamily } from '@/design-system/tokens/theme';
 import { DefaultHostBrandMark } from '@/modules/marketplace/DefaultHostBrandMark';
+import { normalizeRemoteImageUri } from '@/lib/mediaUrls';
 
 // ─── Accent palette ───────────────────────────────────────────────────────────
 
@@ -57,7 +58,7 @@ function BrandLogoTile({ listing, size }: { listing: ShopListing; size: number }
     return (
       <View style={[styles.logoBox, { width: size, height: size }]}>
         <Image
-          source={{ uri: listing.logoUrl }}
+          source={{ uri: normalizeRemoteImageUri(listing.logoUrl) ?? undefined }}
           style={{ width: '100%', height: '100%' }}
           contentFit="contain"
         />
@@ -111,7 +112,7 @@ export function ShopListingCard({ listing, width, onPress, onSave, saved }: Prop
         <View style={[styles.imageWrap, { height: imageH }]}>
           {listing.imageUrl ? (
             <Image
-              source={{ uri: listing.imageUrl }}
+              source={{ uri: normalizeRemoteImageUri(listing.imageUrl) ?? undefined }}
               style={StyleSheet.absoluteFill}
               contentFit="cover"
               transition={150}

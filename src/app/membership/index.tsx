@@ -21,7 +21,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
@@ -309,7 +309,8 @@ const promo = StyleSheet.create({
 // ─── Main screen ───────────────────────────────────────────────────────────────
 
 export default function MembershipHubScreen() {
-  const insets = useSafeAreaInsets();
+  const safeInsets = useSafeAreaInsetsWeb();
+  const topInset = safeInsets.top;
   const { hPad } = useLayout();
   const handleBack = useSafeBack('/(tabs)/my-space');
   const { userId, isAuthenticated } = useAuth();
@@ -327,7 +328,6 @@ export default function MembershipHubScreen() {
   });
 
   const isPlus = membership?.tier === 'plus' && membership?.status === 'active';
-  const topInset = Platform.OS === 'web' ? 0 : insets.top;
   const memberCount = memberCountData?.count ?? 0;
 
   const handleCodeSuccess = useCallback(() => {
@@ -368,7 +368,7 @@ export default function MembershipHubScreen() {
           {
             paddingHorizontal: hPad,
             paddingTop: 20,
-            paddingBottom: insets.bottom + 48,
+            paddingBottom: safeInsets.bottom + 48,
           },
         ]}
       >

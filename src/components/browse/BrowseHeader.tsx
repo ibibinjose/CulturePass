@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useColors } from '@/hooks/useColors';
+import { useM3Colors } from '@/hooks/useM3Colors';
 import { useSafeBack } from '@/lib/navigation';
 import { MAIN_TAB_UI } from '@/modules/core/layout/tabs/mainTabTokens';
 import { HeaderTokens, FontFamily, FontSize } from '@/design-system/tokens/theme';
@@ -15,7 +15,7 @@ interface BrowseHeaderProps {
 }
 
 export function BrowseHeader({ title, tagline, accentColor, accentIcon }: BrowseHeaderProps) {
-  const colors = useColors();
+  const m3Colors = useM3Colors();
   const goBack = useSafeBack('/');
 
   return (
@@ -24,36 +24,36 @@ export function BrowseHeader({ title, tagline, accentColor, accentIcon }: Browse
         onPress={goBack}
         style={({ pressed }) => [
           styles.backBtn, 
-          { backgroundColor: colors.surface, borderColor: colors.borderLight },
-          pressed && { backgroundColor: colors.backgroundSecondary }
+          { backgroundColor: m3Colors.surface, borderColor: m3Colors.outlineVariant },
+          pressed && { backgroundColor: m3Colors.surfaceVariant }
         ]}
         hitSlop={12}
         accessibilityLabel="Go back"
         accessibilityRole="button"
       >
-        <Ionicons name="chevron-back" size={22} color={colors.text} />
+        <Ionicons name="chevron-back" size={22} color={m3Colors.onSurface} />
       </Pressable>
       <View style={styles.headerCenter}>
         <View style={[styles.headerIcon, { backgroundColor: accentColor + '15' }]}>
           <Ionicons name={accentIcon as keyof typeof Ionicons.glyphMap} size={18} color={accentColor} />
         </View>
         <View>
-          <Text style={[styles.headerTitle, { color: colors.text }]}>{title}</Text>
-          {tagline ? <Text style={[styles.headerTagline, { color: colors.textSecondary }]}>{tagline}</Text> : null}
+          <Text style={[styles.headerTitle, { color: m3Colors.onSurface }]}>{title}</Text>
+          {tagline ? <Text style={[styles.headerTagline, { color: m3Colors.onSurfaceVariant }]}>{tagline}</Text> : null}
         </View>
       </View>
       <Pressable
         style={({ pressed }) => [
           styles.backBtn, 
-          { backgroundColor: colors.surface, borderColor: colors.borderLight },
-          pressed && { backgroundColor: colors.backgroundSecondary }
+          { backgroundColor: m3Colors.surface, borderColor: m3Colors.outlineVariant },
+          pressed && { backgroundColor: m3Colors.surfaceVariant }
         ]}
         hitSlop={12}
         onPress={() => router.push('/search' as any)}
         accessibilityLabel="Search"
         accessibilityRole="button"
       >
-        <Ionicons name="search-outline" size={22} color={colors.text} />
+        <Ionicons name="search-outline" size={22} color={m3Colors.onSurface} />
       </Pressable>
     </View>
   );

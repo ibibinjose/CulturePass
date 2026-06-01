@@ -36,11 +36,12 @@ import {
   type AppStateStatus,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 
 import { useColors } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
+import { useRole } from '@/hooks/useRole';
 import { useFormWizard, type EntityType } from '../../hooks/useFormWizard';
 import { Luxe } from '@/design-system/tokens/luxeHeritage';
 import { responsiveMaxWidth } from '../../utils/responsive';
@@ -122,11 +123,11 @@ export function WizardContainer({
 }: WizardContainerProps) {
   const colors = useColors();
   const layout = useLayout();
-  const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { isOrganizer } = useRole();
 
-  // Top inset: 0 on web, insets.top on native
-  const topInset = Platform.OS === 'web' ? 0 : insets.top;
+  const safeInsets = useSafeAreaInsetsWeb();
+  const topInset = safeInsets.top;
 
   // ---------------------------------------------------------------------------
   // Draft Recovery
@@ -140,8 +141,8 @@ export function WizardContainer({
       // The wizard hook will handle loading the draft via draftId prop
       // We need to trigger a re-initialization with the draft
       router.replace({
-        pathname: `/hostspace/create/${entityType}`,
-        params: { draftId: draft.id },
+        pathname: '/hostspace/create' as any,
+        params: { profileType: entityType, draftId: draft.id } as any,
       });
     },
     onStartFresh: () => {
@@ -174,6 +175,7 @@ export function WizardContainer({
 
   const stepContentRef = useRef<View>(null);
   const previousStepRef = useRef(wizard.currentStep);
+  const handleCancelRef = useRef<() => void>(() => {}); // Updated in effect below to always have latest handleCancel
 
   // Announce step changes and move focus to first input
   useEffect(() => {
@@ -190,7 +192,7 @@ export function WizardContainer({
 
       previousStepRef.current = wizard.currentStep;
     }
-  }, [wizard.currentStep, wizard.totalSteps]);
+  }, [wizard.currentStep, wizard.totalSteps, wizard.entityType]);
 
   // ---------------------------------------------------------------------------
   // Accessibility: Escape Key Handler (Web)
@@ -202,7 +204,7 @@ export function WizardContainer({
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.preventDefault();
-        handleCancel();
+        handleCancelRef.current();
       }
     };
 
@@ -210,7 +212,7 @@ export function WizardContainer({
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, []);
+  }, []); // Stable because we use handleCancelRef.current inside
 
   // ---------------------------------------------------------------------------
   // Navigation Handlers
@@ -247,6 +249,24 @@ export function WizardContainer({
   }, [wizard]);
 
   const handlePublish = useCallback(async () => {
+    if (!isOrganizer) {
+      if (Platform.OS === 'web') {
+        if (window.confirm('You are in Sandbox Mode. You must apply to become a host and be approved before you can publish. Would you like to apply now?')) {
+          router.push('/hostspace/create');
+        }
+      } else {
+        Alert.alert(
+          'Host Approval Required',
+          'You are in Sandbox Mode. You must apply to become a host and be approved before you can publish.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Create Host Profile', onPress: () => router.push('/hostspace/create') }
+          ]
+        );
+      }
+      return;
+    }
+
     try {
       await wizard.publish();
     } catch (error) {
@@ -263,7 +283,7 @@ export function WizardContainer({
         Alert.alert('Publish failed', message);
       }
     }
-  }, [wizard]);
+  }, [wizard, isOrganizer, router]);
 
   const handleSaveDraft = useCallback(async () => {
     try {
@@ -336,6 +356,12 @@ export function WizardContainer({
     }
   }, [wizard.isDirty, onCancel, router]);
 
+  // Keep a ref to the latest handleCancel so the early Escape key effect (which runs before this definition)
+  // always calls the current version without causing the effect to re-subscribe on every render.
+  useEffect(() => {
+    handleCancelRef.current = handleCancel;
+  }, [handleCancel]);
+
   // ---------------------------------------------------------------------------
   // AppState Listener — auto-save when app is backgrounded (Requirement 22.10)
   // ---------------------------------------------------------------------------
@@ -360,7 +386,7 @@ export function WizardContainer({
     return () => {
       subscription.remove();
     };
-  }, [wizard.isDirty, wizard.triggerSave]);
+  }, [wizard.isDirty, wizard.triggerSave]); // eslint-disable-line react-hooks/exhaustive-deps -- specific properties are stable enough; full `wizard` object would cause unnecessary re-subscriptions
 
   // ---------------------------------------------------------------------------
   // Swipe Gesture for Step Navigation (Requirement 22.9)
@@ -487,7 +513,7 @@ export function WizardContainer({
           styles.scrollContent,
           {
             paddingHorizontal: layout.hPad,
-            paddingBottom: insets.bottom + 100, // Extra space for navigation
+            paddingBottom: safeInsets.bottom + 100, // Extra space for navigation
           },
           contentMaxWidthStyle,
         ]}
@@ -513,7 +539,7 @@ export function WizardContainer({
         style={[
           styles.navigationContainer,
           {
-            paddingBottom: insets.bottom + Luxe.spacing.md,
+            paddingBottom: safeInsets.bottom + Luxe.spacing.md,
             backgroundColor: colors.surface,
             borderTopColor: colors.border,
           },

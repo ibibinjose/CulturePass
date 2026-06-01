@@ -31,7 +31,8 @@ export default function HandleResolverScreen() {
           const hit = await modulesApi.cpid.lookup(normalized).catch(() => null);
           const target = hit?.userId ?? hit?.targetId;
           if (!cancelled && target) {
-            router.replace({ pathname: '/u/[id]', params: { id: normalized } });
+            // Prefer the branded CPU public URL
+            router.replace({ pathname: '/CPU/[id]', params: { id: normalized } });
             return;
           }
         }
@@ -39,7 +40,10 @@ export default function HandleResolverScreen() {
         // Try user first
         const user = await modulesApi.users.getByHandle(handle).catch(() => null);
         if (!cancelled && user?.id) {
-          router.replace({ pathname: '/u/[id]', params: { id: userPublicSegment(user) } });
+          const segment = userPublicSegment(user);
+          // Prefer branded CPU path for CPIDs
+          const targetPath = /^CP-[A-Z0-9]{6,}$/i.test(segment) ? '/CPU/[id]' : '/u/[id]';
+          router.replace({ pathname: targetPath, params: { id: segment } });
           return;
         }
 

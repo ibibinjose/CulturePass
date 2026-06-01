@@ -248,11 +248,14 @@ export function DateField({
   };
 
   /**
-   * Render web date input
+   * Render web date input — delegates to the improved segmented DateField.web.tsx in practice.
+   * This fallback keeps the old single-field for any direct import scenarios.
    */
   const renderWebInput = () => {
     if (Platform.OS !== 'web') return null;
 
+    // For a first-class experience on web we strongly recommend the platform-specific
+    // DateField.web.tsx which renders proper Year | Month | Day columns.
     return (
       <Input
         label={required ? `${label} *` : label}

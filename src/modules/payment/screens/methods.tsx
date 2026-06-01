@@ -1,6 +1,6 @@
 import { View, Text, Pressable, StyleSheet, ScrollView, Platform, Alert, TextInput, Modal, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import * as Haptics from 'expo-haptics';
 import { useState } from 'react';
 import { useAuth } from '@/lib/auth';
@@ -33,9 +33,9 @@ export default function PaymentMethodsScreen() {
   const { userId }  = useAuth();
   const colors = useColors();
   const s = getStyles(colors);
-  const insets = useSafeAreaInsets();
-  const bottomInset = Platform.OS === 'web' ? 34 : insets.bottom;
-  const topInset = Platform.OS === 'web' ? 0 : insets.top;
+  const safeInsets = useSafeAreaInsetsWeb();
+  const bottomInset = safeInsets.bottom;
+  const topInset = safeInsets.top;
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [formData, setFormData] = useState({

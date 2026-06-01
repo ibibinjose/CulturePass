@@ -7,7 +7,7 @@ import { View, Text, Pressable, ScrollView, StyleSheet, Platform } from 'react-n
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import { useColors } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
 import { CultureTokens, FontFamily, Radius, Spacing } from '@/design-system/tokens/theme';
@@ -29,10 +29,10 @@ const ACCENT: Record<CommunityCategory, string> = {
 
 export default function CommunityTopicPickerScreen() {
   const colors  = useColors();
-  const insets  = useSafeAreaInsets();
+  const safeInsets = useSafeAreaInsetsWeb();
   const { hPad, isDesktop, isTablet, columnWidth, columnGap } = useLayout();
-  const topInset    = Platform.OS === 'web' ? 0 : insets.top;
-  const bottomInset = Platform.OS === 'web' ? 24 : insets.bottom;
+  const topInset    = safeInsets.top;
+  const bottomInset = Math.max(safeInsets.bottom, 24);
 
   const cols      = isDesktop ? 3 : isTablet ? 3 : 2;
   const cardWidth = columnWidth(cols);

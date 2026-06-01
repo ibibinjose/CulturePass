@@ -21,6 +21,7 @@ import {
   getCommunitySignals,
 } from '@/lib/community';
 import { useSaved } from '@/contexts/SavedContext';
+import { normalizeRemoteImageUri } from '@/lib/mediaUrls';
 
 interface CommunityCardProps {
   community: Community;
@@ -76,7 +77,7 @@ function CommunityCard({ community, index = 0 }: CommunityCardProps) {
         <View style={[styles.cover, { backgroundColor: colors.backgroundSecondary }]}>
           {community.imageUrl ? (
             <Image
-              source={{ uri: community.imageUrl }}
+              source={{ uri: normalizeRemoteImageUri(community.imageUrl) }}
               style={styles.coverImage}
               contentFit="cover"
               transition={300}

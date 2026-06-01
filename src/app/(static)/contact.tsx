@@ -13,7 +13,7 @@ import {
 import { Link } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import * as Haptics from 'expo-haptics';
 
 import { useColors } from '@/hooks/useColors';
@@ -151,8 +151,8 @@ function buildMailto(to: string, subject: string, body: string): string {
 
 export default function ContactScreen() {
   const colors = useColors();
-  const insets = useSafeAreaInsets();
-  const topInset = Platform.OS === 'web' ? 0 : insets.top;
+  const safeInsets = useSafeAreaInsetsWeb();
+  const topInset = safeInsets.top;
   const styles = useMemo(() => getStyles(colors), [colors]);
 
   const [channel, setChannel] = useState<ChannelId>('support');
@@ -229,7 +229,7 @@ export default function ContactScreen() {
       >
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: insets.bottom + 48 }}
+          contentContainerStyle={{ paddingBottom: safeInsets.bottom + 48 }}
           keyboardShouldPersistTaps="handled"
         >
           {/* Hero */}
@@ -438,7 +438,7 @@ export default function ContactScreen() {
             <Text style={[styles.sectionLabel, { color: colors.textSecondary, marginTop: 28 }]}>Other enquiries</Text>
             <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.borderLight }]}>
               {ADDITIONAL_CONTACTS.map((ac, i) => (
-                <React.Fragment key={ac.email}>
+                <React.Fragment key={ac.title}>
                   {i > 0 && <View style={[styles.hairline, { backgroundColor: colors.divider }]} />}
                   <Pressable
                     onPress={() => openEmailDirect(ac.email)}

@@ -30,3 +30,5 @@ export { SuperAppLinks } from '@/components/Discover/SuperAppLinks';
 export { default as WebEventRailCard } from '@/components/Discover/WebEventRailCard';
 export { default as WebHeroCarousel } from '@/components/Discover/WebHeroCarousel';
 export { default as WebRailSection } from '@/components/Discover/WebRailSection';
+export { CultureWheelModal } from '@/components/Discover/CultureWheelModal';
+

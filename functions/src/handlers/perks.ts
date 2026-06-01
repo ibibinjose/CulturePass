@@ -203,13 +203,21 @@ perksRouter.post('/perks/:id/redeem', requireAuth, async (req, res) => {
       }
 
       // Optional tier gate: require a minimum membership tier when configured on perk.
-      const requiredTier = String((perk as unknown as { requiredTier?: string }).requiredTier ?? '').trim().toLowerCase();
-      if (requiredTier) {
+      const requiredTier = String((perk as unknown as { requiredTier?: string }).requiredTier ?? perk.requiredMembershipTier ?? '').trim().toLowerCase();
+      if (requiredTier && requiredTier !== 'free') {
         const userSnap = await db.collection('users').doc(userId).get();
         const userTier = String((userSnap.data() as { membership?: { tier?: string } } | undefined)?.membership?.tier ?? 'free')
           .trim()
           .toLowerCase();
-        const rank: Record<string, number> = { free: 0, basic: 1, plus: 2, premium: 3, vip: 4 };
+        const rank: Record<string, number> = {
+          free: 0,
+          basic: 1,
+          plus: 2,
+          elite: 3,
+          pro: 4,
+          premium: 5,
+          vip: 6
+        };
         if ((rank[userTier] ?? 0) < (rank[requiredTier] ?? Number.MAX_SAFE_INTEGER)) {
           return res.status(403).json({ error: `This perk requires ${requiredTier} membership or higher.` });
         }

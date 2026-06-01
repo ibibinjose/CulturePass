@@ -19,7 +19,7 @@ import { router, Stack } from 'expo-router';
 import Head from 'expo-router/head';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as Haptics from 'expo-haptics';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -140,8 +140,8 @@ function EmptyOrbitCard({ onDiscover }: { onDiscover: () => void }) {
 export default function MyCityScreen() {
   const m3Colors = useM3Colors();
   const { hPad, tabBarHeight, windowSizeClass, isExpanded } = useLayout();
-  const insets = useSafeAreaInsets();
-  const topInset = Platform.OS === 'web' ? 0 : insets.top;
+  const safeInsets = useSafeAreaInsetsWeb();
+  const topInset = safeInsets.top;
   const { state: onboarding } = useOnboarding();
   const { user, isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
@@ -301,7 +301,7 @@ export default function MyCityScreen() {
           ref={scrollRef}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={[
-            { paddingBottom: tabBarHeight + insets.bottom + 40 },
+            { paddingBottom: tabBarHeight + safeInsets.bottom + 40 },
             Platform.OS === 'web' && isExpanded && { width: contentWidth, alignSelf: 'center' }
           ]}
           stickyHeaderIndices={[3]}
@@ -608,7 +608,7 @@ export default function MyCityScreen() {
         </ScrollView>
 
         {/* Floating Map FAB */}
-        <Animated.View entering={FadeInDown.delay(800)} style={[s.fab, { bottom: insets.bottom + tabBarHeight + 16 }]}>
+        <Animated.View entering={FadeInDown.delay(800)} style={[s.fab, { bottom: safeInsets.bottom + tabBarHeight + 16 }]}>
           <Pressable
             onPress={() => router.push({ pathname: '/map', params: { city: cityName } })}
             style={({ pressed }) => [

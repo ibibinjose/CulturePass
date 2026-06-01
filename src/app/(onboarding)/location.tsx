@@ -15,7 +15,7 @@ import { Image } from 'expo-image';
 import { router , useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import Animated, { FadeIn, FadeInRight, FadeInLeft, FadeInDown, useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInRight, FadeInLeft, FadeInDown } from 'react-native-reanimated';
 
 import { useOnboarding } from '@/contexts/OnboardingContext';
 import { useColors } from '@/hooks/useColors';
@@ -27,10 +27,9 @@ import { LuxeCard } from '@/design-system/ui/LuxeCard';
 import { LuxeButton } from '@/design-system/ui/LuxeButton';
 import { LuxeFilterChip } from '@/design-system/ui/LuxeFilterChip';
 import { M3TopAppBar } from '@/design-system/ui/M3TopAppBar';
-import { CultureTokens, FontFamily, IconSize, M3Typography } from '@/design-system/tokens/theme';
-import { 
-  australianPostcodes 
-} from '@shared/location/australian-postcodes';
+import { CultureTokens, FontFamily } from '@/design-system/tokens/theme';
+import { australianPostcodes } from '@shared/location/australian-postcodes';
+import { OnboardingProgressHeader } from '@/components/onboarding/OnboardingProgressHeader';
 
 // Import missing hooks and utils
 import { useAuth } from '@/lib/auth';
@@ -98,9 +97,21 @@ const STEP_TITLE: Record<LocStep, (country?: string) => string> = {
 
 const STEP_SUBTITLE: Record<LocStep, string> = {
   country: 'CulturePass shows events, communities and deals tailored to your location.',
-  region: "We'll surface cultural events and communities near you.",
+  region: "We'll prioritize cultural events and communities near you.",
   city: "Pick your city and we'll show what's happening nearby.",
 };
+
+// Reliable fallback list for Australian states (used when dynamic data fails)
+const australianStatesFallback: { code: string; name: string; emoji: string; cities?: number }[] = [
+  { code: 'NSW', name: 'New South Wales', emoji: '🏙️', cities: 35 },
+  { code: 'VIC', name: 'Victoria', emoji: '🎭', cities: 27 },
+  { code: 'QLD', name: 'Queensland', emoji: '🌞', cities: 27 },
+  { code: 'WA', name: 'Western Australia', emoji: '🌊', cities: 26 },
+  { code: 'SA', name: 'South Australia', emoji: '🍷', cities: 21 },
+  { code: 'TAS', name: 'Tasmania', emoji: '🏔️', cities: 15 },
+  { code: 'ACT', name: 'Australian Capital Territory', emoji: '🏛️', cities: 10 },
+  { code: 'NT', name: 'Northern Territory', emoji: '🦘', cities: 13 },
+];
 
 // ---------------------------------------------------------------------------
 // Component
@@ -138,23 +149,7 @@ export default function LocationScreen() {
   const [pendingState, setPendingState] = useState('');
   const [citySearch, setCitySearch] = useState('');
 
-  // ---------------------------------------------------------------------------
-  // Animated progress bar
-  // ---------------------------------------------------------------------------
-
-  const progressWidth = useSharedValue(0);
   const stepIndex = STEPS.indexOf(step);
-
-  useEffect(() => {
-    progressWidth.value = withTiming((stepIndex + 1) / STEPS.length, {
-      duration: 350,
-      easing: Easing.out(Easing.cubic),
-    });
-  }, [stepIndex, progressWidth]);
-
-  const progressBarStyle = useAnimatedStyle(() => ({
-    width: `${progressWidth.value * 100}%` as DimensionValue,
-  }));
 
   // ---------------------------------------------------------------------------
   // Derived data
@@ -191,6 +186,29 @@ export default function LocationScreen() {
     }
   }, [state.city, state.country, getStateForCity]);
 
+  // Slice 2: Declarative auto-trigger for council (LGA) when city is successfully set for Australia.
+  // This replaces the previous fragile setTimeout hack in handleDetectCity (which was a workaround for JSI crashes).
+  // Runs only when entering the city step with AU data and no council detected yet.
+  useEffect(() => {
+    const shouldAutoDetectCouncil =
+      step === 'city' &&
+      pendingCountry === 'Australia' &&
+      !!state.city &&
+      !detectedCouncil &&
+      councilStatus === 'idle';
+
+    if (shouldAutoDetectCouncil) {
+      // Small micro-delay via setTimeout(0) to let the step transition and any pending location promises settle.
+      // Much safer and shorter than the previous 1500ms hardcoded delay.
+      const t = setTimeout(() => {
+        console.log('[LocationScreen] Auto-triggering council detection (declarative)');
+        void detectCouncil();
+      }, 0);
+
+      return () => clearTimeout(t);
+    }
+  }, [step, pendingCountry, state.city, detectedCouncil, councilStatus, detectCouncil]);
+
   // ---------------------------------------------------------------------------
   // Navigation helpers
   // ---------------------------------------------------------------------------
@@ -203,6 +221,7 @@ export default function LocationScreen() {
   const goBackWithinFlow = () => {
     if (step === 'city') {
       setCitySearch('');
+      resetCouncil(); // Clear any auto-detected council when leaving the city step (prevents stale data on back/forward)
       if (pendingCountry === 'Australia') {
         goToStep('region', 'back');
       } else {
@@ -228,6 +247,10 @@ export default function LocationScreen() {
     resetGpsCountry();
     setPendingCountry(countryName);
     setCitySearch('');
+    // If switching away from Australia, clear any council data (AU-specific feature)
+    if (countryName !== 'Australia') {
+      resetCouncil();
+    }
     const regs = getRegionsForCountry(countryName, states);
     if (regs.length === 1) {
       setPendingState(regs[0].code);
@@ -251,6 +274,11 @@ export default function LocationScreen() {
     setCountry(c);
     setCity(city);
     void syncUserMarketplaceLocation(user?.id, c, city);
+
+    // For AU: reset any previous council so the declarative auto-detect effect can re-trigger for the new city
+    if (c === 'Australia') {
+      resetCouncil();
+    }
   };
 
   // ---------------------------------------------------------------------------
@@ -291,15 +319,7 @@ export default function LocationScreen() {
       if (stateCode) setPendingState(stateCode);
       goToStep('city', 'forward');
 
-      // Slice 2: Auto-trigger council detection for AU users after successful city GPS
-      // TEMP: Increased delay + logging to help reproduce/test the JSI promise crash scenario
-      if (r.country === 'Australia') {
-        console.log('[LocationScreen] AU city detected via GPS — scheduling council detection in 1500ms');
-        const timeout = setTimeout(() => {
-          console.log('[LocationScreen] Auto-triggering detectCouncil() now');
-          void detectCouncil();
-        }, 1500); // Increased from 400ms so user has time to navigate away
-      }
+      // Note: Council auto-detection for AU is now handled declaratively via useEffect below (removes fragile setTimeout hack)
     } else {
       if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       if (cityDetectStatus === 'denied') {
@@ -459,14 +479,7 @@ export default function LocationScreen() {
         }
       />
 
-      {!isDesktop && (
-        <View style={s.mobileProgressWrap}>
-          <Text style={[s.stepText, M3Typography.labelSmall, { color: m3Colors.onSurfaceVariant }]}>STEP {stepIndex + 1} OF 3</Text>
-          <View style={[s.progressTrack, { backgroundColor: m3Colors.surfaceContainerHigh }]}>
-            <Animated.View style={[s.progressFill, progressBarStyle, { backgroundColor: m3Colors.primary }]} />
-          </View>
-        </View>
-      )}
+      <OnboardingProgressHeader currentStep="location" redirectTo={redirectTo} />
 
       <ScrollView
         style={s.scrollView}
@@ -475,7 +488,7 @@ export default function LocationScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <Animated.View entering={enter(40)} style={[s.formContainer, isDesktop && s.formContainerDesktop]}>
-          <LuxeCard variant="default" style={s.formContent}>{/* Breadcrumb — shown after country is chosen */}
+          <LuxeCard variant="glass" style={s.formContent}>{/* Breadcrumb — shown after country is chosen */}
             {step !== 'country' && (
               <View style={s.breadcrumbRow}>
                 {breadcrumbItems.map((item, i) => (
@@ -600,47 +613,113 @@ export default function LocationScreen() {
                     <ActivityIndicator size="large" color={luxeDark.primary} style={{ paddingVertical: 20 }} />
                   )}
 
-                  {pendingCountry === 'Australia' && !!locationsError && (
-                    <View style={[s.errorBanner, { backgroundColor: luxeDark.error + '20' }]}>
-                      <Ionicons name="alert-circle" size={IconSize.md} color={luxeDark.error} />
-                      <LuxeText variant="body" style={{ color: luxeDark.error }}>Failed to load locations.</LuxeText>
+                  {/* Error state (still fully usable via hardcoded fallback grid below) */}
+                  {pendingCountry === 'Australia' && !!locationsError && !locationsLoading && (
+                    <View style={[s.errorBanner, { backgroundColor: luxeDark.error + '12', borderColor: luxeDark.error + '25' }]}>
+                      <Ionicons name="alert-circle-outline" size={20} color={luxeDark.error} />
+                      <View style={{ flex: 1, gap: 2 }}>
+                        <LuxeText variant="body" style={{ color: luxeDark.error, fontFamily: FontFamily.semibold }}>
+                          Failed to load states
+                        </LuxeText>
+                        <LuxeText variant="caption" style={{ color: luxeDark.textSecondary }}>
+                          You can still choose your state below.
+                        </LuxeText>
+                      </View>
                     </View>
                   )}
 
+                  {/* Single clean header (changes based on error state) */}
                   {pendingCountry === 'Australia' && !locationsLoading && (
-                    <View style={s.orDivider}>
-                      <View style={[s.orDividerLine, { backgroundColor: luxeDark.border }]} />
-                      <LuxeText variant="badgeCaps" style={{ color: luxeDark.textSecondary }}>OR CHOOSE A STATE</LuxeText>
-                      <View style={[s.orDividerLine, { backgroundColor: luxeDark.border }]} />
+                    <View style={{ marginBottom: 12 }}>
+                      <LuxeText 
+                        variant="title3" 
+                        style={{ 
+                          color: luxeDark.text, 
+                          textAlign: 'center',
+                          fontSize: 18,
+                          fontFamily: FontFamily.semibold 
+                        }}
+                      >
+                        {locationsError ? 'Choose a state' : 'Your home state'}
+                      </LuxeText>
+                      <LuxeText 
+                        variant="caption" 
+                        style={{ 
+                          color: luxeDark.textSecondary, 
+                          textAlign: 'center', 
+                          marginTop: 4 
+                        }}
+                      >
+                        We&apos;ll prioritize cultural events and communities near you.
+                      </LuxeText>
                     </View>
                   )}
 
-                  <View style={s.stateGrid}>
-                    {regions.map((st) => {
-                      const isSelected = st.code === pendingState;
-                      return (
-                        <LuxeCard
-                          key={st.code}
-                          variant={isSelected ? 'tonal' : 'default'}
-                          onPress={() => selectRegion(st.code)}
-                          style={[
-                            s.stateCard,
-                            {
-                              backgroundColor: isSelected ? luxeDark.primaryContainer : luxeDark.surface,
-                              borderColor: isSelected ? 'transparent' : luxeDark.border,
-                              borderWidth: isSelected ? 0 : 1,
-                            },
-                          ]}
-                        ><Text style={s.stateEmoji}>{st.emoji}</Text>
-                          <LuxeText variant="title3" style={{ textAlign: 'center', color: isSelected ? luxeDark.onPrimaryContainer : luxeDark.text }}>
-                            {st.name}
-                          </LuxeText>
-                          <LuxeText variant="caption" style={{ textAlign: 'center', color: isSelected ? luxeDark.onPrimaryContainer : luxeDark.textSecondary }}>
-                            {st.cities.length} cities
-                          </LuxeText></LuxeCard>
-                      );
-                    })}
-                  </View>
+                  {/* States — vertical list, top to bottom, one full-width card per line (clean, scannable, long names have room) */}
+                  {pendingCountry === 'Australia' && !locationsLoading && (
+                    <View style={s.stateList}>
+                      {(() => {
+                        const auRegions = (regions || []).filter((r: any) =>
+                          ['NSW', 'VIC', 'QLD', 'WA', 'SA', 'TAS', 'ACT', 'NT'].includes(r.code)
+                        );
+                        const rawStates = auRegions.length > 0 ? auRegions : australianStatesFallback;
+
+                        // Normalize once — NEVER render .cities array (prevents "SydneyParramatta..." concatenation)
+                        const statesToShow = rawStates.map((st: any) => {
+                          const count = Array.isArray(st.cities)
+                            ? st.cities.length
+                            : (typeof st.cities === 'number' ? st.cities : 0);
+                          const safeCount = count > 0 ? count : (australianStatesFallback.find(f => f.code === st.code)?.cities ?? 0);
+                          return {
+                            code: st.code,
+                            name: st.name,
+                            emoji: st.emoji || '🇦🇺',
+                            cityCount: safeCount,
+                          };
+                        });
+
+                        return statesToShow.map((st) => {
+                          const isSelected = st.code === pendingState;
+                          return (
+                            <LuxeCard
+                              key={st.code}
+                              variant={isSelected ? 'tonal' : 'default'}
+                              onPress={() => selectRegion(st.code)}
+                              style={s.stateCard}
+                            >
+                              <View style={{ flexDirection: 'row', alignItems: 'center', padding: 14, gap: 14 }}>
+                                <Text style={{ fontSize: 26 }}>{st.emoji}</Text>
+                                <View style={{ flex: 1, minWidth: 0 }}>
+                                  <LuxeText
+                                    variant="bodyMedium"
+                                    style={{
+                                      color: isSelected ? luxeDark.onPrimaryContainer : luxeDark.text,
+                                      fontFamily: FontFamily.semibold,
+                                    }}
+                                    numberOfLines={1}
+                                  >
+                                    {st.name}
+                                  </LuxeText>
+                                  <LuxeText
+                                    variant="caption"
+                                    style={{
+                                      color: isSelected ? luxeDark.onPrimaryContainer : luxeDark.textSecondary,
+                                      marginTop: 2,
+                                    }}
+                                  >
+                                    {st.cityCount} cities
+                                  </LuxeText>
+                                </View>
+                                {isSelected && (
+                                  <Ionicons name="checkmark-circle" size={22} color={luxeDark.onPrimaryContainer} />
+                                )}
+                              </View>
+                            </LuxeCard>
+                          );
+                        });
+                      })()}
+                    </View>
+                  )}
                 </View>
               )}
 
@@ -679,7 +758,7 @@ export default function LocationScreen() {
                       </LuxeText>
                       <LuxeButton variant="glass" size="sm" onPress={() => setCitySearch('')}>Clear search</LuxeButton></LuxeCard>
                   ) : (
-                    <View style={s.cityGrid}>
+                    <View style={s.cityList}>
                       {citiesToShow.map((city) => {
                         const isActive = state.city === city;
                         return (
@@ -687,26 +766,26 @@ export default function LocationScreen() {
                             key={city}
                             variant={isActive ? 'tonal' : 'default'}
                             onPress={() => selectCity(city)}
-                            style={[
-                              s.cityCard,
-                              {
-                                backgroundColor: isActive ? luxeDark.primary : luxeDark.surface,
-                                borderColor: isActive ? 'transparent' : luxeDark.border,
-                                borderWidth: isActive ? 0 : 1,
-                              },
-                            ]}
-                          ><Ionicons
+                            style={s.cityCard}
+                          >
+                            <View style={{ flexDirection: 'row', alignItems: 'center', padding: 14, gap: 14 }}>
+                              <Ionicons
                                 name={isActive ? "checkmark-circle" : "location-outline"}
-                                size={20}
-                                color={isActive ? "#FFF" : luxeDark.primary}
-                            />
-                            <LuxeText
-                              variant="body"
-                              style={{ color: isActive ? "#FFF" : luxeDark.text, flex: 1 }}
-                              numberOfLines={1}
-                            >
-                              {city}
-                            </LuxeText></LuxeCard>
+                                size={22}
+                                color={isActive ? luxeDark.onPrimaryContainer : luxeDark.primary}
+                              />
+                              <LuxeText
+                                variant="bodyMedium"
+                                style={{ color: isActive ? luxeDark.onPrimaryContainer : luxeDark.text, flex: 1 }}
+                                numberOfLines={1}
+                              >
+                                {city}
+                              </LuxeText>
+                              {isActive && (
+                                <Ionicons name="checkmark-circle" size={20} color={luxeDark.onPrimaryContainer} />
+                              )}
+                            </View>
+                          </LuxeCard>
                         );
                       })}
                     </View>
@@ -731,8 +810,8 @@ export default function LocationScreen() {
 
             <View style={s.spacer} />
 
-            {/* TEMP DEBUG: Manual trigger for crash reproduction testing */}
-            {__DEV__ && state.city === 'Sydney' && (
+            {/* TEMP DEBUG: Manual trigger for council / JSI crash reproduction testing (available in all dev builds for easier testing) */}
+            {__DEV__ && (
               <View style={{ paddingHorizontal: hPad, marginBottom: 12 }}>
                 <LuxeButton
                   variant="glass"
@@ -747,13 +826,13 @@ export default function LocationScreen() {
               </View>
             )}
 
-            {/* Council / LGA Detection — Slice 2 (polished) */}
-            {state.city && (
+            {/* Council / LGA Detection — Slice 2 (polished) — AU only */}
+            {!!state.city && (pendingCountry === 'Australia' || state.country === 'Australia') && (
               <LuxeCard variant="default" style={{ marginBottom: 16, padding: 18 }}><View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
                   <LuxeText variant="title3" style={{ color: luxeDark.text, flex: 1 }}>
                     Local Council (LGA)
                   </LuxeText>
-                  {detectedCouncil && confidence && (
+                  {!!detectedCouncil && !!confidence && (
                     <LuxeText variant="badgeCaps" style={{ color: confidence === 'strong' ? luxeDark.primary : luxeDark.textSecondary }}>
                       {confidence.toUpperCase()}
                     </LuxeText>
@@ -795,7 +874,7 @@ export default function LocationScreen() {
                         variant="filled"
                         size="sm"
                         onPress={async () => {
-                          setCouncil(detectedCouncil.id);
+                          setCouncil(detectedCouncil.id, detectedCouncil.lgaCode);
                           if (user?.id) {
                             try {
                               await api.council.select(detectedCouncil.id);
@@ -889,7 +968,7 @@ const s = StyleSheet.create({
   },
   formContainerDesktop: { maxWidth: 520 },
 
-  formContent: { padding: 32 },
+  formContent: { padding: 24 },
 
   // Breadcrumb
   breadcrumbRow: {
@@ -935,19 +1014,21 @@ const s = StyleSheet.create({
   },
 
   // Header
-  headerBlock: { alignItems: 'center', marginBottom: 32 },
+  headerBlock: { alignItems: 'center', marginBottom: 24 },
   iconWrapper: {
-    width: 72,
-    height: 72,
-    borderRadius: 24,
+    width: 64,
+    height: 64,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
   },
-  title: { textAlign: 'center', marginBottom: 8 },
+  title: { textAlign: 'center', marginBottom: 6, fontSize: 26 },
   subtitle: {
     textAlign: 'center',
-    maxWidth: 340,
+    maxWidth: 320,
+    fontSize: 14,
+    lineHeight: 20,
   },
 
   // GPS suggestion card (country detected)
@@ -972,38 +1053,30 @@ const s = StyleSheet.create({
   gpsSuggestCountry: { letterSpacing: -0.2 },
 
   // Or divider
-  orDivider: { flexDirection: 'row', alignItems: 'center', gap: 12, marginVertical: 20 },
-  orDividerLine: { flex: 1, height: 1 },
-  orDividerText: {
-    letterSpacing: 0.4,
-  },
+
 
   errorBanner: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: 12,
     padding: 16,
     borderRadius: 16,
-    marginBottom: 20,
+    borderWidth: 1,
+    marginBottom: 12,
   },
   errorText: { flex: 1, fontFamily: FontFamily.medium, fontSize: 14 },
 
   // Back link
   backLinkRow: { marginTop: 16, alignItems: 'flex-start' },
 
-  // State grid
-  stateGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-  stateCard: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    padding: 16,
-    width: '48%',
-    minHeight: 110,
+  // Vertical list for Australian States (top-to-bottom, one full-width card per line)
+  stateList: {
+    gap: 12,
   },
-  stateEmoji: { fontSize: 36 },
-  stateName: { textAlign: 'center' },
-  cityCount: { textAlign: 'center' },
+  stateCard: {
+    width: '100%',
+    borderRadius: 16,
+  },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1011,17 +1084,14 @@ const s = StyleSheet.create({
   },
   searchInput: { flex: 1, height: '100%' },
 
-  // City grid
-  cityGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-  cityCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  // City vertical list (top to bottom, full-width cards, same pattern as States)
+  cityList: {
     gap: 10,
-    padding: 16,
-    width: '48.2%',
-    minHeight: 56,
   },
-  cityName: { flex: 1 },
+  cityCard: {
+    width: '100%',
+    borderRadius: 16,
+  },
 
   noResults: { alignItems: 'center', paddingVertical: 48, gap: 12 },
   noResultsText: { textAlign: 'center' },

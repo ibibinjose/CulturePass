@@ -35,7 +35,7 @@ From code exploration:
   - Generating business-scoped promo codes for staff.
   - Staff claiming the perk + receiving a visible badge.
 - **Promo code system** (`admin/promo-codes`) supports `free_plus` type — this is reusable.
-- **Host application + creation flows** (`/hostspace/apply`, `/hostspace/create`) exist and support `business`/`venue` entity types.
+- **Host creation flow** is now unified under `/hostspace/create` (rich profiles use the full wizard; quick content uses the workspace launcher).
 - **Badges** are mentioned in copy but have no real implementation yet for Nation Builders.
 - **Admin surfaces** exist for host applications and promo codes — good foundation.
 
@@ -70,7 +70,7 @@ From code exploration:
 Instead of sending everyone to the generic marketing page:
 
 1. **Short term (Quick Win)**: "Apply Now" from the promo banner routes to:
-   - `/hostspace/apply?intent=nation-builder` (or directly to creation with pre-selected `business`/`venue` type).
+   - `/hostspace/create?intent=nation-builder` (pre-selects business/venue types for the wizard).
    - Show a beautiful Nation Builder Partner onboarding screen first.
 
 2. **Ideal long-term**:
@@ -130,7 +130,7 @@ This directly serves the goal: **more businesses onboarded faster**.
 ## 6. Immediate Next Steps (Execution Plan)
 
 **Completed (as of this session):**
-- "Apply Now" in `NationBuildersPromo` now routes to `/hostspace/apply?intent=nation-builder` (strong business acquisition signal).
+- "Apply Now" / "Join as Nation Builder" in `NationBuildersPromo` now routes to `/hostspace/create?intent=nation-builder`.
 - `NationBuildersProgram.tsx` updated with dual CTAs:
   - Primary: "I'm a Business / Venue Owner — Become a Partner" → host application flow.
   - Secondary: Staff claim path.

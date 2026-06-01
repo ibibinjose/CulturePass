@@ -4,6 +4,7 @@ import { CultureImage } from '@/design-system/ui/CultureImage';
 
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { useM3Colors } from '@/hooks/useM3Colors';
 import { useColors } from '@/hooks/useColors';
 import { TextStyles } from '@/design-system/tokens/typography';
 import { Card } from '@/design-system/ui/Card';
@@ -31,6 +32,7 @@ export function BrowseCardComponent({
   onPress, 
   renderExtra 
 }: BrowseCardProps) {
+  const m3Colors = useM3Colors();
   const colors = useColors();
   const { isLiked, toggleLike } = useLikes();
   const liked = isLiked(item.id);
@@ -56,7 +58,7 @@ export function BrowseCardComponent({
         {item.imageUrl ? (
           <CultureImage uri={item.imageUrl} style={StyleSheet.absoluteFill} transition={200} />
         ) : (
-          <View style={[StyleSheet.absoluteFill, styles.cardImageFallback, { backgroundColor: colors.surfaceElevated, borderColor: accentColor + '35' }]}>
+          <View style={[StyleSheet.absoluteFill, styles.cardImageFallback, { backgroundColor: m3Colors.surfaceVariant, borderColor: accentColor + '35' }]}>
             <Ionicons name={accentIcon as keyof typeof Ionicons.glyphMap} size={isGrid ? 32 : 28} color={accentColor} />
           </View>
         )}
@@ -86,7 +88,7 @@ export function BrowseCardComponent({
           <Text 
             style={[
               isGrid ? TextStyles.labelSemibold : TextStyles.headline, 
-              { color: colors.text }
+              { color: m3Colors.onSurface }
             ]} 
             numberOfLines={1}
           >
@@ -103,7 +105,7 @@ export function BrowseCardComponent({
           <Text 
             style={[
               TextStyles.caption, 
-              { color: colors.textSecondary }
+              { color: m3Colors.onSurfaceVariant }
             ]} 
             numberOfLines={1}
           >
@@ -112,7 +114,7 @@ export function BrowseCardComponent({
         )}
 
         {!isGrid && item.description && (
-          <Text style={[TextStyles.caption, { color: colors.textTertiary, marginTop: 4 }]} numberOfLines={2}>
+          <Text style={[TextStyles.caption, { color: m3Colors.onSurfaceVariant, marginTop: 4 }]} numberOfLines={2}>
             {item.description}
           </Text>
         )}
@@ -124,14 +126,14 @@ export function BrowseCardComponent({
             </Text>
           )}
           {!isGrid && item.badge && (
-            <View style={[styles.cardBadge, { backgroundColor: colors.surfaceElevated, borderColor: accentColor + '30' }]}>
-              <Text style={[TextStyles.badgeCaps, { color: colors.textSecondary }]}>{item.badge}</Text>
+            <View style={[styles.cardBadge, { backgroundColor: m3Colors.surfaceVariant, borderColor: accentColor + '30' }]}>
+              <Text style={[TextStyles.badgeCaps, { color: m3Colors.onSurfaceVariant }]}>{item.badge}</Text>
             </View>
           )}
           {item.rating != null && (
             <View style={styles.ratingRow}>
               <Ionicons name="star" size={12} color={CultureTokens.gold} />
-              <Text style={[TextStyles.captionSemibold, { color: colors.textSecondary }]}>
+              <Text style={[TextStyles.captionSemibold, { color: m3Colors.onSurfaceVariant }]}>
                 {item.rating}{item.reviews ? ` (${item.reviews})` : ''}
               </Text>
             </View>

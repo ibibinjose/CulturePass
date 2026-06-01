@@ -12,8 +12,7 @@ import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { VerificationStatusBanner } from '@/modules/host/components/VerificationStatusBanner';
 import { trackPostPublishActivation } from '@/modules/host/services/formAnalyticsService';
 import { Button } from '@/design-system/ui/Button';
-import { CultureTokens } from '@/design-system/tokens/theme';
-import { Spacing, Radius } from '@/design-system/tokens/theme';
+import { CultureTokens, Spacing, Radius } from '@/design-system/tokens/theme';
 import { useColors } from '@/hooks/useColors';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -64,17 +63,22 @@ export default function HostspaceCreateIndex() {
     profileId?: string | string[];     // For editing existing profiles
   }>();
   
+  const { intent } = params;
+
   // Support both legacy ?category= and new ?profileType= for rich profiles
   const profileTypeRaw = Array.isArray(params.profileType) ? params.profileType[0] : params.profileType;
   const categoryRaw = Array.isArray(params.category) ? params.category[0] : params.category;
   
-  const raw = profileTypeRaw || categoryRaw;
-  const isProfileWizard = !!profileTypeRaw;
+  // Nation Builder intent: default to rich business profile for the full wizard
+  const isNationBuilder = typeof intent === 'string' && intent === 'nation-builder';
+  const effectiveProfileType = profileTypeRaw || (isNationBuilder ? 'business' : undefined);
+  const effectiveCategory = categoryRaw || (isNationBuilder ? undefined : categoryRaw);
+  
+  const raw = effectiveProfileType || effectiveCategory;
+  const isProfileWizard = !!effectiveProfileType;
 
   const draftId = Array.isArray(params.draftId) ? params.draftId[0] : params.draftId;
   const editProfileId = Array.isArray(params.profileId) ? params.profileId[0] : params.profileId;
-
-  const { intent } = params;
   const { user } = useAuth();
   const [showEntitySelector, setShowEntitySelector] = useState(!raw);
 

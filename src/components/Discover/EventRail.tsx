@@ -54,6 +54,7 @@ function EventRailComponent({
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
+          removeClippedSubviews={false}
           contentContainerStyle={[scrollPadStyle, { gap: RAIL_ITEM_GAP }]}
           snapToInterval={RAIL_CARD_WIDTH + RAIL_ITEM_GAP}
           snapToAlignment="start"

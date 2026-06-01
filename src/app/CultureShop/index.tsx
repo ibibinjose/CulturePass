@@ -17,7 +17,7 @@ import {
 } from 'react-native';
 import { router, type Href } from 'expo-router';
 import Head from 'expo-router/head';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import { useQuery } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -56,8 +56,8 @@ function dealGroupLabel(deal: DailyDeal): string {
 }
 
 function CultureShopScreenInner() {
-  const insets = useSafeAreaInsets();
-  const topInset = Platform.OS === 'web' ? 0 : insets.top;
+  const safeInsets = useSafeAreaInsetsWeb();
+  const topInset = safeInsets.top;
   const colors = useColors();
   const { hPad, contentWidth, columnGap, isDesktop, isTablet } = useLayout();
   const { user } = useAuth();
@@ -121,7 +121,7 @@ function CultureShopScreenInner() {
       </Head>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}
+        contentContainerStyle={{ paddingBottom: safeInsets.bottom + 40 }}
         refreshControl={
           <RefreshControl
             refreshing={dealsQuery.isFetching}

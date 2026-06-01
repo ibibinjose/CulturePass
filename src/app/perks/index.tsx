@@ -14,7 +14,7 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { usePerks } from '@/hooks/queries/usePerks';
@@ -26,6 +26,7 @@ import {
   CultureTokens, FontFamily, gradients,
 } from '@/design-system/tokens/theme';
 import type { PerkData } from '@/shared/schema';
+import { useAuth } from '@/lib/auth';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -105,6 +106,22 @@ const PerkCard = React.memo(function PerkCard({
   const expiry = expiryLabel(perk.expiresAt);
   const isExpired = expiry === 'Expired';
 
+  const { user } = useAuth();
+  const userTier = user?.subscriptionTier || 'free';
+  const requiredTier = perk.requiredMembershipTier || (perk.isMembershipRequired ? 'plus' : 'free');
+
+  const rank: Record<string, number> = {
+    free: 0,
+    basic: 1,
+    plus: 2,
+    elite: 3,
+    pro: 4,
+    premium: 5,
+    vip: 6
+  };
+
+  const isLocked = requiredTier !== 'free' && (rank[userTier] ?? 0) < (rank[requiredTier] ?? 0);
+
   return (
     <Animated.View
       entering={FadeInDown.delay(Math.min(index * 50, 350)).springify().damping(18)}
@@ -152,8 +169,18 @@ const PerkCard = React.memo(function PerkCard({
             </View>
           ) : null}
 
+          {/* Locked overlay */}
+          {isLocked ? (
+            <View style={card.lockedOverlay}>
+              <Ionicons name="lock-closed" size={18} color="#FFF" />
+              <Text style={card.lockedText}>
+                {requiredTier.toUpperCase()} REQUIRED
+              </Text>
+            </View>
+          ) : null}
+
           {/* Plus required indicator */}
-          {perk.isMembershipRequired ? (
+          {!isLocked && perk.isMembershipRequired ? (
             <View style={card.plusBadge}>
               <Ionicons name="diamond" size={9} color={CultureTokens.gold} />
               <Text style={card.plusBadgeText}>Plus</Text>
@@ -188,11 +215,11 @@ const PerkCard = React.memo(function PerkCard({
 // ─── Main screen ──────────────────────────────────────────────────────────────
 
 export default function PerksScreen() {
-  const insets = useSafeAreaInsets();
   const colors = useColors();
   const { isDesktop, hPad, columnWidth } = useLayout();
   const handleBack = useSafeBack('/(tabs)');
-  const topInset = Platform.OS === 'web' ? 0 : insets.top;
+  const safeInsets = useSafeAreaInsetsWeb();
+  const topInset = safeInsets.top;
 
   const [selectedFilter, setSelectedFilter] = useState<FilterKey>('all');
   const [search, setSearch] = useState('');
@@ -263,7 +290,7 @@ export default function PerksScreen() {
           {
             paddingHorizontal: hPad,
             paddingTop: 16,
-            paddingBottom: insets.bottom + 48,
+            paddingBottom: safeInsets.bottom + 48,
           },
         ]}
       >
@@ -439,4 +466,17 @@ const card = StyleSheet.create({
   title: { fontFamily: FontFamily.bold, fontSize: 14, lineHeight: 20 },
   expiryRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
   expiryText: { fontFamily: FontFamily.regular, fontSize: 11 },
+  lockedOverlay: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: 'rgba(30,20,60,0.72)',
+    alignItems: 'center', justifyContent: 'center',
+    gap: 4,
+  },
+  lockedText: {
+    fontFamily: FontFamily.semibold,
+    fontSize: 10,
+    color: '#FFF',
+    textAlign: 'center',
+    paddingHorizontal: 8,
+  },
 });

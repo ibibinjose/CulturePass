@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, ScrollView, Platform, StyleSheet, RefreshControlProps } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useColors } from '@/hooks/useColors';
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
+import { useM3Colors } from '@/hooks/useM3Colors';
 import { useLayout } from '@/hooks/useLayout';
 import { useBrowseData } from '@/hooks/useBrowseData';
 import { FilterChipRow } from '@/modules/core/components';
@@ -58,11 +58,11 @@ export default function BrowsePage({
   selectedCategoryId,
   onCategoryChange,
 }: BrowsePageProps) {
-  const colors = useColors();
-  const insets = useSafeAreaInsets();
+  const m3Colors = useM3Colors();
+  const insets = useSafeAreaInsetsWeb();
   const { isDesktop, contentWidth, hPad } = useLayout();
-  const topInset = Platform.OS === 'web' ? 0 : insets.top;
-  const bottomInset = Platform.OS === 'web' ? 34 : insets.bottom;
+  const topInset = insets.top;
+  const bottomInset = insets.bottom;
 
   const {
     selectedCat,
@@ -80,7 +80,7 @@ export default function BrowsePage({
   });
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: topInset + 16 }]}>
+    <View style={[styles.container, { backgroundColor: m3Colors.background, paddingTop: topInset + 16 }]}>
       <View style={isDesktop && { width: contentWidth + hPad * 2, alignSelf: 'center' }}>
         <BrowseHeader
           title={title}

@@ -1,14 +1,13 @@
-import { Platform } from 'react-native';
 import { useLocalSearchParams, usePathname } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 
 export function useEventDetailRouteState() {
   const { id } = useLocalSearchParams<{ id?: string }>();
   const pathname = usePathname();
-  const insets = useSafeAreaInsets();
+  const insets = useSafeAreaInsetsWeb();
   const eventId = typeof id === 'string' ? id : '';
-  const topInset = Platform.OS === 'web' ? 0 : insets.top;
-  const bottomInset = Platform.OS === 'web' ? 20 : Math.max(insets.bottom, 20);
+  const topInset = insets.top;
+  const bottomInset = Math.max(insets.bottom, 20);
 
   return {
     eventId,

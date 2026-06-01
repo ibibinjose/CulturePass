@@ -30,9 +30,19 @@ import { getCurrencyForCountry, formatCurrency } from '@/lib/currency';
 import { captureTicketPurchaseCompleted } from '@/lib/analytics';
 import { useSafeBack } from '@/lib/navigation';
 
+import { StripeNativeProvider, useSafeStripe } from '@/lib/stripe-wrapper';
+
 const isWeb = Platform.OS === 'web';
 
 export default function CheckoutPage() {
+  return (
+    <StripeNativeProvider>
+      <CheckoutPageInner />
+    </StripeNativeProvider>
+  );
+}
+
+function CheckoutPageInner() {
   const params = useLocalSearchParams();
   const eventId = params.eventId as string;
   const dismissCheckout = useSafeBack(eventId ? `/e/${eventId}` : '/(tabs)');
@@ -43,6 +53,7 @@ export default function CheckoutPage() {
   const insets = useSafeAreaInsets();
   const colors = useColors();
   const { userId } = useAuth();
+  const { initPaymentSheet, presentPaymentSheet } = useSafeStripe();
 
   const [promoCode, setPromoCode] = useState('');
   const [promoLoading, setPromoLoading] = useState(false);
@@ -50,13 +61,25 @@ export default function CheckoutPage() {
   const [validatedPromoCode, setValidatedPromoCode] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const [usePoints, setUsePoints] = useState(false);
+  const [familyNames, setFamilyNames] = useState<string[]>(Array(Math.max(0, quantity - 1)).fill(''));
+
   const { data: event, isLoading: eventLoading } = useQuery<EventData>({
     queryKey: ['/api/events', eventId],
     queryFn: () => modulesApi.events.get(eventId) as Promise<EventData>,
     enabled: !!eventId,
   });
 
-  const totalPriceCents = Math.max(0, (basePriceCents * quantity) - promoDiscount);
+  const { data: rewards } = useQuery({
+    queryKey: ['/api/rewards', userId],
+    queryFn: () => modulesApi.rewards.get(userId!),
+    enabled: !!userId,
+  });
+
+  const availablePoints = rewards?.points ?? 0;
+  const totalPriceBeforePoints = Math.max(0, (basePriceCents * quantity) - promoDiscount);
+  const pointsDiscount = usePoints ? Math.min(availablePoints, totalPriceBeforePoints) : 0;
+  const totalPriceCents = totalPriceBeforePoints - pointsDiscount;
 
   const handleApplyPromo = async () => {
     if (!promoCode.trim() || !eventId) return;
@@ -85,9 +108,27 @@ export default function CheckoutPage() {
     setLoading(true);
     if (!isWeb) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
+    const familyString = familyNames.filter(Boolean).join(', ');
+
+    const assignFamilyDetails = async (ticketId: string) => {
+      if (familyString) {
+        try {
+          await modulesApi.tickets.assign(ticketId, { familyMemberName: familyString });
+        } catch (e) {
+          if (__DEV__) console.warn('Failed to assign family details:', e);
+        }
+      }
+    };
+
     try {
-      if (totalPriceCents === 0) {
-        const t = await modulesApi.tickets.purchase({ eventId, tierId: tierName, quantity, promoCode: validatedPromoCode ?? undefined });
+      if (totalPriceBeforePoints === 0) {
+        const t = await modulesApi.tickets.purchase({
+          eventId,
+          tierId: tierName,
+          quantity,
+          promoCode: validatedPromoCode ?? undefined,
+          familyMemberId: familyString || undefined,
+        });
         if (event) {
           captureTicketPurchaseCompleted({
             ticket_id: t.id,
@@ -103,14 +144,107 @@ export default function CheckoutPage() {
         router.replace('/(tabs)');
         return;
       }
-      const session = await modulesApi.stripe.createCheckoutSession({
-        eventId, eventTitle: event?.title, eventDate: event?.date,
-        tierName, quantity, totalPriceCents, currency: getCurrencyForCountry(event?.country),
-        promoCode: validatedPromoCode ?? undefined,
-      });
-      if (session.checkoutUrl) {
-        if (isWeb) window.location.href = session.checkoutUrl;
-        else await WebBrowser.openBrowserAsync(session.checkoutUrl);
+
+      if (isWeb) {
+        const session = await modulesApi.stripe.createCheckoutSession({
+          eventId, eventTitle: event?.title, eventDate: event?.date,
+          tierName, quantity, totalPriceCents, currency: getCurrencyForCountry(event?.country),
+          promoCode: validatedPromoCode ?? undefined,
+          redeemPoints: usePoints ? pointsDiscount : undefined,
+        });
+
+        if (session.directConfirmation) {
+          if (event) {
+            captureTicketPurchaseCompleted({
+              ticket_id: session.ticketId,
+              event_id: event.id,
+              publisher_profile_id: event.publisherProfileId ?? null,
+              venue_profile_id: event.venueProfileId ?? null,
+              organizer_id: event.organizerId ?? null,
+              quantity: quantity,
+              total_price_cents: 0,
+              source: 'checkout_free_ticket',
+            });
+          }
+          await assignFamilyDetails(session.ticketId);
+          router.replace(`/payment/success?ticketId=${session.ticketId}`);
+          return;
+        }
+
+        if (session.checkoutUrl) {
+          window.location.href = session.checkoutUrl;
+        }
+      } else {
+        const response = await modulesApi.stripe.createPaymentIntent({
+          eventId, eventTitle: event?.title, eventDate: event?.date,
+          tierName, quantity, totalPriceCents, currency: getCurrencyForCountry(event?.country),
+          promoCode: validatedPromoCode ?? undefined,
+          redeemPoints: usePoints ? pointsDiscount : undefined,
+        });
+
+        if (response.directConfirmation) {
+          if (event) {
+            captureTicketPurchaseCompleted({
+              ticket_id: response.ticketId,
+              event_id: event.id,
+              publisher_profile_id: event.publisherProfileId ?? null,
+              venue_profile_id: event.venueProfileId ?? null,
+              organizer_id: event.organizerId ?? null,
+              quantity: quantity,
+              total_price_cents: 0,
+              source: 'checkout_free_ticket',
+            });
+          }
+          await assignFamilyDetails(response.ticketId);
+          router.replace(`/payment/success?ticketId=${response.ticketId}`);
+          return;
+        }
+
+        const { error: initError } = await initPaymentSheet({
+          merchantDisplayName: 'CulturePass',
+          customerId: response.customer,
+          customerEphemeralKeySecret: response.ephemeralKey,
+          paymentIntentClientSecret: response.paymentIntent,
+          allowsDelayedPaymentMethods: false,
+          style: 'alwaysDark',
+          applePay: {
+            merchantCountryCode: 'AU',
+          },
+          googlePay: {
+            merchantCountryCode: 'AU',
+            testEnv: true,
+          },
+        });
+
+        if (initError) {
+          Alert.alert('Payment Initialisation Failed', initError.message);
+          return;
+        }
+
+        const { error: presentError } = await presentPaymentSheet();
+        if (presentError) {
+          if (presentError.code === 'Canceled') {
+            return;
+          }
+          Alert.alert('Payment Failed', presentError.message);
+          return;
+        }
+
+        if (event) {
+          captureTicketPurchaseCompleted({
+            ticket_id: response.ticketId,
+            event_id: event.id,
+            publisher_profile_id: event.publisherProfileId ?? null,
+            venue_profile_id: event.venueProfileId ?? null,
+            organizer_id: event.organizerId ?? null,
+            quantity: quantity,
+            total_price_cents: totalPriceCents,
+            source: 'stripe_web_checkout_return',
+          });
+        }
+
+        await assignFamilyDetails(response.ticketId);
+        router.replace(`/payment/success?ticketId=${response.ticketId}`);
       }
     } catch (error) {
       Alert.alert('Error', error instanceof Error ? error.message : 'Unknown error');
@@ -233,16 +367,109 @@ export default function CheckoutPage() {
             <M3Button variant="filled" loading={promoLoading} onPress={() => void handleApplyPromo()} style={styles.promoBtn}>Apply</M3Button>
           </View>
 
+          {quantity > 1 && (
+            <View style={{ marginTop: 24, gap: 12 }}>
+              <Text style={{ fontFamily: 'Poppins_600SemiBold', fontSize: 15, color: colors.text }}>
+                👥 Family & Guest Details
+              </Text>
+              <Text style={{ fontFamily: 'Poppins_400Regular', fontSize: 12, color: colors.textSecondary, marginBottom: 4 }}>
+                Personalise each ticket for seamless admission check-in.
+              </Text>
+              
+              {/* Ticket 1: Primary Purchaser */}
+              <View style={[styles.familyInputRow, { borderColor: colors.borderLight, backgroundColor: colors.surface, opacity: 0.8 }]}>
+                <Ionicons name="person" size={16} color={colors.primary} />
+                <Text style={{ fontFamily: 'Poppins_500Medium', fontSize: 14, color: colors.text, flex: 1, marginLeft: 8 }}>
+                  Ticket 1: Me (Primary)
+                </Text>
+              </View>
+
+              {/* Guests / Family Tickets */}
+              {Array.from({ length: quantity - 1 }).map((_, index) => (
+                <View key={`guest-${index}`} style={[styles.familyInputRow, { borderColor: colors.borderLight, backgroundColor: colors.surface }]}>
+                  <Ionicons name="person-add" size={16} color={colors.textTertiary} />
+                  <TextInput
+                    style={{ flex: 1, fontFamily: 'Poppins_400Regular', fontSize: 14, color: colors.text, marginLeft: 8, padding: 0 }}
+                    placeholder={`Ticket ${index + 2}: Family Member / Guest Name`}
+                    placeholderTextColor={colors.textTertiary}
+                    value={familyNames[index] || ''}
+                    onChangeText={(txt) => {
+                      const next = [...familyNames];
+                      next[index] = txt;
+                      setFamilyNames(next);
+                    }}
+                    accessibilityLabel={`Guest ${index + 2} name`}
+                  />
+                </View>
+              ))}
+            </View>
+          )}
+
+          {availablePoints > 0 && (
+            <M3Card variant="filled" style={[styles.pointsCard, { backgroundColor: colors.surfaceElevated, borderColor: colors.borderLight, borderWidth: 1, marginTop: 16 }]}>
+              <View style={[styles.row, { padding: 4 }]}>
+                <View style={{ flex: 1, gap: 4 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Ionicons name="gift-outline" size={16} color={CultureTokens.gold} />
+                    <Text style={{ fontFamily: 'Poppins_600SemiBold', fontSize: 14, color: colors.text }}>
+                      Redeem Rewards Points
+                    </Text>
+                  </View>
+                  <Text style={{ fontFamily: 'Poppins_400Regular', fontSize: 12, color: colors.textSecondary }}>
+                    {availablePoints} points available ({formatCurrency(availablePoints, event?.country)} value)
+                  </Text>
+                </View>
+                <Pressable
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setUsePoints(!usePoints);
+                  }}
+                  style={{
+                    width: 48,
+                    height: 28,
+                    borderRadius: 14,
+                    backgroundColor: usePoints ? colors.primary : colors.borderLight,
+                    justifyContent: 'center',
+                    paddingHorizontal: 2,
+                  }}
+                >
+                  <View
+                    style={{
+                      width: 24,
+                      height: 24,
+                      borderRadius: 12,
+                      backgroundColor: '#FFF',
+                      alignSelf: usePoints ? 'flex-end' : 'flex-start',
+                    }}
+                  />
+                </Pressable>
+              </View>
+            </M3Card>
+          )}
+
           <View style={styles.footer}>
+            {promoDiscount > 0 && (
+              <View style={[styles.row, { marginBottom: 8 }]}>
+                <Text style={{ fontFamily: 'Poppins_400Regular', fontSize: 14, color: colors.textSecondary }}>Promo Discount</Text>
+                <Text style={{ fontFamily: 'Poppins_600SemiBold', fontSize: 14, color: CultureTokens.teal }}>
+                  -{formatCurrency(promoDiscount, event?.country)}
+                </Text>
+              </View>
+            )}
+            {pointsDiscount > 0 && (
+              <View style={[styles.row, { marginBottom: 8 }]}>
+                <Text style={{ fontFamily: 'Poppins_400Regular', fontSize: 14, color: colors.textSecondary }}>Points Applied</Text>
+                <Text style={{ fontFamily: 'Poppins_600SemiBold', fontSize: 14, color: CultureTokens.teal }}>
+                  -{formatCurrency(pointsDiscount, event?.country)} ({pointsDiscount} pts)
+                </Text>
+              </View>
+            )}
             <View style={styles.row}>
               <Text style={[styles.totalLabel, { color: colors.text }]}>Total</Text>
               <Text style={[styles.totalValue, { color: CultureTokens.gold }]}>
                 {totalPriceCents === 0 ? 'Free' : formatCurrency(totalPriceCents, event?.country)}
               </Text>
             </View>
-            {promoDiscount > 0 && (
-              <Text style={styles.discountTag}>-{formatCurrency(promoDiscount, event?.country)} promo applied</Text>
-            )}
 
             <M3Button
               variant="filled"
@@ -294,6 +521,7 @@ const styles = StyleSheet.create({
   eventTitle: { ...TextStyles.title3 },
   eventMeta: { ...TextStyles.chip, marginTop: 4 },
   summaryCard: { borderRadius: 24, backgroundColor: 'rgba(0,0,0,0.02)' },
+  pointsCard: { padding: 12, borderRadius: 16 },
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   label: { ...TextStyles.label },
   value: { ...TextStyles.cardTitle },
@@ -308,4 +536,12 @@ const styles = StyleSheet.create({
   payBtn: { marginTop: 24, height: 60, borderRadius: 20 },
   payBtnText: { color: '#fff', ...TextStyles.title3 },
   secureText: { textAlign: 'center', marginTop: 16, ...TextStyles.badge, opacity: 0.6 },
+  familyInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 52,
+    borderRadius: 16,
+    borderWidth: 1,
+    paddingHorizontal: 16,
+  },
 });

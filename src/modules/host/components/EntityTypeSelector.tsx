@@ -3,7 +3,7 @@ import { Platform, Pressable, ScrollView, StyleSheet, Text, View, Modal } from '
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import { router } from 'expo-router';
 
 import { useColors } from '@/hooks/useColors';
@@ -103,10 +103,10 @@ const CATEGORY_LABELS: Record<string, string> = {
 
 export function EntityTypeSelector({ onSelect, existingProfiles = [], intent }: EntityTypeSelectorProps) {
   const colors = useColors();
-  const insets = useSafeAreaInsets();
   const { hPad, isDesktop, isCompact } = useLayout();
 
-  const topInset = Platform.OS === 'web' ? 0 : insets.top;
+  const safeInsets = useSafeAreaInsetsWeb();
+  const topInset = safeInsets.top;
   const isNationBuilder = intent === 'nation-builder';
 
   // Mobile quick actions bottom sheet
@@ -180,7 +180,7 @@ export function EntityTypeSelector({ onSelect, existingProfiles = [], intent }: 
                   </Badge>
                 )}
                 {/* Phase 1 Unification indicator */}
-                {['business', 'venue', 'artist', 'professional', 'organizer', 'community'].includes(entity.type) && (
+                {['business', 'venue', 'artist', 'professional', 'organiser', 'community'].includes(entity.type) && (
                   <Badge
                     variant="success"
                     size="sm"

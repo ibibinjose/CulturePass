@@ -2,7 +2,7 @@
 
 **Priority**: High (directly from TheApp.md roadmap + user direction after Slice 1)
 **Owner**: Engineering
-**Status**: Planning (ready for execution after user GO)
+**Status**: Completed (un-stubbed LocationField, added integration tests, verified compile)
 **Branch Strategy**: New branch `feat/slice2-geohash-nearest-council` from `fix/luxe-foundation-stabilize`
 **Risk Level**: Medium (location data + discover filtering; no payments or auth changes)
 

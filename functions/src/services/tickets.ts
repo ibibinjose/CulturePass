@@ -17,6 +17,12 @@ export interface FirestoreTicket {
   cashbackCreditedAt?: string;
   rewardPointsEarned?: number;
   rewardPointsAwardedAt?: string;
+
+  // Points redemption (CulturePass wallet)
+  pointsRedeemed?: number;
+  pointsDiscountCents?: number;
+  pointsRedeemedDeductedAt?: string;
+
   eventTitle?: string;
   eventDate?: string;
   eventVenue?: string;

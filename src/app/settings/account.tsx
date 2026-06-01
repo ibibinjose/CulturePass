@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { Stack, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import * as Haptics from 'expo-haptics';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { updateEmail, updatePassword, reauthenticateWithCredential, EmailAuthProvider, type User as FirebaseUser } from 'firebase/auth';
@@ -289,15 +289,15 @@ function ChangeEmailModal({
 // Main Screen
 // ─────────────────────────────────────────────────────────────────────────────
 export default function AccountSettingsScreen() {
-  const insets = useSafeAreaInsets();
   const colors = useColors();
   const { width } = useWindowDimensions();
   const { user: authUser, logout, sendVerificationEmail, emailVerified, updateUserProfile, refreshUser } = useAuth();
   const { isAdmin } = useRole();
   const queryClient = useQueryClient();
 
-  const topInset = Platform.OS === 'web' ? 0 : insets.top;
-  const bottomInset = Platform.OS === 'web' ? 28 : insets.bottom + 24;
+  const safeInsets = useSafeAreaInsetsWeb();
+  const topInset = safeInsets.top;
+  const bottomInset = safeInsets.bottom + 24;
   const isWide = width >= 900;
 
   const { data: serverUser } = useQuery<AccountUser>({

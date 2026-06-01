@@ -6,9 +6,9 @@ export declare const ProfileVersionSchema: z.ZodObject<{
     data: z.ZodObject<{
         id: z.ZodString;
         entityType: z.ZodEnum<{
+            venue: "venue";
             community: "community";
             organiser: "organiser";
-            venue: "venue";
             business: "business";
             artist: "artist";
             professional: "professional";
@@ -80,6 +80,7 @@ export declare const ProfileVersionSchema: z.ZodObject<{
         tagline: z.ZodString;
         description: z.ZodString;
         categoryTags: z.ZodArray<z.ZodString>;
+        indigenousTags: z.ZodOptional<z.ZodArray<z.ZodString>>;
         metaDescription: z.ZodString;
         abn: z.ZodOptional<z.ZodString>;
         acn: z.ZodOptional<z.ZodString>;
@@ -342,14 +343,12 @@ export declare const ProfileVersionSchema: z.ZodObject<{
 }, z.core.$strip>;
 export type ProfileVersion = z.infer<typeof ProfileVersionSchema>;
 export declare const CreateProfileVersionSchema: z.ZodObject<{
-    profileId: z.ZodString;
-    versionNumber: z.ZodNumber;
     data: z.ZodObject<{
         id: z.ZodString;
         entityType: z.ZodEnum<{
+            venue: "venue";
             community: "community";
             organiser: "organiser";
-            venue: "venue";
             business: "business";
             artist: "artist";
             professional: "professional";
@@ -421,6 +420,7 @@ export declare const CreateProfileVersionSchema: z.ZodObject<{
         tagline: z.ZodString;
         description: z.ZodString;
         categoryTags: z.ZodArray<z.ZodString>;
+        indigenousTags: z.ZodOptional<z.ZodArray<z.ZodString>>;
         metaDescription: z.ZodString;
         abn: z.ZodOptional<z.ZodString>;
         acn: z.ZodOptional<z.ZodString>;
@@ -676,6 +676,8 @@ export declare const CreateProfileVersionSchema: z.ZodObject<{
         searchAppearances: z.ZodDefault<z.ZodNumber>;
         engagementScore: z.ZodDefault<z.ZodNumber>;
     }, z.core.$strip>;
+    profileId: z.ZodString;
+    versionNumber: z.ZodNumber;
     changedFields: z.ZodDefault<z.ZodArray<z.ZodString>>;
     changedBy: z.ZodString;
     changeReason: z.ZodOptional<z.ZodString>;
@@ -693,3 +695,4 @@ export declare const ProfileVersionDiffSchema: z.ZodObject<{
     changedAt: z.ZodString;
 }, z.core.$strip>;
 export type ProfileVersionDiff = z.infer<typeof ProfileVersionDiffSchema>;
+//# sourceMappingURL=hostProfileVersion.d.ts.map

@@ -36,14 +36,14 @@ export default function NationBuildersProgramScreen() {
   const insets = useSafeAreaInsets();
 
   const handleJoinPress = () => {
-    // Primary CTA for businesses (acquisition) — send to host application with Nation Builder Partner intent.
+    // Primary CTA for businesses (acquisition) — send to host creation with Nation Builder Partner intent.
     // This is the key entry point for bringing venues/businesses onto the platform.
-    router.push('/hostspace/apply?intent=nation-builder' as any);
+    router.push('/hostspace/create?intent=nation-builder' as any);
   };
 
   const handleStaffClaim = () => {
-    // Staff / essential worker path — go to the rich program page or membership flow
-    router.push('/NationBuildersProgram');
+    // Staff / essential worker path — go to the membership upgrade flow to redeem code
+    router.push('/membership/upgrade' as any);
   };
 
   const handleBackPress = () => {

@@ -6,7 +6,7 @@ import {
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { modulesApi } from '@/modules/api';
 import { useOnboarding } from '@/contexts/OnboardingContext';
@@ -184,9 +184,9 @@ const RestaurantCard = React.memo(function RestaurantCard({
 // ─── Main screen ──────────────────────────────────────────────────────────────
 
 function RestaurantsScreen() {
-  const insets = useSafeAreaInsets();
-  const topInset = Platform.OS === 'web' ? 0 : insets.top;
-  const bottomInset = Platform.OS === 'web' ? 0 : insets.bottom;
+  const safeInsets = useSafeAreaInsetsWeb();
+  const topInset = safeInsets.top;
+  const bottomInset = safeInsets.bottom;
   const colors = useColors();
   const { state } = useOnboarding();
   const { isDesktop, hPad } = useLayout();

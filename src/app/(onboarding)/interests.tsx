@@ -9,35 +9,27 @@ import {
   Alert,
   type DimensionValue,
 } from 'react-native';
-import { CultureTokens } from '@/design-system/tokens/theme';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import Animated, { FadeInDown, FadeInUp, Layout as ReanimatedLayout } from 'react-native-reanimated';
 
-import { useColors } from '@/hooks/useColors';
 import { useM3Colors } from '@/hooks/useM3Colors';
 import { useLayout } from '@/hooks/useLayout';
 import { luxeDark } from '@/design-system/tokens/luxeHeritage';
 import { LuxeText } from '@/design-system/ui/LuxeText';
 import { LuxeButton } from '@/design-system/ui/LuxeButton';
 import { LuxeFilterChip } from '@/design-system/ui/LuxeFilterChip';
+import { LuxeCard } from '@/design-system/ui/LuxeCard';
 import { M3TopAppBar } from '@/design-system/ui/M3TopAppBar';
 import { useInterestsSelection } from '@/hooks/useInterestsSelection';
-// Local minimal types to match the simplified data used in this onboarding screen
-// (full InterestCategory/Interest live in shared/schema but resolution + shape mismatch in current visual work)
-// Local simplified types for this screen's data model
-type Interest = { id?: string; name: string; icon?: string };
-type InterestCategory = {
-  id: string;
-  title: string;
-  emoji?: string;
-  interests: (string | Interest)[];
-  accentColor?: string;
-  softColor?: string;
-};
-
+import { OnboardingProgressHeader } from '@/components/onboarding/OnboardingProgressHeader';
+import {
+  interestCategories,
+  popularInterestsSydney,
+  interestIcons,
+} from '@/constants/onboardingInterests';
 
 const CATEGORY_EMOJI: Record<string, string> = {
   cultural: '🎭',
@@ -50,51 +42,10 @@ const CATEGORY_EMOJI: Record<string, string> = {
   format:   '🎟️',
 };
 
-// Define the missing constants locally
-const popularInterestsSydney: string[] = ['Food & Dining', 'Arts & Culture', 'Music & Festivals', 'Community Events'];
-const interestIcons: Record<string, string> = { 'Food & Dining': '🍽️', 'Arts & Culture': '🎨', 'Music & Festivals': '🎵', 'Community Events': '👥' };
-const interestCategories: { id: string; title: string; emoji: string; interests: string[]; accentColor?: string }[] = [
-  { id: 'cultural', title: 'Cultural', emoji: '🎭', interests: [], accentColor: '#E36A4E' },
-  { id: 'arts',     title: 'Arts',     emoji: '🎨', interests: [], accentColor: '#F5A623' },
-  { id: 'food',     title: 'Food',     emoji: '🍛', interests: [], accentColor: '#0A8C7F' },
-  { id: 'business', title: 'Business', emoji: '💼', interests: [], accentColor: '#4A5EBF' },
-  { id: 'family',   title: 'Family',   emoji: '👨‍👩‍👧', interests: [], accentColor: '#6B7F6B' },
-  { id: 'civic',    title: 'Civic',    emoji: '🏙️', interests: [], accentColor: '#8B5E3C' },
-  { id: 'wellness', title: 'Wellness', emoji: '🧘', interests: [], accentColor: '#0D9488' },
-  { id: 'format',   title: 'Format',   emoji: '🎟️', interests: [], accentColor: '#9333EA' },
-];
-
-// Define the minimum required interests constant
-const MIN_REQUIRED = 3; // kept for future enforcement
-
-// ---------------------------------------------------------------------------
-// InterestChip
-// ---------------------------------------------------------------------------
-const InterestChip = React.memo(function InterestChip({
-  interest, icon, isSelected, onPress,
-}: {
-  interest: string;
-  icon: string;
-  isSelected: boolean;
-  accentColor: string;
-  onPress: () => void;
-  colors: ReturnType<typeof useColors>;
-}) {
-  return (
-    <LuxeFilterChip
-        label={interest}
-        selected={isSelected}
-        onPress={onPress}
-        icon={icon as any}
-    />
-  );
-});
-
 // ---------------------------------------------------------------------------
 // Main screen
 // ---------------------------------------------------------------------------
 export default function InterestsScreen() {
-  const colors = useColors();
   const m3Colors = useM3Colors();
   const { isDesktop, windowSizeClass } = useLayout();
   const insets = useSafeAreaInsets();
@@ -131,7 +82,6 @@ export default function InterestsScreen() {
   return (
     <View style={[s.root, { backgroundColor: m3Colors.background }]}>
 
-      {/* Header */}
       <M3TopAppBar
         title="Interests"
         onBack={() => router.canGoBack() ? router.back() : router.replace('/(onboarding)/communities')}
@@ -144,6 +94,8 @@ export default function InterestsScreen() {
           />
         }
       />
+
+      <OnboardingProgressHeader currentStep="interests" />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -186,23 +138,31 @@ export default function InterestsScreen() {
           {/* Popular picks */}
           <Animated.View entering={FadeInDown.springify().damping(15).delay(200)} style={s.section}>
             <LuxeText variant="badgeCaps" style={{ color: luxeDark.textSecondary, marginBottom: 16 }}>POPULAR NEAR YOU</LuxeText>
-            <View style={s.chipWrap}>
+            {/* Popular interests — vertical list top to bottom */}
+            <View style={s.interestList}>
               {popularInterestsSydney.map(interest => {
-                const cat = interestCategories.find(c => 
-                  c.interests.includes(interest) || c.title.toLowerCase().includes(interest.toLowerCase().split(' ')[0])
-                );
-                const accent = cat?.accentColor ?? CultureTokens.gold;
+                const isSelected = selectedSet.has(interest);
                 const icon = interestIcons[interest] ?? 'star';
                 return (
-                  <InterestChip
+                  <LuxeCard
                     key={interest}
-                    interest={interest}
-                    icon={icon}
-                    isSelected={selectedSet.has(interest)}
-                    accentColor={accent}
-                    colors={colors}
+                    variant={isSelected ? "tonal" : "default"}
                     onPress={() => toggle(interest)}
-                  />
+                    style={s.interestCard}
+                  >
+                    <View style={{ flexDirection: 'row', alignItems: 'center', padding: 14, gap: 14 }}>
+                      <Text style={{ fontSize: 18 }}>{icon}</Text>
+                      <LuxeText 
+                        variant="bodyMedium" 
+                        style={{ color: isSelected ? luxeDark.onPrimaryContainer : luxeDark.text, flex: 1 }}
+                      >
+                        {interest}
+                      </LuxeText>
+                      {isSelected && (
+                        <Ionicons name="checkmark-circle" size={20} color={luxeDark.onPrimaryContainer} />
+                      )}
+                    </View>
+                  </LuxeCard>
                 );
               })}
             </View>
@@ -215,7 +175,6 @@ export default function InterestsScreen() {
             const isOpen = expanded[category.id] ?? false;
             const countInCat = category.interests.filter(i => selectedSet.has(i)).length;
             const allSelected = category.interests.every(i => selectedSet.has(i));
-            const accent = category.accentColor;
             const emoji = CATEGORY_EMOJI[category.id as keyof typeof CATEGORY_EMOJI] ?? '•';
 
             return (
@@ -245,7 +204,7 @@ export default function InterestsScreen() {
                     <LuxeButton
                         variant="glass"
                         size="sm"
-                        onPress={() => toggleAll(category as any)}
+                        onPress={() => toggleAll(category)}
                     >
                         {allSelected ? 'Clear' : 'All'}
                     </LuxeButton>
@@ -261,19 +220,30 @@ export default function InterestsScreen() {
                 </View>
 
                 {isOpen && (
-                  <Animated.View entering={FadeInUp.duration(200)} layout={ReanimatedLayout.springify().damping(16)} style={s.chipWrap}>
+                  <Animated.View entering={FadeInUp.duration(200)} layout={ReanimatedLayout.springify().damping(16)} style={s.interestList}>
                     {category.interests.map(interest => {
+                      const isSelected = selectedSet.has(interest);
                       const icon = interestIcons[interest] ?? 'star';
                       return (
-                        <InterestChip
+                        <LuxeCard
                           key={interest}
-                          interest={interest}
-                          icon={icon}
-                          isSelected={selectedSet.has(interest)}
-                          accentColor={accent ?? luxeDark.primary}
-                          colors={colors}
+                          variant={isSelected ? "tonal" : "default"}
                           onPress={() => toggle(interest)}
-                        />
+                          style={s.interestCard}
+                        >
+                          <View style={{ flexDirection: 'row', alignItems: 'center', padding: 14, gap: 14 }}>
+                            <Text style={{ fontSize: 16 }}>{icon}</Text>
+                            <LuxeText 
+                              variant="body" 
+                              style={{ color: isSelected ? luxeDark.onPrimaryContainer : luxeDark.text, flex: 1 }}
+                            >
+                              {interest}
+                            </LuxeText>
+                            {isSelected && (
+                              <Ionicons name="checkmark-circle" size={20} color={luxeDark.onPrimaryContainer} />
+                            )}
+                          </View>
+                        </LuxeCard>
                       );
                     })}
                   </Animated.View>
@@ -426,5 +396,14 @@ const s = StyleSheet.create({
   },
   remainingText: {
     textAlign: 'center',
+  },
+
+  // Vertical interest lists (popular + category accordions) — top to bottom, full width, same pattern as States/City
+  interestList: {
+    gap: 10,
+  },
+  interestCard: {
+    width: '100%',
+    borderRadius: 16,
   },
 });

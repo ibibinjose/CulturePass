@@ -12,7 +12,10 @@ import {
   Pressable,
   StyleSheet,
   Platform,
+  Easing,
+  Animated as RNAnimated,
 } from 'react-native';
+import Svg, { Circle, Line } from 'react-native-svg';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import Head from 'expo-router/head';
@@ -33,7 +36,6 @@ import {
   FontFamily,
   Spacing,
   CultureTokens,
-  gradients,
   Radius,
 } from '@/design-system/tokens/theme';
 import { isCultureKeralaHost } from '@/lib/domainHost';
@@ -101,6 +103,26 @@ export default function DiscoverScreen() {
   const { isDesktop, contentWidth, hPad } = useLayout();
   const scrollBottomPad = useTabScrollBottomPadding(28);
   const [keralaDomain, setKeralaDomain] = useState(false);
+
+  // Slow continuous background spin animation for the CultureWheel promo card decoration
+  const bgWheelAnim = useRef(new RNAnimated.Value(0)).current;
+  useEffect(() => {
+    const anim = RNAnimated.loop(
+      RNAnimated.timing(bgWheelAnim, {
+        toValue: 360,
+        duration: 40000, // 40 seconds per rotation for a premium slow motion feel
+        easing: Easing.linear,
+        useNativeDriver: Platform.OS !== 'web',
+      })
+    );
+    anim.start();
+    return () => anim.stop();
+  }, [bgWheelAnim]);
+
+  const bgRotateInterpolate = bgWheelAnim.interpolate({
+    inputRange: [0, 360],
+    outputRange: ['0deg', '360deg'],
+  });
 
   // On web desktop the sticky sidebar + root maxWidth already constrain the area.
   // Use a modest internal side padding (matches the new rail insets) so nothing
@@ -415,18 +437,17 @@ export default function DiscoverScreen() {
                 marginHorizontal: pageSidePad,
                 marginBottom: Spacing.md,
                 borderRadius: Radius.lg,
-                borderWidth: 1.5,
-                borderColor: isDark ? 'rgba(255, 215, 0, 0.12)' : 'rgba(218, 165, 32, 0.18)',
-                backgroundColor: isDark ? 'rgba(30, 30, 35, 0.65)' : 'rgba(255, 255, 255, 0.75)',
+                borderWidth: 1,
+                borderColor: isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.05)',
                 overflow: 'hidden',
-                transform: [{ scale: pressed ? 0.98 : (hovered ? 1.01 : 1) }],
+                transform: [{ scale: pressed ? 0.985 : (hovered ? 1.015 : 1) }],
                 ...Platform.select({
                   web: {
                     boxShadow: hovered 
-                      ? '0 12px 32px rgba(126, 87, 194, 0.12)' 
-                      : '0 4px 12px rgba(0,0,0,0.02)',
-                    backdropFilter: 'blur(16px)',
-                    transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+                      ? '0 16px 36px rgba(126, 87, 194, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.15)' 
+                      : '0 4px 16px rgba(0, 0, 0, 0.06)',
+                    backdropFilter: 'blur(20px)',
+                    transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
                     cursor: 'pointer',
                   },
                 }),
@@ -436,48 +457,133 @@ export default function DiscoverScreen() {
             <LinearGradient
               colors={
                 isDark
-                  ? ['rgba(126, 87, 194, 0.15)', 'rgba(255, 112, 67, 0.12)']
-                  : ['rgba(126, 87, 194, 0.06)', 'rgba(255, 112, 67, 0.05)']
+                  ? ['#E64A19', '#880E4F', '#4A148C'] // Deep Terracotta -> Deep Plum -> Indigo/Violet
+                  : ['#FF7043', '#EC407A', '#7E57C2'] // Warm Terracotta -> Rose Pink -> Vibrant Purple
               }
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              style={{ padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12 }}
+              style={{ padding: 18, flexDirection: 'row', alignItems: 'center', gap: 14, position: 'relative', overflow: 'hidden' }}
             >
-              <View 
-                style={{ 
-                  width: 44, 
-                  height: 44, 
-                  borderRadius: 22, 
-                  backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)',
-                  alignItems: 'center', 
-                  justifyContent: 'center',
+              {/* Spinning/glowing wheel blueprint vector in background */}
+              <RNAnimated.View
+                style={{
+                  position: 'absolute',
+                  right: -35,
+                  top: -30,
+                  width: 170,
+                  height: 170,
+                  opacity: isDark ? 0.16 : 0.26,
+                  transform: [{ rotate: bgRotateInterpolate }],
+                  pointerEvents: 'none',
                 }}
               >
-                <Text style={{ fontSize: 24 }}>🎡</Text>
+                <Svg width="170" height="170" viewBox="0 0 100 100">
+                  <Circle cx="50" cy="50" r="45" stroke="#FFFFFF" strokeWidth="0.8" strokeDasharray="3,3" fill="none" />
+                  <Circle cx="50" cy="50" r="35" stroke="#FFFFFF" strokeWidth="0.5" fill="none" />
+                  <Circle cx="50" cy="50" r="26" stroke="#FFFFFF" strokeWidth="0.8" strokeDasharray="1,2" fill="none" />
+                  <Circle cx="50" cy="50" r="14" stroke="#FFFFFF" strokeWidth="0.6" fill="none" />
+                  {Array.from({ length: 12 }).map((_, idx) => {
+                    const angle = (idx * 30 * Math.PI) / 180;
+                    const x2 = 50 + 45 * Math.cos(angle);
+                    const y2 = 50 + 45 * Math.sin(angle);
+                    return (
+                      <Line
+                        key={idx}
+                        x1="50"
+                        y1="50"
+                        x2={x2}
+                        y2={y2}
+                        stroke="#FFFFFF"
+                        strokeWidth="0.4"
+                        strokeDasharray="1,4"
+                      />
+                    );
+                  })}
+                </Svg>
+              </RNAnimated.View>
+
+              {/* Glowing emoji circle with double border */}
+              <View 
+                style={{ 
+                  width: 52, 
+                  height: 52, 
+                  borderRadius: 26, 
+                  backgroundColor: 'rgba(255, 255, 255, 0.22)',
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  borderWidth: 1.5,
+                  borderColor: 'rgba(255, 255, 255, 0.45)',
+                  ...Platform.select({
+                    ios: {
+                      shadowColor: '#000000',
+                      shadowOpacity: 0.2,
+                      shadowRadius: 5,
+                      shadowOffset: { width: 0, height: 3 },
+                    },
+                    android: {
+                      elevation: 3,
+                    },
+                  }),
+                }}
+              >
+                <Text style={{ fontSize: 28 }}>🎡</Text>
               </View>
-              <View style={{ flex: 1, gap: 2 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <Text style={{ fontSize: 14.5, fontFamily: FontFamily.bold, color: colors.text }}>
+
+              <View style={{ flex: 1, gap: 4, zIndex: 2 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Text style={{ fontSize: 16, fontFamily: FontFamily.bold, color: '#FFFFFF', letterSpacing: -0.2 }}>
                     Spin the CultureWheel
                   </Text>
-                  <View 
-                    style={{ 
-                      paddingHorizontal: 6, 
-                      paddingVertical: 1.5, 
-                      borderRadius: 4, 
-                      backgroundColor: m3Colors.primaryContainer,
+                  
+                  {/* Premium golden NEW badge */}
+                  <LinearGradient
+                    colors={['#FFD54F', '#FFB300']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={{
+                      paddingHorizontal: 7,
+                      paddingVertical: 2.5,
+                      borderRadius: 8,
+                      borderWidth: 1,
+                      borderColor: 'rgba(255, 255, 255, 0.45)',
+                      ...Platform.select({
+                        web: {
+                          boxShadow: '0 2px 8px rgba(255, 179, 0, 0.4)',
+                        },
+                      }),
                     }}
                   >
-                    <Text style={{ fontSize: 8.5, fontFamily: FontFamily.bold, color: m3Colors.onPrimaryContainer, letterSpacing: 0.5 }}>
+                    <Text style={{ fontSize: 9, fontFamily: FontFamily.bold, color: '#1C1917', letterSpacing: 0.8 }}>
                       NEW
                     </Text>
-                  </View>
+                  </LinearGradient>
                 </View>
-                <Text style={{ fontSize: 11.5, fontFamily: FontFamily.medium, color: colors.textSecondary, lineHeight: 15 }}>
-                  Unsure what to do? Let the wheel decide! Explore events, food, and classes around you.
+                <Text style={{ fontSize: 12, fontFamily: FontFamily.medium, color: 'rgba(255, 255, 255, 0.92)', lineHeight: 16 }}>
+                  Stuck on what to do next? Let the wheel decide! Explore events, hubs, dining & cultural activities.
                 </Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color={m3Colors.primary} />
+
+              {/* Glossy glass orb with arrow */}
+              <View 
+                style={{ 
+                  width: 36, 
+                  height: 36, 
+                  borderRadius: 18, 
+                  backgroundColor: 'rgba(255, 255, 255, 0.25)',
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  borderWidth: 1.2,
+                  borderColor: 'rgba(255, 255, 255, 0.35)',
+                  zIndex: 2,
+                  ...Platform.select({
+                    web: {
+                      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                    },
+                  }),
+                }}
+              >
+                <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
+              </View>
             </LinearGradient>
           </Pressable>
 
@@ -684,6 +790,11 @@ export default function DiscoverScreen() {
           dining={d.restaurantPreviewItems}
           perks={d.perksPreviewItems}
           classes={classEvents}
+          hubs={d.allCommunities}
+          activities={d.allActivities}
+          shopping={d.shoppingPreviewItems}
+          indigenousOrganisations={d.indigenousOrganisations}
+          land={d.land}
         />
 
       </View>
@@ -707,13 +818,13 @@ function IntentPill({
   const colors = useM3Colors();
   const isDark = useIsDark();
   
-  const bg = accentColor 
-    ? (isDark ? `${accentColor}1C` : `${accentColor}12`)
-    : (isDark ? 'rgba(30, 30, 35, 0.5)' : 'rgba(255, 255, 255, 0.7)');
+  const gradColors: [string, string] = accentColor 
+    ? [isDark ? `${accentColor}24` : `${accentColor}18`, isDark ? `${accentColor}0A` : `${accentColor}06`]
+    : (isDark ? ['rgba(255, 255, 255, 0.08)', 'rgba(255, 255, 255, 0.02)'] : ['rgba(0, 0, 0, 0.04)', 'rgba(0, 0, 0, 0.01)']);
     
   const border = accentColor 
-    ? `${accentColor}4A` 
-    : (isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)');
+    ? `${accentColor}5A` 
+    : (isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.06)');
     
   const iconColor = accentColor || colors.primary;
 
@@ -722,21 +833,16 @@ function IntentPill({
       onPress={onPress}
       style={({ pressed, hovered }: any) => [
         {
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 6,
-          paddingHorizontal: 16,
-          paddingVertical: 9,
           borderRadius: 999,
-          backgroundColor: bg,
           borderWidth: 1.2,
           borderColor: border,
+          overflow: 'hidden',
           transform: [{ scale: pressed ? 0.96 : (hovered ? 1.04 : 1) }],
           ...Platform.select({
             web: {
               transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
               boxShadow: hovered 
-                ? `0 6px 20px ${iconColor}28` 
+                ? `0 6px 20px ${iconColor}3D, inset 0 1px 0 rgba(255,255,255,0.1)` 
                 : (isDark ? '0 2px 8px rgba(0,0,0,0.2)' : '0 2px 8px rgba(0,0,0,0.03)'),
               backdropFilter: 'blur(12px)',
               cursor: 'pointer',
@@ -747,17 +853,30 @@ function IntentPill({
       accessibilityRole="button"
       accessibilityLabel={label}
     >
-      <Ionicons name={icon} size={15} color={iconColor} />
-      <Text
+      <LinearGradient
+        colors={gradColors}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
         style={{
-          fontSize: 13,
-          fontFamily: FontFamily.semibold,
-          color: colors.onSurface,
-          letterSpacing: 0.2,
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 6,
+          paddingHorizontal: 16,
+          paddingVertical: 9,
         }}
       >
-        {label}
-      </Text>
+        <Ionicons name={icon} size={15} color={iconColor} />
+        <Text
+          style={{
+            fontSize: 13,
+            fontFamily: FontFamily.semibold,
+            color: colors.onSurface,
+            letterSpacing: 0.2,
+          }}
+        >
+          {label}
+        </Text>
+      </LinearGradient>
     </Pressable>
   );
 }

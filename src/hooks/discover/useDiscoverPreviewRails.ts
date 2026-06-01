@@ -33,7 +33,7 @@ export function useDiscoverPreviewRails({
       subtitle: `${r.cuisine} · ${r.priceRange}`,
       badge: r.isOpen ? 'Open' : undefined,
       badgeColor: r.isOpen ? '#34C759' : undefined,
-      route: `/r/${r.id}`,
+      route: `/b/${r.id}`,
     }));
   }, [restaurantsRaw, restaurantsLoading]);
 
@@ -46,7 +46,7 @@ export function useDiscoverPreviewRails({
       subtitle: Array.isArray(m.genre) ? m.genre[0] : m.genre,
       badge: m.rating,
       badgeColor: '#1C1C1E',
-      route: `/m/${m.id}`,
+      route: `/e/${m.id}`,
     }));
   }, [moviesRaw, moviesLoading]);
 
@@ -72,7 +72,7 @@ export function useDiscoverPreviewRails({
       subtitle: p.partnerName ?? p.categories?.[0],
       badge: p.discountPercent ? `${p.discountPercent}% off` : p.perkType,
       badgeColor: CultureTokens.indigo,
-      route: `/p/${p.id}`,
+      route: `/perks/${p.id}`,
     }));
   }, [perksRaw, perksLoading]);
 

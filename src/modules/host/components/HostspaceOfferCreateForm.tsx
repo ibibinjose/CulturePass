@@ -18,6 +18,8 @@ import { useColors, useIsDark } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
 import { useImageUpload } from '@/hooks/useImageUpload';
 import * as ImagePicker from 'expo-image-picker';
+import { DateField } from './fields/DateField';
+import { MediaUploadField } from './fields/MediaUploadField';
 import {
   ButtonTokens,
   CultureTokens,
@@ -604,12 +606,24 @@ export function HostspaceOfferCreateForm({ onReview }: { onReview?: () => void }
 
           <Section title="Validity & Schedule" icon="calendar-outline">
             <View style={styles.twoCol}>
-              <Field label="Start Date" required>
-                <DraftInput value={draft.startDate} onChangeText={(startDate) => updateDraft({ startDate })} placeholder="2026-07-01" accessibilityLabel="Start date" />
-              </Field>
-              <Field label="Expiry Date" required>
-                <DraftInput value={draft.expiryDate} onChangeText={(expiryDate) => updateDraft({ expiryDate })} placeholder="2026-08-31" accessibilityLabel="Expiry date" />
-              </Field>
+              <View style={{ flex: 1 }}>
+                <DateField
+                  label="Start Date"
+                  value={draft.startDate}
+                  onChange={(startDate) => updateDraft({ startDate })}
+                  allowFutureDates={true}
+                  required
+                />
+              </View>
+              <View style={{ flex: 1 }}>
+                <DateField
+                  label="Expiry Date"
+                  value={draft.expiryDate}
+                  onChange={(expiryDate) => updateDraft({ expiryDate })}
+                  allowFutureDates={true}
+                  required
+                />
+              </View>
             </View>
             <Field label="Valid Days">
               <MultiChoice options={VALID_DAYS} values={draft.validDays} onChange={(validDays) => updateDraft({ validDays })} />
@@ -642,24 +656,26 @@ export function HostspaceOfferCreateForm({ onReview }: { onReview?: () => void }
           </Section>
 
           <Section title="Visuals (1:1)" icon="image-outline">
-            <View style={styles.brandingAction}>
-              <View style={[styles.brandingIconPh, { backgroundColor: CultureTokens.coral + '20' }]}>
-                {draft.offerImage ? (
-                  <Image source={{ uri: draft.offerImage }} style={StyleSheet.absoluteFill} contentFit="cover" cachePolicy="memory-disk" placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }} />
-                ) : (
-                  <Ionicons name="image-outline" size={24} color={CultureTokens.coral} />
-                )}
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.brandingLabel, { color: colors.text }]}>Offer Image</Text>
-                <Text style={[styles.brandingSub, { color: colors.textSecondary }]}>Squared 1:1 format</Text>
-              </View>
-              <Button variant="ghost" size="sm" loading={imageUploading} onPress={handlePickImage}>
-                {draft.offerImage ? 'Change' : 'Upload'}
-              </Button>
-            </View>
+            <Field label="Offer Image" hint="Squared 1:1 format">
+              <MediaUploadField
+                type="logo"
+                value={draft.offerImage}
+                onChange={(url) => updateDraft({ offerImage: url as string })}
+                storagePath={`offers/${user?.id || 'anonymous'}/cover`}
+                aspectRatio={1}
+              />
+            </Field>
             <Field label="Gallery" hint="Up to 4 images">
-              <DraftInput value={draft.gallery} onChangeText={(gallery) => updateDraft({ gallery })} placeholder="Paste image URLs separated by commas" accessibilityLabel="Gallery image URLs" />
+              <MediaUploadField
+                type="gallery"
+                value={draft.gallery ? draft.gallery.split(',').map((s) => s.trim()).filter(Boolean) : []}
+                onChange={(val) => {
+                  const arr = Array.isArray(val) ? val : [val];
+                  updateDraft({ gallery: arr.join(',') });
+                }}
+                storagePath={`offers/${user?.id || 'anonymous'}/gallery`}
+                maxItems={4}
+              />
             </Field>
             <Field label="Accent Color">
               <DraftInput value={draft.accentColor} onChangeText={(accentColor) => updateDraft({ accentColor })} placeholder={CultureTokens.coral} accessibilityLabel="Accent color" />

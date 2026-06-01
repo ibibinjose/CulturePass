@@ -8,7 +8,6 @@ import {
   Animated,
   Easing,
   Platform,
-  Dimensions,
   ScrollView,
 } from 'react-native';
 import { Image } from 'expo-image';
@@ -24,8 +23,8 @@ import { LuxeButton } from '@/design-system/ui/LuxeButton';
 import { M3Button } from '@/design-system/ui';
 import { CultureTokens, FontFamily, Radius, Spacing } from '@/design-system/tokens/theme';
 import { normalizeRemoteImageUri } from '@/lib/mediaUrls';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+import { getCommunityProfilePathId } from '@/lib/community';
+import { useFeaturedCities } from '@/hooks/useFeaturedCities';
 
 interface Slice {
   id: string;
@@ -38,73 +37,121 @@ interface Slice {
 
 const WHEEL_SLICES: Slice[] = [
   {
-    id: 'yoga',
-    label: 'Yoga Class',
-    emoji: '🧘',
-    color: '#FF7043', // Warm Terracotta
-    category: 'classes',
-    description: 'Find inner calm and stretch with others in a group yoga session. Joining wellness circles helps migrants build local connections and peaceful mindsets.'
+    id: 'hubs',
+    label: 'Hubs',
+    emoji: '🏛️',
+    color: '#3F51B5', // Indigo
+    category: 'hubs',
+    description: 'Connect with community hubs and cultural associations near you.'
   },
   {
-    id: 'movie',
-    label: 'Movie Night',
-    emoji: '🎬',
-    color: '#9575CD', // Soft Violet
-    category: 'movies',
-    description: 'Enjoy a cultural screening! Cinema is a universal language, perfect for sharing narratives, stepping out of isolation, and making friends.'
-  },
-  {
-    id: 'nature',
-    label: 'Nature Walk',
-    emoji: '🌳',
-    color: '#4CAF50', // Leaf Green
-    category: 'activities',
-    description: 'Explore local landscapes and natural beauty. Group walks are fantastic for refreshing the mind, discovering local spots, and starting natural conversations.'
-  },
-  {
-    id: 'perk',
-    label: 'Claim a Perk',
-    emoji: '🎟️',
-    color: '#FFD54F', // Warm Gold
-    category: 'offers',
-    description: 'Unlock a special local offer! Exploring small businesses helps you integrate with local LGA economies while supporting multicultural venues.'
-  },
-  {
-    id: 'art',
-    label: 'Art & Museum',
-    emoji: '🎭',
-    color: '#E0A96D', // Heritage Tan
-    category: 'art',
-    description: 'Immerse yourself in local and heritage galleries. Art connects diverse backgrounds and gives newcomers a rich window into the community.'
-  },
-  {
-    id: 'festival',
-    label: 'Join Festival',
+    id: 'events',
+    label: 'Events',
     emoji: '🎪',
     color: '#FF9800', // Deep Orange
     category: 'events',
-    description: 'Vibrant music, food, and culture. Festivals are the ultimate celebration where migrants and long-term locals naturalize and share traditions.'
+    description: 'Celebrate culture, music, and heritage with upcoming local events.'
   },
   {
-    id: 'food',
-    label: 'Local Food',
+    id: 'art',
+    label: 'Art',
+    emoji: '🎭',
+    color: '#E0A96D', // Heritage Gold/Tan
+    category: 'art',
+    description: 'Explore gallery openings, heritage exhibitions, and visual art.'
+  },
+  {
+    id: 'movies',
+    label: 'Movies',
+    emoji: '🎬',
+    color: '#9575CD', // Violet
+    category: 'movies',
+    description: 'Enjoy cinema screenings and heritage films.'
+  },
+  {
+    id: 'dining',
+    label: 'Dining',
     emoji: '🥘',
-    color: '#E25B45', // Earthy Red
+    color: '#E25B45', // Earthy Red / Coral
     category: 'dining',
-    description: 'Savour cultural flavours near you. Food brings people together instantly. Sharing a table is the easiest way to feel at home in a new city.'
+    description: 'Savour authentic cultural cuisines and dining spaces.'
   },
   {
-    id: 'tango',
-    label: 'Tango Class',
-    emoji: '💃',
-    color: '#7E57C2', // Rich Indigo
+    id: 'activities',
+    label: 'Activities',
+    emoji: '🌳',
+    color: '#4CAF50', // Leaf Green / Teal
+    category: 'activities',
+    description: 'Participate in group outdoor activities, walks, and local tours.'
+  },
+  {
+    id: 'classes',
+    label: 'Classes & Gym',
+    emoji: '🧘',
+    color: '#FF7043', // Terracotta
     category: 'classes',
-    description: 'Learn the steps and feel the rhythm! Dance classes require no translation and are exceptionally good for building confidence and meeting partners.'
+    description: 'Learn new skills, tango, yoga, and wellness sessions.'
+  },
+  {
+    id: 'travel',
+    label: 'Travel',
+    emoji: '✈️',
+    color: '#00BCD4', // Cyan
+    category: 'travel',
+    description: 'Explore featured cultural travel destinations and weekend trips.'
+  },
+  {
+    id: 'shopping',
+    label: 'Shopping',
+    emoji: '🛍️',
+    color: '#2EC4B6', // Emerald / Teal
+    category: 'shopping',
+    description: 'Support local businesses selling cultural goods and fashion.'
+  },
+  {
+    id: 'offers',
+    label: 'Offers',
+    emoji: '🎟️',
+    color: '#FFD54F', // Amber / Gold
+    category: 'offers',
+    description: 'Claim exclusive local deals, discounts, and member perks.'
+  },
+  {
+    id: 'directory',
+    label: 'Directory',
+    emoji: '📇',
+    color: '#8BC34A', // Light Green
+    category: 'directory',
+    description: 'Browse the full local directory of cultural business, associations, and services.'
+  },
+  {
+    id: 'indigenous',
+    label: 'Indigenous',
+    emoji: '🍂',
+    color: '#795548', // Earthy Brown
+    category: 'indigenous',
+    description: 'Acknowledge traditional lands and support First Nations organisations.'
   }
 ];
 
 // Fallback recommendations when database queries are empty
 const FALLBACK_RECOMMENDATIONS: Record<string, any[]> = {
+  hubs: [
+    {
+      id: 'mock-hub-1',
+      name: 'Multicultural Community Hub',
+      subtitle: 'Association · Sydney CBD',
+      description: 'A welcoming space hosting weekly coffee meetups, language exchanges, and settlement assistance for new arrivals.',
+      imageUrl: 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&q=80&w=400',
+    },
+    {
+      id: 'mock-hub-2',
+      name: 'Global Diaspora Circle',
+      subtitle: 'Club · Parramatta',
+      description: 'Connect with local diaspora members to share stories, food, and professional networking opportunities.',
+      imageUrl: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&q=80&w=400',
+    }
+  ],
   classes: [
     {
       id: 'mock-yoga',
@@ -188,16 +235,71 @@ const FALLBACK_RECOMMENDATIONS: Record<string, any[]> = {
       description: 'A grand celebration featuring workshops, traditional drums, street vendors, and city resources helping new residents integrate.',
       imageUrl: 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?auto=format&fit=crop&q=80&w=400',
     }
+  ],
+  travel: [
+    {
+      id: 'mock-travel-1',
+      name: 'Melbourne',
+      countryName: 'Australia',
+      countryEmoji: '🇦🇺',
+      imageUrl: 'https://images.unsplash.com/photo-1514395462725-fb4566210144?auto=format&fit=crop&q=80&w=400',
+    },
+    {
+      id: 'mock-travel-2',
+      name: 'Auckland',
+      countryName: 'New Zealand',
+      countryEmoji: '🇳🇿',
+      imageUrl: 'https://images.unsplash.com/photo-1507699622108-4be3aac695ad?auto=format&fit=crop&q=80&w=400',
+    }
+  ],
+  shopping: [
+    {
+      id: 'mock-shop-1',
+      name: 'Heritage Spices & Handicrafts',
+      subtitle: 'Specialty Store · Surry Hills',
+      description: 'Authentic imported spices, artisanal kitchenware, and handmade textiles from around the world.',
+      imageUrl: 'https://images.unsplash.com/photo-1488459718432-01055e67e1f5?auto=format&fit=crop&q=80&w=400',
+    },
+    {
+      id: 'mock-shop-2',
+      name: 'Global Threads Apparel',
+      subtitle: 'Boutique · Fitzroy',
+      description: 'Vibrant apparel celebrating diverse cultures and traditional weaving techniques made modern.',
+      imageUrl: 'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&q=80&w=400',
+    }
+  ],
+  directory: [
+    {
+      id: 'mock-dir-1',
+      name: 'Local Business Directory',
+      subtitle: 'Directory Services',
+      description: 'Access the complete business registry to find verified cultural grocers, tax agents, translators, and legal assistance.',
+      imageUrl: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=400',
+    }
+  ],
+  indigenous: [
+    {
+      id: 'mock-indig-1',
+      name: 'First Nations Cultural Centre',
+      subtitle: 'Organisation · Redfern',
+      description: 'Dedicated to preserving Aboriginal history, hosting art walks, community programs, and local smoke ceremonies.',
+      imageUrl: 'https://images.unsplash.com/photo-1528127269322-539801943592?auto=format&fit=crop&q=80&w=400',
+    }
   ]
 };
 
 interface CultureWheelModalProps {
   visible: boolean;
   onClose: () => void;
-  events: any[];
-  dining: any[];
-  perks: any[];
-  classes: any[];
+  events?: any[];
+  dining?: any[];
+  perks?: any[];
+  classes?: any[];
+  hubs?: any[];
+  activities?: any[];
+  shopping?: any[];
+  indigenousOrganisations?: any[];
+  land?: any;
 }
 
 export function CultureWheelModal({
@@ -207,6 +309,11 @@ export function CultureWheelModal({
   dining = [],
   perks = [],
   classes = [],
+  hubs = [],
+  activities = [],
+  shopping = [],
+  indigenousOrganisations = [],
+  land,
 }: CultureWheelModalProps) {
   const colors = useM3Colors();
   const isDark = useIsDark();
@@ -219,14 +326,50 @@ export function CultureWheelModal({
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const resultFadeAnim = useRef(new Animated.Value(0)).current;
 
+  // Pulse animation for the spin button to attract attention when idle
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  React.useEffect(() => {
+    let animation: Animated.CompositeAnimation | null = null;
+    if (visible && !isSpinning) {
+      pulseAnim.setValue(1);
+      animation = Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, {
+            toValue: 1.05,
+            duration: 1100,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: Platform.OS !== 'web',
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 1100,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: Platform.OS !== 'web',
+          }),
+        ])
+      );
+      animation.start();
+    } else {
+      pulseAnim.setValue(1);
+    }
+    return () => {
+      if (animation) animation.stop();
+    };
+  }, [visible, isSpinning, pulseAnim]);
+
   // We track the rotation angle to calculate segments crossed for haptics
   const currentRotation = useRef(0);
   const lastTickerRef = useRef(-1);
 
+  // Fetch featured cities directly for Travel category recommendations
+  const { cities: featuredCities } = useFeaturedCities();
+
   const drawSlicePath = (cx: number, cy: number, r: number, index: number) => {
-    // Angle spacing for 8 slices. Subtract 90 to place slice 0 at the top, and offset by 22.5 to center it
-    const startAngle = index * 45 - 90 - 22.5;
-    const endAngle = (index + 1) * 45 - 90 - 22.5;
+    const sliceAngle = 360 / WHEEL_SLICES.length;
+    // Offset by sliceAngle / 2 to center the slice at the top pointer
+    const startAngle = index * sliceAngle - 90 - (sliceAngle / 2);
+    const endAngle = (index + 1) * sliceAngle - 90 - (sliceAngle / 2);
 
     const startRad = (startAngle * Math.PI) / 180;
     const endRad = (endAngle * Math.PI) / 180;
@@ -253,12 +396,14 @@ export function CultureWheelModal({
     resultFadeAnim.setValue(0);
     scaleAnim.setValue(1);
 
+    const sliceAngle = 360 / WHEEL_SLICES.length;
+
     // Reset listener to track ticks
     spinAnim.removeAllListeners();
     spinAnim.addListener(({ value }) => {
       currentRotation.current = value;
       const normalizedDegree = Math.floor(value);
-      const crossedSegment = Math.floor(normalizedDegree / 45);
+      const crossedSegment = Math.floor(normalizedDegree / sliceAngle);
 
       if (crossedSegment !== lastTickerRef.current) {
         lastTickerRef.current = crossedSegment;
@@ -282,7 +427,7 @@ export function CultureWheelModal({
       
       // Calculate winner slice based on final angle
       const finalAngle = targetAngle % 360;
-      const index = Math.floor(((360 - finalAngle + 22.5) % 360) / 45);
+      const index = Math.floor(((360 - finalAngle + (sliceAngle / 2)) % 360) / sliceAngle);
       
       setWinnerIndex(index);
       setShowResult(true);
@@ -312,7 +457,7 @@ export function CultureWheelModal({
     return WHEEL_SLICES[winnerIndex];
   }, [winnerIndex]);
 
-  // Compute recommendations for the winning category
+  // Compute recommendations for the winning category using real backend queries
   const recommendations = useMemo(() => {
     if (!selectedSlice) return [];
 
@@ -322,26 +467,29 @@ export function CultureWheelModal({
     let list: any[] = [];
 
     if (cat === 'classes') {
-      const keyword = sliceId === 'yoga' ? 'yoga' : 'tango';
-      list = classes.filter(e =>
-        e.title?.toLowerCase().includes(keyword) ||
-        e.description?.toLowerCase().includes(keyword) ||
-        e.tags?.some((t: string) => t.toLowerCase().includes(keyword))
-      );
-      if (list.length === 0) list = classes;
+      list = classes;
     } else if (cat === 'dining') {
       list = dining;
     } else if (cat === 'offers') {
       list = perks;
+    } else if (cat === 'hubs') {
+      list = hubs;
+    } else if (cat === 'activities') {
+      list = activities;
+    } else if (cat === 'shopping') {
+      list = shopping;
+    } else if (cat === 'indigenous') {
+      list = indigenousOrganisations;
+    } else if (cat === 'travel') {
+      list = featuredCities;
     } else if (cat === 'movies') {
       list = events.filter(e => e.category?.toLowerCase() === 'movies' || e.title?.toLowerCase().includes('movie'));
       if (list.length === 0) list = events;
     } else if (cat === 'art') {
-      list = events.filter(e => e.category?.toLowerCase() === 'art' || e.title?.toLowerCase().includes('art'));
+      list = events.filter(e => e.category?.toLowerCase() === 'art' || e.title?.toLowerCase().includes('art') || e.title?.toLowerCase().includes('museum') || e.title?.toLowerCase().includes('gallery') || e.title?.toLowerCase().includes('exhibition'));
       if (list.length === 0) list = events;
-    } else if (cat === 'activities') {
-      list = events.filter(e => e.title?.toLowerCase().includes('walk') || e.title?.toLowerCase().includes('nature'));
-      if (list.length === 0) list = events;
+    } else if (cat === 'directory') {
+      list = [...shopping, ...dining];
     } else {
       list = events;
     }
@@ -355,7 +503,7 @@ export function CultureWheelModal({
     }
 
     return resolved;
-  }, [selectedSlice, events, dining, perks, classes]);
+  }, [selectedSlice, events, dining, perks, classes, hubs, activities, shopping, indigenousOrganisations, featuredCities]);
 
   const spinInterpolation = spinAnim.interpolate({
     inputRange: [0, 360],
@@ -437,7 +585,7 @@ export function CultureWheelModal({
                   },
                 ]}
               >
-                <Svg width="290" height="290" viewBox="0 0 300 300">
+                <Svg width="330" height="330" viewBox="0 0 300 300">
                   {/* Wheel outer rim */}
                   <Circle cx="150" cy="150" r="147" fill={isDark ? '#2D2D35' : '#FFFFFF'} stroke={isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'} strokeWidth="6" />
                   
@@ -451,8 +599,9 @@ export function CultureWheelModal({
 
                   {/* Draw labels & emojis radially */}
                   {WHEEL_SLICES.map((slice, i) => {
-                    const midAngle = i * 45 - 90; // Center angle of slice
-                    const textR = 92; // Radial distance
+                    const sliceAngle = 360 / WHEEL_SLICES.length;
+                    const midAngle = i * sliceAngle - 90; // Center angle of slice
+                    const textR = 108; // Radial distance
                     const tx = 150 + textR * Math.cos((midAngle * Math.PI) / 180);
                     const ty = 150 + textR * Math.sin((midAngle * Math.PI) / 180);
 
@@ -462,7 +611,7 @@ export function CultureWheelModal({
                           x="0"
                           y="-8"
                           fill="#FFFFFF"
-                          fontSize="15"
+                          fontSize="13"
                           textAnchor="middle"
                           alignmentBaseline="middle"
                         >
@@ -472,11 +621,11 @@ export function CultureWheelModal({
                           x="0"
                           y="6"
                           fill="#FFFFFF"
-                          fontSize="8.5"
+                          fontSize="7.5"
                           fontFamily={FontFamily.semibold}
                           textAnchor="middle"
                           alignmentBaseline="middle"
-                          letterSpacing="0.3"
+                          letterSpacing="0.2"
                         >
                           {slice.label.split(' ')[0]}
                         </SvgText>
@@ -491,16 +640,27 @@ export function CultureWheelModal({
               </Animated.View>
 
               {/* Spin Controller Button */}
-              <View style={styles.btnRow}>
+              <Animated.View style={[styles.btnRow, { transform: [{ scale: pulseAnim }] }]}>
                 <LuxeButton
                   onPress={handleSpin}
                   variant="filled"
                   loading={isSpinning}
-                  style={{ width: 220, alignSelf: 'center', height: 50, borderRadius: 25 }}
+                  style={{
+                    width: 240,
+                    alignSelf: 'center',
+                    height: 52,
+                    borderRadius: 26,
+                    ...Platform.select({
+                      web: {
+                        boxShadow: '0 8px 24px rgba(226, 91, 69, 0.35)',
+                      },
+                    }),
+                  }}
+                  gradientColors={['#E0A96D', '#FF7043', '#7E57C2']}
                 >
                   {isSpinning ? 'SPINNING...' : 'SPIN THE WHEEL 🎡'}
                 </LuxeButton>
-              </View>
+              </Animated.View>
             </View>
 
             {/* Results Reveal Area */}
@@ -543,11 +703,59 @@ export function CultureWheelModal({
                   {/* Dynamic cards */}
                   <View style={styles.cardContainer}>
                     {recommendations.map((item, idx) => {
-                      const isEvent = !!item.category || !!item.organizerId;
                       const displayTitle = item.title || item.name;
-                      const displaySub = isEvent ? (item.date || 'Sydney') : item.subtitle;
-                      const displayImg = item.imageUrl || 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&q=80&w=400';
-                      const route = isEvent ? `/event/${item.id}` : item.route;
+                      
+                      // Resolve display image
+                      let fallbackImg = 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&q=80&w=400';
+                      const cat = selectedSlice.category;
+                      if (cat === 'indigenous') {
+                        fallbackImg = 'https://images.unsplash.com/photo-1528127269322-539801943592?auto=format&fit=crop&q=80&w=400';
+                      } else if (cat === 'travel') {
+                        fallbackImg = 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&q=80&w=400';
+                      } else if (cat === 'hubs') {
+                        fallbackImg = 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&q=80&w=400';
+                      }
+                      const displayImg = item.imageUrl || fallbackImg;
+
+                      // Resolve subtitle and route based on category
+                      let displaySub = item.subtitle || '';
+                      let route: any = '';
+
+                      if (cat === 'events' || cat === 'art' || cat === 'movies' || cat === 'classes') {
+                        displaySub = item.date || item.subtitle || 'Upcoming Event';
+                        route = `/event/${item.id}`;
+                      } else if (cat === 'activities') {
+                        displaySub = item.subtitle || item.category || 'Local Activity';
+                        route = `/a/${item.id}`;
+                      } else if (cat === 'hubs') {
+                        displaySub = item.subtitle || (item.memberCount || item.membersCount ? `${(item.memberCount || item.membersCount).toLocaleString()} members` : 'Community Hub');
+                        const pathId = getCommunityProfilePathId(item);
+                        route = {
+                          pathname: '/c/[id]',
+                          params: { id: pathId }
+                        };
+                      } else if (cat === 'dining') {
+                        displaySub = item.subtitle || item.cuisine || 'Cultural Dining';
+                        route = `/business/${item.id}`;
+                      } else if (cat === 'shopping') {
+                        displaySub = item.subtitle || item.category || 'Specialty Store';
+                        route = `/CultureMarket/${item.id}`;
+                      } else if (cat === 'offers') {
+                        displaySub = item.subtitle || item.discountCode || 'Exclusive Offer';
+                        route = `/perks/${item.id}`;
+                      } else if (cat === 'travel') {
+                        displaySub = item.countryName ? `${item.countryEmoji || ''} ${item.countryName}` : 'Featured City';
+                        route = {
+                          pathname: '/city/[name]',
+                          params: { name: item.name, country: item.countryName }
+                        };
+                      } else if (cat === 'directory') {
+                        displaySub = item.subtitle || 'Local Directory';
+                        route = item.id ? `/CultureMarket/${item.id}` : '/(tabs)/directory';
+                      } else if (cat === 'indigenous') {
+                        displaySub = item.nationOrPeople || item.city || 'First Nations';
+                        route = '/browse/All';
+                      }
 
                       return (
                         <Pressable
@@ -555,7 +763,7 @@ export function CultureWheelModal({
                           onPress={() => {
                             onClose();
                             if (route) {
-                              router.push(route as `/${string}`);
+                              router.push(route as any);
                             }
                           }}
                           style={({ pressed }) => [
@@ -684,8 +892,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   wheelWrapper: {
-    width: 290,
-    height: 290,
+    width: 330,
+    height: 330,
     alignItems: 'center',
     justifyContent: 'center',
     marginVertical: 10,

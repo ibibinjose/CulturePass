@@ -17,6 +17,7 @@ import { useColors, useIsDark } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
 import { useImageUpload } from '@/hooks/useImageUpload';
 import * as ImagePicker from 'expo-image-picker';
+import { MediaUploadField } from './fields/MediaUploadField';
 import {
   CultureTokens,
   TextStyles,
@@ -489,38 +490,28 @@ export function HostspaceCommunityCreateForm({ onReview }: { onReview?: () => vo
             <CommunityPreviewCard draft={draft} colors={colors} />
 
             <GlassView intensity={10} style={styles.brandingBox}>
-               <Text style={[styles.brandingTitle, { color: colors.text }]}>Community Visuals (1:1)</Text>
-               <View style={styles.brandingAction}>
-                 <View style={[styles.brandingIconPh, { backgroundColor: CultureTokens.indigo + '20' }]}>
-                   {draft.logoUrl ? (
-                     <Image source={{ uri: draft.logoUrl }} style={StyleSheet.absoluteFill} contentFit="cover" cachePolicy="memory-disk" placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }} />
-                   ) : (
-                     <Ionicons name="image-outline" size={24} color={CultureTokens.indigo} />
-                   )}
+               <Text style={[styles.brandingTitle, { color: colors.text, marginBottom: 12 }]}>Community Visuals</Text>
+               <View style={{ gap: 16 }}>
+                 <View>
+                   <Text style={[styles.brandingLabel, { color: colors.text, marginBottom: 8 }]}>Logo / Avatar (1:1)</Text>
+                   <MediaUploadField
+                     type="logo"
+                     value={draft.logoUrl}
+                     onChange={(url) => updateDraft({ logoUrl: url as string })}
+                     storagePath={`communities/${user?.id || 'anonymous'}/logo`}
+                     aspectRatio={1}
+                   />
                  </View>
-                 <View style={{ flex: 1 }}>
-                    <Text style={[styles.brandingLabel, { color: colors.text }]}>Logo / Avatar</Text>
-                    <Text style={[styles.brandingSub, { color: colors.textSecondary }]}>Squared image recommended</Text>
+                 <View>
+                   <Text style={[styles.brandingLabel, { color: colors.text, marginBottom: 8 }]}>Cover Banner (16:9)</Text>
+                   <MediaUploadField
+                     type="hero"
+                     value={draft.bannerUrl}
+                     onChange={(url) => updateDraft({ bannerUrl: url as string })}
+                     storagePath={`communities/${user?.id || 'anonymous'}/banner`}
+                     aspectRatio={16 / 9}
+                   />
                  </View>
-                 <Button variant="ghost" size="sm" loading={imageUploading} onPress={() => handlePickImage('logoUrl')}>
-                   {draft.logoUrl ? 'Change' : 'Upload'}
-                 </Button>
-               </View>
-               <View style={styles.brandingAction}>
-                 <View style={[styles.brandingIconPh, { backgroundColor: CultureTokens.teal + '20' }]}>
-                   {draft.bannerUrl ? (
-                     <Image source={{ uri: draft.bannerUrl }} style={StyleSheet.absoluteFill} contentFit="cover" cachePolicy="memory-disk" placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }} />
-                   ) : (
-                     <Ionicons name="images-outline" size={24} color={CultureTokens.teal} />
-                   )}
-                 </View>
-                 <View style={{ flex: 1 }}>
-                    <Text style={[styles.brandingLabel, { color: colors.text }]}>Cover Banner</Text>
-                    <Text style={[styles.brandingSub, { color: colors.textSecondary }]}>Square cropped for platforms</Text>
-                 </View>
-                 <Button variant="ghost" size="sm" loading={imageUploading} onPress={() => handlePickImage('bannerUrl')}>
-                   {draft.bannerUrl ? 'Change' : 'Upload'}
-                 </Button>
                </View>
             </GlassView>
 

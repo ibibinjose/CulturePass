@@ -50,9 +50,11 @@ export const isFirestoreConfigured = Boolean(
   process.env.K_SERVICE // Cloud Functions production env
 );
 
-/** Stripe instance */
-export const stripeClient = process.env.STRIPE_SECRET_KEY
-  ? new Stripe(process.env.STRIPE_SECRET_KEY, {
-      apiVersion: '2024-11-20.acacia' as any,
+const stripeApiKey = process.env.STRIPE_API_KEY ?? process.env.STRIPE_SECRET_KEY;
+
+/** Stripe instance. Prefer a restricted key (`rk_...`) in STRIPE_API_KEY. */
+export const stripeClient = stripeApiKey
+  ? new Stripe(stripeApiKey, {
+      apiVersion: '2026-05-27.dahlia' as any,
     })
   : null;

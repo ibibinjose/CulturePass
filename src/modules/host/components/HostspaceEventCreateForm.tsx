@@ -18,6 +18,8 @@ import { useLayout } from '@/hooks/useLayout';
 import { useImageUpload } from '@/hooks/useImageUpload';
 import { CultureImage } from '@/design-system/ui/CultureImage';
 import { ImageGalleryPicker } from '@/design-system/ui/ImageGalleryPicker';
+import { DateField } from './fields/DateField';
+import { MediaUploadField } from './fields/MediaUploadField';
 
 import * as ImagePicker from 'expo-image-picker';
 import {
@@ -290,13 +292,16 @@ export function HostspaceEventCreateForm({ onReview }: { onReview?: () => void }
             </FormField>
           </FormSection>
 
-          {/* Section 2: Date & Time */}
           <FormSection title="2. Schedule" icon="time-outline" color={CultureTokens.coral}>
             <View style={styles.row}>
               <View style={{ flex: 1 }}>
-                <FormField label="Start Date" required>
-                  <FormInput value={draft.startDate} onChangeText={(startDate) => updateDraft({ startDate })} placeholder="YYYY-MM-DD" />
-                </FormField>
+                <DateField
+                  label="Start Date"
+                  value={draft.startDate}
+                  onChange={(startDate) => updateDraft({ startDate })}
+                  allowFutureDates={true}
+                  required
+                />
               </View>
               <View style={{ flex: 1 }}>
                 <FormField label="Start Time">
@@ -306,9 +311,13 @@ export function HostspaceEventCreateForm({ onReview }: { onReview?: () => void }
             </View>
             <View style={styles.row}>
               <View style={{ flex: 1 }}>
-                <FormField label="End Date">
-                  <FormInput value={draft.endDate} onChangeText={(endDate) => updateDraft({ endDate })} placeholder="YYYY-MM-DD" />
-                </FormField>
+                <DateField
+                  label="End Date"
+                  value={draft.endDate}
+                  onChange={(endDate) => updateDraft({ endDate })}
+                  allowFutureDates={true}
+                  required={false}
+                />
               </View>
               <View style={{ flex: 1 }}>
                 <FormField label="End Time">
@@ -570,28 +579,14 @@ export function HostspaceEventCreateForm({ onReview }: { onReview?: () => void }
             <EventPreviewCard draft={draft} colors={colors} />
 
             <GlassView intensity={10} style={styles.brandingBox}>
-               <Text style={[styles.brandingTitle, { color: colors.text }]}>Event Visuals</Text>
-               <View style={styles.brandingAction}>
-                 <View style={[styles.brandingIconPh, { backgroundColor: CultureTokens.indigo + '20' }]}>
-                   {draft.heroImageUrl ? (
-                      <CultureImage uri={draft.heroImageUrl} style={StyleSheet.absoluteFill} placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }} />
-                   ) : (
-                     <Ionicons name="image-outline" size={24} color={CultureTokens.indigo} />
-                   )}
-                 </View>
-                 <View style={{ flex: 1 }}>
-                    <Text style={[styles.brandingLabel, { color: colors.text }]}>Cover Image</Text>
-                    <Text style={[styles.brandingSub, { color: colors.textSecondary }]}>{draft.heroImageUrl ? 'Image selected' : 'High-res landscape recommended'}</Text>
-                 </View>
-                 <Button
-                   variant="ghost"
-                   size="sm"
-                   loading={imageUploading}
-                   onPress={handlePickImage}
-                 >
-                   {draft.heroImageUrl ? 'Change' : 'Upload'}
-                 </Button>
-               </View>
+               <Text style={[styles.brandingTitle, { color: colors.text, marginBottom: 12 }]}>Event Visuals</Text>
+               <MediaUploadField
+                 type="hero"
+                 value={draft.heroImageUrl}
+                 onChange={(url) => updateDraft({ heroImageUrl: url as string })}
+                 storagePath={`events/${user?.id || 'anonymous'}/cover`}
+                 aspectRatio={16 / 9}
+               />
             </GlassView>
 
             <View style={styles.floatingPreviewInfo}>

@@ -27,7 +27,6 @@ async function createPerkCheckoutSession(args: CheckoutArgs): Promise<{ sessionI
   const priceCents = perk.discountedPriceCents || perk.originalPriceCents || 500;
 
   const session = await stripeClient.checkout.sessions.create({
-    payment_method_types: ['card', 'link'],
     mode: 'payment',
     success_url: `https://culturepass.app/p/${perkId}?success=true`,
     cancel_url: `https://culturepass.app/p/${perkId}?canceled=true`,

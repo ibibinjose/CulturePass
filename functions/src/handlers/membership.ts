@@ -2,7 +2,7 @@
  * Membership routes — /api/membership/*
  *
  * CulturePass+ subscription management via Stripe.
- * Endpoints: member-count, get by userId, subscribe, cancel-subscription.
+ * Endpoints: member-count, get by userId, subscribe, billing-portal, cancel-subscription.
  */
 
 import { Router, type Request, type Response } from 'express';
@@ -170,6 +170,36 @@ membershipRouter.post('/membership/subscribe', requireAuth, requireRevocationChe
   } catch (err) {
     captureRouteError(err, 'membership/subscribe');
     return res.status(500).json({ error: 'Failed to create subscription checkout' });
+  }
+});
+
+// ── POST /api/membership/billing-portal ─────────────────────────────────────
+membershipRouter.post('/membership/billing-portal', requireAuth, requireRevocationCheck, async (req: Request, res: Response) => {
+  const userId = req.user!.id;
+  const user = await usersService.getById(userId);
+  if (!user) return res.status(404).json({ error: 'User not found' });
+
+  if (!stripeClient) {
+    return res.status(503).json({ error: 'Payment service unavailable', code: 'STRIPE_NOT_CONFIGURED' });
+  }
+
+  const stripeCustomerId = user.stripeCustomerId;
+  if (!stripeCustomerId) {
+    return res.status(400).json({ error: 'No Stripe customer found', code: 'CUSTOMER_NOT_FOUND' });
+  }
+
+  const appUrl = process.env.APP_URL ?? 'https://culturepass.app';
+
+  try {
+    const session = await stripeClient.billingPortal.sessions.create({
+      customer: stripeCustomerId,
+      return_url: `${appUrl}/membership/upgrade`,
+    });
+
+    return res.json({ url: session.url });
+  } catch (err) {
+    captureRouteError(err, 'membership/billing-portal');
+    return res.status(500).json({ error: 'Failed to create billing portal session' });
   }
 });
 

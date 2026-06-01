@@ -22,6 +22,13 @@ export const LEGACY_ROUTE_REMAPS = [
   ['/user/', '/u/'],
   ['/businesses/', '/business/'],
   ['/business/', '/b/'],
+  ['/restaurant/', '/business/'],
+  ['/restaurants/', '/business/'],
+  ['/movie/', '/event/'],
+  ['/movies/', '/event/'],
+  ['/shop/', '/CultureMarket/'],
+  ['/perk/', '/perks/'],
+  ['/activity/', '/activities/'],
 ] as const;
 
 const TRUSTED_DEEP_LINK_HOSTS = new Set([

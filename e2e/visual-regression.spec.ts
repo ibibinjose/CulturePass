@@ -20,6 +20,7 @@ test.describe('Visual regression — critical layout surfaces (FIXES-001)', () =
   test('host apply / entity selector — desktop', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
     // /hostspace/apply removed - consolidated into /hostspace/create
+    await page.goto('/hostspace/create');
     // Wait for the hero gradient and cards to settle
     await page.waitForSelector('text=Create Your Host Profile', { timeout: 10000 });
     await expect(page).toHaveScreenshot('host-apply-desktop.png', {
@@ -31,6 +32,7 @@ test.describe('Visual regression — critical layout surfaces (FIXES-001)', () =
   test('host apply / entity selector — mobile', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 }); // iPhone 14-ish
     // /hostspace/apply removed - consolidated into /hostspace/create
+    await page.goto('/hostspace/create');
     await page.waitForSelector('text=Create Your Host Profile', { timeout: 10000 });
     await expect(page).toHaveScreenshot('host-apply-mobile.png', {
       fullPage: true,

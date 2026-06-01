@@ -112,5 +112,15 @@ describe('Route Utilities', () => {
         '/culturehub/kerala?country=Australia&scope=single&state=NSW'
       );
     });
+
+    test('should normalize legacy paths (restaurant, movie, shop, perk, activity)', () => {
+      expect(normalizeSystemPath('/restaurant/123')).toBe('/b/123');
+      expect(normalizeSystemPath('/restaurants/123')).toBe('/b/123');
+      expect(normalizeSystemPath('/movie/123')).toBe('/e/123');
+      expect(normalizeSystemPath('/movies/123')).toBe('/e/123');
+      expect(normalizeSystemPath('/shop/123')).toBe('/CultureMarket/123');
+      expect(normalizeSystemPath('/perk/123')).toBe('/perks/123');
+      expect(normalizeSystemPath('/activity/123')).toBe('/activities/123');
+    });
   });
 });

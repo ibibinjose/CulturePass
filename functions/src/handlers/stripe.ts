@@ -294,7 +294,7 @@ export function createStripeRouter() {
     });
 
     if (!stripeClient) {
-      console.error('[stripe] STRIPE_SECRET_KEY not configured');
+      console.error('[stripe] STRIPE_API_KEY/STRIPE_SECRET_KEY not configured');
       return res.status(503).json({
         error: 'Payment service unavailable. Please contact support.',
         code: 'STRIPE_NOT_CONFIGURED',
@@ -351,7 +351,6 @@ export function createStripeRouter() {
 
       const session = await stripeClient.checkout.sessions.create({
         mode: 'payment',
-        payment_method_types: ['card'],
         line_items: [{
           price_data: {
             currency:     draft.currency.toLowerCase(),
@@ -560,7 +559,7 @@ export function createStripeRouter() {
     });
 
     if (!stripeClient) {
-      console.error('[stripe] STRIPE_SECRET_KEY not configured');
+      console.error('[stripe] STRIPE_API_KEY/STRIPE_SECRET_KEY not configured');
       return res.status(503).json({
         error: 'Payment service unavailable. Please contact support.',
         code: 'STRIPE_NOT_CONFIGURED',
@@ -943,7 +942,7 @@ export function createStripeRouter() {
     // Signed request but we did not enter the verified branch — misconfiguration (no secret key,
     // missing STRIPE_WEBHOOK_SECRET, or raw body not captured). Fail loudly so Stripe retries.
     console.error(
-      '[stripe] Webhook signature present but verification skipped — check STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, and express.json verify (rawBody)',
+      '[stripe] Webhook signature present but verification skipped — check STRIPE_API_KEY/STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, and express.json verify (rawBody)',
     );
     return res.status(503).json({ error: 'Webhook verification unavailable' });
   });

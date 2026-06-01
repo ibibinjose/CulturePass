@@ -18,7 +18,7 @@ PODS:
   - EXJSONUtils (56.0.0)
   - EXManifests (56.0.4):
     - ExpoModulesCore
-  - Expo (56.0.7):
+  - Expo (56.0.8):
     - ExpoModulesCore
     - ExpoModulesJSI
     - hermes-engine
@@ -228,9 +228,9 @@ PODS:
     - ExpoModulesCore
   - ExpoImage (56.0.9):
     - ExpoModulesCore
-  - ExpoImageManipulator (56.0.15):
+  - ExpoImageManipulator (56.0.16):
     - ExpoModulesCore
-  - ExpoImagePicker (56.0.14):
+  - ExpoImagePicker (56.0.15):
     - ExpoModulesCore
   - ExpoKeepAwake (56.0.3):
     - ExpoModulesCore
@@ -242,7 +242,7 @@ PODS:
     - ExpoModulesCore
   - ExpoLocalization (56.0.6):
     - ExpoModulesCore
-  - ExpoLocation (56.0.14):
+  - ExpoLocation (56.0.15):
     - ExpoModulesCore
   - ExpoLogBox (56.0.12):
     - React-Core
@@ -281,7 +281,7 @@ PODS:
     - ExpoModulesJSI
     - ExpoModulesWorklets
     - RNWorklets
-  - ExpoNotifications (56.0.14):
+  - ExpoNotifications (56.0.15):
     - ExpoModulesCore
   - ExpoRouter (56.2.8):
     - ExpoModulesCore
@@ -2378,6 +2378,28 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - RNDateTimePicker (9.1.0):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-Core-prebuilt
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
   - RNGestureHandler (2.31.2):
     - hermes-engine
     - RCTRequired
@@ -2544,7 +2566,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - RNSentry (7.11.0):
+  - RNSentry (7.13.0):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2685,6 +2707,113 @@ PODS:
     - ReactNativeDependencies
     - Yoga
   - Sentry/HybridSDK (8.58.0)
+  - Stripe (25.11.0):
+    - StripeApplePay (= 25.11.0)
+    - StripeCore (= 25.11.0)
+    - StripeIssuing (= 25.11.0)
+    - StripePayments (= 25.11.0)
+    - StripePaymentsUI (= 25.11.0)
+    - StripeUICore (= 25.11.0)
+  - stripe-react-native (0.64.0):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-Core-prebuilt
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - stripe-react-native/Core (= 0.64.0)
+    - stripe-react-native/NewArch (= 0.64.0)
+    - Yoga
+  - stripe-react-native/Core (0.64.0):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-Core-prebuilt
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Stripe (~> 25.11.0)
+    - StripeApplePay (~> 25.11.0)
+    - StripeFinancialConnections (~> 25.11.0)
+    - StripePayments (~> 25.11.0)
+    - StripePaymentSheet (~> 25.11.0)
+    - StripePaymentsUI (~> 25.11.0)
+    - Yoga
+  - stripe-react-native/NewArch (0.64.0):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-Core-prebuilt
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
+  - StripeApplePay (25.11.0):
+    - StripeCore (= 25.11.0)
+  - StripeCore (25.11.0)
+  - StripeFinancialConnections (25.11.0):
+    - StripeCore (= 25.11.0)
+    - StripeUICore (= 25.11.0)
+  - StripeIssuing (25.11.0):
+    - StripeCore (= 25.11.0)
+    - StripePayments (= 25.11.0)
+    - StripePaymentsUI (= 25.11.0)
+  - StripePayments (25.11.0):
+    - StripeCore (= 25.11.0)
+    - StripePayments/Stripe3DS2 (= 25.11.0)
+  - StripePayments/Stripe3DS2 (25.11.0):
+    - StripeCore (= 25.11.0)
+  - StripePaymentSheet (25.11.0):
+    - StripeApplePay (= 25.11.0)
+    - StripeCore (= 25.11.0)
+    - StripePayments (= 25.11.0)
+    - StripePaymentsUI (= 25.11.0)
+  - StripePaymentsUI (25.11.0):
+    - StripeCore (= 25.11.0)
+    - StripePayments (= 25.11.0)
+    - StripeUICore (= 25.11.0)
+  - StripeUICore (25.11.0):
+    - StripeCore (= 25.11.0)
   - Yoga (0.0.0)
 
 DEPENDENCIES:
@@ -2820,6 +2949,7 @@ DEPENDENCIES:
   - ReactNativeDependencies (from `../node_modules/react-native/third-party-podspecs/ReactNativeDependencies.podspec`)
   - "RNCAsyncStorage (from `../node_modules/@react-native-async-storage/async-storage`)"
   - "RNCMaskedView (from `../node_modules/@react-native-masked-view/masked-view`)"
+  - "RNDateTimePicker (from `../node_modules/@react-native-community/datetimepicker`)"
   - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
   - "RNGoogleSignin (from `../node_modules/@react-native-google-signin/google-signin`)"
   - RNReanimated (from `../node_modules/react-native-reanimated`)
@@ -2827,6 +2957,7 @@ DEPENDENCIES:
   - "RNSentry (from `../node_modules/@sentry/react-native`)"
   - RNSVG (from `../node_modules/react-native-svg`)
   - RNWorklets (from `../node_modules/react-native-worklets`)
+  - "stripe-react-native (from `../node_modules/@stripe/stripe-react-native`)"
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
 
 SPEC REPOS:
@@ -2842,6 +2973,15 @@ SPEC REPOS:
     - PromisesObjC
     - ReachabilitySwift
     - Sentry
+    - Stripe
+    - StripeApplePay
+    - StripeCore
+    - StripeFinancialConnections
+    - StripeIssuing
+    - StripePayments
+    - StripePaymentSheet
+    - StripePaymentsUI
+    - StripeUICore
 
 EXTERNAL SOURCES:
   EASClient:
@@ -3107,6 +3247,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@react-native-async-storage/async-storage"
   RNCMaskedView:
     :path: "../node_modules/@react-native-masked-view/masked-view"
+  RNDateTimePicker:
+    :path: "../node_modules/@react-native-community/datetimepicker"
   RNGestureHandler:
     :path: "../node_modules/react-native-gesture-handler"
   RNGoogleSignin:
@@ -3121,6 +3263,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-svg"
   RNWorklets:
     :path: "../node_modules/react-native-worklets"
+  stripe-react-native:
+    :path: "../node_modules/@stripe/stripe-react-native"
   Yoga:
     :path: "../node_modules/react-native/ReactCommon/yoga"
 
@@ -3132,7 +3276,7 @@ SPEC CHECKSUMS:
   EXConstants: 1c400bb9969f4c9e5ab324553138b74ae47b9efe
   EXJSONUtils: dba2755f4e24009eaf87a876b2d615ea06c16e42
   EXManifests: 7e19be8df665a338493060a419847dae76ffcd43
-  Expo: 7ff6f263ca3ca6ae2a2861310d008485e546133e
+  Expo: c82930e1c8b6f2e26308e364499773d3de12d55d
   expo-dev-client: 754a615fe4d63fdffb9bd41ea45092daa7fdfc33
   expo-dev-launcher: e3f91a500b71c6fd5c2764364d2920ea4116ed21
   expo-dev-menu: 1c851977caf77bb9ba81298ea03270d2b1f96bc8
@@ -3154,20 +3298,20 @@ SPEC CHECKSUMS:
   ExpoGlassEffect: 7d4233dc0727ee2b28dd757eda70e1b6abf662fd
   ExpoHaptics: 89364cf3c3ca2cfd54cafed42f3be3169bab6d42
   ExpoImage: 3f44073bf450afdb87333f9671ffe7b9bfa5f70e
-  ExpoImageManipulator: 441ca8a28fe700c5948863772578bab2ffd79e77
-  ExpoImagePicker: 30a39958c3c92b3cf33534489db0b63d9ca13da3
+  ExpoImageManipulator: 4a7d8efe364d3db8698507177a75eb16b51bc104
+  ExpoImagePicker: 808f5ed1553dca885ed5b05a8d6c67bf1d379da3
   ExpoKeepAwake: 359c47a1d9ccc3a3c519bca6e39562cce230c5bb
   ExpoLinearGradient: 16c2b9c6105444883d34958d573725de1293b8d0
   ExpoLinking: 49cc5ddd93b68506c588aa1985c27b795e6d69d6
   ExpoLocalAuthentication: 93f29833d2a8b957f996eddc05a632eb2bdeaa7d
   ExpoLocalization: cf50efc436b2ec313510131c1ee0e778366d64b0
-  ExpoLocation: aa8c8333df2637416623f4d2723f52a268f8e490
+  ExpoLocation: ed45ae27d6eb115a84b16713f3e5a9c5822a5b24
   ExpoLogBox: 7aa03244fe5eeced5129e4ec7ad5bd9a3994378e
   ExpoModulesCore: 1d287b31a51626daf8727809d0500a6e668879eb
   ExpoModulesJSI: f25a013ea9a79904bdd535e4bea0872e155cde09
   ExpoModulesWorklets: 3f847eb6ba544bd4b55d585f89b3b18f8cd73a72
   ExpoModulesWorkletsAdapter: a538403990508224d8401ff2ac544ca83df52eb6
-  ExpoNotifications: 4f6324955cea640a65f40c67a8e42505a6a514b7
+  ExpoNotifications: 22f9caefdb674598ee2d11dfe06eebab7a7cc155
   ExpoRouter: 806ab2bc2124594c624ffe6fde15c28e4c4f0b03
   ExpoSecureStore: f1bd083c1b7b8d4142013ffcc0082d377d9f49f4
   ExpoSplashScreen: 3fe3a57d56d7242a9109d9714a6f9fa1e256538b
@@ -3266,14 +3410,25 @@ SPEC CHECKSUMS:
   ReactNativeDependencies: 8df7ccddf19724b1932f67da28f3da362375a3fa
   RNCAsyncStorage: 2ad919e88b8bc2cd80e8697ce66d04d006743283
   RNCMaskedView: eb2b2e538afa907f05a5848a1a1ac26092e6fec9
+  RNDateTimePicker: 7b2738f1e595f83c14580a11c476872755c5befc
   RNGestureHandler: 2ff61eac036eaf89f6818bf4ed9c39771a17d134
   RNGoogleSignin: 0d72ae233fe10522497424748acf00fcc1ed2ee7
   RNReanimated: f735b1747a7a93bda7ca102c6d37a3cf54b6d5e8
   RNScreens: f94000b3cb1eb14cbb8d08dd6074fdd6ccf0e6b0
-  RNSentry: c2b739c5dbdd77f439fbd197d1d45724b22a0437
+  RNSentry: 75c4d13ce357c077976a57a84eacdaf72d859963
   RNSVG: 04044c3abcf177fd674a1a3d13097efa1adebcbe
   RNWorklets: 4931990f73bc8f347586918b2e13f11dfadf3b75
   Sentry: d587a8fe91ca13503ecd69a1905f3e8a0fcf61be
+  Stripe: 0421dcc510a52f2abf63bbf03a547caf6639dce7
+  stripe-react-native: a3e3f2e3f7cc3a62bc4e5fae6daeccde21cbbd3e
+  StripeApplePay: b74b487cdc4176b32ea3f250d63ceb7b0ab7dedb
+  StripeCore: c9d8b48d4b9b14e73edfa2ca714dea44c0849f73
+  StripeFinancialConnections: 0209e955d46e927089a017f56e4a34f2e3e85bfd
+  StripeIssuing: 2b1f0054ee9439e7e716f101099a22bb95addc08
+  StripePayments: c54ac68d13e5ef09c98aa5c12314a73d1e6a1fc6
+  StripePaymentSheet: 46ca981c6106b559d323d41b5ee9af0485252a63
+  StripePaymentsUI: e942824c2a21c67f41b3bf6c09e87ebe882dd5c5
+  StripeUICore: 9ee3c730f282fd34605f7ba00f2b77d80729d882
   Yoga: 77dfa8673de2874e1855002ae59c68b8be9b007b
 
 PODFILE CHECKSUM: f9cbbbebcf1258b74d0f9899fe92e073e6881fbe

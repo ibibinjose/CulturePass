@@ -14,6 +14,9 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
 import { api, ApiError, type ActivityInput } from '@/lib/api';
+import { useAuth } from '@/lib/auth';
+import { DateField } from './fields/DateField';
+import { MediaUploadField } from './fields/MediaUploadField';
 import { useColors, useIsDark } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
 import {
@@ -441,12 +444,24 @@ function ActivityPreview({ draft, colors }: { draft: ActivityDraft; colors: Colo
 export function HostspaceActivityCreateForm({ onReview }: { onReview?: () => void }) {
   const colors = useColors();
   const { isDesktop } = useLayout();
+  const { user } = useAuth();
   const [draft, setDraft] = useState<ActivityDraft>(INITIAL_DRAFT);
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<'draft' | 'published' | null>(null);
   const [showSponsorForm, setShowSponsorForm] = useState(false);
   const [newSponsor, setNewSponsor] = useState<Sponsor>({ id: '', name: '', tier: 'gold' });
   const showPreview = true;
+
+  const parseDateTime = (dateTimeStr: string) => {
+    const parts = dateTimeStr ? dateTimeStr.split(' ') : [];
+    return {
+      date: parts[0] || '',
+      time: parts[1] || '',
+    };
+  };
+
+  const startVal = parseDateTime(draft.startDateTime);
+  const endVal = parseDateTime(draft.endDateTime);
 
   const handlePath = useMemo(() => `/a/${draft.handle || slugify(draft.title) || 'your-activity-name'}`, [draft.handle, draft.title]);
 
@@ -578,12 +593,58 @@ export function HostspaceActivityCreateForm({ onReview }: { onReview?: () => voi
 
           <Section title="Date & Time" icon="time-outline">
             <View style={styles.twoCol}>
-              <Field label="Start Date & Time" required>
-                <DraftInput value={draft.startDateTime} onChangeText={(startDateTime) => updateDraft({ startDateTime })} placeholder="2026-09-06 10:30" accessibilityLabel="Start date and time" />
-              </Field>
-              <Field label="End Date & Time">
-                <DraftInput value={draft.endDateTime} onChangeText={(endDateTime) => updateDraft({ endDateTime })} placeholder="2026-09-06 12:00" accessibilityLabel="End date and time" />
-              </Field>
+              <View style={{ flex: 1 }}>
+                <DateField
+                  label="Start Date"
+                  value={startVal.date}
+                  onChange={(date) => {
+                    const timePart = startVal.time || '10:30';
+                    updateDraft({ startDateTime: `${date} ${timePart}`.trim() });
+                  }}
+                  allowFutureDates={true}
+                  required
+                />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Field label="Start Time" required>
+                  <FormInput
+                    value={startVal.time}
+                    onChangeText={(time) => {
+                      const datePart = startVal.date || '2026-09-06';
+                      updateDraft({ startDateTime: `${datePart} ${time}`.trim() });
+                    }}
+                    placeholder="10:30"
+                    accessibilityLabel="Start time"
+                  />
+                </Field>
+              </View>
+            </View>
+            <View style={styles.twoCol}>
+              <View style={{ flex: 1 }}>
+                <DateField
+                  label="End Date"
+                  value={endVal.date}
+                  onChange={(date) => {
+                    const timePart = endVal.time || '12:00';
+                    updateDraft({ endDateTime: `${date} ${timePart}`.trim() });
+                  }}
+                  allowFutureDates={true}
+                  required={false}
+                />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Field label="End Time">
+                  <FormInput
+                    value={endVal.time}
+                    onChangeText={(time) => {
+                      const datePart = endVal.date || '2026-09-06';
+                      updateDraft({ endDateTime: `${datePart} ${time}`.trim() });
+                    }}
+                    placeholder="12:00"
+                    accessibilityLabel="End time"
+                  />
+                </Field>
+              </View>
             </View>
             <Field label="Time Zone">
               <DraftInput value={draft.timeZone} onChangeText={(timeZone) => updateDraft({ timeZone })} placeholder="Australia/Sydney" accessibilityLabel="Time zone" />
@@ -636,14 +697,34 @@ export function HostspaceActivityCreateForm({ onReview }: { onReview?: () => voi
           </Section>
 
           <Section title="Media & Visuals" icon="image-outline">
-            <Field label="Cover Image" hint="Recommended 1200x600">
-              <DraftInput value={draft.coverImage} onChangeText={(coverImage) => updateDraft({ coverImage })} placeholder="https://..." accessibilityLabel="Cover image URL" />
+            <Field label="Cover Image" hint="Recommended aspect ratio 16:9">
+              <MediaUploadField
+                type="hero"
+                value={draft.coverImage}
+                onChange={(val) => updateDraft({ coverImage: val as string })}
+                storagePath={`activities/${user?.id || 'anonymous'}/cover`}
+                aspectRatio={16 / 9}
+              />
             </Field>
             <Field label="Gallery" hint="Up to 8 photos">
-              <DraftInput value={draft.gallery} onChangeText={(gallery) => updateDraft({ gallery })} placeholder="Paste image URLs separated by commas" accessibilityLabel="Gallery image URLs" />
+              <MediaUploadField
+                type="gallery"
+                value={draft.gallery ? draft.gallery.split(',').map((s) => s.trim()).filter(Boolean) : []}
+                onChange={(val) => {
+                  const arr = Array.isArray(val) ? val : [val];
+                  updateDraft({ gallery: arr.join(',') });
+                }}
+                storagePath={`activities/${user?.id || 'anonymous'}/gallery`}
+                maxItems={8}
+              />
             </Field>
             <Field label="Promo Video">
-              <DraftInput value={draft.promoVideo} onChangeText={(promoVideo) => updateDraft({ promoVideo })} placeholder="YouTube, Vimeo, or upload URL" accessibilityLabel="Promo video URL" />
+              <MediaUploadField
+                type="video"
+                value={draft.promoVideo}
+                onChange={(val) => updateDraft({ promoVideo: val as string })}
+                storagePath={`activities/${user?.id || 'anonymous'}/video`}
+              />
             </Field>
           </Section>
 

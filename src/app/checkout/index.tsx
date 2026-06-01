@@ -33,6 +33,7 @@ import { useSafeBack } from '@/lib/navigation';
 import { StripeNativeProvider, useSafeStripe } from '@/lib/stripe-wrapper';
 
 const isWeb = Platform.OS === 'web';
+const isStripeTestMode = !process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY?.startsWith('pk_live_');
 
 export default function CheckoutPage() {
   return (
@@ -212,7 +213,7 @@ function CheckoutPageInner() {
           },
           googlePay: {
             merchantCountryCode: 'AU',
-            testEnv: true,
+            testEnv: isStripeTestMode,
           },
         });
 

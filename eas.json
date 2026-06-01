@@ -26,7 +26,7 @@
       },
       "env": {
         "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD": "1",
-        "EXPO_PUBLIC_SENTRY_DSN": "https://c99b1f7bc7c59d6f5fd539e84f738c69@o4511445582675968.ingest.de.sentry.io/4511445586542672"  // EU region
+        "EXPO_PUBLIC_SENTRY_DSN": "https://5dacae168399d609b383f56047e434c6@o4511488428408832.ingest.us.sentry.io/4511488823984128"
         // Add SENTRY_RELEASE_HOOK_URL and SENTRY_AUTH_TOKEN as secrets when using CI for releases + sourcemaps
       }
     },
@@ -49,15 +49,15 @@
         "EXPO_PUBLIC_API_URL": "https://australia-southeast1-culturepass-4f264.cloudfunctions.net/api/",
         "EXPO_PUBLIC_EAS_PROJECT_ID": "9dc511ee-ee3e-4798-ae29-30efc8f5343e",
         "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD": "1",
-        // Sentry configuration (EU region)
-        "EXPO_PUBLIC_SENTRY_DSN": "https://c99b1f7bc7c59d6f5fd539e84f738c69@o4511445582675968.ingest.de.sentry.io/4511445586542672",
+        "EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY": "pk_test_51TaSrKPjFeuRSdIYKNav3rkYyElZrGV51tvmLrNNKW6oqUD5F60x6vf9osoXNno1y7D4sxSpOkF3u98xiLeAVV2000FG7Crcnb",
+        // Sentry configuration (US region)
+        "EXPO_PUBLIC_SENTRY_DSN": "https://5dacae168399d609b383f56047e434c6@o4511488428408832.ingest.us.sentry.io/4511488823984128",
         // For sourcemap uploads during EAS builds (recommended to set these via `eas secret:create`)
-        "SENTRY_ORG": "culturepass",
-        "SENTRY_PROJECT": "culturepass"   // <-- Replace with your actual Sentry project slug (e.g. culturepass-mobile)
+        "SENTRY_ORG": "culturepass-wc",
+        "SENTRY_PROJECT": "react-native"   // <-- Replace with your actual Sentry project slug (e.g. culturepass-mobile)
       }
     },
     "production": {
-      "autoIncrement": true,
       "channel": "production",
       "ios": {
         "simulator": false
@@ -69,11 +69,12 @@
         "EXPO_PUBLIC_API_URL": "https://australia-southeast1-culturepass-4f264.cloudfunctions.net/api/",
         "EXPO_PUBLIC_EAS_PROJECT_ID": "9dc511ee-ee3e-4798-ae29-30efc8f5343e",
         "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD": "1",
-        // Sentry configuration (EU region)
-        "EXPO_PUBLIC_SENTRY_DSN": "https://c99b1f7bc7c59d6f5fd539e84f738c69@o4511445582675968.ingest.de.sentry.io/4511445586542672",
+        "EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY": "pk_test_51TaSrKPjFeuRSdIYKNav3rkYyElZrGV51tvmLrNNKW6oqUD5F60x6vf9osoXNno1y7D4sxSpOkF3u98xiLeAVV2000FG7Crcnb",
+        // Sentry configuration (US region)
+        "EXPO_PUBLIC_SENTRY_DSN": "https://5dacae168399d609b383f56047e434c6@o4511488428408832.ingest.us.sentry.io/4511488823984128",
         // For sourcemap uploads during EAS builds (recommended to set these via `eas secret:create`)
-        "SENTRY_ORG": "culturepass",
-        "SENTRY_PROJECT": "culturepass"   // <-- Replace with your actual Sentry project slug (e.g. culturepass-mobile)
+        "SENTRY_ORG": "culturepass-wc",
+        "SENTRY_PROJECT": "react-native"   // <-- Replace with your actual Sentry project slug (e.g. culturepass-mobile)
       }
     }
   },

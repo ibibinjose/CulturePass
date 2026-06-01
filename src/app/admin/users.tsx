@@ -749,7 +749,7 @@ export default function UserDirectoryScreen() {
                 ]}
                 onPress={() => toggleFilter('roles', role)}
               >
-                <Text style={[styles.filterChipText, { color: active ? '#fff' : colors.text }]}>
+                <Text style={[styles.filterChipText, { color: active ? colors.textInverse : colors.text }]}>
                   {role}
                 </Text>
               </Pressable>
@@ -770,7 +770,7 @@ export default function UserDirectoryScreen() {
                 ]}
                 onPress={() => toggleFilter('statuses', s)}
               >
-                <Text style={[styles.filterChipText, { color: active ? '#fff' : colors.text }]}>{s}</Text>
+                <Text style={[styles.filterChipText, { color: active ? colors.textInverse : colors.text }]}>{s}</Text>
               </Pressable>
             );
           })}
@@ -786,7 +786,7 @@ export default function UserDirectoryScreen() {
                 ]}
                 onPress={() => toggleFilter('memberships', m)}
               >
-                <Text style={[styles.filterChipText, { color: active ? '#fff' : colors.text }]}>{m}</Text>
+                <Text style={[styles.filterChipText, { color: active ? colors.textInverse : colors.text }]}>{m}</Text>
               </Pressable>
             );
           })}
@@ -825,7 +825,7 @@ export default function UserDirectoryScreen() {
               >
                 <Text style={{
                   fontSize: 12,
-                  color: isActive ? '#fff' : colors.text,
+                  color: isActive ? colors.textInverse : colors.text,
                   fontFamily: FontFamily.medium
                 }}>
                   {option.label}
@@ -902,11 +902,9 @@ export default function UserDirectoryScreen() {
                           {(item.displayName || item.username || 'U').charAt(0).toUpperCase()}
                         </Text>
                       </View>
-                      <View>
-                        <Text style={[styles.userName, { color: colors.text }]} numberOfLines={1}>
-                          {item.displayName || item.username}
-                        </Text>
-                        <Text style={[styles.userHandle, { color: colors.textTertiary }]} numberOfLines={1}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.userName, { color: colors.text }]} numberOfLines={1} ellipsizeMode="tail">{item.displayName || item.username}</Text>
+                        <Text style={[styles.userHandle, { color: colors.textTertiary }]} numberOfLines={1} ellipsizeMode="tail">
                           @{item.username}
                         </Text>
                       </View>
@@ -917,8 +915,8 @@ export default function UserDirectoryScreen() {
                       </View>
                     </View>
                     <View style={{ flex: 1.5 }}>
-                      <View style={[styles.miniBadge, { backgroundColor: status === 'suspended' ? '#FEE2E2' : '#D1FAE5' }]}>
-                        <Text style={{ fontSize: 9, fontFamily: FontFamily.bold, color: status === 'suspended' ? '#991B1B' : '#065F46' }}>
+                      <View style={[styles.miniBadge, { backgroundColor: status === 'suspended' ? colors.error + '20' : colors.success + '20' }]}>
+                        <Text style={{ fontSize: 9, fontFamily: FontFamily.bold, color: status === 'suspended' ? colors.error : colors.success }}>
                           {status.toUpperCase()}
                         </Text>
                       </View>
@@ -1101,7 +1099,7 @@ const styles = StyleSheet.create({
   controlSectionTitle: {
     fontSize: 10,
     fontFamily: FontFamily.bold,
-    color: '#71717A',
+    color: CultureTokens.grey500,
     letterSpacing: 1,
     marginBottom: 4,
   },
@@ -1163,7 +1161,7 @@ const styles = StyleSheet.create({
   tableHeaderText: {
     fontSize: 10,
     fontFamily: FontFamily.bold,
-    color: '#71717A',
+    color: CultureTokens.grey500,
     letterSpacing: 0.5,
   },
   tableRow: {

@@ -15,25 +15,29 @@ Belong anywhere. Discover culture.
 
 ## Full Description (iOS & Android) — ~4000 chars max
 
-**CulturePass — Belong anywhere.**
+Discover, plan, and track every cultural adventure — all in one place.
 
-Your one-stop lifestyle platform for cultural diaspora communities worldwide.
+CulturePass.app makes it effortless to explore the best your city has to offer. Browse events by category, venue, date, or time and discover experiences perfectly matched to your interests — from museums, food festivals, and cultural exhibits to live theatre, markets, movies, workshops, and more.
 
-Discover events, communities, venues, and cultural businesses in your city and around the world. Buy tickets, join groups, earn perks, and connect with people who share your heritage and interests.
+Check in seamlessly with your phone, collect digital stamps, and track visits for yourself and your whole household. Stay in the loop with instant real-time notifications for new events and last-minute changes — so you never miss a moment.
 
-**What’s inside:**
-- **Event Discovery** — Browse festivals, concerts, workshops, and community gatherings by city, date, culture, and category. Powerful search and smart recommendations.
-- **Tickets & Wallet** — Secure Stripe checkout, QR tickets, Apple/Google Wallet support.
-- **Communities** — Join and manage diaspora groups, cultural associations, and interest circles.
-- **Business Directory** — Find venues, restaurants, shops, and services near you, filtered by LGA/council.
-- **Membership & Perks** — Unlock cashback, priority access, and partner discounts with CulturePass+.
-- **Host Tools** — Create and sell events, manage profiles, and grow your audience (for organizers, venues, artists, and communities).
-- **First Nations Spotlight** — Dedicated discovery for Indigenous Australian culture and events.
-- **Apple Widgets & Live Activities** — See upcoming events and tickets right on your home screen and Lock Screen.
+Built for every generation and every community, CulturePass.app brings together free events, ticketed experiences, and local cultural venues in one beautiful app.
 
-**Built for diaspora communities** — whether you’re in Sydney, Melbourne, London, Toronto, New York, or beyond. Find your people and your culture, wherever you live.
+With CulturePass+, unlock a whole season of creativity: premium events, movies, classes, exclusive activities, and special perks.
 
-Download free. No credit card required to explore.
+Whether you're creating memories with family and friends or rediscovering your city on your own, CulturePass.app helps you embrace local culture, connect with your community, and make the most of everything your council and neighbourhood have to offer.
+
+### Alternative shorter & punchier version:
+CulturePass.app — Your all-in-one cultural adventure companion.
+
+Easily discover events that match your interests — museums, festivals, theatre, markets, workshops, and more. Browse by category, venue, date, or time, then plan and track everything in one place.
+
+Check in with your phone, collect digital stamps, and keep track of visits for the whole family. Get real-time notifications so you’re always in the know.
+
+Perfect for every generation and every community. From free local events to premium experiences, CulturePass+ opens the door to exclusive movies, classes, activities, and more.
+
+Rediscover your city. Connect with your community. Live a richer cultural life — all with CulturePass.app.
+
 
 ---
 

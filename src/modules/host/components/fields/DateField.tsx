@@ -35,6 +35,7 @@ import { useColors } from '@/hooks/useColors';
 import { useFieldValidation } from '@/modules/host/hooks/useFieldValidation';
 import { pastDateSchema } from '@/modules/host/schemas/profileSchema';
 import { CultureTokens, FontFamily } from '@/design-system/tokens/theme';
+import { z } from 'zod';
 
 export interface DateFieldProps {
   /**
@@ -91,6 +92,11 @@ export interface DateFieldProps {
    * Callback when validation completes
    */
   onValidationComplete?: (isValid: boolean) => void;
+
+  /**
+   * Whether future dates are allowed (for scheduling events, activities, offers)
+   */
+  allowFutureDates?: boolean;
 }
 
 /**
@@ -129,6 +135,10 @@ function formatDateForDisplay(isoString: string): string {
   });
 }
 
+const anyDateSchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format');
+
 export function DateField({
   value,
   onChange,
@@ -138,15 +148,19 @@ export function DateField({
   placeholder = 'Select date',
   required = true,
   disabled = false,
-  maxDate = new Date(),
+  maxDate,
   minDate,
   onValidationComplete,
+  allowFutureDates = false,
 }: DateFieldProps) {
   const colors = useColors();
   const [showPicker, setShowPicker] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(
     value ? parseISODate(value) || new Date() : new Date()
   );
+
+  const resolvedMaxDate = maxDate !== undefined ? maxDate : (allowFutureDates ? undefined : new Date());
+  const schema = allowFutureDates ? anyDateSchema : pastDateSchema;
 
   /**
    * Field validation hook
@@ -157,7 +171,7 @@ export function DateField({
     hasValidated,
     validate,
   } = useFieldValidation({
-    schema: pastDateSchema,
+    schema,
     debounceMs: 300,
   });
 
@@ -240,7 +254,7 @@ export function DateField({
         mode="date"
         display={Platform.OS === 'ios' ? 'spinner' : 'default'}
         onChange={handleDateChange}
-        maximumDate={maxDate}
+        maximumDate={resolvedMaxDate}
         minimumDate={minDate}
         textColor={colors.text}
       />

@@ -12,7 +12,7 @@
     "android": "npx expo start --android",
     "ios": "npx expo start --ios",
     "web": "npx expo start --web",
-    "server:dev": "tsx functions/src/index.ts",
+    "server:dev": "tsx scripts/server-dev.ts",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:unit": "jest && npm run test:functions",
@@ -22,7 +22,6 @@
     "test:property": "tsx scripts/tests/property-tests.ts",
     "test:load": "tsx scripts/tests/load-tests.ts",
     "test:functional": "node scripts/run-functional-tests.js",
-    "build": "npx expo export --platform web",
     "build-web": "npx expo export --platform web",
     "build:ios:development": "eas build --platform ios --profile development",
     "build:ios:preview": "eas build --platform ios --profile preview",
@@ -70,9 +69,10 @@
     "@posthog/core": "1.29.9",
     "@posthog/types": "1.376.0",
     "@react-native-async-storage/async-storage": "2.2.0",
+    "@react-native-community/datetimepicker": "9.1.0",
     "@react-native-google-signin/google-signin": "16.1.2",
     "@sentry/react": "8.55.2",
-    "@sentry/react-native": "7.11.0",
+    "@sentry/react-native": "^7.13.0",
     "@shopify/flash-list": "2.0.2",
     "@stripe/stripe-react-native": "0.64.0",
     "@tanstack/query-async-storage-persister": "5.100.9",
@@ -144,6 +144,7 @@
     "@react-native/jest-preset": "0.85.3",
     "@sentry/cli": "2.58.4",
     "@testing-library/react-native": "13.3.3",
+    "@types/express": "5.0.0",
     "@types/jest": "29.5.14",
     "@types/node": "20.11.16",
     "@types/react": "~19.2.14",
@@ -156,10 +157,12 @@
     "eslint": "9.39.4",
     "eslint-config-expo": "~56.0.4",
     "eslint-config-prettier": "10.1.8",
+    "express": "4.21.2",
     "fast-check": "4.8.0",
     "jest": "29.7.0",
     "jest-expo": "^56.0.4",
     "nodemon": "3.1.14",
+    "tsx": "4.19.2",
     "typescript": "6.0.3",
     "typescript-eslint": "8.59.4"
   },
@@ -168,7 +171,7 @@
     "node": ">=22.14.0 <23"
   },
   "overrides": {
-    "@xmldom/xmldom": "^0.9.9",
+    "@xmldom/xmldom": "0.8.10",
     "@expo/plist": "^0.3.1",
     "uuid": "^10.0.0"
   }

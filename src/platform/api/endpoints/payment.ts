@@ -27,6 +27,7 @@ export function createMembershipNamespace(request: ApiRequestFn) {
         membership?: MembershipSummary;
         introDiscountApplied?: boolean;
       }>('POST', 'api/membership/subscribe', data),
+    billingPortal: () => request<{ url: string }>('POST', 'api/membership/billing-portal'),
     cancel: () => request<{ success: boolean; membership?: MembershipSummary }>('POST', 'api/membership/cancel-subscription'),
     redeemCode: (code: string) =>
       request<{

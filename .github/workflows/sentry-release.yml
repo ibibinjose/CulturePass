@@ -106,8 +106,8 @@ jobs:
         if: inputs.upload_sourcemaps == true && (inputs.platform == 'ios' || inputs.platform == 'android')
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          SENTRY_ORG: ${{ vars.SENTRY_ORG || 'culturepass' }}
-          SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT || 'culturepass' }}
+          SENTRY_ORG: ${{ vars.SENTRY_ORG || 'culturepass-wc' }}
+          SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT || 'react-native' }}
           INPUT_VERSION: ${{ inputs.version }}
           INPUT_PLATFORM: ${{ inputs.platform }}
         run: |
@@ -147,8 +147,8 @@ jobs:
         if: inputs.upload_sourcemaps == true
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          SENTRY_ORG: ${{ vars.SENTRY_ORG || 'culturepass' }}
-          SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT || 'culturepass' }}
+          SENTRY_ORG: ${{ vars.SENTRY_ORG || 'culturepass-wc' }}
+          SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT || 'react-native' }}
           INPUT_VERSION: ${{ inputs.version }}
           INPUT_ENVIRONMENT: ${{ inputs.environment }}
         run: |

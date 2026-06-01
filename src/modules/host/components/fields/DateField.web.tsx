@@ -22,6 +22,7 @@ export interface DateFieldProps {
   maxDate?: Date;
   minDate?: Date;
   onValidationComplete?: (isValid: boolean) => void;
+  allowFutureDates?: boolean;
 }
 
 function formatDateToISO(date: Date): string {
@@ -60,6 +61,7 @@ export function DateField({
   maxDate = new Date(),
   minDate,
   onValidationComplete,
+  allowFutureDates = false,
 }: DateFieldProps) {
   const colors = useColors();
 
@@ -132,10 +134,11 @@ export function DateField({
 
   // Build options for selects
   const currentYear = new Date().getFullYear();
+  const maxYear = allowFutureDates ? currentYear + 15 : currentYear;
   const minYear = 1800; // Reasonable for historical entities/organisers
 
-  const yearOptions = Array.from({ length: currentYear - minYear + 1 }, (_, i) => {
-    const y = String(currentYear - i);
+  const yearOptions = Array.from({ length: maxYear - minYear + 1 }, (_, i) => {
+    const y = String(maxYear - i);
     return { value: y, label: y };
   });
 

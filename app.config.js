@@ -18,6 +18,9 @@ const shouldExcludeMapsPlugin = isWebEnvironment ||
   process.argv.includes('web') || 
   (process.argv.includes('--platform') && process.argv[process.argv.indexOf('--platform') + 1] === 'web');
 
+const stripeMerchantIdentifier = process.env.EXPO_PUBLIC_STRIPE_MERCHANT_IDENTIFIER || "merchant.au.culturepass.app";
+const stripeAndroidPayMode = process.env.EXPO_PUBLIC_STRIPE_ANDROID_PAY_MODE === "production" ? "production" : "test";
+
 export default function(appConfig) {
   const { config } = appConfig || {};
   
@@ -32,8 +35,8 @@ export default function(appConfig) {
     [
       "@stripe/stripe-react-native",
       {
-        merchantIdentifier: "merchant.au.culturepass.app",
-        androidPayMode: "test"
+        merchantIdentifier: stripeMerchantIdentifier,
+        androidPayMode: stripeAndroidPayMode
       }
     ],
     "expo-font",
@@ -84,6 +87,7 @@ export default function(appConfig) {
         iosGoogleMapsApiKey: "$(EXPO_PUBLIC_GOOGLE_MAPS_KEY)"
       }
     ],
+    "@react-native-community/datetimepicker",
     [
       "expo-build-properties",
       {
@@ -225,6 +229,9 @@ export default function(appConfig) {
         buildNumber: "27",
         appleTeamId: "26WGXSNG58",
         entitlements: {
+          "com.apple.developer.in-app-payments": [
+            stripeMerchantIdentifier
+          ],
           "com.apple.security.application-groups": [
             "group.au.culturepass.app"
           ]

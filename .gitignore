@@ -35,6 +35,7 @@ build-*.apk
 .env
 .env.local
 .env.*.local
+.sentryclirc
 
 # Signing credentials & secrets — NEVER commit plaintext passwords/keys
 credentials.json
@@ -64,3 +65,7 @@ sentry-wizard-installation-error-*.log
 ._*
 .AppleDouble
 .LSOverride
+
+.env.local
+
+.env.local

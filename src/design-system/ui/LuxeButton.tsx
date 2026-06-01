@@ -49,6 +49,7 @@ interface LuxeButtonProps {
   onPress?: () => void;
   accessibilityLabel?: string;
   accessibilityRole?: 'button' | 'link' | 'image' | 'text' | 'none';
+  gradientColors?: [string, string, ...string[]];
 }
 
 const sizeTokens = {
@@ -131,6 +132,7 @@ export function LuxeButton({
   style,
   children,
   onPress,
+  gradientColors,
   ...rest
 }: LuxeButtonProps) {
   const isDisabled = disabled || loading;
@@ -213,12 +215,15 @@ export function LuxeButton({
     </View>
   );
 
+  const isGradient = v.isGradient || !!gradientColors;
+  const finalGradientColors = gradientColors ?? v.gradient ?? [TERRACOTTA_GLOW, DEEP_SAFFRON];
+
   const buttonStyle = [
     styles.base,
     {
       height: tokens.height,
       paddingHorizontal: tokens.paddingH,
-      backgroundColor: v.isGradient ? 'transparent' : v.background,
+      backgroundColor: isGradient ? 'transparent' : v.background,
       borderWidth: variant === 'outlined' ? 1.5 : 0,
       borderColor: v.border,
       width: fullWidth ? '100%' : undefined,
@@ -227,9 +232,7 @@ export function LuxeButton({
     style,
   ];
 
-  const gradientColors = v.gradient ?? [TERRACOTTA_GLOW, DEEP_SAFFRON];
-
-  if (v.isGradient) {
+  if (isGradient) {
     return (
       <AnimatedPressable
         onPress={handlePress}
@@ -240,7 +243,7 @@ export function LuxeButton({
         {...rest}
       >
         <LinearGradient
-          colors={gradientColors}
+          colors={finalGradientColors}
           start={{ x: 0, y: 0.5 }}
           end={{ x: 1, y: 0.5 }}
           style={StyleSheet.absoluteFill}

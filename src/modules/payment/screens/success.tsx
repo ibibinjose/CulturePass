@@ -38,11 +38,16 @@ export default function PaymentSuccessScreen() {
     queryFn: () => modulesApi.tickets.get(ticketId!),
     enabled: !!ticketId && isAuthenticated,
     staleTime: 60_000,
+    refetchInterval: (query) => {
+      const current = query.state.data;
+      return current && current.paymentStatus !== 'paid' ? 2_000 : false;
+    },
   });
 
   const purchaseComplete = Boolean(
     ticket &&
-      (ticket.paymentStatus === 'paid' || ticket.status === 'confirmed'),
+      (ticket.paymentStatus === 'paid' ||
+        (!ticket.paymentStatus && ticket.status === 'confirmed')),
   );
 
   const { data: eventForAnalytics, isFetched: eventCtxFetched } = useQuery<EventData>({
@@ -96,7 +101,9 @@ export default function PaymentSuccessScreen() {
       </View>
 
       <View style={styles.textBlock}>
-        <Text style={[styles.title, { color: colors.text }]}>{"You're going! 🎉"}</Text>
+        <Text style={[styles.title, { color: colors.text }]}>
+          {purchaseComplete ? "You're going!" : 'Finalising payment'}
+        </Text>
         {ticket ? (
           <>
             <Text style={[styles.eventTitle, { color: colors.text }]}>
@@ -127,8 +134,9 @@ export default function PaymentSuccessScreen() {
             variant="primary"
             onPress={() => router.replace(`/tickets/${ticketId}`)}
             accessibilityLabel="View your ticket"
+            disabled={!purchaseComplete}
           >
-            View Ticket
+            {purchaseComplete ? 'View Ticket' : 'Ticket Processing'}
           </Button>
         ) : null}
 

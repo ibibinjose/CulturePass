@@ -8,7 +8,7 @@ import { router } from 'expo-router';
 
 import { useColors } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
-import { Luxe, luxeDark, SignatureGradient, Spacing, Radius, CardTokens, TextStyles } from '@/design-system/tokens/theme';
+import { Luxe, luxeDark, SignatureGradient, Spacing, Radius, CardTokens, TextStyles, CultureTokens } from '@/design-system/tokens/theme';
 import { LuxeCard } from '@/design-system/ui/LuxeCard';
 import { LuxeText } from '@/design-system/ui/LuxeText';
 import { Badge } from '@/design-system/ui/Badge';
@@ -240,7 +240,7 @@ export function EntityTypeSelector({ onSelect, existingProfiles = [], intent }: 
             <LinearGradient
               // FIXES-001: nation-builder gradient uses a deliberate warm variation for the hero.
               // The middle stop is intentionally a touch lighter than heritage gold for contrast on the dark overlay.
-              colors={[Luxe.colors.dark.secondary, '#D4A017', '#E36A4E']}
+              colors={[Luxe.colors.dark.secondary, CultureTokens.heritageGold, CultureTokens.terracottaGlow]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0.9 }}
               style={styles.heroGradient}

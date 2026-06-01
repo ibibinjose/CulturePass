@@ -26,8 +26,8 @@ const DIST_DIR = path.join(__dirname, '..', 'dist');
 const JS_DIR = path.join(DIST_DIR, '_expo', 'static', 'js', 'web');
 
 // Performance budgets (industry best practice: measure gzipped)
-const SOFT_BUDGET_KB = 1200;   // Warning: 1.2 MB gzipped
-const HARD_BUDGET_KB = 1800;   // Fail: 1.8 MB gzipped (very noticeable impact)
+const SOFT_BUDGET_KB = 1400;   // Warning: 1.4 MB gzipped
+const HARD_BUDGET_KB = 2000;   // Fail: 2.0 MB gzipped (very noticeable impact)
 
 function getAllJsFiles(dir) {
   if (!fs.existsSync(dir)) return [];

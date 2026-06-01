@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import { M3Button, Skeleton } from '@/design-system/ui';
 import { Ionicons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -206,9 +206,9 @@ export default function WalletScreen() {
   const colors = useColors();
   const styles = getStyles(colors);
   const { isDesktop } = useLayout();
-  const insets      = useSafeAreaInsets();
-  const topInset    = isWeb ? 0 : insets.top;
-  const bottomInset = isWeb ? 34 : insets.bottom;
+  const insets      = useSafeAreaInsetsWeb();
+  const topInset    = insets.top;
+  const bottomInset = insets.bottom;
   const { userId, user }  = useAuth();
   const [tab, setTab] = useState<WalletTab>('upcoming');
   const [pendingTicketWalletAction, setPendingTicketWalletAction] = useState<{ ticketId: string; provider: 'apple' | 'google' } | null>(null);

@@ -26,7 +26,7 @@ import {
 import {
   M3Button,
   GlassView,
-  BrandLockup,
+  CulturePassWordmark,
 } from '@/design-system/ui';
 import { api } from '@/lib/api';
 import { useLayout } from '@/hooks/useLayout';
@@ -118,7 +118,7 @@ export function WaitlistLanding() {
       <View style={[styles.nav, { borderBottomColor: colors.borderLight, backgroundColor: isDark ? 'rgba(11,11,20,0.92)' : 'rgba(255,255,255,0.92)' }]}>
         <View style={[styles.navInner, maxWidth != null ? { maxWidth, alignSelf: 'center' as const } : null]}>
           <Pressable onPress={() => router.replace('/(tabs)')} style={styles.navBrand}>
-            <BrandLockup size="sm" />
+            <CulturePassWordmark size="sm" showSuffix={false} />
           </Pressable>
 
           <View style={styles.navActions}>
@@ -147,21 +147,29 @@ export function WaitlistLanding() {
         <View style={styles.hero}>
           <View style={styles.heroContent}>
             <Animated.View entering={FadeInDown.duration(600)}>
-              <BrandLockup size="lg" withTagline centered />
+              <CulturePassWordmark size="lg" showSuffix />
             </Animated.View>
 
             <Animated.Text
-              entering={FadeInDown.delay(120).duration(700)}
-              style={[styles.heroTitle, { color: colors.text }]}
+              entering={FadeInDown.delay(100).duration(550)}
+              style={[styles.heroTagline, { color: colors.text }]}
             >
-              The home for diaspora cultures.
+              Belong anywhere.
             </Animated.Text>
 
             <Animated.Text
-              entering={FadeInDown.delay(220).duration(700)}
+              entering={FadeInDown.delay(180).duration(550)}
+              style={[styles.heroTitle, { color: colors.text }]}
+              numberOfLines={1}
+            >
+              The cultural home for the diaspora.
+            </Animated.Text>
+
+            <Animated.Text
+              entering={FadeInDown.delay(260).duration(600)}
               style={[styles.heroSubtitle, { color: colors.textSecondary }]}
             >
-              Discover festivals, join circles that matter, and build real belonging — online and in the real world.
+              The platform for diaspora communities. Discover real events, join circles that matter, and build belonging in your city.
             </Animated.Text>
 
             <Animated.View
@@ -348,8 +356,8 @@ export function WaitlistLanding() {
         <View style={[styles.footer, { borderTopColor: colors.borderLight }]}>
           <View style={[styles.footerInner, isDesktop && styles.footerInnerWide]}>
             <View style={styles.footerBrand}>
-              <BrandLockup size="sm" />
-              <Text style={[styles.footerTagline, { color: colors.textTertiary }]}>Connecting cultures, building belonging.</Text>
+              <CulturePassWordmark size="sm" showSuffix={false} />
+              <Text style={[styles.footerTagline, { color: colors.textTertiary }]}>Belong anywhere.</Text>
             </View>
 
             <View style={styles.footerLinks}>
@@ -492,41 +500,50 @@ const styles = StyleSheet.create({
 
   // Hero
   hero: {
-    paddingTop: 48,
-    paddingBottom: 32,
+    paddingTop: 56,
+    paddingBottom: 40,
     paddingHorizontal: 20,
     alignItems: 'center',
   },
-  heroContent: { alignItems: 'center', maxWidth: 720, width: '100%' },
-  heroTitle: {
-    fontSize: 52,
-    lineHeight: 58,
+  heroContent: { alignItems: 'center', maxWidth: 680, width: '100%' },
+  heroTagline: {
+    fontSize: 38,
+    lineHeight: 44,
     fontFamily: FontFamily.bold,
     textAlign: 'center',
-    marginTop: 18,
-    marginBottom: 14,
+    marginTop: 8,
+    marginBottom: 4,
     letterSpacing: -1.2,
   },
-  heroSubtitle: {
-    fontSize: 18,
+  heroTitle: {
+    fontSize: 22,
     lineHeight: 28,
+    fontFamily: FontFamily.bold,
+    textAlign: 'center',
+    marginTop: 2,
+    marginBottom: 10,
+    letterSpacing: -0.5,
+  },
+  heroSubtitle: {
+    fontSize: 17,
+    lineHeight: 26,
     fontFamily: FontFamily.regular,
     textAlign: 'center',
-    maxWidth: 560,
-    marginBottom: 28,
+    maxWidth: 540,
+    marginBottom: 24,
   },
   heroCtas: { gap: 12, marginBottom: 16, width: '100%', maxWidth: 420 },
   heroCtasRow: { flexDirection: 'row', justifyContent: 'center', gap: 14 },
   primaryCta: { height: 56, minWidth: 180 },
   secondaryCta: { height: 56, minWidth: 160 },
-  heroTrust: { fontSize: 13, textAlign: 'center', marginTop: 8 },
+  heroTrust: { fontSize: 13, textAlign: 'center', marginTop: 4, opacity: 0.7 },
   heroVisual: {
     width: '100%',
     maxWidth: 980,
     height: 320,
     borderRadius: Radius.xl,
     overflow: 'hidden',
-    marginTop: 32,
+    marginTop: 24,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.08)',
   },
@@ -534,7 +551,7 @@ const styles = StyleSheet.create({
   heroImageOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, height: '45%' },
 
   // Trust
-  trustBar: { borderTopWidth: 1, borderBottomWidth: 1, paddingVertical: 22 },
+  trustBar: { borderTopWidth: 1, borderBottomWidth: 1, paddingVertical: 16 },
   trustInner: { flexDirection: 'row', justifyContent: 'space-around', paddingHorizontal: 12, gap: 12 },
   trustGrid: { justifyContent: 'space-between', paddingHorizontal: 40 },
   trustItem: { alignItems: 'center', minWidth: 90 },
@@ -542,7 +559,7 @@ const styles = StyleSheet.create({
   trustLabel: { fontSize: 12, marginTop: 2, fontFamily: FontFamily.regular },
 
   // Sections
-  section: { paddingHorizontal: 20, paddingTop: 48, paddingBottom: 12 },
+  section: { paddingHorizontal: 20, paddingTop: 36, paddingBottom: 8 },
   sectionEyebrow: { fontSize: 12, fontFamily: FontFamily.semibold, letterSpacing: 1.5, marginBottom: 8 },
   sectionTitle: { fontSize: 28, lineHeight: 34, fontFamily: FontFamily.bold, marginBottom: 12 },
   sectionBody: { fontSize: 16, lineHeight: 26, fontFamily: FontFamily.regular, maxWidth: 620 },

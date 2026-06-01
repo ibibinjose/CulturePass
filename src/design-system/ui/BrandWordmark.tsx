@@ -1,14 +1,9 @@
 import React from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { useColors } from '@/hooks/useColors';
 import { APP_AKA, TAGLINE_PRIMARY } from '@/lib/app-meta';
-
-const FONT_SIZES: Record<string, { name: number; tagline: number }> = {
-  sm: { name: 15, tagline: 10 },
-  md: { name: 18, tagline: 10.5 },
-  lg: { name: 24, tagline: 12 },
-  xl: { name: 28, tagline: 13 },
-};
+import { NameTaglineLockup } from './NameTaglineLockup';
+import { CulturePassWordmark } from './CulturePassWordmark';
 
 export function BrandWordmark({
   size = 'md',
@@ -24,38 +19,48 @@ export function BrandWordmark({
   tagline?: string;
 }) {
   const colors = useColors();
-  const sz = FONT_SIZES[size] ?? FONT_SIZES.md;
-  const nameColor = color ?? colors.text;
-  const taglineColor = color ? `${color}99` : colors.textSecondary;
+
+  const isOfficialBrand = !color;
+
+  if (isOfficialBrand) {
+    // Official app branding: "Culture" red + "Pass" green + ".App"
+    return (
+      <View style={{ alignItems: centered ? 'center' : 'flex-start' }}>
+        <CulturePassWordmark
+          size={size === 'xl' ? 'xl' : size === 'lg' ? 'lg' : size === 'md' ? 'md' : 'sm'}
+          showSuffix
+        />
+        {withTagline && tagline && (
+          <View style={{ marginTop: 4 }}>
+            <NameTaglineLockup
+              name=""
+              tagline={tagline}
+              taglineColor={colors.textSecondary}
+              size={size === 'xl' || size === 'lg' ? 'md' : 'sm'}
+              align={centered ? 'center' : 'left'}
+              marginBottom={0}
+            />
+          </View>
+        )}
+      </View>
+    );
+  }
+
+  // Custom color usage (themed sections, etc.) — fall back to previous treatment
+  const resolvedNameColor = color;
+  const resolvedTaglineColor = color ? `${color}99` : colors.textSecondary;
 
   return (
     <View style={{ alignItems: centered ? 'center' : 'flex-start' }}>
-      <Text
-        style={{
-          fontSize: sz.name,
-          fontFamily: 'Poppins_700Bold',
-          color: nameColor,
-          letterSpacing: -0.6,
-          lineHeight: sz.name + 4,
-          includeFontPadding: false,
-        }}
-      >
-        {APP_AKA}
-      </Text>
-      {withTagline ? (
-        <Text
-          style={{
-            fontSize: sz.tagline,
-            fontFamily: 'Poppins_500Medium',
-            color: taglineColor,
-            marginTop: 1,
-            letterSpacing: -0.1,
-          }}
-          numberOfLines={1}
-        >
-          {tagline}
-        </Text>
-      ) : null}
+      <NameTaglineLockup
+        name={APP_AKA}
+        tagline={withTagline ? tagline : undefined}
+        nameColor={resolvedNameColor}
+        taglineColor={resolvedTaglineColor}
+        size={size === 'xl' ? 'lg' : size === 'lg' ? 'md' : 'sm'}
+        align={centered ? 'center' : 'left'}
+        marginBottom={0}
+      />
     </View>
   );
 }

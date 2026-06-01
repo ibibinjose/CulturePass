@@ -11,6 +11,7 @@ import {
   OAuthProvider,
   setPersistence,
   browserLocalPersistence,
+  sendEmailVerification,
 } from 'firebase/auth';
 import { api } from '@/lib/api';
 import * as AppleAuthentication from 'expo-apple-authentication';
@@ -209,6 +210,11 @@ export function useSignup() {
       }
       const credential = await createUserWithEmailAndPassword(firebaseAuth, normalizedEmail, password);
       await updateProfile(credential.user, { displayName: normalizedName });
+      try {
+        await sendEmailVerification(credential.user);
+      } catch (sendError) {
+        console.warn('Failed to send verification email during signup:', sendError);
+      }
       await credential.user.getIdToken(true);
       await api.auth.register({ displayName: normalizedName, role });
 

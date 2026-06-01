@@ -1,14 +1,13 @@
 import React from 'react';
-import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Platform, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 
-import { M3Button } from '@/design-system/ui';
+import { M3Button, NameTaglineLockup } from '@/design-system/ui';
 import { useM3Colors } from '@/hooks/useM3Colors';
 import { useLayout } from '@/hooks/useLayout';
 import { CultureTokens, FontFamily, M3Typography } from '@/design-system/tokens/theme';
-import { Luxe } from '@/design-system/tokens/luxeHeritage';
 import { getCommunityLabel } from '@/lib/community';
 import type { Community } from '@/shared/schema';
 
@@ -47,7 +46,7 @@ function HeroIdentity({
   webLayout: boolean;
 }) {
   const m3Colors = useM3Colors();
-  const { hPad, isDesktop } = useLayout();
+  const { hPad } = useLayout();
   const showHeadline = headline !== community.description;
 
   const body = (
@@ -68,38 +67,21 @@ function HeroIdentity({
         )}
       </View>
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={heroStyles.heroNameScroll}
-        keyboardShouldPersistTaps="handled"
-      >
-        <Text
-          style={[
-            heroStyles.heroName,
-            webLayout && heroStyles.heroNameWeb,
-            M3Typography.headlineLarge,
-            { color: '#fff' },
-          ]}
-          numberOfLines={1}
-        >
-          {community.name}
-        </Text>
-      </ScrollView>
+      {/* Premium Name + Tagline lockup (consistent editorial treatment across the app) */}
+      <NameTaglineLockup
+        name={community.name}
+        tagline={showHeadline ? headline : undefined}
+        nameColor="#fff"
+        taglineColor="rgba(255,255,255,0.85)"
+        align={webLayout ? 'center' : 'left'}
+        size={webLayout ? 'lg' : 'md'}
+        marginBottom={6}
+      />
 
       <Text style={[heroStyles.heroLabel, M3Typography.labelLarge, { color: 'rgba(255,255,255,0.8)' }]}>
         {getCommunityLabel(community)}
         {locationLabel ? ` · ${locationLabel}` : ''}
       </Text>
-
-      {showHeadline ? (
-        <Text
-          style={[heroStyles.heroHeadline, M3Typography.bodyMedium, { color: 'rgba(255,255,255,0.9)' }]}
-          numberOfLines={3}
-        >
-          {headline}
-        </Text>
-      ) : null}
 
       <View
         style={[

@@ -17,7 +17,7 @@ import { api, ApiError, type ActivityInput } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { DateField } from './fields/DateField';
 import { MediaUploadField } from './fields/MediaUploadField';
-import { useColors, useIsDark } from '@/hooks/useColors';
+import { useColors } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
 import {
   ButtonTokens,
@@ -207,7 +207,23 @@ function makeActivityPayload(draft: ActivityDraft, status: 'draft' | 'published'
       draft.visibility,
     ].filter(Boolean),
     status,
+    // ── Rich class & fitness fields (now persisted) ──
+    recurrence: draft.recurrence,
+    difficulty: draft.difficulty,
+    instructorName: draft.hostName?.trim() || undefined,
+    locationType: draft.locationType,
+    primaryCulture: draft.primaryCulture || undefined,
+    visibility: draft.visibility,
+    maxParticipants: draft.maxParticipants || undefined,
   };
+
+  // Build a nice human schedule text for display in rails/cards
+  const timePart = draft.startDateTime?.trim();
+  const durPart = draft.endDateTime?.trim() ? ` · ${draft.endDateTime.trim()}` : '';
+  const recPart = draft.recurrence && draft.recurrence !== 'One-time' ? ` · ${draft.recurrence}` : '';
+  const scheduleText = timePart ? `${timePart}${durPart}${recPart}` : draft.recurrence;
+  if (scheduleText) payload.scheduleText = scheduleText;
+
   const imageUrl = draft.coverImage.trim();
   const location = draft.venueName.trim() || draft.venueAddress.trim();
   const priceLabel = draft.pricingModel === 'Paid' && draft.price.trim() ? draft.price.trim() : draft.pricingModel;
@@ -221,6 +237,18 @@ function makeActivityPayload(draft: ActivityDraft, status: 'draft' | 'published'
   return payload;
 }
 
+const MujiColors = {
+  bg: '#FAF8F5',
+  card: '#F6F1EA',
+  border: '#DED8CE',
+  text: '#3C3A35',
+  textMuted: '#8E877E',
+  accent: '#7D7060',
+  accentLight: '#EFEAE0',
+  white: '#FFFFFF',
+  accentDark: '#4A4135'
+};
+
 function Section({
   title,
   icon,
@@ -230,15 +258,13 @@ function Section({
   icon: keyof typeof Ionicons.glyphMap;
   children: React.ReactNode;
 }) {
-  const colors = useColors();
-  const isDark = useIsDark();
   return (
-    <View style={[styles.section, { borderColor: colors.borderLight, backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)' }]}>
+    <View style={[styles.section, { borderColor: MujiColors.border, backgroundColor: MujiColors.card }]}>
       <View style={styles.sectionHeader}>
-        <GlassView intensity={10} style={[styles.sectionIcon, { backgroundColor: CultureTokens.coral + '25' }]}>
-          <Ionicons name={icon} size={18} color={CultureTokens.coral} />
-        </GlassView>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>{title}</Text>
+        <View style={[styles.sectionIcon, { backgroundColor: MujiColors.accentLight, borderRadius: 8 }]}>
+          <Ionicons name={icon} size={18} color={MujiColors.accent} />
+        </View>
+        <Text style={[styles.sectionTitle, { color: MujiColors.text, fontFamily: 'Poppins_700Bold' }]}>{title}</Text>
       </View>
       <View style={styles.sectionBody}>{children}</View>
     </View>
@@ -256,15 +282,14 @@ function Field({
   hint?: string;
   children: React.ReactNode;
 }) {
-  const colors = useColors();
   return (
     <View style={styles.field}>
       <View style={styles.labelRow}>
-        <Text style={[styles.label, { color: colors.text }]}>
+        <Text style={[styles.label, { color: MujiColors.text, fontFamily: 'Poppins_600SemiBold' }]}>
           {label}
-          {required ? <Text style={{ color: colors.error }}> *</Text> : null}
+          {required ? <Text style={{ color: '#C08A7C' }}> *</Text> : null}
         </Text>
-        {hint ? <Text style={[styles.hint, { color: colors.textTertiary }]}>{hint}</Text> : null}
+        {hint ? <Text style={[styles.hint, { color: MujiColors.textMuted }]}>{hint}</Text> : null}
       </View>
       {children}
     </View>
@@ -272,16 +297,15 @@ function Field({
 }
 
 function FormInput({ ...props }: TextInput['props']) {
-  const colors = useColors();
   return (
     <TextInput
-      placeholderTextColor={colors.textTertiary}
+      placeholderTextColor={MujiColors.textMuted}
       style={[
         styles.input,
         {
-          backgroundColor: colors.background + '80',
-          borderColor: colors.borderLight,
-          color: colors.text,
+          backgroundColor: MujiColors.white,
+          borderColor: MujiColors.border,
+          color: MujiColors.text,
         },
         props.multiline && styles.textarea,
         props.style,
@@ -305,21 +329,20 @@ function DraftInput({
   multiline?: boolean;
   accessibilityLabel: string;
 }) {
-  const colors = useColors();
   return (
     <TextInput
       value={value}
       onChangeText={onChangeText}
       placeholder={placeholder}
-      placeholderTextColor={colors.textTertiary}
+      placeholderTextColor={MujiColors.textMuted}
       multiline={multiline}
       textAlignVertical={multiline ? 'top' : undefined}
       style={[
         multiline ? styles.textarea : styles.input,
         {
-          borderColor: colors.borderLight,
-          backgroundColor: colors.background + '80',
-          color: colors.text
+          borderColor: MujiColors.border,
+          backgroundColor: MujiColors.white,
+          color: MujiColors.text
         },
       ]}
       accessibilityLabel={accessibilityLabel}
@@ -336,25 +359,24 @@ function ChoiceChip({
   selected: boolean;
   onPress: () => void;
 }) {
-  const colors = useColors();
   return (
     <Pressable
       onPress={onPress}
       accessibilityLabel={`${selected ? 'Remove' : 'Select'} ${label}`}
       accessibilityState={{ selected }}
     >
-      <GlassView
-        intensity={selected ? 20 : 5}
+      <View
         style={[
           styles.chip,
           {
-            backgroundColor: selected ? CultureTokens.indigo : 'transparent',
-            borderColor: selected ? CultureTokens.indigo : colors.borderLight,
+            backgroundColor: selected ? MujiColors.accent : MujiColors.white,
+            borderColor: selected ? MujiColors.accent : MujiColors.border,
+            borderRadius: 8,
           },
         ]}
       >
-        <Text style={[styles.chipText, { color: selected ? '#fff' : colors.textSecondary }]}>{label}</Text>
-      </GlassView>
+        <Text style={[styles.chipText, { color: selected ? MujiColors.white : MujiColors.text, fontFamily: 'Poppins_600SemiBold' }]}>{label}</Text>
+      </View>
     </Pressable>
   );
 }
@@ -958,20 +980,20 @@ const styles = StyleSheet.create({
   input: {
     minHeight: InputTokens.height,
     borderWidth: 1,
-    borderRadius: 14,
-    paddingHorizontal: 14,
+    borderRadius: 10,
+    paddingHorizontal: 12,
     fontSize: 14,
     fontFamily: 'Poppins_400Regular',
     ...(Platform.OS === 'web' ? { outlineWidth: 0 } : {}),
   },
   textarea: {
-    minHeight: 118,
+    minHeight: 88,
     borderWidth: 1,
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
     fontSize: 14,
-    lineHeight: 21,
+    lineHeight: 20,
     fontFamily: 'Poppins_400Regular',
     ...(Platform.OS === 'web' ? { outlineWidth: 0 } : {}),
   },

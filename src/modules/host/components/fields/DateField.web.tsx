@@ -305,11 +305,11 @@ const styles = StyleSheet.create({
   },
   // Base styles for <select> (theme colors + border are applied inline for dark mode support)
   select: {
-    height: 48,
-    borderRadius: 12,
+    height: 44,
+    borderRadius: 10,
     borderWidth: 1,
     paddingHorizontal: 12,
-    fontSize: 15,
+    fontSize: 14,
     fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
     outline: 'none',
     width: '100%',

@@ -557,15 +557,26 @@ export function HostspaceCommunityCreateForm({ onReview }: { onReview?: () => vo
   );
 }
 
+const MujiColors = {
+  bg: '#FAF8F5',
+  card: '#F6F1EA',
+  border: '#DED8CE',
+  text: '#3C3A35',
+  textMuted: '#8E877E',
+  accent: '#7D7060',
+  accentLight: '#EFEAE0',
+  white: '#FFFFFF',
+  accentDark: '#4A4135'
+};
+
 function FormSection({ title, icon, color, children }: { title: string; icon: keyof typeof Ionicons.glyphMap; color: string; children: React.ReactNode }) {
-  const colors = useColors();
   return (
-    <View style={styles.section}>
+    <View style={[styles.section, { borderColor: MujiColors.border, backgroundColor: MujiColors.card, borderWidth: 1, borderRadius: 18, padding: 16 }]}>
       <View style={styles.sectionHeader}>
-        <GlassView intensity={10} style={[styles.sectionIconWrap, { backgroundColor: color + '15' }]}>
-          <Ionicons name={icon} size={18} color={color} />
-        </GlassView>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>{title}</Text>
+        <View style={[styles.sectionIconWrap, { backgroundColor: MujiColors.accentLight, borderRadius: 8 }]}>
+          <Ionicons name={icon} size={18} color={MujiColors.accent} />
+        </View>
+        <Text style={[styles.sectionTitle, { color: MujiColors.text, fontFamily: 'Poppins_700Bold' }]}>{title}</Text>
       </View>
       <View style={styles.sectionBody}>{children}</View>
     </View>
@@ -573,15 +584,14 @@ function FormSection({ title, icon, color, children }: { title: string; icon: ke
 }
 
 function FormField({ label, required, hint, children }: { label: string; required?: boolean; hint?: string; children: React.ReactNode }) {
-  const colors = useColors();
   return (
     <View style={styles.field}>
       <View style={styles.labelRow}>
-        <Text style={[styles.fieldLabel, { color: colors.text }]}>
+        <Text style={[styles.fieldLabel, { color: MujiColors.text, fontFamily: 'Poppins_600SemiBold' }]}>
           {label}
-          {required && <Text style={{ color: CultureTokens.coral }}> *</Text>}
+          {required && <Text style={{ color: '#C08A7C' }}> *</Text>}
         </Text>
-        {hint && <Text style={[styles.fieldHint, { color: colors.textTertiary }]}>{hint}</Text>}
+        {hint && <Text style={[styles.fieldHint, { color: MujiColors.textMuted }]}>{hint}</Text>}
       </View>
       {children}
     </View>
@@ -589,16 +599,15 @@ function FormField({ label, required, hint, children }: { label: string; require
 }
 
 function FormInput({ ...props }: TextInput['props']) {
-  const colors = useColors();
   return (
     <TextInput
-      placeholderTextColor={colors.textTertiary}
+      placeholderTextColor={MujiColors.textMuted}
       style={[
         styles.input,
         {
-          backgroundColor: colors.background + '80',
-          borderColor: colors.borderLight,
-          color: colors.text,
+          backgroundColor: MujiColors.white,
+          borderColor: MujiColors.border,
+          color: MujiColors.text,
         },
         props.multiline && styles.textarea,
       ]}
@@ -609,21 +618,20 @@ function FormInput({ ...props }: TextInput['props']) {
 }
 
 function ChoiceChip({ label, selected, onPress }: { label: string; selected: boolean; onPress: () => void }) {
-  const colors = useColors();
   return (
     <Pressable onPress={onPress}>
-      <GlassView
-        intensity={selected ? 20 : 5}
+      <View
         style={[
           styles.chip,
           {
-            backgroundColor: selected ? CultureTokens.indigo : 'transparent',
-            borderColor: selected ? CultureTokens.indigo : colors.borderLight,
+            backgroundColor: selected ? MujiColors.accent : MujiColors.white,
+            borderColor: selected ? MujiColors.accent : MujiColors.border,
+            borderRadius: 8,
           },
         ]}
       >
-        <Text style={[styles.chipText, { color: selected ? '#fff' : colors.textSecondary }]}>{label}</Text>
-      </GlassView>
+        <Text style={[styles.chipText, { color: selected ? MujiColors.white : MujiColors.text, fontFamily: 'Poppins_600SemiBold' }]}>{label}</Text>
+      </View>
     </Pressable>
   );
 }
@@ -784,16 +792,16 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   input: {
-    minHeight: 52,
-    borderRadius: 14,
-    borderWidth: 1.5,
-    paddingHorizontal: 16,
-    fontSize: 15,
+    minHeight: 44,
+    borderRadius: 10,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    fontSize: 14,
     fontFamily: 'Poppins_400Regular',
   },
   textarea: {
-    minHeight: 120,
-    paddingVertical: 12,
+    minHeight: 88,
+    paddingVertical: 10,
   },
   chipRow: {
     flexDirection: 'row',

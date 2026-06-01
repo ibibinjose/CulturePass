@@ -17,7 +17,7 @@ import { Image } from 'expo-image';
 import { Button } from '@/design-system/ui/Button';
 import { GlassView } from '@/design-system/ui/GlassView';
 import { M3Card } from '@/design-system/ui/M3Card';
-import { AppearanceModeToggle } from '@/design-system/ui/AppearanceModeToggle';
+import { AppearanceModeToggle, CulturePassWordmark } from '@/design-system/ui';
 import { APP_NAME, APP_WEB_TAGLINE } from '@/lib/app-meta';
 import {
   SIDEBAR_ATTENDEE_LINKS,
@@ -459,7 +459,7 @@ function WebSidebarContent() {
           accessibilityRole="button"
           accessibilityLabel="Expand sidebar"
         >
-          <Ionicons name="chevron-forward-outline" size={18} color={mutedColor} />
+          <Ionicons name="chevron-forward-outline" size={12} color={mutedColor} />
         </Pressable>
 
         {isAuthenticated && (
@@ -508,8 +508,17 @@ function WebSidebarContent() {
         >
           <SidebarLogoMark size={38} borderRadius={11} />
           <View style={s.brandTextBlock}>
-            <Text style={[s.brandName, { color: colors.text }]}>{APP_NAME}</Text>
-            <Text style={[s.brandTagline, { color: colors.textSecondary }]} numberOfLines={1}>
+            <CulturePassWordmark
+              size="sm"
+              showSuffix
+            />
+            <Text
+              style={[
+                s.brandTagline,
+                { color: colors.textSecondary, marginTop: 1 },
+              ]}
+              numberOfLines={1}
+            >
               {APP_WEB_TAGLINE}
             </Text>
           </View>

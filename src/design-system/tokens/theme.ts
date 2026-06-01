@@ -171,14 +171,14 @@ export const AccessibilityTokens = {
 } as const;
 
 export const InputTokens = {
-  height: 48,
-  heightSearch: 44,
-  radius: Radius.md,
-  fontSize: 15,
-  paddingH: 14,
-  paddingV: 10,
-  iconSize: 19,
-  iconGap: 8,
+  height: 44,
+  heightSearch: 40,
+  radius: Radius.sm,
+  fontSize: 14,
+  paddingH: 12,
+  paddingV: 8,
+  iconSize: 18,
+  iconGap: 6,
 } as const;
 
 export const ChipTokens = {

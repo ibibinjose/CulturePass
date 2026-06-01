@@ -286,10 +286,9 @@ export function focusElement(ref: RefObject<any>): void {
 
   setTimeout(() => {
     if (Platform.OS === 'web') {
-      // On web, use native focus()
-      const node = findNodeHandle(ref.current);
-      if (node && typeof (ref.current as any).focus === 'function') {
-        (ref.current as any).focus();
+      // On web, use native focus() directly if available
+      if (typeof ref.current.focus === 'function') {
+        ref.current.focus();
       }
     } else {
       // On native, use AccessibilityInfo to set focus
@@ -310,15 +309,15 @@ export function focusFirstInput(containerRef: RefObject<any>): void {
     setTimeout(() => {
       if (!containerRef.current) return;
       // On web, find the first focusable input within the container
-      const node = findNodeHandle(containerRef.current);
-      if (node) {
-        const container = document.querySelector(`[data-reactroot]`) || document.body;
-        const focusable = container.querySelector<HTMLElement>(
-          'input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
-        );
-        if (focusable) {
-          focusable.focus();
-        }
+      const container = containerRef.current;
+      const target = (container && typeof container.querySelector === 'function')
+        ? (container as HTMLElement)
+        : document.body;
+      const focusable = target.querySelector(
+        'input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      ) as HTMLElement | null;
+      if (focusable) {
+        focusable.focus();
       }
     }, FOCUS_DELAY);
   } else {

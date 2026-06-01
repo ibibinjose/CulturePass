@@ -14,6 +14,21 @@ export interface FirestoreActivity {
   isPromoted?: boolean;
   createdAt: string;
   updatedAt: string;
+
+  // Classes & Fitness rich fields (forward-compatible)
+  recurrence?: string;
+  difficulty?: string;
+  instructorName?: string;
+  scheduleText?: string;
+  maxParticipants?: string | number;
+  locationType?: string;
+  primaryCulture?: string;
+  visibility?: string;
+  ageGroup?: string;
+  duration?: string;
+  priceLabel?: string;
+  highlights?: string[];
+  location?: string;
 }
 
 const activitiesCol = () => db.collection('activities');
@@ -25,13 +40,42 @@ export const activitiesService = {
     return { id: snap.id, ...snap.data() } as FirestoreActivity;
   },
 
-  async list(filters: { city?: string; category?: string } = {}): Promise<FirestoreActivity[]> {
+  async list(filters: { 
+    city?: string; 
+    country?: string;
+    category?: string; 
+    status?: 'published' | 'draft' | 'archived' | 'all';
+    /** Simple server-side hint for fitness/wellness classes (client can also filter) */
+    fitness?: boolean;
+  } = {}): Promise<FirestoreActivity[]> {
     let query: FirebaseFirestore.Query = activitiesCol();
+
     if (filters.city) query = query.where('city', '==', filters.city);
+    if (filters.country) query = query.where('country', '==', filters.country);
     if (filters.category) query = query.where('category', '==', filters.category);
-    
+
+    // Default to published for public discovery surfaces
+    const wantStatus = filters.status ?? 'published';
+    if (wantStatus !== 'all') {
+      query = query.where('status', '==', wantStatus);
+    }
+
     const snap = await query.limit(100).get();
-    return snap.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as FirestoreActivity[];
+    let results = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as FirestoreActivity[];
+
+    // Optional post-filter for fitness-oriented categories when fitness=true
+    if (filters.fitness) {
+      const fitnessKeywords = ['wellness', 'yoga', 'fitness', 'dance', 'pilates', 'meditation', 'gym', 'sports', 'training', 'class', 'workout', 'zumba', 'boxing', 'martial'];
+      results = results.filter((a) => {
+        const hay = [a.category, a.name, a.description, ...(a.highlights ?? [])]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+        return fitnessKeywords.some((k) => hay.includes(k));
+      });
+    }
+
+    return results;
   },
 
   async create(data: Omit<FirestoreActivity, 'id' | 'createdAt' | 'updatedAt'>): Promise<FirestoreActivity> {

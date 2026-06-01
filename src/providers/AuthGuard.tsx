@@ -10,7 +10,7 @@ import { routeWithRedirect } from '@/lib/routes';
  * Global route protector: guests → login; authenticated users → tabs or onboarding.
  */
 export function AuthGuard() {
-  const { user, isRestoring } = useAuth();
+  const { user, isRestoring, emailVerified } = useAuth();
   const { state: onboardingState, isLoading: onboardingLoading } = useOnboarding();
   const segments = useSegments() as string[];
   const router = useRouter();
@@ -61,6 +61,20 @@ export function AuthGuard() {
       router.replace(routeWithRedirect('/(onboarding)/login', redirectTo) as never);
     } else if (
       user &&
+      !emailVerified
+    ) {
+      if (segments[0] !== '(onboarding)' || segments[1] !== 'verify-email') {
+        router.replace('/(onboarding)/verify-email');
+      }
+    } else if (
+      user &&
+      !onboardingLoading &&
+      inOnboardingGroup &&
+      currentOnboardingScreen === 'verify-email'
+    ) {
+      router.replace(onboardingState.isComplete ? '/(tabs)' : '/(onboarding)/location');
+    } else if (
+      user &&
       !onboardingLoading &&
       inOnboardingGroup &&
       preAuthScreens.has(currentOnboardingScreen)
@@ -75,7 +89,7 @@ export function AuthGuard() {
     ) {
       router.replace('/(tabs)');
     }
-  }, [user, segments, isRestoring, onboardingLoading, onboardingState.isComplete, router]);
+  }, [user, emailVerified, segments, isRestoring, onboardingLoading, onboardingState.isComplete, router]);
 
   return null;
 }

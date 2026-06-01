@@ -14,6 +14,8 @@ interface LuxeFilterChipProps {
   icon?: keyof typeof Ionicons.glyphMap | string;
   style?: StyleProp<ViewStyle>;
   compact?: boolean;
+  activeBgColor?: string;
+  activeTextColor?: string;
 }
 
 function isIoniconName(icon: string): icon is keyof typeof Ionicons.glyphMap {
@@ -23,7 +25,16 @@ function isIoniconName(icon: string): icon is keyof typeof Ionicons.glyphMap {
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 /** Premium Luxe Filter Chip with tactile feedback and elevated cultural aesthetics. */
-export function LuxeFilterChip({ label, selected, onPress, icon, style, compact = false }: LuxeFilterChipProps) {
+export function LuxeFilterChip({
+  label,
+  selected,
+  onPress,
+  icon,
+  style,
+  compact = false,
+  activeBgColor,
+  activeTextColor,
+}: LuxeFilterChipProps) {
   const iconSize = compact ? 16 : 18;
   const iconName = icon && isIoniconName(icon) ? icon : undefined;
 
@@ -47,8 +58,8 @@ export function LuxeFilterChip({ label, selected, onPress, icon, style, compact 
   const isDark = useIsDark();
   const theme = isDark ? luxeDark : luxeLight;
 
-  const activeBg = theme.primaryContainer;
-  const activeContent = theme.onPrimaryContainer;
+  const activeBg = activeBgColor || theme.primaryContainer;
+  const activeContent = activeTextColor || theme.onPrimaryContainer;
   const inactiveBg = theme.surfaceElevated;
   const inactiveContent = theme.textSecondary;
   const inactiveBorder = theme.border;

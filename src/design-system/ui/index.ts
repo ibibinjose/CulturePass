@@ -28,6 +28,8 @@ export { Skeleton } from './Skeleton';
 export { BrandWordmark } from './BrandWordmark';
 export { BrandLockup } from './BrandLockup';
 export { AppearanceModeToggle } from './AppearanceModeToggle';
+export { NameTaglineLockup } from './NameTaglineLockup';
+export { CulturePassWordmark } from './CulturePassWordmark';
 export { GlassView } from './GlassView';
 export { GlassView as GlassViewNative } from './GlassView.native';
 export { M3FAB } from './M3FAB';

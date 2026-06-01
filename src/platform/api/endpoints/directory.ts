@@ -79,6 +79,8 @@ export function createDirectoryNamespaces(request: ApiRequestFn) {
       category?: string;
       ownerId?: string;
       promoted?: boolean;
+      /** Bias results toward fitness/wellness/dance/yoga/gym classes */
+      fitness?: boolean;
     }) => {
       const qs = new URLSearchParams();
       if (params?.city) qs.set('city', params.city);
@@ -86,6 +88,7 @@ export function createDirectoryNamespaces(request: ApiRequestFn) {
       if (params?.category) qs.set('category', params.category);
       if (params?.ownerId) qs.set('ownerId', params.ownerId);
       if (params?.promoted) qs.set('promoted', 'true');
+      if (params?.fitness) qs.set('fitness', 'true');
       const q = qs.toString();
       const res = await request<ActivityData[] | { activities: ActivityData[] }>(
         'GET',

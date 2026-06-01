@@ -428,4 +428,27 @@ export const M3Typography = {
     lineHeight: 16,
     letterSpacing: 0.5,
   },
+
+  // ─────────────────────────────────────────────────────────────
+  // Editorial Name + Tagline treatment (Jony Ive / display lockup style)
+  // Use for prominent creator, host, community, business, artist names + their one-liner.
+  // The NAME is massive, bold, uppercase, tight-tracked.
+  // The TAGLINE is small, elegant, sentence case.
+  // ─────────────────────────────────────────────────────────────
+  nameDisplay: {
+    fontFamily: FontFamily.bold,
+    fontWeight: weight('700'),
+    fontSize: 38,
+    lineHeight: 42,
+    letterSpacing: -1.8,
+    textTransform: 'uppercase' as const,
+    ...(Platform.OS === 'android' && { includeFontPadding: false }),
+  },
+  taglineEditorial: {
+    fontFamily: FontFamily.regular,
+    fontWeight: weight('400'),
+    fontSize: 15,
+    lineHeight: 22,
+    letterSpacing: 0.15,
+  },
 } as const;

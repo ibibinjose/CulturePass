@@ -2,12 +2,11 @@ import React from 'react';
 import { View, Text, StyleSheet, Pressable, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { FontFamily, M3Typography } from '@/design-system/tokens/theme';
+import { FontFamily } from '@/design-system/tokens/theme';
 import type { EventData } from '@/shared/schema';
 import type { ColorTheme } from '@/design-system/tokens/colors';
 import { Image } from 'expo-image';
-import { M3Button } from '@/design-system/ui/M3Button';
-import { M3Card } from '@/design-system/ui/M3Card';
+import { M3Button, M3Card, NameTaglineLockup } from '@/design-system/ui';
 import { useM3Colors } from '@/hooks/useM3Colors';
 
 interface HostSectionProps {
@@ -55,7 +54,13 @@ export function HostSection({
         )}
       </View>
       <View style={styles.info}>
-        <Text style={[styles.name, M3Typography.titleLarge, { color: m3Colors.onSurface }]}>{organizer.name}</Text>
+        <NameTaglineLockup
+          name={organizer.name}
+          nameColor={m3Colors.onSurface}
+          size="sm"
+          align="left"
+          marginBottom={0}
+        />
         <View style={styles.badgeRow}>
           <View style={[styles.badge, { backgroundColor: m3Colors.secondaryContainer }]}>
             <Text style={[styles.badgeText, { color: m3Colors.onSecondaryContainer }]}>{displayCategory.toUpperCase()}</Text>

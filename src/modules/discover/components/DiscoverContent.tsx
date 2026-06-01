@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View, Text, Platform } from 'react-native';
+import { View, Text, Platform, Pressable } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useM3Colors } from '@/hooks/useM3Colors';
@@ -8,13 +8,12 @@ import { useLayout } from '@/hooks/useLayout';
 import { CultureTokens, FontFamily, Radius } from '@/design-system/tokens/theme';
 import { M3SectionHeader } from '@/design-system/ui';
 import { M3EventCard } from '@/modules/events/components/M3EventCard';
-import type { EventData } from '@/shared/schema';
+import type { EventData, ActivityData } from '@/shared/schema';
 
-/* eslint-disable import/first -- lazy dynamic imports + barrel re-exports must appear before regular code */
+ 
+
+ 
 import { createLazyComponent } from '@/lib/lazy';
-
-const CityRail = createLazyComponent(() => import('@/components/Discover/CityRail'));
-const LazyCommunityRail = createLazyComponent(() => import('@/components/Discover/CommunityRail'));
 
 import ContinueBrowsingRail from '@/components/Discover/ContinueBrowsingRail';
 import CommunityEventsRail from '@/components/Discover/CommunityEventsRail';
@@ -34,13 +33,17 @@ import {
   CultureHubRail,
   InlineSearchResults,
   DiscoverShopRail,
+  ActivityRail,
 } from './index';
 
 import { useDiscoverData } from '../hooks/useDiscoverData';
 import { useKeralaScoping } from '../hooks/useKeralaScoping';
-/* eslint-enable import/first */
+ 
 
 import type { DiscoverFilter } from '@/components/Discover/DiscoverFilterModal';
+
+const CityRail = createLazyComponent(() => import('@/components/Discover/CityRail'));
+const LazyCommunityRail = createLazyComponent(() => import('@/components/Discover/CommunityRail'));
 
 interface DiscoverContentProps {
   activeFilter: DiscoverFilter;
@@ -67,6 +70,44 @@ export function DiscoverContent({
   const { hPad, isExpanded, contentWidth, isDesktop } = useLayout();
   const colors = useM3Colors();
 
+  // Real fitness / classes activities from the dedicated Activities collection (preferred source)
+  const fitnessActivities = useMemo(() => {
+    const raw = (d as any).allActivities ?? [];
+    if (!Array.isArray(raw) || raw.length === 0) return [] as ActivityData[];
+
+    const fitnessKeywords = [
+      'wellness', 'yoga', 'fitness', 'dance', 'pilates', 'meditation', 'gym',
+      'sports', 'training', 'workout', 'zumba', 'boxing', 'martial', 'class',
+      'tango', 'aerobics', 'tai chi',
+    ];
+
+    const filtered = raw.filter((a: ActivityData) => {
+      if (!a || a.status === 'draft' || a.status === 'archived') return false;
+      const hay = [
+        a.category,
+        a.name,
+        a.description,
+        a.primaryCulture,
+        ...(a.highlights ?? []),
+        a.instructorName,
+        a.difficulty,
+      ].filter(Boolean).join(' ').toLowerCase();
+      return fitnessKeywords.some((kw) => hay.includes(kw));
+    });
+
+    // Dedupe + limit for rail
+    const seen = new Set<string>();
+    const out: ActivityData[] = [];
+    for (const a of filtered) {
+      if (seen.has(a.id)) continue;
+      seen.add(a.id);
+      out.push(a);
+      if (out.length >= 12) break;
+    }
+    return out;
+  }, [d]);
+
+  // Legacy event-based fallback (kept only for CultureWheel modal + transitional empty states)
   const classEvents = useMemo(() => {
     const combined = [...s.nearby, ...s.popular, ...s.soon, ...s.forYou];
     const seen = new Set<string>();
@@ -330,26 +371,55 @@ export function DiscoverContent({
         />
       )}
 
-      {/* ── CLASSES & FITNESS (Yoga, Tango, dance, meditation, Gym, workout etc.) ── */}
-      {show(['classes']) && (
+      {/* ── CLASSES & FITNESS AROUND YOU (real Activities data) ── */}
+      {show(['classes', 'activities', 'all']) && (
         <>
-          {classEvents.length === 0 ? (
-            <View style={{ paddingHorizontal: sidePad, marginVertical: 20 }}>
-              <M3SectionHeader title="Classes & Fitness Around You" />
-              <View style={{ padding: 24, alignItems: 'center', gap: 12, backgroundColor: colors.surfaceVariant, borderRadius: Radius.lg }}>
-                <Ionicons name="fitness-outline" size={36} color={CultureTokens.coral} />
-                <Text style={{ color: colors.onSurfaceVariant, textAlign: 'center', fontFamily: FontFamily.medium, fontSize: 14 }}>
-                  No classes or fitness sessions scheduled around you right now. Check back later!
-                </Text>
-              </View>
-            </View>
-          ) : (
+          {fitnessActivities.length > 0 ? (
+            <ActivityRail
+              title="Classes & Fitness Around You"
+              subtitle="Yoga, dance, meditation, gyms & cultural fitness near you"
+              data={fitnessActivities}
+              onSeeAll={() => router.push('/activities?category=Classes')}
+            />
+          ) : classEvents.length > 0 ? (
+            // Transitional fallback while hosts migrate to the real Activities flow
             <M3EventRail
               title="Classes & Fitness Around You"
               subtitle="Yoga, tango, dance, meditation, gyms & workouts near you"
               data={classEvents}
               onSeeAll={goEvents}
             />
+          ) : (
+            <View style={{ paddingHorizontal: sidePad, marginVertical: 20 }}>
+              <M3SectionHeader 
+                title="Classes & Fitness Around You" 
+                onAction={() => router.push('/activities')}
+              />
+              <View style={{ padding: 24, alignItems: 'center', gap: 12, backgroundColor: colors.surfaceVariant, borderRadius: Radius.lg }}>
+                <Ionicons name="fitness-outline" size={36} color={CultureTokens.coral} />
+                <Text style={{ color: colors.onSurfaceVariant, textAlign: 'center', fontFamily: FontFamily.medium, fontSize: 14 }}>
+                  No classes listed near you yet. Be the first to host one or browse all activities.
+                </Text>
+                <View style={{ flexDirection: 'row', gap: 12, marginTop: 8 }}>
+                  <Pressable 
+                    onPress={() => router.push('/hostspace')} 
+                    style={{ paddingHorizontal: 16, paddingVertical: 8, backgroundColor: CultureTokens.indigo, borderRadius: 8 }}
+                    accessibilityRole="button"
+                    accessibilityLabel="Open HostSpace to create a class"
+                  >
+                    <Text style={{ color: 'white', fontFamily: FontFamily.medium, fontSize: 13 }}>Host a class</Text>
+                  </Pressable>
+                  <Pressable 
+                    onPress={() => router.push('/activities')} 
+                    style={{ paddingHorizontal: 16, paddingVertical: 8, backgroundColor: colors.surface, borderRadius: 8, borderWidth: 1, borderColor: colors.outlineVariant }}
+                    accessibilityRole="button"
+                    accessibilityLabel="Browse all activities"
+                  >
+                    <Text style={{ color: colors.onSurface, fontFamily: FontFamily.medium, fontSize: 13 }}>Browse all</Text>
+                  </Pressable>
+                </View>
+              </View>
+            </View>
           )}
         </>
       )}

@@ -10,7 +10,7 @@ import { CultureTokens } from '@/design-system/tokens/theme';
 export default function OnboardingLayout() {
   const colors = useColors();
   const { state, isLoading } = useOnboarding();
-  const { userId } = useAuth();
+  const { userId, emailVerified } = useAuth();
 
   if (isLoading) {
     return (
@@ -22,7 +22,7 @@ export default function OnboardingLayout() {
     );
   }
 
-  if (userId && state.isComplete) {
+  if (userId && state.isComplete && emailVerified) {
     return <Redirect href="/(tabs)" />;
   }
 
@@ -34,6 +34,7 @@ export default function OnboardingLayout() {
         <Stack.Screen name="signup" />
         <Stack.Screen name="login" />
         <Stack.Screen name="forgot-password" />
+        <Stack.Screen name="verify-email" />
         <Stack.Screen name="location" />
         <Stack.Screen name="communities" />
         <Stack.Screen name="culture-match" />

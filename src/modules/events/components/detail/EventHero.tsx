@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, Text, Pressable, Platform } from 'react-native';
-import { CultureImage } from '@/design-system/ui/CultureImage';
+import { CultureImage, NameTaglineLockup } from '@/design-system/ui';
 
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -104,7 +104,13 @@ export function EventHero({
                 <Text style={[styles.categoryText, { color: m3Colors.onTertiaryContainer }]}>{event.category?.toUpperCase() || 'EVENT'}</Text>
             </View>
          </Animated.View>
-         <Text style={[styles.title, M3Typography.headlineLarge]} numberOfLines={2}>{event.title}</Text>
+         <NameTaglineLockup
+           name={event.title}
+           nameColor="#fff"
+           size="md"
+           align="left"
+           marginBottom={4}
+         />
          <View style={styles.metaRow}>
             <View style={styles.metaItem}>
                 <Ionicons name="calendar-outline" size={16} color="rgba(255,255,255,0.8)" />

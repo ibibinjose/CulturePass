@@ -657,6 +657,8 @@ export default function DiscoverScreen() {
                         selected={isActive}
                         onPress={() => handleFilterPress(f.id)}
                         compact
+                        activeBgColor={isDark ? `${accent}22` : `${accent}14`}
+                        activeTextColor={accent}
                         style={
                           isActive 
                             ? { borderColor: accent, borderWidth: 1.5 } 

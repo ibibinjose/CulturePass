@@ -42,6 +42,7 @@ import { SectionHeader } from '@/modules/profile/components/public/SectionHeader
 import { SocialCard } from '@/modules/profile/components/public/SocialCard';
 import { DetailRow } from '@/modules/profile/components/public/DetailRow';
 import { LoadingSkeleton } from '@/modules/profile/components/public/LoadingSkeleton';
+import { NameTaglineLockup } from '@/design-system/ui';
 
 export default function PublicProfileScreen() {
   const colors = useColors();
@@ -211,7 +212,13 @@ export default function PublicProfileScreen() {
               </View>
             )}
 
-            <Text style={styles.heroName}>{displayName}</Text>
+            <NameTaglineLockup
+              name={displayName}
+              nameColor={colors.text}
+              size="md"
+              align="center"
+              marginBottom={2}
+            />
             <Text style={styles.heroHandle}>+{user.handle ?? user.username}</Text>
 
             <View style={styles.heroPills}>

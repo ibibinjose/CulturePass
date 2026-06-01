@@ -29,7 +29,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { useColors } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
-import { M3Card } from '@/design-system/ui/M3Card';
+import { M3Card, NameTaglineLockup } from '@/design-system/ui';
 import { CultureTokens, Spacing, Radius, FontFamily } from '@/design-system/tokens/theme';
 import type { HostProfileFormData } from '@/shared/schema/hostProfile';
 import type { HostEntityType } from '@/shared/schema/hostTypes';
@@ -176,23 +176,66 @@ export function ProfilePreviewModal({
             </View>
           )}
 
-          {/* Profile Header */}
-          <View style={styles.profileHeader}><View style={styles.profileTitleRow}><View style={styles.profileTitleContent}><Text style={[styles.profileName, { color: colors.text }]}>{formData.officialName || 'Profile Name'}</Text><Text style={[styles.profileHandle, { color: colors.textSecondary }]}>@{formData.handle || 'handle'}</Text></View><View style={[styles.entityTypeBadge, { backgroundColor: CultureTokens.indigo + '20' }]}><Text style={[styles.entityTypeBadgeText, { color: CultureTokens.indigo }]}>{getEntityTypeDisplayName(entityType)}</Text></View></View>{formData.tagline && (
-              <Text style={[styles.tagline, { color: colors.textSecondary }]}>{formData.tagline}</Text>
-            )}<View style={styles.metaInfo}>{formData.foundingDate && (
-                <View style={styles.metaItem}><Ionicons name="calendar-outline" size={16} color={colors.textSecondary} /><Text style={[styles.metaText, { color: colors.textSecondary }]}>Since {formatDate(formData.foundingDate)}</Text></View>
-              )}{formData.primaryAddress && !formData.isOnlineOnly && (
-                <View style={styles.metaItem}><Ionicons name="location-outline" size={16} color={colors.textSecondary} /><Text style={[styles.metaText, { color: colors.textSecondary }]}>{formData.primaryAddress.city}, {formData.primaryAddress.state}</Text></View>
-              )}{formData.isOnlineOnly && (
-                <View style={styles.metaItem}><Ionicons name="globe-outline" size={16} color={colors.textSecondary} /><Text style={[styles.metaText, { color: colors.textSecondary }]}>Online Only</Text></View>
-              )}</View>{formData.categoryTags && formData.categoryTags.length > 0 && (
-              <View style={styles.tagsContainer}>{formData.categoryTags.map((tag: any, index: number) => (
+          {/* Profile Header — now using the premium editorial Name + Tagline treatment */}
+          <View style={styles.profileHeader}>
+            <View style={styles.profileTitleRow}>
+              <View style={styles.profileTitleContent}>
+                <NameTaglineLockup
+                  name={formData.officialName || 'Profile Name'}
+                  tagline={formData.tagline}
+                  nameColor={CultureTokens.coral}
+                  taglineColor={colors.textSecondary}
+                  align="left"
+                  size="lg"
+                  marginBottom={4}
+                />
+                <Text style={[styles.profileHandle, { color: colors.textSecondary }]}>@{formData.handle || 'handle'}</Text>
+              </View>
+              <View style={[styles.entityTypeBadge, { backgroundColor: CultureTokens.indigo + '20' }]}>
+                <Text style={[styles.entityTypeBadgeText, { color: CultureTokens.indigo }]}>
+                  {getEntityTypeDisplayName(entityType)}
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.metaInfo}>
+              {formData.foundingDate && (
+                <View style={styles.metaItem}>
+                  <Ionicons name="calendar-outline" size={16} color={colors.textSecondary} />
+                  <Text style={[styles.metaText, { color: colors.textSecondary }]}>
+                    Since {formatDate(formData.foundingDate)}
+                  </Text>
+                </View>
+              )}
+              {formData.primaryAddress && !formData.isOnlineOnly && (
+                <View style={styles.metaItem}>
+                  <Ionicons name="location-outline" size={16} color={colors.textSecondary} />
+                  <Text style={[styles.metaText, { color: colors.textSecondary }]}>
+                    {formData.primaryAddress.city}, {formData.primaryAddress.state}
+                  </Text>
+                </View>
+              )}
+              {formData.isOnlineOnly && (
+                <View style={styles.metaItem}>
+                  <Ionicons name="globe-outline" size={16} color={colors.textSecondary} />
+                  <Text style={[styles.metaText, { color: colors.textSecondary }]}>Online Only</Text>
+                </View>
+              )}
+            </View>
+
+            {formData.categoryTags && formData.categoryTags.length > 0 && (
+              <View style={styles.tagsContainer}>
+                {formData.categoryTags.map((tag: any, index: number) => (
                   <View
                     key={index}
                     style={[styles.tag, { backgroundColor: colors.surfaceElevated }]}
-                  ><Text style={[styles.tagText, { color: colors.text }]}>{tag}</Text></View>
-                ))}</View>
-            )}</View>
+                  >
+                    <Text style={[styles.tagText, { color: colors.text }]}>{tag}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
 
           {/* Description Section */}
           {formData.description && (

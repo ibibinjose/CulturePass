@@ -17,6 +17,7 @@ import Svg, { Path, Text as SvgText, G, Circle } from 'react-native-svg';
 import { router } from 'expo-router';
 
 import { useM3Colors } from '@/hooks/useM3Colors';
+import { useLayout } from '@/hooks/useLayout';
 import { useIsDark } from '@/hooks/useColors';
 import { GlassView } from '@/design-system/ui/GlassView';
 import { LuxeButton } from '@/design-system/ui/LuxeButton';
@@ -318,6 +319,10 @@ export function CultureWheelModal({
   const colors = useM3Colors();
   const isDark = useIsDark();
   const isWeb = Platform.OS === 'web';
+  const { width: windowWidth, isDesktop } = useLayout();
+
+  // Responsive wheel size: larger on desktop (380px), scaled to screen width on mobile (max 350px)
+  const wheelSize = isDesktop ? 380 : Math.min(350, windowWidth - 48);
 
   const [isSpinning, setIsSpinning] = useState(false);
   const [winnerIndex, setWinnerIndex] = useState<number | null>(null);
@@ -536,6 +541,7 @@ export function CultureWheelModal({
             {
               backgroundColor: isDark ? 'rgba(20, 20, 25, 0.88)' : 'rgba(255, 255, 255, 0.94)',
               borderColor: colors.outlineVariant,
+              maxWidth: isDesktop ? 560 : 500,
             },
           ]}
         >
@@ -581,11 +587,13 @@ export function CultureWheelModal({
                 style={[
                   styles.wheelWrapper,
                   {
+                    width: wheelSize,
+                    height: wheelSize,
                     transform: [{ rotate: spinInterpolation }, { scale: scaleAnim }],
                   },
                 ]}
               >
-                <Svg width="330" height="330" viewBox="0 0 300 300">
+                <Svg width={wheelSize} height={wheelSize} viewBox="0 0 300 300">
                   {/* Wheel outer rim */}
                   <Circle cx="150" cy="150" r="147" fill={isDark ? '#2D2D35' : '#FFFFFF'} stroke={isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'} strokeWidth="6" />
                   

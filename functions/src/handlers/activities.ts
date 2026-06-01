@@ -3,12 +3,14 @@ import { activitiesService } from '../services/activities';
 
 export async function getAllActivities(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
   try {
-    const { city, search } = event.queryStringParameters || {};
+    const { city, country, category, search, fitness } = event.queryStringParameters || {};
     
-    // Use list method instead of getAll - this matches the actual service API
     const activities = await activitiesService.list({
-      city,
-      category: search, // Using search as category filter for simplicity
+      city: city || undefined,
+      country: country || undefined,
+      category: category || search || undefined,
+      fitness: fitness === 'true' || fitness === '1',
+      status: 'published', // public discovery only sees published
     });
     
     return {

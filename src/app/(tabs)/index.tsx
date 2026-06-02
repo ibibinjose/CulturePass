@@ -47,6 +47,7 @@ import {
   AppearanceModeToggle,
   CulturalTopAppBar,
   LuxeFilterChip,
+  PageContainer,
 } from '@/design-system/ui';
 import { CommunityHomeBanner } from '@/components/CommunityHomeBanner';
 
@@ -337,9 +338,6 @@ export default function DiscoverScreen() {
         <DiscoverScrollShell
           scrollBottomPad={scrollBottomPad}
           contentContainerStyle={
-            // On web desktop the root layout (WebSidebar + mainFlex maxWidth:1200) already
-            // provides the sidebar gutter + centered container. Avoid double-constraining
-            // the inner ScrollView width here — it causes sides to clip or feel covered.
             isDesktop && Platform.OS !== 'web'
               ? { width: contentWidth, alignSelf: 'center' }
               : undefined
@@ -352,23 +350,24 @@ export default function DiscoverScreen() {
             />
           }
         >
-          <CommunityHomeBanner />
+          <PageContainer compact noTopPadding>
+            <CommunityHomeBanner />
 
-          <DiscoverHeader
-            currentTime={d.currentTime}
-            weatherSummary={d.weatherSummary}
-            city={d.state.city || 'Sydney'}
-            country={d.state.country || 'Australia'}
-            isAuthenticated={d.isAuthenticated}
-            onRefresh={d.handleRefresh}
-          />
+            <DiscoverHeader
+              currentTime={d.currentTime}
+              weatherSummary={d.weatherSummary}
+              city={d.state.city || 'Sydney'}
+              country={d.state.country || 'Australia'}
+              isAuthenticated={d.isAuthenticated}
+              onRefresh={d.handleRefresh}
+            />
 
           {/* Quick intent pills — one-tap access to high-frequency journeys (major UX improvement) */}
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={{ paddingHorizontal: pageSidePad, gap: 8, paddingBottom: 4 }}
-            style={{ marginBottom: Spacing.sm }}
+            style={{ marginBottom: Spacing.md }}
           >
             <IntentPill
               label="Today"
@@ -774,6 +773,7 @@ export default function DiscoverScreen() {
               {`${APP_NAME} · ${MADE_IN}`}
             </Text>
           </View>
+          </PageContainer>
 
         </DiscoverScrollShell>
         

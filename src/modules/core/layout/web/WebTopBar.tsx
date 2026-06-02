@@ -11,7 +11,7 @@ import { useAuth } from "@/lib/auth";
 import { LocationPicker } from "@/modules/core/components";
 import { useLayout } from "@/hooks/useLayout";
 import { routeWithRedirect } from "@/lib/routes";
-import { BrandLockup } from "@/design-system/ui/BrandLockup";
+import { CulturePassWordmark } from "@/design-system/ui";
 import { getAppVersionWithBuild, MADE_IN } from "@/lib/app-meta";
 import Breadcrumb from "@/components/ui/Breadcrumb";
 
@@ -142,13 +142,13 @@ export function WebTopBar() {
           )}
         </Pressable>
 
-        {/* Logo */}
+        {/* Logo - Modern split branding */}
         <Pressable
           style={({ pressed }: { pressed: boolean; hovered?: boolean }) => [styles.logoBlock, pressed && { opacity: 0.8 }]}
           onPress={() => handleNav('/(tabs)')}
           accessibilityLabel="CulturePass Home"
         >
-          <BrandLockup size="sm" withTagline />
+          <CulturePassWordmark size="sm" showSuffix={false} />
         </Pressable>
 
         {/* Location picker (desktop only) */}

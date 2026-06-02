@@ -15,7 +15,7 @@ import Head from 'expo-router/head';
 import { router } from 'expo-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
-import { M3Button, M3Card } from '@/design-system/ui';
+import { M3Button, M3Card, PageContainer } from '@/design-system/ui';
 import { formatCurrency } from '@/lib/currency';
 import { formatEventDateTime, parseEventStartMs } from '@/lib/dateUtils';
 import { openExternalUrl } from '@/lib/openExternalUrl';

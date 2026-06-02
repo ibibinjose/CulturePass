@@ -32,7 +32,7 @@ import {
   Checkbox,
   SocialButton,
 } from '@/design-system/ui';
-import { BrandWordmark } from '@/design-system/ui/BrandWordmark';
+import { CulturePassWordmark } from '@/design-system/ui';
 
 import {
   CardTokens,
@@ -113,7 +113,7 @@ export default function LoginScreen() {
     <View style={s.cardInner}>
       {/* Brand — single appearance, inside the card */}
       <Animated.View entering={enter(30)} style={s.brandBlock}>
-        <BrandWordmark size="md" withTagline={false} centered />
+        <CulturePassWordmark size="md" showSuffix={false} />
       </Animated.View>
 
       {/* Copy */}

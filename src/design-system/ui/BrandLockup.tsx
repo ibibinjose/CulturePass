@@ -5,6 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { gradients } from '@/design-system/tokens/theme';
 import { useColors } from '@/hooks/useColors';
 import { BrandWordmark } from './BrandWordmark';
+import { CulturePassWordmark } from './CulturePassWordmark';
 
 const LOGO_SIZES: Record<string, number> = { sm: 28, md: 36, lg: 44, xl: 52 };
 
@@ -62,7 +63,12 @@ export function BrandLockup({
           />
         </View>
       </View>
-      <BrandWordmark size={size} withTagline={withTagline} color={color} />
+      {/* Use the modern split-color wordmark when no custom color is provided */}
+      {color ? (
+        <BrandWordmark size={size} withTagline={withTagline} color={color} />
+      ) : (
+        <CulturePassWordmark size={(size as any) || 'md'} showSuffix />
+      )}
     </View>
   );
 }

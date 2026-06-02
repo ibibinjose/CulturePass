@@ -25,7 +25,7 @@ import {
 } from '@/design-system/tokens/theme';
 import { LuxeButton, LuxeText } from '@/design-system/ui';
 import { Input } from '@/design-system/ui/Input';
-import { BrandWordmark } from '@/design-system/ui/BrandWordmark';
+import { CulturePassWordmark } from '@/design-system/ui';
 import { useColors } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
 import Animated, { FadeInUp, useReducedMotion } from 'react-native-reanimated';
@@ -147,7 +147,7 @@ export default function ForgotPasswordScreen() {
             {!sent ? (
               <>
                 <View style={styles.brandBlock}>
-                  <BrandWordmark size="md" withTagline={false} centered />
+                  <CulturePassWordmark size="md" showSuffix={false} />
                 </View>
 
                 {/* Icon + heading */}
@@ -208,7 +208,7 @@ export default function ForgotPasswordScreen() {
               /* Success state */
               <View style={styles.successContainer}>
                 <View style={styles.brandBlock}>
-                  <BrandWordmark size="md" withTagline={false} centered />
+                  <CulturePassWordmark size="md" showSuffix={false} />
                 </View>
 
                 <View style={[styles.successIconWrap, { backgroundColor: luxeDark.emerald + '20', borderColor: 'transparent' }]}>

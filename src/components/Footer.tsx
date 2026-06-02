@@ -3,8 +3,7 @@ import { View, Text, Pressable, StyleSheet, Linking, Platform } from 'react-nati
 import { Ionicons } from '@expo/vector-icons';
 import { Link } from 'expo-router';
 import { useColors } from '@/hooks/useColors';
-import { Spacing } from '@/design-system/tokens/theme';
-import { SOCIAL_LINKS } from '@/lib/site-footer-links';
+import { FOOTER_SECTIONS } from '@/lib/site-footer-links';
 
 export function Footer() {
   const colors = useColors();
@@ -19,43 +18,60 @@ export function Footer() {
   };
 
   return (
-    <View style={styles.footer}>
+    <View style={styles.footer} accessibilityLabel="Footer navigation">
       {/* Main Footer Content */}
       <View style={styles.mainRow}>
-        {/* Brand + Acknowledgment */}
+        {/* Get2Know Section */}
         <View style={styles.brandCol}>
           <Text style={styles.brandName}>CulturePass</Text>
-          <Text style={styles.ackText}>
-            We acknowledge the Traditional Custodians of Country throughout Australia and pay our respects to Elders past and present.
-          </Text>
+          
+          {/* Get2Know Links */}
+          {FOOTER_SECTIONS.get2Know.map((item, index) => (
+            <Link 
+              key={item.href} 
+              href={item.href} 
+              style={styles.footerLink} 
+              accessibilityLabel={item.label}
+            >
+              <Text style={styles.footerLinkText}>{item.label}</Text>
+            </Link>
+          ))}
+          
+          {/* Ready to Explore Section */}
+          <View style={styles.ctaSection}>
+            <Text style={styles.ctaTitle}>Ready to Explore Your Culture?</Text>
+            <Text style={styles.ackText}>
+              We acknowledge the Traditional Custodians of Country throughout Australia and pay our respects to Elders past and present.
+            </Text>
+          </View>
         </View>
 
-        {/* Navigation Links */}
+        {/* Legal & Support Section */}
         <View style={styles.linksCol}>
-          <Text style={styles.colTitle}>Explore</Text>
-          <Link href="/about" style={styles.footerLink}>About</Link>
-          <Link href="/founder" style={styles.footerLink}>Our Story</Link>
-          <Link href="/help" style={styles.footerLink}>Help Centre</Link>
-          <Link href="/contact" style={styles.footerLink}>Contact</Link>
+          <Text style={styles.colTitle}>Legal & Support</Text>
+          {FOOTER_SECTIONS.legalSupport.map((item, index) => (
+            <Link 
+              key={item.href} 
+              href={item.href} 
+              style={styles.footerLink} 
+              accessibilityLabel={item.label}
+            >
+              <Text style={styles.footerLinkText}>{item.label}</Text>
+            </Link>
+          ))}
         </View>
 
-        <View style={styles.linksCol}>
-          <Text style={styles.colTitle}>Legal</Text>
-          <Link href="/legal/terms" style={styles.footerLink}>Terms</Link>
-          <Link href="/legal/privacy" style={styles.footerLink}>Privacy</Link>
-          <Link href="/legal/community" style={styles.footerLink}>Community Guidelines</Link>
-          <Link href="/legal/cookies" style={styles.footerLink}>Cookies</Link>
-        </View>
-
-        {/* Social */}
+        {/* Connect Section */}
         <View style={styles.socialCol}>
           <Text style={styles.colTitle}>Connect</Text>
           <View style={styles.socialRow}>
-            {SOCIAL_LINKS.slice(0, 5).map((social, index) => (
+            {FOOTER_SECTIONS.connect.map((social, index) => (
               <Pressable
-                key={index}
+                key={social.key}
                 onPress={() => openSocialLink(social.url)}
                 style={styles.socialIcon}
+                accessibilityLabel={`Visit ${social.label} on ${social.key}`}
+                accessibilityRole="link"
               >
                 <Ionicons name={social.icon as any} size={18} color={colors.textSecondary} />
               </Pressable>
@@ -68,7 +84,7 @@ export function Footer() {
       {/* Bottom Bar */}
       <View style={styles.bottomBar}>
         <Text style={styles.copyright}>
-          © {new Date().getFullYear()} CulturePass.App — Made in Sydney, Australia
+          © {new Date().getFullYear()} CulturePass Pty Ltd • Made in Sydney, Australia
         </Text>
       </View>
     </View>
@@ -82,7 +98,7 @@ const getStyles = (colors: ReturnType<typeof useColors>) => StyleSheet.create({
     borderColor: colors.borderLight,
   },
 
-  // Main content row - clean 4-column layout on desktop
+  // Main content row - clean 3-column layout on desktop
   mainRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -107,6 +123,18 @@ const getStyles = (colors: ReturnType<typeof useColors>) => StyleSheet.create({
     letterSpacing: -0.3,
     marginBottom: 10,
   },
+  ctaSection: {
+    marginTop: 20,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderColor: colors.borderLight,
+  },
+  ctaTitle: {
+    fontSize: 16,
+    fontFamily: 'Poppins_600SemiBold',
+    color: colors.text,
+    marginBottom: 8,
+  },
   ackText: {
     fontSize: 12,
     fontFamily: 'Poppins_400Regular',
@@ -125,6 +153,9 @@ const getStyles = (colors: ReturnType<typeof useColors>) => StyleSheet.create({
     marginBottom: 10,
   },
   footerLink: {
+    textDecorationLine: 'none', // Remove underline for cleaner look
+  },
+  footerLinkText: {
     fontSize: 13,
     fontFamily: 'Poppins_400Regular',
     color: colors.textSecondary,

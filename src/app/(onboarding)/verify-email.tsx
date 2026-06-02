@@ -7,7 +7,7 @@ import { useLayout } from '@/hooks/useLayout';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { LuxeButton, LuxeCard, LuxeText } from '@/design-system/ui';
-import { BrandWordmark } from '@/design-system/ui/BrandWordmark';
+import { CulturePassWordmark } from '@/design-system/ui';
 import { AuthAmbientBackground } from '@/components/onboarding/AuthScreenPrimitives';
 import { Spacing, FontFamily, CardTokens } from '@/design-system/tokens/theme';
 import Head from 'expo-router/head';
@@ -87,7 +87,7 @@ export default function VerifyEmailScreen() {
           <LuxeCard variant="default" style={styles.card}>
             <View style={styles.cardInner}>
               <View style={styles.brandBlock}>
-                <BrandWordmark size="md" withTagline={false} centered />
+                <CulturePassWordmark size="md" showSuffix={false} />
               </View>
 
               <View style={styles.copyBlock}>

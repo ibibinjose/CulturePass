@@ -19,7 +19,7 @@ import { CultureTokens } from '@/design-system/tokens/colors';
 import { FontFamily, HeaderTokens } from '@/design-system/tokens/theme';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ErrorBoundary } from '@/modules/core/ui/ErrorBoundary';
-import { BrandWordmark, M3Button } from '@/design-system/ui';
+import { CulturePassWordmark, M3Button } from '@/design-system/ui';
 import { useSafeBack } from '@/lib/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
@@ -88,7 +88,7 @@ export default function AdminLayout() {
       {/* Header */}
       <View style={styles.sidebarHeader}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          <BrandWordmark size="md" color={colors.text} />
+          <CulturePassWordmark size="md" showSuffix />
         </View>
         <View style={[styles.adminBadge, { backgroundColor: isSuperAdmin ? '#EF4444' : CultureTokens.indigo }]}>
           <Text style={styles.adminBadgeText}>

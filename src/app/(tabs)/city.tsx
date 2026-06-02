@@ -32,7 +32,7 @@ import { modulesApi } from '@/modules/api';
 import { useM3Colors } from '@/hooks/useM3Colors';
 import { useLayout } from '@/hooks/useLayout';
 import { useOnboarding } from '@/contexts/OnboardingContext';
-import { M3Button, M3Card, M3FilterChip, M3SectionHeader, Skeleton } from '@/design-system/ui';
+import { M3Button, M3Card, M3FilterChip, M3SectionHeader, PageContainer, Skeleton } from '@/design-system/ui';
 import {
   communityKeys,
   useCommunities,
@@ -309,6 +309,7 @@ export default function MyCityScreen() {
             <RefreshControl refreshing={page.refreshing} onRefresh={onRefresh} tintColor={m3Colors.primary} />
           }
         >
+          <PageContainer compact>
           {/* ── Hero ──────────────────────────────────────────────────────── */}
           <View style={[s.hero, { height: isExpanded ? 520 : 440 }]}>
             <Image source={{ uri: page.heroImage }} style={StyleSheet.absoluteFill} contentFit="cover" transition={400} />
@@ -355,6 +356,7 @@ export default function MyCityScreen() {
 
             {/* Content */}
             <View style={[s.heroContent, { paddingHorizontal: hPad }]}>
+            <PageContainer compact noTopPadding>
               <Animated.View entering={FadeInDown.delay(100).springify()}>
                 <View
                   style={[
@@ -407,6 +409,7 @@ export default function MyCityScreen() {
                   {subscribed ? 'Subscribed' : 'Get Updates'}
                 </M3Button>
               </Animated.View>
+            </PageContainer>
             </View>
           </View>
 
@@ -604,7 +607,7 @@ export default function MyCityScreen() {
               </ScrollView>
             </View>
           )}
-
+          </PageContainer>
         </ScrollView>
 
         {/* Floating Map FAB */}

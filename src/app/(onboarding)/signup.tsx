@@ -28,7 +28,7 @@ import {
   LuxeCard,
   LuxeText,
 } from '@/design-system/ui';
-import { BrandWordmark } from '@/design-system/ui/BrandWordmark';
+import { CulturePassWordmark } from '@/design-system/ui';
 
 
 import {
@@ -374,7 +374,7 @@ export default function SignUpScreen() {
     <LuxeCard variant="default" style={{ padding: isExpanded ? 32 : 24 }}>
       {/* Brand — single appearance, inside the card */}
       <Animated.View entering={enter(30)} style={s.brandBlock}>
-        <BrandWordmark size="md" withTagline={false} centered />
+        <CulturePassWordmark size="md" showSuffix={false} />
       </Animated.View>
 
       {/* Copy */}

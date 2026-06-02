@@ -113,7 +113,7 @@ const { value: showV2 } = useFlagOverride('eventcard-v2');
 - Test on iOS, Android, **and** Web before opening a PR.
 
 ### Layout Rules (Web vs Native)
-- Desktop ≥ 1100px: 240px left `WebSidebar`.
+- Desktop ≥ 1100px: 240px left `WebSidebar` with compact theme, local time/date, and weather chrome.
 - Tablet / iPad: Bottom tab bar (safe areas respected via `useSafeAreaInsetsWeb()`).
 - Mobile web (iPhone/Android): Bottom tab bar + proper Dynamic Island / home indicator via CSS `env(safe-area-inset-*)`.
 

@@ -23,7 +23,7 @@ import { useRole } from '@/hooks/useRole';
 import { useAuth } from '@/lib/auth';
 import { api } from '@/lib/api';
 import { CultureTokens, TextStyles, M3Typography, Radius, Spacing, FontFamily } from '@/design-system/tokens/theme';
-import { M3TopAppBar, M3Card, M3Button, Skeleton, GlassView } from '@/design-system/ui';
+import { M3TopAppBar, M3Card, M3Button, Skeleton, GlassView, PageContainer, CulturePassWordmark } from '@/design-system/ui';
 import { ErrorBoundary } from '@/modules/core/ui/ErrorBoundary';
 import { HostspaceAccessGate } from '@/modules/host/components/HostspaceAccessGate';
 import { DraftRecoveryModal } from '@/modules/host/components/DraftRecoveryModal';
@@ -655,13 +655,14 @@ function HostspaceWorkspace() {
       <ScrollView
         contentContainerStyle={[
           styles.scroll,
-          { paddingHorizontal: hPad, maxWidth: isDesktop ? 1120 : undefined, alignSelf: 'center', width: '100%' },
+          { maxWidth: isDesktop ? 1120 : undefined, alignSelf: 'center', width: '100%' },
         ]}
         refreshControl={
           <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={CultureTokens.indigo} />
         }
         showsVerticalScrollIndicator={false}
       >
+        <PageContainer compact noTopPadding>
         {/* Hero + Personalized Dashboard Header */}
         <Animated.View entering={FadeInUp.duration(500)} style={styles.hero}>
           <View style={[styles.badge, { backgroundColor: m3Colors.secondaryContainer }]}>
@@ -950,6 +951,7 @@ function HostspaceWorkspace() {
             </View>
           )}
         </View>
+        </PageContainer>
       </ScrollView>
 
       {/* Draft Recovery Modal */}

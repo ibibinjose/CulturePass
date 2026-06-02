@@ -1,11 +1,10 @@
 import React from 'react';
-import { Text, View, StyleSheet } from 'react-native';
+import { Text, StyleSheet } from 'react-native';
 import { FontFamily } from '@/design-system/tokens/theme';
-import { useM3Colors } from '@/hooks/useM3Colors';
 
 interface CulturePassWordmarkProps {
   /** Size of the wordmark */
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   /** Whether to show .App suffix */
   showSuffix?: boolean;
   /** Text alignment */
@@ -14,75 +13,64 @@ interface CulturePassWordmarkProps {
   passColor?: string;
   /** Optional custom red color for "Culture" */
   cultureColor?: string;
+  /** Optional custom blue color for ".App" */
+  suffixColor?: string;
 }
 
 const SIZE_MAP = {
+  xs: 16,
   sm: 18,
   md: 24,
   lg: 32,
   xl: 42,
-};
+} as const;
+
+const UN_BLUE = '#009EDB';
 
 /**
  * CulturePassWordmark
- * 
+ *
  * Official split-color wordmark treatment:
- *   - "Culture" in red (#f80020)
+ *   - "Culture" in red
  *   - "Pass" in green
- *   - ".App" in neutral
- * 
- * Use this for the official app branding wherever the name appears prominently
- * (sidebar, headers, footers, loading screens, etc.).
+ *   - ".App" in UN Blue
  */
 export function CulturePassWordmark({
-  size = 'md',
+  size = 'sm',
   showSuffix = true,
   align = 'left',
-  passColor = '#00A651',           // Nice vibrant green
-  cultureColor = '#f80020',        // New red to try (user requested #f80020)
+  passColor = '#00A651',
+  cultureColor = '#f80020',
+  suffixColor = UN_BLUE,
 }: CulturePassWordmarkProps) {
-  const colors = useM3Colors();
   const fontSize = SIZE_MAP[size];
 
-  const textAlign = align;
-
   return (
-    <View style={[styles.container, { alignItems: align === 'center' ? 'center' : 'flex-start' }]}>
-      <Text
-        style={[
-          styles.base,
-          {
-            fontSize,
-            lineHeight: Math.round(fontSize * 1.05),
-            textAlign,
-          },
-        ]}
-      >
-        <Text style={{ color: cultureColor, fontFamily: FontFamily.bold, fontWeight: '700' as any }}>
-          Culture
-        </Text>
-        <Text style={{ color: passColor, fontFamily: FontFamily.bold, fontWeight: '700' as any }}>
-          Pass
-        </Text>
-        {showSuffix && (
-          <Text style={{ color: colors.onSurface, fontFamily: FontFamily.bold, fontWeight: '700' as any }}>
-            .App
-          </Text>
-        )}
-      </Text>
-    </View>
+    <Text
+      numberOfLines={1}
+      style={[
+        styles.base,
+        {
+          fontSize,
+          lineHeight: Math.round(fontSize * 1.1), // Slightly improved spacing
+          textAlign: align,
+        },
+      ]}
+    >
+      <Text style={{ color: cultureColor }}>Culture</Text>
+      <Text style={{ color: passColor }}>Pass</Text>
+      {showSuffix ? <Text style={{ color: suffixColor }}>.App</Text> : null}
+    </Text>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flexShrink: 1,
-  },
   base: {
     fontFamily: FontFamily.bold,
-    fontWeight: '700' as any,
+    fontWeight: '700',
     includeFontPadding: false,
   },
 });
 
+// Optional: also export as default
 export default CulturePassWordmark;

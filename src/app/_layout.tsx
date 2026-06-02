@@ -35,6 +35,7 @@ import { LikesProvider } from "@/contexts/LikesContext";
 import { ContactsProvider } from "@/contexts/ContactsContext";
 import { LinearGradient } from "expo-linear-gradient";
 import { CultureTokens } from "@/design-system/tokens/theme";
+import { PageContainer, CulturePassWordmark } from "@/design-system/ui";
 import { useColors, useIsDark } from "@/hooks/useColors";
 import { useLayout } from "@/hooks/useLayout";
 import { AuthGuard, AuthSyncBanner, DataSync } from "@/providers";
@@ -208,6 +209,8 @@ function RootLayoutNav() {
   );
 
   if (shouldShowDesktopLayout) {
+    const contentStyle = webStyles.contentContainer;
+    const mainStyle = [webStyles.mainFlex, webStyles.mainFlexDesktop];
     return (
       <View style={{ flex: 1, flexDirection: 'column' }}>
         <View
@@ -225,11 +228,14 @@ function RootLayoutNav() {
             style={webStyles.ambientMesh}
             pointerEvents="none"
           />
+
           <React.Suspense fallback={null}>
             <WebSidebar />
           </React.Suspense>
-          <View style={webStyles.contentContainer}>
-            <View style={[webStyles.mainFlex, webStyles.mainFlexDesktop]}>
+
+          {/* Main content area */}
+          <View style={contentStyle}>
+            <View style={mainStyle}>
               {stackContent}
             </View>
           </View>
@@ -274,73 +280,28 @@ function RootLayoutNav() {
           <View style={{ width: 40 }} />
         </View>
 
-        {/* Main Content */}
+        {/* Main content area */}
         <View style={{ flex: 1 }}>
           {stackContent}
         </View>
 
-        {/* Drawer Slide-out Sidebar Overlay */}
-        {isDrawerOpen && (
-          <View style={StyleSheet.absoluteFill}>
-            {/* Backdrop */}
-            <Pressable
-              style={webStyles.drawerBackdrop}
-              onPress={() => setIsDrawerOpen(false)}
-            />
-            
-            {/* Drawer WebSidebar container */}
-            <View
-              style={[
-                webStyles.drawerContent,
-                {
-                  backgroundColor: colors.surface,
-                  borderRightColor: colors.borderLight,
-                },
-              ]}
-            >
-              <View
-                style={[
-                  webStyles.drawerHeader,
-                  {
-                    borderBottomColor: colors.borderLight,
-                  },
-                ]}
-              >
-                <RNText style={[webStyles.drawerTitle, { color: colors.text }]}>
-                  Navigation
-                </RNText>
-                <Pressable
-                  onPress={() => setIsDrawerOpen(false)}
-                  style={({ pressed }) => [
-                    webStyles.closeBtn,
-                    pressed && { opacity: 0.7 },
-                  ]}
-                  accessibilityRole="button"
-                  accessibilityLabel="Close menu"
-                >
-                  <Ionicons name="close" size={22} color={colors.text} />
-                </Pressable>
-              </View>
-              <View style={{ flex: 1 }}>
-                <React.Suspense fallback={null}>
-                  <WebSidebar />
-                </React.Suspense>
-              </View>
-            </View>
-          </View>
-        )}
+        {/* Mobile Global Footer (only on mobile web) */}
+        <View style={{ borderTopWidth: 1, borderColor: colors.borderLight }}>
+          <Footer />
+        </View>
       </View>
     );
   }
 
-  // Native Mobile App Layout (Direct stack, no web chrome / footer)
+  // Native App Layout (Standard Stack, No global Footer)
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
+    <SafeAreaProvider style={{ flex: 1, backgroundColor: colors.background }}>
+      <StatusBar style={isDark ? "light" : "dark"} />
       <React.Suspense fallback={null}>
         <NavigationMetadata />
       </React.Suspense>
       {stackContent}
-    </View>
+    </SafeAreaProvider>
   );
 }
 
@@ -543,6 +504,11 @@ const webStyles = StyleSheet.create({
     minHeight: 0,
     flexDirection: "column",
     alignSelf: "stretch",
+    // Consistent responsive padding — prefer using <PageContainer> inside screens for even better control
+    paddingHorizontal: 16,
+    ...(Platform.OS === "web" && {
+      paddingHorizontal: 24,
+    }),
   },
   mainFlex: {
     flex: 1,

@@ -28,7 +28,7 @@ import { useImageUpload } from '@/hooks/useImageUpload';
 import { useColors } from '@/hooks/useColors';
 import { Button } from '@/design-system/ui/Button';
 import { CultureImage } from '@/design-system/ui/CultureImage';
-import { ImageGalleryPicker, M3Card, M3SectionHeader } from '@/design-system/ui';
+import { ImageGalleryPicker, M3Card, M3SectionHeader, PageContainer } from '@/design-system/ui';
 import { DatePickerInput, type ISODateString } from '@/design-system/ui/DatePickerInput';
 import { Skeleton } from '@/design-system/ui/Skeleton';
 import { CultureTokens, FontFamily, Radius, ScreenTokens, SignatureGradient, Spacing, gradients } from '@/design-system/tokens/theme';

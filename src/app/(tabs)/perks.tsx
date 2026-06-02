@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, RefreshControl, Pressable } from 'r
 import { useQuery } from '@tanstack/react-query';
 import { useColors } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
-import { GlassView } from '@/design-system/ui/GlassView';
+import { GlassView, PageContainer } from '@/design-system/ui';
 import { ErrorBoundary } from '@/modules/core/ui/ErrorBoundary';
 import { AuthGuard } from '@/modules/core/auth/AuthGuard';
 import { api } from '@/lib/api';
@@ -54,7 +54,8 @@ export default function PerksTabScreen() {
           </View>
 
           {/* Content */}
-          <View style={{ paddingHorizontal: hPad, paddingTop: 20 }}>
+          <PageContainer compact>
+            <View style={{ paddingTop: 20 }}>
             {isLoading ? (
               <View style={styles.loadingState}>
                 <Ionicons name="reload" size={48} color={colors.primary} />
@@ -118,6 +119,7 @@ export default function PerksTabScreen() {
               </View>
             )}
           </View>
+          </PageContainer>
         </ScrollView>
       </AuthGuard>
     </ErrorBoundary>

@@ -1,13 +1,17 @@
 /**
- * CulturePass Digital ID
+ * CulturePass Digital ID (Reimagined)
  *
- * Reorganized, native-first layout:
- * - Interactive 3D flippable Passport Card (Front: Identity, Back: QR Verification)
- * - Premium glassmorphism matching the user's membership tier
- * - Golden EMV smartchip & magnetic stripe details for authentic realism
- * - Floating background blobs & modern hover actions
+ * A premium digital member pass screen designed with a hybrid of Muji-like organic minimalism
+ * and Apple's luxury skeuomorphic fidelity:
+ * - Dynamic card themes based on the user's membership tier (Obsidian Gold for Elite, Indigo Plum for Plus, Charcoal Stone for Free)
+ * - Tactile golden EMV smartchip and NFC contactless wave indicators
+ * - Realistic signature strip on the back with handwritten italic typography
+ * - Living ambient background with floating animated glowing orbs (using Reanimated)
+ * - Interactive 3D flippable card transition with spring physics
+ * - Clean, standard size fields and premium action buttons
  */
 
+import React, { useMemo, useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -28,12 +32,11 @@ import type { User, Membership } from '@shared/schema';
 import QRCode from 'react-native-qrcode-svg';
 import * as Haptics from 'expo-haptics';
 import * as Clipboard from 'expo-clipboard';
-import { useMemo, useState } from 'react';
 import { useColors, useIsDark } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
 import { CultureTokens, gradients, TextStyles, FontFamily } from '@/design-system/tokens/theme';
 import { Luxe } from '@/design-system/tokens/luxeHeritage';
-import { Skeleton } from '@/design-system/ui';
+import { Skeleton, CulturePassWordmark, PageContainer } from '@/design-system/ui';
 import { AppHeaderBar } from '@/modules/core/ui/AppHeaderBar';
 import { modulesApi } from '@/modules/api';
 import { formatLocationLabel } from '@/lib/format';
@@ -42,72 +45,76 @@ import { openExternalUrl } from '@/lib/openExternalUrl';
 import { useAuth } from '@/lib/auth';
 import { AuthGuard } from '@/modules/core/auth/AuthGuard';
 import { TIER_CFG } from '@/modules/profile/components/tabs/ProfileUtils';
-import Animated, { useSharedValue, useAnimatedStyle, withSpring, interpolate } from 'react-native-reanimated';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withRepeat,
+  withTiming,
+  withSequence,
+  interpolate,
+} from 'react-native-reanimated';
 
-const CARD_WIDTH_FIXED = 340;
-const CARD_HEIGHT = 330;
-const QR_SIZE_FIXED = 136;
-const AVATAR_SIZE = 80;
-const SURFACE_WHITE = '#FFFFFF';
+const CARD_WIDTH_FIXED = 330;
+const CARD_HEIGHT = 460;
+const QR_SIZE_FIXED = 150;
+const AVATAR_SIZE = 60;
 
 function capitalize(s: string) {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-// Custom theme mapping for each membership tier
-const getTierTheme = (tierKey: string) => {
-  const t = tierKey.toLowerCase();
-  switch (t) {
-    case 'plus':
-      return {
-        cardGradients: ['#0A2F2B', '#021F1C', '#0D3E3A'],
-        accent: CultureTokens.teal,
-        border: 'rgba(45, 212, 191, 0.3)',
-        text: '#E6F4F1',
-        glow: 'rgba(45, 212, 191, 0.45)',
-      };
-    case 'elite':
-      return {
-        cardGradients: ['#2D1F05', '#170F00', '#36260B'],
-        accent: CultureTokens.gold,
-        border: 'rgba(212, 175, 55, 0.38)',
-        text: '#FAF3E0',
-        glow: 'rgba(212, 175, 55, 0.45)',
-      };
-    case 'pro':
-      return {
-        cardGradients: ['#210B3B', '#110321', '#2C124D'],
-        accent: '#8B5CF6',
-        border: 'rgba(139, 92, 246, 0.3)',
-        text: '#F5F3FF',
-        glow: 'rgba(139, 92, 246, 0.45)',
-      };
-    case 'premium':
-      return {
-        cardGradients: ['#3A0D18', '#20030B', '#4C1322'],
-        accent: CultureTokens.coral,
-        border: 'rgba(244, 63, 94, 0.35)',
-        text: '#FFF1F2',
-        glow: 'rgba(244, 63, 94, 0.45)',
-      };
-    case 'vip':
-      return {
-        cardGradients: ['#141414', '#080808', '#222222'],
-        accent: '#D4AF37',
-        border: 'rgba(212, 175, 55, 0.45)',
-        text: '#FFFFFF',
-        glow: 'rgba(212, 175, 55, 0.55)',
-      };
-    case 'free':
-    default:
-      return {
-        cardGradients: ['#1E293B', '#0F172A', '#25354C'],
-        accent: '#64748B',
-        border: 'rgba(148, 163, 184, 0.22)',
-        text: '#F1F5F9',
-        glow: 'rgba(148, 163, 184, 0.25)',
-      };
-  }
+// Dynamic Card Themes based on Membership Status
+const DYNAMIC_CARD_THEMES: Record<string, {
+  cardGradients: [string, string, ...string[]];
+  accent: string;
+  border: string;
+  text: string;
+  glow: string;
+  chipColor: string;
+  chipBorder: string;
+  isDarkCard: boolean;
+}> = {
+  free: {
+    cardGradients: ['#1C1917', '#292524', '#1C1917'] as [string, string, ...string[]], // Muji Dark Charcoal / Stone
+    accent: CultureTokens.terracottaGlow,
+    border: 'rgba(227, 106, 78, 0.25)',
+    text: '#F5F5F4',
+    glow: 'rgba(227, 106, 78, 0.15)',
+    chipColor: '#A8A29E', // Stone silver chip
+    chipBorder: '#78716C',
+    isDarkCard: true,
+  },
+  plus: {
+    cardGradients: ['#1E1B4B', '#311042', '#1E1B4B'] as [string, string, ...string[]], // Deep Brand Purple / Indigo
+    accent: CultureTokens.coral,
+    border: 'rgba(255, 94, 91, 0.4)',
+    text: '#FFF0F0',
+    glow: 'rgba(79, 70, 229, 0.35)',
+    chipColor: '#E29578', // Warm rose gold chip
+    chipBorder: '#B06D53',
+    isDarkCard: true,
+  },
+  elite: {
+    cardGradients: ['#09090B', '#18181B', '#09090B'] as [string, string, ...string[]], // Obsidian Matte Black
+    accent: CultureTokens.gold,
+    border: 'rgba(255, 200, 87, 0.45)',
+    text: '#FFFBEB',
+    glow: 'rgba(255, 200, 87, 0.25)',
+    chipColor: '#D4A017', // Gold chip
+    chipBorder: '#9E740C',
+    isDarkCard: true,
+  },
+  pro: {
+    cardGradients: ['#061F2E', '#0B3C5D', '#061F2E'] as [string, string, ...string[]], // Teal / Blue Pro
+    accent: '#00F0FF',
+    border: 'rgba(0, 240, 255, 0.45)',
+    text: '#E0FAFF',
+    glow: 'rgba(0, 240, 255, 0.25)',
+    chipColor: '#00F0FF',
+    chipBorder: '#00B4D8',
+    isDarkCard: true,
+  },
 };
 
 export default function QRScreen() {
@@ -135,19 +142,22 @@ export default function QRScreen() {
     enabled: !!userId,
   });
 
-  const userProfileLoading =
-    isRestoring || (Boolean(authUserId) && userPending && !user);
+  const userProfileLoading = isRestoring || (Boolean(authUserId) && userPending && !user);
   const isLoading = userProfileLoading || (!!userId && membershipLoading);
 
   const tier = membership?.tier ?? 'free';
   const tierConf = TIER_CFG[tier] ?? TIER_CFG.free;
-  const tierTheme = getTierTheme(tier);
+
+  // Retrieve active card theme configuration based on user membership
+  const cardTheme = useMemo(() => {
+    return DYNAMIC_CARD_THEMES[tier] ?? DYNAMIC_CARD_THEMES.free;
+  }, [tier]);
 
   const cpid = user?.culturePassId ?? 'CP-000000';
   const name = user?.displayName ?? 'CulturePass User';
   const username = user?.username ?? 'user';
   const avatarUrl = user?.avatarUrl;
-  const interests = (user?.interests ?? []).slice(0, 5);
+  const interests = (user?.interests ?? []).slice(0, 4);
   const location = formatLocationLabel(user?.city, user?.country, '');
 
   const initials = useMemo(
@@ -165,7 +175,7 @@ export default function QRScreen() {
     return new Date(user.createdAt).toLocaleDateString(undefined, { month: 'short', year: 'numeric' });
   }, [user?.createdAt]);
 
-  // Lazy loaded apple/google wallet passes
+  // Wallet pass credentials
   const { data: appleWallet } = useQuery<{ url: string }>({
     queryKey: ['/api/wallet/business-card/apple', userId],
     queryFn: () => modulesApi.wallet.businessCardApple() as Promise<{ url: string }>,
@@ -179,6 +189,27 @@ export default function QRScreen() {
     enabled: !!userId && (Platform.OS === 'android' || Platform.OS === 'web'),
     staleTime: 30 * 60 * 1000,
   });
+
+  // Reanimated Ambient Background Blobs Y/X Float
+  const blob1X = useSharedValue(0);
+  const blob1Y = useSharedValue(0);
+  const blob2X = useSharedValue(0);
+  const blob2Y = useSharedValue(0);
+
+  useEffect(() => {
+    blob1X.value = withRepeat(withSequence(withTiming(40, { duration: 7000 }), withTiming(-40, { duration: 7000 })), -1, true);
+    blob1Y.value = withRepeat(withSequence(withTiming(30, { duration: 8000 }), withTiming(-30, { duration: 8000 })), -1, true);
+    blob2X.value = withRepeat(withSequence(withTiming(-30, { duration: 9000 }), withTiming(30, { duration: 9000 })), -1, true);
+    blob2Y.value = withRepeat(withSequence(withTiming(45, { duration: 10000 }), withTiming(-45, { duration: 10000 })), -1, true);
+  }, [blob1X, blob1Y, blob2X, blob2Y]);
+
+  const animatedBlob1 = useAnimatedStyle(() => ({
+    transform: [{ translateX: blob1X.value }, { translateY: blob1Y.value }],
+  }));
+
+  const animatedBlob2 = useAnimatedStyle(() => ({
+    transform: [{ translateX: blob2X.value }, { translateY: blob2Y.value }],
+  }));
 
   // Reanimated Card Flipping State
   const [isFaceSide, setIsFaceSide] = useState(true);
@@ -228,7 +259,6 @@ export default function QRScreen() {
     };
   });
 
-  // Wallet Display Rules
   const showAppleWallet = useMemo(() => {
     if (Platform.OS === 'ios') return true;
     if (Platform.OS === 'web' && typeof navigator !== 'undefined') {
@@ -274,46 +304,48 @@ export default function QRScreen() {
           style={StyleSheet.absoluteFill}
         />
 
-        {/* Ambient glowing blobs */}
+        {/* Ambient living blurred blobs (Stripe/Apple visual aesthetic) */}
         <View style={s.ambientContainer} pointerEvents="none">
-          <View
+          <Animated.View
             style={[
               s.ambientBlob,
+              animatedBlob1,
               {
-                backgroundColor: tierTheme.accent + '12',
-                top: -85,
-                left: -85,
+                backgroundColor: cardTheme.accent + '15',
+                top: -80,
+                left: -60,
                 width: 320,
                 height: 320,
                 borderRadius: 160,
               },
             ]}
           />
-          <View
+          <Animated.View
             style={[
               s.ambientBlob,
+              animatedBlob2,
               {
-                backgroundColor: CultureTokens.indigo + '10',
-                bottom: -60,
-                right: -60,
-                width: 360,
-                height: 360,
-                borderRadius: 180,
+                backgroundColor: CultureTokens.indigo + '12',
+                bottom: -50,
+                right: -70,
+                width: 350,
+                height: 350,
+                borderRadius: 175,
               },
             ]}
           />
         </View>
 
         <AppHeaderBar
-          title="Digital ID"
-          subtitle="CulturePassport"
+          title="CulturePass"
+          subtitle="Digital Member Pass"
           backFallback="/(tabs)/my-space"
           topInset={topInset}
           rightAction={{
             icon: 'scan-outline',
-            onPress: () => { 
+            onPress: () => {
               if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              router.push('/scanner'); 
+              router.push('/scanner');
             },
             label: 'Scan a CulturePass',
           }}
@@ -323,6 +355,7 @@ export default function QRScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={[s.scroll, { paddingBottom: bottomInset + 40 }]}
         >
+          <PageContainer compact noTopPadding>
           {isLoading ? (
             <View style={{ gap: 14, alignItems: 'center', paddingTop: 20 }}>
               <Skeleton width={cardWidth} height={CARD_HEIGHT} borderRadius={24} />
@@ -337,131 +370,155 @@ export default function QRScreen() {
             <>
               {/* 3D Flippable Passport Card Container */}
               <View style={[s.flipCardContainer, { width: cardWidth }]}>
-                
-                {/* Front Side: Identity Badge */}
+
+                {/* Front Side: Golden chip, EMV badge-like Passport */}
                 <Animated.View style={[s.identityCardWrap, { width: cardWidth }, frontStyle]} pointerEvents={isFaceSide ? 'auto' : 'none'}>
                   <LinearGradient
-                    colors={tierTheme.cardGradients as [string, string, ...string[]]}
+                    colors={cardTheme.cardGradients}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
-                    style={[s.identityCard, { borderColor: tierTheme.border }]}
+                    style={[s.identityCard, { borderColor: cardTheme.border }]}
                   >
-                    {/* Reflective gloss diagonal overlay */}
+                    {/* Header Banner - Sleek Minimalist */}
+                    <View style={s.passHeader}>
+                      <View style={s.passHeaderContent}>
+                        {/* Tactile Golden EMV Smartchip + Wave Contactless logo */}
+                        <View style={s.chipBlock}>
+                          <View style={[s.emvChip, { backgroundColor: cardTheme.chipColor, borderColor: cardTheme.chipBorder }]}>
+                            <View style={[s.emvLineHorizontal, { backgroundColor: cardTheme.chipBorder }]} />
+                            <View style={[s.emvLineVertical, { backgroundColor: cardTheme.chipBorder }]} />
+                            <View style={[s.emvInnerChip, { borderColor: cardTheme.chipBorder }]} />
+                          </View>
+                          <Ionicons
+                            name="wifi"
+                            size={16}
+                            color="rgba(255,255,255,0.3)"
+                            style={{ transform: [{ rotate: '90deg' }], marginLeft: 2 }}
+                          />
+                        </View>
+                        <View style={s.passHeaderRight}>
+                          <Text style={[s.passType, { color: cardTheme.text }]}>MEMBER PASS</Text>
+                          <Text style={[s.passTier, { color: cardTheme.accent }]}>{tierConf.label.toUpperCase()}</Text>
+                        </View>
+                      </View>
+                    </View>
+
+                    {/* Holographic metallic-effect dividing strip */}
                     <LinearGradient
-                      colors={['rgba(255,255,255,0.06)', 'transparent', 'rgba(0,0,0,0.06)']}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                      style={StyleSheet.absoluteFill}
-                      pointerEvents="none"
+                      colors={['rgba(255,255,255,0.01)', cardTheme.border, 'rgba(255,255,255,0.01)']}
+                      start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                      style={s.hologramDivider}
                     />
 
-                    {/* Logo & smartchip row */}
-                    <View style={s.identityHeader}>
-                      <View style={s.identityBrand}>
-                        <Image
-                          source={require('@/assets/images/culturepass-logo.png')}
-                          style={s.identityBrandLogo}
-                          contentFit="contain"
-                          accessibilityLabel="CulturePass"
-                        />
-                        <Text style={[s.identityBrandTitle, { color: colors.text }]}>CulturePass ID</Text>
+                    {/* Body content */}
+                    <View style={s.passBody}>
+                      {/* Avatar + name display */}
+                      <View style={s.passUserRow}>
+                        <View style={s.passAvatarWrap}>
+                          {avatarUrl ? (
+                            <Image source={{ uri: avatarUrl }} style={s.passAvatar} contentFit="cover" />
+                          ) : (
+                            <View style={[s.passAvatarFallback, { backgroundColor: cardTheme.accent + '25', borderColor: cardTheme.border }]}>
+                              <Text style={[s.passAvatarInitials, { color: cardTheme.text }]}>{initials}</Text>
+                            </View>
+                          )}
+                        </View>
+                        <View style={s.passUserInfo}>
+                          <Text style={[s.passName, { color: cardTheme.text }]} numberOfLines={1}>{name}</Text>
+                          <Text style={[s.passHandle, { color: 'rgba(255,255,255,0.6)' }]}>@{username}</Text>
+                          <View style={s.passMetaRow}>
+                            {location ? (
+                              <View style={s.passMetaItem}>
+                                <Ionicons name="location-outline" size={11} color="rgba(255,255,255,0.5)" />
+                                <Text style={[s.passMetaText, { color: 'rgba(255,255,255,0.5)' }]} numberOfLines={1}>{location}</Text>
+                              </View>
+                            ) : null}
+                          </View>
+                        </View>
                       </View>
 
-                      {/* Golden Smartchip */}
-                      <View style={s.smartChip}>
-                        <View style={s.smartChipInner}>
-                          <View style={s.smartChipLineH1} />
-                          <View style={s.smartChipLineH2} />
-                          <View style={s.smartChipLineV} />
+                      {/* Monospaced embossed-style card identifier */}
+                      <View style={[s.passIdStrip, { backgroundColor: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.08)' }]}>
+                        <Text style={[s.passIdLabel, { color: 'rgba(255,255,255,0.45)' }]}>CPID</Text>
+                        <Pressable onPress={handleCopy} style={s.passIdValueWrap}>
+                          <Text style={[s.passIdValue, { color: cardTheme.text }]} numberOfLines={1}>
+                            {cpid.slice(0, 3)}-{cpid.slice(3)}
+                          </Text>
+                          <Ionicons name={copied ? 'checkmark' : 'copy-outline'} size={13} color={copied ? '#34C759' : 'rgba(255,255,255,0.45)'} />
+                        </Pressable>
+                      </View>
+
+                      {/* Recessed high-contrast QR Verification compartment */}
+                      <View style={s.passQrSection}>
+                        <View style={s.qrWhiteBackground}>
+                          <QRCode
+                            value={qrValue}
+                            size={qrSize}
+                            color="#090A0F"
+                            backgroundColor="#FFFFFF"
+                            ecl="H"
+                          />
                         </View>
+                        <Text style={[s.passQrFooter, { color: 'rgba(255,255,255,0.5)' }]}>
+                          Scan to verify signature • Secure signature v2
+                        </Text>
                       </View>
                     </View>
 
-                    {/* Avatar and Info section */}
-                    <View style={s.identityMainRow}>
-                      <View style={s.avatarContainer}>
-                        {avatarUrl ? (
-                          <Image source={{ uri: avatarUrl }} style={[s.avatar, { borderColor: tierTheme.accent }]} contentFit="cover" />
-                        ) : (
-                          <View style={[s.avatarFallback, { backgroundColor: tierTheme.accent + '20', borderColor: tierTheme.accent }]}>
-                            <Text style={[s.avatarInitials, { color: colors.text }]}>{initials}</Text>
-                          </View>
-                        )}
-                        {/* Tier Emblem Indicator */}
-                        <View style={[s.tierBadgeContainer, { backgroundColor: tierTheme.accent }]}>
-                          <Ionicons name={tierConf.icon as any} size={10} color="#0B0F19" />
-                        </View>
-                      </View>
-
-                      <View style={s.identityMeta}>
-                        <View style={s.tierTagContainer}>
-                          <Text style={[s.tierTagText, { color: tierTheme.accent }]}>{tierConf.label.toUpperCase()}</Text>
-                        </View>
-                        <Text style={[s.nameText, { color: colors.text }]} numberOfLines={1}>{name}</Text>
-                        <Text style={[s.handleText, { color: colors.textSecondary }]} numberOfLines={1}>@{username}</Text>
-                        {location ? (
-                          <View style={[s.locationPill, { backgroundColor: 'rgba(255,255,255,0.06)', borderColor: 'rgba(255,255,255,0.1)' }]}>
-                            <Ionicons name="location-outline" size={11} color={colors.textSecondary} />
-                            <Text style={[s.locationText, { color: colors.textSecondary }]} numberOfLines={1}>{location}</Text>
-                          </View>
-                        ) : null}
-                      </View>
-                    </View>
-
-                    {/* Bottom Metadata row */}
-                    <View style={[s.identityInfoRow, { borderTopColor: 'rgba(255,255,255,0.1)' }]}>
-                      <View style={s.infoBlock}>
-                        <Text style={[s.infoLabel, { color: colors.textTertiary }]}>MEMBER SINCE</Text>
-                        <Text style={[s.infoValue, { color: colors.text }]}>{memberSince}</Text>
-                      </View>
-                      <Pressable
-                        style={[s.cpidBtn, { borderColor: 'rgba(255,255,255,0.12)', backgroundColor: 'rgba(255,255,255,0.04)' }]}
-                        onPress={handleCopy}
-                        accessibilityRole="button"
-                        accessibilityLabel={copied ? 'ID copied' : 'Copy CulturePass ID'}
-                      >
-                        <Text style={[s.cpidBtnLabel, { color: colors.textTertiary }]}>ID</Text>
-                        <Text style={[s.cpidBtnValue, { color: colors.text }]} numberOfLines={1}>{cpid}</Text>
-                        <Ionicons name={copied ? 'checkmark-circle' : 'copy-outline'} size={15} color={copied ? '#34C759' : colors.textSecondary} />
-                      </Pressable>
+                    {/* Footer strip */}
+                    <View style={s.passFooterStrip}>
+                      <Text style={[s.passFooterText, { color: 'rgba(255,255,255,0.4)' }]}>
+                        © CULTUREPASS PTY LTD • {memberSince} • MADE IN SYDNEY
+                      </Text>
                     </View>
                   </LinearGradient>
                 </Animated.View>
 
-                {/* Back Side: QR Verification */}
+                {/* Back Side: Magnetic strip, signature block, terms */}
                 <Animated.View style={[s.identityCardWrap, { width: cardWidth }, backStyle]} pointerEvents={!isFaceSide ? 'auto' : 'none'}>
                   <LinearGradient
-                    colors={tierTheme.cardGradients as [string, string, ...string[]]}
+                    colors={cardTheme.cardGradients}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
-                    style={[s.identityCard, { borderColor: tierTheme.border, paddingTop: 56 }]}
+                    style={[s.identityCard, { borderColor: cardTheme.border }]}
                   >
-                    {/* Magnetic Stripe */}
+                    {/* Magnetic Stripe (realistic card simulation) */}
                     <View style={s.magneticStripe} />
 
-                    <View style={s.qrBackHeader}>
-                      <Text style={[s.qrBackTitle, { color: colors.text }]}>SECURE PASS VERIFICATION</Text>
-                      <Text style={[s.qrBackSubtitle, { color: colors.textSecondary }]}>Scan to verify membership status</Text>
-                    </View>
-
-                    {/* QR Code container */}
-                    <View style={s.qrContainerBack}>
-                      <View style={s.qrWhiteBackground}>
-                        <QRCode
-                          value={qrValue}
-                          size={qrSize}
-                          color="#0B0F19"
-                          backgroundColor="#FFFFFF"
-                          ecl="H"
-                        />
+                    <View style={s.backContent}>
+                      <Text style={[s.backTitle, { color: cardTheme.text }]}>CULTUREPASS CARD PRIVILEGES</Text>
+                      
+                      {/* Realistic cursive signature block */}
+                      <View style={s.signatureSection}>
+                        <Text style={s.signatureLabel}>AUTHORIZED SIGNATURE</Text>
+                        <View style={s.signaturePanel}>
+                          <Text style={s.signatureText}>{name}</Text>
+                        </View>
                       </View>
-                    </View>
 
-                    {/* QR Footer details */}
-                    <View style={s.qrBackFooter}>
-                      <Text style={[s.qrBackFooterText, { color: colors.textSecondary }]}>
-                        CPID: <Text style={{ color: colors.text, fontFamily: FontFamily.bold }}>{cpid}</Text>
-                      </Text>
+                      <View style={s.backDetails}>
+                        <View style={s.backDetailRow}>
+                          <Text style={[s.backDetailLabel, { color: 'rgba(255,255,255,0.45)' }]}>HOLDER</Text>
+                          <Text style={[s.backDetailValue, { color: cardTheme.text }]} numberOfLines={1}>{name}</Text>
+                        </View>
+                        <View style={s.backDetailRow}>
+                          <Text style={[s.backDetailLabel, { color: 'rgba(255,255,255,0.45)' }]}>MEMBER NO</Text>
+                          <Text style={[s.backDetailValue, { color: cardTheme.text }]}>{cpid}</Text>
+                        </View>
+                        <View style={s.backDetailRow}>
+                          <Text style={[s.backDetailLabel, { color: 'rgba(255,255,255,0.45)' }]}>SINCE</Text>
+                          <Text style={[s.backDetailValue, { color: cardTheme.text }]}>{memberSince}</Text>
+                        </View>
+                      </View>
+
+                      <View style={s.backFinePrint}>
+                        <Text style={[s.backFineText, { color: colors.textTertiary }]}>
+                          This card is the property of CulturePass. It is non-transferable and linked to your digital signature. Present it to event staff for validation.
+                        </Text>
+                        <Text style={[s.backFineText, { color: colors.textTertiary, marginTop: 8 }]}>
+                          CulturePass.App — global community infrastructure
+                        </Text>
+                      </View>
                     </View>
                   </LinearGradient>
                 </Animated.View>
@@ -474,13 +531,13 @@ export default function QRScreen() {
                 style={({ pressed, hovered }: any) => [
                   s.flipToggleBtn,
                   {
-                    backgroundColor: tierTheme.accent + '15',
-                    borderColor: tierTheme.accent + '4A',
+                    backgroundColor: cardTheme.accent + '15',
+                    borderColor: cardTheme.accent + '3C',
                     transform: [{ scale: pressed ? 0.96 : (hovered ? 1.04 : 1) }],
                     ...Platform.select({
                       web: {
-                        transition: 'all 0.2s ease-in-out',
-                        boxShadow: hovered ? `0px 4px 15px ${tierTheme.accent}24` : 'none',
+                        transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+                        boxShadow: hovered ? `0px 4px 20px ${cardTheme.accent}24` : 'none',
                         cursor: 'pointer',
                       },
                     }),
@@ -489,32 +546,37 @@ export default function QRScreen() {
                 accessibilityRole="button"
                 accessibilityLabel="Flip passport card"
               >
-                <Ionicons name="swap-horizontal" size={16} color={tierTheme.accent} />
-                <Text style={[s.flipToggleBtnText, { color: tierTheme.accent }]}>
-                  {isFaceSide ? 'Flip to QR Verification' : 'Flip to Member ID'}
+                <Ionicons name="swap-horizontal" size={15} color={cardTheme.accent} />
+                <Text style={[s.flipToggleBtnText, { color: cardTheme.accent }]}>
+                  {isFaceSide ? 'Flip to Pass Back' : 'Flip to Pass Front'}
                 </Text>
               </Pressable>
 
-              {/* Action row buttons */}
+              {/* Usage hint text */}
+              <Text style={[s.passHint, { color: colors.textTertiary, width: cardWidth }]}>
+                Present this card at events and partner venues. Add to Apple or Google Wallet for secure, offline access.
+              </Text>
+
+              {/* Action Toolbar buttons */}
               <View style={[s.actionsRow, { width: cardWidth }]}>
                 {([
-                  { icon: 'share-outline', label: 'Share', color: CultureTokens.indigo, onPress: handleShare },
-                  { icon: copied ? 'checkmark' : 'copy-outline', label: copied ? 'Copied' : 'Copy ID', color: copied ? '#34C759' : CultureTokens.gold, onPress: handleCopy },
-                  { icon: 'scan-outline', label: 'Scan', color: CultureTokens.coral, onPress: () => { if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push('/scanner'); } },
+                  { icon: 'share-outline', label: 'Share Link', color: CultureTokens.indigo, onPress: handleShare },
+                  { icon: copied ? 'checkmark' : 'copy-outline', label: copied ? 'Copied' : 'Copy CPID', color: copied ? '#34C759' : CultureTokens.gold, onPress: handleCopy },
+                  { icon: 'scan-outline', label: 'Scan ID', color: CultureTokens.coral, onPress: () => { if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push('/scanner'); } },
                 ] as const).map((btn) => (
                   <Pressable
                     key={btn.label}
                     style={({ pressed, hovered }: any) => [
                       s.actionBtn,
                       {
-                        backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(255, 255, 255, 0.07)',
-                        borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.12)',
-                        opacity: pressed ? 0.78 : 1,
-                        transform: [{ scale: pressed ? 0.96 : (hovered ? 1.04 : 1) }],
+                        backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.02)',
+                        borderColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.06)',
+                        opacity: pressed ? 0.8 : 1,
+                        transform: [{ scale: pressed ? 0.95 : (hovered ? 1.05 : 1) }],
                         ...Platform.select({
                           web: {
-                            transition: 'all 0.2s ease-in-out',
-                            boxShadow: hovered ? '0px 8px 24px rgba(0,0,0,0.25)' : 'none',
+                            transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                            boxShadow: hovered ? '0px 6px 20px rgba(0,0,0,0.15)' : 'none',
                             cursor: 'pointer',
                           },
                         }),
@@ -524,7 +586,7 @@ export default function QRScreen() {
                     accessibilityRole="button"
                     accessibilityLabel={btn.label}
                   >
-                    <View style={[s.actionIcon, { backgroundColor: (btn.color as string) + '15' }]}>
+                    <View style={[s.actionIcon, { backgroundColor: (btn.color as string) + '12' }]}>
                       <Ionicons name={btn.icon as keyof typeof Ionicons.glyphMap} size={18} color={btn.color as string} />
                     </View>
                     <Text style={[s.actionLabel, { color: colors.textSecondary }]}>{btn.label}</Text>
@@ -546,7 +608,7 @@ export default function QRScreen() {
                           transform: [{ scale: pressed ? 0.97 : (hovered ? 1.03 : 1) }],
                           ...Platform.select({
                             web: {
-                              transition: 'all 0.2s ease-in-out',
+                              transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
                               cursor: 'pointer',
                             },
                           }),
@@ -560,7 +622,7 @@ export default function QRScreen() {
                       accessibilityLabel="Add to Apple Wallet"
                     >
                       <LinearGradient
-                        colors={['#1C1C1E', '#000000']}
+                        colors={['#1F1F21', '#000000']}
                         start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
                         style={StyleSheet.absoluteFill}
                       />
@@ -569,7 +631,7 @@ export default function QRScreen() {
                         <Text style={s.walletBtnSub}>Add to</Text>
                         <Text style={s.walletBtnTitle}>Apple Wallet</Text>
                       </View>
-                      <Ionicons name="chevron-forward" size={16} color="rgba(255,255,255,0.40)" />
+                      <Ionicons name="chevron-forward" size={15} color="rgba(255,255,255,0.4)" />
                     </Pressable>
                   )}
 
@@ -582,7 +644,7 @@ export default function QRScreen() {
                           transform: [{ scale: pressed ? 0.97 : (hovered ? 1.03 : 1) }],
                           ...Platform.select({
                             web: {
-                              transition: 'all 0.2s ease-in-out',
+                              transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
                               cursor: 'pointer',
                             },
                           }),
@@ -605,7 +667,7 @@ export default function QRScreen() {
                         <Text style={s.walletBtnSub}>Save to</Text>
                         <Text style={s.walletBtnTitle}>Google Wallet</Text>
                       </View>
-                      <Ionicons name="chevron-forward" size={16} color="rgba(255,255,255,0.40)" />
+                      <Ionicons name="chevron-forward" size={15} color="rgba(255,255,255,0.4)" />
                     </Pressable>
                   )}
                 </View>
@@ -614,11 +676,11 @@ export default function QRScreen() {
               {/* Interests tag list */}
               {interests.length > 0 && (
                 <View style={[s.tagsSection, { width: cardWidth }]}>
-                  <Text style={[s.tagsHeading, { color: colors.textTertiary }]}>INTERESTS</Text>
+                  <Text style={[s.tagsHeading, { color: colors.textTertiary }]}>CULTURAL INTERESTS</Text>
                   <View style={s.tagsRow}>
                     {interests.map(interest => (
-                      <View key={interest} style={[s.tag, { backgroundColor: tierTheme.accent + '15', borderColor: tierTheme.accent + '25' }]}>
-                        <Text style={[s.tagText, { color: tierTheme.accent }]}>{capitalize(interest)}</Text>
+                      <View key={interest} style={[s.tag, { backgroundColor: cardTheme.accent + '10', borderColor: cardTheme.accent + '20' }]}>
+                        <Text style={[s.tagText, { color: cardTheme.accent }]}>{capitalize(interest)}</Text>
                       </View>
                     ))}
                   </View>
@@ -626,13 +688,12 @@ export default function QRScreen() {
               )}
             </>
           )}
+          </PageContainer>
         </ScrollView>
       </View>
     </AuthGuard>
   );
 }
-
-// ─── Styles ───────────────────────────────────────────────────────────────────
 
 const s = StyleSheet.create({
   root: { flex: 1 },
@@ -649,13 +710,13 @@ const s = StyleSheet.create({
   ambientBlob: {
     position: 'absolute',
     ...Platform.select({
-      web: { filter: 'blur(80px)' },
+      web: { filter: 'blur(90px)' },
       default: {},
     }),
-    opacity: 0.55,
+    opacity: 0.45,
   },
 
-  scroll: { alignItems: 'center', paddingTop: 24, gap: 20 },
+  scroll: { alignItems: 'center', paddingTop: 20, gap: 16 },
 
   flipCardContainer: {
     height: CARD_HEIGHT,
@@ -665,293 +726,347 @@ const s = StyleSheet.create({
 
   identityCardWrap: {
     height: CARD_HEIGHT,
-    borderRadius: 24,
+    borderRadius: 20,
     ...Platform.select({
-      web: { boxShadow: '0px 12px 34px rgba(0,0,0,0.3)' },
-      default: { shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.25, shadowRadius: 16, elevation: 8 },
+      web: { boxShadow: '0px 15px 35px rgba(0,0,0,0.35)' },
+      default: { shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.3, shadowRadius: 18, elevation: 10 },
     }),
   },
+
   identityCard: {
     flex: 1,
-    borderRadius: 24,
-    borderWidth: 1.2,
-    paddingHorizontal: 20,
-    paddingVertical: 18,
-    justifyContent: 'space-between',
+    borderRadius: 20,
+    borderWidth: 1,
     overflow: 'hidden',
+    backgroundColor: '#0B0F19',
   },
-  identityHeader: {
+
+  // Pass Header Banner
+  passHeader: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 12,
+    justifyContent: 'center',
+  },
+  passHeaderContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  identityBrand: {
+  chipBlock: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
-  identityBrandLogo: {
-    width: 24,
-    height: 24,
-  },
-  identityBrandTitle: {
-    fontSize: 13,
-    fontFamily: FontFamily.bold,
-    letterSpacing: -0.2,
-  },
-  smartChip: {
-    width: 32,
-    height: 24,
+  emvChip: {
+    width: 38,
+    height: 26,
     borderRadius: 5,
-    backgroundColor: '#E5C158',
-    padding: 3,
     borderWidth: 1,
-    borderColor: '#C5A038',
+    position: 'relative',
     overflow: 'hidden',
   },
-  smartChipInner: {
-    flex: 1,
-    borderWidth: 1.2,
-    borderColor: 'rgba(0,0,0,0.18)',
-    borderRadius: 3.5,
-  },
-  smartChipLineH1: {
+  emvLineHorizontal: {
     position: 'absolute',
+    top: '50%',
     left: 0,
     right: 0,
-    top: '33%',
     height: 1,
-    backgroundColor: 'rgba(0,0,0,0.15)',
   },
-  smartChipLineH2: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: '66%',
-    height: 1,
-    backgroundColor: 'rgba(0,0,0,0.15)',
-  },
-  smartChipLineV: {
+  emvLineVertical: {
     position: 'absolute',
     top: 0,
     bottom: 0,
     left: '50%',
     width: 1,
-    backgroundColor: 'rgba(0,0,0,0.15)',
   },
-
-  identityMainRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
-  },
-  avatarContainer: {
-    position: 'relative',
-    width: AVATAR_SIZE,
-    height: AVATAR_SIZE,
-  },
-  avatar: {
-    width: AVATAR_SIZE,
-    height: AVATAR_SIZE,
-    borderRadius: 20,
-    borderWidth: 2,
-  },
-  avatarFallback: {
-    width: AVATAR_SIZE,
-    height: AVATAR_SIZE,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-  },
-  avatarInitials: {
-    fontSize: 26,
-    fontFamily: 'Poppins_700Bold',
-    letterSpacing: -0.3,
-  },
-  tierBadgeContainer: {
+  emvInnerChip: {
     position: 'absolute',
-    bottom: -4,
-    right: -4,
+    top: 5,
+    left: 7,
     width: 22,
-    height: 22,
-    borderRadius: 11,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: '#0B0F19',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
-    elevation: 2,
+    height: 14,
+    borderRadius: 3,
+    borderWidth: 1,
+    backgroundColor: 'transparent',
   },
-  identityMeta: {
-    flex: 1,
-    gap: 3,
+  passHeaderRight: {
+    alignItems: 'flex-end',
   },
-  tierTagContainer: {
-    alignSelf: 'flex-start',
-    borderRadius: 4,
-    marginBottom: 2,
-  },
-  tierTagText: {
-    fontSize: 9,
+  passType: {
+    fontSize: 10,
     fontFamily: FontFamily.bold,
     letterSpacing: 1.2,
   },
-  nameText: {
-    fontSize: 22,
-    lineHeight: 26,
-    fontFamily: 'Poppins_700Bold',
-    letterSpacing: -0.4,
+  passTier: {
+    fontSize: 9,
+    fontFamily: FontFamily.semibold,
+    letterSpacing: 0.5,
+    marginTop: 2,
   },
-  handleText: {
+
+  hologramDivider: {
+    height: 1,
+    width: '100%',
+  },
+
+  // Pass Body
+  passBody: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 12,
+    gap: 12,
+  },
+  passUserRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  passAvatarWrap: {
+    width: AVATAR_SIZE,
+    height: AVATAR_SIZE,
+    borderRadius: 12,
+    overflow: 'hidden',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.25)',
+  },
+  passAvatar: {
+    width: AVATAR_SIZE,
+    height: AVATAR_SIZE,
+  },
+  passAvatarFallback: {
+    width: AVATAR_SIZE,
+    height: AVATAR_SIZE,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+  },
+  passAvatarInitials: {
+    fontSize: 20,
+    fontFamily: FontFamily.bold,
+  },
+  passUserInfo: {
+    flex: 1,
+    gap: 1,
+  },
+  passName: {
+    fontSize: 18,
+    lineHeight: 22,
+    fontFamily: FontFamily.bold,
+    letterSpacing: -0.3,
+  },
+  passHandle: {
     fontSize: 12,
     fontFamily: FontFamily.medium,
   },
-  locationPill: {
-    marginTop: 4,
-    alignSelf: 'flex-start',
-    borderRadius: 999,
-    borderWidth: 1,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+  passMetaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    maxWidth: '100%',
+    gap: 6,
+    marginTop: 2,
   },
-  locationText: {
-    fontSize: 10,
+  passMetaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+  },
+  passMetaText: {
+    fontSize: 11,
     fontFamily: FontFamily.medium,
   },
 
-  identityInfoRow: {
-    borderTopWidth: StyleSheet.hairlineWidth * 2,
-    paddingTop: 12,
+  // CPID Strip (Embossed card look)
+  passIdStrip: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 10,
+    borderWidth: 1,
   },
-  infoBlock: {
-    flex: 1,
-    gap: 2,
-  },
-  infoLabel: {
+  passIdLabel: {
     fontSize: 8.5,
     fontFamily: FontFamily.medium,
-    letterSpacing: 1.1,
+    letterSpacing: 1,
   },
-  infoValue: {
-    fontSize: 12,
-    fontFamily: FontFamily.semibold,
-  },
-  cpidBtn: {
-    minWidth: 136,
-    maxWidth: '56%',
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingVertical: 7,
-    paddingHorizontal: 10,
+  passIdValueWrap: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
   },
-  cpidBtnLabel: {
-    fontSize: 9,
-    fontFamily: FontFamily.medium,
-    letterSpacing: 0.5,
-  },
-  cpidBtnValue: {
-    flex: 1,
-    fontSize: 11,
-    fontFamily: FontFamily.semibold,
-    letterSpacing: 0.2,
+  passIdValue: {
+    fontSize: 13,
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    letterSpacing: 1.5,
+    textShadowColor: 'rgba(0,0,0,0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 1,
   },
 
-  // Back of Card Styles
-  magneticStripe: {
-    position: 'absolute',
-    top: 24,
-    left: 0,
-    right: 0,
-    height: 38,
-    backgroundColor: 'rgba(15, 23, 42, 0.95)',
-  },
-  qrBackHeader: {
+  // QR Section
+  passQrSection: {
     alignItems: 'center',
-    marginBottom: 8,
-  },
-  qrBackTitle: {
-    fontSize: 10,
-    fontFamily: FontFamily.bold,
-    letterSpacing: 1.5,
-    textAlign: 'center',
-  },
-  qrBackSubtitle: {
-    fontSize: 9,
-    fontFamily: FontFamily.medium,
+    gap: 6,
     marginTop: 2,
-    textAlign: 'center',
   },
-  qrContainerBack: {
+  passQrWrapper: {
     alignItems: 'center',
     justifyContent: 'center',
   },
   qrWhiteBackground: {
-    padding: 10,
+    padding: 8,
     backgroundColor: '#FFFFFF',
-    borderRadius: 18,
+    borderRadius: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 3,
   },
-  qrBackFooter: {
-    alignItems: 'center',
-    marginTop: 4,
+  passQrFooter: {
+    fontSize: 9,
+    fontFamily: FontFamily.medium,
+    textAlign: 'center',
+    letterSpacing: 0.3,
   },
-  qrBackFooterText: {
-    fontSize: 11,
+
+  // Pass Footer Strip
+  passFooterStrip: {
+    height: 26,
+    backgroundColor: 'rgba(0,0,0,0.25)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  passFooterText: {
+    fontSize: 8.5,
     fontFamily: FontFamily.medium,
     letterSpacing: 0.5,
   },
 
-  // Flip Toggle Trigger Button
+  // Back of Card Styles
+  backContent: {
+    flex: 1,
+    padding: 16,
+    paddingTop: 48,
+    gap: 12,
+  },
+  magneticStripe: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 36,
+    backgroundColor: '#111317',
+  },
+  backTitle: {
+    fontSize: 12,
+    fontFamily: FontFamily.bold,
+    letterSpacing: 1.2,
+    textAlign: 'center',
+  },
+  signatureSection: {
+    gap: 4,
+    marginTop: 4,
+  },
+  signatureLabel: {
+    fontSize: 8,
+    fontFamily: FontFamily.bold,
+    color: 'rgba(255,255,255,0.4)',
+    letterSpacing: 0.8,
+    marginLeft: 4,
+  },
+  signaturePanel: {
+    height: 38,
+    backgroundColor: '#FAF7F2', // Warm bone texture signature panel
+    borderRadius: 4,
+    justifyContent: 'center',
+    paddingLeft: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.06)',
+  },
+  signatureText: {
+    fontFamily: Platform.select({ ios: 'Georgia', android: 'serif', web: 'Georgia, serif' }),
+    fontStyle: 'italic',
+    fontSize: 16,
+    color: '#292524',
+    opacity: 0.85,
+    transform: [{ rotate: '-1.5deg' }],
+  },
+  backDetails: {
+    gap: 6,
+    marginTop: 4,
+    paddingHorizontal: 4,
+  },
+  backDetailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  backDetailLabel: {
+    fontSize: 9,
+    fontFamily: FontFamily.medium,
+    letterSpacing: 0.5,
+  },
+  backDetailValue: {
+    fontSize: 11,
+    fontFamily: FontFamily.semibold,
+  },
+  backFinePrint: {
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.08)',
+    paddingTop: 8,
+    marginTop: 4,
+  },
+  backFineText: {
+    fontSize: 8.5,
+    fontFamily: FontFamily.medium,
+    lineHeight: 12,
+    textAlign: 'center',
+    opacity: 0.5,
+  },
+
+  // Flip Toggle
   flipToggleBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
+    gap: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
     borderRadius: 999,
     borderWidth: 1,
-    marginTop: 10,
-    marginBottom: 4,
+    marginTop: 14,
   },
   flipToggleBtnText: {
-    fontSize: 13,
+    fontSize: 12,
     fontFamily: FontFamily.semibold,
+  },
+  passHint: {
+    fontSize: 11,
+    fontFamily: FontFamily.medium,
+    textAlign: 'center',
+    lineHeight: 15,
+    marginTop: 4,
+    opacity: 0.65,
   },
 
   // Action Buttons
-  actionsRow: { flexDirection: 'row', gap: 12 },
+  actionsRow: { flexDirection: 'row', gap: 10, marginTop: 4 },
   actionBtn: {
     flex: 1,
     alignItems: 'center',
-    gap: 8,
-    paddingVertical: 14,
-    borderRadius: 20,
+    gap: 6,
+    paddingVertical: 12,
+    borderRadius: 16,
     borderWidth: 1,
   },
   actionIcon: {
-    width: 42,
-    height: 42,
-    borderRadius: 12,
+    width: 38,
+    height: 38,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -961,59 +1076,59 @@ const s = StyleSheet.create({
   },
 
   // Wallet Buttons
-  walletSection: { gap: 10, marginTop: 10 },
+  walletSection: { gap: 8, marginTop: 8 },
   walletHeading: {
-    fontSize: 10,
+    fontSize: 9.5,
     fontFamily: FontFamily.semibold,
-    letterSpacing: 1.5,
-    marginLeft: 4,
+    letterSpacing: 1.2,
+    marginLeft: 2,
   },
   walletBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    borderRadius: 20,
+    gap: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 16,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderColor: 'rgba(255,255,255,0.06)',
     ...Platform.select({
-      web: { boxShadow: '0px 10px 24px rgba(0,0,0,0.35)' },
-      default: { shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.35, shadowRadius: 14, elevation: 10 },
+      web: { boxShadow: '0px 8px 20px rgba(0,0,0,0.25)' },
+      default: { shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.25, shadowRadius: 10, elevation: 6 },
     }),
   },
-  walletBtnText: { flex: 1, gap: 1 },
+  walletBtnText: { flex: 1, gap: 0 },
   walletBtnSub: {
-    fontSize: 10,
+    fontSize: 9,
     fontFamily: FontFamily.medium,
-    color: 'rgba(255,255,255,0.65)',
-    letterSpacing: 0.5,
+    color: 'rgba(255,255,255,0.6)',
+    letterSpacing: 0.3,
   },
   walletBtnTitle: {
-    fontSize: 15,
+    fontSize: 14,
     fontFamily: FontFamily.bold,
     color: '#FFFFFF',
-    letterSpacing: -0.3,
+    letterSpacing: -0.2,
   },
 
-  // Interest Tags
-  tagsSection: { gap: 10, marginTop: 10 },
+  // Interests Tags
+  tagsSection: { gap: 8, marginTop: 8 },
   tagsHeading: {
-    fontSize: 10,
+    fontSize: 9.5,
     fontFamily: FontFamily.semibold,
-    letterSpacing: 1.5,
-    marginLeft: 4,
+    letterSpacing: 1.2,
+    marginLeft: 2,
   },
-  tagsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  tagsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   tag: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 14,
     borderWidth: 1,
   },
   tagText: {
-    fontSize: 12,
+    fontSize: 11,
     fontFamily: FontFamily.semibold,
   },
 });

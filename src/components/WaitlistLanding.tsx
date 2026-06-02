@@ -9,11 +9,12 @@ import {
   Platform,
   Alert,
   Share,
+  Linking,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import Head from 'expo-router/head';
-import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
+import Animated, { FadeInDown, FadeIn, FadeInUp } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 
@@ -22,6 +23,7 @@ import {
   Radius,
   FontFamily,
   Spacing,
+  CulturalAccents,
 } from '@/design-system/tokens/theme';
 import {
   M3Button,
@@ -37,7 +39,9 @@ import {
   APP_WEB_DESCRIPTION,
   APP_WEB_KEYWORDS,
   SITE_ORIGIN,
+  APP_WEB_TAGLINE,
 } from '@/lib/app-meta';
+import { Footer } from '@/components/Footer';
 
 export function WaitlistLanding() {
   const { isDesktop, contentWidth } = useLayout();
@@ -50,7 +54,7 @@ export function WaitlistLanding() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
-  const maxWidth = isDesktop ? Math.min(contentWidth, 1180) : undefined;
+  const maxWidth = isDesktop ? Math.min(contentWidth, 1200) : undefined;
 
   const handleSubmit = async () => {
     if (!email || !email.includes('@')) {
@@ -91,6 +95,14 @@ export function WaitlistLanding() {
       });
     } catch (error) {
       console.error('Share error:', error);
+    }
+  };
+
+  const openSocialLink = (url: string) => {
+    if (Platform.OS === 'web') {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    } else {
+      Linking.openURL(url);
     }
   };
 
@@ -154,7 +166,7 @@ export function WaitlistLanding() {
               entering={FadeInDown.delay(100).duration(550)}
               style={[styles.heroTagline, { color: colors.text }]}
             >
-              Belong anywhere.
+              {APP_WEB_TAGLINE}
             </Animated.Text>
 
             <Animated.Text
@@ -192,7 +204,7 @@ export function WaitlistLanding() {
           {/* Hero Visual */}
           <Animated.View entering={FadeInDown.delay(180).duration(900)} style={styles.heroVisual}>
             <Image
-              source={{ uri: 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?auto=format&fit=crop&q=80&w=1400' }}
+              source={{ uri: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=1400' }}
               style={styles.heroImage}
               contentFit="cover"
             />
@@ -201,6 +213,35 @@ export function WaitlistLanding() {
               style={styles.heroImageOverlay}
             />
           </Animated.View>
+        </View>
+
+        {/* ==================== CULTURAL ACCENTS SECTION ==================== */}
+        <View style={styles.culturalAccentsSection}>
+          <View style={styles.culturalAccentsContainer}>
+            <Animated.View entering={FadeInUp.delay(100).duration(600)} style={styles.accentCard}>
+              <View style={[styles.accentIcon, { backgroundColor: CulturalAccents.terracottaSurface }]}>
+                <Ionicons name="earth-outline" size={28} color={CulturalAccents.terracottaGlow} />
+              </View>
+              <Text style={[styles.accentTitle, { color: colors.text }]}>Global Connection</Text>
+              <Text style={[styles.accentSubtitle, { color: colors.textSecondary }]}>Connect with diaspora communities worldwide</Text>
+            </Animated.View>
+            
+            <Animated.View entering={FadeInUp.delay(200).duration(600)} style={styles.accentCard}>
+              <View style={[styles.accentIcon, { backgroundColor: CulturalAccents.emeraldSurface }]}>
+                <Ionicons name="heart-outline" size={28} color={CulturalAccents.emeraldHarmony} />
+              </View>
+              <Text style={[styles.accentTitle, { color: colors.text }]}>Cultural Belonging</Text>
+              <Text style={[styles.accentSubtitle, { color: colors.textSecondary }]}>Find your cultural home in any city</Text>
+            </Animated.View>
+            
+            <Animated.View entering={FadeInUp.delay(300).duration(600)} style={styles.accentCard}>
+              <View style={[styles.accentIcon, { backgroundColor: CulturalAccents.goldSurface }]}>
+                <Ionicons name="people-outline" size={28} color={CulturalAccents.heritageGold} />
+              </View>
+              <Text style={[styles.accentTitle, { color: colors.text }]}>Real Communities</Text>
+              <Text style={[styles.accentSubtitle, { color: colors.textSecondary }]}>Join IRL gatherings and events</Text>
+            </Animated.View>
+          </View>
         </View>
 
         {/* ==================== TRUST BAR ==================== */}
@@ -262,6 +303,27 @@ export function WaitlistLanding() {
           <View style={[styles.testimonials, isDesktop && styles.testimonialsRow]}>
             {TESTIMONIALS.map((t, i) => (
               <TestimonialCard key={i} {...t} colors={colors} isDark={isDark} delay={i * 80} />
+            ))}
+          </View>
+        </View>
+
+        {/* ==================== SOCIAL PROOF ==================== */}
+        <View style={styles.socialProofSection}>
+          <Text style={[styles.sectionEyebrow, { color: CultureTokens.emeraldHarmony, textAlign: 'center', marginBottom: 24 }]}>CONNECT WITH US</Text>
+          <View style={styles.socialLinks}>
+            {[
+              { name: 'Instagram', icon: 'logo-instagram', url: 'https://www.instagram.com/culturepassapp' },
+              { name: 'Facebook', icon: 'logo-facebook', url: 'https://facebook.com/CulturePass.App' },
+              { name: 'Twitter/X', icon: 'logo-twitter', url: 'https://x.com/CulturePassApp' },
+              { name: 'TikTok', icon: 'logo-tiktok', url: 'https://tiktok.com/@culturepassapp' },
+            ].map((social, index) => (
+              <Pressable 
+                key={social.name}
+                style={[styles.socialButton, { backgroundColor: colors.surface, borderColor: colors.borderLight }]}
+                onPress={() => openSocialLink(social.url)}
+              >
+                <Ionicons name={social.icon as any} size={24} color={colors.text} />
+              </Pressable>
             ))}
           </View>
         </View>
@@ -351,30 +413,10 @@ export function WaitlistLanding() {
             )}
           </GlassView>
         </View>
-
-        {/* ==================== FOOTER ==================== */}
-        <View style={[styles.footer, { borderTopColor: colors.borderLight }]}>
-          <View style={[styles.footerInner, isDesktop && styles.footerInnerWide]}>
-            <View style={styles.footerBrand}>
-              <CulturePassWordmark size="sm" showSuffix={false} />
-              <Text style={[styles.footerTagline, { color: colors.textTertiary }]}>Belong anywhere.</Text>
-            </View>
-
-            <View style={styles.footerLinks}>
-              <Pressable onPress={() => router.push('/about' as any)}><Text style={[styles.footerLink, { color: colors.textSecondary }]}>About</Text></Pressable>
-              <Pressable onPress={() => router.push('/founder' as any)}><Text style={[styles.footerLink, { color: colors.textSecondary }]}>Founder</Text></Pressable>
-              <Pressable onPress={() => router.push('/company-info' as any)}><Text style={[styles.footerLink, { color: colors.textSecondary }]}>Company</Text></Pressable>
-              <Pressable onPress={() => router.push('/hostspace' as any)}><Text style={[styles.footerLink, { color: colors.textSecondary }]}>Host</Text></Pressable>
-              <Pressable onPress={() => router.push('/legal/terms' as any)}><Text style={[styles.footerLink, { color: colors.textSecondary }]}>Terms</Text></Pressable>
-              <Pressable onPress={() => router.push('/legal/privacy' as any)}><Text style={[styles.footerLink, { color: colors.textSecondary }]}>Privacy</Text></Pressable>
-            </View>
-
-            <Text style={[styles.footerCopy, { color: colors.textTertiary }]}>
-              © {new Date().getFullYear()} {APP_NAME}. Made with care for the diaspora.
-            </Text>
-          </View>
-        </View>
       </ScrollView>
+
+      {/* ==================== FOOTER ==================== */}
+      <Footer />
     </View>
   );
 }
@@ -496,7 +538,7 @@ const styles = StyleSheet.create({
   navCta: { height: 40, paddingHorizontal: 18, marginLeft: 4 } as const,
   iconBtn: { padding: 10, marginLeft: 4 },
 
-  scrollContent: { paddingBottom: 80 },
+  scrollContent: { paddingBottom: 0 },
 
   // Hero
   hero: {
@@ -507,17 +549,17 @@ const styles = StyleSheet.create({
   },
   heroContent: { alignItems: 'center', maxWidth: 680, width: '100%' },
   heroTagline: {
-    fontSize: 38,
-    lineHeight: 44,
+    fontSize: 24,
+    lineHeight: 30,
     fontFamily: FontFamily.bold,
     textAlign: 'center',
     marginTop: 8,
     marginBottom: 4,
-    letterSpacing: -1.2,
+    letterSpacing: -0.5,
   },
   heroTitle: {
-    fontSize: 22,
-    lineHeight: 28,
+    fontSize: 28,
+    lineHeight: 34,
     fontFamily: FontFamily.bold,
     textAlign: 'center',
     marginTop: 2,
@@ -549,6 +591,67 @@ const styles = StyleSheet.create({
   },
   heroImage: { width: '100%', height: '100%' },
   heroImageOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, height: '45%' },
+
+  // Cultural Accents
+  culturalAccentsSection: {
+    paddingHorizontal: 20,
+    paddingVertical: 40,
+    alignItems: 'center',
+  },
+  culturalAccentsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    flexWrap: 'wrap',
+    gap: 20,
+    maxWidth: 800,
+  },
+  accentCard: {
+    flex: 1,
+    minWidth: 220,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: Radius.lg,
+    padding: 20,
+    alignItems: 'center',
+    gap: 12,
+  },
+  accentIcon: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  accentTitle: {
+    fontSize: 18,
+    fontFamily: FontFamily.bold,
+    textAlign: 'center',
+  },
+  accentSubtitle: {
+    fontSize: 14,
+    fontFamily: FontFamily.regular,
+    textAlign: 'center',
+    opacity: 0.8,
+  },
+
+  // Social Proof
+  socialProofSection: {
+    paddingHorizontal: 20,
+    paddingVertical: 40,
+    alignItems: 'center',
+  },
+  socialLinks: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 20,
+  },
+  socialButton: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+  },
 
   // Trust
   trustBar: { borderTopWidth: 1, borderBottomWidth: 1, paddingVertical: 16 },
@@ -637,16 +740,6 @@ const styles = StyleSheet.create({
   successBody: { fontSize: 15, lineHeight: 23, textAlign: 'center', maxWidth: 380 },
   successActions: { flexDirection: 'row', gap: 12, marginTop: 12 },
 
-  // Footer
-  footer: { borderTopWidth: 1, paddingTop: 32, paddingBottom: 48, paddingHorizontal: 20 },
-  footerInner: { gap: 20 },
-  footerInnerWide: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap' },
-  footerBrand: { gap: 4 },
-  footerTagline: { fontSize: 13 },
-  footerLinks: { flexDirection: 'row', flexWrap: 'wrap', gap: 18, marginTop: 4 },
-  footerLink: { fontSize: 14, fontFamily: FontFamily.medium },
-  footerCopy: { fontSize: 12, marginTop: 12 },
-
-  // Misc
+  // Footer is now handled separately
   isDesktop: {}, // placeholder for conditional
 });

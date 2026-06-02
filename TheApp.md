@@ -131,7 +131,7 @@ For the full directory map see [`AGENTS.md`](AGENTS.md). For architecture decisi
 
 | Breakpoint | Layout |
 |------------|--------|
-| Desktop ≥ 1024px | 240px left sidebar (`WebSidebar.tsx`), `topInset = 0` |
+| Desktop ≥ 1024px | 240px left sidebar (`WebSidebar.tsx`) with theme toggle, local time/date, and weather chrome; `topInset = 0` |
 | Tablet 768–1023px | Bottom tab bar, `topInset = 0` |
 | Mobile native | Bottom tab bar standard (49-64px + safe area), `topInset = insets.top` |
 

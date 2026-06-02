@@ -108,4 +108,3 @@ export function getAppVersionWithBuild(): string {
 export function getAuVersionLabel(): string {
   return `v${getAppVersion()} · ${APP_NAME_AU}`;
 }
-

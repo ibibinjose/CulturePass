@@ -75,7 +75,7 @@ CulturePass/
 │   │   ├── admin/              # 19 admin screens (applications, verification queue, users, finance...)
 │   │   ├── hostspace/          # 8 core files + heavy module delegation
 │   │   ├── create/, dashboard/, membership/, payment/, perks/, profile/, settings/, tickets/, etc.
-│   │   └── _layout.tsx         # Root providers, WebSidebar, ErrorBoundary, PostHog, etc.
+│   │   └── _layout.tsx         # Root providers, WebSidebar (theme + time/date/weather chrome), ErrorBoundary, PostHog, etc.
 │   │
 │   ├── modules/                # Feature modules (strongest modularity in host/)
 │   │   ├── events/ (46 files)

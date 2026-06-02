@@ -28,7 +28,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Pressable, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 // @ts-ignore - @react-native-community/datetimepicker may not have type declarations installed
-// eslint-disable-next-line import/no-unresolved
+ 
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { Input } from '@/design-system/ui/Input';
 import { useColors } from '@/hooks/useColors';

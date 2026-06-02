@@ -10,7 +10,7 @@ import { Buffer } from "buffer";
 import { initSentry } from "@/lib/sentry";
 
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
-import { Stack, usePathname } from "expo-router";
+import { Stack, usePathname, router } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { PostHogProvider } from 'posthog-react-native';
 import posthogClient from '@/lib/analytics';
@@ -21,6 +21,7 @@ import {
   Text as RNText,
   StyleSheet,
   Pressable,
+  ScrollView,
 } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
@@ -35,22 +36,12 @@ import { LikesProvider } from "@/contexts/LikesContext";
 import { ContactsProvider } from "@/contexts/ContactsContext";
 import { LinearGradient } from "expo-linear-gradient";
 import { CultureTokens } from "@/design-system/tokens/theme";
-import { PageContainer, CulturePassWordmark } from "@/design-system/ui";
 import { useColors, useIsDark } from "@/hooks/useColors";
 import { useLayout } from "@/hooks/useLayout";
 import { AuthGuard, AuthSyncBanner, DataSync } from "@/providers";
 import { withAlpha } from "@/lib/withAlpha";
 import { initializeWidgets } from "@/lib/widgets/register";
 import { WidgetSync } from "@/components/WidgetSync";
-// Lazy load NavigationMetadata (web-only metadata injection, keeps it out of main entry on native)
-const NavigationMetadata = React.lazy(() =>
-  import("@/components/NavigationMetadata").then((mod) => ({ default: mod.NavigationMetadata }))
-);
-
-// Lazy load the heavy WebSidebar to keep it out of the main entry chunk on web
-const WebSidebar = React.lazy(() =>
-  import("@/modules/core/layout/web/WebSidebar").then((mod) => ({ default: mod.WebSidebar }))
-);
 import { CulturalThemeProvider } from "@/providers/CulturalThemeProvider";
 
 import {
@@ -66,7 +57,16 @@ import {
   PlayfairDisplay_500Medium,
   PlayfairDisplay_700Bold,
 } from "@expo-google-fonts/playfair-display";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons"; // kept for potential static surfaces; not injected globally in app shell
+// Lazy load NavigationMetadata (web-only metadata injection, keeps it out of main entry on native)
+const NavigationMetadata = React.lazy(() =>
+  import("@/components/NavigationMetadata").then((mod) => ({ default: mod.NavigationMetadata }))
+);
+
+// Lazy load the heavy WebSidebar to keep it out of the main entry chunk on web
+const WebSidebar = React.lazy(() =>
+  import("@/modules/core/layout/web/WebSidebar").then((mod) => ({ default: mod.WebSidebar }))
+);
 initSentry();
 
 // Import LinkPreviewContextProvider if available (lazy, after all static imports)
@@ -244,7 +244,9 @@ function RootLayoutNav() {
     );
   }
 
-  // Mobile Web Browser Layout (Burger Menu + Sidebar Drawer, No global Footer)
+  // Mobile Web Browser Layout (Burger Menu + potential Drawer for non-tab web surfaces)
+  // Note: For full app experience with tabs, the (tabs) layout handles bottom nav.
+  // This provides a minimal chrome for direct web access / PWA shell on small screens.
   if (isWeb) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -252,7 +254,7 @@ function RootLayoutNav() {
           <NavigationMetadata />
         </React.Suspense>
         
-        {/* Mobile Header */}
+        {/* Mobile Header (only show on non-tab routes or as needed; currently simple for all small web) */}
         <View
           style={[
             webStyles.mobileHeader,
@@ -285,24 +287,96 @@ function RootLayoutNav() {
           {stackContent}
         </View>
 
-        {/* Mobile Global Footer (only on mobile web) */}
-        <View style={{ borderTopWidth: 1, borderColor: colors.borderLight }}>
-          <Footer />
-        </View>
+        {/* Mobile Drawer Overlay (implemented for working nav on small web screens) */}
+        {isDrawerOpen && (
+          <>
+            <Pressable
+              style={webStyles.drawerBackdrop}
+              onPress={() => setIsDrawerOpen(false)}
+              accessibilityRole="button"
+              accessibilityLabel="Close navigation menu"
+            />
+            <View
+              style={[
+                webStyles.drawerContent,
+                { backgroundColor: colors.surface, borderRightColor: colors.borderLight },
+              ]}
+            >
+              <View
+                style={[
+                  webStyles.drawerHeader,
+                  { backgroundColor: colors.surface, borderBottomColor: colors.borderLight },
+                ]}
+              >
+                <RNText style={[webStyles.drawerTitle, { color: colors.text }]}>Menu</RNText>
+                <Pressable
+                  onPress={() => setIsDrawerOpen(false)}
+                  style={webStyles.closeBtn}
+                  accessibilityRole="button"
+                  accessibilityLabel="Close menu"
+                >
+                  <Ionicons name="close" size={20} color={colors.text} />
+                </Pressable>
+              </View>
+
+              <ScrollView style={{ flex: 1 }}>
+                {[
+                  { label: 'Discover', route: '/(tabs)', icon: 'compass-outline' },
+                  { label: 'Calendar', route: '/(tabs)/calendar', icon: 'calendar-outline' },
+                  { label: 'Community', route: '/(tabs)/community', icon: 'people-outline' },
+                  { label: 'My City', route: '/(tabs)/city', icon: 'location-outline' },
+                  { label: 'Profile', route: '/(tabs)/my-space', icon: 'person-circle-outline' },
+                  { label: 'Perks', route: '/(tabs)/perks', icon: 'pricetag-outline' },
+                ].map((item) => (
+                  <Pressable
+                    key={item.route}
+                    style={({ pressed }) => [
+                      {
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        paddingHorizontal: 16,
+                        paddingVertical: 14,
+                        borderBottomWidth: 1,
+                        borderBottomColor: colors.borderLight,
+                        opacity: pressed ? 0.6 : 1,
+                      },
+                    ]}
+                    onPress={() => {
+                      setIsDrawerOpen(false);
+                      router.push(item.route as any);
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel={item.label}
+                  >
+                    <Ionicons name={item.icon as any} size={20} color={colors.text} style={{ marginRight: 12 }} />
+                    <RNText style={{ color: colors.text, fontSize: 15, fontFamily: 'Poppins_500Medium' }}>{item.label}</RNText>
+                  </Pressable>
+                ))}
+
+                <View style={{ height: 24 }} />
+                <Pressable
+                  style={{ padding: 16 }}
+                  onPress={() => {
+                    setIsDrawerOpen(false);
+                    router.push('/menu');
+                  }}
+                >
+                  <RNText style={{ color: colors.primary || colors.text, fontSize: 14 }}>More • Settings &amp; Host</RNText>
+                </Pressable>
+              </ScrollView>
+            </View>
+          </>
+        )}
+
+        {/* Note: Global footer intentionally NOT injected here for app flow;
+             individual public pages (landing, city, etc.) import and render <Footer /> themselves. */}
       </View>
     );
   }
 
-  // Native App Layout (Standard Stack, No global Footer)
-  return (
-    <SafeAreaProvider style={{ flex: 1, backgroundColor: colors.background }}>
-      <StatusBar style={isDark ? "light" : "dark"} />
-      <React.Suspense fallback={null}>
-        <NavigationMetadata />
-      </React.Suspense>
-      {stackContent}
-    </SafeAreaProvider>
-  );
+  // Native: return only the stack content. SafeAreaProvider + StatusBar + providers live in RootLayoutContent.
+  // This avoids double-wrapping SafeArea and StatusBar (which was causing scope bugs + layout issues).
+  return stackContent;
 }
 
 // ---------------------------------------------------------------------------

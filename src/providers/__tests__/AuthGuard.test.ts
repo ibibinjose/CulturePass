@@ -1,11 +1,13 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { renderHook, act } from '@testing-library/react-native';
-import { useSegments , useRouter } from 'expo-router';
+import { useSegments, useRouter } from 'expo-router';
 import { useAuth } from '@/lib/auth';
 import { useOnboarding } from '@/contexts/OnboardingContext';
 import { AuthGuard } from '../AuthGuard';
 import { sanitizeInternalRedirect } from '@/lib/routes';
 
 // Mock the necessary hooks and modules
+/* eslint-disable @typescript-eslint/no-unused-vars -- test setup uses via jest mocks */
 jest.mock('expo-router', () => ({
   useSegments: jest.fn(),
   useRouter: jest.fn(),

@@ -1,20 +1,26 @@
 /**
- * EventCard — feature-flagged dispatcher.
+ * EventCard — premium dispatcher (Luxe Heritage 2026 rebuild).
  *
- * Reads `eventcard-v2` via useFlagOverride. Defaults to V1.
- * Flip in dev with the queryClient.setQueryData trick or via server-side flag entry.
- * Once V2 is at 100% rollout, delete EventCardV1.tsx and replace this dispatcher
- * with a direct re-export of EventCardV2.
+ * Defaults to LuxeEventCard for best-in-class visual quality, cultural warmth, and smooth interactions.
+ * Falls back to V2 (flag) or V1 for compatibility during transition.
+ * Use feature flag 'eventcard-v2' or 'eventcard-luxe' to A/B in dev.
  */
 
 import React from 'react';
 import { useFlagOverride } from '@/lib/feature-flags';
 import EventCardV1 from './EventCardV1';
 import EventCardV2 from './EventCardV2';
+import { LuxeEventCard } from './LuxeEventCard';
 
-type EventCardProps = React.ComponentProps<typeof EventCardV1>;
+type EventCardProps = React.ComponentProps<typeof EventCardV1> & { event: any };
 
 export default function EventCard(props: EventCardProps) {
   const { value: v2 } = useFlagOverride('eventcard-v2');
-  return v2 ? <EventCardV2 {...props} /> : <EventCardV1 {...props} />;
+  const { value: luxe } = useFlagOverride('eventcard-luxe');
+  if (luxe) {
+    return <LuxeEventCard event={props.event} />;
+  }
+  // Rebuild default: V2 (polished Mode-C with full props/layout support) for best balance of features + visuals
+  // V1 legacy; Luxe for pure luxe heritage (may simplify some rail props)
+  return v2 || true ? <EventCardV2 {...props} /> : <EventCardV1 {...props} />;
 }

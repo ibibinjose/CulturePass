@@ -34,12 +34,11 @@ import * as Haptics from 'expo-haptics';
 import * as Clipboard from 'expo-clipboard';
 import { useColors, useIsDark } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
-import { CultureTokens, gradients, TextStyles, FontFamily } from '@/design-system/tokens/theme';
+import { CultureTokens, gradients, FontFamily } from '@/design-system/tokens/theme';
 import { Luxe } from '@/design-system/tokens/luxeHeritage';
-import { Skeleton, CulturePassWordmark, PageContainer } from '@/design-system/ui';
+import { Skeleton, PageContainer } from '@/design-system/ui';
 import { AppHeaderBar } from '@/modules/core/ui/AppHeaderBar';
 import { modulesApi } from '@/modules/api';
-import { formatLocationLabel } from '@/lib/format';
 import { siteUrl } from '@/lib/publicPaths';
 import { openExternalUrl } from '@/lib/openExternalUrl';
 import { useAuth } from '@/lib/auth';
@@ -52,7 +51,6 @@ import Animated, {
   withRepeat,
   withTiming,
   withSequence,
-  interpolate,
 } from 'react-native-reanimated';
 
 const CARD_WIDTH_FIXED = 330;
@@ -64,7 +62,7 @@ function capitalize(s: string) {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-// Dynamic Card Themes based on Membership Status
+// Dynamic Card Themes based on Membership Status — Luxe Heritage aligned, reduced raw hex where possible
 const DYNAMIC_CARD_THEMES: Record<string, {
   cardGradients: [string, string, ...string[]];
   accent: string;
@@ -115,19 +113,53 @@ const DYNAMIC_CARD_THEMES: Record<string, {
     chipBorder: '#00B4D8',
     isDarkCard: true,
   },
+  // Extended for full TIER_CFG coverage (premium/vip fallbacks map elegantly)
+  premium: {
+    cardGradients: ['#1A0F0A', '#2C1810', '#1A0F0A'] as [string, string, ...string[]], // Warm terracotta heritage dark
+    accent: CultureTokens.coral,
+    border: 'rgba(255, 94, 91, 0.5)',
+    text: '#FFF1EB',
+    glow: 'rgba(255, 94, 91, 0.22)',
+    chipColor: '#F2C078',
+    chipBorder: '#C17E3F',
+    isDarkCard: true,
+  },
+  vip: {
+    cardGradients: ['#0F0A02', '#1F1608', '#0F0A02'] as [string, string, ...string[]], // Deep heritage gold obsidian
+    accent: CultureTokens.gold,
+    border: 'rgba(255, 200, 87, 0.55)',
+    text: '#FFFBEB',
+    glow: 'rgba(255, 200, 87, 0.3)',
+    chipColor: '#E8C36B',
+    chipBorder: '#B38A2E',
+    isDarkCard: true,
+  },
 };
+
+function resolveCardTheme(tier: string) {
+  const key = (tier || 'free').toLowerCase();
+  if (key in DYNAMIC_CARD_THEMES) return DYNAMIC_CARD_THEMES[key];
+  if (key === 'premium' || key === 'plus') return DYNAMIC_CARD_THEMES.plus;
+  if (key === 'vip' || key === 'elite') return DYNAMIC_CARD_THEMES.elite;
+  return DYNAMIC_CARD_THEMES.free;
+}
 
 export default function QRScreen() {
   const colors = useColors();
   const isDark = useIsDark();
   const { width: screenWidth } = useWindowDimensions();
+  const { isDesktop } = useLayout();
   const safeInsets = useSafeAreaInsetsWeb();
   const topInset = safeInsets.top;
   const bottomInset = safeInsets.bottom;
   const [copied, setCopied] = useState(false);
 
-  const cardWidth = Math.min(screenWidth - 32, CARD_WIDTH_FIXED);
-  const qrSize = Math.min(cardWidth - 84, QR_SIZE_FIXED);
+  // Better responsive card: elegant fixed on mobile, slightly larger premium on desktop (consistent with web sidebar layouts)
+  const cardWidth = Math.min(
+    screenWidth - (isDesktop ? 80 : 32),
+    isDesktop ? 360 : CARD_WIDTH_FIXED
+  );
+  const qrSize = Math.min(cardWidth - 84, isDesktop ? 170 : QR_SIZE_FIXED);
 
   const { userId: authUserId, isRestoring } = useAuth();
   const { data: user, isPending: userPending } = useQuery<User>({
@@ -148,17 +180,14 @@ export default function QRScreen() {
   const tier = membership?.tier ?? 'free';
   const tierConf = TIER_CFG[tier] ?? TIER_CFG.free;
 
-  // Retrieve active card theme configuration based on user membership
-  const cardTheme = useMemo(() => {
-    return DYNAMIC_CARD_THEMES[tier] ?? DYNAMIC_CARD_THEMES.free;
-  }, [tier]);
+  // Retrieve active card theme configuration based on user membership (now covers all tiers)
+  const cardTheme = useMemo(() => resolveCardTheme(tier), [tier]);
 
   const cpid = user?.culturePassId ?? 'CP-000000';
   const name = user?.displayName ?? 'CulturePass User';
   const username = user?.username ?? 'user';
   const avatarUrl = user?.avatarUrl;
   const interests = (user?.interests ?? []).slice(0, 4);
-  const location = formatLocationLabel(user?.city, user?.country, '');
 
   const initials = useMemo(
     () => (name || 'U').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase(),
@@ -304,14 +333,14 @@ export default function QRScreen() {
           style={StyleSheet.absoluteFill}
         />
 
-        {/* Ambient living blurred blobs (Stripe/Apple visual aesthetic) */}
+        {/* Ambient living blurred blobs (Luxe Heritage premium aesthetic) */}
         <View style={s.ambientContainer} pointerEvents="none">
           <Animated.View
             style={[
               s.ambientBlob,
               animatedBlob1,
               {
-                backgroundColor: cardTheme.accent + '15',
+                backgroundColor: cardTheme.glow,
                 top: -80,
                 left: -60,
                 width: 320,
@@ -325,7 +354,7 @@ export default function QRScreen() {
               s.ambientBlob,
               animatedBlob2,
               {
-                backgroundColor: CultureTokens.indigo + '12',
+                backgroundColor: (Luxe.colors?.indigo || '#4A5EBF') + '18',
                 bottom: -50,
                 right: -70,
                 width: 350,
@@ -338,7 +367,7 @@ export default function QRScreen() {
 
         <AppHeaderBar
           title="CulturePass"
-          subtitle="Digital Member Pass"
+          subtitle="Add to Wallet • Digital Member ID"
           backFallback="/(tabs)/my-space"
           topInset={topInset}
           rightAction={{
@@ -347,7 +376,7 @@ export default function QRScreen() {
               if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               router.push('/scanner');
             },
-            label: 'Scan a CulturePass',
+            label: 'Scan ID',
           }}
         />
 
@@ -368,10 +397,20 @@ export default function QRScreen() {
             </View>
           ) : (
             <>
-              {/* 3D Flippable Passport Card Container */}
-              <View style={[s.flipCardContainer, { width: cardWidth }]}>
+              {/* ========== WALLET-FIRST REDESIGN: Hero Preview + Primary Save CTAs ========== */}
+              {/* Interactive visual preview (your CulturePass Member Pass) */}
+              <View style={{ alignItems: 'center', marginBottom: 12 }}>
+                <Text style={[s.walletHeroLabel, { color: colors.textTertiary }]}>YOUR CULTUREPASS DIGITAL ID</Text>
+                <Text style={[s.walletHeroSub, { color: cardTheme.accent }]}>{tierConf.label.toUpperCase()} MEMBER PASS</Text>
+              </View>
 
-                {/* Front Side: Golden chip, EMV badge-like Passport */}
+              {/* Compact but beautiful preview card (tap to flip for details) */}
+              <Pressable
+                onPress={toggleFlip}
+                style={[s.flipCardContainer, { width: cardWidth, marginBottom: 8 }]}
+                accessibilityRole="button"
+                accessibilityLabel={isFaceSide ? 'Preview your ID card — tap to flip' : 'Flip back to front'}
+              >
                 <Animated.View style={[s.identityCardWrap, { width: cardWidth }, frontStyle]} pointerEvents={isFaceSide ? 'auto' : 'none'}>
                   <LinearGradient
                     colors={cardTheme.cardGradients}
@@ -379,22 +418,15 @@ export default function QRScreen() {
                     end={{ x: 1, y: 1 }}
                     style={[s.identityCard, { borderColor: cardTheme.border }]}
                   >
-                    {/* Header Banner - Sleek Minimalist */}
                     <View style={s.passHeader}>
                       <View style={s.passHeaderContent}>
-                        {/* Tactile Golden EMV Smartchip + Wave Contactless logo */}
                         <View style={s.chipBlock}>
                           <View style={[s.emvChip, { backgroundColor: cardTheme.chipColor, borderColor: cardTheme.chipBorder }]}>
                             <View style={[s.emvLineHorizontal, { backgroundColor: cardTheme.chipBorder }]} />
                             <View style={[s.emvLineVertical, { backgroundColor: cardTheme.chipBorder }]} />
                             <View style={[s.emvInnerChip, { borderColor: cardTheme.chipBorder }]} />
                           </View>
-                          <Ionicons
-                            name="wifi"
-                            size={16}
-                            color="rgba(255,255,255,0.3)"
-                            style={{ transform: [{ rotate: '90deg' }], marginLeft: 2 }}
-                          />
+                          <Ionicons name="wifi" size={14} color="rgba(255,255,255,0.25)" style={{ transform: [{ rotate: '90deg' }], marginLeft: 2 }} />
                         </View>
                         <View style={s.passHeaderRight}>
                           <Text style={[s.passType, { color: cardTheme.text }]}>MEMBER PASS</Text>
@@ -403,16 +435,7 @@ export default function QRScreen() {
                       </View>
                     </View>
 
-                    {/* Holographic metallic-effect dividing strip */}
-                    <LinearGradient
-                      colors={['rgba(255,255,255,0.01)', cardTheme.border, 'rgba(255,255,255,0.01)']}
-                      start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                      style={s.hologramDivider}
-                    />
-
-                    {/* Body content */}
                     <View style={s.passBody}>
-                      {/* Avatar + name display */}
                       <View style={s.passUserRow}>
                         <View style={s.passAvatarWrap}>
                           {avatarUrl ? (
@@ -424,259 +447,189 @@ export default function QRScreen() {
                           )}
                         </View>
                         <View style={s.passUserInfo}>
-                          <Text style={[s.passName, { color: cardTheme.text }]} numberOfLines={1}>{name}</Text>
-                          <Text style={[s.passHandle, { color: 'rgba(255,255,255,0.6)' }]}>@{username}</Text>
-                          <View style={s.passMetaRow}>
-                            {location ? (
-                              <View style={s.passMetaItem}>
-                                <Ionicons name="location-outline" size={11} color="rgba(255,255,255,0.5)" />
-                                <Text style={[s.passMetaText, { color: 'rgba(255,255,255,0.5)' }]} numberOfLines={1}>{location}</Text>
-                              </View>
-                            ) : null}
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                            <Text style={[s.passName, { color: cardTheme.text }]} numberOfLines={1}>{name}</Text>
+                            {(user as any)?.isVerified && <Ionicons name="checkmark-circle" size={13} color={cardTheme.accent} />}
                           </View>
+                          <Text style={[s.passHandle, { color: 'rgba(255,255,255,0.6)' }]}>@{username}</Text>
                         </View>
                       </View>
 
-                      {/* Monospaced embossed-style card identifier */}
                       <View style={[s.passIdStrip, { backgroundColor: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.08)' }]}>
                         <Text style={[s.passIdLabel, { color: 'rgba(255,255,255,0.45)' }]}>CPID</Text>
                         <Pressable onPress={handleCopy} style={s.passIdValueWrap}>
-                          <Text style={[s.passIdValue, { color: cardTheme.text }]} numberOfLines={1}>
-                            {cpid.slice(0, 3)}-{cpid.slice(3)}
-                          </Text>
-                          <Ionicons name={copied ? 'checkmark' : 'copy-outline'} size={13} color={copied ? '#34C759' : 'rgba(255,255,255,0.45)'} />
+                          <Text style={[s.passIdValue, { color: cardTheme.text }]} numberOfLines={1}>{cpid.slice(0, 3)}-{cpid.slice(3)}</Text>
+                          <Ionicons name={copied ? 'checkmark' : 'copy-outline'} size={12} color={copied ? '#34C759' : 'rgba(255,255,255,0.45)'} />
                         </Pressable>
-                      </View>
-
-                      {/* Recessed high-contrast QR Verification compartment */}
-                      <View style={s.passQrSection}>
-                        <View style={s.qrWhiteBackground}>
-                          <QRCode
-                            value={qrValue}
-                            size={qrSize}
-                            color="#090A0F"
-                            backgroundColor="#FFFFFF"
-                            ecl="H"
-                          />
-                        </View>
-                        <Text style={[s.passQrFooter, { color: 'rgba(255,255,255,0.5)' }]}>
-                          Scan to verify signature • Secure signature v2
-                        </Text>
                       </View>
                     </View>
 
-                    {/* Footer strip */}
                     <View style={s.passFooterStrip}>
                       <Text style={[s.passFooterText, { color: 'rgba(255,255,255,0.4)' }]}>
-                        © CULTUREPASS PTY LTD • {memberSince} • MADE IN SYDNEY
+                        © CULTUREPASS • {memberSince}
                       </Text>
                     </View>
                   </LinearGradient>
                 </Animated.View>
 
-                {/* Back Side: Magnetic strip, signature block, terms */}
+                {/* Back preview (shown when flipped) */}
                 <Animated.View style={[s.identityCardWrap, { width: cardWidth }, backStyle]} pointerEvents={!isFaceSide ? 'auto' : 'none'}>
-                  <LinearGradient
-                    colors={cardTheme.cardGradients}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={[s.identityCard, { borderColor: cardTheme.border }]}
-                  >
-                    {/* Magnetic Stripe (realistic card simulation) */}
+                  <LinearGradient colors={cardTheme.cardGradients} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[s.identityCard, { borderColor: cardTheme.border }]}>
                     <View style={s.magneticStripe} />
-
                     <View style={s.backContent}>
-                      <Text style={[s.backTitle, { color: cardTheme.text }]}>CULTUREPASS CARD PRIVILEGES</Text>
-                      
-                      {/* Realistic cursive signature block */}
+                      <Text style={[s.backTitle, { color: cardTheme.text }]}>CULTUREPASS MEMBER ID</Text>
                       <View style={s.signatureSection}>
                         <Text style={s.signatureLabel}>AUTHORIZED SIGNATURE</Text>
                         <View style={s.signaturePanel}>
                           <Text style={s.signatureText}>{name}</Text>
                         </View>
                       </View>
-
                       <View style={s.backDetails}>
-                        <View style={s.backDetailRow}>
-                          <Text style={[s.backDetailLabel, { color: 'rgba(255,255,255,0.45)' }]}>HOLDER</Text>
-                          <Text style={[s.backDetailValue, { color: cardTheme.text }]} numberOfLines={1}>{name}</Text>
-                        </View>
-                        <View style={s.backDetailRow}>
-                          <Text style={[s.backDetailLabel, { color: 'rgba(255,255,255,0.45)' }]}>MEMBER NO</Text>
-                          <Text style={[s.backDetailValue, { color: cardTheme.text }]}>{cpid}</Text>
-                        </View>
-                        <View style={s.backDetailRow}>
-                          <Text style={[s.backDetailLabel, { color: 'rgba(255,255,255,0.45)' }]}>SINCE</Text>
-                          <Text style={[s.backDetailValue, { color: cardTheme.text }]}>{memberSince}</Text>
-                        </View>
+                        <View style={s.backDetailRow}><Text style={[s.backDetailLabel, { color: 'rgba(255,255,255,0.45)' }]}>CPID</Text><Text style={[s.backDetailValue, { color: cardTheme.text }]}>{cpid}</Text></View>
+                        <View style={s.backDetailRow}><Text style={[s.backDetailLabel, { color: 'rgba(255,255,255,0.45)' }]}>TIER</Text><Text style={[s.backDetailValue, { color: cardTheme.text }]}>{tierConf.label}</Text></View>
                       </View>
-
                       <View style={s.backFinePrint}>
-                        <Text style={[s.backFineText, { color: colors.textTertiary }]}>
-                          This card is the property of CulturePass. It is non-transferable and linked to your digital signature. Present it to event staff for validation.
-                        </Text>
-                        <Text style={[s.backFineText, { color: colors.textTertiary, marginTop: 8 }]}>
-                          CulturePass.App — global community infrastructure
-                        </Text>
+                        <Text style={[s.backFineText, { color: 'rgba(255,255,255,0.45)' }]}>Verified digital ID. Show in Wallet at events.</Text>
                       </View>
                     </View>
                   </LinearGradient>
                 </Animated.View>
-
-              </View>
-
-              {/* Flip Action Button */}
-              <Pressable
-                onPress={toggleFlip}
-                style={({ pressed, hovered }: any) => [
-                  s.flipToggleBtn,
-                  {
-                    backgroundColor: cardTheme.accent + '15',
-                    borderColor: cardTheme.accent + '3C',
-                    transform: [{ scale: pressed ? 0.96 : (hovered ? 1.04 : 1) }],
-                    ...Platform.select({
-                      web: {
-                        transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
-                        boxShadow: hovered ? `0px 4px 20px ${cardTheme.accent}24` : 'none',
-                        cursor: 'pointer',
-                      },
-                    }),
-                  },
-                ]}
-                accessibilityRole="button"
-                accessibilityLabel="Flip passport card"
-              >
-                <Ionicons name="swap-horizontal" size={15} color={cardTheme.accent} />
-                <Text style={[s.flipToggleBtnText, { color: cardTheme.accent }]}>
-                  {isFaceSide ? 'Flip to Pass Back' : 'Flip to Pass Front'}
-                </Text>
               </Pressable>
 
-              {/* Usage hint text */}
-              <Text style={[s.passHint, { color: colors.textTertiary, width: cardWidth }]}>
-                Present this card at events and partner venues. Add to Apple or Google Wallet for secure, offline access.
+              <Text style={[s.passHint, { color: colors.textTertiary, width: cardWidth, marginBottom: 16 }]}>
+                Tap preview to flip • This is how your ID looks in real life and in Wallet
               </Text>
 
-              {/* Action Toolbar buttons */}
-              <View style={[s.actionsRow, { width: cardWidth }]}>
-                {([
-                  { icon: 'share-outline', label: 'Share Link', color: CultureTokens.indigo, onPress: handleShare },
-                  { icon: copied ? 'checkmark' : 'copy-outline', label: copied ? 'Copied' : 'Copy CPID', color: copied ? '#34C759' : CultureTokens.gold, onPress: handleCopy },
-                  { icon: 'scan-outline', label: 'Scan ID', color: CultureTokens.coral, onPress: () => { if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push('/scanner'); } },
-                ] as const).map((btn) => (
+              {/* ========== PRIMARY WALLET SAVE CTAs (redesigned hero focus) ========== */}
+              <View style={[s.walletHero, { width: cardWidth }]}>
+                <Text style={s.walletHeroTitle}>Save to Wallet</Text>
+                <Text style={s.walletHeroDesc}>
+                  Add your verified CulturePass Digital ID to Apple Wallet or Google Wallet for instant, offline access at events, venues, and check-ins.
+                  Follows Apple & Google Wallet design & privacy guidelines.
+                </Text>
+
+                {/* Apple Wallet — prominent, dark premium button (matches Apple HIG) */}
+                {appleWallet?.url && showAppleWallet && (
                   <Pressable
-                    key={btn.label}
-                    style={({ pressed, hovered }: any) => [
-                      s.actionBtn,
-                      {
-                        backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.02)',
-                        borderColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.06)',
-                        opacity: pressed ? 0.8 : 1,
-                        transform: [{ scale: pressed ? 0.95 : (hovered ? 1.05 : 1) }],
-                        ...Platform.select({
-                          web: {
-                            transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
-                            boxShadow: hovered ? '0px 6px 20px rgba(0,0,0,0.15)' : 'none',
-                            cursor: 'pointer',
-                          },
-                        }),
-                      },
+                    onPress={async () => {
+                      if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                      await openExternalUrl(appleWallet.url, { failureTitle: 'Could not open Apple Wallet' });
+                    }}
+                    style={({ pressed }) => [
+                      s.walletPrimaryBtn,
+                      { backgroundColor: '#000000', borderColor: '#333' },
+                      pressed && { opacity: 0.85 },
                     ]}
-                    onPress={btn.onPress}
                     accessibilityRole="button"
-                    accessibilityLabel={btn.label}
+                    accessibilityLabel="Add your CulturePass ID to Apple Wallet"
                   >
-                    <View style={[s.actionIcon, { backgroundColor: (btn.color as string) + '12' }]}>
-                      <Ionicons name={btn.icon as keyof typeof Ionicons.glyphMap} size={18} color={btn.color as string} />
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                      <Ionicons name="logo-apple" size={22} color="#FFFFFF" />
+                      <View>
+                        <Text style={s.walletPrimaryTitle}>Add to Apple Wallet</Text>
+                        <Text style={s.walletPrimarySub}>Official .pkpass — works offline</Text>
+                      </View>
                     </View>
-                    <Text style={[s.actionLabel, { color: colors.textSecondary }]}>{btn.label}</Text>
+                    <Ionicons name="chevron-forward" size={18} color="rgba(255,255,255,0.6)" />
                   </Pressable>
-                ))}
+                )}
+
+                {/* Google Wallet — prominent blue button */}
+                {googleWallet?.url && showGoogleWallet && (
+                  <Pressable
+                    onPress={async () => {
+                      if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                      await openExternalUrl(googleWallet.url, { failureTitle: 'Could not open Google Wallet' });
+                    }}
+                    style={({ pressed }) => [
+                      s.walletPrimaryBtn,
+                      { backgroundColor: '#1A73E8', borderColor: '#1557B0' },
+                      pressed && { opacity: 0.9 },
+                    ]}
+                    accessibilityRole="button"
+                    accessibilityLabel="Save your CulturePass ID to Google Wallet"
+                  >
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                      <Ionicons name="logo-google" size={20} color="#FFFFFF" />
+                      <View>
+                        <Text style={s.walletPrimaryTitle}>Save to Google Wallet</Text>
+                        <Text style={s.walletPrimarySub}>Secure pass • Instant access</Text>
+                      </View>
+                    </View>
+                    <Ionicons name="chevron-forward" size={18} color="rgba(255,255,255,0.7)" />
+                  </Pressable>
+                )}
+
+                {/* Fallback / not ready messaging (takes "permissions" from platform readiness) */}
+                {(!appleWallet?.url && !googleWallet?.url) && (
+                  <View style={s.walletNotReady}>
+                    <Ionicons name="wallet-outline" size={18} color={colors.textTertiary} />
+                    <Text style={{ color: colors.textTertiary, fontSize: 12, marginTop: 4, textAlign: 'center' }}>
+                      Wallet passes are being prepared for your account.{'\n'}Check back shortly or contact support if this persists.
+                    </Text>
+                  </View>
+                )}
+
+                <Text style={s.walletLegal}>
+                  By adding this pass you allow Wallet to display your CulturePass ID (name, CPID, tier, location, verification signature). 
+                  Apple and Google manage the pass securely according to their privacy policies. CulturePass only signs the pass data.
+                </Text>
               </View>
 
-              {/* Wallet Integration Section */}
-              {(appleWallet?.url || googleWallet?.url) && (
-                <View style={[s.walletSection, { width: cardWidth }]}>
-                  <Text style={[s.walletHeading, { color: colors.textTertiary }]}>ADD TO WALLET</Text>
+              {/* Secondary tools: QR, share, public profile, scan */}
+              <View style={{ marginTop: 20, width: cardWidth }}>
+                <Text style={[s.sectionLabel, { color: colors.textTertiary }]}>VERIFICATION & SHARING</Text>
 
-                  {/* Apple Wallet Button */}
-                  {appleWallet?.url && showAppleWallet && (
-                    <Pressable
-                      style={({ pressed, hovered }: any) => [
-                        s.walletBtn,
-                        {
-                          transform: [{ scale: pressed ? 0.97 : (hovered ? 1.03 : 1) }],
-                          ...Platform.select({
-                            web: {
-                              transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
-                              cursor: 'pointer',
-                            },
-                          }),
-                        },
-                      ]}
-                      onPress={async () => {
-                        if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                        await openExternalUrl(appleWallet.url, { failureTitle: 'Could not open Apple Wallet' });
-                      }}
-                      accessibilityRole="button"
-                      accessibilityLabel="Add to Apple Wallet"
-                    >
-                      <LinearGradient
-                        colors={['#1F1F21', '#000000']}
-                        start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                        style={StyleSheet.absoluteFill}
-                      />
-                      <Ionicons name="wallet-outline" size={20} color="#FFFFFF" />
-                      <View style={s.walletBtnText}>
-                        <Text style={s.walletBtnSub}>Add to</Text>
-                        <Text style={s.walletBtnTitle}>Apple Wallet</Text>
-                      </View>
-                      <Ionicons name="chevron-forward" size={15} color="rgba(255,255,255,0.4)" />
-                    </Pressable>
-                  )}
-
-                  {/* Google Wallet Button */}
-                  {googleWallet?.url && showGoogleWallet && (
-                    <Pressable
-                      style={({ pressed, hovered }: any) => [
-                        s.walletBtn,
-                        {
-                          transform: [{ scale: pressed ? 0.97 : (hovered ? 1.03 : 1) }],
-                          ...Platform.select({
-                            web: {
-                              transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
-                              cursor: 'pointer',
-                            },
-                          }),
-                        },
-                      ]}
-                      onPress={async () => {
-                        if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                        await openExternalUrl(googleWallet.url, { failureTitle: 'Could not open Google Wallet' });
-                      }}
-                      accessibilityRole="button"
-                      accessibilityLabel="Add to Google Wallet"
-                    >
-                      <LinearGradient
-                        colors={['#1A73E8', '#1557B0']}
-                        start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                        style={StyleSheet.absoluteFill}
-                      />
-                      <Ionicons name="card-outline" size={20} color="#FFFFFF" />
-                      <View style={s.walletBtnText}>
-                        <Text style={s.walletBtnSub}>Save to</Text>
-                        <Text style={s.walletBtnTitle}>Google Wallet</Text>
-                      </View>
-                      <Ionicons name="chevron-forward" size={15} color="rgba(255,255,255,0.4)" />
-                    </Pressable>
-                  )}
+                {/* QR for scanners */}
+                <View style={[s.qrSectionModern, { backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)' }]}>
+                  <Pressable
+                    onPress={async () => {
+                      if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      const shareLink = siteUrl(`/u/${username}`);
+                      await Clipboard.setStringAsync(shareLink);
+                      setCopied(true);
+                      setTimeout(() => setCopied(false), 1600);
+                    }}
+                    style={{ alignItems: 'center' }}
+                  >
+                    <View style={s.qrWhiteBackground}>
+                      <QRCode value={qrValue} size={qrSize} color="#090A0F" backgroundColor="#FFFFFF" ecl="H" />
+                    </View>
+                    <Text style={{ marginTop: 8, fontSize: 11, color: colors.textSecondary }}>Tap to copy public profile link • Scannable at events</Text>
+                  </Pressable>
                 </View>
-              )}
 
-              {/* Interests tag list */}
+                {/* Quick actions row */}
+                <View style={[s.actionsRow, { width: cardWidth, marginTop: 12 }]}>
+                  {([
+                    { icon: 'share-outline', label: 'Share', color: CultureTokens.indigo, onPress: handleShare },
+                    { icon: copied ? 'checkmark' : 'copy-outline', label: copied ? 'Copied' : 'Copy CPID', color: copied ? '#34C759' : CultureTokens.gold, onPress: handleCopy },
+                    { icon: 'scan-outline', label: 'Scan', color: CultureTokens.coral, onPress: () => { if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push('/scanner'); } },
+                  ] as const).map((btn) => (
+                    <Pressable key={btn.label} onPress={btn.onPress} style={({ pressed }) => [s.actionBtn, { opacity: pressed ? 0.7 : 1 }]}>
+                      <View style={[s.actionIcon, { backgroundColor: (btn.color as string) + '12' }]}>
+                        <Ionicons name={btn.icon as keyof typeof Ionicons.glyphMap} size={18} color={btn.color as string} />
+                      </View>
+                      <Text style={[s.actionLabel, { color: colors.textSecondary }]}>{btn.label}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+
+                {/* Public profile link */}
+                <Pressable
+                  onPress={() => { if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push(`/u/${username}` as any); }}
+                  style={{ marginTop: 10, alignSelf: 'center' }}
+                >
+                  <Text style={{ color: cardTheme.accent, fontSize: 13, textDecorationLine: 'underline' }}>
+                    View public profile
+                  </Text>
+                </Pressable>
+              </View>
+
+              {/* Interests (lightweight) */}
               {interests.length > 0 && (
-                <View style={[s.tagsSection, { width: cardWidth }]}>
-                  <Text style={[s.tagsHeading, { color: colors.textTertiary }]}>CULTURAL INTERESTS</Text>
+                <View style={[s.tagsSection, { width: cardWidth, marginTop: 16 }]}>
+                  <Text style={[s.tagsHeading, { color: colors.textTertiary }]}>INTERESTS</Text>
                   <View style={s.tagsRow}>
                     {interests.map(interest => (
                       <View key={interest} style={[s.tag, { backgroundColor: cardTheme.accent + '10', borderColor: cardTheme.accent + '20' }]}>
@@ -1130,5 +1083,90 @@ const s = StyleSheet.create({
   tagText: {
     fontSize: 11,
     fontFamily: FontFamily.semibold,
+  },
+
+  // ========== NEW WALLET-FIRST REDESIGN STYLES ==========
+  walletHero: {
+    backgroundColor: 'rgba(0,0,0,0.03)',
+    borderRadius: 20,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)',
+    gap: 12,
+  },
+  walletHeroLabel: {
+    fontSize: 10,
+    fontFamily: FontFamily.semibold,
+    letterSpacing: 1.5,
+    textAlign: 'center',
+  },
+  walletHeroSub: {
+    fontSize: 11,
+    fontFamily: FontFamily.bold,
+    letterSpacing: 0.8,
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  walletHeroTitle: {
+    fontSize: 18,
+    fontFamily: FontFamily.bold,
+    textAlign: 'center',
+    color: '#fff',
+  },
+  walletHeroDesc: {
+    fontSize: 12,
+    fontFamily: FontFamily.medium,
+    textAlign: 'center',
+    color: 'rgba(255,255,255,0.65)',
+    lineHeight: 17,
+  },
+  walletPrimaryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 14,
+    paddingHorizontal: 18,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  walletPrimaryTitle: {
+    fontSize: 15,
+    fontFamily: FontFamily.bold,
+    color: '#FFFFFF',
+    letterSpacing: -0.2,
+  },
+  walletPrimarySub: {
+    fontSize: 10,
+    fontFamily: FontFamily.medium,
+    color: 'rgba(255,255,255,0.65)',
+    marginTop: 1,
+  },
+  walletLegal: {
+    fontSize: 9,
+    fontFamily: FontFamily.medium,
+    color: 'rgba(255,255,255,0.4)',
+    textAlign: 'center',
+    lineHeight: 13,
+    marginTop: 6,
+  },
+  walletNotReady: {
+    alignItems: 'center',
+    padding: 12,
+    backgroundColor: 'rgba(255,255,255,0.02)',
+    borderRadius: 12,
+  },
+  sectionLabel: {
+    fontSize: 10,
+    fontFamily: FontFamily.semibold,
+    letterSpacing: 1.4,
+    marginBottom: 8,
+    marginLeft: 2,
+  },
+  qrSectionModern: {
+    padding: 16,
+    borderRadius: 18,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)',
   },
 });

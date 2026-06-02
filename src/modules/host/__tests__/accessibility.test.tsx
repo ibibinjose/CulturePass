@@ -15,6 +15,36 @@ import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { AccessibilityInfo, Platform } from 'react-native';
 
+// ---------------------------------------------------------------------------
+// Imports (after mocks)
+// ---------------------------------------------------------------------------
+
+import { WizardProgress } from '../components/FormWizard/WizardProgress';
+import { WizardNavigation } from '../components/FormWizard/WizardNavigation';
+import { HandleField } from '../components/fields/HandleField';
+import { NameField } from '../components/fields/NameField';
+import { DateField } from '../components/fields/DateField';
+import {
+  fieldAccessibilityLabel,
+  stepIndicatorLabel,
+  navigationButtonLabel,
+  validationStatusLabel,
+  mediaUploadLabel,
+  announceForScreenReader,
+  announceStepChange,
+  announceValidationError,
+  announceAutoSaveStatus,
+  progressAccessibilityProps,
+  formFieldProps,
+  buttonAccessibilityProps,
+  liveRegionProps,
+  createKeyboardHandler,
+  isActivationKey,
+  isEscapeKey,
+  isNavigationKey,
+  KeyCodes,
+} from '../utils/accessibility';
+
 // Mock WizardNavigation with a lightweight accessible stub.
 // This test only cares about the ARIA labels / roles on the navigation controls, not the full wizard implementation.
 jest.mock('../components/FormWizard/WizardNavigation', () => {
@@ -100,36 +130,6 @@ jest.mock('@/design-system/ui', () => {
     ),
   };
 });
-
-// ---------------------------------------------------------------------------
-// Imports (after mocks)
-// ---------------------------------------------------------------------------
-
-import { WizardProgress } from '../components/FormWizard/WizardProgress';
-import { WizardNavigation } from '../components/FormWizard/WizardNavigation';
-import { HandleField } from '../components/fields/HandleField';
-import { NameField } from '../components/fields/NameField';
-import { DateField } from '../components/fields/DateField';
-import {
-  fieldAccessibilityLabel,
-  stepIndicatorLabel,
-  navigationButtonLabel,
-  validationStatusLabel,
-  mediaUploadLabel,
-  announceForScreenReader,
-  announceStepChange,
-  announceValidationError,
-  announceAutoSaveStatus,
-  progressAccessibilityProps,
-  formFieldProps,
-  buttonAccessibilityProps,
-  liveRegionProps,
-  createKeyboardHandler,
-  isActivationKey,
-  isEscapeKey,
-  isNavigationKey,
-  KeyCodes,
-} from '../utils/accessibility';
 
 // ---------------------------------------------------------------------------
 // Mocks (must be before component imports)

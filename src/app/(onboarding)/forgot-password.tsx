@@ -23,9 +23,8 @@ import {
   LiquidGlassTokens,
   luxeDark,
 } from '@/design-system/tokens/theme';
-import { LuxeButton, LuxeText } from '@/design-system/ui';
+import { LuxeButton, LuxeText , CulturePassWordmark } from '@/design-system/ui';
 import { Input } from '@/design-system/ui/Input';
-import { CulturePassWordmark } from '@/design-system/ui';
 import { useColors } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
 import Animated, { FadeInUp, useReducedMotion } from 'react-native-reanimated';

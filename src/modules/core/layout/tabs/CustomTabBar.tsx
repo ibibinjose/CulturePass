@@ -27,12 +27,6 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Pressable } from 'react-native';
 
-type BottomTabBarProps = {
-  state: any;
-  navigation: any;
-  insets: any;
-};
-
 import { useColors, useIsDark } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
 import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
@@ -47,6 +41,12 @@ import {
 } from '@/design-system/tokens/theme';
 import { MAIN_TAB_UI } from '@/modules/core/layout/tabs/mainTabTokens';
 import { withAlpha } from '@/lib/withAlpha';
+
+type BottomTabBarProps = {
+  state: any;
+  navigation: any;
+  insets: any;
+};
 // import type { Route } from '@react-navigation/native';
 type Route<T extends string, P extends object | undefined = object | undefined> = {
   key: string;

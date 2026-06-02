@@ -31,8 +31,7 @@ import {
   Input,
   Checkbox,
   SocialButton,
-} from '@/design-system/ui';
-import { CulturePassWordmark } from '@/design-system/ui';
+ CulturePassWordmark } from '@/design-system/ui';
 
 import {
   CardTokens,

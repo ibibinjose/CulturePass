@@ -99,7 +99,6 @@ const _DISCOVER_HEAD_URL = SITE_ORIGIN;
 
 export default function DiscoverScreen() {
   const colors = useColors();
-  const m3Colors = useM3Colors();
   const isDark = useIsDark();
   const { isDesktop, contentWidth, hPad } = useLayout();
   const scrollBottomPad = useTabScrollBottomPadding(28);
@@ -619,7 +618,7 @@ export default function DiscoverScreen() {
               ]}
             >
               {allCategoryFilters.map((f) => {
-                const accent = categoryAccent[f.id] || m3Colors.primary;
+                const accent = categoryAccent[f.id] || colors.primary;
                 const isActive = activeFilter === f.id;
                 return (
                   <View
@@ -704,7 +703,7 @@ export default function DiscoverScreen() {
               <Text 
                 style={{ 
                   fontSize: 12, 
-                  color: m3Colors.primary, 
+                  color: colors.primary, 
                   fontFamily: FontFamily.medium 
                 }}
               >
@@ -718,20 +717,20 @@ export default function DiscoverScreen() {
               <View
                 style={[ds.searchBar, {
                   marginHorizontal: pageSidePad,
-                  backgroundColor: m3Colors.surface,
+                  backgroundColor: colors.surface,
                   height: 56,
                   borderRadius: 28,
                   paddingHorizontal: 16,
                   borderWidth: 1,
-                  borderColor: m3Colors.outlineVariant,
+                  borderColor: colors.borderLight,
                 }]}
               >
-                <Ionicons name="search" size={24} color={m3Colors.primary} />
+                <Ionicons name="search" size={24} color={colors.primary} />
                 <TextInput
                   ref={searchInputRef as any}
-                  style={[ds.searchInput, { color: m3Colors.onSurface, fontSize: 16, marginLeft: 12 }]}
+                  style={[ds.searchInput, { color: colors.text, fontSize: 16, marginLeft: 12 }]}
                   placeholder="Search events, places, movies..."
-                  placeholderTextColor={m3Colors.onSurfaceVariant}
+                  placeholderTextColor={colors.textSecondary || '#888'}
                   value={searchQuery}
                   onChangeText={setSearchQuery}
                   autoFocus
@@ -740,7 +739,7 @@ export default function DiscoverScreen() {
                 />
                 {searchQuery.length > 0 && (
                   <Pressable onPress={() => setSearchQuery('')} hitSlop={10}>
-                    <Ionicons name="close" size={24} color={m3Colors.onSurfaceVariant} />
+                    <Ionicons name="close" size={24} color={colors.textSecondary || '#888'} />
                   </Pressable>
                 )}
               </View>
@@ -761,15 +760,15 @@ export default function DiscoverScreen() {
           {/* Nation Builders Promo — moved to bottom, smaller + improved UI */}
           <NationBuildersPromo variant="full" />
 
-          <View style={[ds.footer, { marginHorizontal: pageSidePad, borderTopColor: m3Colors.outlineVariant }]}>
+          <View style={[ds.footer, { marginHorizontal: pageSidePad, borderTopColor: colors.borderLight }]}>
             <View style={ds.footerLinks}>
               {FOOTER_LINKS.map((link) => (
                 <Pressable key={link.href} onPress={() => router.push(link.href)}>
-                  <Text style={[ds.footerLinkText, { color: m3Colors.onSurfaceVariant }]}>{link.label}</Text>
+                  <Text style={[ds.footerLinkText, { color: colors.textSecondary || '#888' }]}>{link.label}</Text>
                 </Pressable>
               ))}
             </View>
-            <Text style={[ds.footerMeta, { color: m3Colors.onSurfaceVariant }]}>
+            <Text style={[ds.footerMeta, { color: colors.textSecondary || '#888' }]}>
               {`${APP_NAME} · ${MADE_IN}`}
             </Text>
           </View>

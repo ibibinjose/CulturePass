@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 
 import { useOnboarding } from '@/contexts/OnboardingContext';
 import { useAuth, subscriptionTierForOnboarding } from '@/lib/auth';

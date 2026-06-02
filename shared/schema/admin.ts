@@ -9,10 +9,10 @@ export interface AdminStats {
   activeOrganizers?: number;         // Total unique people with organizer roles
 
   // Signup trends (last 30 days)
-  signupTrends?: Array<{
+  signupTrends?: {
     date: string;   // YYYY-MM-DD
     count: number;
-  }>;
+  }[];
 
   // Optional additional signals
   newProfiles30d?: number;

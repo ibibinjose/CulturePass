@@ -84,13 +84,13 @@ export interface Profile {
      * Multiple organizers / team members for communities, businesses, venues, etc.
      * Supports different roles (lead_organizer, co_organizer, manager, moderator, editor, etc.)
      */
-    organizers?: Array<{
+    organizers?: {
         userId: string;
         role: string;
         title?: string;
         addedAt: string;
         addedBy?: string;
-    }>;
+    }[];
     approvedAt?: string;
     reportCount?: number;
     isClaimed?: boolean;

@@ -10,7 +10,7 @@ import { CultureTokens, Spacing, Radius } from '@/design-system/tokens/theme';
 interface CreateMenuSheetProps {
   visible: boolean;
   onClose: () => void;
-  availableProfiles?: Array<{ id: string; name: string; entityType: string }>;
+  availableProfiles?: { id: string; name: string; entityType: string }[];
   onCreateUnderProfile?: (profileId: string, type: 'event' | 'listing') => void;
 }
 

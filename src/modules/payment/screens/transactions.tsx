@@ -1,4 +1,4 @@
-import { View, Text, Pressable, StyleSheet, FlatList, Platform, ActivityIndicator } from 'react-native';
+import { View, Text, Pressable, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import { router, usePathname } from 'expo-router';

@@ -28,8 +28,8 @@ import { CardTokens, webShadow } from '@/design-system/tokens/theme';
 import SectionHeader from './SectionHeader';
 
 import type { PreviewItem } from '@/shared/schema/browse';
-export type { PreviewItem } from '@/shared/schema/browse';
 import { normalizeRemoteImageUri } from '@/lib/mediaUrls';
+export type { PreviewItem } from '@/shared/schema/browse';
 
 interface PreviewRailProps {
   title: string;

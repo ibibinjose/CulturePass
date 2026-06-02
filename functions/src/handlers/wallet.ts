@@ -23,6 +23,8 @@ async function loadWalletPassUser(req: Request): Promise<WalletPassUser> {
   const u = req.user!;
   const snap = await db.collection('users').doc(u.id).get();
   const data = snap.data() ?? {};
+  // Support both embedded membership.tier and top level for flexibility
+  const tier = (data.membership as any)?.tier || (data.tier as string | undefined) || 'free';
   return {
     id: u.id,
     username: u.username,
@@ -31,6 +33,7 @@ async function loadWalletPassUser(req: Request): Promise<WalletPassUser> {
     city: (data.city as string | undefined) ?? u.city,
     country: (data.country as string | undefined) ?? u.country,
     culturePassId: data.culturePassId as string | undefined,
+    tier,
   };
 }
 

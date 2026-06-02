@@ -7,7 +7,7 @@ export function createAdminNamespace(request: ApiRequestFn) {
   stats: () => request<AdminStats & {
     multiOrganizerProfiles?: number;
     activeOrganizers?: number;
-    signupTrends?: Array<{ date: string; count: number }>;
+    signupTrends?: { date: string; count: number }[];
     newProfiles30d?: number;
     newEvents30d?: number;
     organizerRoleCounts?: Record<string, number>;

@@ -7,7 +7,7 @@ import {
   Platform,
   Alert,
   Share,
-} from 'react-native';
+ Modal, TextInput, KeyboardAvoidingView } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -31,7 +31,6 @@ import { useLayout } from '@/hooks/useLayout';
 import { useColors, useIsDark } from '@/hooks/useColors';
 import { Skeleton } from '@/design-system/ui/Skeleton';
 import { GlassView } from '@/design-system/ui/GlassView';
-import { Modal, TextInput, KeyboardAvoidingView } from 'react-native';
 import { M3Button } from '@/design-system/ui';
 
 function parseWalletApiError(err: ApiError): string {

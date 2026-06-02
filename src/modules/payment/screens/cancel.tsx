@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Pressable, Platform } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import { useLocalSearchParams, router } from 'expo-router';

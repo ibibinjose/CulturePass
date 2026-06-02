@@ -5,10 +5,10 @@ export interface AdminStats {
     revenue: number;
     multiOrganizerProfiles?: number;
     activeOrganizers?: number;
-    signupTrends?: Array<{
+    signupTrends?: {
         date: string;
         count: number;
-    }>;
+    }[];
     newProfiles30d?: number;
     newEvents30d?: number;
     multiOrganizerCommunities?: number;

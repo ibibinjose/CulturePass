@@ -12,6 +12,7 @@ export type WalletPassUser = {
   city?: string;
   country?: string;
   culturePassId?: string;
+  tier?: string; // free | plus | elite | pro | premium | vip etc. for themed Wallet passes
 };
 
 type AppleBusinessCardTokenPayload = {
@@ -314,6 +315,19 @@ export async function createGoogleBusinessCardSaveUrl(user: WalletPassUser): Pro
   const displayName = String(user.displayName ?? username);
   const objectId = `${config.issuerId}.${slugify(`${username}-${randomUUID()}`).slice(0, 48)}`;
   const profileUrl = buildProfileUrl(username);
+  const tier = (user.tier || 'free').toLowerCase();
+
+  // Tier-aware colors for Google Wallet (match Apple + brand)
+  const tierBg: Record<string, string> = {
+    elite: '#0F0F0F',
+    vip: '#0F0A02',
+    premium: '#1A0F0A',
+    plus: '#1E1B4B',
+    pro: '#061F2E',
+    free: '#1C1917',
+  };
+  const bgColor = tierBg[tier] || '#1C1917';
+  const tierLabel = tier === 'elite' ? 'ELITE MEMBER' : tier === 'vip' ? 'VIP MEMBER' : tier === 'plus' || tier === 'premium' ? 'PLUS MEMBER' : tier === 'pro' ? 'PRO MEMBER' : 'STANDARD MEMBER';
 
   const payload = {
     genericObjects: [
@@ -321,7 +335,7 @@ export async function createGoogleBusinessCardSaveUrl(user: WalletPassUser): Pro
         id: objectId,
         classId: config.classId,
         state: 'ACTIVE',
-        hexBackgroundColor: '#4F46E5',
+        hexBackgroundColor: bgColor,
         cardTitle: {
           defaultValue: { language: 'en-AU', value: 'CulturePass' },
         },
@@ -329,7 +343,7 @@ export async function createGoogleBusinessCardSaveUrl(user: WalletPassUser): Pro
           defaultValue: { language: 'en-AU', value: displayName },
         },
         subheader: {
-          defaultValue: { language: 'en-AU', value: user.culturePassId ?? `@${username}` },
+          defaultValue: { language: 'en-AU', value: `${user.culturePassId ?? `@${username}`} · ${tierLabel}` },
         },
         barcode: {
           type: 'QR_CODE',
@@ -338,9 +352,14 @@ export async function createGoogleBusinessCardSaveUrl(user: WalletPassUser): Pro
         },
         textModulesData: [
           {
+            id: 'membership',
+            header: 'Membership',
+            body: tierLabel,
+          },
+          {
             id: 'city-country',
             header: 'Location',
-            body: [user.city, user.country].filter(Boolean).join(', ') || 'Australia',
+            body: [user.city, user.country].filter(Boolean).join(', ') || 'Global',
           },
           {
             id: 'profile',
@@ -397,6 +416,7 @@ export async function generateAppleBusinessCardPass(user: WalletPassUser): Promi
   const displayName = String(user.displayName ?? username);
   const profileUrl = buildProfileUrl(username);
   const culturePassId = String(user.culturePassId ?? `CP-${user.id}`);
+  const tier = (user.tier || 'free').toLowerCase();
   const serialNumber = buildApplePassSerialNumber(user.id);
   const authenticationToken = getApplePassAuthenticationToken(serialNumber);
   const webServiceBaseUrl =
@@ -406,16 +426,30 @@ export async function generateAppleBusinessCardPass(user: WalletPassUser): Promi
   const logo = await renderBrandAsset(160, 50);
   const logo2x = await renderBrandAsset(320, 100);
 
+  // Tier-themed colors for Apple Wallet pass (follows Apple HIG for contrast + brand)
+  const tierStyles: Record<string, { bg: string; fg: string; label: string; tierLabel: string }> = {
+    elite:   { bg: 'rgb(15,15,15)', fg: 'rgb(255,251,235)', label: 'rgb(212,160,23)', tierLabel: 'ELITE MEMBER' },
+    vip:     { bg: 'rgb(15,10,2)', fg: 'rgb(255,251,235)', label: 'rgb(232,195,107)', tierLabel: 'VIP MEMBER' },
+    premium: { bg: 'rgb(26,15,10)', fg: 'rgb(255,241,235)', label: 'rgb(242,192,120)', tierLabel: 'PREMIUM MEMBER' },
+    plus:    { bg: 'rgb(30,27,75)', fg: 'rgb(255,240,240)', label: 'rgb(255,94,91)', tierLabel: 'PLUS MEMBER' },
+    pro:     { bg: 'rgb(6,31,46)', fg: 'rgb(224,250,255)', label: 'rgb(0,240,255)', tierLabel: 'PRO MEMBER' },
+    free:    { bg: 'rgb(28,25,23)', fg: 'rgb(245,245,244)', label: 'rgb(227,106,78)', tierLabel: 'STANDARD MEMBER' },
+  };
+  const style = tierStyles[tier] || tierStyles.free;
+  const tierLabel = style.tierLabel;
+
   const passJson = {
     formatVersion: 1,
     passTypeIdentifier,
     teamIdentifier,
     organizationName: 'CulturePass',
-    description: 'CulturePass Digital Business Card',
+    description: 'CulturePass Digital Member ID — add to Wallet for events',
     logoText: 'CulturePass',
     authenticationToken,
     webServiceURL: webServiceBaseUrl,
-    generic: {},
+    generic: {
+      // Use generic for flexible membership ID layout (recommended by Apple for custom digital IDs)
+    },
   };
 
   const pass = new PKPass(
@@ -429,29 +463,40 @@ export async function generateAppleBusinessCardPass(user: WalletPassUser): Promi
     certificates,
     {
       serialNumber,
-      description: 'CulturePass Digital Business Card',
+      description: 'CulturePass Digital Member ID',
       organizationName: 'CulturePass',
-      backgroundColor: 'rgb(0,102,204)',
-      foregroundColor: 'rgb(255,255,255)',
-      labelColor: 'rgb(255,204,0)',
+      backgroundColor: style.bg,
+      foregroundColor: style.fg,
+      labelColor: style.label,
     }
   );
+
+  // Prominent tier header
+  pass.headerFields.push({
+    key: 'tier',
+    label: 'CULTUREPASS',
+    value: tierLabel,
+  });
 
   pass.primaryFields.push({
     key: 'member_name',
     label: 'MEMBER',
     value: displayName,
   });
+
   pass.secondaryFields.push({
     key: 'culturepass_id',
-    label: 'CULTUREPASS ID',
+    label: 'CPID',
     value: culturePassId,
   });
+
   pass.auxiliaryFields.push({
     key: 'username',
-    label: 'USERNAME',
+    label: 'HANDLE',
     value: `@${username}`,
   });
+
+  // Back fields for full details (visible when user flips the pass in Wallet)
   pass.backFields.push({
     key: 'profile_url',
     label: 'PROFILE',
@@ -460,8 +505,15 @@ export async function generateAppleBusinessCardPass(user: WalletPassUser): Promi
   pass.backFields.push({
     key: 'location',
     label: 'LOCATION',
-    value: [user.city, user.country].filter(Boolean).join(', ') || 'Australia',
+    value: [user.city, user.country].filter(Boolean).join(', ') || 'Global',
   });
+  pass.backFields.push({
+    key: 'tier_detail',
+    label: 'MEMBERSHIP',
+    value: tierLabel,
+  });
+
+  // Barcode / QR points to public profile (scannable from Wallet)
   pass.setBarcodes(profileUrl);
 
   return pass.getAsBuffer();

@@ -5,7 +5,7 @@
  * Plus: rich member dashboard → plan card → benefits → quick actions
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View, Text, Pressable, StyleSheet, ScrollView,
   Platform, Alert, TextInput, ActivityIndicator,
@@ -13,7 +13,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
-import { router, usePathname } from 'expo-router';
+import { router, usePathname, useLocalSearchParams } from 'expo-router';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import Animated, {
   FadeInDown, FadeInUp,
@@ -30,9 +30,11 @@ import { Skeleton } from '@/design-system/ui/Skeleton';
 import { api } from '@/lib/api';
 import { queryClient } from '@/lib/query-client';
 import { useAuth } from '@/lib/auth';
+import { useColors } from '@/hooks/useColors';
+import { LuxeButton, LuxeCard, LuxeText } from '@/design-system/ui';
+import { HapticManager } from '@/lib/haptics';
 import {
   BENEFITS,
-  DARK_BG,
   DARK_BORDER,
   GOLD,
   GOLD_DIM,
@@ -46,8 +48,9 @@ import {
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
 
 function UpgradeSkeleton({ topInset }: { topInset: number }) {
+  const colors = useColors();
   return (
-    <View style={[sk.root, { paddingTop: topInset + 16 }]}>
+    <View style={[sk.root, { paddingTop: topInset + 16, backgroundColor: colors.background }]}>
       <View style={sk.header}>
         <Skeleton width={40} height={40} borderRadius={20} />
         <Skeleton width={130} height={22} borderRadius={6} />
@@ -69,7 +72,7 @@ function UpgradeSkeleton({ topInset }: { topInset: number }) {
 }
 
 const sk = StyleSheet.create({
-  root: { flex: 1, backgroundColor: DARK_BG },
+  root: { flex: 1 },
   header: {
     flexDirection: 'row', alignItems: 'center',
     justifyContent: 'space-between', paddingHorizontal: 16, height: 56,
@@ -89,6 +92,7 @@ function PlanStatusCard({
   cashbackRate: number;
   earlyAccessHours: number;
 }) {
+  const colors = useColors();
   const renewalLabel = expiresAt
     ? new Date(expiresAt).toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' })
     : 'No expiry set';
@@ -98,65 +102,58 @@ function PlanStatusCard({
   const cashbackPct = Math.round(cashbackRate * 100);
 
   return (
-    <View style={planCard.wrap}>
-      <LinearGradient
-        colors={[GOLD + '16', GOLD + '05', 'transparent']}
-        start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-        style={[StyleSheet.absoluteFill, { borderRadius: 24 }]}
-      />
-
+    <LuxeCard variant="glass" tone="auto" style={planCard.wrap}>
       {/* Plan name row */}
       <View style={planCard.topRow}>
         <View style={planCard.nameRow}>
-          <View style={planCard.iconBubble}>
-            <Ionicons name="diamond" size={18} color={GOLD} />
+          <View style={[planCard.iconBubble, { backgroundColor: colors.gold + '18' }]}>
+            <Ionicons name="diamond" size={18} color={colors.gold} />
           </View>
-          <Text style={planCard.planName}>CulturePass+</Text>
+          <LuxeText variant="title3" style={[planCard.planName, { color: colors.text }]}>CulturePass+</LuxeText>
         </View>
-        <View style={planCard.activeBadge}>
+        <View style={[planCard.activeBadge, { borderColor: CultureTokens.teal + '40', backgroundColor: CultureTokens.teal + '20' }]}>
           <View style={planCard.activeDot} />
-          <Text style={planCard.activeText}>Active</Text>
+          <LuxeText variant="badge" style={planCard.activeText}>Active</LuxeText>
         </View>
       </View>
 
-      <View style={planCard.divider} />
+      <View style={[planCard.divider, { backgroundColor: colors.borderLight }]} />
 
       {/* Renewal */}
       <View style={planCard.metaRow}>
-        <Ionicons name="calendar-outline" size={14} color={WHITE_40} />
-        <Text style={planCard.metaText}>
+        <Ionicons name="calendar-outline" size={14} color={colors.textTertiary} />
+        <LuxeText variant="caption" style={[planCard.metaText, { color: colors.textSecondary }]}>
           Renews {renewalLabel}
           {daysLeft !== null && daysLeft <= 14
-            ? <Text style={{ color: GOLD }}> · {daysLeft}d left</Text>
+            ? <LuxeText style={{ color: colors.gold }}> · {daysLeft}d left</LuxeText>
             : null}
-        </Text>
+        </LuxeText>
       </View>
 
       {/* Stats */}
-      <View style={planCard.statsRow}>
+      <View style={[planCard.statsRow, { backgroundColor: colors.surfaceVariant }]}>
         <View style={planCard.stat}>
-          <Text style={planCard.statValue}>{eventsAttended}</Text>
-          <Text style={planCard.statLabel}>Events attended</Text>
+          <LuxeText variant="title" style={[planCard.statValue, { color: colors.text }]}>{eventsAttended}</LuxeText>
+          <LuxeText variant="caption" style={[planCard.statLabel, { color: colors.textTertiary }]}>Events attended</LuxeText>
         </View>
-        <View style={planCard.statDivider} />
+        <View style={[planCard.statDivider, { backgroundColor: colors.borderLight }]} />
         <View style={planCard.stat}>
-          <Text style={planCard.statValue}>{cashbackPct}%</Text>
-          <Text style={planCard.statLabel}>Cashback rate</Text>
+          <LuxeText variant="title" style={[planCard.statValue, { color: colors.text }]}>{cashbackPct}%</LuxeText>
+          <LuxeText variant="caption" style={[planCard.statLabel, { color: colors.textTertiary }]}>Cashback rate</LuxeText>
         </View>
-        <View style={planCard.statDivider} />
+        <View style={[planCard.statDivider, { backgroundColor: colors.borderLight }]} />
         <View style={planCard.stat}>
-          <Text style={planCard.statValue}>{earlyAccessHours}h</Text>
-          <Text style={planCard.statLabel}>Early access</Text>
+          <LuxeText variant="title" style={[planCard.statValue, { color: colors.text }]}>{earlyAccessHours}h</LuxeText>
+          <LuxeText variant="caption" style={[planCard.statLabel, { color: colors.textTertiary }]}>Early access</LuxeText>
         </View>
       </View>
-    </View>
+    </LuxeCard>
   );
 }
 
 const planCard = StyleSheet.create({
   wrap: {
-    borderRadius: 24, borderWidth: 1, borderColor: GOLD + '28',
-    padding: 20, marginBottom: 28, overflow: 'hidden', gap: 16,
+    padding: 20, marginBottom: 28, gap: 16,
   },
   topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
@@ -164,7 +161,7 @@ const planCard = StyleSheet.create({
     width: 34, height: 34, borderRadius: 10,
     backgroundColor: GOLD + '20', alignItems: 'center', justifyContent: 'center',
   },
-  planName: { fontSize: 18, fontFamily: FontFamily.bold, color: WHITE, letterSpacing: -0.4 },
+  planName: { color: WHITE, letterSpacing: -0.4 },
   activeBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     backgroundColor: CultureTokens.teal + '20', borderWidth: 1,
@@ -172,23 +169,24 @@ const planCard = StyleSheet.create({
     paddingHorizontal: 12, paddingVertical: 5, borderRadius: 999,
   },
   activeDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: CultureTokens.teal },
-  activeText: { fontSize: 12, fontFamily: FontFamily.bold, color: CultureTokens.teal, letterSpacing: 0.2 },
+  activeText: { color: CultureTokens.teal, letterSpacing: 0.2 },
   divider: { height: 1, backgroundColor: DARK_BORDER },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },
-  metaText: { fontSize: 13, fontFamily: FontFamily.regular, color: WHITE_40 },
+  metaText: { color: WHITE_40 },
   statsRow: {
     flexDirection: 'row', alignItems: 'center',
     backgroundColor: WHITE_20, borderRadius: 14, padding: 16,
   },
   stat: { flex: 1, alignItems: 'center', gap: 3 },
-  statValue: { fontSize: 20, fontFamily: FontFamily.bold, color: WHITE, letterSpacing: -0.6 },
-  statLabel: { fontSize: 11, fontFamily: FontFamily.regular, color: WHITE_40, textAlign: 'center' },
+  statValue: { color: WHITE, letterSpacing: -0.6 },
+  statLabel: { color: WHITE_40, textAlign: 'center' },
   statDivider: { width: 1, height: 32, backgroundColor: DARK_BORDER },
 });
 
 // ─── Promo code widget ─────────────────────────────────────────────────────────
 
 function PromoCodeWidget({ userId, onFreeActivation }: { userId: string | null; onFreeActivation: () => void }) {
+  const colors = useColors();
   const [expanded, setExpanded] = useState(false);
   const [code, setCode] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -225,7 +223,7 @@ function PromoCodeWidget({ userId, onFreeActivation }: { userId: string | null; 
   }, [code, userId, mutation]);
 
   return (
-    <View style={pc.outer}>
+    <LuxeCard variant="glass" tone="auto" size="sm" style={pc.outer}>
       <Pressable
         onPress={() => { membershipHaptic(); setExpanded(v => !v); }}
         style={pc.toggle}
@@ -233,77 +231,73 @@ function PromoCodeWidget({ userId, onFreeActivation }: { userId: string | null; 
         accessibilityLabel={expanded ? 'Collapse promo code' : 'Enter promo or gift code'}
       >
         <View style={pc.toggleLeft}>
-          <View style={pc.toggleIcon}>
-            <Ionicons name="pricetag-outline" size={17} color={GOLD} />
+          <View style={[pc.toggleIcon, { backgroundColor: colors.gold + '18' }]}>
+            <Ionicons name="pricetag-outline" size={17} color={colors.gold} />
           </View>
-          <Text style={pc.toggleLabel}>Have a promo or gift code?</Text>
+          <LuxeText variant="bodyMedium" style={[pc.toggleLabel, { color: colors.textSecondary }]}>Have a promo or gift code?</LuxeText>
         </View>
         <Ionicons
           name={expanded ? 'chevron-up' : 'chevron-down'}
           size={16}
-          color={WHITE_40}
+          color={colors.textTertiary}
         />
       </Pressable>
 
       {expanded && (
-        <View style={pc.body}>
+        <View style={[pc.body, { borderTopColor: colors.borderLight }]}>
           <View style={pc.inputRow}>
             <TextInput
               value={code}
               onChangeText={v => { setCode(v); setError(null); setSuccessMsg(null); }}
               placeholder="e.g. CULTURE30"
-              placeholderTextColor={WHITE_40}
+              placeholderTextColor={colors.textTertiary}
               autoCapitalize="characters"
               autoCorrect={false}
               returnKeyType="done"
               onSubmitEditing={handleRedeem}
               editable={!mutation.isPending}
-              style={[pc.input, error ? pc.inputError : null]}
+              style={[pc.input, { color: colors.text, backgroundColor: colors.surfaceVariant, borderColor: error ? '#EF4444' : colors.borderLight }]}
               accessibilityLabel="Promo or gift code"
             />
-            <Pressable
+            <LuxeButton
+              variant="filled"
+              tone="auto"
+              size="sm"
               onPress={handleRedeem}
               disabled={!code.trim() || mutation.isPending || !userId}
-              style={({ pressed }) => [
-                pc.redeemBtn,
-                { opacity: !code.trim() || mutation.isPending || !userId ? 0.5 : pressed ? 0.82 : 1 },
-              ]}
-              accessibilityRole="button"
+              loading={mutation.isPending}
             >
-              {mutation.isPending
-                ? <ActivityIndicator size="small" color={WHITE} />
-                : <Text style={pc.redeemText}>Apply</Text>}
-            </Pressable>
+              Apply
+            </LuxeButton>
           </View>
 
           {error ? (
             <View style={pc.msgRow}>
               <Ionicons name="alert-circle" size={14} color="#EF4444" />
-              <Text style={[pc.msgText, pc.msgError]}>{error}</Text>
+              <LuxeText variant="caption" style={[pc.msgText, pc.msgError]}>{error}</LuxeText>
             </View>
           ) : null}
 
           {successMsg ? (
             <View style={pc.msgRow}>
               <Ionicons name="checkmark-circle" size={14} color={CultureTokens.teal} />
-              <Text style={[pc.msgText, pc.msgSuccess]}>{successMsg}</Text>
+              <LuxeText variant="caption" style={[pc.msgText, pc.msgSuccess]}>{successMsg}</LuxeText>
             </View>
           ) : null}
 
-          <Text style={pc.hint}>
+          <LuxeText variant="caption" style={[pc.hint, { color: colors.textTertiary }]}>
             Gift codes activate Plus instantly.{' '}
             Stripe discount codes can be entered after clicking &quot;Unlock CulturePass+&quot;.
-          </Text>
+          </LuxeText>
         </View>
       )}
-    </View>
+    </LuxeCard>
   );
 }
 
 const pc = StyleSheet.create({
   outer: {
-    borderRadius: 16, borderWidth: 1, borderColor: DARK_BORDER,
-    overflow: 'hidden', marginBottom: 14,
+    marginBottom: 14, padding: 0,
   },
   toggle: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
@@ -314,27 +308,19 @@ const pc = StyleSheet.create({
     width: 30, height: 30, borderRadius: 9,
     backgroundColor: GOLD + '18', alignItems: 'center', justifyContent: 'center',
   },
-  toggleLabel: { fontSize: 14, fontFamily: FontFamily.medium, color: WHITE_60 },
+  toggleLabel: { color: WHITE_60 },
   body: { borderTopWidth: 1, borderTopColor: DARK_BORDER, padding: 16, gap: 10 },
-  inputRow: { flexDirection: 'row', gap: 10 },
+  inputRow: { flexDirection: 'row', gap: 10, alignItems: 'center' },
   input: {
     flex: 1, height: 46, borderRadius: 12, borderWidth: 1,
-    borderColor: DARK_BORDER, paddingHorizontal: 14,
-    fontFamily: FontFamily.bold, fontSize: 14, color: WHITE,
-    backgroundColor: WHITE_20, letterSpacing: 1.2,
+    paddingHorizontal: 14, fontFamily: FontFamily.bold, fontSize: 14,
+    letterSpacing: 1.2,
   },
-  inputError: { borderColor: '#EF4444' },
-  redeemBtn: {
-    height: 46, paddingHorizontal: 18, borderRadius: 12,
-    backgroundColor: CultureTokens.indigo,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  redeemText: { fontFamily: FontFamily.bold, fontSize: 14, color: WHITE },
   msgRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 6 },
   msgText: { fontSize: 12, fontFamily: FontFamily.medium, flex: 1, lineHeight: 17 },
   msgError: { color: '#EF4444' },
   msgSuccess: { color: CultureTokens.teal },
-  hint: { fontSize: 11, fontFamily: FontFamily.regular, color: WHITE_40, lineHeight: 16 },
+  hint: { fontSize: 11, fontFamily: FontFamily.regular, lineHeight: 16, marginTop: 4 },
 });
 
 // ─── Main screen ──────────────────────────────────────────────────────────────
@@ -345,13 +331,14 @@ export default function UpgradeScreen() {
   const { hPad } = useLayout();
   const safeInsets = useSafeAreaInsetsWeb();
   const topInset = safeInsets.top;
+  const colors = useColors();
 
   const scrollY = useSharedValue(0);
   const onScroll = useAnimatedScrollHandler(e => { scrollY.value = e.contentOffset.y; });
 
   const headerAnim = useAnimatedStyle(() => ({
     opacity: interpolate(scrollY.value, [40, 120], [0, 1], Extrapolate.CLAMP),
-    backgroundColor: `rgba(8,11,20,${interpolate(scrollY.value, [40, 120], [0, 0.94], Extrapolate.CLAMP)})`,
+    backgroundColor: `${colors.background}${interpolate(scrollY.value, [40, 120], [0, 0.94], Extrapolate.CLAMP) > 0.9 ? 'F0' : '00'}`,
   }));
   const headerTitleAnim = useAnimatedStyle(() => ({
     opacity: interpolate(scrollY.value, [80, 150], [0, 1], Extrapolate.CLAMP),
@@ -365,6 +352,37 @@ export default function UpgradeScreen() {
     price, perMonth, loading,
     executeSubscribe, executeCancel,
   } = useMembershipUpgrade();
+
+  const params = useLocalSearchParams<{ status?: 'success' | 'cancelled'; session_id?: string }>();
+
+  useEffect(() => {
+    // 1. Mobile browser deep link redirection:
+    if (Platform.OS === 'web' && typeof window !== 'undefined' && window.location) {
+      const ua = navigator.userAgent || '';
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+      if (isMobile && params.status) {
+        const schemeUrl = `culturepass://membership/upgrade?status=${params.status}${params.session_id ? `&session_id=${params.session_id}` : ''}`;
+        window.location.href = schemeUrl;
+        return;
+      }
+    }
+
+    // 2. Local redirection/cleanup and haptics/alerts
+    if (params.status === 'success') {
+      void HapticManager.success();
+      queryClient.invalidateQueries({ queryKey: ['membership', userId] });
+      queryClient.invalidateQueries({ queryKey: ['membership-member-count'] });
+      Alert.alert(
+        'Welcome to CulturePass+!',
+        'Your membership is now active. Enjoy early access, cashback rewards, and exclusive perks!'
+      );
+      router.replace('/membership/upgrade');
+    } else if (params.status === 'cancelled') {
+      void HapticManager.medium();
+      Alert.alert('Checkout Cancelled', 'You have cancelled the subscription process.');
+      router.replace('/membership/upgrade');
+    }
+  }, [params.status, params.session_id, userId]);
 
   const { data: introOffer } = useQuery({
     queryKey: ['membership-intro-eligibility'],
@@ -383,18 +401,18 @@ export default function UpgradeScreen() {
   // ── Floating animated header ───────────────────────────────────────────────
   const floatingHeader = (
     <View style={[hdr.wrap, { paddingTop: topInset + 16 }]} pointerEvents="box-none">
-      <Animated.View style={[StyleSheet.absoluteFill, hdr.blurBg, headerAnim]} pointerEvents="none" />
+      <Animated.View style={[StyleSheet.absoluteFill, hdr.blurBg, { borderBottomColor: colors.borderLight }, headerAnim]} pointerEvents="none" />
       <View style={hdr.row}>
         <Pressable
           onPress={() => { membershipHaptic(); handleBack(); }}
-          style={({ pressed }) => [hdr.backBtn, { transform: [{ scale: pressed ? 0.92 : 1 }] }]}
+          style={({ pressed }) => [hdr.backBtn, { backgroundColor: colors.surfaceVariant, borderColor: colors.borderLight, transform: [{ scale: pressed ? 0.92 : 1 }] }]}
           accessibilityRole="button"
           accessibilityLabel="Go back"
           hitSlop={12}
         >
-          <Ionicons name="chevron-back" size={22} color={WHITE} />
+          <Ionicons name="chevron-back" size={22} color={colors.text} />
         </Pressable>
-        <Animated.Text style={[hdr.title, headerTitleAnim]}>
+        <Animated.Text style={[hdr.title, { color: colors.text }, headerTitleAnim]}>
           CulturePass+
         </Animated.Text>
         <View style={{ width: 44 }} />
@@ -414,8 +432,12 @@ export default function UpgradeScreen() {
   // ── Unauthenticated ────────────────────────────────────────────────────────
   if (!isAuthenticated) {
     return (
-      <View style={page.root}>
-        <LinearGradient colors={['#0D0F1E', '#141828', '#0A0C14']} style={StyleSheet.absoluteFill} />
+      <View style={[page.root, { backgroundColor: colors.background }]}>
+        <LinearGradient
+          colors={[`${colors.primary}08`, 'transparent']}
+          style={StyleSheet.absoluteFill}
+          pointerEvents="none"
+        />
         {floatingHeader}
         <Animated.ScrollView
           onScroll={onScroll}
@@ -424,44 +446,48 @@ export default function UpgradeScreen() {
           contentContainerStyle={scrollContentStyle}
         >
           <Animated.View entering={FadeInUp.springify().damping(18)} style={hero.wrap}>
-            <View style={hero.iconRing}>
-              <LinearGradient colors={[GOLD + '30', GOLD + '08']} style={[StyleSheet.absoluteFill, { borderRadius: 56 }]} />
-              <Ionicons name="star" size={52} color={GOLD} />
+            <View style={[hero.iconRing, { borderColor: colors.gold + '50' }]}>
+              <LinearGradient colors={[colors.gold + '30', colors.gold + '08']} style={[StyleSheet.absoluteFill, { borderRadius: 56 }]} />
+              <Ionicons name="star" size={52} color={colors.gold} />
             </View>
-            <Text style={hero.title}>CulturePass+</Text>
-            <View style={hero.badge}>
-              <Text style={hero.badgeText}>PREMIUM MEMBERSHIP</Text>
+            <LuxeText variant="display" style={[hero.title, { color: colors.text }]}>CulturePass+</LuxeText>
+            <View style={[hero.badge, { backgroundColor: colors.gold + '18', borderColor: colors.gold + '40' }]}>
+              <LuxeText variant="badge" style={[hero.badgeText, { color: colors.gold }]}>PREMIUM MEMBERSHIP</LuxeText>
             </View>
-            <Text style={hero.desc}>
+            <LuxeText variant="body" style={[hero.desc, { color: colors.textSecondary }]}>
               Unlock exclusive benefits, earn cashback, and get early access to the experiences that matter most.
-            </Text>
+            </LuxeText>
           </Animated.View>
 
           <View style={page.benefitsGrid}>
             {BENEFITS.slice(0, 4).map((b, i) => (
-              <Animated.View key={b.title} entering={FadeInDown.delay(200 + i * 80)} style={bCard.wrap}>
-                <LinearGradient colors={[b.color + '18', b.color + '06']} style={[StyleSheet.absoluteFill, { borderRadius: 20 }]} />
-                <View style={[bCard.icon, { backgroundColor: b.color + '20' }]}>
-                  <Ionicons name={b.icon} size={22} color={b.color} />
-                </View>
-                <Text style={bCard.title}>{b.title}</Text>
-                <Text style={bCard.desc}>{b.desc}</Text>
+              <Animated.View key={b.title} entering={FadeInDown.delay(200 + i * 80)} style={{ flex: 1, minWidth: '46%' }}>
+                <LuxeCard variant="glass" tone="auto" style={bCard.wrap}>
+                  <View style={[bCard.icon, { backgroundColor: b.color + '20' }]}>
+                    <Ionicons name={b.icon} size={22} color={b.color} />
+                  </View>
+                  <LuxeText variant="bodyMedium" style={[bCard.title, { color: colors.text }]}>{b.title}</LuxeText>
+                  <LuxeText variant="caption" style={[bCard.desc, { color: colors.textSecondary }]}>{b.desc}</LuxeText>
+                </LuxeCard>
               </Animated.View>
             ))}
           </View>
 
           <View style={page.ctaArea}>
-            <Pressable
-              onPress={() => { membershipHaptic(); router.push(routeWithRedirect('/(onboarding)/login', pathname)); }}
-              style={({ pressed }) => [cta.btn, { opacity: pressed ? 0.88 : 1 }]}
-              accessibilityRole="button"
+            <LuxeButton
+              variant="filled"
+              tone="auto"
+              leftIcon="star"
+              fullWidth
+              onPress={() => {
+                membershipHaptic();
+                router.push(routeWithRedirect('/(onboarding)/login', pathname));
+              }}
             >
-              <LinearGradient colors={gradients.culturepassBrand} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={[StyleSheet.absoluteFill, { borderRadius: 32 }]} />
-              <Ionicons name="star" size={20} color={WHITE} />
-              <Text style={cta.text}>Sign in to unlock</Text>
-            </Pressable>
+              Sign in to unlock
+            </LuxeButton>
             <Pressable onPress={() => router.replace('/(tabs)')} style={cta.ghost}>
-              <Text style={cta.ghostText}>Explore as guest</Text>
+              <LuxeText variant="bodyMedium" style={[cta.ghostText, { color: colors.textSecondary }]}>Explore as guest</LuxeText>
             </Pressable>
           </View>
         </Animated.ScrollView>
@@ -472,10 +498,9 @@ export default function UpgradeScreen() {
   // ── Plus member — dedicated member dashboard ───────────────────────────────
   if (isPlus && membership) {
     return (
-      <View style={page.root}>
-        <LinearGradient colors={['#0D0F1E', '#12162A', '#0A0C14']} style={StyleSheet.absoluteFill} />
+      <View style={[page.root, { backgroundColor: colors.background }]}>
         <LinearGradient
-          colors={[GOLD + '12', 'transparent']}
+          colors={[colors.gold + '12', 'transparent']}
           start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 0.4 }}
           style={[StyleSheet.absoluteFill, { top: 0, height: '50%' }]}
           pointerEvents="none"
@@ -494,13 +519,13 @@ export default function UpgradeScreen() {
               <LinearGradient colors={[CultureTokens.teal + '30', CultureTokens.teal + '08']} style={[StyleSheet.absoluteFill, { borderRadius: 56 }]} />
               <Ionicons name="checkmark-circle" size={52} color={CultureTokens.teal} />
             </View>
-            <Text style={hero.title}>CulturePass+</Text>
+            <LuxeText variant="display" style={[hero.title, { color: colors.text }]}>CulturePass+</LuxeText>
             <View style={[hero.badge, { backgroundColor: CultureTokens.teal + '20', borderColor: CultureTokens.teal + '50' }]}>
-              <Text style={[hero.badgeText, { color: CultureTokens.teal }]}>✓  ACTIVE MEMBER</Text>
+              <LuxeText variant="badge" style={[hero.badgeText, { color: CultureTokens.teal }]}>✓  ACTIVE MEMBER</LuxeText>
             </View>
-            <Text style={hero.desc}>
+            <LuxeText variant="body" style={[hero.desc, { color: colors.textSecondary }]}>
               You&apos;re enjoying all CulturePass+ benefits. Thank you for being part of the inner circle.
-            </Text>
+            </LuxeText>
           </Animated.View>
 
           {/* Plan status card */}
@@ -515,91 +540,92 @@ export default function UpgradeScreen() {
 
           {/* Benefits */}
           <Animated.View entering={FadeInDown.delay(200)} style={page.section}>
-            <Text style={page.sectionTitle}>YOUR ACTIVE BENEFITS</Text>
+            <LuxeText variant="badge" style={[page.sectionTitle, { color: colors.textTertiary }]}>YOUR ACTIVE BENEFITS</LuxeText>
             <View style={{ gap: 10 }}>
               {BENEFITS.map((b, i) => (
                 <Animated.View key={b.title} entering={FadeInDown.delay(250 + i * 55)}>
-                  <View style={bRow.wrap}>
-                    <LinearGradient colors={[b.color + '10', 'transparent']} style={[StyleSheet.absoluteFill, { borderRadius: 20 }]} />
+                  <LuxeCard variant="glass" tone="auto" size="sm" style={bRow.wrap}>
                     <View style={[bRow.icon, { backgroundColor: b.color + '20' }]}>
                       <Ionicons name={b.icon} size={24} color={b.color} />
                     </View>
                     <View style={bRow.text}>
-                      <Text style={bRow.title}>{b.title}</Text>
-                      <Text style={bRow.desc}>{b.desc}</Text>
+                      <LuxeText variant="bodyMedium" style={[bRow.title, { color: colors.text }]}>{b.title}</LuxeText>
+                      <LuxeText variant="caption" style={[bRow.desc, { color: colors.textSecondary }]}>{b.desc}</LuxeText>
                     </View>
                     <Ionicons name="checkmark-circle" size={20} color={CultureTokens.teal} />
-                  </View>
+                  </LuxeCard>
                 </Animated.View>
               ))}
             </View>
           </Animated.View>
 
           {/* Quick actions */}
-          <Animated.View entering={FadeInDown.delay(420)} style={actions.group}>
-            <Pressable
-              onPress={() => { membershipHaptic(); router.push('/perks'); }}
-              style={({ pressed }) => [actions.row, { opacity: pressed ? 0.8 : 1 }]}
-              accessibilityRole="button"
-            >
-              <View style={[actions.icon, { backgroundColor: GOLD + '18' }]}>
-                <Ionicons name="gift-outline" size={18} color={GOLD} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={actions.label}>Explore your perks</Text>
-                <Text style={actions.sub}>Members-only deals from top venues</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={16} color={WHITE_40} />
-            </Pressable>
+          <Animated.View entering={FadeInDown.delay(420)}>
+            <LuxeCard variant="glass" tone="auto" size="sm" style={{ padding: 0, marginBottom: 28 }}>
+              <Pressable
+                onPress={() => { membershipHaptic(); router.push('/perks'); }}
+                style={({ pressed }) => [actions.row, { backgroundColor: pressed ? colors.primarySoft : 'transparent' }]}
+                accessibilityRole="button"
+              >
+                <View style={[actions.icon, { backgroundColor: colors.gold + '18' }]}>
+                  <Ionicons name="gift-outline" size={18} color={colors.gold} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <LuxeText variant="bodyMedium" style={[actions.label, { color: colors.text }]}>Explore your perks</LuxeText>
+                  <LuxeText variant="caption" style={{ color: colors.textSecondary }}>Members-only deals from top venues</LuxeText>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={colors.textTertiary} />
+              </Pressable>
 
-            <View style={actions.divider} />
+              <View style={[actions.divider, { backgroundColor: colors.borderLight }]} />
 
-            <Pressable
-              onPress={() => { membershipHaptic(); router.push('/membership'); }}
-              style={({ pressed }) => [actions.row, { opacity: pressed ? 0.8 : 1 }]}
-              accessibilityRole="button"
-            >
-              <View style={[actions.icon, { backgroundColor: WHITE_20 }]}>
-                <Ionicons name="card-outline" size={18} color={WHITE_60} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={actions.label}>Membership hub</Text>
-                <Text style={actions.sub}>View your full membership details</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={16} color={WHITE_40} />
-            </Pressable>
+              <Pressable
+                onPress={() => { membershipHaptic(); router.push('/membership'); }}
+                style={({ pressed }) => [actions.row, { backgroundColor: pressed ? colors.primarySoft : 'transparent' }]}
+                accessibilityRole="button"
+              >
+                <View style={[actions.icon, { backgroundColor: colors.primarySoft }]}>
+                  <Ionicons name="card-outline" size={18} color={colors.primary} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <LuxeText variant="bodyMedium" style={[actions.label, { color: colors.text }]}>Membership hub</LuxeText>
+                  <LuxeText variant="caption" style={{ color: colors.textSecondary }}>View your full membership details</LuxeText>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={colors.textTertiary} />
+              </Pressable>
 
-            <View style={actions.divider} />
+              <View style={[actions.divider, { backgroundColor: colors.borderLight }]} />
 
-            <Pressable
-              onPress={() => {
-                membershipHaptic();
-                Alert.alert(
-                  'Cancel CulturePass+',
-                  'Are you sure? You will keep access until the end of your billing period.',
-                  [
-                    { text: 'Keep Plus', style: 'cancel' },
-                    { text: 'Cancel subscription', style: 'destructive', onPress: executeCancel },
-                  ],
-                );
-              }}
-              style={({ pressed }) => [actions.row, { opacity: pressed ? 0.8 : 1 }]}
-              accessibilityRole="button"
-            >
-              <View style={[actions.icon, { backgroundColor: '#EF444420' }]}>
-                <Ionicons name="close-circle-outline" size={18} color="#EF4444" />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[actions.label, { color: '#EF4444' }]}>Cancel subscription</Text>
-                <Text style={actions.sub}>You keep access until your paid period ends</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={16} color={WHITE_40} />
-            </Pressable>
+              <Pressable
+                onPress={() => {
+                  membershipHaptic();
+                  Alert.alert(
+                    'Cancel CulturePass+',
+                    'Are you sure? You will keep access until the end of your billing period.',
+                    [
+                      { text: 'Keep Plus', style: 'cancel' },
+                      { text: 'Cancel subscription', style: 'destructive', onPress: executeCancel },
+                    ],
+                  );
+                }}
+                style={({ pressed }) => [actions.row, { backgroundColor: pressed ? colors.primarySoft : 'transparent' }]}
+                accessibilityRole="button"
+              >
+                <View style={[actions.icon, { backgroundColor: '#EF444420' }]}>
+                  <Ionicons name="close-circle-outline" size={18} color="#EF4444" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <LuxeText variant="bodyMedium" style={[actions.label, { color: '#EF4444' }]}>Cancel subscription</LuxeText>
+                  <LuxeText variant="caption" style={{ color: colors.textSecondary }}>You keep access until your paid period ends</LuxeText>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={colors.textTertiary} />
+              </Pressable>
+            </LuxeCard>
           </Animated.View>
 
-          <Text style={page.fine}>
+          <LuxeText variant="caption" style={[page.fine, { color: colors.textTertiary }]}>
             Secured by Stripe · Cancel anytime · CulturePass+ is a marketplace membership, not a government service.
-          </Text>
+          </LuxeText>
         </Animated.ScrollView>
       </View>
     );
@@ -607,10 +633,9 @@ export default function UpgradeScreen() {
 
   // ── Non-Plus authenticated — upgrade flow ──────────────────────────────────
   return (
-    <View style={page.root}>
-      <LinearGradient colors={['#0D0F1E', '#12162A', '#0A0C14']} style={StyleSheet.absoluteFill} />
+    <View style={[page.root, { backgroundColor: colors.background }]}>
       <LinearGradient
-        colors={[GOLD + '12', 'transparent']}
+        colors={[colors.gold + '12', 'transparent']}
         start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 0.4 }}
         style={[StyleSheet.absoluteFill, { top: 0, height: '50%' }]}
         pointerEvents="none"
@@ -625,42 +650,43 @@ export default function UpgradeScreen() {
       >
         {/* Hero */}
         <Animated.View entering={FadeInUp.springify().damping(16)} style={hero.wrap}>
-          <View style={hero.iconRing}>
-            <LinearGradient colors={[GOLD + '35', GOLD + '10']} style={[StyleSheet.absoluteFill, { borderRadius: 56 }]} />
-            <Ionicons name="diamond" size={52} color={GOLD} />
+          <View style={[hero.iconRing, { borderColor: colors.gold + '50' }]}>
+            <LinearGradient colors={[colors.gold + '35', colors.gold + '10']} style={[StyleSheet.absoluteFill, { borderRadius: 56 }]} />
+            <Ionicons name="diamond" size={52} color={colors.gold} />
           </View>
-          <Text style={hero.title}>CulturePass+</Text>
-          <View style={hero.badge}>
-            <Text style={hero.badgeText}>PREMIUM MEMBERSHIP</Text>
+          <LuxeText variant="display" style={[hero.title, { color: colors.text }]}>CulturePass+</LuxeText>
+          <View style={[hero.badge, { backgroundColor: colors.gold + '18', borderColor: colors.gold + '40' }]}>
+            <LuxeText variant="badge" style={[hero.badgeText, { color: colors.gold }]}>PREMIUM MEMBERSHIP</LuxeText>
           </View>
-          <Text style={hero.desc}>
+          <LuxeText variant="body" style={[hero.desc, { color: colors.textSecondary }]}>
             {memberCount > 0
               ? `Join ${memberCount.toLocaleString()} cultural explorers already on Plus.`
               : 'Unlock exclusive benefits, earn cashback, and get early access to the best cultural experiences.'}
-          </Text>
+          </LuxeText>
         </Animated.View>
 
         {/* Intro offer banner */}
         {introOffer?.eligible ? (
-          <Animated.View entering={FadeInDown.delay(60)} style={introOfferBanner.wrap}>
-            <LinearGradient colors={[GOLD + '18', GOLD + '05']} style={[StyleSheet.absoluteFill, { borderRadius: 18 }]} />
-            <View style={introOfferBanner.row}>
-              <Ionicons name="pricetag" size={24} color={GOLD} />
-              <View style={{ flex: 1 }}>
-                <Text style={introOfferBanner.title}>{introOffer.headline}</Text>
-                <Text style={introOfferBanner.desc}>{introOffer.detail}</Text>
+          <Animated.View entering={FadeInDown.delay(60)}>
+            <LuxeCard variant="glass" tone="auto" size="sm" style={introOfferBanner.wrap}>
+              <View style={introOfferBanner.row}>
+                <Ionicons name="pricetag" size={24} color={colors.gold} />
+                <View style={{ flex: 1 }}>
+                  <LuxeText variant="bodyMedium" style={[introOfferBanner.title, { color: colors.text }]}>{introOffer.headline}</LuxeText>
+                  <LuxeText variant="caption" style={[introOfferBanner.desc, { color: colors.textSecondary }]}>{introOffer.detail}</LuxeText>
+                </View>
               </View>
-            </View>
+            </LuxeCard>
           </Animated.View>
         ) : null}
 
         {/* Pricing toggle */}
         <Animated.View entering={FadeInDown.delay(150)} style={pricing.wrap}>
-          <View style={pricing.toggle}>
+          <View style={[pricing.toggle, { backgroundColor: colors.surfaceVariant, borderColor: colors.borderLight }]}>
             {(['monthly', 'yearly'] as const).map(period => (
               <Pressable
                 key={period}
-                style={[pricing.tab, billingPeriod === period && pricing.tabActive]}
+                style={[pricing.tab, billingPeriod === period && { backgroundColor: colors.text }]}
                 onPress={() => { membershipHaptic(); setBillingPeriod(period); }}
               >
                 {period === 'yearly' && (
@@ -668,42 +694,40 @@ export default function UpgradeScreen() {
                     <Text style={pricing.savePillText}>SAVE 28%</Text>
                   </View>
                 )}
-                <Text style={[pricing.tabText, billingPeriod === period && pricing.tabTextActive]}>
+                <Text style={[pricing.tabText, { color: colors.textSecondary }, billingPeriod === period && { color: colors.background }]}>
                   {period === 'monthly' ? 'Monthly' : 'Yearly'}
                 </Text>
               </Pressable>
             ))}
           </View>
 
-          <View style={pricing.card}>
-            <LinearGradient colors={[GOLD + '14', GOLD + '04']} style={[StyleSheet.absoluteFill, { borderRadius: 28 }]} />
-            <Text style={pricing.amount}>{price}</Text>
-            <Text style={pricing.period}>
+          <LuxeCard variant="glass" tone="auto" style={pricing.card}>
+            <LuxeText variant="display" style={[pricing.amount, { color: colors.gold }]}>{price}</LuxeText>
+            <LuxeText variant="badge" style={[pricing.period, { color: colors.textTertiary }]}>
               {billingPeriod === 'yearly' ? 'PER YEAR' : 'PER MONTH'}
-            </Text>
+            </LuxeText>
             {billingPeriod === 'yearly' ? (
-              <Text style={pricing.equiv}>{"That's"} just {perMonth} per month</Text>
+              <LuxeText variant="body" style={[pricing.equiv, { color: colors.textSecondary }]}>{"That's"} just {perMonth} per month</LuxeText>
             ) : null}
-          </View>
+          </LuxeCard>
         </Animated.View>
 
         {/* Benefits list */}
         <Animated.View entering={FadeInDown.delay(250)} style={page.section}>
-          <Text style={page.sectionTitle}>WHAT YOU GET</Text>
+          <LuxeText variant="badge" style={[page.sectionTitle, { color: colors.textTertiary }]}>WHAT YOU GET</LuxeText>
           <View style={{ gap: 10 }}>
             {BENEFITS.map((b, i) => (
               <Animated.View key={b.title} entering={FadeInDown.delay(300 + i * 60)}>
-                <View style={bRow.wrap}>
-                  <LinearGradient colors={[b.color + '10', 'transparent']} style={[StyleSheet.absoluteFill, { borderRadius: 20 }]} />
+                <LuxeCard variant="glass" tone="auto" size="sm" style={bRow.wrap}>
                   <View style={[bRow.icon, { backgroundColor: b.color + '20' }]}>
                     <Ionicons name={b.icon} size={24} color={b.color} />
                   </View>
                   <View style={bRow.text}>
-                    <Text style={bRow.title}>{b.title}</Text>
-                    <Text style={bRow.desc}>{b.desc}</Text>
+                    <LuxeText variant="bodyMedium" style={[bRow.title, { color: colors.text }]}>{b.title}</LuxeText>
+                    <LuxeText variant="caption" style={[bRow.desc, { color: colors.textSecondary }]}>{b.desc}</LuxeText>
                   </View>
-                  <Ionicons name="lock-closed" size={15} color={WHITE_40} />
-                </View>
+                  <Ionicons name="lock-closed" size={15} color={colors.textTertiary} />
+                </LuxeCard>
               </Animated.View>
             ))}
           </View>
@@ -716,30 +740,23 @@ export default function UpgradeScreen() {
 
         {/* CTA */}
         <Animated.View entering={FadeInDown.delay(520)} style={page.ctaArea}>
-          <Pressable
-            onPress={() => { membershipHaptic(); executeSubscribe(); }}
+          <LuxeButton
+            variant="filled"
+            tone="auto"
+            leftIcon="diamond"
+            fullWidth
+            loading={loading}
             disabled={loading}
-            style={({ pressed }) => [cta.btn, { opacity: loading || pressed ? 0.82 : 1 }]}
-            accessibilityRole="button"
-            accessibilityLabel="Unlock CulturePass+ now"
+            onPress={() => {
+              membershipHaptic();
+              executeSubscribe();
+            }}
           >
-            <LinearGradient
-              colors={gradients.culturepassBrand}
-              start={{ x: 0, y: 0.2 }} end={{ x: 1, y: 0.8 }}
-              style={[StyleSheet.absoluteFill, { borderRadius: 32 }]}
-            />
-            {loading ? (
-              <ActivityIndicator size="small" color={WHITE} />
-            ) : (
-              <>
-                <Ionicons name="diamond" size={20} color={WHITE} />
-                <Text style={cta.text}>Unlock CulturePass+</Text>
-              </>
-            )}
-          </Pressable>
-          <Text style={cta.finePrint}>
+            Unlock CulturePass+
+          </LuxeButton>
+          <LuxeText variant="caption" style={[cta.finePrint, { color: colors.textTertiary }]}>
             Secured by Stripe · Cancel anytime · No hidden fees
-          </Text>
+          </LuxeText>
         </Animated.View>
       </Animated.ScrollView>
     </View>
@@ -749,36 +766,36 @@ export default function UpgradeScreen() {
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const page = StyleSheet.create({
-  root: { flex: 1, backgroundColor: DARK_BG },
+  root: { flex: 1 },
   content: { paddingHorizontal: 20 },
   section: { marginBottom: 32 },
   sectionTitle: {
     fontSize: 11, fontFamily: FontFamily.bold,
-    color: WHITE_40, letterSpacing: 2,
+    letterSpacing: 2,
     marginBottom: 14, textAlign: 'center',
   },
   benefitsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 40 },
   ctaArea: { marginBottom: 16, gap: 10 },
   fine: {
     fontSize: 11, fontFamily: FontFamily.regular,
-    color: WHITE_40, textAlign: 'center', lineHeight: 16,
+    textAlign: 'center', lineHeight: 16,
     paddingHorizontal: 8, marginTop: 8,
   },
 });
 
 const hdr = StyleSheet.create({
   wrap: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 100 },
-  blurBg: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: DARK_BORDER },
+  blurBg: { borderBottomWidth: StyleSheet.hairlineWidth },
   row: {
     flexDirection: 'row', alignItems: 'center',
     justifyContent: 'space-between', paddingHorizontal: 16, height: 56,
   },
   backBtn: {
     width: 40, height: 40, borderRadius: 20,
-    backgroundColor: WHITE_20, borderWidth: 1, borderColor: DARK_BORDER,
+    borderWidth: 1,
     alignItems: 'center', justifyContent: 'center',
   },
-  title: { fontSize: 17, fontFamily: FontFamily.bold, color: WHITE, letterSpacing: -0.2 },
+  title: { fontSize: 17, fontFamily: FontFamily.bold, letterSpacing: -0.2 },
 });
 
 const hero = StyleSheet.create({
@@ -786,19 +803,19 @@ const hero = StyleSheet.create({
   iconRing: {
     width: 112, height: 112, borderRadius: 56,
     alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1.5, borderColor: GOLD_DIM,
+    borderWidth: 1.5,
     marginBottom: 28, overflow: 'hidden',
   },
-  title: { fontSize: 40, fontFamily: FontFamily.bold, color: WHITE, letterSpacing: -1.5, textAlign: 'center' },
+  title: { fontSize: 40, fontFamily: FontFamily.bold, letterSpacing: -1.5, textAlign: 'center' },
   badge: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: GOLD_DIM, borderWidth: 1, borderColor: GOLD + '50',
+    borderWidth: 1,
     paddingHorizontal: 16, paddingVertical: 6,
     borderRadius: 999, marginTop: 12,
   },
-  badgeText: { fontSize: 11, fontFamily: FontFamily.bold, color: GOLD, letterSpacing: 1.2 },
+  badgeText: { fontSize: 11, fontFamily: FontFamily.bold, letterSpacing: 1.2 },
   desc: {
-    fontSize: 15, fontFamily: FontFamily.regular, color: WHITE_60,
+    fontSize: 15, fontFamily: FontFamily.regular,
     textAlign: 'center', lineHeight: 23, marginTop: 18, paddingHorizontal: 8,
   },
 });
@@ -806,14 +823,12 @@ const hero = StyleSheet.create({
 const pricing = StyleSheet.create({
   wrap: { marginBottom: 36 },
   toggle: {
-    flexDirection: 'row', backgroundColor: WHITE_20,
+    flexDirection: 'row',
     borderRadius: 32, padding: 5, marginBottom: 20,
-    borderWidth: 1, borderColor: DARK_BORDER,
+    borderWidth: 1,
   },
   tab: { flex: 1, paddingVertical: 13, alignItems: 'center', borderRadius: 28, justifyContent: 'center' },
-  tabActive: { backgroundColor: WHITE },
-  tabText: { fontSize: 15, fontFamily: FontFamily.bold, color: WHITE_60 },
-  tabTextActive: { color: DARK_BG },
+  tabText: { fontSize: 15, fontFamily: FontFamily.bold },
   savePill: {
     position: 'absolute', top: -10, right: 8,
     backgroundColor: CultureTokens.teal,
@@ -822,67 +837,53 @@ const pricing = StyleSheet.create({
   savePillText: { fontSize: 9, fontFamily: FontFamily.bold, color: WHITE, letterSpacing: 0.5 },
   card: {
     alignItems: 'center', padding: 36,
-    borderRadius: 28, borderWidth: 1, borderColor: GOLD + '25', overflow: 'hidden',
   },
-  amount: { fontSize: 68, fontFamily: FontFamily.bold, color: GOLD, letterSpacing: -3, lineHeight: 72 },
-  period: { fontSize: 13, fontFamily: FontFamily.bold, color: WHITE_40, letterSpacing: 2, marginTop: -4 },
-  equiv: { fontSize: 14, fontFamily: FontFamily.medium, color: WHITE_60, marginTop: 14 },
+  amount: { fontSize: 68, fontFamily: FontFamily.bold, letterSpacing: -3, lineHeight: 72 },
+  period: { fontSize: 13, fontFamily: FontFamily.bold, letterSpacing: 2, marginTop: -4 },
+  equiv: { fontSize: 14, fontFamily: FontFamily.medium, marginTop: 14 },
 });
 
 // Benefit card (2-column grid — unauthenticated view)
 const bCard = StyleSheet.create({
   wrap: {
-    flex: 1, minWidth: '46%', padding: 18,
-    borderRadius: 20, borderWidth: 1, borderColor: DARK_BORDER,
-    overflow: 'hidden', gap: 8,
+    gap: 8,
   },
   icon: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  title: { fontSize: 15, fontFamily: FontFamily.bold, color: WHITE, letterSpacing: -0.2 },
-  desc: { fontSize: 12, fontFamily: FontFamily.regular, color: WHITE_60, lineHeight: 17 },
+  title: { fontSize: 15, fontFamily: FontFamily.bold, letterSpacing: -0.2 },
+  desc: { fontSize: 12, fontFamily: FontFamily.regular, lineHeight: 17 },
 });
 
 // Benefit row (full-width list)
 const bRow = StyleSheet.create({
   wrap: {
     flexDirection: 'row', alignItems: 'center',
-    padding: 18, gap: 16, borderRadius: 20,
-    borderWidth: 1, borderColor: DARK_BORDER, overflow: 'hidden',
+    gap: 16,
   },
   icon: { width: 52, height: 52, borderRadius: 16, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   text: { flex: 1 },
-  title: { fontSize: 16, fontFamily: FontFamily.bold, color: WHITE, letterSpacing: -0.2 },
-  desc: { fontSize: 13, fontFamily: FontFamily.regular, color: WHITE_60, lineHeight: 19, marginTop: 3 },
+  title: { fontSize: 16, fontFamily: FontFamily.bold, letterSpacing: -0.2 },
+  desc: { fontSize: 13, fontFamily: FontFamily.regular, lineHeight: 19, marginTop: 3 },
 });
 
 // Action rows (Plus member view)
 const actions = StyleSheet.create({
-  group: {
-    borderRadius: 20, borderWidth: 1, borderColor: DARK_BORDER,
-    overflow: 'hidden', marginBottom: 28,
-  },
   row: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 16, paddingVertical: 15 },
   icon: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  label: { fontSize: 15, fontFamily: FontFamily.medium, color: WHITE },
-  sub: { fontSize: 12, fontFamily: FontFamily.regular, color: WHITE_40, marginTop: 1 },
-  divider: { height: 1, backgroundColor: DARK_BORDER, marginHorizontal: 16 },
+  label: { fontSize: 15, fontFamily: FontFamily.medium },
+  sub: { fontSize: 12, fontFamily: FontFamily.regular, marginTop: 1 },
+  divider: { height: 1, marginHorizontal: 16 },
 });
 
 const cta = StyleSheet.create({
-  btn: {
-    height: 60, borderRadius: 32, flexDirection: 'row',
-    alignItems: 'center', justifyContent: 'center', gap: 10, overflow: 'hidden',
-  },
-  text: { fontSize: 18, fontFamily: FontFamily.bold, color: WHITE, letterSpacing: -0.2 },
   ghost: { alignItems: 'center', paddingVertical: 16 },
-  ghostText: { fontSize: 14, fontFamily: FontFamily.medium, color: WHITE_40 },
-  finePrint: { fontSize: 12, fontFamily: FontFamily.regular, color: WHITE_40, textAlign: 'center' },
+  ghostText: { fontSize: 14, fontFamily: FontFamily.medium },
+  finePrint: { fontSize: 12, fontFamily: FontFamily.regular, textAlign: 'center' },
 });
 
 const introOfferBanner = StyleSheet.create({
   wrap: {
-    marginHorizontal: 4, marginBottom: 18,
-    padding: 16, borderRadius: 18, borderWidth: 1,
-    borderColor: GOLD + '35', overflow: 'hidden',
+    marginHorizontal: 4,
+    marginBottom: 18,
   },
   row: { flexDirection: 'row', gap: 12, alignItems: 'flex-start' },
   title: { fontSize: 16, fontFamily: FontFamily.bold, color: WHITE },

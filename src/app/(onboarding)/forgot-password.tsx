@@ -154,13 +154,13 @@ export default function ForgotPasswordScreen() {
                   <View
                     style={[
                       styles.iconWrapper,
-                      { backgroundColor: luxeDark.primaryContainer, borderColor: 'transparent' },
+                      { backgroundColor: colors.primaryLight, borderColor: 'transparent' },
                     ]}
                   >
-                    <Ionicons name="lock-open-outline" size={28} color={luxeDark.onPrimaryContainer} />
+                    <Ionicons name="lock-open-outline" size={28} color={colors.primaryDark} />
                   </View>
-                  <LuxeText variant="display" style={[styles.title, { color: luxeDark.text }]}>Reset Password</LuxeText>
-                  <LuxeText variant="body" style={[styles.subtitle, { color: luxeDark.textSecondary }]}>
+                  <LuxeText variant="display" style={[styles.title, { color: colors.text }]}>Reset Password</LuxeText>
+                  <LuxeText variant="body" style={[styles.subtitle, { color: colors.textSecondary }]}>
                     Enter your account email and we&apos;ll send a reset link straight to your inbox.
                   </LuxeText>
                 </View>
@@ -182,6 +182,7 @@ export default function ForgotPasswordScreen() {
 
                   <LuxeButton
                     variant="filled"
+                    tone="auto"
                     rightIcon="send"
                     loading={loading}
                     disabled={!isValid || loading}
@@ -199,8 +200,8 @@ export default function ForgotPasswordScreen() {
                   accessibilityRole="link"
                   accessibilityLabel="Back to Sign In"
                 >
-                  <Ionicons name="chevron-back" size={14} color={luxeDark.primary} />
-                  <LuxeText variant="bodyMedium" style={{ color: luxeDark.primary }}>Back to Sign In</LuxeText>
+                  <Ionicons name="chevron-back" size={14} color={colors.primary} />
+                  <LuxeText variant="bodyMedium" style={{ color: colors.primary }}>Back to Sign In</LuxeText>
                 </Pressable>
               </>
             ) : (
@@ -210,21 +211,22 @@ export default function ForgotPasswordScreen() {
                   <CulturePassWordmark size="md" showSuffix={false} />
                 </View>
 
-                <View style={[styles.successIconWrap, { backgroundColor: luxeDark.emerald + '20', borderColor: 'transparent' }]}>
-                  <Ionicons name="checkmark-circle" size={40} color={luxeDark.emerald} />
+                <View style={[styles.successIconWrap, { backgroundColor: colors.success + '20', borderColor: 'transparent' }]}>
+                  <Ionicons name="checkmark-circle" size={40} color={colors.success} />
                 </View>
 
-                <LuxeText variant="display" style={[styles.successTitle, { color: luxeDark.text }]}>Check Your Email</LuxeText>
-                <LuxeText variant="body" style={[styles.successSub, { color: luxeDark.textSecondary }]}>
+                <LuxeText variant="display" style={[styles.successTitle, { color: colors.text }]}>Check Your Email</LuxeText>
+                <LuxeText variant="body" style={[styles.successSub, { color: colors.textSecondary }]}>
                   We&apos;ve sent a reset link to:
                 </LuxeText>
-                <LuxeText variant="title3" style={[styles.emailDisplay, { color: luxeDark.accent }]}>{email}</LuxeText>
-                <LuxeText variant="caption" style={[styles.successHint, { color: luxeDark.textTertiary }]}>
+                <LuxeText variant="title3" style={[styles.emailDisplay, { color: colors.accent }]}>{email}</LuxeText>
+                <LuxeText variant="caption" style={[styles.successHint, { color: colors.textTertiary }]}>
                   If you don&apos;t see it, check your spam folder. The link expires in 24 hours.
                 </LuxeText>
 
                 <LuxeButton
                   variant="filled"
+                  tone="auto"
                   leftIcon="chevron-back"
                   onPress={() => router.replace('/(onboarding)/login')}
                   style={[styles.submitBtn, { marginTop: Spacing.lg }]}
@@ -240,9 +242,9 @@ export default function ForgotPasswordScreen() {
                   accessibilityLabel="Resend reset email"
                   disabled={loading}
                 >
-                  <LuxeText variant="body" style={{ color: luxeDark.textSecondary, textAlign: 'center' }}>
+                  <LuxeText variant="body" style={{ color: colors.textSecondary, textAlign: 'center' }}>
                     Didn&apos;t get it?{' '}
-                    <LuxeText variant="bodyMedium" style={{ color: luxeDark.primary }}>Resend</LuxeText>
+                    <LuxeText variant="bodyMedium" style={{ color: colors.primary }}>Resend</LuxeText>
                   </LuxeText>
                 </Pressable>
               </View>

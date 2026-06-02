@@ -20,6 +20,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useIsDark } from '@/hooks/useColors';
 
 import {
   Luxe,
@@ -50,6 +51,7 @@ interface LuxeButtonProps {
   accessibilityLabel?: string;
   accessibilityRole?: 'button' | 'link' | 'image' | 'text' | 'none';
   gradientColors?: [string, string, ...string[]];
+  tone?: 'auto' | 'light' | 'dark';
 }
 
 const sizeTokens = {
@@ -133,13 +135,28 @@ export function LuxeButton({
   children,
   onPress,
   gradientColors,
+  tone = 'auto',
   ...rest
 }: LuxeButtonProps) {
   const isDisabled = disabled || loading;
   const tokens = sizeTokens[size];
-  const isDark = true; // For now default to dark (premium experience). Later wire to useIsDark()
+  const systemIsDark = useIsDark();
+  const isDark = tone === 'auto' ? systemIsDark : tone === 'dark';
 
   const v = getVariantStyles(variant, isDark);
+
+  // Accessible contrast-guaranteed disabled colors
+  const disabledBg = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)';
+  const disabledText = isDark ? 'rgba(255, 255, 255, 0.38)' : 'rgba(0, 0, 0, 0.38)';
+  const disabledBorder = isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.12)';
+
+  const buttonTextColor = isDisabled ? disabledText : v.text;
+  const buttonBgColor = isDisabled 
+    ? (variant === 'outlined' ? 'transparent' : disabledBg)
+    : (v.isGradient || gradientColors ? 'transparent' : v.background);
+  const buttonBorderColor = isDisabled
+    ? (variant === 'outlined' ? disabledBorder : 'transparent')
+    : (variant === 'outlined' ? v.border : 'transparent');
 
   const scale = useSharedValue(1);
   const opacity = useSharedValue(1);
@@ -177,14 +194,14 @@ export function LuxeButton({
       {loading ? (
         <ActivityIndicator
           size="small"
-          color={v.text}
+          color={buttonTextColor}
           style={{ marginRight: leftIcon || rightIcon ? 8 : 0 }}
         />
       ) : leftIcon ? (
         <Ionicons
           name={leftIcon}
           size={tokens.iconSize}
-          color={v.text}
+          color={buttonTextColor}
           style={{ marginRight: 8 }}
         />
       ) : null}
@@ -194,7 +211,7 @@ export function LuxeButton({
           Luxe.typography.styles.bodyMedium,
           {
             fontSize: tokens.fontSize,
-            color: v.text,
+            color: buttonTextColor,
             fontWeight: '600',
             letterSpacing: 0.2,
           },
@@ -208,14 +225,14 @@ export function LuxeButton({
         <Ionicons
           name={rightIcon}
           size={tokens.iconSize}
-          color={v.text}
+          color={buttonTextColor}
           style={{ marginLeft: 8 }}
         />
       )}
     </View>
   );
 
-  const isGradient = v.isGradient || !!gradientColors;
+  const isGradient = !isDisabled && (v.isGradient || !!gradientColors);
   const finalGradientColors = gradientColors ?? v.gradient ?? [TERRACOTTA_GLOW, DEEP_SAFFRON];
 
   const buttonStyle = [
@@ -223,11 +240,10 @@ export function LuxeButton({
     {
       height: tokens.height,
       paddingHorizontal: tokens.paddingH,
-      backgroundColor: isGradient ? 'transparent' : v.background,
+      backgroundColor: buttonBgColor,
       borderWidth: variant === 'outlined' ? 1.5 : 0,
-      borderColor: v.border,
+      borderColor: buttonBorderColor,
       width: fullWidth ? '100%' : undefined,
-      opacity: isDisabled ? 0.5 : 1,
     },
     style,
   ];

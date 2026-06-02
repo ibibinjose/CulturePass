@@ -11,7 +11,7 @@
  * - Clean, standard size fields and premium action buttons
  */
 
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -54,9 +54,14 @@ import Animated, {
 } from 'react-native-reanimated';
 
 const CARD_WIDTH_FIXED = 330;
-const CARD_HEIGHT = 460;
-const QR_SIZE_FIXED = 150;
-const AVATAR_SIZE = 60;
+const CARD_HEIGHT_LANDSCAPE = 210;
+const CARD_HEIGHT_VERTICAL = 440;
+
+const QR_SIZE_LANDSCAPE = 84;
+const QR_SIZE_VERTICAL = 120;
+
+const AVATAR_SIZE_LANDSCAPE = 44;
+const AVATAR_SIZE_VERTICAL = 64;
 
 function capitalize(s: string) {
   return s.charAt(0).toUpperCase() + s.slice(1);
@@ -153,13 +158,18 @@ export default function QRScreen() {
   const topInset = safeInsets.top;
   const bottomInset = safeInsets.bottom;
   const [copied, setCopied] = useState(false);
+  
+  const cardTextColor = '#0B0F19';
+  const cardSecondaryTextColor = '#4B5563';
+  const cardTertiaryTextColor = '#9CA3AF';
 
   // Better responsive card: elegant fixed on mobile, slightly larger premium on desktop (consistent with web sidebar layouts)
   const cardWidth = Math.min(
     screenWidth - (isDesktop ? 80 : 32),
     isDesktop ? 360 : CARD_WIDTH_FIXED
   );
-  const qrSize = Math.min(cardWidth - 84, isDesktop ? 170 : QR_SIZE_FIXED);
+  const qrSizeLandscape = Math.min(cardWidth - 84, isDesktop ? 96 : QR_SIZE_LANDSCAPE);
+  const qrSizeVertical = Math.min(cardWidth - 84, isDesktop ? 140 : QR_SIZE_VERTICAL);
 
   const { userId: authUserId, isRestoring } = useAuth();
   const { data: user, isPending: userPending } = useQuery<User>({
@@ -240,53 +250,41 @@ export default function QRScreen() {
     transform: [{ translateX: blob2X.value }, { translateY: blob2Y.value }],
   }));
 
-  // Reanimated Card Flipping State
-  const [isFaceSide, setIsFaceSide] = useState(true);
-  const isFlipped = useSharedValue(0);
+  // Holographic shimmer and spring scale animations (Tactile Apple/Jony Ive feel)
+  const cardScale = useSharedValue(1);
+  const shimmerX = useSharedValue(-150);
 
-  const toggleFlip = () => {
-    if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    }
-    const target = isFlipped.value === 0 ? 1 : 0;
-    isFlipped.value = withSpring(target, {
-      damping: 14,
-      stiffness: 80,
-    });
-    setIsFaceSide(target === 0);
+  const triggerShimmer = useCallback(() => {
+    shimmerX.value = -150;
+    shimmerX.value = withTiming(350, { duration: 1000 });
+  }, [shimmerX]);
+
+  useEffect(() => {
+    triggerShimmer();
+  }, [triggerShimmer]);
+
+  const cardAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: cardScale.value }],
+  }));
+
+  const shimmerStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: shimmerX.value }],
+  }));
+
+  const handlePressIn = () => {
+    cardScale.value = withSpring(0.97, { damping: 12, stiffness: 100 });
   };
 
-  const frontStyle = useAnimatedStyle(() => {
-    const spin = isFlipped.value * 180;
-    return {
-      transform: [
-        { perspective: 1200 },
-        { rotateY: `${spin}deg` },
-      ],
-      opacity: isFlipped.value > 0.5 ? 0 : 1,
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-    };
-  });
+  const handlePressOut = () => {
+    cardScale.value = withSpring(1, { damping: 12, stiffness: 100 });
+  };
 
-  const backStyle = useAnimatedStyle(() => {
-    const spin = (isFlipped.value * 180) + 180;
-    return {
-      transform: [
-        { perspective: 1200 },
-        { rotateY: `${spin}deg` },
-      ],
-      opacity: isFlipped.value > 0.5 ? 1 : 0,
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-    };
-  });
+  const handlePress = () => {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    triggerShimmer();
+  };
 
   const showAppleWallet = useMemo(() => {
     if (Platform.OS === 'ios') return true;
@@ -321,6 +319,18 @@ export default function QRScreen() {
     setTimeout(() => setCopied(false), 2200);
   };
 
+  const handlePrint = () => {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      Share.share({
+        message: `CulturePass ID: ${name} (${cpid}). Profile: ${siteUrl(`/u/${username}`)}`,
+        title: 'Print CulturePass ID',
+      });
+    } else {
+      window.print();
+    }
+  };
+
   return (
     <AuthGuard
       icon="qr-code-outline"
@@ -328,6 +338,46 @@ export default function QRScreen() {
       message="Sign in to view and share your CulturePass Digital ID — your business card and conference badge."
     >
       <View style={s.root}>
+        {/* Dynamic media print-friendly style injection (React Native Web compliant) */}
+        {Platform.OS === 'web' && React.createElement('style', null, `
+          @media print {
+            body {
+              background-color: #ffffff !important;
+            }
+            body * {
+              visibility: hidden !important;
+            }
+            #print-badge-area, #print-badge-area * {
+              visibility: visible !important;
+            }
+            #print-badge-area {
+              position: absolute !important;
+              left: 50% !important;
+              top: 5% !important;
+              transform: translateX(-50%) scale(1.0) !important;
+              width: 330px !important;
+              margin: 0 !important;
+              box-shadow: none !important;
+              background: transparent !important;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
+            #card-1, #card-2 {
+              border: 1px solid #888 !important;
+              background-color: #ffffff !important;
+              border-radius: 20px !important;
+              box-shadow: none !important;
+            }
+            #heading-1, #heading-2 {
+              display: none !important;
+            }
+            #print-spacer {
+              height: 30px !important;
+              display: block !important;
+            }
+          }
+        `)}
+
         <LinearGradient
           colors={gradients.midnight}
           style={StyleSheet.absoluteFill}
@@ -366,7 +416,12 @@ export default function QRScreen() {
         </View>
 
         <AppHeaderBar
-          title="CulturePass"
+          title={
+            <Text style={{ fontSize: 19, fontFamily: FontFamily.bold }}>
+              <Text style={{ color: '#FF3B30' }}>Culture</Text>
+              <Text style={{ color: '#34C759' }}>Pass</Text>
+            </Text>
+          }
           subtitle="Add to Wallet • Digital Member ID"
           backFallback="/(tabs)/my-space"
           topInset={topInset}
@@ -387,8 +442,9 @@ export default function QRScreen() {
           <PageContainer compact noTopPadding>
           {isLoading ? (
             <View style={{ gap: 14, alignItems: 'center', paddingTop: 20 }}>
-              <Skeleton width={cardWidth} height={CARD_HEIGHT} borderRadius={24} />
-              <View style={{ height: 46 }} />
+              <Skeleton width={cardWidth} height={CARD_HEIGHT_LANDSCAPE} borderRadius={24} />
+              <Skeleton width={cardWidth} height={CARD_HEIGHT_VERTICAL} borderRadius={24} />
+              <View style={{ height: 26 }} />
               <View style={{ flexDirection: 'row', gap: 10, width: cardWidth }}>
                 <Skeleton width="32%" height={66} borderRadius={14} />
                 <Skeleton width="32%" height={66} borderRadius={14} />
@@ -397,118 +453,268 @@ export default function QRScreen() {
             </View>
           ) : (
             <>
-              {/* ========== WALLET-FIRST REDESIGN: Hero Preview + Primary Save CTAs ========== */}
-              {/* Interactive visual preview (your CulturePass Member Pass) */}
+              {/* ========== WALLET-FIRST REDESIGN: Dual-Card Previews & Wallet Actions ========== */}
               <View style={{ alignItems: 'center', marginBottom: 12 }}>
-                <Text style={[s.walletHeroLabel, { color: colors.textTertiary }]}>YOUR CULTUREPASS DIGITAL ID</Text>
-                <Text style={[s.walletHeroSub, { color: cardTheme.accent }]}>{tierConf.label.toUpperCase()} MEMBER PASS</Text>
+                <Text style={[s.walletHeroLabel, { color: colors.textTertiary }]}>YOUR CULTUREPASS DIGITAL PASSES</Text>
+                <Text style={[s.walletHeroSub, { color: '#009CDE' }]}>
+                  {tierConf.label.toUpperCase()} MEMBER PASSES
+                </Text>
               </View>
 
-              {/* Compact but beautiful preview card (tap to flip for details) */}
-              <Pressable
-                onPress={toggleFlip}
-                style={[s.flipCardContainer, { width: cardWidth, marginBottom: 8 }]}
-                accessibilityRole="button"
-                accessibilityLabel={isFaceSide ? 'Preview your ID card — tap to flip' : 'Flip back to front'}
+              {/* Both printable/wallet cards grouped in the print container */}
+              <View
+                id="print-badge-area"
+                nativeID="print-badge-area"
+                style={[s.printBadgeArea, { width: cardWidth }]}
               >
-                <Animated.View style={[s.identityCardWrap, { width: cardWidth }, frontStyle]} pointerEvents={isFaceSide ? 'auto' : 'none'}>
-                  <LinearGradient
-                    colors={cardTheme.cardGradients}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={[s.identityCard, { borderColor: cardTheme.border }]}
-                  >
-                    <View style={s.passHeader}>
-                      <View style={s.passHeaderContent}>
-                        <View style={s.chipBlock}>
-                          <View style={[s.emvChip, { backgroundColor: cardTheme.chipColor, borderColor: cardTheme.chipBorder }]}>
-                            <View style={[s.emvLineHorizontal, { backgroundColor: cardTheme.chipBorder }]} />
-                            <View style={[s.emvLineVertical, { backgroundColor: cardTheme.chipBorder }]} />
-                            <View style={[s.emvInnerChip, { borderColor: cardTheme.chipBorder }]} />
-                          </View>
-                          <Ionicons name="wifi" size={14} color="rgba(255,255,255,0.25)" style={{ transform: [{ rotate: '90deg' }], marginLeft: 2 }} />
-                        </View>
-                        <View style={s.passHeaderRight}>
-                          <Text style={[s.passType, { color: cardTheme.text }]}>MEMBER PASS</Text>
-                          <Text style={[s.passTier, { color: cardTheme.accent }]}>{tierConf.label.toUpperCase()}</Text>
-                        </View>
-                      </View>
-                    </View>
+                {/* CARD 1: Landscape Business Pass */}
+                <Text style={s.cardHeadingLabel}>1. DIGITAL BUSINESS PASS</Text>
+                <Pressable
+                  onPressIn={handlePressIn}
+                  onPressOut={handlePressOut}
+                  onPress={handlePress}
+                  style={{ width: cardWidth, marginBottom: 20 }}
+                  accessibilityRole="button"
+                  accessibilityLabel="Digital landscape business card. Tap for shimmer effect."
+                >
+                  <Animated.View style={[{ width: cardWidth }, cardAnimatedStyle]}>
+                    <View
+                      style={[
+                        s.identityCard,
+                        {
+                          width: cardWidth,
+                          height: CARD_HEIGHT_LANDSCAPE,
+                          backgroundColor: '#FFFFFF',
+                          borderColor: '#E5E7EB',
+                        },
+                      ]}
+                    >
+                      {/* Diagonal light specular reflection overlay */}
+                      <LinearGradient
+                        colors={['rgba(255, 255, 255, 0.12)', 'rgba(255, 255, 255, 0.02)', 'transparent']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={StyleSheet.absoluteFill}
+                        pointerEvents="none"
+                      />
 
-                    <View style={s.passBody}>
-                      <View style={s.passUserRow}>
-                        <View style={s.passAvatarWrap}>
-                          {avatarUrl ? (
-                            <Image source={{ uri: avatarUrl }} style={s.passAvatar} contentFit="cover" />
-                          ) : (
-                            <View style={[s.passAvatarFallback, { backgroundColor: cardTheme.accent + '25', borderColor: cardTheme.border }]}>
-                              <Text style={[s.passAvatarInitials, { color: cardTheme.text }]}>{initials}</Text>
+                      {/* Interactive holographic light reflection shimmer effect */}
+                      <Animated.View style={[StyleSheet.absoluteFill, shimmerStyle, { width: '50%' }]} pointerEvents="none">
+                        <LinearGradient
+                          colors={['transparent', 'rgba(255, 255, 255, 0.06)', 'rgba(255, 255, 255, 0.22)', 'rgba(255, 255, 255, 0.06)', 'transparent']}
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 1, y: 0 }}
+                          style={StyleSheet.absoluteFill}
+                        />
+                      </Animated.View>
+
+                      {/* Card Content Wrapper */}
+                      <View style={s.cardInner}>
+                        {/* Top Bar: Title & Tier */}
+                        <View style={s.passHeaderContent}>
+                          <Text style={s.passType}>
+                            <Text style={{ color: '#FF3B30' }}>CULTURE</Text>
+                            <Text style={{ color: '#34C759' }}>PASS</Text>
+                            <Text style={{ color: '#009CDE' }}> ID</Text>
+                          </Text>
+                          <Text style={[s.passTier, { color: '#009CDE' }]}>
+                            {tierConf.label.toUpperCase()}
+                          </Text>
+                        </View>
+
+                        {/* Middle Section (Horizontal Layout) */}
+                        <View style={s.passMiddle}>
+                          {/* Left Column: User details + NFC indicator */}
+                          <View style={s.leftCol}>
+                            <View style={s.passUserRow}>
+                              <View style={[s.passAvatarWrap, { borderColor: '#E5E7EB' }]}>
+                                {avatarUrl ? (
+                                  <Image source={{ uri: avatarUrl }} style={s.passAvatar} contentFit="cover" />
+                                ) : (
+                                  <View style={[s.passAvatarFallback, { backgroundColor: '#F3F4F6', borderColor: 'transparent' }]}>
+                                    <Text style={[s.passAvatarInitials, { color: cardTextColor }]}>{initials}</Text>
+                                  </View>
+                                )}
+                              </View>
+                              <View style={s.passUserInfo}>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                                  <Text style={[s.passName, { color: cardTextColor }]} numberOfLines={1}>
+                                    {name}
+                                  </Text>
+                                  {(user as any)?.isVerified && <Ionicons name="checkmark-circle" size={12} color="#009CDE" />}
+                                </View>
+                                <Text style={[s.passHandle, { color: cardSecondaryTextColor }]}>
+                                  @{username}
+                                </Text>
+                              </View>
                             </View>
-                          )}
-                        </View>
-                        <View style={s.passUserInfo}>
-                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                            <Text style={[s.passName, { color: cardTheme.text }]} numberOfLines={1}>{name}</Text>
-                            {(user as any)?.isVerified && <Ionicons name="checkmark-circle" size={13} color={cardTheme.accent} />}
+
+                            {/* NFC Wave indicator at bottom-left */}
+                            <View style={s.nfcLeftCol}>
+                              <Ionicons name="wifi" size={14} color={cardSecondaryTextColor} style={{ transform: [{ rotate: '90deg' }] }} />
+                              <Text style={[s.nfcTextCol, { color: cardSecondaryTextColor }]}>
+                                NFC PASS ACTIVE
+                              </Text>
+                            </View>
                           </View>
-                          <Text style={[s.passHandle, { color: 'rgba(255,255,255,0.6)' }]}>@{username}</Text>
+
+                          {/* Right Column: QR Code + Monospace CPID */}
+                          <View style={s.rightCol}>
+                            <View style={s.qrWhiteBackground}>
+                              <QRCode value={qrValue} size={qrSizeLandscape} color="#000000" backgroundColor="#FFFFFF" ecl="H" />
+                            </View>
+                            <Pressable onPress={handleCopy} style={s.cpidMonospaceContainer} hitSlop={8}>
+                              <Text style={[s.cpidMonospaceText, { color: cardTextColor }]}>
+                                {cpid.slice(0, 3)}-{cpid.slice(3)}
+                              </Text>
+                              <Ionicons name={copied ? 'checkmark' : 'copy-outline'} size={11} color={copied ? '#30D158' : '#9CA3AF'} />
+                            </Pressable>
+                          </View>
+                        </View>
+
+                        {/* Bottom Secure Banner */}
+                        <View style={s.cardFooterBanner}>
+                          <Ionicons name="lock-closed-outline" size={10} color={cardTertiaryTextColor} />
+                          <Text style={[s.cardFooterBannerText, { color: cardTertiaryTextColor }]}>
+                            WALLET READY • iOS / ANDROID COMPATIBLE
+                          </Text>
                         </View>
                       </View>
-
-                      <View style={[s.passIdStrip, { backgroundColor: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.08)' }]}>
-                        <Text style={[s.passIdLabel, { color: 'rgba(255,255,255,0.45)' }]}>CPID</Text>
-                        <Pressable onPress={handleCopy} style={s.passIdValueWrap}>
-                          <Text style={[s.passIdValue, { color: cardTheme.text }]} numberOfLines={1}>{cpid.slice(0, 3)}-{cpid.slice(3)}</Text>
-                          <Ionicons name={copied ? 'checkmark' : 'copy-outline'} size={12} color={copied ? '#34C759' : 'rgba(255,255,255,0.45)'} />
-                        </Pressable>
-                      </View>
                     </View>
+                  </Animated.View>
+                </Pressable>
 
-                    <View style={s.passFooterStrip}>
-                      <Text style={[s.passFooterText, { color: 'rgba(255,255,255,0.4)' }]}>
-                        © CULTUREPASS • {memberSince}
-                      </Text>
-                    </View>
-                  </LinearGradient>
-                </Animated.View>
+                {/* Print layout spacer (only active during print overrides) */}
+                <View style={s.printSpacer} />
 
-                {/* Back preview (shown when flipped) */}
-                <Animated.View style={[s.identityCardWrap, { width: cardWidth }, backStyle]} pointerEvents={!isFaceSide ? 'auto' : 'none'}>
-                  <LinearGradient colors={cardTheme.cardGradients} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[s.identityCard, { borderColor: cardTheme.border }]}>
-                    <View style={s.magneticStripe} />
-                    <View style={s.backContent}>
-                      <Text style={[s.backTitle, { color: cardTheme.text }]}>CULTUREPASS MEMBER ID</Text>
-                      <View style={s.signatureSection}>
-                        <Text style={s.signatureLabel}>AUTHORIZED SIGNATURE</Text>
-                        <View style={s.signaturePanel}>
-                          <Text style={s.signatureText}>{name}</Text>
+                {/* CARD 2: Vertical Event Pass / Apple Pass Style */}
+                <Text style={s.cardHeadingLabel}>2. EVENT LANYARD & WALLET PASS</Text>
+                <Pressable
+                  onPressIn={handlePressIn}
+                  onPressOut={handlePressOut}
+                  onPress={handlePress}
+                  style={{ width: cardWidth, marginBottom: 8 }}
+                  accessibilityRole="button"
+                  accessibilityLabel="Digital vertical lanyard event pass. Tap for shimmer effect."
+                >
+                  <Animated.View style={[{ width: cardWidth }, cardAnimatedStyle]}>
+                    <View
+                      style={[
+                        s.identityCard,
+                        {
+                          width: cardWidth,
+                          height: CARD_HEIGHT_VERTICAL,
+                          backgroundColor: '#FFFFFF',
+                          borderColor: '#E5E7EB',
+                        },
+                      ]}
+                    >
+                      {/* Diagonal light specular reflection overlay */}
+                      <LinearGradient
+                        colors={['rgba(255, 255, 255, 0.12)', 'rgba(255, 255, 255, 0.02)', 'transparent']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={StyleSheet.absoluteFill}
+                        pointerEvents="none"
+                      />
+
+                      {/* Interactive holographic light reflection shimmer effect */}
+                      <Animated.View style={[StyleSheet.absoluteFill, shimmerStyle, { width: '50%' }]} pointerEvents="none">
+                        <LinearGradient
+                          colors={['transparent', 'rgba(255, 255, 255, 0.06)', 'rgba(255, 255, 255, 0.22)', 'rgba(255, 255, 255, 0.06)', 'transparent']}
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 1, y: 0 }}
+                          style={StyleSheet.absoluteFill}
+                        />
+                      </Animated.View>
+
+                      {/* Vertical Card Content Wrapper */}
+                      <View style={s.cardInnerVertical}>
+                        {/* Header Bar */}
+                        <View style={s.passHeaderContent}>
+                          <Text style={s.passType}>
+                            <Text style={{ color: '#FF3B30' }}>CULTURE</Text>
+                            <Text style={{ color: '#34C759' }}>PASS</Text>
+                            <Text style={{ color: '#009CDE' }}> ID</Text>
+                          </Text>
+                          <Text style={[s.passTier, { color: '#009CDE' }]}>
+                            {tierConf.label.toUpperCase()}
+                          </Text>
+                        </View>
+
+                        {/* Top Profile Area (Centered vertical stack) */}
+                        <View style={s.passProfileVertical}>
+                          <View style={[s.passAvatarWrapVertical, { borderColor: '#E5E7EB' }]}>
+                            {avatarUrl ? (
+                              <Image source={{ uri: avatarUrl }} style={s.passAvatarVertical} contentFit="cover" />
+                            ) : (
+                              <View style={[s.passAvatarFallbackVertical, { backgroundColor: '#F3F4F6' }]}>
+                                <Text style={[s.passAvatarInitialsVertical, { color: cardTextColor }]}>{initials}</Text>
+                              </View>
+                            )}
+                          </View>
+                          <View style={s.passUserInfoVertical}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, justifyContent: 'center' }}>
+                              <Text style={[s.passNameVertical, { color: cardTextColor }]} numberOfLines={1}>
+                                {name}
+                              </Text>
+                              {(user as any)?.isVerified && <Ionicons name="checkmark-circle" size={15} color="#009CDE" />}
+                            </View>
+                            <Text style={[s.passHandleVertical, { color: cardSecondaryTextColor }]}>
+                              @{username}
+                            </Text>
+                            <Text style={[s.passMemberSinceVertical, { color: cardTertiaryTextColor }]}>
+                              Member Since {memberSince}
+                            </Text>
+                          </View>
+                        </View>
+
+                        {/* Middle QR Code and Monospace CPID */}
+                        <View style={s.passMiddleVertical}>
+                          <View style={s.qrWhiteBackground}>
+                            <QRCode value={qrValue} size={qrSizeVertical} color="#000000" backgroundColor="#FFFFFF" ecl="H" />
+                          </View>
+                          <Pressable onPress={handleCopy} style={s.cpidMonospaceContainer} hitSlop={8}>
+                            <Text style={[s.cpidMonospaceTextVertical, { color: cardTextColor }]}>
+                              {cpid.slice(0, 3)}-{cpid.slice(3)}
+                            </Text>
+                            <Ionicons name={copied ? 'checkmark' : 'copy-outline'} size={12} color={copied ? '#30D158' : '#9CA3AF'} />
+                          </Pressable>
+                        </View>
+
+                        {/* Bottom Contactless pass / waves panel */}
+                        <View style={s.nfcBottomVertical}>
+                          <Ionicons name="wifi" size={18} color={cardSecondaryTextColor} style={{ transform: [{ rotate: '90deg' }] }} />
+                          <Text style={[s.nfcTextVertical, { color: cardSecondaryTextColor }]}>
+                            TAP TO SCAN • EVENT LANYARD PASS
+                          </Text>
+                        </View>
+
+                        {/* Bottom Secure Banner */}
+                        <View style={s.cardFooterBannerVertical}>
+                          <Ionicons name="lock-closed-outline" size={10} color={cardTertiaryTextColor} style={{ marginRight: 4 }} />
+                          <Text style={[s.cardFooterBannerTextVertical, { color: cardTertiaryTextColor }]}>
+                            WALLET SECURE • iOS / ANDROID COMPATIBLE
+                          </Text>
                         </View>
                       </View>
-                      <View style={s.backDetails}>
-                        <View style={s.backDetailRow}><Text style={[s.backDetailLabel, { color: 'rgba(255,255,255,0.45)' }]}>CPID</Text><Text style={[s.backDetailValue, { color: cardTheme.text }]}>{cpid}</Text></View>
-                        <View style={s.backDetailRow}><Text style={[s.backDetailLabel, { color: 'rgba(255,255,255,0.45)' }]}>TIER</Text><Text style={[s.backDetailValue, { color: cardTheme.text }]}>{tierConf.label}</Text></View>
-                      </View>
-                      <View style={s.backFinePrint}>
-                        <Text style={[s.backFineText, { color: 'rgba(255,255,255,0.45)' }]}>Verified digital ID. Show in Wallet at events.</Text>
-                      </View>
                     </View>
-                  </LinearGradient>
-                </Animated.View>
-              </Pressable>
+                  </Animated.View>
+                </Pressable>
+              </View>
 
               <Text style={[s.passHint, { color: colors.textTertiary, width: cardWidth, marginBottom: 16 }]}>
-                Tap preview to flip • This is how your ID looks in real life and in Wallet
+                Tap cards to trigger light reflection shimmer · Integrated QR & NFC passes
               </Text>
 
-              {/* ========== PRIMARY WALLET SAVE CTAs (redesigned hero focus) ========== */}
+              {/* ========== PRIMARY WALLET SAVE CTAs ========== */}
               <View style={[s.walletHero, { width: cardWidth }]}>
                 <Text style={s.walletHeroTitle}>Save to Wallet</Text>
                 <Text style={s.walletHeroDesc}>
                   Add your verified CulturePass Digital ID to Apple Wallet or Google Wallet for instant, offline access at events, venues, and check-ins.
-                  Follows Apple & Google Wallet design & privacy guidelines.
                 </Text>
 
-                {/* Apple Wallet — prominent, dark premium button (matches Apple HIG) */}
+                {/* Apple Wallet */}
                 {appleWallet?.url && showAppleWallet && (
                   <Pressable
                     onPress={async () => {
@@ -534,7 +740,7 @@ export default function QRScreen() {
                   </Pressable>
                 )}
 
-                {/* Google Wallet — prominent blue button */}
+                {/* Google Wallet */}
                 {googleWallet?.url && showGoogleWallet && (
                   <Pressable
                     onPress={async () => {
@@ -560,7 +766,7 @@ export default function QRScreen() {
                   </Pressable>
                 )}
 
-                {/* Fallback / not ready messaging (takes "permissions" from platform readiness) */}
+                {/* Fallback Wallet Message */}
                 {(!appleWallet?.url && !googleWallet?.url) && (
                   <View style={s.walletNotReady}>
                     <Ionicons name="wallet-outline" size={18} color={colors.textTertiary} />
@@ -572,43 +778,37 @@ export default function QRScreen() {
 
                 <Text style={s.walletLegal}>
                   By adding this pass you allow Wallet to display your CulturePass ID (name, CPID, tier, location, verification signature). 
-                  Apple and Google manage the pass securely according to their privacy policies. CulturePass only signs the pass data.
+                  Apple and Google manage the pass securely according to their privacy policies.
                 </Text>
               </View>
 
-              {/* Secondary tools: QR, share, public profile, scan */}
-              <View style={{ marginTop: 20, width: cardWidth }}>
+              {/* Action Tools Row */}
+              <View style={{ marginTop: 12, width: cardWidth }}>
                 <Text style={[s.sectionLabel, { color: colors.textTertiary }]}>VERIFICATION & SHARING</Text>
 
-                {/* QR for scanners */}
-                <View style={[s.qrSectionModern, { backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)' }]}>
-                  <Pressable
-                    onPress={async () => {
-                      if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      const shareLink = siteUrl(`/u/${username}`);
-                      await Clipboard.setStringAsync(shareLink);
-                      setCopied(true);
-                      setTimeout(() => setCopied(false), 1600);
-                    }}
-                    style={{ alignItems: 'center' }}
-                  >
-                    <View style={s.qrWhiteBackground}>
-                      <QRCode value={qrValue} size={qrSize} color="#090A0F" backgroundColor="#FFFFFF" ecl="H" />
-                    </View>
-                    <Text style={{ marginTop: 8, fontSize: 11, color: colors.textSecondary }}>Tap to copy public profile link • Scannable at events</Text>
-                  </Pressable>
-                </View>
-
-                {/* Quick actions row */}
-                <View style={[s.actionsRow, { width: cardWidth, marginTop: 12 }]}>
+                {/* The redesigned stylish 3-button actions row */}
+                <View style={[s.actionsRow, { width: cardWidth }]}>
                   {([
-                    { icon: 'share-outline', label: 'Share', color: CultureTokens.indigo, onPress: handleShare },
-                    { icon: copied ? 'checkmark' : 'copy-outline', label: copied ? 'Copied' : 'Copy CPID', color: copied ? '#34C759' : CultureTokens.gold, onPress: handleCopy },
-                    { icon: 'scan-outline', label: 'Scan', color: CultureTokens.coral, onPress: () => { if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push('/scanner'); } },
+                    { icon: 'share-outline', label: 'Share ID', color: colors.primary, onPress: handleShare },
+                    { icon: copied ? 'checkmark-circle' : 'copy-outline', label: copied ? 'Copied' : 'Copy CPID', color: colors.gold, onPress: handleCopy },
+                    { icon: 'print-outline', label: 'Print Pass', color: CultureTokens.coral, onPress: handlePrint },
                   ] as const).map((btn) => (
-                    <Pressable key={btn.label} onPress={btn.onPress} style={({ pressed }) => [s.actionBtn, { opacity: pressed ? 0.7 : 1 }]}>
-                      <View style={[s.actionIcon, { backgroundColor: (btn.color as string) + '12' }]}>
-                        <Ionicons name={btn.icon as keyof typeof Ionicons.glyphMap} size={18} color={btn.color as string} />
+                    <Pressable
+                      key={btn.label}
+                      onPress={btn.onPress}
+                      style={({ pressed }) => [
+                        s.actionBtn,
+                        {
+                          borderColor: colors.borderLight,
+                          backgroundColor: colors.surfaceVariant,
+                          opacity: pressed ? 0.75 : 1
+                        }
+                      ]}
+                      accessibilityRole="button"
+                      accessibilityLabel={btn.label}
+                    >
+                      <View style={[s.actionIcon, { backgroundColor: btn.color + '12' }]}>
+                        <Ionicons name={btn.icon as any} size={18} color={btn.color} />
                       </View>
                       <Text style={[s.actionLabel, { color: colors.textSecondary }]}>{btn.label}</Text>
                     </Pressable>
@@ -618,7 +818,7 @@ export default function QRScreen() {
                 {/* Public profile link */}
                 <Pressable
                   onPress={() => { if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push(`/u/${username}` as any); }}
-                  style={{ marginTop: 10, alignSelf: 'center' }}
+                  style={{ marginTop: 12, alignSelf: 'center' }}
                 >
                   <Text style={{ color: cardTheme.accent, fontSize: 13, textDecorationLine: 'underline' }}>
                     View public profile
@@ -626,7 +826,7 @@ export default function QRScreen() {
                 </Pressable>
               </View>
 
-              {/* Interests (lightweight) */}
+              {/* Interests Tags */}
               {interests.length > 0 && (
                 <View style={[s.tagsSection, { width: cardWidth, marginTop: 16 }]}>
                   <Text style={[s.tagsHeading, { color: colors.textTertiary }]}>INTERESTS</Text>
@@ -671,332 +871,284 @@ const s = StyleSheet.create({
 
   scroll: { alignItems: 'center', paddingTop: 20, gap: 16 },
 
-  flipCardContainer: {
-    height: CARD_HEIGHT,
-    position: 'relative',
-    zIndex: 5,
+  printBadgeArea: {
+    gap: 20,
+    alignItems: 'center',
   },
 
-  identityCardWrap: {
-    height: CARD_HEIGHT,
-    borderRadius: 20,
+  printSpacer: {
+    height: 0,
     ...Platform.select({
-      web: { boxShadow: '0px 15px 35px rgba(0,0,0,0.35)' },
-      default: { shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.3, shadowRadius: 18, elevation: 10 },
+      web: {
+        display: 'none',
+      },
     }),
   },
 
+  cardHeadingLabel: {
+    fontSize: 10,
+    fontFamily: FontFamily.bold,
+    letterSpacing: 1,
+    alignSelf: 'flex-start',
+    marginLeft: 4,
+    marginBottom: -8,
+    opacity: 0.8,
+  },
+
   identityCard: {
-    flex: 1,
     borderRadius: 20,
     borderWidth: 1,
     overflow: 'hidden',
-    backgroundColor: '#0B0F19',
+    ...Platform.select({
+      web: { boxShadow: '0px 10px 25px rgba(0,0,0,0.25)' },
+      default: { shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.2, shadowRadius: 12, elevation: 8 },
+    }),
   },
 
-  // Pass Header Banner
-  passHeader: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 12,
-    justifyContent: 'center',
+  cardInner: {
+    flex: 1,
+    padding: 14,
+    justifyContent: 'space-between',
   },
+
+  cardInnerVertical: {
+    flex: 1,
+    padding: 18,
+    justifyContent: 'space-between',
+  },
+
   passHeaderContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  chipBlock: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  emvChip: {
-    width: 38,
-    height: 26,
-    borderRadius: 5,
-    borderWidth: 1,
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  emvLineHorizontal: {
-    position: 'absolute',
-    top: '50%',
-    left: 0,
-    right: 0,
-    height: 1,
-  },
-  emvLineVertical: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    left: '50%',
-    width: 1,
-  },
-  emvInnerChip: {
-    position: 'absolute',
-    top: 5,
-    left: 7,
-    width: 22,
-    height: 14,
-    borderRadius: 3,
-    borderWidth: 1,
-    backgroundColor: 'transparent',
-  },
-  passHeaderRight: {
-    alignItems: 'flex-end',
-  },
+
   passType: {
     fontSize: 10,
     fontFamily: FontFamily.bold,
     letterSpacing: 1.2,
   },
+
   passTier: {
     fontSize: 9,
-    fontFamily: FontFamily.semibold,
-    letterSpacing: 0.5,
-    marginTop: 2,
+    fontFamily: FontFamily.bold,
+    letterSpacing: 0.8,
   },
 
-  hologramDivider: {
-    height: 1,
-    width: '100%',
-  },
-
-  // Pass Body
-  passBody: {
+  passMiddle: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     flex: 1,
-    paddingHorizontal: 16,
-    paddingTop: 14,
-    paddingBottom: 12,
-    gap: 12,
+    marginVertical: 4,
   },
+
+  passMiddleVertical: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 12,
+  },
+
+  leftCol: {
+    flex: 1,
+    justifyContent: 'space-between',
+    height: '100%',
+    paddingRight: 10,
+  },
+
+  rightCol: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
   passUserRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 10,
   },
+
   passAvatarWrap: {
-    width: AVATAR_SIZE,
-    height: AVATAR_SIZE,
-    borderRadius: 12,
+    width: AVATAR_SIZE_LANDSCAPE,
+    height: AVATAR_SIZE_LANDSCAPE,
+    borderRadius: AVATAR_SIZE_LANDSCAPE / 2,
     overflow: 'hidden',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.25)',
-  },
-  passAvatar: {
-    width: AVATAR_SIZE,
-    height: AVATAR_SIZE,
-  },
-  passAvatarFallback: {
-    width: AVATAR_SIZE,
-    height: AVATAR_SIZE,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
     borderWidth: 1,
   },
+
+  passAvatar: {
+    width: AVATAR_SIZE_LANDSCAPE,
+    height: AVATAR_SIZE_LANDSCAPE,
+  },
+
+  passAvatarFallback: {
+    width: AVATAR_SIZE_LANDSCAPE,
+    height: AVATAR_SIZE_LANDSCAPE,
+    borderRadius: AVATAR_SIZE_LANDSCAPE / 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
   passAvatarInitials: {
-    fontSize: 20,
+    fontSize: 15,
     fontFamily: FontFamily.bold,
   },
+
   passUserInfo: {
     flex: 1,
     gap: 1,
   },
+
   passName: {
-    fontSize: 18,
-    lineHeight: 22,
+    fontSize: 14,
     fontFamily: FontFamily.bold,
-    letterSpacing: -0.3,
+    lineHeight: 18,
   },
+
   passHandle: {
-    fontSize: 12,
-    fontFamily: FontFamily.medium,
-  },
-  passMetaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginTop: 2,
-  },
-  passMetaItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-  },
-  passMetaText: {
     fontSize: 11,
     fontFamily: FontFamily.medium,
   },
 
-  // CPID Strip (Embossed card look)
-  passIdStrip: {
-    flexDirection: 'row',
+  passProfileVertical: {
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 10,
-    borderWidth: 1,
+    gap: 10,
+    marginTop: 8,
   },
-  passIdLabel: {
-    fontSize: 8.5,
+
+  passAvatarWrapVertical: {
+    width: AVATAR_SIZE_VERTICAL,
+    height: AVATAR_SIZE_VERTICAL,
+    borderRadius: AVATAR_SIZE_VERTICAL / 2,
+    overflow: 'hidden',
+    borderWidth: 1.5,
+  },
+
+  passAvatarVertical: {
+    width: AVATAR_SIZE_VERTICAL,
+    height: AVATAR_SIZE_VERTICAL,
+  },
+
+  passAvatarFallbackVertical: {
+    width: AVATAR_SIZE_VERTICAL,
+    height: AVATAR_SIZE_VERTICAL,
+    borderRadius: AVATAR_SIZE_VERTICAL / 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  passAvatarInitialsVertical: {
+    fontSize: 22,
+    fontFamily: FontFamily.bold,
+  },
+
+  passUserInfoVertical: {
+    alignItems: 'center',
+    gap: 2,
+  },
+
+  passNameVertical: {
+    fontSize: 18,
+    fontFamily: FontFamily.bold,
+    lineHeight: 22,
+  },
+
+  passHandleVertical: {
+    fontSize: 12,
     fontFamily: FontFamily.medium,
-    letterSpacing: 1,
   },
-  passIdValueWrap: {
+
+  passMemberSinceVertical: {
+    fontSize: 10,
+    fontFamily: FontFamily.medium,
+    marginTop: 2,
+  },
+
+  nfcLeftCol: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+    marginTop: 12,
   },
-  passIdValue: {
-    fontSize: 13,
+
+  nfcTextCol: {
+    fontSize: 8.5,
+    fontFamily: FontFamily.bold,
+    letterSpacing: 0.5,
+  },
+
+  nfcBottomVertical: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: '#F3F4F6',
+    backgroundColor: '#FAFAFA',
+    borderRadius: 10,
+    width: '100%',
+  },
+
+  nfcTextVertical: {
+    fontSize: 9,
+    fontFamily: FontFamily.bold,
+    letterSpacing: 0.8,
+  },
+
+  qrWhiteBackground: {
+    padding: 5,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+  },
+
+  cpidMonospaceContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 6,
+  },
+
+  cpidMonospaceText: {
+    fontSize: 11,
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    letterSpacing: 1,
+    fontWeight: 'bold',
+  },
+
+  cpidMonospaceTextVertical: {
+    fontSize: 12,
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
     letterSpacing: 1.5,
-    textShadowColor: 'rgba(0,0,0,0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 1,
+    fontWeight: 'bold',
   },
 
-  // QR Section
-  passQrSection: {
+  cardFooterBanner: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 6,
-    marginTop: 2,
-  },
-  passQrWrapper: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  qrWhiteBackground: {
-    padding: 8,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  passQrFooter: {
-    fontSize: 9,
-    fontFamily: FontFamily.medium,
-    textAlign: 'center',
-    letterSpacing: 0.3,
+    paddingTop: 4,
   },
 
-  // Pass Footer Strip
-  passFooterStrip: {
-    height: 26,
-    backgroundColor: 'rgba(0,0,0,0.25)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  passFooterText: {
-    fontSize: 8.5,
-    fontFamily: FontFamily.medium,
-    letterSpacing: 0.5,
-  },
-
-  // Back of Card Styles
-  backContent: {
-    flex: 1,
-    padding: 16,
-    paddingTop: 48,
-    gap: 12,
-  },
-  magneticStripe: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 36,
-    backgroundColor: '#111317',
-  },
-  backTitle: {
-    fontSize: 12,
-    fontFamily: FontFamily.bold,
-    letterSpacing: 1.2,
-    textAlign: 'center',
-  },
-  signatureSection: {
-    gap: 4,
-    marginTop: 4,
-  },
-  signatureLabel: {
+  cardFooterBannerText: {
     fontSize: 8,
     fontFamily: FontFamily.bold,
-    color: 'rgba(255,255,255,0.4)',
-    letterSpacing: 0.8,
-    marginLeft: 4,
-  },
-  signaturePanel: {
-    height: 38,
-    backgroundColor: '#FAF7F2', // Warm bone texture signature panel
-    borderRadius: 4,
-    justifyContent: 'center',
-    paddingLeft: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.06)',
-  },
-  signatureText: {
-    fontFamily: Platform.select({ ios: 'Georgia', android: 'serif', web: 'Georgia, serif' }),
-    fontStyle: 'italic',
-    fontSize: 16,
-    color: '#292524',
-    opacity: 0.85,
-    transform: [{ rotate: '-1.5deg' }],
-  },
-  backDetails: {
-    gap: 6,
-    marginTop: 4,
-    paddingHorizontal: 4,
-  },
-  backDetailRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  backDetailLabel: {
-    fontSize: 9,
-    fontFamily: FontFamily.medium,
-    letterSpacing: 0.5,
-  },
-  backDetailValue: {
-    fontSize: 11,
-    fontFamily: FontFamily.semibold,
-  },
-  backFinePrint: {
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.08)',
-    paddingTop: 8,
-    marginTop: 4,
-  },
-  backFineText: {
-    fontSize: 8.5,
-    fontFamily: FontFamily.medium,
-    lineHeight: 12,
-    textAlign: 'center',
-    opacity: 0.5,
+    letterSpacing: 0.6,
   },
 
-  // Flip Toggle
-  flipToggleBtn: {
+  cardFooterBannerVertical: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 999,
-    borderWidth: 1,
-    marginTop: 14,
+    paddingTop: 6,
   },
-  flipToggleBtnText: {
-    fontSize: 12,
-    fontFamily: FontFamily.semibold,
+
+  cardFooterBannerTextVertical: {
+    fontSize: 8,
+    fontFamily: FontFamily.bold,
+    letterSpacing: 0.6,
   },
+
   passHint: {
     fontSize: 11,
     fontFamily: FontFamily.medium,
@@ -1006,7 +1158,6 @@ const s = StyleSheet.create({
     opacity: 0.65,
   },
 
-  // Action Buttons
   actionsRow: { flexDirection: 'row', gap: 10, marginTop: 4 },
   actionBtn: {
     flex: 1,
@@ -1028,64 +1179,6 @@ const s = StyleSheet.create({
     fontFamily: FontFamily.semibold,
   },
 
-  // Wallet Buttons
-  walletSection: { gap: 8, marginTop: 8 },
-  walletHeading: {
-    fontSize: 9.5,
-    fontFamily: FontFamily.semibold,
-    letterSpacing: 1.2,
-    marginLeft: 2,
-  },
-  walletBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 16,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
-    ...Platform.select({
-      web: { boxShadow: '0px 8px 20px rgba(0,0,0,0.25)' },
-      default: { shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.25, shadowRadius: 10, elevation: 6 },
-    }),
-  },
-  walletBtnText: { flex: 1, gap: 0 },
-  walletBtnSub: {
-    fontSize: 9,
-    fontFamily: FontFamily.medium,
-    color: 'rgba(255,255,255,0.6)',
-    letterSpacing: 0.3,
-  },
-  walletBtnTitle: {
-    fontSize: 14,
-    fontFamily: FontFamily.bold,
-    color: '#FFFFFF',
-    letterSpacing: -0.2,
-  },
-
-  // Interests Tags
-  tagsSection: { gap: 8, marginTop: 8 },
-  tagsHeading: {
-    fontSize: 9.5,
-    fontFamily: FontFamily.semibold,
-    letterSpacing: 1.2,
-    marginLeft: 2,
-  },
-  tagsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  tag: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 14,
-    borderWidth: 1,
-  },
-  tagText: {
-    fontSize: 11,
-    fontFamily: FontFamily.semibold,
-  },
-
-  // ========== NEW WALLET-FIRST REDESIGN STYLES ==========
   walletHero: {
     backgroundColor: 'rgba(0,0,0,0.03)',
     borderRadius: 20,
@@ -1162,11 +1255,23 @@ const s = StyleSheet.create({
     marginBottom: 8,
     marginLeft: 2,
   },
-  qrSectionModern: {
-    padding: 16,
-    borderRadius: 18,
-    alignItems: 'center',
+  tagsSection: { gap: 8, marginTop: 8 },
+  tagsHeading: {
+    fontSize: 9.5,
+    fontFamily: FontFamily.semibold,
+    letterSpacing: 1.2,
+    marginLeft: 2,
+  },
+  tagsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  tag: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
+  },
+  tagText: {
+    fontSize: 11,
+    fontFamily: FontFamily.semibold,
   },
 });
+

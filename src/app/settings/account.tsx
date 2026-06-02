@@ -19,12 +19,15 @@ import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import * as Haptics from 'expo-haptics';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { updateEmail, updatePassword, reauthenticateWithCredential, EmailAuthProvider, type User as FirebaseUser } from 'firebase/auth';
+import { LinearGradient } from 'expo-linear-gradient';
+import * as Clipboard from 'expo-clipboard';
+import { withAlpha } from '@/lib/withAlpha';
 
 import { useAuth } from '@/lib/auth';
 import { modulesApi } from '@/modules/api';
 import { api } from '@/lib/api';
 import { goBackOrReplace } from '@/lib/navigation';
-import { useColors } from '@/hooks/useColors';
+import { useColors, useIsDark } from '@/hooks/useColors';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useRole } from '@/hooks/useRole';
 import { auth as firebaseAuth } from '@/lib/firebase';
@@ -70,6 +73,34 @@ function getProviderLabel(providerId: string): { label: string; icon: keyof type
   if (providerId.includes('apple')) return { label: 'Apple', icon: 'logo-apple' };
   if (providerId.includes('password')) return { label: 'Password', icon: 'key-outline' };
   return { label: providerId, icon: 'person-outline' };
+}
+
+function getProviderStyle(providerId: string, isDark: boolean) {
+  const isGoogle = providerId.toLowerCase().includes('google');
+  const isApple = providerId.toLowerCase().includes('apple');
+  
+  if (isGoogle) {
+    return {
+      backgroundColor: isDark ? 'rgba(234, 67, 53, 0.08)' : 'rgba(234, 67, 53, 0.05)',
+      borderColor: 'rgba(234, 67, 53, 0.25)',
+      textColor: isDark ? '#FF8F87' : '#C5221F',
+      iconColor: '#EA4335'
+    };
+  }
+  if (isApple) {
+    return {
+      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)',
+      borderColor: isDark ? 'rgba(255, 255, 255, 0.25)' : 'rgba(0, 0, 0, 0.2)',
+      textColor: isDark ? '#FFFFFF' : '#000000',
+      iconColor: isDark ? '#FFFFFF' : '#000000'
+    };
+  }
+  return {
+    backgroundColor: isDark ? 'rgba(74, 94, 191, 0.08)' : 'rgba(74, 94, 191, 0.05)',
+    borderColor: 'rgba(74, 94, 191, 0.25)',
+    textColor: isDark ? '#AEC0FF' : '#3F51B5',
+    iconColor: '#4A5EBF'
+  };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -148,7 +179,7 @@ function ChangePasswordModal({
     <Modal visible={visible} transparent animationType="fade" onRequestClose={handleClose}>
       <View style={[styles.modalBackdrop, { backgroundColor: 'rgba(0,0,0,0.7)' }]}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.modalCardWrap}>
-          <LuxeCard variant="default" style={styles.modalCard}><View style={styles.modalHeader}><LuxeText variant="title2">Change Password</LuxeText><Pressable onPress={handleClose} hitSlop={12}><Ionicons name="close" size={24} color={colors.textTertiary} /></Pressable></View><View style={styles.modalBody}><CulturalInput
+          <LuxeCard variant="glass" style={styles.modalCard}><View style={styles.modalHeader}><LuxeText variant="title2">Change Password</LuxeText><Pressable onPress={handleClose} hitSlop={12}><Ionicons name="close" size={24} color={colors.textTertiary} /></Pressable></View><View style={styles.modalBody}><CulturalInput
                 label="Current password"
                 value={currentPassword}
                 onChangeText={setCurrentPassword}
@@ -258,7 +289,7 @@ function ChangeEmailModal({
     <Modal visible={visible} transparent animationType="fade" onRequestClose={handleClose}>
       <View style={[styles.modalBackdrop, { backgroundColor: 'rgba(0,0,0,0.7)' }]}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.modalCardWrap}>
-          <LuxeCard variant="default" style={styles.modalCard}><View style={styles.modalHeader}><LuxeText variant="title2">Change Email</LuxeText><Pressable onPress={handleClose} hitSlop={12}><Ionicons name="close" size={24} color={colors.textTertiary} /></Pressable></View><View style={styles.modalBody}><LuxeText variant="caption" style={{ color: colors.textSecondary, marginBottom: 12 }}>Current: <Text style={{ color: colors.text, fontWeight: '600' }}>{currentEmail || '—'}</Text></LuxeText><CulturalInput
+          <LuxeCard variant="glass" style={styles.modalCard}><View style={styles.modalHeader}><LuxeText variant="title2">Change Email</LuxeText><Pressable onPress={handleClose} hitSlop={12}><Ionicons name="close" size={24} color={colors.textTertiary} /></Pressable></View><View style={styles.modalBody}><LuxeText variant="caption" style={{ color: colors.textSecondary, marginBottom: 12 }}>Current: <Text style={{ color: colors.text, fontWeight: '600' }}>{currentEmail || '—'}</Text></LuxeText><CulturalInput
                 label="New email address"
                 value={newEmail}
                 onChangeText={setNewEmail}
@@ -337,6 +368,23 @@ export default function AccountSettingsScreen() {
   const [displayName, setDisplayName] = useState('');
   const [username, setUsername] = useState('');
   const [dirty, setDirty] = useState(false);
+
+  const [backHovered, setBackHovered] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const [changePasswordHovered, setChangePasswordHovered] = useState(false);
+  const [membershipBillingHovered, setMembershipBillingHovered] = useState(false);
+  const [privacyPermissionsHovered, setPrivacyPermissionsHovered] = useState(false);
+  const [deleteAccountHovered, setDeleteAccountHovered] = useState(false);
+
+  const handleCopyCpid = useCallback(async () => {
+    if (!user.culturePassId) return;
+    await Clipboard.setStringAsync(user.culturePassId);
+    haptic('success');
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }, [user.culturePassId]);
+
   const [saveError, setSaveError] = useState<string | null>(null);
 
   const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'taken' | 'invalid'>('idle');
@@ -451,8 +499,11 @@ export default function AccountSettingsScreen() {
 
   const linkedProviders = useMemo(() => {
     const fbUser = firebaseAuth?.currentUser;
-    if (!fbUser?.providerData?.length) return [{ label: 'Email / Password', icon: 'mail-outline' as const }];
-    return fbUser.providerData.map((p) => getProviderLabel(p.providerId));
+    if (!fbUser?.providerData?.length) return [{ label: 'Email / Password', icon: 'mail-outline' as const, id: 'password' }];
+    return fbUser.providerData.map((p) => {
+      const info = getProviderLabel(p.providerId);
+      return { ...info, id: p.providerId };
+    });
   }, []);
 
   const confirmDelete = async () => {
@@ -484,9 +535,36 @@ export default function AccountSettingsScreen() {
 
   const tierLabel = (user.subscriptionTier || 'free').toUpperCase();
 
+  const isDark = useIsDark();
+  const glassBg = isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.03)';
+
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       <Stack.Screen options={{ headerShown: false }} />
+      {Platform.OS === 'web' && (
+        <style dangerouslySetInnerHTML={{ __html: `
+          @keyframes pulse {
+            0% { transform: scale(0.9); opacity: 0.6; }
+            50% { transform: scale(1.15); opacity: 1; box-shadow: 0 0 8px #F5A623; }
+            100% { transform: scale(0.9); opacity: 0.6; }
+          }
+          .saffron-pulse {
+            animation: pulse 2s infinite ease-in-out;
+          }
+        `}} />
+      )}
+      
+      {/* Background Mesh Gradients */}
+      <LinearGradient
+        colors={[colors.background, colors.backgroundSecondary || colors.background]}
+        style={StyleSheet.absoluteFill}
+      />
+      <LinearGradient
+        colors={Luxe.gradients.culturepassBrand}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[StyleSheet.absoluteFill, { opacity: 0.04 }]}
+      />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -501,48 +579,128 @@ export default function AccountSettingsScreen() {
           <View style={[styles.header, { paddingTop: topInset + 12 }]}>
             <Pressable
               onPress={() => goBackOrReplace('/settings')}
+              onHoverIn={() => setBackHovered(true)}
+              onHoverOut={() => setBackHovered(false)}
               style={({ pressed }) => [
                 styles.backCircle,
-                { backgroundColor: colors.card, borderColor: colors.cardBorder },
+                {
+                  backgroundColor: backHovered ? colors.backgroundSecondary : glassBg,
+                  borderColor: backHovered ? colors.primary : colors.borderLight,
+                  transform: [{ translateX: backHovered ? -3 : 0 }],
+                },
                 pressed && { opacity: 0.7 },
+                Platform.select({
+                  web: {
+                    transition: 'all 0.2s ease-in-out',
+                    boxShadow: backHovered ? `0 0 12px ${withAlpha(colors.primary, 0.2)}` : 'none',
+                  }
+                }) as any,
               ]}
               accessibilityRole="button"
               accessibilityLabel="Go back"
-            ><Ionicons name="chevron-back" size={22} color={colors.text} /></Pressable>
-            <View style={{ flex: 1, marginLeft: Spacing.md }}><LuxeText variant="caption" style={{ color: colors.textTertiary, letterSpacing: 1.5 }}>SETTINGS</LuxeText><LuxeText variant="title">Account</LuxeText></View>
+            >
+              <Ionicons name="chevron-back" size={22} color={colors.text} />
+            </Pressable>
+            <View style={{ flex: 1, marginLeft: Spacing.md }}>
+              <LuxeText variant="caption" style={{ color: colors.textTertiary, letterSpacing: 1.5 }}>SETTINGS</LuxeText>
+              <LuxeText variant="title">Account</LuxeText>
+            </View>
           </View>
 
           {/* Identity Hero */}
-          <LuxeCard variant="default" style={styles.hero}><View style={styles.heroLeft}><View style={[styles.avatar, { backgroundColor: colors.primary + '18' }]}>{user.avatarUrl ? (
-                  <CultureImage
-                    uri={user.avatarUrl}
-                    style={{ width: '100%', height: '100%', borderRadius: 30 }}
-                    contentFit="cover"
-                    recyclingKey={user.id}
-                  />
-                ) : (
-                  <LuxeText variant="title" style={{ color: colors.primary }}>{(user.displayName || user.username || 'U')[0]?.toUpperCase()}</LuxeText>
-                )}</View><View style={{ flex: 1 }}><LuxeText variant="bodyMedium" style={{ fontSize: 18 }}>{user.displayName || 'CulturePass Member'}</LuxeText><LuxeText variant="caption" style={{ color: colors.textSecondary }}>{formatHandle(user.handle || user.username)}</LuxeText>{user.culturePassId && (
-                  <LuxeText variant="caption" style={{ color: colors.textTertiary, fontSize: 11, marginTop: 4 }}>CPID: {user.culturePassId}</LuxeText>
-                )}</View></View><LuxeButton variant="glass" size="sm" onPress={() => router.push('/profile/edit' as never)} leftIcon="create-outline">Edit profile</LuxeButton></LuxeCard>
+          <LuxeCard variant="glass" style={styles.hero}>
+            <View style={styles.heroLeft}>
+              <View style={styles.avatarRing}>
+                <LinearGradient
+                  colors={Luxe.gradients.culturepassBrand}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={[StyleSheet.absoluteFill, { borderRadius: 32 }]}
+                />
+                <View style={[styles.avatarInner, { backgroundColor: colors.surfaceElevated }]}>
+                  {user.avatarUrl ? (
+                    <CultureImage
+                      uri={user.avatarUrl}
+                      style={{ width: '100%', height: '100%', borderRadius: 30 }}
+                      contentFit="cover"
+                      recyclingKey={user.id}
+                    />
+                  ) : (
+                    <LuxeText variant="title" style={{ color: colors.primary, fontSize: 22 }}>
+                      {(user.displayName || user.username || 'U')[0]?.toUpperCase()}
+                    </LuxeText>
+                  )}
+                </View>
+              </View>
+              <View style={{ flex: 1 }}>
+                <LuxeText variant="bodyMedium" style={{ fontSize: 18, fontFamily: Luxe.typography.fonts.semibold }}>{user.displayName || 'CulturePass Member'}</LuxeText>
+                <LuxeText variant="caption" style={{ color: colors.textSecondary }}>{formatHandle(user.handle || user.username)}</LuxeText>
+                {user.culturePassId && (
+                  <Pressable
+                    onPress={handleCopyCpid}
+                    style={({ pressed }) => [
+                      styles.cpidPressable,
+                      {
+                        backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.02)',
+                        borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)',
+                        borderWidth: 1,
+                        paddingHorizontal: 8,
+                        paddingVertical: 3,
+                        borderRadius: 99,
+                        marginTop: 6,
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        alignSelf: 'flex-start',
+                      },
+                      pressed && { opacity: 0.7 },
+                      Platform.select({
+                        web: {
+                          transition: 'all 0.15s ease-in-out',
+                          cursor: 'pointer',
+                        }
+                      }) as any,
+                    ]}
+                  >
+                    <LuxeText variant="caption" style={{ color: colors.textTertiary, fontSize: 11 }}>
+                      CPID: <Text style={{ fontFamily: Luxe.typography.fonts.semibold, color: colors.textSecondary }}>{user.culturePassId}</Text>
+                    </LuxeText>
+                    <Ionicons
+                      name={copied ? "checkmark" : "copy-outline"}
+                      size={11}
+                      color={copied ? colors.success : colors.textTertiary}
+                      style={{ marginLeft: 4 }}
+                    />
+                  </Pressable>
+                )}
+              </View>
+            </View>
+            <LuxeButton variant="glass" size="sm" onPress={() => router.push('/profile/edit' as never)} leftIcon="create-outline">Edit profile</LuxeButton>
+          </LuxeCard>
 
           {/* Flash banner */}
           {flash && (
-            <GlassView style={[styles.flashBanner, { borderColor: flash.type === 'success' ? '#10B98155' : '#FF5E5B55' }]}><Ionicons
+            <GlassView style={[styles.flashBanner, { borderColor: flash.type === 'success' ? '#10B98155' : '#FF5E5B55' }]}>
+              <Ionicons
                 name={flash.type === 'success' ? 'checkmark-circle' : 'alert-circle'}
                 size={18}
                 color={flash.type === 'success' ? '#10B981' : '#FF5E5B'}
-              /><LuxeText variant="bodyMedium" style={{ fontSize: 14, flex: 1 }}>{flash.text}</LuxeText></GlassView>
+              />
+              <LuxeText variant="bodyMedium" style={{ fontSize: 14, flex: 1 }}>{flash.text}</LuxeText>
+            </GlassView>
           )}
 
           {/* Identity Section */}
-          <View style={styles.section}><LuxeText variant="badgeCaps" style={{ color: colors.textTertiary, marginLeft: 4 }}>Identity</LuxeText><LuxeCard variant="default" style={styles.card}><CulturalInput
+          <View style={styles.section}>
+            <LuxeText variant="badgeCaps" style={{ color: colors.textTertiary, marginLeft: 4 }}>Identity</LuxeText>
+            <LuxeCard variant="glass" style={styles.card}>
+              <CulturalInput
                 label="Display name"
                 value={displayName}
                 onChangeText={(v) => handleFieldChange('displayName', v)}
                 placeholder="Your public name"
                 leftIcon="person-outline"
-              /><CulturalInput
+              />
+              <CulturalInput
                 label="Username / handle"
                 value={username}
                 onChangeText={(v) => handleFieldChange('username', v.replace(/[^a-zA-Z0-9_.-]/g, ''))}
@@ -550,71 +708,458 @@ export default function AccountSettingsScreen() {
                 leftIcon="at-outline"
                 error={usernameStatus === 'taken' || usernameStatus === 'invalid' ? usernameMessage : undefined}
                 helperText={usernameStatus === 'available' ? usernameMessage : undefined}
-              />{saveError ? <LuxeText variant="caption" style={{ color: colors.error, paddingHorizontal: 4 }}>{saveError}</LuxeText> : null}<View style={styles.saveBar}><LuxeButton
+              />
+              {saveError ? <LuxeText variant="caption" style={{ color: colors.error, paddingHorizontal: 4 }}>{saveError}</LuxeText> : null}
+              <View style={styles.saveBar}>
+                <LuxeButton
                   onPress={() => saveIdentity.mutate()}
                   disabled={!dirty || usernameStatus === 'taken' || usernameStatus === 'invalid'}
                   loading={saveIdentity.isPending}
                   size="sm"
                   style={{ minWidth: 140 }}
-                >Save Identity</LuxeButton>{dirty && <LuxeText variant="caption" style={{ color: colors.textTertiary }}>Unsaved changes</LuxeText>}</View></LuxeCard></View>
+                >Save Identity</LuxeButton>
+                {dirty && (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <View
+                      style={[
+                        {
+                          width: 8,
+                          height: 8,
+                          borderRadius: 4,
+                          backgroundColor: Luxe.colors.saffron,
+                        },
+                        Platform.select({
+                          web: {
+                            animation: 'pulse 1.5s infinite ease-in-out',
+                          }
+                        }) as any
+                      ]}
+                    />
+                    <LuxeText variant="caption" style={{ color: colors.textSecondary, fontFamily: Luxe.typography.fonts.semibold }}>Unsaved changes</LuxeText>
+                  </View>
+                )}
+              </View>
+            </LuxeCard>
+          </View>
 
           {/* Contact Section */}
-          <View style={styles.section}><LuxeText variant="badgeCaps" style={{ color: colors.textTertiary, marginLeft: 4 }}>Contact & Verification</LuxeText><LuxeCard variant="default" style={styles.card}><View style={styles.infoRow}><View style={{ flex: 1 }}><LuxeText variant="caption" style={{ color: colors.textTertiary }}>Email</LuxeText><LuxeText variant="bodyMedium">{user.email || '—'}</LuxeText></View><View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>{emailVerified ? (
-                    <View style={[styles.badge, { backgroundColor: '#10B98122' }]}><Ionicons name="checkmark-circle" size={14} color="#10B981" /><Text style={[styles.badgeText, { color: '#10B981' }]}>Verified</Text></View>
+          <View style={styles.section}>
+            <LuxeText variant="badgeCaps" style={{ color: colors.textTertiary, marginLeft: 4 }}>Contact & Verification</LuxeText>
+            <LuxeCard variant="glass" style={styles.card}>
+              <View style={styles.infoRow}>
+                <View style={{ flex: 1 }}>
+                  <LuxeText variant="caption" style={{ color: colors.textTertiary }}>Email</LuxeText>
+                  <LuxeText variant="bodyMedium" style={{ fontFamily: Luxe.typography.fonts.semibold }}>{user.email || '—'}</LuxeText>
+                </View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  {emailVerified ? (
+                    <View
+                      style={[
+                        styles.badge,
+                        {
+                          backgroundColor: withAlpha(colors.success, 0.1),
+                          borderColor: withAlpha(colors.success, 0.3),
+                          borderWidth: 1,
+                          paddingHorizontal: 8,
+                          paddingVertical: 4,
+                          borderRadius: 6,
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 4
+                        }
+                      ]}
+                    >
+                      <Ionicons name="shield-checkmark" size={12} color={colors.success} />
+                      <Text style={[styles.badgeText, { color: colors.success, fontSize: 10, letterSpacing: 0.5, fontFamily: Luxe.typography.fonts.semibold }]}>VERIFIED</Text>
+                    </View>
                   ) : (
-                    <View style={[styles.badge, { backgroundColor: '#F5A62322' }]}><Text style={[styles.badgeText, { color: '#F5A623' }]}>Unverified</Text></View>
-                  )}<LuxeButton variant="glass" size="sm" onPress={() => setShowEmailModal(true)}>Change</LuxeButton></View></View>{!emailVerified && (
-                <Pressable onPress={handleResendVerification} style={styles.resendRow}><Ionicons name="mail-outline" size={18} color={colors.primary} /><LuxeText variant="bodyMedium" style={{ color: colors.primary, marginLeft: 8, fontSize: 13 }}>Resend verification email</LuxeText></Pressable>
-              )}{!!user.phone && (
-                <View style={styles.dividerRow}><View><LuxeText variant="caption" style={{ color: colors.textTertiary }}>Phone</LuxeText><LuxeText variant="bodyMedium">{user.phone}</LuxeText></View></View>
-              )}</LuxeCard></View>
+                    <View
+                      style={[
+                        styles.badge,
+                        {
+                          backgroundColor: withAlpha(colors.warning, 0.1),
+                          borderColor: withAlpha(colors.warning, 0.3),
+                          borderWidth: 1,
+                          paddingHorizontal: 8,
+                          paddingVertical: 4,
+                          borderRadius: 6,
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 4
+                        }
+                      ]}
+                    >
+                      <Ionicons name="warning" size={12} color={colors.warning} />
+                      <Text style={[styles.badgeText, { color: colors.warning, fontSize: 10, letterSpacing: 0.5, fontFamily: Luxe.typography.fonts.semibold }]}>UNVERIFIED</Text>
+                    </View>
+                  )}
+                  <LuxeButton variant="glass" size="sm" onPress={() => setShowEmailModal(true)}>Change</LuxeButton>
+                </View>
+              </View>
+              {!emailVerified && (
+                <Pressable
+                  onPress={handleResendVerification}
+                  style={({ pressed }) => [
+                    styles.resendRow,
+                    {
+                      backgroundColor: isDark ? 'rgba(245, 166, 35, 0.06)' : 'rgba(245, 166, 35, 0.04)',
+                      borderColor: withAlpha(Luxe.colors.saffron, 0.2),
+                      borderWidth: 1,
+                      borderRadius: 12,
+                      padding: 12,
+                      marginTop: 12,
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    },
+                    pressed && { opacity: 0.8 },
+                    Platform.select({
+                      web: {
+                        transition: 'all 0.2s ease',
+                      }
+                    }) as any
+                  ]}
+                >
+                  <Ionicons name="paper-plane-outline" size={16} color={colors.warning} />
+                  <LuxeText variant="bodyMedium" style={{ color: colors.warning, marginLeft: 8, fontSize: 13, fontFamily: Luxe.typography.fonts.medium }}>
+                    Resend verification email
+                  </LuxeText>
+                </Pressable>
+              )}
+              {!!user.phone && (
+                <View style={styles.dividerRow}>
+                  <View>
+                    <LuxeText variant="caption" style={{ color: colors.textTertiary }}>Phone</LuxeText>
+                    <LuxeText variant="bodyMedium">{user.phone}</LuxeText>
+                  </View>
+                </View>
+              )}
+            </LuxeCard>
+          </View>
 
           {/* Security Section */}
-          <View style={styles.section}><LuxeText variant="badgeCaps" style={{ color: colors.textTertiary, marginLeft: 4 }}>Security</LuxeText><LuxeCard variant="default" style={styles.card}><Pressable
+          <View style={styles.section}>
+            <LuxeText variant="badgeCaps" style={{ color: colors.textTertiary, marginLeft: 4 }}>Security</LuxeText>
+            <LuxeCard variant="glass" style={styles.card}>
+              <Pressable
                 onPress={() => { haptic(); setShowPasswordModal(true); }}
-                style={({ pressed }) => [styles.actionRow, pressed && { backgroundColor: colors.backgroundSecondary }]}
-              ><Ionicons name="key-outline" size={20} color={colors.textSecondary} /><LuxeText variant="bodyMedium" style={{ flex: 1, marginLeft: 12 }}>Change password</LuxeText><Ionicons name="chevron-forward" size={18} color={colors.textTertiary} /></Pressable><View style={[styles.divider, { backgroundColor: colors.borderLight }]} /><View style={styles.providersHeader}><Ionicons name="shield-checkmark-outline" size={20} color={colors.textSecondary} /><LuxeText variant="bodyMedium" style={{ marginLeft: 12 }}>Sign-in methods</LuxeText></View><View style={styles.providers}>{linkedProviders.map((p, idx) => (
-                  <View key={idx} style={[styles.providerPill, { backgroundColor: colors.surfaceElevated, borderColor: colors.borderLight }]}><Ionicons name={p.icon} size={15} color={colors.textSecondary} /><Text style={[styles.providerText, { color: colors.textSecondary }]}>{p.label}</Text></View>
-                ))}</View><GlassView style={styles.teaser}><Ionicons name="finger-print-outline" size={22} color={Luxe.colors.indigo} /><View style={{ flex: 1 }}><LuxeText variant="bodyMedium" style={{ fontSize: 14 }}>Passkeys (coming soon)</LuxeText><LuxeText variant="caption" style={{ color: colors.textTertiary }}>Secure biometric sign-in with Face ID or Touch ID.</LuxeText></View></GlassView></LuxeCard></View>
+                onHoverIn={() => setChangePasswordHovered(true)}
+                onHoverOut={() => setChangePasswordHovered(false)}
+                style={({ pressed }) => [
+                  styles.actionRow,
+                  {
+                    backgroundColor: pressed
+                      ? colors.backgroundSecondary
+                      : changePasswordHovered
+                      ? (isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)')
+                      : 'transparent',
+                    borderRadius: 8,
+                  },
+                  Platform.select({
+                    web: {
+                      transition: 'all 0.2s ease-in-out',
+                      paddingLeft: changePasswordHovered ? 20 : 16,
+                    }
+                  }) as any
+                ]}
+              >
+                <Ionicons name="key-outline" size={20} color={changePasswordHovered ? colors.primary : colors.textSecondary} />
+                <LuxeText variant="bodyMedium" style={{ flex: 1, marginLeft: 12, color: changePasswordHovered ? colors.text : colors.textSecondary }}>Change password</LuxeText>
+                <Ionicons
+                  name="chevron-forward"
+                  size={18}
+                  color={changePasswordHovered ? colors.primary : colors.textTertiary}
+                  style={{
+                    transform: [{ translateX: changePasswordHovered ? 4 : 0 }],
+                  }}
+                />
+              </Pressable>
+              <View style={[styles.divider, { backgroundColor: colors.borderLight }]} />
+              <View style={styles.providersHeader}>
+                <Ionicons name="shield-checkmark-outline" size={20} color={colors.textSecondary} />
+                <LuxeText variant="bodyMedium" style={{ marginLeft: 12 }}>Sign-in methods</LuxeText>
+              </View>
+              <View style={styles.providers}>
+                {linkedProviders.map((p, idx) => {
+                  const pStyle = getProviderStyle(p.id, isDark);
+                  return (
+                    <View
+                      key={idx}
+                      style={[
+                        styles.providerPill,
+                        {
+                          backgroundColor: pStyle.backgroundColor,
+                          borderColor: pStyle.borderColor,
+                          borderWidth: 1,
+                        },
+                        Platform.select({
+                          web: {
+                            transition: 'all 0.2s ease',
+                          }
+                        }) as any
+                      ]}
+                    >
+                      <Ionicons name={p.icon} size={14} color={pStyle.iconColor} />
+                      <Text style={[styles.providerText, { color: pStyle.textColor, fontFamily: Luxe.typography.fonts.medium }]}>
+                        {p.label}
+                      </Text>
+                    </View>
+                  );
+                })}
+              </View>
+              <GlassView
+                style={[
+                  styles.teaser,
+                  {
+                    backgroundColor: isDark ? 'rgba(74, 94, 191, 0.06)' : 'rgba(74, 94, 191, 0.03)',
+                    borderColor: isDark ? 'rgba(74, 94, 191, 0.15)' : 'rgba(74, 94, 191, 0.1)',
+                    borderWidth: 1,
+                  }
+                ]}
+              >
+                <View style={[styles.teaserIconWrap, { backgroundColor: withAlpha(Luxe.colors.indigo, 0.12) }]}>
+                  <Ionicons name="finger-print-outline" size={20} color={Luxe.colors.indigo} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <LuxeText variant="bodyMedium" style={{ fontSize: 14, fontFamily: Luxe.typography.fonts.semibold, color: colors.text }}>
+                    Passkeys (coming soon)
+                  </LuxeText>
+                  <LuxeText variant="caption" style={{ color: colors.textSecondary, fontSize: 12 }}>
+                    Secure biometric sign-in with Face ID or Touch ID.
+                  </LuxeText>
+                </View>
+                <View
+                  style={[
+                    styles.badge,
+                    {
+                      backgroundColor: withAlpha(colors.primary, 0.1),
+                      borderColor: withAlpha(colors.primary, 0.3),
+                      borderWidth: 1,
+                      borderRadius: 4,
+                      paddingHorizontal: 6,
+                      paddingVertical: 2,
+                    }
+                  ]}
+                >
+                  <Text style={[styles.badgeText, { color: colors.primary, fontSize: 9, letterSpacing: 0.5, fontFamily: Luxe.typography.fonts.semibold }]}>
+                    BETA
+                  </Text>
+                </View>
+              </GlassView>
+            </LuxeCard>
+          </View>
 
           {/* Quick links */}
-          <View style={styles.section}><LuxeText variant="badgeCaps" style={{ color: colors.textTertiary, marginLeft: 4 }}>Related</LuxeText><LuxeCard variant="default" style={styles.card}><Pressable onPress={() => router.push('/membership/upgrade' as never)} style={({ pressed }) => [styles.actionRow, pressed && { backgroundColor: colors.backgroundSecondary }]}><Ionicons name="card-outline" size={20} color={colors.textSecondary} /><LuxeText variant="bodyMedium" style={{ flex: 1, marginLeft: 12 }}>Membership & billing</LuxeText><LuxeText variant="caption" style={{ marginRight: 8 }}>{tierLabel}</LuxeText><Ionicons name="chevron-forward" size={16} color={colors.textTertiary} /></Pressable><View style={[styles.divider, { backgroundColor: colors.borderLight }]} /><Pressable onPress={() => router.push('/settings/privacy' as never)} style={({ pressed }) => [styles.actionRow, pressed && { backgroundColor: colors.backgroundSecondary }]}><Ionicons name="lock-closed-outline" size={20} color={colors.textSecondary} /><LuxeText variant="bodyMedium" style={{ flex: 1, marginLeft: 12 }}>Privacy & permissions</LuxeText><Ionicons name="chevron-forward" size={16} color={colors.textTertiary} /></Pressable></LuxeCard></View>
+          <View style={styles.section}>
+            <LuxeText variant="badgeCaps" style={{ color: colors.textTertiary, marginLeft: 4 }}>Related</LuxeText>
+            <LuxeCard variant="glass" style={styles.card}>
+              <Pressable
+                onPress={() => router.push('/membership/upgrade' as never)}
+                onHoverIn={() => setMembershipBillingHovered(true)}
+                onHoverOut={() => setMembershipBillingHovered(false)}
+                style={({ pressed }) => [
+                  styles.actionRow,
+                  {
+                    backgroundColor: pressed
+                      ? colors.backgroundSecondary
+                      : membershipBillingHovered
+                      ? (isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)')
+                      : 'transparent',
+                    borderRadius: 8,
+                  },
+                  Platform.select({
+                    web: {
+                      transition: 'all 0.2s ease-in-out',
+                      paddingLeft: membershipBillingHovered ? 20 : 16,
+                    }
+                  }) as any
+                ]}
+              >
+                <Ionicons name="card-outline" size={20} color={membershipBillingHovered ? colors.primary : colors.textSecondary} />
+                <LuxeText variant="bodyMedium" style={{ flex: 1, marginLeft: 12, color: membershipBillingHovered ? colors.text : colors.textSecondary }}>Membership & billing</LuxeText>
+                <View
+                  style={[
+                    styles.badge,
+                    {
+                      backgroundColor: tierLabel === 'FREE'
+                        ? (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.03)')
+                        : withAlpha(Luxe.colors.gold, 0.1),
+                      borderColor: tierLabel === 'FREE'
+                        ? colors.borderLight
+                        : withAlpha(Luxe.colors.gold, 0.4),
+                      borderWidth: 1,
+                      paddingHorizontal: 8,
+                      paddingVertical: 2,
+                      borderRadius: 4,
+                      marginRight: 4,
+                    }
+                  ]}
+                >
+                  <Text style={[styles.badgeText, { color: tierLabel === 'FREE' ? colors.textSecondary : Luxe.colors.gold, fontSize: 10, letterSpacing: 0.5, fontFamily: Luxe.typography.fonts.semibold }]}>
+                    {tierLabel}
+                  </Text>
+                </View>
+                <Ionicons
+                  name="chevron-forward"
+                  size={16}
+                  color={membershipBillingHovered ? colors.primary : colors.textTertiary}
+                  style={{
+                    transform: [{ translateX: membershipBillingHovered ? 4 : 0 }],
+                  }}
+                />
+              </Pressable>
+              <View style={[styles.divider, { backgroundColor: colors.borderLight }]} />
+              <Pressable
+                onPress={() => router.push('/settings/privacy' as never)}
+                onHoverIn={() => setPrivacyPermissionsHovered(true)}
+                onHoverOut={() => setPrivacyPermissionsHovered(false)}
+                style={({ pressed }) => [
+                  styles.actionRow,
+                  {
+                    backgroundColor: pressed
+                      ? colors.backgroundSecondary
+                      : privacyPermissionsHovered
+                      ? (isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)')
+                      : 'transparent',
+                    borderRadius: 8,
+                  },
+                  Platform.select({
+                    web: {
+                      transition: 'all 0.2s ease-in-out',
+                      paddingLeft: privacyPermissionsHovered ? 20 : 16,
+                    }
+                  }) as any
+                ]}
+              >
+                <Ionicons name="lock-closed-outline" size={20} color={privacyPermissionsHovered ? colors.primary : colors.textSecondary} />
+                <LuxeText variant="bodyMedium" style={{ flex: 1, marginLeft: 12, color: privacyPermissionsHovered ? colors.text : colors.textSecondary }}>Privacy & permissions</LuxeText>
+                <Ionicons
+                  name="chevron-forward"
+                  size={16}
+                  color={privacyPermissionsHovered ? colors.primary : colors.textTertiary}
+                  style={{
+                    transform: [{ translateX: privacyPermissionsHovered ? 4 : 0 }],
+                  }}
+                />
+              </Pressable>
+            </LuxeCard>
+          </View>
 
           {/* Danger Zone */}
-          <View style={styles.section}><LuxeText variant="badgeCaps" style={{ color: colors.error, marginLeft: 4, opacity: 0.8 }}>Danger Zone</LuxeText><LuxeCard variant="default" style={[styles.card, { borderColor: colors.error + '44' }]}><Pressable
+          <View style={styles.section}>
+            <LuxeText variant="badgeCaps" style={{ color: colors.error, marginLeft: 4, opacity: 0.8 }}>Danger Zone</LuxeText>
+            <LuxeCard
+              variant="glass"
+              style={[
+                styles.card,
+                {
+                  borderColor: withAlpha(colors.error, 0.25),
+                  backgroundColor: isDark ? 'rgba(186, 26, 26, 0.04)' : 'rgba(186, 26, 26, 0.02)',
+                  borderWidth: 1,
+                }
+              ]}
+            >
+              <Pressable
                 onPress={() => { haptic('warning'); setShowDeleteConfirm(true); }}
                 disabled={isAdmin}
-                style={({ pressed }) => [styles.dangerRow, pressed && { backgroundColor: colors.error + '11' }]}
-              ><View style={{ flex: 1 }}><LuxeText variant="bodyMedium" style={{ color: colors.error }}>Delete Account</LuxeText><LuxeText variant="caption" style={{ color: colors.textTertiary, marginTop: 2 }}>Permanently remove your profile and data.</LuxeText></View><Ionicons name={isAdmin ? 'shield-checkmark' : 'trash-outline'} size={20} color={isAdmin ? colors.textTertiary : colors.error} /></Pressable></LuxeCard></View>
+                onHoverIn={() => setDeleteAccountHovered(true)}
+                onHoverOut={() => setDeleteAccountHovered(false)}
+                style={({ pressed }) => [
+                  styles.dangerRow,
+                  {
+                    backgroundColor: pressed
+                      ? withAlpha(colors.error, 0.08)
+                      : deleteAccountHovered
+                      ? withAlpha(colors.error, 0.04)
+                      : 'transparent',
+                    borderRadius: 8,
+                    paddingHorizontal: 8,
+                    marginHorizontal: -8,
+                  },
+                  Platform.select({
+                    web: {
+                      transition: 'all 0.2s ease-in-out',
+                    }
+                  }) as any
+                ]}
+              >
+                <View style={{ flex: 1 }}>
+                  <LuxeText variant="bodyMedium" style={{ color: colors.error, fontFamily: Luxe.typography.fonts.semibold }}>
+                    Delete Account
+                  </LuxeText>
+                  <LuxeText variant="caption" style={{ color: colors.textTertiary, marginTop: 2 }}>
+                    Permanently remove your profile and data.
+                  </LuxeText>
+                </View>
+                <View
+                  style={[
+                    styles.dangerIconWrap,
+                    {
+                      backgroundColor: deleteAccountHovered
+                        ? withAlpha(colors.error, 0.2)
+                        : withAlpha(colors.error, 0.1),
+                    },
+                    Platform.select({
+                      web: {
+                        transition: 'all 0.2s ease-in-out',
+                        transform: [{ scale: deleteAccountHovered ? 1.1 : 1 }],
+                      }
+                    }) as any
+                  ]}
+                >
+                  <Ionicons name={isAdmin ? 'shield-checkmark' : 'trash-outline'} size={18} color={isAdmin ? colors.textTertiary : colors.error} />
+                </View>
+              </Pressable>
+            </LuxeCard>
+          </View>
 
           <LuxeText variant="caption" style={{ textAlign: 'center', color: colors.textTertiary, paddingVertical: 40 }}>Changes use secure authentication and sync across devices.</LuxeText>
         </View>
       </ScrollView>
 
       {/* Modals */}
-      <ChangePasswordModal visible={showPasswordModal} onClose={() => setShowPasswordModal(false)} onSuccess={() => {}} onFlash={showFlash} /><ChangeEmailModal visible={showEmailModal} currentEmail={user.email} onClose={() => setShowEmailModal(false)} onSuccess={(newEmail) => {
+      <ChangePasswordModal visible={showPasswordModal} onClose={() => setShowPasswordModal(false)} onSuccess={() => {}} onFlash={showFlash} />
+      <ChangeEmailModal
+        visible={showEmailModal}
+        currentEmail={user.email}
+        onClose={() => setShowEmailModal(false)}
+        onSuccess={(newEmail) => {
           queryClient.setQueryData(['account-settings-user', user.id], (old: any) => ({ ...old, email: newEmail }));
-        }} onFlash={showFlash} />
+        }}
+        onFlash={showFlash}
+      />
 
       {/* Delete Confirmation */}
       <Modal visible={showDeleteConfirm} transparent animationType="fade" onRequestClose={() => setShowDeleteConfirm(false)}>
         <View style={[styles.modalBackdrop, { backgroundColor: 'rgba(0,0,0,0.8)' }]}>
-          <LuxeCard variant="default" style={styles.deleteCard}><LuxeText variant="title2" style={{ color: colors.error }}>Delete Account?</LuxeText><LuxeText variant="body" style={{ color: colors.textSecondary, marginTop: 12 }}>This is permanent. All events, tickets, and profile data will be lost.</LuxeText>{Platform.OS !== 'web' && (
-              <View style={{ marginTop: 20 }}><LuxeText variant="badgeCaps" style={{ color: colors.textTertiary, marginBottom: 8 }}>Type DELETE to confirm</LuxeText><TextInput
+          <LuxeCard variant="glass" style={styles.deleteCard}>
+            <LuxeText variant="title2" style={{ color: colors.error }}>Delete Account?</LuxeText>
+            <LuxeText variant="body" style={{ color: colors.textSecondary, marginTop: 12 }}>This is permanent. All events, tickets, and profile data will be lost.</LuxeText>
+            {Platform.OS !== 'web' && (
+              <View style={{ marginTop: 20 }}>
+                <LuxeText variant="badgeCaps" style={{ color: colors.textTertiary, marginBottom: 8 }}>Type DELETE to confirm</LuxeText>
+                <TextInput
                   value={deleteConfirmText}
                   onChangeText={setDeleteConfirmText}
                   placeholder="DELETE"
                   placeholderTextColor={colors.textTertiary}
                   style={[styles.deleteInput, { color: colors.text, borderColor: colors.border, backgroundColor: colors.backgroundSecondary }]}
                   autoCapitalize="characters"
-                /></View>
-            )}<View style={styles.modalActions}><LuxeButton variant="glass" onPress={() => { setShowDeleteConfirm(false); setDeleteConfirmText(''); }} style={{ flex: 1 }}>Cancel</LuxeButton><LuxeButton
+                />
+              </View>
+            )}
+            <View style={styles.modalActions}>
+              <LuxeButton variant="glass" onPress={() => { setShowDeleteConfirm(false); setDeleteConfirmText(''); }} style={{ flex: 1 }}>Cancel</LuxeButton>
+              <LuxeButton
                 variant="filled"
                 onPress={confirmDelete}
                 disabled={deleting || (Platform.OS !== 'web' && deleteConfirmText.trim().toUpperCase() !== 'DELETE')}
                 loading={deleting}
                 style={{ flex: 2, backgroundColor: colors.error }}
-              >Delete Permanently</LuxeButton></View></LuxeCard></View>
+              >Delete Permanently</LuxeButton>
+            </View>
+          </LuxeCard>
+        </View>
       </Modal>
     </View>
   );
@@ -628,7 +1173,9 @@ const styles = StyleSheet.create({
   backCircle: { width: 44, height: 44, borderRadius: 22, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   hero: { flexDirection: 'row', alignItems: 'center', padding: 20, gap: 16 },
   heroLeft: { flexDirection: 'row', alignItems: 'center', gap: 16, flex: 1 },
-  avatar: { width: 60, height: 60, borderRadius: 30, alignItems: 'center', justifyContent: 'center' },
+  avatarRing: { width: 64, height: 64, borderRadius: 32, padding: 2, alignItems: 'center', justifyContent: 'center' },
+  avatarInner: { width: '100%', height: '100%', borderRadius: 30, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  cpidPressable: { flexDirection: 'row', alignItems: 'center', marginTop: 4, alignSelf: 'flex-start' },
   flashBanner: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: 12, borderWidth: 1 },
   section: { gap: 12 },
   card: { padding: 16 },
@@ -645,7 +1192,9 @@ const styles = StyleSheet.create({
   providerPill: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 99, borderWidth: 1 },
   providerText: { fontSize: 13, fontWeight: '500' },
   teaser: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: 12, marginTop: 8 },
+  teaserIconWrap: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
   dangerRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12 },
+  dangerIconWrap: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
   modalBackdrop: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 20 },
   modalCardWrap: { width: '100%', maxWidth: 440 },
   modalCard: { padding: 24 },

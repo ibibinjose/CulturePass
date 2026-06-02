@@ -48,6 +48,7 @@ import {
   CulturalTopAppBar,
   LuxeFilterChip,
   PageContainer,
+  CulturePassWordmark,
 } from '@/design-system/ui';
 import { CommunityHomeBanner } from '@/components/CommunityHomeBanner';
 
@@ -316,7 +317,7 @@ export default function DiscoverScreen() {
         </View>
         <View style={ds.topAppBarLayer}>
           <CulturalTopAppBar
-            title={topBarTitle}
+            title={activeFilter === 'all' ? <CulturePassWordmark size="sm" showSuffix={true} /> : topBarTitle}
             variant="small"
             titleLeading={
               <Image

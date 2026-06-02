@@ -43,6 +43,7 @@ import { withAlpha } from "@/lib/withAlpha";
 import { initializeWidgets } from "@/lib/widgets/register";
 import { WidgetSync } from "@/components/WidgetSync";
 import { CulturalThemeProvider } from "@/providers/CulturalThemeProvider";
+import { CulturePassWordmark } from "@/design-system/ui";
 
 import {
   useFonts,
@@ -57,7 +58,8 @@ import {
   PlayfairDisplay_500Medium,
   PlayfairDisplay_700Bold,
 } from "@expo-google-fonts/playfair-display";
-import { Ionicons } from "@expo/vector-icons"; // kept for potential static surfaces; not injected globally in app shell
+import { Ionicons } from "@expo/vector-icons";
+
 // Lazy load NavigationMetadata (web-only metadata injection, keeps it out of main entry on native)
 const NavigationMetadata = React.lazy(() =>
   import("@/components/NavigationMetadata").then((mod) => ({ default: mod.NavigationMetadata }))
@@ -67,6 +69,7 @@ const NavigationMetadata = React.lazy(() =>
 const WebSidebar = React.lazy(() =>
   import("@/modules/core/layout/web/WebSidebar").then((mod) => ({ default: mod.WebSidebar }))
 );
+
 initSentry();
 
 // Import LinkPreviewContextProvider if available (lazy, after all static imports)
@@ -96,7 +99,6 @@ if (typeof console !== 'undefined') {
   const _warn = console.warn.bind(console);
   console.warn = (...args: unknown[]) => {
     const msg = typeof args[0] === 'string' ? args[0] : '';
-    // React Native Web ≥0.19 deprecations (web only)
     if (Platform.OS === 'web') {
       if (msg.includes('props.pointerEvents is deprecated')) return;
       if (msg.includes('style props are deprecated')) return;
@@ -107,7 +109,7 @@ if (typeof console !== 'undefined') {
 }
 
 // Prevent splash auto-hide safely
-SplashScreen.preventAutoHideAsync().catch(() => {});
+SplashScreen.preventAutoHideAsync().catch(() => { });
 
 // ---------------------------------------------------------------------------
 // Stack navigator — all screens registered here so Expo Router can deep-link
@@ -228,12 +230,9 @@ function RootLayoutNav() {
             style={webStyles.ambientMesh}
             pointerEvents="none"
           />
-
           <React.Suspense fallback={null}>
             <WebSidebar />
           </React.Suspense>
-
-          {/* Main content area */}
           <View style={contentStyle}>
             <View style={mainStyle}>
               {stackContent}
@@ -244,17 +243,12 @@ function RootLayoutNav() {
     );
   }
 
-  // Mobile Web Browser Layout (Burger Menu + potential Drawer for non-tab web surfaces)
-  // Note: For full app experience with tabs, the (tabs) layout handles bottom nav.
-  // This provides a minimal chrome for direct web access / PWA shell on small screens.
   if (isWeb) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.background }}>
         <React.Suspense fallback={null}>
           <NavigationMetadata />
         </React.Suspense>
-        
-        {/* Mobile Header (only show on non-tab routes or as needed; currently simple for all small web) */}
         <View
           style={[
             webStyles.mobileHeader,
@@ -275,19 +269,14 @@ function RootLayoutNav() {
           >
             <Ionicons name="menu-outline" size={24} color={colors.text} />
           </Pressable>
-          <RNText style={[webStyles.mobileHeaderTitle, { color: colors.text }]}>
-            CulturePass
-          </RNText>
-          {/* Layout balance spacer */}
+          <CulturePassWordmark size="sm" showSuffix={true} />
           <View style={{ width: 40 }} />
         </View>
 
-        {/* Main content area */}
         <View style={{ flex: 1 }}>
           {stackContent}
         </View>
 
-        {/* Mobile Drawer Overlay (implemented for working nav on small web screens) */}
         {isDrawerOpen && (
           <>
             <Pressable
@@ -367,118 +356,25 @@ function RootLayoutNav() {
             </View>
           </>
         )}
-
-        {/* Note: Global footer intentionally NOT injected here for app flow;
-             individual public pages (landing, city, etc.) import and render <Footer /> themselves. */}
       </View>
     );
   }
 
-  // Native: return only the stack content. SafeAreaProvider + StatusBar + providers live in RootLayoutContent.
-  // This avoids double-wrapping SafeArea and StatusBar (which was causing scope bugs + layout issues).
   return stackContent;
 }
 
 // ---------------------------------------------------------------------------
-// Root layout — provider order matters:
-//   PersistQueryClientProvider (outermost)
-//   └── LinkPreviewContextProvider (NEW - wraps Router)
-//   └── OnboardingProvider
-//   └── AuthProvider
-//   └── DataSync (syncs auth user → onboarding state)
-//   └── SavedProvider / ContactsProvider / ...
+// Main Render Core — Wraps setup and maps contexts down safely
 // ---------------------------------------------------------------------------
-
-function RootLayoutContent() {
+function AppShellWrapper({ onLayoutRootView }: { onLayoutRootView: () => void }) {
   const isDark = useIsDark();
-  const [fontsLoaded, fontError] = useFonts({
-    Poppins_400Regular,
-    Poppins_500Medium,
-    Poppins_600SemiBold,
-    Poppins_700Bold,
-    Poppins_800ExtraBold,
-    // Premium display pairing for Luxe Heritage 2026 (heroes, onboarding, branding)
-    PlayfairDisplay_400Regular,
-    PlayfairDisplay_500Medium,
-    PlayfairDisplay_700Bold,
-    ...Ionicons.font,
-  });
-
-  // Add a timeout state to prevent indefinite loading
-  const [fontTimeout, setFontTimeout] = useState(false);
-  
-  // Improved timeout: longer on web (fonts + network can be slower), shorter on native
-  const FONT_TIMEOUT_MS = Platform.OS === 'web' ? 5500 : 4200;
-
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (!fontsLoaded) {
-        setFontTimeout(true);
-        console.warn(`[RootLayout] Font loading timed out after ${FONT_TIMEOUT_MS}ms — using system fonts as fallback`);
-      }
-    }, FONT_TIMEOUT_MS);
-    
-    return () => clearTimeout(timeoutId);
-  }, [fontsLoaded, FONT_TIMEOUT_MS]);
-
-  // Log font loading errors for debugging
-  useEffect(() => {
-    if (fontError) {
-      console.error('[RootLayout] Font loading error:', fontError);
-    }
-  }, [fontError]);
-
-  const onLayoutRootView = useCallback(async () => {
-    if (fontsLoaded || fontError || fontTimeout) {
-      await SplashScreen.hideAsync().catch(() => {});
-    }
-  }, [fontsLoaded, fontError, fontTimeout]);
-
-  useEffect(() => {
-    if (fontsLoaded || fontError || fontTimeout) {
-      SplashScreen.hideAsync().catch(() => {});
-    }
-  }, [fontsLoaded, fontError, fontTimeout]);
-
-  useEffect(() => {
-    initializeWidgets();
-  }, []);
-
   const isWeb = Platform.OS === "web";
 
-  // SSR Hydration fix: Always render the same thing on server and first client pass
-  const [isMounted, setIsMounted] = useState(false);
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  // If fonts fail to load OR timeout occurs, we still want to show the app instead of hanging on loading screen
-  // But during SSR we must render the same thing as the first client render.
-  if (!isMounted || (!fontsLoaded && !fontError && !fontTimeout)) {
-    return (
-      <View style={{ flex: 1, backgroundColor: isDark ? '#0B0B14' : '#FFFFFF', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-        <RNText style={{ color: isDark ? '#FFFFFF' : '#000000', fontSize: 16, marginBottom: 20 }}>
-          Loading CulturePass...
-        </RNText>
-      </View>
-    );
-  }
-
-  // If fonts failed to load or timed out, log the issue but still render the app
-  if (fontError || fontTimeout) {
-    if (fontError) {
-      console.warn('[RootLayout] Fonts failed to load, using system fonts as fallback:', fontError);
-    } else if (fontTimeout) {
-      // Already logged the timeout above with duration
-      SplashScreen.hideAsync().catch(() => {});
-    }
-  }
-
-  const appShell = (
+  return (
     <GestureHandlerRootView
       style={[
         { flex: 1 },
-        Platform.OS === "web" && ({ minHeight: "100%", height: "100%" } as const),
+        isWeb && ({ minHeight: "100%", height: "100%" } as const),
       ]}
       onLayout={onLayoutRootView}
     >
@@ -496,58 +392,118 @@ function RootLayoutContent() {
       )}
     </GestureHandlerRootView>
   );
+}
+
+function RootLayoutContent() {
+  const isDark = useIsDark();
+  const [fontsLoaded, fontError] = useFonts({
+    Poppins_400Regular,
+    Poppins_500Medium,
+    Poppins_600SemiBold,
+    Poppins_700Bold,
+    Poppins_800ExtraBold,
+    PlayfairDisplay_400Regular,
+    PlayfairDisplay_500Medium,
+    PlayfairDisplay_700Bold,
+    ...Ionicons.font,
+  });
+
+  const [fontTimeout, setFontTimeout] = useState(false);
+  const FONT_TIMEOUT_MS = Platform.OS === 'web' ? 5500 : 4200;
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (!fontsLoaded) {
+        setFontTimeout(true);
+        console.warn(`[RootLayout] Font loading timed out after ${FONT_TIMEOUT_MS}ms — using system fonts as fallback`);
+      }
+    }, FONT_TIMEOUT_MS);
+
+    return () => clearTimeout(timeoutId);
+  }, [fontsLoaded, FONT_TIMEOUT_MS]);
+
+  useEffect(() => {
+    if (fontError) {
+      console.error('[RootLayout] Font loading error:', fontError);
+    }
+  }, [fontError]);
+
+  const onLayoutRootView = useCallback(async () => {
+    if (fontsLoaded || fontError || fontTimeout) {
+      await SplashScreen.hideAsync().catch(() => { });
+    }
+  }, [fontsLoaded, fontError, fontTimeout]);
+
+  useEffect(() => {
+    if (fontsLoaded || fontError || fontTimeout) {
+      SplashScreen.hideAsync().catch(() => { });
+    }
+  }, [fontsLoaded, fontError, fontTimeout]);
+
+  useEffect(() => {
+    initializeWidgets();
+  }, []);
+
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted || (!fontsLoaded && !fontError && !fontTimeout)) {
+    return (
+      <View style={{ flex: 1, backgroundColor: isDark ? '#0B0B14' : '#FFFFFF', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+        <RNText style={{ color: isDark ? '#FFFFFF' : '#000000', fontSize: 16, marginBottom: 20 }}>
+          Loading CulturePass...
+        </RNText>
+      </View>
+    );
+  }
+
+  if (fontError || fontTimeout) {
+    if (fontError) {
+      console.warn('[RootLayout] Fonts failed to load, using system fonts as fallback:', fontError);
+    } else if (fontTimeout) {
+      SplashScreen.hideAsync().catch(() => { });
+    }
+  }
 
   const queryAppTree = (
     <PersistQueryClientProvider
       client={queryClient}
       persistOptions={{ persister: queryPersister }}
     >
-      {LinkPreviewContextProvider ? (
-        <LinkPreviewContextProvider>
-          <OnboardingProvider>
-            <AuthProvider>
-              <SavedProvider>
-                <LikesProvider>
-                  <ContactsProvider>
-                    <CulturalThemeProvider>
-                      {posthogClient ? (
-                        <PostHogProvider client={posthogClient} autocapture={{ captureScreens: false }}>{appShell}</PostHogProvider>
-                      ) : (
-                        appShell
-                      )}
-                    </CulturalThemeProvider>
-                  </ContactsProvider>
-                </LikesProvider>
-              </SavedProvider>
-            </AuthProvider>
-          </OnboardingProvider>
-        </LinkPreviewContextProvider>
-      ) : (
-        <OnboardingProvider>
-          <AuthProvider>
-            <SavedProvider>
-              <LikesProvider>
-                <ContactsProvider>
-                  <CulturalThemeProvider>
-                    {posthogClient ? (
-                      <PostHogProvider client={posthogClient} autocapture={{ captureScreens: false }}>{appShell}</PostHogProvider>
-                    ) : (
-                      appShell
-                    )}
-                  </CulturalThemeProvider>
-                </ContactsProvider>
-              </LikesProvider>
-            </SavedProvider>
-          </AuthProvider>
-        </OnboardingProvider>
-      )}
+      <OnboardingProvider>
+        <AuthProvider>
+          <SavedProvider>
+            <LikesProvider>
+              <ContactsProvider>
+                <CulturalThemeProvider>
+                  {posthogClient ? (
+                    <PostHogProvider client={posthogClient} autocapture={{ captureScreens: false }}>
+                      <AppShellWrapper onLayoutRootView={onLayoutRootView} />
+                    </PostHogProvider>
+                  ) : (
+                    <AppShellWrapper onLayoutRootView={onLayoutRootView} />
+                  )}
+                </CulturalThemeProvider>
+              </ContactsProvider>
+            </LikesProvider>
+          </SavedProvider>
+        </AuthProvider>
+      </OnboardingProvider>
     </PersistQueryClientProvider>
   );
 
   return (
     <SafeAreaProvider style={Platform.OS === "web" ? ({ flex: 1, minHeight: 0 } as const) : undefined}>
       <ErrorBoundary>
-        {queryAppTree}
+        {LinkPreviewContextProvider ? (
+          <LinkPreviewContextProvider>
+            {queryAppTree}
+          </LinkPreviewContextProvider>
+        ) : (
+          queryAppTree
+        )}
       </ErrorBoundary>
     </SafeAreaProvider>
   );
@@ -558,8 +514,6 @@ const webStyles = StyleSheet.create({
     flex: 1,
     flexDirection: "row",
     alignItems: "stretch",
-    // Do NOT set overflow:hidden here — on web it clips absolutely-positioned
-    // modals, dropdowns, and popales, blocking their touch events entirely.
     ...(Platform.OS !== "web" ? { overflow: "hidden" } as const : {}),
     ...(Platform.OS === "web" &&
       ({
@@ -578,7 +532,6 @@ const webStyles = StyleSheet.create({
     minHeight: 0,
     flexDirection: "column",
     alignSelf: "stretch",
-    // Consistent responsive padding — prefer using <PageContainer> inside screens for even better control
     paddingHorizontal: 16,
     ...(Platform.OS === "web" && {
       paddingHorizontal: 24,

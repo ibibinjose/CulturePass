@@ -14,6 +14,7 @@ import React from 'react';
 import { View, Pressable, StyleSheet, Platform, ViewStyle, StyleProp } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
+import { useIsDark } from '@/hooks/useColors';
 
 import { Luxe } from '@/design-system/tokens/luxeHeritage';
 
@@ -31,6 +32,7 @@ interface LuxeCardProps {
   haptic?: boolean;
   disabled?: boolean;
   accessibilityLabel?: string;
+  tone?: 'auto' | 'light' | 'dark';
 }
 
 const sizeTokens = {
@@ -48,6 +50,7 @@ export function LuxeCard({
   haptic = true,
   disabled = false,
   accessibilityLabel,
+  tone = 'auto',
   ...rest
 }: LuxeCardProps) {
   const scale = useSharedValue(1);
@@ -68,10 +71,11 @@ export function LuxeCard({
     scale.value = withSpring(1, Luxe.spring.smooth);
   };
 
+  const systemIsDark = useIsDark();
   const t = sizeTokens[size];
 
   const getSurfaceStyle = () => {
-    const isDark = true; // default premium dark for now
+    const isDark = tone === 'auto' ? systemIsDark : tone === 'dark';
     const c = isDark ? Luxe.colors.dark : Luxe.colors.light;
 
     switch (variant) {

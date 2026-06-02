@@ -152,6 +152,7 @@ export function WaitlistLanding() {
 
       <ScrollView
         ref={scrollRef}
+        style={styles.scrollView}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.scrollContent, maxWidth != null ? { maxWidth, alignSelf: 'center' as const } : null]}
       >
@@ -413,10 +414,10 @@ export function WaitlistLanding() {
             )}
           </GlassView>
         </View>
-      </ScrollView>
 
-      {/* ==================== FOOTER ==================== */}
-      <Footer />
+        {/* ==================== FOOTER ==================== */}
+        <Footer />
+      </ScrollView>
     </View>
   );
 }
@@ -516,6 +517,7 @@ const TESTIMONIALS = [
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  scrollView: { flex: 1 },
 
   // Nav
   nav: {

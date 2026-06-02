@@ -69,6 +69,8 @@ export const useAnimatedScrollHandler = () => noop;
 export const useAnimatedKeyboard = () => ({ height: { value: 0 }, state: { value: 0 } });
 export const useAnimatedSensor = () => ({ sensor: { value: {} }, unregister: noop });
 export const useReducedMotion = () => false;
+export const useEvent = () => noop;
+export const setGestureState = noop;
 export const interpolate = (val, _input, output) => output[0] ?? val;
 export const interpolateColor = (val, _input, output) => output[0] ?? '#000';
 
@@ -146,6 +148,8 @@ const stub = {
   useAnimatedKeyboard,
   useAnimatedSensor,
   useReducedMotion,
+  useEvent,
+  setGestureState,
   interpolate,
   interpolateColor,
   Easing,

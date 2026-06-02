@@ -24,7 +24,7 @@ interface ActionItem {
 }
 
 interface CulturalTopAppBarProps {
-  title: string;
+  title: string | React.ReactNode;
   variant?: CulturalTopAppBarVariant;
   titleLeading?: ReactNode;
   titleTrailing?: ReactNode;
@@ -119,9 +119,13 @@ export const CulturalTopAppBar: React.FC<CulturalTopAppBarProps> = ({
         {/* Title section */}
         <View style={titleContainerStyle}>
           {titleLeading}
-          <Text style={titleTextStyle} numberOfLines={1} ellipsizeMode="tail">
-            {title}
-          </Text>
+          {typeof title === 'string' ? (
+            <Text style={titleTextStyle} numberOfLines={1} ellipsizeMode="tail">
+              {title}
+            </Text>
+          ) : (
+            title
+          )}
           {titleTrailing}
         </View>
 

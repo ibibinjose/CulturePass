@@ -43,8 +43,8 @@ import { withAlpha } from '@/lib/withAlpha';
 // ─── Constants ────────────────────────────────────────────────────────────────
 const SIDEBAR_WIDTH = Layout.sidebarWidth;
 const RAIL_WIDTH = Layout.sidebarRailWidth;
-const ACTIVE_COLOR = CultureTokens.violet;
-const ACTIVE_GRAD: [string, string] = [CultureTokens.violet, CultureTokens.coral];
+const ACTIVE_COLOR = CultureTokens.terracottaGlow;
+const ACTIVE_GRAD: [string, string] = [CultureTokens.terracottaGlow, CultureTokens.deepSaffron];
 const SIDEBAR_COLLAPSED_STORAGE_KEY = 'culturepass:web-sidebar-collapsed';
 const DEFAULT_WEATHER_CITY = 'Sydney';
 const DEFAULT_WEATHER_COORDS = { lat: -33.8688, lon: 151.2093 };
@@ -137,7 +137,7 @@ function AvatarWithRing({
   const colors = useColors();
   const isDark = useIsDark();
   const innerSize = size - ringWidth * 2 - 2;
-  const cutoutBg = isDark ? withAlpha(CultureTokens.indigo, 0.08) : colors.surfaceElevated || '#F8F1E9';
+  const cutoutBg = isDark ? withAlpha(CultureTokens.indigo, 0.08) : colors.surfaceVariant;
 
   const resolvedUri = avatarUrl
     ? recyclingKey
@@ -325,6 +325,8 @@ function WebSidebarContent() {
   const [collapsed, setCollapsed] = useState(false);
   const isSidebarCollapsed = collapsed && isDesktop;
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchFocused, setSearchFocused] = useState(false);
+  const [collapseHovered, setCollapseHovered] = useState(false);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -364,7 +366,7 @@ function WebSidebarContent() {
     const base = [...MAIN_NAV, ...ATTENDEE_NAV, ...BROWSE_NAV, ...hostHubNav];
     if (isVenue) base.push(...VENUE_NAV);
     if (isSponsor) base.push(...SPONSOR_NAV);
-    if (isAdmin) base.push(...ADMIN_NAV);
+    if (isAdmin && !isSuperAdmin) base.push(...ADMIN_NAV);
     if (isSuperAdmin) base.push(...SUPERADMIN_NAV);
 
     const seen = new Set<string>();
@@ -411,7 +413,17 @@ function WebSidebarContent() {
 
   if (isSidebarCollapsed) {
     return (
-      <View style={[railStyles.rail, { backgroundColor: bg, borderRightColor: border }]}>
+      <GlassView
+        intensity={isDark ? 25 : 15}
+        tone={isDark ? 'dark' : 'light'}
+        style={[
+          railStyles.rail,
+          {
+            backgroundColor: isDark ? 'rgba(10, 10, 12, 0.82)' : 'rgba(250, 249, 246, 0.85)',
+            borderRightColor: border,
+          }
+        ]}
+      >
         <Pressable style={railStyles.railTop} onPress={() => navigate('/(tabs)')} hitSlop={4}>
           <SidebarLogoMark size={36} borderRadius={10} />
         </Pressable>
@@ -452,12 +464,23 @@ function WebSidebarContent() {
             <AvatarWithRing avatarUrl={profileImage} initials={initials} size={28} ringWidth={1} recyclingKey={recyclingKey} />
           </Pressable>
         )}
-      </View>
+      </GlassView>
     );
   }
 
   return (
-    <View style={[styles.sidebar, { width: sidebarWidth, backgroundColor: bg, borderRightColor: border }]}>
+    <GlassView
+      intensity={isDark ? 25 : 15}
+      tone={isDark ? 'dark' : 'light'}
+      style={[
+        styles.sidebar,
+        {
+          width: sidebarWidth,
+          borderRightColor: border,
+          backgroundColor: isDark ? 'rgba(10, 10, 12, 0.82)' : 'rgba(250, 249, 246, 0.85)',
+        }
+      ]}
+    >
       <View style={styles.brandHeader}>
         <Pressable style={styles.brandHeaderPress} onPress={() => navigate('/(tabs)')}>
           <SidebarLogoMark size={36} borderRadius={10} />
@@ -470,7 +493,7 @@ function WebSidebarContent() {
         </Pressable>
 
         <View style={styles.headerActions}>
-          <View style={[styles.headerMetaStack, { backgroundColor: colors.backgroundSecondary, borderColor: border }]}>
+          <View style={[styles.headerMetaStack, { backgroundColor: isDark ? 'rgba(0,0,0,0.22)' : 'rgba(255,255,255,0.45)', borderColor: border }]}>
             <View style={styles.headerMetaLine}>
               <Ionicons name="time-outline" size={12} color={colors.textSecondary} />
               <Text style={[styles.headerMetaText, { color: colors.textSecondary }]} numberOfLines={1}>
@@ -485,23 +508,46 @@ function WebSidebarContent() {
             </View>
           </View>
           <AppearanceModeToggle compact />
-          <Pressable onPress={collapseSidebar} style={styles.collapseBtn} hitSlop={6}>
+          <Pressable
+            onPress={collapseSidebar}
+            onHoverIn={() => setCollapseHovered(true)}
+            onHoverOut={() => setCollapseHovered(false)}
+            style={[
+              styles.collapseBtn,
+              {
+                backgroundColor: collapseHovered ? (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)') : 'transparent',
+                transform: collapseHovered ? [{ scale: 1.08 }] : [{ scale: 1.0 }],
+              } as any
+            ]}
+            hitSlop={6}
+          >
             <Ionicons name="chevron-back" size={14} color={colors.textTertiary} />
           </Pressable>
         </View>
       </View>
 
       <View style={styles.searchContainer}>
-        <View style={[styles.searchBar, { backgroundColor: colors.backgroundSecondary, borderColor: border }]}>
+        <View
+          style={[
+            styles.searchBar,
+            {
+              backgroundColor: searchFocused ? (isDark ? 'rgba(0,0,0,0.4)' : '#fff') : colors.backgroundSecondary,
+              borderColor: searchFocused ? CultureTokens.terracottaGlow : border,
+              boxShadow: searchFocused ? `0 0 0 2px ${withAlpha(CultureTokens.terracottaGlow, 0.15)}` : undefined,
+            } as any
+          ]}
+        >
           <Ionicons name="search-outline" size={15} color={mutedColor} />
           <TextInput
             placeholder="Search..."
             placeholderTextColor={mutedColor}
             value={searchQuery}
             onChangeText={setSearchQuery}
+            onFocus={() => setSearchFocused(true)}
+            onBlur={() => setSearchFocused(false)}
             style={[styles.searchInput, { color: colors.text }]}
           />
-          {searchQuery && (
+          {!!searchQuery && (
             <Pressable onPress={() => setSearchQuery('')} hitSlop={6}>
               <Ionicons name="close-circle" size={15} color={mutedColor} />
             </Pressable>
@@ -517,7 +563,7 @@ function WebSidebarContent() {
 
         {isVenue && <NavGroup label="Venue" items={filterNav(VENUE_NAV)} isActive={isActive} navigate={navigate} colors={colors} isDark={isDark} />}
         {isSponsor && <NavGroup label="Sponsor" items={filterNav(SPONSOR_NAV)} isActive={isActive} navigate={navigate} colors={colors} isDark={isDark} />}
-        {isAdmin && <NavGroup label="Admin" items={filterNav(ADMIN_NAV)} isActive={isActive} navigate={navigate} colors={colors} isDark={isDark} />}
+        {isAdmin && !isSuperAdmin && <NavGroup label="Admin" items={filterNav(ADMIN_NAV)} isActive={isActive} navigate={navigate} colors={colors} isDark={isDark} />}
         {isSuperAdmin && <NavGroup label="SuperAdmin" items={filterNav(SUPERADMIN_NAV)} isActive={isActive} navigate={navigate} colors={colors} isDark={isDark} />}
 
         <NavGroup label="Support" items={filterNav(BOTTOM_NAV)} isActive={isActive} navigate={navigate} colors={colors} isDark={isDark} />
@@ -561,7 +607,7 @@ function WebSidebarContent() {
           </Button>
         )}
       </View>
-    </View>
+    </GlassView>
   );
 }
 
@@ -599,6 +645,7 @@ function SidebarItem({ item, active, isDark, onPress, colors }: { item: NavItem;
         itemStyles.item,
         active && { backgroundColor: activeBg },
         !active && hovered && { backgroundColor: colors.backgroundSecondary },
+        hovered && !active && { transform: [{ scale: 1.01 }, { translateX: 2 }] as any },
       ]}
       onPress={onPress}
       onHoverIn={() => setHovered(true)}
@@ -609,7 +656,7 @@ function SidebarItem({ item, active, isDark, onPress, colors }: { item: NavItem;
       <Text style={[itemStyles.label, { color: active ? ACTIVE_COLOR : colors.text }, active && itemStyles.labelActive]}>
         {item.label}
       </Text>
-      {item.badge && (
+      {!!item.badge && (
         <View style={itemStyles.badge}>
           <Text style={itemStyles.badgeText}>{item.badge}</Text>
         </View>
@@ -620,12 +667,15 @@ function SidebarItem({ item, active, isDark, onPress, colors }: { item: NavItem;
 
 function SidebarProfileBlock({ user, colors, isDark, friendlyRole, onNavigate, onLogout }: any) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [hovered, setHovered] = useState(false);
   const { profileImage, initials, recyclingKey } = useProfileImage();
   const displayName = user.displayName || user.username || 'User';
 
   const publicProfileRoute = user?.id
     ? `/user/${user.handle && user.handleStatus === 'approved' ? user.handle.toLowerCase() : (user.culturePassId || user.id)}`
     : '/profile/edit';
+
+  const border = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)';
 
   return (
     <View>
@@ -667,8 +717,18 @@ function SidebarProfileBlock({ user, colors, isDark, friendlyRole, onNavigate, o
       )}
 
       <Pressable
-        style={profileStyles.profileRow}
+        style={[
+          profileStyles.profileRow,
+          {
+            backgroundColor: hovered || menuOpen
+              ? (isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)')
+              : (isDark ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.01)'),
+            borderColor: hovered || menuOpen ? colors.borderLight : border,
+          }
+        ]}
         onPress={() => setMenuOpen(!menuOpen)}
+        onHoverIn={() => setHovered(true)}
+        onHoverOut={() => setHovered(false)}
       >
         <AvatarWithRing avatarUrl={profileImage} initials={initials} size={30} recyclingKey={recyclingKey} />
         <View style={{ flex: 1, minWidth: 0 }}>
@@ -748,13 +808,13 @@ function SidebarFooter({ colors, border, mutedColor }: { colors: any; border: st
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  sidebar: { height: '100%', borderRightWidth: Platform.OS === 'web' ? 0 : 1, ...Platform.select({ web: { position: 'sticky', top: 0 } as any }) },
+  sidebar: { height: '100%', flexShrink: 0, borderRightWidth: 1, ...Platform.select({ web: { position: 'sticky', top: 0 } as any }) },
   brandHeader: { paddingTop: Spacing.md, paddingHorizontal: Spacing.md, paddingBottom: Spacing.sm, gap: Spacing.sm },
   brandHeaderPress: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 4, paddingHorizontal: 6, borderRadius: Radius.md },
   brandTextBlock: { flex: 1, minWidth: 0, gap: 0 },
   brandTagline: { fontSize: 10, fontFamily: 'Poppins_500Medium', letterSpacing: 0.2, lineHeight: 13, opacity: 0.65, marginTop: -1 },
   headerActions: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 4 },
-  headerMetaStack: { width: 126, gap: 2, paddingHorizontal: 7, paddingVertical: 5, borderRadius: 8, borderWidth: 1 },
+  headerMetaStack: { width: 128, gap: 3, paddingHorizontal: 9, paddingVertical: 6, borderRadius: Radius.md, borderWidth: 1 },
   headerMetaLine: { flexDirection: 'row', alignItems: 'center', gap: 4, minWidth: 0 },
   headerMetaText: { fontSize: 9, fontFamily: 'Poppins_600SemiBold', lineHeight: 12 },
   collapseBtn: { width: 24, height: 24, borderRadius: 6, alignItems: 'center', justifyContent: 'center' },
@@ -774,7 +834,7 @@ const styles = StyleSheet.create({
 });
 
 const railStyles = StyleSheet.create({
-  rail: { width: RAIL_WIDTH, height: '100%', borderRightWidth: Platform.OS === 'web' ? 0 : 1, alignItems: 'center', paddingTop: 18 },
+  rail: { width: RAIL_WIDTH, height: '100%', flexShrink: 0, borderRightWidth: 1, alignItems: 'center', paddingTop: 18 },
   railTop: { marginBottom: 16 },
   divider: { height: 1, width: 28, marginBottom: 10 },
   railIcons: { gap: 6 },
@@ -784,7 +844,7 @@ const railStyles = StyleSheet.create({
 
 const itemStyles = StyleSheet.create({
   item: { flexDirection: 'row', alignItems: 'center', gap: 11, paddingVertical: 9, paddingHorizontal: 11, borderRadius: Radius.md, marginBottom: 1, position: 'relative' },
-  activeBar: { position: 'absolute', left: 0, top: 9, bottom: 9, width: 3, borderRadius: 2 },
+  activeBar: { position: 'absolute', left: 0, top: 6, bottom: 6, width: 4, borderRadius: 2 },
   label: { ...TextStyles.body, fontSize: 13, flex: 1 },
   labelActive: { fontWeight: '600' },
   badge: { backgroundColor: CultureTokens.coral, paddingHorizontal: 6, borderRadius: 10 },
@@ -792,7 +852,15 @@ const itemStyles = StyleSheet.create({
 });
 
 const profileStyles = StyleSheet.create({
-  profileRow: { flexDirection: 'row', alignItems: 'center', gap: 9, padding: 6, paddingLeft: 8, borderRadius: Radius.md },
+  profileRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 9,
+    padding: 8,
+    paddingHorizontal: 12,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+  },
   name: { ...TextStyles.labelSemibold, fontSize: 13 },
   sub: { ...TextStyles.caption, fontSize: 11 },
   menu: { position: 'absolute', bottom: 58, left: 8, right: 8, padding: 4, borderRadius: Radius.md, zIndex: 1000, borderWidth: 1, overflow: 'hidden' },

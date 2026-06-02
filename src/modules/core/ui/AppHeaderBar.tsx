@@ -19,7 +19,7 @@ export const APP_HEADER_BAR_HEIGHT = HeaderTokens.height;
 
 export interface AppHeaderBarProps {
   /** Page title */
-  title: string;
+  title: string | React.ReactNode;
   /** Optional subtitle shown below the title */
   subtitle?: string;
   /** Back fallback route when no history */
@@ -84,9 +84,13 @@ export function AppHeaderBar({
         </Pressable>
 
         <View style={styles.center}>
-          <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
-            {title}
-          </Text>
+          {typeof title === 'string' ? (
+            <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
+              {title}
+            </Text>
+          ) : (
+            title
+          )}
           {subtitle ? (
             <Text style={[styles.subtitle, { color: colors.textSecondary }]} numberOfLines={1}>
               {subtitle}

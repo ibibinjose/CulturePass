@@ -162,6 +162,18 @@ export function DateField({
     return { value: d, label: d };
   });
 
+  // Web-only style resets for native <select> elements (to hide browser UI).
+  // These are NOT included in styles.select to avoid RNW StyleSheet validator errors
+  // on shortform / non-RN properties like "outline".
+  const webSelectStyle = {
+    outlineWidth: 0,
+    outlineStyle: 'none',
+    appearance: 'none' as any,
+    WebkitAppearance: 'none',
+    MozAppearance: 'none',
+    cursor: 'pointer',
+  };
+
   // Notify parent validation callback if provided (simple passthrough based on whether we have a full valid date)
   useEffect(() => {
     if (onValidationComplete) {
@@ -193,6 +205,7 @@ export function DateField({
               backgroundColor: colors.surfaceElevated,
               borderColor: displayError ? colors.error : colors.borderLight,
               color: colors.text,
+              ...webSelectStyle,
             } as any}
             aria-label="Year"
           >
@@ -217,6 +230,7 @@ export function DateField({
               backgroundColor: colors.surfaceElevated,
               borderColor: displayError ? colors.error : colors.borderLight,
               color: colors.text,
+              ...webSelectStyle,
             } as any}
             aria-label="Month"
           >
@@ -241,6 +255,7 @@ export function DateField({
               backgroundColor: colors.surfaceElevated,
               borderColor: displayError ? colors.error : colors.borderLight,
               color: colors.text,
+              ...webSelectStyle,
             } as any}
             aria-label="Day"
           >
@@ -262,7 +277,7 @@ export function DateField({
       ) : null}
 
       {/* Success indicator (simple check for complete valid date) */}
-      {!displayError && year && month && day && value && (
+      {!displayError && !!year && !!month && !!day && !!value && (
         <View style={styles.successContainer}>
           <Ionicons
             name="checkmark-circle"
@@ -279,7 +294,7 @@ export function DateField({
 
 const styles = StyleSheet.create({
   container: {
-    gap: 6,
+    gap: 4,
   },
   label: {
     fontSize: 13,
@@ -303,7 +318,8 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     marginLeft: 4,
   },
-  // Base styles for <select> (theme colors + border are applied inline for dark mode support)
+  // Base styles for <select> — only RN-compatible properties here.
+  // Web-specific resets (appearance, outline, etc.) are added at runtime below.
   select: {
     height: 44,
     borderRadius: 10,
@@ -311,19 +327,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     fontSize: 14,
     fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-    outline: 'none',
     width: '100%',
-    appearance: 'none',
-    WebkitAppearance: 'none',
-    MozAppearance: 'none',
-    cursor: 'pointer',
   } as any,
   successContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 4,
     gap: 4,
-    marginTop: 4,
+    marginTop: 2,
   },
   successIcon: {},
   successText: {

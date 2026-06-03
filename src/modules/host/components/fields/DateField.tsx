@@ -319,7 +319,7 @@ export function DateField({
   };
 
   return (
-    <View style={styles.container}>{Platform.OS === 'web' ? renderWebInput() : renderNativeInput()}{hasValidated && isValid && !displayError && value && (
+    <View style={styles.container}>{Platform.OS === 'web' ? renderWebInput() : renderNativeInput()}{hasValidated && isValid && !displayError && !!value && (
         <View style={styles.successContainer}><Ionicons
             name="checkmark-circle"
             size={14}
@@ -334,7 +334,7 @@ export function DateField({
 
 const styles = StyleSheet.create({
   container: {
-    gap: 6,
+    gap: 4,
   },
   successContainer: {
     flexDirection: 'row',

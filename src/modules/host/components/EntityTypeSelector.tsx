@@ -263,9 +263,12 @@ export function EntityTypeSelector({ onSelect, existingProfiles = [], intent }: 
               end={{ x: 1, y: 1 }}
               style={styles.heroGradient}
             >
-              <Text style={styles.heroTitle}>Create Your Host Profile</Text>
+              <Text style={styles.heroTitle}>Create a Page</Text>
               <Text style={styles.heroSubtitle}>
-                Choose the type of profile that best represents your cultural presence on CulturePass
+                Your Page is your home on CulturePass — where people discover your culture, events, stories and community.
+              </Text>
+              <Text style={[styles.heroSubtitle, { fontSize: 13, marginTop: 8, opacity: 0.9 }]}>
+                Which option is best for you?
               </Text>
             </LinearGradient>
           )}

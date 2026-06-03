@@ -283,7 +283,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: Spacing.md,
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.lg,
   },
   iconContainer: {
     width: 56,
@@ -344,8 +344,8 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   section: {
-    gap: Spacing.md,
-    marginBottom: Spacing.xl,
+    gap: 10,
+    marginBottom: 12,
   },
   sectionHeader: {
     flexDirection: 'row',

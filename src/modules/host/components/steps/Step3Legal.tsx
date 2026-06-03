@@ -445,7 +445,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   form: {
-    gap: Spacing.xl,
+    gap: 10,
   },
   fieldGroup: {
     gap: Spacing.sm,

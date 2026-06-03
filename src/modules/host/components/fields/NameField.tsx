@@ -218,7 +218,7 @@ export function NameField({
         rightIcon={rightIcon}
       />{showCharCount && (
         <View style={styles.footer}><Text style={[styles.charCount, { color: getCharCountColor() }]}>{value.length}/{maxLength} characters{getCharCountStatus()}</Text></View>
-      )}{hasValidated && isValid && !displayError && value.trim() && (
+      )}{hasValidated && isValid && !displayError && !!value.trim() && (
         <View style={styles.successContainer}><Ionicons
             name="checkmark-circle"
             size={14}
@@ -231,7 +231,7 @@ export function NameField({
 
 const styles = StyleSheet.create({
   container: {
-    gap: 6,
+    gap: 4,
   },
   footer: {
     flexDirection: 'row',

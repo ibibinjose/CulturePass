@@ -362,7 +362,7 @@ export function HandleField({
           maxLength={30}
           accessibilityLabel={label}
           accessibilityHint="Enter a unique handle for your profile"
-        /><View style={styles.rightIconContainer}>{getRightIcon()}</View></View><View style={styles.footer}><Text style={[styles.charCount, { color: getCharCountColor() }]}>{value.length}/30 characters</Text></View>{showSuggestion && suggestedHandle && !value && (
+        /><View style={styles.rightIconContainer}>{getRightIcon()}</View></View><View style={styles.footer}><Text style={[styles.charCount, { color: getCharCountColor() }]}>{value.length}/30 characters</Text></View>{showSuggestion && !!suggestedHandle && !value && (
         <Pressable
           onPress={applySuggestion}
           style={[styles.suggestion, { backgroundColor: colors.surfaceElevated }]}
@@ -378,7 +378,7 @@ export function HandleField({
             size={16}
             color={colors.textSecondary}
           /></Pressable>
-      )}{hasValidated && value && !displayError && isValid && !lastCheckFailed && (
+      )}{hasValidated && !!value && !displayError && isValid && !lastCheckFailed && (
         <View style={[styles.statusBanner, { backgroundColor: colors.surfaceElevated }]}><Ionicons
             name="checkmark-circle"
             size={16}
@@ -388,7 +388,7 @@ export function HandleField({
       )}
 
       {/* Soft non-blocking warning when availability check couldn't reach the server (common in local dev without emulators) */}
-      {lastCheckFailed && value && !displayError && (
+      {lastCheckFailed && !!value && !displayError && (
         <View style={[styles.warningBanner, { backgroundColor: colors.surfaceElevated, borderColor: colors.borderLight }]}>
           <Ionicons name="cloud-offline-outline" size={16} color={colors.textSecondary} />
           <Text style={[styles.warningText, { color: colors.textSecondary }]}>
@@ -402,7 +402,7 @@ export function HandleField({
 
 const styles = StyleSheet.create({
   container: {
-    gap: 8,
+    gap: 4,
   },
   inputWrapper: {
     position: 'relative',

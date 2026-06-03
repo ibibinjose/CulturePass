@@ -745,14 +745,14 @@ const styles = StyleSheet.create({
   },
   formColumn: {
     flex: 1,
-    gap: 24,
+    gap: 12,
   },
   previewColumn: {
     width: Platform.OS === 'web' ? 360 : '100%',
     gap: 20,
   },
   section: {
-    gap: 16,
+    gap: 10,
   },
   sectionHeader: {
     flexDirection: 'row',

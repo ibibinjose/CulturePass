@@ -304,7 +304,7 @@ export function RichTextEditor({
 
 const styles = StyleSheet.create({
   container: {
-    gap: 6,
+    gap: 4,
   },
   labelRow: {
     flexDirection: 'row',

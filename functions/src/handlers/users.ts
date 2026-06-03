@@ -63,6 +63,21 @@ usersRouter.get('/users/me', requireAuth, async (req: Request, res: Response) =>
   }
 });
 
+/** GET /api/users/handle/:handle — public lookup by approved handle (for /cpu/username etc) */
+usersRouter.get('/users/handle/:handle', async (req: Request, res: Response) => {
+  const h = String(req.params.handle ?? '').trim();
+  if (!h) return res.status(400).json({ error: 'Handle required' });
+  try {
+    const user = await usersService.getByHandle(h);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    // Public fields only here; full /users/:id adds private contact details for followers/owners
+    return res.json(sanitizeUserResponse(user as any, req.user));
+  } catch (err) {
+    captureRouteError(err, 'GET /api/users/handle/:handle');
+    return res.status(500).json({ error: 'Failed to fetch user by handle' });
+  }
+});
+
 /** GET /api/users/:id — fetch any user by ID */
 usersRouter.get('/users/:id', async (req: Request, res: Response) => {
   const id = String(req.params.id ?? '');

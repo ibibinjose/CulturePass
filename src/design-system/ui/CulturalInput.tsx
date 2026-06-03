@@ -158,7 +158,7 @@ export const CulturalInput = forwardRef<TextInput, CulturalInputProps>(({
       </View>
       
       {error && <Text style={errorTextStyle}>{error}</Text>}
-      {!error && helperText && (
+      {!error && !!helperText && (
         <Text style={[errorTextStyle, { color: theme.isDark 
           ? withAlpha(theme.onSurface, 0.6) 
           : withAlpha(theme.onSurface, 0.6) }]}>{helperText}</Text>

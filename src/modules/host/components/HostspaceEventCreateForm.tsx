@@ -808,14 +808,14 @@ const styles = StyleSheet.create({
   },
   formColumn: {
     flex: 1,
-    gap: 24,
+    gap: 12,
   },
   previewColumn: {
     width: Platform.OS === 'web' ? 360 : '100%',
     gap: 20,
   },
   section: {
-    gap: 16,
+    gap: 12,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -835,11 +835,11 @@ const styles = StyleSheet.create({
     letterSpacing: -0.3,
   },
   sectionBody: {
-    gap: 16,
+    gap: 10,
     paddingLeft: 4,
   },
   field: {
-    gap: 8,
+    gap: 4,
   },
   labelRow: {
     flexDirection: 'row',

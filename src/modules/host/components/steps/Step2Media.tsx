@@ -91,7 +91,7 @@ export function Step2Media({
   const renderSectionHeader = (title: string, subtitle?: string, required?: boolean) => (
     <View style={styles.sectionHeader}><View style={styles.sectionTitleRow}><Text style={[styles.sectionTitle, { color: colors.text }]}>{title}</Text>{required && (
           <View style={[styles.requiredBadge, { backgroundColor: Luxe.colors.dark.primary }]}><Text style={styles.requiredBadgeText}>Required</Text></View>
-        )}</View>{subtitle && (
+        )}</View>{!!subtitle && (
         <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>{subtitle}</Text>
       )}</View>
   );
@@ -222,7 +222,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xl,
   },
   header: {
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.lg,
     gap: Spacing.sm,
   },
   title: {
@@ -236,8 +236,8 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   section: {
-    marginBottom: Spacing.xl,
-    gap: Spacing.md,
+    marginBottom: 12,
+    gap: 10,
   },
   sectionHeader: {
     gap: Spacing.xs,

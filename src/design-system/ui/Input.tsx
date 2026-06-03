@@ -178,7 +178,7 @@ export function Input({
 }
 
 const styles = StyleSheet.create({
-  wrap: { gap: 6 },
+  wrap: { gap: 4 },
   label: {
     fontSize: 13,
     fontFamily: FontFamily.semibold,

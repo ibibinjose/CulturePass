@@ -38,7 +38,7 @@ import { CultureTokens, gradients, FontFamily } from '@/design-system/tokens/the
 import { Luxe } from '@/design-system/tokens/luxeHeritage';
 import { Skeleton, PageContainer } from '@/design-system/ui';
 import { AppHeaderBar } from '@/modules/core/ui/AppHeaderBar';
-import { modulesApi } from '@/modules/api';
+import { modulesApi, ApiError } from '@/modules/api';
 import { siteUrl } from '@/lib/publicPaths';
 import { openExternalUrl } from '@/lib/openExternalUrl';
 import { useAuth } from '@/lib/auth';
@@ -214,19 +214,39 @@ export default function QRScreen() {
     return new Date(user.createdAt).toLocaleDateString(undefined, { month: 'short', year: 'numeric' });
   }, [user?.createdAt]);
 
+  // Safe wrappers: treat "Wallet not configured on server" (503 + code) as successful null data
+  // so we avoid ERROR logs / Sentry noise when the feature is intentionally disabled in a deploy.
+  const safeBusinessCardQuery = (kind: 'apple' | 'google') => async () => {
+    try {
+      return kind === 'apple'
+        ? ((await modulesApi.wallet.businessCardApple()) as { url: string })
+        : ((await modulesApi.wallet.businessCardGoogle()) as { url: string });
+    } catch (err: any) {
+      if (err instanceof ApiError && err.status === 503) {
+        const m = err.message || '';
+        if (m.includes('WALLET_APPLE_NOT_CONFIGURED') || m.includes('WALLET_GOOGLE_NOT_CONFIGURED')) {
+          return null;
+        }
+      }
+      throw err;
+    }
+  };
+
   // Wallet pass credentials
-  const { data: appleWallet } = useQuery<{ url: string }>({
+  const { data: appleWallet } = useQuery<{ url: string } | null>({
     queryKey: ['/api/wallet/business-card/apple', userId],
-    queryFn: () => modulesApi.wallet.businessCardApple() as Promise<{ url: string }>,
+    queryFn: safeBusinessCardQuery('apple'),
     enabled: !!userId && (Platform.OS === 'ios' || Platform.OS === 'web'),
     staleTime: 8 * 60 * 1000,
+    retry: false,
   });
 
-  const { data: googleWallet } = useQuery<{ url: string }>({
+  const { data: googleWallet } = useQuery<{ url: string } | null>({
     queryKey: ['/api/wallet/business-card/google', userId],
-    queryFn: () => modulesApi.wallet.businessCardGoogle() as Promise<{ url: string }>,
+    queryFn: safeBusinessCardQuery('google'),
     enabled: !!userId && (Platform.OS === 'android' || Platform.OS === 'web'),
     staleTime: 30 * 60 * 1000,
+    retry: false,
   });
 
   // Reanimated Ambient Background Blobs Y/X Float

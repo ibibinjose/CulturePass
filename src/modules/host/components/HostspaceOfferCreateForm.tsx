@@ -865,7 +865,7 @@ const styles = StyleSheet.create({
   formColumn: {
     flex: 1,
     minWidth: 0,
-    gap: Spacing.md,
+    gap: 12,
   },
   previewColumn: {
     gap: Spacing.sm,
@@ -877,7 +877,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 18,
     padding: Spacing.md,
-    gap: Spacing.md,
+    gap: 12,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -897,10 +897,10 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   sectionBody: {
-    gap: Spacing.md,
+    gap: 10,
   },
   field: {
-    gap: 7,
+    gap: 4,
   },
   labelRow: {
     flexDirection: 'row',

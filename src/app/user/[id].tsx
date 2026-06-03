@@ -29,7 +29,7 @@ import { useContacts } from '@/contexts/ContactsContext';
 import { exportToAddressBook } from '@/modules/contacts/lib/exportContact';
 import { isAppAdminEmail } from '@/lib/admin';
 import { goBackOrReplace } from '@/lib/navigation';
-import { userPublicSegment, siteUrl } from '@/lib/publicPaths';
+import { siteUrl, canonicalUserPath, canonicalCPUPath } from '@/lib/publicPaths';
 import {
   profileShareDescription,
   profileShareImage,
@@ -90,7 +90,16 @@ async function resolveUser(rawId: string): Promise<User> {
     const user = await modulesApi.users.get(targetUserId) as User;
     return user.culturePassId ? user : { ...user, culturePassId: rawId.toUpperCase() };
   }
-  return modulesApi.users.get(rawId) as Promise<User>;
+  try {
+    return await (modulesApi.users.get(rawId) as Promise<User>);
+  } catch (e: any) {
+    if (e instanceof ApiError && (e.status === 404 || e.status === 400 || e.status === 403)) {
+      // Fallback: support direct /user/<handle> or /cpu/<username> links (via the /api/users/handle route added for this)
+      const byHandle = await modulesApi.users.getByHandle(rawId).catch(() => null);
+      if (byHandle?.id) return byHandle as User;
+    }
+    throw e;
+  }
 }
 
 function fmt(n: number) {
@@ -157,14 +166,15 @@ function UserPublicScreen() {
 
   const isOwner = !!currentUserId && !!user && currentUserId === user.id;
 
-  // Safe canonical redirect — resolveUser always backfills culturePassId so this never loops.
-  // Guard: only redirect when still on a /user/ path to avoid hijacking navigation away from this page.
+  // General canonical enforcer (cleanup): snap whatever entrypoint (/user/, /cpu/, /CPU/, /u/ or bare) to the preferred /cpu/ public URL (for /cpu/username support, correct og:url in metadata for shares, business card profile image in previews, and security logs).
+  // Delegation on alias routes means we render under the visited branded path; this effect keeps the bar + canonicals consistent.
   useEffect(() => {
     if (Platform.OS !== 'web' || isLoading || !user) return;
-    if (!pathname.startsWith('/user/')) return;
-    const segment = userPublicSegment(displayUser as any);
+    const preferred = canonicalUserPath(displayUser as any);
     const cur = pathname.replace(/\/$/, '');
-    if (cur !== `/user/${segment}`) router.replace(`/user/${segment}` as never);
+    if (cur !== preferred) {
+      router.replace(preferred as never);
+    }
   }, [user, pathname, isLoading, displayUser]);
 
   const isAdmin = isAppAdminEmail(currentUser?.email);
@@ -192,7 +202,7 @@ function UserPublicScreen() {
           targetType: 'user',
           targetId,
           reason: 'profile_view',
-          details: 'Public /user profile page loaded (possible contact scraping)',
+          details: 'Public /user or /cpu profile page loaded (possible contact scraping)',
           userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown',
         });
       } catch {
@@ -217,7 +227,7 @@ function UserPublicScreen() {
   const handleShare = async () => {
     if (!displayUser) return;
     const safeDu = displayUser as any;
-    const url = siteUrl(`/user/${userPublicSegment(safeDu)}`);
+    const url = siteUrl(canonicalUserPath(safeDu));
     const title = profileShareTitle(safeDu);
     const text = profileShareDescription(safeDu);
     if (Platform.OS === 'web') {
@@ -334,19 +344,16 @@ function UserPublicScreen() {
     ...(user.languages ?? []),
   ].filter(Boolean).slice(0, 14);
   const duForShare = displayUser || (user as any);
-  const publicSegment = userPublicSegment(duForShare);
-  const profileUrl = siteUrl(`/user/${publicSegment}`);
+  // Use canonical helpers (post-cleanup for /cpu/username etc)
+  const profileUrl = siteUrl(canonicalUserPath(duForShare));
+  const cpuPublicUrl = siteUrl(canonicalCPUPath(duForShare));
 
-  // Branded CPU (CulturePass User) URL - preferred for CPIDs
-  const isCPID = /^CP-[A-Z0-9]{6,}$/i.test(publicSegment);
-  const cpuPublicUrl = isCPID ? siteUrl(`/CPU/${publicSegment}`) : null;
-
-  // Clean "username" style URL when handle is approved
+  // Keep for render/QR that reference them (will show cpu branded in bottom card)
   const hasNiceHandle = !!(duForShare.handle && duForShare.handleStatus === 'approved');
   const niceUsername = hasNiceHandle ? duForShare.handle!.toLowerCase() : null;
   const nicePublicUrl = niceUsername 
     ? siteUrl(`/${niceUsername}`) 
-    : (cpuPublicUrl || profileUrl);
+    : cpuPublicUrl;
   const shareTitle = profileShareTitle(duForShare);
   const shareDescription = profileShareDescription(duForShare);
   const shareImage = profileShareImage(duForShare);
@@ -363,13 +370,13 @@ function UserPublicScreen() {
         <meta property="og:description" content={shareDescription} />
         <meta property="og:image" content={shareImage} />
         <meta property="og:image:alt" content={`${displayName} profile on CulturePass`} />
-        <meta property="og:url" content={nicePublicUrl || profileUrl} />
+        <meta property="og:url" content={profileUrl} />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={shareTitle} />
         <meta name="twitter:description" content={shareDescription} />
         <meta name="twitter:image" content={shareImage} />
-        <meta name="twitter:url" content={nicePublicUrl || profileUrl} />
-        <link rel="canonical" href={nicePublicUrl || profileUrl} />
+        <meta name="twitter:url" content={profileUrl} />
+        <link rel="canonical" href={profileUrl} />
       </Head>
 
       <View style={[s.fill, { backgroundColor: pageBg }]}>

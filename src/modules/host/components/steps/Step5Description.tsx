@@ -467,7 +467,7 @@ export function Step5Description({
           })}
         </View>
 
-        {tagsError && (
+        {!!tagsError && (
           <Text style={[styles.errorText, { color: colors.error }]}>
             {tagsError}
           </Text>
@@ -566,7 +566,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: Spacing.lg,
-    gap: Spacing.xl,
+    gap: 16,
   },
   contentDesktop: {
     maxWidth: 800,
@@ -587,7 +587,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   section: {
-    gap: Spacing.md,
+    gap: 10,
   },
   sectionHeader: {
     gap: Spacing.xs,

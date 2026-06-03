@@ -434,8 +434,15 @@ function shouldRetry(failureCount: number, error: unknown): boolean {
 
   if (error instanceof Error) {
     const match = error.message.match(/^(\d{3}):/);
-    if (match && parseInt(match[1]) >= 400 && parseInt(match[1]) < 500) {
-      return false;
+    if (match) {
+      const status = parseInt(match[1], 10);
+      if (status >= 400 && status < 500) {
+        return false;
+      }
+      // Permanent config errors (e.g. wallet certs not provisioned) should not retry.
+      if (status === 503 && /WALLET_(APPLE|GOOGLE)_NOT_CONFIGURED/.test(error.message)) {
+        return false;
+      }
     }
   }
 
@@ -446,6 +453,16 @@ export const queryClient = new QueryClient({
   queryCache: new QueryCache({
     onError: (error, query) => {
       const queryKeyStr = JSON.stringify(query.queryKey);
+      const errMsg = error instanceof Error ? error.message : String(error || '');
+
+      // Downgrade "not configured" (permanent per-deploy) to warn to avoid noisy ERROR logs / Sentry.
+      if (/WALLET_(APPLE|GOOGLE)_NOT_CONFIGURED/.test(errMsg)) {
+        log.warn('Query: wallet feature not configured on server', undefined, {
+          queryKey: queryKeyStr,
+          status: (error as any)?.status,
+        });
+        return;
+      }
 
       if (error instanceof ApiError) {
         if (error.isServerError) {

@@ -91,8 +91,17 @@ export interface WizardContainerProps {
 // ---------------------------------------------------------------------------
 
 function getStepLabels(entityType: EntityType): string[] {
+  const displayNames: Record<EntityType, string> = {
+    community: 'Community',
+    organiser: 'Organiser',
+    venue: 'Venue',
+    business: 'Business',
+    artist: 'Artist',
+    professional: 'Professional',
+  };
+  const typeName = displayNames[entityType] || entityType;
   const base = [
-    'Basic Identity',
+    `${typeName} Profile`,
     'Media & Branding',
     'Legal & Compliance',
     'Location & Operations',

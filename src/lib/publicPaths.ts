@@ -75,11 +75,13 @@ export function canonicalProfilePath(profile: {
 }): string | null {
   const prefix = profileCanonicalPrefix(profile.entityType);
   if (!prefix) return null;
+  if (prefix === '/user') {
+    // Use the user canonical ( /cpu/seg or future) so user profiles get consistent branded /cpu/ (or bare) even via /profile/ paths.
+    return canonicalUserPath(profile as unknown as Pick<User, 'id' | 'handle' | 'handleStatus'> & { culturePassId?: string | null });
+  }
   const segment = prefix === '/community'
     ? communityPublicSegment(profile as Parameters<typeof communityPublicSegment>[0])
-    : prefix === '/user'
-      ? userPublicSegment(profile as unknown as Pick<User, 'id' | 'handle' | 'handleStatus'> & { culturePassId?: string | null })
-      : profilePublicSegment(profile as Profile);
+    : profilePublicSegment(profile as Profile);
   return `${prefix}/${segment}`;
 }
 
@@ -95,17 +97,15 @@ export function canonicalCommunityPath(
 
 export function canonicalUserPath(u: Pick<User, 'id' | 'handle' | 'handleStatus'> & { culturePassId?: string | null }): string {
   const seg = userPublicSegment(u);
-  // Prefer branded CPU path for CulturePass User IDs
-  if (/^CP-[A-Z0-9]{6,}$/i.test(seg)) {
-    return `/CPU/${seg}`;
-  }
-  return `/user/${seg}`;
+  // Branded /cpu/ (for CP- ids and for /cpu/username handles) -- bare /handle still works as shortcut via [handle] resolver.
+  // This keeps sharing + metadata consistent with "cpu" branded business card public profiles.
+  return `/cpu/${seg}`;
 }
 
-/** Branded CulturePass User (CPU) path – preferred for sharing CPIDs */
+/** Branded CulturePass User (CPU) path – preferred for sharing CPIDs and usernames */
 export function canonicalCPUPath(u: Pick<User, 'id' | 'handle' | 'handleStatus'> & { culturePassId?: string | null }): string {
   const seg = userPublicSegment(u);
-  return `/CPU/${seg}`;
+  return `/cpu/${seg}`;
 }
 
 export function canonicalActivityPath(id: string): string {

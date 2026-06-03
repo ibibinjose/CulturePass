@@ -2,7 +2,7 @@
  * Step1Identity Component
  * 
  * First step of the HostSpace Enterprise-Grade Form System wizard.
- * Collects basic identity information for all entity types:
+ * Create Page flow for CulturePass: collects profile info for communities, businesses, artists and organisations.
  * - Official Name (required, 2-120 characters)
  * - Handle (required, unique, URL-safe)
  * - Founding Date (required, no future dates)
@@ -46,6 +46,7 @@ import { SITE_ORIGIN } from '@/lib/app-meta';
 import { HandleField } from '../fields/HandleField';
 import { NameField } from '../fields/NameField';
 import { DateField } from '../fields/DateField';
+import { Input } from '@/design-system/ui/Input';
 import { Luxe } from '@/design-system/tokens/luxeHeritage';
 import { FontFamily, Radius, Spacing } from '@/design-system/tokens/theme';
 import type { EntityType } from '../../hooks/useFormWizard';
@@ -148,6 +149,7 @@ export function Step1Identity({
   const handle = formData.handle || '';
   const foundingDate = formData.foundingDate || '';
   const tradingName = formData.tradingName || '';
+  const bio = (formData as any).bio || (formData as any).shortBio || '';
 
   // ---------------------------------------------------------------------------
   // Handle Changes
@@ -173,6 +175,10 @@ export function Step1Identity({
 
   const handleTradingNameChange = (value: string) => {
     updateFormData({ tradingName: value });
+  };
+
+  const handleBioChange = (value: string) => {
+    updateFormData({ bio: value } as any);
   };
 
   // ---------------------------------------------------------------------------
@@ -202,7 +208,7 @@ export function Step1Identity({
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
     >
-      {/* Header */}
+      {/* Header with Create a Page intro and CulturePass benefits */}
       <View style={styles.header}>
         <View style={[styles.iconContainer, { backgroundColor: colors.surfaceElevated }]}>
           <Ionicons
@@ -211,9 +217,34 @@ export function Step1Identity({
             color={Luxe.colors.dark.accent}
           />
         </View>
-        <Text style={[styles.title, { color: colors.text }]}>Basic Identity</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Create a Page</Text>
         <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-          {`Let's start with the essential information about your ${getEntityTypeDisplayName(entityType).toLowerCase()}. This will help people find and recognize you on CulturePass.`}
+          Your Page is your home on CulturePass — where people discover your culture, events, stories and community.
+        </Text>
+        <Text style={[styles.entityTypeNote, { color: colors.textTertiary }]}>
+          Creating a {getEntityTypeDisplayName(entityType)} Page
+        </Text>
+
+        {/* Benefits list for CulturePass — cultural profiles, events, communities & creators */}
+        <View style={[styles.benefitsContainer, { backgroundColor: colors.surfaceElevated }]}>
+          <Text style={[styles.benefitsTitle, { color: colors.text }]}>With your Page you can:</Text>
+          {[
+            { icon: 'people-outline', text: 'Connect with your cultural community and fans worldwide' },
+            { icon: 'construct-outline', text: 'Use professional tools to promote events and heritage' },
+            { icon: 'cash-outline', text: 'Earn money through ticketed events, shops and offers' },
+            { icon: 'people-circle-outline', text: 'Invite collaborators and team members to help grow your profile' },
+            { icon: 'analytics-outline', text: 'Get insights on your audience and cultural engagement' },
+            { icon: 'trending-up-outline', text: 'Get discovered — people can follow you and see your updates in their feed' },
+          ].map((benefit, idx) => (
+            <View key={idx} style={styles.benefitRow}>
+              <Ionicons name={benefit.icon as any} size={16} color={Luxe.colors.dark.accent} style={styles.benefitIcon} />
+              <Text style={[styles.benefitText, { color: colors.textSecondary }]}>{benefit.text}</Text>
+            </View>
+          ))}
+        </View>
+
+        <Text style={[styles.termsText, { color: colors.textTertiary }]}>
+          By continuing you agree to the CulturePass Page Terms.
         </Text>
       </View>
 
@@ -223,9 +254,9 @@ export function Step1Identity({
           <NameField
             value={officialName}
             onChange={handleOfficialNameChange}
-            label="Official Name"
-            placeholder="Enter your official name"
-            hint="The legal or registered name of your entity"
+            label="Page name (required)"
+            placeholder="Enter your official / business / community name"
+            hint="Use the name of your business, brand or organisation, or a name that helps explain your Page."
             required
             error={getFieldError('officialName')}
           />
@@ -237,7 +268,7 @@ export function Step1Identity({
             suggestedHandle={suggestedHandle}
             error={getFieldError('handle')}
           />
-          {handle && (
+          {!!handle && (
             <View style={[styles.previewBanner, { backgroundColor: colors.surfaceElevated }]}>
               <Ionicons
                 name="link-outline"
@@ -245,7 +276,23 @@ export function Step1Identity({
                 color={Luxe.colors.dark.accent}
                 style={styles.previewIcon}
               /><Text style={[styles.previewLabel, { color: colors.textSecondary }]}>Your profile URL:</Text><Text style={[styles.previewUrl, { color: Luxe.colors.dark.accent }]}>{SITE_ORIGIN.replace(/^https?:\/\//, '')}/@{handle}</Text></View>
-          )}</View><View style={styles.fieldGroup}><DateField
+          )}</View>
+
+        {/* Short bio - FB-style easy entry */}
+        <View style={styles.fieldGroup}>
+          <Input
+            label="Bio (optional)"
+            value={bio}
+            onChangeText={handleBioChange}
+            placeholder="Tell people a little about what you do."
+            hint="A short introduction for your Page. You can expand this later."
+            maxLength={160}
+            multiline
+            numberOfLines={2}
+          />
+        </View>
+
+        <View style={styles.fieldGroup}><DateField
             value={foundingDate}
             onChange={handleFoundingDateChange}
             label="Founding Date"
@@ -268,7 +315,7 @@ export function Step1Identity({
           color={Luxe.colors.dark.accent}
           style={styles.infoIcon}
         /><View style={styles.infoContent}><Text style={[styles.infoTitle, { color: colors.text }]}>Why do we need this?</Text><Text style={[styles.infoText, { color: colors.textSecondary }]}>Your official name and handle are used to create your unique profile
-            on CulturePass. The handle becomes your permanent URL and cannot be
+            on CulturePass. The handle becomes your permanent Page URL and cannot be
             changed later, so choose carefully!</Text></View></View>
 
       {/* Bottom Padding */}
@@ -297,7 +344,7 @@ const styles = StyleSheet.create({
   },
   header: {
     gap: Spacing.md,
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.lg,
   },
   iconContainer: {
     width: 56,
@@ -317,7 +364,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   form: {
-    gap: Spacing.xl,
+    gap: 10,
   },
   fieldGroup: {
     gap: Spacing.sm,
@@ -346,7 +393,7 @@ const styles = StyleSheet.create({
     padding: Spacing.lg,
     borderRadius: Radius.md,
     gap: Spacing.md,
-    marginTop: Spacing.xl,
+    marginTop: 16,
   },
   infoIcon: {
     marginTop: 2,
@@ -366,6 +413,42 @@ const styles = StyleSheet.create({
   },
   bottomPadding: {
     height: Spacing.xxl,
+  },
+  // FB-style Page creation enhancements
+  entityTypeNote: {
+    fontSize: 13,
+    fontFamily: FontFamily.medium,
+    marginTop: 4,
+  },
+  benefitsContainer: {
+    marginTop: Spacing.md,
+    padding: Spacing.md,
+    borderRadius: Radius.md,
+    gap: Spacing.sm,
+  },
+  benefitsTitle: {
+    fontSize: 14,
+    fontFamily: FontFamily.semibold,
+    marginBottom: 4,
+  },
+  benefitRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  benefitIcon: {
+    marginTop: 1,
+  },
+  benefitText: {
+    fontSize: 13,
+    fontFamily: FontFamily.medium,
+    flex: 1,
+  },
+  termsText: {
+    fontSize: 11,
+    fontFamily: FontFamily.medium,
+    textAlign: 'center',
+    marginTop: Spacing.sm,
   },
 });
 

@@ -53,7 +53,21 @@ function ProfileDetailScreenInner() {
             user = await modulesApi.users.get(targetUserId) as User;
             resolvedViaCpid = true;
           } else {
-            user = await modulesApi.users.get(rawId) as User;
+            try {
+              user = await modulesApi.users.get(rawId) as User;
+            } catch (e: any) {
+              const status = e instanceof ApiError ? e.status : undefined;
+              if (status === 404 || status === 400 || status === 403) {
+                const byH = await modulesApi.users.getByHandle(rawId).catch(() => null);
+                if (byH?.id) {
+                  user = byH as User;
+                } else {
+                  throw e;
+                }
+              } else {
+                throw e;
+              }
+            }
           }
           return {
             id: user.id,

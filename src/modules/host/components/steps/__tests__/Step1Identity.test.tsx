@@ -110,7 +110,7 @@ describe('Step1Identity', () => {
 
   it('renders without crashing', () => {
     const { getByText } = render(<Step1Identity {...defaultProps} />);
-    expect(getByText('Basic Identity')).toBeTruthy();
+    expect(getByText('Create a Page')).toBeTruthy();
   });
 
   it('displays the correct entity type in subtitle', () => {
@@ -123,7 +123,7 @@ describe('Step1Identity', () => {
   it('renders all required fields', () => {
     const { getByTestId } = render(<Step1Identity {...defaultProps} />);
     
-    expect(getByTestId('name-field-Official Name')).toBeTruthy();
+    expect(getByTestId('name-field-Page name (required)')).toBeTruthy();
     expect(getByTestId('handle-field')).toBeTruthy();
     expect(getByTestId('date-field')).toBeTruthy();
     expect(getByTestId('name-field-Trading Name')).toBeTruthy();
@@ -132,7 +132,7 @@ describe('Step1Identity', () => {
   it('updates official name when changed', () => {
     const { getByTestId } = render(<Step1Identity {...defaultProps} />);
     
-    const input = getByTestId('name-input-Official Name');
+    const input = getByTestId('name-input-Page name (required)');
     fireEvent.changeText(input, 'My Community');
     
     expect(mockUpdateFormData).toHaveBeenCalledWith({ officialName: 'My Community' });
@@ -180,7 +180,7 @@ describe('Step1Identity', () => {
       <Step1Identity {...defaultProps} formData={formData} />
     );
     
-    expect(getByTestId('name-input-Official Name').props.value).toBe('Existing Community');
+    expect(getByTestId('name-input-Page name (required)').props.value).toBe('Existing Community');
     expect(getByTestId('handle-input').props.value).toBe('existing-handle');
     expect(getByTestId('date-input').props.value).toBe('2019-05-10');
     expect(getByTestId('name-input-Trading Name').props.value).toBe('Existing Trading Name');
@@ -208,7 +208,7 @@ describe('Step1Identity', () => {
 
     const { getByTestId } = render(<Step1Identity {...defaultProps} />);
     
-    expect(getByTestId('name-error-Official Name')).toBeTruthy();
+    expect(getByTestId('name-error-Page name (required)')).toBeTruthy();
     expect(getByTestId('handle-error')).toBeTruthy();
   });
 

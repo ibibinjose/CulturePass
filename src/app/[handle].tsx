@@ -1,13 +1,14 @@
 /**
- * Public path resolver — catches paths like /CP-U58B35B, /jiobaba or /+jiobaba.
- * CPID first, then handle lookup, then profile lookup.
+ * Public path resolver — catches bare handles like /ibibinjose , /CP-xxx , +@ etc.
+ * Uses getByHandle (new public /users/handle backend) + cpid, then redirects to canonical public URL (/cpu/seg or bare vanity).
+ * /cpu/ and /CPU/ alias routes (delegating to renderer) + effect ensure /cpu/username (and CPID) "just work" at correct URL with business-card profile image in og: share metadata + security logging.
  */
 import { useEffect } from 'react';
 import { View, ActivityIndicator, Text, StyleSheet } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useColors } from '@/hooks/useColors';
 import { modulesApi } from '@/modules/api';
-import { userPublicSegment } from '@/lib/publicPaths';
+import { canonicalUserPath } from '@/lib/publicPaths';
 
 export default function HandleResolverScreen() {
   const colors = useColors();
@@ -31,19 +32,18 @@ export default function HandleResolverScreen() {
           const hit = await modulesApi.cpid.lookup(normalized).catch(() => null);
           const target = hit?.userId ?? hit?.targetId;
           if (!cancelled && target) {
-            // Prefer the branded CPU public URL
-            router.replace({ pathname: '/CPU/[id]', params: { id: normalized } });
+            // Use canonical (will be /cpu/CP-... ) -- lands directly on preferred public /cpu/ URL (delegation + effect ensure no spinner bounce, correct metadata)
+            const targetPath = canonicalUserPath({ id: target, culturePassId: normalized } as any);
+            router.replace(targetPath as never);
             return;
           }
         }
 
-        // Try user first
+        // Try user first (by handle)
         const user = await modulesApi.users.getByHandle(handle).catch(() => null);
         if (!cancelled && user?.id) {
-          const segment = userPublicSegment(user);
-          // Prefer branded CPU path for CPIDs
-          const targetPath = /^CP-[A-Z0-9]{6,}$/i.test(segment) ? '/CPU/[id]' : '/u/[id]';
-          router.replace({ pathname: targetPath, params: { id: segment } });
+          // Use canonicalUserPath (/cpu/seg for branded, including /cpu/username) -- clean public URL + og:image (profile pic as business card) + security
+          router.replace( canonicalUserPath(user) as never );
           return;
         }
 
@@ -57,6 +57,8 @@ export default function HandleResolverScreen() {
 
         // Not found — go home
         if (!cancelled) router.replace('/(tabs)');
+
+        // User public profiles (including /cpu/username) now resolve via canonical + delegation; see user/[id].tsx for business-card og:image + security updates.
       } catch {
         if (!cancelled) router.replace('/(tabs)');
       }

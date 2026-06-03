@@ -30,7 +30,7 @@ export function BrandWordmark({
           size={size === 'xl' ? 'xl' : size === 'lg' ? 'lg' : size === 'md' ? 'md' : 'sm'}
           showSuffix
         />
-        {withTagline && tagline && (
+        {withTagline && !!tagline && (
           <View style={{ marginTop: 4 }}>
             <NameTaglineLockup
               name=""

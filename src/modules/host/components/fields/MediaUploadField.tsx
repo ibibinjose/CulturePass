@@ -37,6 +37,10 @@ export interface MediaUploadFieldProps {
   maxItems?: number; // For gallery type
   showCropTool?: boolean;
   showBackgroundRemoval?: boolean; // Future feature
+
+  // Analytics (passed from wizard/step for correlation with session/step)
+  trackUpload?: (status: 'success' | 'failure', fileType: string, fileSizeBytes?: number, durationMs?: number, errorMessage?: string) => void;
+  trackApiCall?: (entry: { endpoint: string; method: string; durationMs: number; statusCode: number; success: boolean }) => void;
 }
 
 /**
@@ -79,6 +83,8 @@ function MediaUploadField({
   maxItems = 12,
   showCropTool = true,
   showBackgroundRemoval = false,
+  trackUpload,
+  trackApiCall,
 }: MediaUploadFieldProps) {
   const colors = useColors();
   const {
@@ -93,7 +99,7 @@ function MediaUploadField({
     requestAITags,
     removeBackground,
     clearError,
-  } = useMediaUpload();
+  } = useMediaUpload(trackUpload ? { trackUpload } : undefined);
 
   const [showCropModal, setShowCropModal] = useState(false);
   const [selectedImageForCrop, setSelectedImageForCrop] = useState<string | null>(null);

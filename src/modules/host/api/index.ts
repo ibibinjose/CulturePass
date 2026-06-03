@@ -129,6 +129,13 @@ export const hostApi = {
     /** List events by publisher profile ID */
     listForPublisher: (publisherProfileId: string) =>
       api.events.list({ publisherProfileId }),
+
+    // Promo codes for the event (hosts only)
+    promos: {
+      list: (eventId: string) => api.events.promos.list(eventId),
+      create: (eventId: string, data: Parameters<typeof api.events.promos.create>[1]) =>
+        api.events.promos.create(eventId, data),
+    },
   },
 
   // ---------------------------------------------------------------------------

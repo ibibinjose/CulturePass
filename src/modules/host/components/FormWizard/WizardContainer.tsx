@@ -48,7 +48,6 @@ import { responsiveMaxWidth } from '../../utils/responsive';
 import {
   announceStepChange,
   focusFirstInput,
-  createKeyboardHandler,
   progressAccessibilityProps,
 } from '../../utils/accessibility';
 
@@ -242,11 +241,7 @@ export function WizardContainer({
     } catch (error) {
       console.error('[WizardContainer] Failed to advance step:', error);
       if (Platform.OS === 'web') {
-        if (Platform.OS === 'web') {
-          window.alert('Please fix the errors before continuing.');
-        } else {
-          Alert.alert('Validation Error', 'Please fix the errors before continuing.');
-        }
+        window.alert('Please fix the errors before continuing.');
       } else {
         Alert.alert('Validation Error', 'Please fix the errors before continuing.');
       }
@@ -283,11 +278,7 @@ export function WizardContainer({
       const message =
         error instanceof Error ? error.message : 'Failed to publish profile. Please try again.';
       if (Platform.OS === 'web') {
-        if (Platform.OS === 'web') {
-          window.alert(message);
-        } else {
-          Alert.alert('Publish Error', message);
-        }
+        window.alert(message);
       } else {
         Alert.alert('Publish failed', message);
       }
@@ -298,22 +289,14 @@ export function WizardContainer({
     try {
       await wizard.saveDraft();
       if (Platform.OS === 'web') {
-        if (Platform.OS === 'web') {
-          window.alert('Draft saved successfully.');
-        } else {
-          Alert.alert('Success', 'Draft saved successfully!');
-        }
+        window.alert('Draft saved successfully.');
       } else {
         Alert.alert('Success', 'Draft saved successfully!');
       }
     } catch (error) {
       console.error('[WizardContainer] Failed to save draft:', error);
       if (Platform.OS === 'web') {
-        if (Platform.OS === 'web') {
-          window.alert('Failed to save draft. Please try again.');
-        } else {
-          Alert.alert('Error', 'Failed to save draft. Please try again.');
-        }
+        window.alert('Failed to save draft. Please try again.');
       } else {
         Alert.alert('Error', 'Failed to save draft. Please try again.');
       }
@@ -541,6 +524,8 @@ export function WizardContainer({
             onPublish={handlePublish}
             isPublishing={wizard.isPublishing}
             isSavingDraft={wizard.isSavingDraft}
+            trackUpload={wizard.trackUpload}
+            trackApiCall={wizard.trackApiCall}
           /></View></ScrollView>
 
       {/* Navigation Buttons */}
@@ -571,6 +556,15 @@ export function WizardContainer({
         status={wizard.saveStatus}
         lastSaved={wizard.lastSaved}
       />
+
+      {/* DEV: Surface session metrics for host wizard funnel debugging (step times, auto-save rates, validation errors, abandonment). Data-driven polish. */}
+      {__DEV__ && (
+        <View style={{ paddingHorizontal: 8, paddingVertical: 4, backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 4, marginTop: 4 }}>
+          <Text style={{ color: '#0f0', fontSize: 9, fontFamily: 'monospace' }} numberOfLines={2}>
+            DEV: {JSON.stringify(wizard.getSessionAnalyticsMetrics?.() || { note: 'metrics' })}
+          </Text>
+        </View>
+      )}
     </View>
   );
 

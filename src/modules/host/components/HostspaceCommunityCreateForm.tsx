@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
 
 import { Image } from 'expo-image';
 import { useColors, useIsDark } from '@/hooks/useColors';
@@ -26,6 +27,9 @@ import { Button } from '@/design-system/ui/Button';
 import { GlassView } from '@/design-system/ui/GlassView';
 import { useAuth } from '@/lib/auth';
 
+// Unification (ADR-001): This dedicated form for rich 'community' entity is legacy.
+// All rich profiles (community, etc.) should use the full FormWizard for consistency, analytics, drafts, legal gates.
+// This form is kept for backward compat but shows deprecation + link to wizard.
 const CATEGORIES = ['Culture', 'Business', 'Tech', 'Students', 'Arts', 'Social', 'Other'];
 const MODES = ['In-person', 'Hybrid', 'Online'];
 const JOIN_POLICIES = ['Open to all', 'Invite only', 'Approval required'];
@@ -210,6 +214,17 @@ export function HostspaceCommunityCreateForm({ onReview }: { onReview?: () => vo
         <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
           Build a space for your diaspora community to connect, share, and grow.
         </Text>
+      </View>
+
+      {/* Unification deprecation banner (ADR-001 execution) */}
+      <View style={{ backgroundColor: '#FEF3C7', padding: 12, borderRadius: 8, marginBottom: 16, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <Ionicons name="information-circle" size={20} color="#92400E" />
+        <Text style={{ color: '#92400E', flex: 1, fontSize: 13 }}>
+          Note: Rich communities now use the full guided FormWizard (with analytics, auto-save, legal gates). This legacy form is for compat only.
+        </Text>
+        <Pressable onPress={() => router.push('/hostspace/create?profileType=community' as any)} style={{ backgroundColor: '#92400E', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 4 }}>
+          <Text style={{ color: 'white', fontSize: 12 }}>Use Wizard</Text>
+        </Pressable>
       </View>
 
       <View style={[styles.content, isDesktop && styles.contentDesktop]}>
@@ -650,7 +665,7 @@ function LinkInput({ icon, ...props }: { icon: keyof typeof Ionicons.glyphMap } 
   );
 }
 
-function CommunityPreviewCard({ draft, colors }: { draft: CommunityDraft; colors: any }) {
+function CommunityPreviewCard({ draft, colors }: { draft: CommunityDraft; colors: ReturnType<typeof useColors> }) {
   const accent = CultureTokens.teal;
   return (
     <GlassView intensity={15} style={[styles.previewCard, { borderColor: colors.borderLight, backgroundColor: colors.surface + '40' }]}>

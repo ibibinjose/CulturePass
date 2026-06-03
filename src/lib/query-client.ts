@@ -2,7 +2,6 @@ import { fetch } from 'expo/fetch';
 import { Platform } from 'react-native';
 import { QueryClient, QueryFunction, QueryCache } from '@tanstack/react-query';
 import { ApiError } from '@/platform/api/client';
-import { Sentry } from '@/lib/sentry';
 import { log, getCorrelationId } from '@/lib/logger';
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -405,9 +404,9 @@ export async function apiRequestCached(
 
 type UnauthorizedBehavior = 'returnNull' | 'throw' | 'redirect';
 
-export const getQueryFn: <T>(
-  options: { on401: UnauthorizedBehavior }
-) => QueryFunction<T> = ({ on401 }) => async ({ queryKey }) => {
+export const getQueryFn = <T>(
+  { on401 }: { on401: UnauthorizedBehavior }
+): QueryFunction<T> => async ({ queryKey }) => {
   const route = Array.isArray(queryKey) ? queryKey.join('/') : String(queryKey);
   const res = await fetch(buildApiUrl(route), {
     headers: _accessToken ? { Authorization: `Bearer ${_accessToken}` } : undefined,
@@ -415,10 +414,10 @@ export const getQueryFn: <T>(
   });
 
   if (res.status === 401) {
-    if (on401 === 'returnNull') return null as any;
+    if (on401 === 'returnNull') return null as unknown as T;
     if (on401 === 'redirect') {
       router.replace('/(onboarding)/login');
-      return null as any;
+      return null as unknown as T;
     }
   }
 
@@ -459,7 +458,7 @@ export const queryClient = new QueryClient({
       if (/WALLET_(APPLE|GOOGLE)_NOT_CONFIGURED/.test(errMsg)) {
         log.warn('Query: wallet feature not configured on server', undefined, {
           queryKey: queryKeyStr,
-          status: (error as any)?.status,
+          status: (error as unknown as { status?: number })?.status,
         });
         return;
       }

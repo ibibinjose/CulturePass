@@ -12,7 +12,7 @@
  * - Top keywords table
  * - Engagement score gauge
  * - Category comparison indicator
- * - AI-powered optimization suggestions
+ * - Rule-based optimization suggestions (data-driven)
  * - CSV export button
  * - Mobile-responsive design (320px+)
  * - Accessibility support (WCAG 2.1 Level AA)

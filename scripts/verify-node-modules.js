@@ -37,6 +37,26 @@ function checkPackage(packagePath, relativeName) {
   }
   try {
     const pkg = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf8'));
+    
+    // 1. If it's a types-only package (starts with @types/ or has types/typings defined), it doesn't need a JS main entry.
+    const isTypesPackage = relativeName.startsWith('@types/') || pkg.types || pkg.typings;
+    if (isTypesPackage) {
+      const typingsFile = pkg.types || pkg.typings || 'index.d.ts';
+      const resolvedTypings = path.resolve(packagePath, typingsFile);
+      if (fs.existsSync(resolvedTypings)) {
+        return true;
+      }
+      if (fs.existsSync(path.join(packagePath, 'index.d.ts'))) {
+        return true;
+      }
+    }
+
+    // 2. If it has exports, module, browser, or bin keys, it's a valid package even if there is no main
+    if (pkg.exports || pkg.module || pkg.browser || pkg.bin) {
+      return true;
+    }
+
+    // 3. Fallback to main check
     let mainFile = pkg.main || 'index.js';
     let resolvedPath = path.resolve(packagePath, mainFile);
     
@@ -59,15 +79,41 @@ function checkPackage(packagePath, relativeName) {
     }
     
     if (!exists) {
-      console.log(`Corrupt package (missing main): ${relativeName} (main: ${mainFile})`);
-      return false;
+      // Let's check if the directory is actually empty, or has no files at all.
+      // If it has files, we shouldn't delete it; just warn, as it could be a package using exports or complex build system.
+      const files = fs.readdirSync(packagePath);
+      if (files.length <= 1 && files[0] === 'package.json') {
+        console.log(`Corrupt package (empty directory except package.json): ${relativeName}`);
+        return false;
+      }
+      // Otherwise, just log a warning but don't delete
+      console.log(`Warning: package ${relativeName} has no obvious main entry point (${mainFile}), but contains files. Skipping deletion.`);
+      return true;
     }
 
     // Verify typings file if specified
     const typingsFile = pkg.typings || pkg.types;
     if (typingsFile) {
-      const resolvedTypings = path.resolve(packagePath, typingsFile);
-      if (!fs.existsSync(resolvedTypings)) {
+      let resolvedTypings = path.resolve(packagePath, typingsFile);
+      let typingsExists = fs.existsSync(resolvedTypings);
+      if (!typingsExists) {
+        const typingsCandidates = [
+          resolvedTypings + '.d.ts',
+          resolvedTypings + '/index.d.ts',
+          path.join(resolvedTypings, 'index.d.ts'),
+        ];
+        // Handle common typos in third-party package.json (e.g. stack-generator's "stack-generator.d.js")
+        if (resolvedTypings.endsWith('.d.js')) {
+          typingsCandidates.push(resolvedTypings.slice(0, -4) + 'd.ts');
+        }
+        for (const cand of typingsCandidates) {
+          if (fs.existsSync(cand)) {
+            typingsExists = true;
+            break;
+          }
+        }
+      }
+      if (!typingsExists) {
         console.log(`Corrupt package (missing typings): ${relativeName} (typings: ${typingsFile})`);
         return false;
       }

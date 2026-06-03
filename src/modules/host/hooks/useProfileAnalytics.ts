@@ -63,7 +63,7 @@ export interface UseProfileAnalyticsReturn {
   setPeriod: (period: AnalyticsPeriod) => void;
   /** Export analytics data as CSV */
   exportCSV: () => void;
-  /** AI-generated optimization suggestions */
+  /** Data-driven optimization suggestions (rule-based heuristics) */
   suggestions: OptimizationSuggestion[];
   /** Total traffic from all sources */
   totalTraffic: number;

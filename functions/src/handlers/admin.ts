@@ -84,7 +84,7 @@ adminRouter.get('/admin/audit-logs', async (req: Request, res: Response) => {
     const limitRaw = Number(qstr(req.query.limit) || '50');
     const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(200, Math.floor(limitRaw))) : 50;
     const logs = await adminService.getAuditLogs(limit);
-    if ((adminService as any)._lastAuditUsedFallback) {
+    if ((adminService as { _lastAuditUsedFallback?: boolean })._lastAuditUsedFallback) {
       res.setHeader('X-Query-Mode', 'fallback');
     }
     res.json({ logs });
@@ -99,12 +99,12 @@ adminRouter.get('/admin/audit-logs', async (req: Request, res: Response) => {
  */
 adminRouter.get('/admin/reports', async (req: Request, res: Response) => {
   try {
-    const status = (qstr(req.query.status) || 'pending') as any;
+    const status = qstr(req.query.status) || 'pending';
     const limitRaw = Number(qstr(req.query.limit) || '50');
     const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(200, Math.floor(limitRaw))) : 50;
     const reports = await adminService.getReports(status, limit);
 
-    if ((adminService as any)._lastReportsUsedFallback) {
+    if ((adminService as { _lastReportsUsedFallback?: boolean })._lastReportsUsedFallback) {
       res.setHeader('X-Query-Mode', 'fallback');
     }
 
@@ -202,7 +202,7 @@ adminRouter.get('/admin/finance/transactions', async (req: Request, res: Respons
     const limitRaw = Number(qstr(req.query.limit) || '50');
     const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(200, Math.floor(limitRaw))) : 50;
     const transactions = await adminService.getRecentTransactions(limit);
-    if ((adminService as any)._lastTransactionsUsedFallback) {
+    if ((adminService as { _lastTransactionsUsedFallback?: boolean })._lastTransactionsUsedFallback) {
       res.setHeader('X-Query-Mode', 'fallback');
     }
     res.json({ transactions });
@@ -230,7 +230,7 @@ adminRouter.get('/admin/platform/config', async (req: Request, res: Response) =>
  */
 adminRouter.put('/admin/platform/config', async (req: Request, res: Response) => {
   try {
-    const adminUser = (req as any).user;
+    const adminUser = (req as AdminRequest).user!;
     await adminService.updatePlatformConfig(req.body);
 
     await adminService.logAction({
@@ -351,12 +351,27 @@ adminRouter.get('/admin/analytics/events/:eventId', async (req: AdminRequest, re
 
 const promoCodeSchema = z.object({
   code:        z.string().min(3).max(32).transform(s => s.trim().toUpperCase()),
-  type:        z.enum(['free_plus']),
-  durationDays: z.number().int().min(1).max(3650),
-  maxUses:     z.number().int().min(1).nullable().default(null),
+  type:        z.enum(['free_plus', 'ticket_discount']),
+  // For free_plus (membership gift)
+  durationDays: z.number().int().min(1).max(3650).optional(),
+  // For ticket_discount
+  discountType: z.enum(['fixed', 'percent']).optional(),
+  discountValue: z.number().min(0).optional(),
+  eventId: z.string().optional(), // optional restrict
+  maxRedemptions: z.number().int().min(1).nullable().optional(),
+  // Common
+  maxUses:     z.number().int().min(1).nullable().default(null), // alias for maxRedemptions in free_plus
   expiresAt:   z.string().datetime({ offset: true }).nullable().default(null),
   note:        z.string().max(200).default(''),
-});
+}).refine((data) => {
+  if (data.type === 'free_plus') {
+    return typeof data.durationDays === 'number';
+  }
+  if (data.type === 'ticket_discount') {
+    return typeof data.discountType === 'string' && typeof data.discountValue === 'number';
+  }
+  return true;
+}, { message: 'Missing required fields for promo type' });
 
 /**
  * GET /api/admin/promo-codes
@@ -369,12 +384,13 @@ adminRouter.get('/admin/promo-codes', async (_req: Request, res: Response) => {
       const snap = await db.collection('promoCodes').orderBy('createdAt', 'desc').limit(200).get();
       const codes = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       return res.json({ codes });
-    } catch (err: any) {
-      const isIndexError = err?.code === 9 || /index/i.test(err?.message || '');
+    } catch (err: unknown) {
+      const errorObj = err as { code?: number; message?: string };
+      const isIndexError = errorObj?.code === 9 || /index/i.test(errorObj?.message || '');
       if (isIndexError) {
         logger.warn('listPromoCodes: Missing index. Falling back.');
         const snap = await db.collection('promoCodes').limit(400).get();
-        const codes: any[] = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        const codes = snap.docs.map(d => ({ id: d.id, ...d.data() }) as { id: string; createdAt?: string });
         codes.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
         res.setHeader('X-Query-Mode', 'fallback');
         return res.json({ codes: codes.slice(0, 200) });
@@ -397,25 +413,39 @@ adminRouter.post('/admin/promo-codes', async (req: Request, res: Response) => {
   try { parsed = promoCodeSchema.parse(req.body); }
   catch (e) { return res.status(400).json({ error: 'Invalid body', detail: String(e) }); }
 
-  // Uniqueness check
-  const existing = await db.collection('promoCodes').where('code', '==', parsed.code).limit(1).get();
-  if (!existing.empty) return res.status(409).json({ error: 'Code already exists' });
+  // Uniqueness check - use doc id for code to support ticket lookup by doc(code)
+  const promoRef = db.collection('promoCodes').doc(parsed.code);
+  const existing = await promoRef.get();
+  if (existing.exists) return res.status(409).json({ error: 'Code already exists' });
 
   try {
-    const ref = await db.collection('promoCodes').add({
+    const baseData = {
       code: parsed.code,
       type: parsed.type,
-      durationDays: parsed.durationDays,
-      maxUses: parsed.maxUses,
-      expiresAt: parsed.expiresAt,
-      note: parsed.note,
       isActive: true,
       usedCount: 0,
-      usedBy: [],
+      redeemedCount: 0,
       createdBy: req.user!.id,
       createdAt: nowIso(),
-    });
-    return res.status(201).json({ id: ref.id, code: parsed.code });
+      expiresAt: parsed.expiresAt,
+      note: parsed.note,
+      maxUses: parsed.maxUses,
+      maxRedemptions: parsed.maxRedemptions ?? parsed.maxUses,
+    };
+
+    let fullData: Record<string, unknown> = { ...baseData };
+    if (parsed.type === 'free_plus') {
+      fullData.durationDays = parsed.durationDays;
+      fullData.usedBy = [];
+    } else if (parsed.type === 'ticket_discount') {
+      fullData.discountType = parsed.discountType;
+      fullData.discountValue = parsed.discountValue;
+      fullData.eventId = parsed.eventId || null;
+      fullData.redeemedCount = 0;
+    }
+
+    await promoRef.set(fullData);
+    return res.status(201).json({ id: parsed.code, code: parsed.code });
   } catch (err) {
     logger.error('promo-codes/create', err);
     return res.status(500).json({ error: 'Failed to create promo code' });
@@ -593,8 +623,8 @@ adminRouter.get('/admin/verification/tasks', async (req: Request, res: Response)
     const overdueSla = qstr(req.query.overdueSla) === 'true';
 
     const tasks = await verificationService.listTasks({
-      status: status as any,
-      entityType: entityType as any,
+      status: status as 'pending' | 'in-review' | 'approved' | 'rejected' | 'more-info-needed',
+      entityType: entityType as 'artist' | 'business' | 'venue' | 'community' | 'organiser' | 'professional',
       assignedTo,
       overdueSla,
     });
@@ -656,10 +686,11 @@ adminRouter.post('/admin/verification/tasks/:id/approve', async (req: Request, r
     });
     logger.info(`Verification task ${taskId} approved by ${req.user!.id}`);
     return res.json({ ok: true });
-  } catch (err: any) {
+  } catch (err: unknown) {
     logger.error('admin/verification/approve', err);
-    const status = err?.message?.includes('not found') ? 404 : 500;
-    return res.status(status).json({ error: err?.message || 'Failed to approve verification' });
+    const errorObj = err as { message?: string };
+    const status = errorObj?.message?.includes('not found') ? 404 : 500;
+    return res.status(status).json({ error: errorObj?.message || 'Failed to approve verification' });
   }
 });
 
@@ -685,10 +716,11 @@ adminRouter.post('/admin/verification/tasks/:id/reject', async (req: Request, re
     });
     logger.info(`Verification task ${taskId} rejected by ${req.user!.id}`);
     return res.json({ ok: true });
-  } catch (err: any) {
+  } catch (err: unknown) {
     logger.error('admin/verification/reject', err);
-    const status = err?.message?.includes('not found') ? 404 : 500;
-    return res.status(status).json({ error: err?.message || 'Failed to reject verification' });
+    const errorObj = err as { message?: string };
+    const status = errorObj?.message?.includes('not found') ? 404 : 500;
+    return res.status(status).json({ error: errorObj?.message || 'Failed to reject verification' });
   }
 });
 
@@ -714,10 +746,11 @@ adminRouter.post('/admin/verification/tasks/:id/request-info', async (req: Reque
     });
     logger.info(`Verification task ${taskId} requested more info by ${req.user!.id}`);
     return res.json({ ok: true });
-  } catch (err: any) {
+  } catch (err: unknown) {
     logger.error('admin/verification/request-info', err);
-    const status = err?.message?.includes('not found') ? 404 : 500;
-    return res.status(status).json({ error: err?.message || 'Failed to request more info' });
+    const errorObj = err as { message?: string };
+    const status = errorObj?.message?.includes('not found') ? 404 : 500;
+    return res.status(status).json({ error: errorObj?.message || 'Failed to request more info' });
   }
 });
 
@@ -740,10 +773,11 @@ adminRouter.post('/admin/verification/tasks/:id/assign', async (req: Request, re
       createdAt: nowIso(),
     });
     return res.json({ ok: true });
-  } catch (err: any) {
+  } catch (err: unknown) {
     logger.error('admin/verification/assign', err);
-    const status = err?.message?.includes('not found') ? 404 : 500;
-    return res.status(status).json({ error: err?.message || 'Failed to assign verification task' });
+    const errorObj = err as { message?: string };
+    const status = errorObj?.message?.includes('not found') ? 404 : 500;
+    return res.status(status).json({ error: errorObj?.message || 'Failed to assign verification task' });
   }
 });
 
@@ -759,9 +793,10 @@ adminRouter.put('/admin/verification/tasks/:id/checklist', async (req: Request, 
   try {
     await verificationService.updateTask(taskId, { checklist });
     return res.json({ ok: true });
-  } catch (err: any) {
+  } catch (err: unknown) {
     logger.error('admin/verification/checklist', err);
-    const status = err?.message?.includes('not found') ? 404 : 500;
-    return res.status(status).json({ error: err?.message || 'Failed to update checklist' });
+    const errorObj = err as { message?: string };
+    const status = errorObj?.message?.includes('not found') ? 404 : 500;
+    return res.status(status).json({ error: errorObj?.message || 'Failed to update checklist' });
   }
 });

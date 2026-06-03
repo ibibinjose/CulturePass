@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -18,6 +18,7 @@ import { useColors } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
 import { CultureTokens, Spacing, Radius, TextStyles } from '@/design-system/tokens/theme';
 import { withAlpha } from '@/lib/withAlpha';
+import { PromoCode } from '@/shared/schema';
 
 interface EventAnalyticsDashboardProps {
   eventId: string;
@@ -30,6 +31,13 @@ export function EventAnalyticsDashboard({ eventId }: EventAnalyticsDashboardProp
   const [broadcastTitle, setBroadcastTitle] = useState('');
   const [broadcastBody, setBroadcastBody] = useState('');
   const [sendingBroadcast, setSendingBroadcast] = useState(false);
+
+  // Host-facing promos for this event (ticket discounts)
+  const [promoCode, setPromoCode] = useState('');
+  const [promoDiscountType, setPromoDiscountType] = useState<'percent' | 'fixed'>('percent');
+  const [promoDiscountValue, setPromoDiscountValue] = useState('');
+  const [promoMaxRedemptions, setPromoMaxRedemptions] = useState('');
+  const [creatingPromo, setCreatingPromo] = useState(false);
 
   const handleSendBroadcast = async () => {
     if (!broadcastTitle.trim() || !broadcastBody.trim()) return;
@@ -54,10 +62,39 @@ export function EventAnalyticsDashboard({ eventId }: EventAnalyticsDashboardProp
     }
   };
 
+  const handleCreatePromo = async () => {
+    if (!promoCode.trim() || !promoDiscountValue.trim()) return;
+    setCreatingPromo(true);
+    try {
+      const dv = parseFloat(promoDiscountValue);
+      if (!Number.isFinite(dv) || dv <= 0) throw new Error('Invalid discount value');
+      await api.events.promos.create(eventId, {
+        code: promoCode.trim().toUpperCase(),
+        discountType: promoDiscountType,
+        discountValue: promoDiscountType === 'percent' ? dv : Math.round(dv * 100),
+        maxRedemptions: promoMaxRedemptions ? parseInt(promoMaxRedemptions, 10) : null,
+      });
+      Alert.alert('Promo Created', `Code ${promoCode.toUpperCase()} is now active for this event.`);
+      setPromoCode(''); setPromoDiscountValue(''); setPromoMaxRedemptions('');
+      await refetchPromos();
+    } catch (err) {
+      Alert.alert('Error', err instanceof Error ? err.message : 'Failed to create promo');
+    } finally {
+      setCreatingPromo(false);
+    }
+  };
+
   const { data: analytics, isLoading, error, refetch } = useQuery({
     queryKey: ['event-analytics', eventId],
     queryFn: () => api.events.getAnalytics(eventId),
   });
+
+  const { data: promosData, isLoading: promosLoading, refetch: refetchPromos } = useQuery({
+    queryKey: ['event-promos', eventId],
+    queryFn: () => api.events.promos.list(eventId),
+    enabled: !!eventId,
+  });
+  const promos = promosData?.promos || [];
 
   if (isLoading) {
     return (
@@ -214,11 +251,86 @@ export function EventAnalyticsDashboard({ eventId }: EventAnalyticsDashboardProp
           )}
         </Pressable>
       </View>
+
+      {/* Host-facing Promos for this event (ticket discounts via promoCodes) */}
+      <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.borderLight }]}>
+        <Text style={[styles.cardTitle, { color: colors.text }]}>Promos</Text>
+        <Text style={[styles.cardSubtitle, { color: colors.textSecondary }]}>
+          Create discount codes for this event. Codes are validated at checkout (fixed or % off).
+        </Text>
+
+        {/* Create form */}
+        <View style={{ gap: 8, marginTop: 12 }}>
+          <TextInput
+            style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.borderLight }]}
+            placeholder="PROMO20"
+            value={promoCode}
+            onChangeText={v => setPromoCode(v.toUpperCase())}
+            autoCapitalize="characters"
+          />
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <Pressable onPress={() => setPromoDiscountType('percent')} style={[styles.promoTypeBtn, promoDiscountType === 'percent' && styles.promoTypeActive]}>
+              <Text style={{ color: promoDiscountType === 'percent' ? '#fff' : colors.text }}> % </Text>
+            </Pressable>
+            <Pressable onPress={() => setPromoDiscountType('fixed')} style={[styles.promoTypeBtn, promoDiscountType === 'fixed' && styles.promoTypeActive]}>
+              <Text style={{ color: promoDiscountType === 'fixed' ? '#fff' : colors.text }}> $ </Text>
+            </Pressable>
+            <TextInput
+              style={[styles.input, { flex: 1, backgroundColor: colors.background, color: colors.text, borderColor: colors.borderLight }]}
+              placeholder={promoDiscountType === 'percent' ? '20' : '5.00'}
+              value={promoDiscountValue}
+              onChangeText={setPromoDiscountValue}
+              keyboardType="decimal-pad"
+            />
+          </View>
+          <TextInput
+            style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.borderLight }]}
+            placeholder="Max redemptions (optional)"
+            value={promoMaxRedemptions}
+            onChangeText={setPromoMaxRedemptions}
+            keyboardType="number-pad"
+          />
+          <Pressable
+            onPress={() => void handleCreatePromo()}
+            disabled={creatingPromo || !promoCode.trim() || !promoDiscountValue.trim()}
+            style={[styles.broadcastBtn, { backgroundColor: creatingPromo || !promoCode.trim() || !promoDiscountValue.trim() ? colors.borderLight : CultureTokens.teal }]}
+          >
+            {creatingPromo ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.btnText}>Create Promo</Text>}
+          </Pressable>
+        </View>
+
+        {/* List existing promos */}
+        <View style={{ marginTop: 16 }}>
+          <Text style={[styles.cardSubtitle, { color: colors.textSecondary }]}>Active Promos for Event</Text>
+          {promosLoading ? (
+            <ActivityIndicator />
+          ) : promos.length === 0 ? (
+            <Text style={{ color: colors.textTertiary, fontSize: 13 }}>No promos yet.</Text>
+          ) : (
+            (promos as PromoCode[]).map((p, i) => (
+              <View key={i} style={{ padding: 8, backgroundColor: colors.background, borderRadius: 8, marginTop: 6, flexDirection: 'row', justifyContent: 'space-between' }}>
+                <Text style={{ color: colors.text, fontFamily: 'monospace' }}>{p.code}</Text>
+                <Text style={{ color: colors.textSecondary }}>
+                  {p.discountType === 'percent' ? `${p.discountValue}%` : `$${(p.discountValue/100).toFixed(2)}`} · {p.redeemedCount || 0} used
+                </Text>
+              </View>
+            ))
+          )}
+        </View>
+      </View>
     </ScrollView>
   );
 }
 
-function StatCard({ label, value, icon, color, colors }: any) {
+interface StatCardProps {
+  label: string;
+  value: string | number;
+  icon: any;
+  color: string;
+  colors: Record<string, string>;
+}
+
+function StatCard({ label, value, icon, color, colors }: StatCardProps) {
   return (
     <View style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.borderLight }]}>
       <View style={[styles.statIcon, { backgroundColor: withAlpha(color, 0.1) }]}>
@@ -230,7 +342,15 @@ function StatCard({ label, value, icon, color, colors }: any) {
   );
 }
 
-function TrafficRow({ label, count, total, color, colors }: any) {
+interface TrafficRowProps {
+  label: string;
+  count: number;
+  total: number;
+  color: string;
+  colors: Record<string, string>;
+}
+
+function TrafficRow({ label, count, total, color, colors }: TrafficRowProps) {
   const percent = total > 0 ? (count / total) * 100 : 0;
   return (
     <View style={styles.trafficRow}>
@@ -321,5 +441,17 @@ const styles = StyleSheet.create({
   cardSubtitle: {
     ...TextStyles.bodyMedium,
     marginTop: -Spacing.xs,
+  },
+  promoTypeBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    backgroundColor: '#fff',
+  },
+  promoTypeActive: {
+    backgroundColor: '#4F46E5',
+    borderColor: '#4F46E5',
   },
 });

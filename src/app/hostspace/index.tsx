@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback, useState } from 'react';
+import React, { useMemo, useCallback, useState, Suspense } from 'react';
 import {
   Platform,
   Pressable,
@@ -26,7 +26,7 @@ import { CultureTokens, TextStyles, M3Typography, Radius, Spacing, FontFamily } 
 import { M3TopAppBar, M3Card, M3Button, Skeleton, GlassView, PageContainer, CulturePassWordmark } from '@/design-system/ui';
 import { ErrorBoundary } from '@/modules/core/ui/ErrorBoundary';
 import { HostspaceAccessGate } from '@/modules/host/components/HostspaceAccessGate';
-import { DraftRecoveryModal } from '@/modules/host/components/DraftRecoveryModal';
+import { createLazyComponent } from '@/lib/lazy';
 import { hostApi } from '@/modules/host/api';
 import { canonicalEventPath, canonicalProfilePath } from '@/lib/publicPaths';
 import { formatCompactDate } from '@/lib/format';
@@ -36,10 +36,12 @@ import type { ProfileDraft } from '@/platform/api/endpoints/createProfilesNamesp
 
 // Creator Trust: Ongoing verification status visibility in HostSpace dashboard
 import { VerificationStatusBanner } from '@/modules/host/components/VerificationStatusBanner';
-import { HostItemActionSheet } from '@/modules/host/components/HostItemActionSheet';
 import { useHostItemActions } from '@/modules/host/components/useHostItemActions';
-import { CreateMenuSheet } from '@/modules/host/components/CreateMenuSheet';
-import { UniversalShareSheet } from '@/modules/host/components/UniversalShareSheet';
+
+const LazyDraftRecoveryModal = createLazyComponent(() => import('@/modules/host/components/DraftRecoveryModal'), 'DraftRecoveryModal');
+const LazyHostItemActionSheet = createLazyComponent(() => import('@/modules/host/components/HostItemActionSheet'), 'HostItemActionSheet');
+const LazyCreateMenuSheet = createLazyComponent(() => import('@/modules/host/components/CreateMenuSheet'), 'CreateMenuSheet');
+const LazyUniversalShareSheet = createLazyComponent(() => import('@/modules/host/components/UniversalShareSheet'), 'UniversalShareSheet');
 
 type HostspaceSummary = {
   events: EventData[];
@@ -955,56 +957,64 @@ function HostspaceWorkspace() {
       </ScrollView>
 
       {/* Draft Recovery Modal */}
-      <DraftRecoveryModal
-        visible={showDraftModal}
-        drafts={drafts}
-        onSelectDraft={handleSelectDraft}
-        onStartFresh={handleStartFresh}
-        onDismiss={handleDismissDraftModal}
-      />
+      <Suspense fallback={null}>
+        <LazyDraftRecoveryModal
+          visible={showDraftModal}
+          drafts={drafts}
+          onSelectDraft={handleSelectDraft}
+          onStartFresh={handleStartFresh}
+          onDismiss={handleDismissDraftModal}
+        />
+      </Suspense>
 
       {/* Unified Action Sheet for all Host Creations - simplifies Edit/Share/Analytics/Team/Delete */}
       {actionSheetItem && (
-        <HostItemActionSheet
-          visible={!!actionSheetItem}
-          itemType={actionSheetItem.type}
-          itemName={
-            actionSheetItem.type === 'profile' 
-              ? (actionSheetItem.data as Profile).name 
-              : (actionSheetItem.data as EventData).title || 'Event'
-          }
-          onClose={() => setActionSheetItem(null)}
-          actions={
-            actionSheetItem.type === 'profile'
-              ? getProfileActionsWithShare(actionSheetItem.data as Profile)
-              : getEventActionsWithShare(actionSheetItem.data as EventData)
-          }
-        />
+        <Suspense fallback={null}>
+          <LazyHostItemActionSheet
+            visible={!!actionSheetItem}
+            itemType={actionSheetItem.type}
+            itemName={
+              actionSheetItem.type === 'profile' 
+                ? (actionSheetItem.data as Profile).name 
+                : (actionSheetItem.data as EventData).title || 'Event'
+            }
+            onClose={() => setActionSheetItem(null)}
+            actions={
+              actionSheetItem.type === 'profile'
+                ? getProfileActionsWithShare(actionSheetItem.data as Profile)
+                : getEventActionsWithShare(actionSheetItem.data as EventData)
+            }
+          />
+        </Suspense>
       )}
 
       {/* Fast Create Menu - collapses the old split between wizard and quick content */}
-      <CreateMenuSheet 
-        visible={showCreateMenu} 
-        onClose={() => setShowCreateMenu(false)} 
-        availableProfiles={profiles.map(p => ({ id: p.id, name: p.name, entityType: p.entityType }))}
-        onCreateUnderProfile={(profileId, type) => {
-          setShowCreateMenu(false);
-          if (type === 'event') {
-            router.push(`/hostspace/create/event?parentProfile=${profileId}` as never);
-          } else {
-            router.push(`/hostspace/create/listing?parentProfile=${profileId}` as never);
-          }
-        }}
-      />
+      <Suspense fallback={null}>
+        <LazyCreateMenuSheet 
+          visible={showCreateMenu} 
+          onClose={() => setShowCreateMenu(false)} 
+          availableProfiles={profiles.map(p => ({ id: p.id, name: p.name, entityType: p.entityType }))}
+          onCreateUnderProfile={(profileId, type) => {
+            setShowCreateMenu(false);
+            if (type === 'event') {
+              router.push(`/hostspace/create/event?parentProfile=${profileId}` as never);
+            } else {
+              router.push(`/hostspace/create/listing?parentProfile=${profileId}` as never);
+            }
+          }}
+        />
+      </Suspense>
 
       {/* Universal Share Sheet - now properly used from ActionSheet (no more placeholder routes) */}
       {shareItem && (
-        <UniversalShareSheet
-          visible={!!shareItem}
-          title={shareItem.title}
-          url={shareItem.url}
-          onClose={() => setShareItem(null)}
-        />
+        <Suspense fallback={null}>
+          <LazyUniversalShareSheet
+            visible={!!shareItem}
+            title={shareItem.title}
+            url={shareItem.url}
+            onClose={() => setShareItem(null)}
+          />
+        </Suspense>
       )}
 
       {/* Mobile FAB for super fast creation (iOS/Android) */}

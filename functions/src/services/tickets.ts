@@ -33,6 +33,7 @@ export interface FirestoreTicket {
   
   paymentMethodType?: string;
   promotionalCode?: string;
+  promoCode?: string | null;
   discountCents?: number;
   sourceMedium?: string;
   metadata?: Record<string, any>;

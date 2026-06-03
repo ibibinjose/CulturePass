@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, Suspense } from 'react';
 import {
   Alert,
   Platform,
@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useColors } from '@/hooks/useColors';
+import { createLazyComponent } from '@/lib/lazy';
 import { useLayout } from '@/hooks/useLayout';
 import { CultureTokens, Spacing, Radius, TextStyles } from '@/design-system/tokens/theme';
 import { api } from '@/lib/api';
@@ -23,11 +24,7 @@ import {
   HostspaceCreateFormPanel,
   invalidateCultureMarketListings,
 } from '@/modules/host/components/HostspaceCreateFormPanel';
-import { HostspaceCreateListingsColumn } from '@/modules/host/components/HostspaceCreateListingsColumn';
-import { HostspaceCreateVerifyCard } from '@/modules/host/components/HostspaceCreateVerifyCard';
-import { HostspaceCreateTopChrome } from '@/modules/host/components/HostspaceCreateTopChrome';
-import { HostspaceCreateCategoryGrid } from '@/modules/host/components/HostspaceCreateCategoryGrid';
-import { HostspaceCreateCategorySidebar } from '@/modules/host/components/HostspaceCreateCategorySidebar';
+ 
 import type { Profile, ShopListing, ShopListingType } from '@/shared/schema';
 
 import {
@@ -37,6 +34,27 @@ import {
   type CreateCategory,
 } from '@/modules/host/config/hostspaceCreateCategories.config';
 import { CREATE_LAB_PATHNAME } from '@/constants/navigation/createNav';
+ 
+const LazyHostspaceCreateListingsColumn = createLazyComponent(
+  () => import('./HostspaceCreateListingsColumn'),
+  'HostspaceCreateListingsColumn'
+);
+const LazyHostspaceCreateVerifyCard = createLazyComponent(
+  () => import('./HostspaceCreateVerifyCard'),
+  'HostspaceCreateVerifyCard'
+);
+const LazyHostspaceCreateTopChrome = createLazyComponent(
+  () => import('./HostspaceCreateTopChrome'),
+  'HostspaceCreateTopChrome'
+);
+const LazyHostspaceCreateCategoryGrid = createLazyComponent(
+  () => import('./HostspaceCreateCategoryGrid'),
+  'HostspaceCreateCategoryGrid'
+);
+const LazyHostspaceCreateCategorySidebar = createLazyComponent(
+  () => import('./HostspaceCreateCategorySidebar'),
+  'HostspaceCreateCategorySidebar'
+);
 
 function haptic() {
   if (Platform.OS !== 'web') void Haptics.selectionAsync();
@@ -320,8 +338,12 @@ export function HostspaceCreateWorkspace({ initialCategory }: { initialCategory?
 
   const filteredCategories = useMemo(() => {
     const q = query.trim().toLowerCase();
+    const RICH_PROFILE_TYPES = ['community', 'organiser', 'venue', 'business', 'artist', 'professional'];
     return CREATE_CATEGORIES.filter((item) => {
       if (!activeGroups.includes('all') && !activeGroups.includes(item.group)) return false;
+      // Unification: rich profile entities must use the full FormWizard (with live analytics, drafts, legal gates, etc.)
+      // Workspace launcher is for quick non-profile content (events, offers, listings, activities) only.
+      if (RICH_PROFILE_TYPES.includes(item.entityType as string)) return false;
       if (!q) return true;
       const haystack = `${item.label} ${item.purpose} ${item.description} ${item.aliases.join(' ')}`.toLowerCase();
       return haystack.includes(q);
@@ -336,7 +358,7 @@ export function HostspaceCreateWorkspace({ initialCategory }: { initialCategory?
         style={StyleSheet.absoluteFill}
       />
 
-      <HostspaceCreateTopChrome liveListingCount={liveListingCount} listingCountLoading={listingCountLoading} />
+      <Suspense fallback={null}><LazyHostspaceCreateTopChrome liveListingCount={liveListingCount} listingCountLoading={listingCountLoading} /></Suspense>
 
       <ScrollView
         style={styles.scrollFlex}
@@ -373,24 +395,24 @@ export function HostspaceCreateWorkspace({ initialCategory }: { initialCategory?
           </View>
         </Animated.View>
 
-        <HostspaceCreateVerifyCard
+        <Suspense fallback={null}><LazyHostspaceCreateVerifyCard
           hostInfoVerified={hostInfoVerified}
           onToggleVerified={() => setHostInfoVerified((prev) => !prev)}
           hostInfoRows={hostInfoRows}
-        />
+        /></Suspense>
 
         {showSelector && !isDesktop ? (
-          <HostspaceCreateCategoryGrid
+          <Suspense fallback={null}><LazyHostspaceCreateCategoryGrid
             categories={filteredCategories}
             activeGroups={activeGroups}
             onGroupToggle={toggleGroup}
             onSelect={selectCategory}
             query={query}
             onQueryChange={setQuery}
-          />
+          /></Suspense>
         ) : (
           <View style={[styles.workspace, isDesktop && styles.workspaceDesktop]}>
-            <HostspaceCreateCategorySidebar
+            <Suspense fallback={null}><LazyHostspaceCreateCategorySidebar
               width={sideWidth}
               navMinimized={navMinimized}
               canMinimizeNav={canMinimizeNav}
@@ -402,7 +424,7 @@ export function HostspaceCreateWorkspace({ initialCategory }: { initialCategory?
               categories={filteredCategories}
               selectedId={selected.id}
               onSelectCategory={selectCategory}
-            />
+            /></Suspense>
 
             <HostspaceCreateFormPanel
               selected={selected}
@@ -426,7 +448,7 @@ export function HostspaceCreateWorkspace({ initialCategory }: { initialCategory?
             />
 
             {showOutputColumn ? (
-              <HostspaceCreateListingsColumn
+              <Suspense fallback={null}><LazyHostspaceCreateListingsColumn
                 selected={selected}
                 isMarket={selected.group === 'market'}
                 itemCount={selected.group === 'market' ? filteredShopListings.length : filteredListings.length}
@@ -440,7 +462,7 @@ export function HostspaceCreateWorkspace({ initialCategory }: { initialCategory?
                 onDeleteShopListing={onDeleteShopListing}
                 onEditListing={onEditListing}
                 onDeleteListing={onDeleteListing}
-              />
+              /></Suspense>
             ) : null}
           </View>
         )}

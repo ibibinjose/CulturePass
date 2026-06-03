@@ -176,7 +176,7 @@ export const FeedbackSchema = z.object({
  */
 export function validateFormData<T extends z.ZodSchema<any>>(
   schema: T,
-  data: any
+  data: unknown
 ): { success: boolean; data?: z.infer<T>; errors?: Record<string, string[]> } {
   try {
     const validatedData = schema.parse(data);
@@ -203,8 +203,8 @@ export function validateFormData<T extends z.ZodSchema<any>>(
 /**
  * Sanitizes form input values
  */
-export function sanitizeFormValues(values: Record<string, any>): Record<string, any> {
-  const sanitized: Record<string, any> = {};
+export function sanitizeFormValues(values: Record<string, unknown>): Record<string, unknown> {
+  const sanitized: Record<string, unknown> = {};
   
   for (const [key, value] of Object.entries(values)) {
     if (typeof value === 'string') {
@@ -222,7 +222,7 @@ export function sanitizeFormValues(values: Record<string, any>): Record<string, 
  */
 export function validateField<T extends z.ZodSchema<any>>(
   schema: T,
-  value: any
+  value: unknown
 ): { success: boolean; errors?: string[] } {
   try {
     schema.parse(value);
@@ -241,7 +241,7 @@ export function validateField<T extends z.ZodSchema<any>>(
  * Creates a reusable validation function for forms
  */
 export function createValidator<T extends z.ZodSchema<any>>(schema: T) {
-  return (data: any) => validateFormData(schema, data);
+  return (data: unknown) => validateFormData(schema, data);
 }
 
 // Export commonly used validators

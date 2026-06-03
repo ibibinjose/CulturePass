@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -20,7 +20,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useColors } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
 import { useAuth } from '@/lib/auth';
-import { CultureTokens, TextStyles } from '@/design-system/tokens/theme';
+import { CultureTokens, TextStyles, Spacing } from '@/design-system/tokens/theme';
 import { GlassView } from '@/design-system/ui/GlassView';
 import { Button } from '@/design-system/ui/Button';
 import { Skeleton } from '@/design-system/ui/Skeleton';
@@ -29,7 +29,8 @@ import { formatCurrency } from '@/lib/currency';
 import { formatCompactDate } from '@/lib/format';
 import { ErrorBoundary } from '@/modules/core/ui/ErrorBoundary';
 import { HostspaceAccessGate } from '@/modules/host/components/HostspaceAccessGate';
-import type { EventData } from '@/shared/schema';
+import { AnalyticsDashboard } from '@/modules/host/components/AnalyticsDashboard';
+import type { EventData, Profile } from '@/shared/schema';
 import { APP_NAME, SITE_ORIGIN } from '@/lib/app-meta';
 
 const HOSTSPACE_DASHBOARD_HEAD_TITLE = `Host dashboard · ${APP_NAME}`;
@@ -150,7 +151,22 @@ function HostDashboard() {
     enabled: !!userId,
   });
 
+  const { data: profilesRes, refetch: refetchProfiles } = useQuery({
+    queryKey: ['host', 'profiles', 'my'],
+    queryFn: () => hostApi.profiles.my(),
+    enabled: !!userId,
+  });
+
   const events = useMemo(() => eventsRes?.events ?? [], [eventsRes?.events]);
+  const myProfiles = useMemo(() => (profilesRes ?? []) as Profile[], [profilesRes]);
+  const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
+
+  // Auto-select first profile for analytics view when loaded
+  useEffect(() => {
+    if (!selectedProfileId && myProfiles.length > 0) {
+      setSelectedProfileId(myProfiles[0].id);
+    }
+  }, [myProfiles, selectedProfileId]);
 
   const stats = useMemo(() => ({
     totalEvents: events.length,
@@ -166,6 +182,7 @@ function HostDashboard() {
   const handleRefresh = () => {
     haptic();
     refetchEvents();
+    refetchProfiles();
   };
 
   return (
@@ -279,6 +296,50 @@ function HostDashboard() {
             </View>
           )}
         </View>
+
+        {/* Profile Analytics — Host Wizard / Post-Publish Performance (now wired and surfaced) */}
+        {myProfiles.length > 0 && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Profile Analytics</Text>
+              <Text style={[TextStyles.caption, { color: colors.textTertiary }]}>Wizard funnels + post-publish reach</Text>
+            </View>
+
+            {/* Simple profile selector for multi-profile hosts */}
+            {myProfiles.length > 1 && (
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: Spacing.sm }}>
+                {myProfiles.map((p) => (
+                  <Pressable
+                    key={p.id}
+                    onPress={() => setSelectedProfileId(p.id)}
+                    style={[
+                      { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, borderWidth: 1, borderColor: colors.borderLight },
+                      selectedProfileId === p.id && { backgroundColor: CultureTokens.violet, borderColor: CultureTokens.violet },
+                    ]}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Show analytics for ${p.name || p.handle || 'profile'}`}
+                  >
+                    <Text style={[TextStyles.caption, { color: selectedProfileId === p.id ? '#fff' : colors.text }]} numberOfLines={1}>
+                      {p.name || p.handle || p.entityType}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            )}
+
+            {selectedProfileId ? (
+              <AnalyticsDashboard
+                profileId={selectedProfileId}
+                onEditProfile={() => router.push(`/hostspace/create?profileId=${selectedProfileId}`)}
+              />
+            ) : (
+              <View style={[styles.emptyBox, { borderColor: colors.borderLight }]}>
+                <Ionicons name="bar-chart-outline" size={28} color={colors.textTertiary} />
+                <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No profile selected</Text>
+              </View>
+            )}
+          </View>
+        )}
 
         {/* Insights — Small Compact Card */}
         <GlassView intensity={10} style={[styles.compactTip, { borderColor: colors.borderLight }]}>

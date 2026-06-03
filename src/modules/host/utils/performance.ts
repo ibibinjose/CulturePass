@@ -9,6 +9,7 @@
 
 import React, { ComponentType, lazy } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { createLazyComponent } from '@/lib/lazy';
 
 // ---------------------------------------------------------------------------
 // Debounce
@@ -255,3 +256,16 @@ export const AUTO_SAVE_INTERVAL_MS = 8000;
  * Throttle interval for scroll-based operations.
  */
 export const SCROLL_THROTTLE_MS = 100;
+
+/**
+ * Lazy entity-specific fields for unification (rich profiles use FormWizard).
+ * These heavy components (~1k LOC each) are now on-demand to keep bundle lean.
+ */
+export const LazyArtistFields = createLazyComponent(
+  () => import('../components/entity-specific/ArtistFields')
+);
+export const LazyBusinessFields = createLazyComponent(
+  () => import('../components/entity-specific/BusinessFields')
+);
+// Similarly for others as wired in unification.
+

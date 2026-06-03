@@ -102,7 +102,13 @@ export const usersService = {
   },
 
   async getByHandle(handle: string): Promise<FirestoreUser | null> {
-    const snap = await usersCol().where('handle', '==', handle.toLowerCase()).limit(1).get();
+    let snap = await usersCol().where('handle', '==', handle.toLowerCase()).limit(1).get();
+    if (snap.empty) {
+      snap = await usersCol().where('username', '==', handle.toLowerCase()).limit(1).get();
+    }
+    if (snap.empty) {
+      snap = await usersCol().where('username', '==', handle).limit(1).get();
+    }
     if (snap.empty) return null;
     const doc = snap.docs[0];
     return { id: doc.id, ...doc.data() } as FirestoreUser;

@@ -144,7 +144,11 @@ export default function AboutScreen() {
                         <View key={link.href}>
                             <Link href={link.href} asChild>
                                 <Pressable
-                                    style={({ pressed }) => [styles.legalRow, pressed && { backgroundColor: colors.primarySoft }]}
+                                    style={({ pressed }) => [
+                                      styles.legalRow, 
+                                      pressed && { backgroundColor: colors.primarySoft },
+                                      i < FOOTER_LINKS.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.borderLight }
+                                    ]}
                                 >
                                     <View style={[styles.legalIcon, { backgroundColor: colors.primarySoft }]}>
                                         <Ionicons name={getLegalLinkIcon(link.label) as any} size={18} color={colors.primary} />
@@ -153,7 +157,6 @@ export default function AboutScreen() {
                                     <Ionicons name="chevron-forward" size={16} color={colors.textTertiary} />
                                 </Pressable>
                             </Link>
-                            {i < FOOTER_LINKS.length - 1 && <View style={[styles.divider, { backgroundColor: colors.borderLight, opacity: 0.5 }]} />}
                         </View>
                     ))}
                 </GlassView>
@@ -163,18 +166,21 @@ export default function AboutScreen() {
                 <Text style={[styles.groupLabel, { color: colors.textTertiary }]}>STAY CONNECTED</Text>
                 <GlassView contentStyle={{ padding: 4 }}>
                     {SOCIAL_LINKS.map((link, i) => (
-                        <View key={link.label}>
+                        <View key={link.key}>
                             <Pressable
                                 onPress={() => openExternalUrl(link.url)}
-                                style={({ pressed }) => [styles.legalRow, pressed && { backgroundColor: colors.primarySoft }]}
+                                style={({ pressed }) => [
+                                  styles.legalRow, 
+                                  pressed && { backgroundColor: colors.primarySoft },
+                                  i < SOCIAL_LINKS.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.borderLight }
+                                ]}
                             >
-                                    <View style={[styles.legalIcon, { backgroundColor: (link as any).label === 'Support' ? CultureTokens.gold + '15' : colors.primarySoft }]}>
-                                        <Ionicons name={getSocialLinkIcon(link.label) as any} size={18} color={(link as any).label === 'Support' ? CultureTokens.gold : colors.primary} />
+                                    <View style={[styles.legalIcon, { backgroundColor: colors.primarySoft }]}>
+                                        <Ionicons name={getSocialLinkIcon(link.label) as any} size={18} color={colors.primary} />
                                     </View>
                                 <Text style={[styles.legalText, { color: colors.text }]}>{link.label}</Text>
                                 <Ionicons name="open-outline" size={16} color={colors.textTertiary} />
                             </Pressable>
-                            {i < SOCIAL_LINKS.length - 1 && <View style={[styles.divider, { backgroundColor: colors.borderLight, opacity: 0.5 }]} />}
                         </View>
                     ))}
                 </GlassView>
@@ -240,7 +246,6 @@ const styles = StyleSheet.create({
   legalRow: { flexDirection: 'row', alignItems: 'center', padding: 16, gap: 16 },
   legalIcon: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   legalText: { flex: 1, fontSize: 15, lineHeight: 21, fontFamily: FontFamily.semibold },
-  divider: { height: 1, marginLeft: 68 },
 
   taglineSection: { alignItems: 'center', paddingVertical: 48, gap: 12 },
   heartGradient: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },

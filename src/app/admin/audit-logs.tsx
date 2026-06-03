@@ -3,7 +3,7 @@
  * ================
  * Immutable trail of all high-authority actions across the platform.
  */
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, FlatList, Pressable, RefreshControl } from 'react-native';
 import { useColors } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
@@ -19,9 +19,12 @@ export default function AuditLogsScreen() {
   const { hPad } = useLayout();
   const queryClient = useQueryClient();
   const limit = 50;
+  const [page, setPage] = useState(0);
+  const PAGE_SIZE = 20;
   const { data, isLoading, isRefetching, refetch } = useAuditLogs(limit);
 
   const logs = data?.logs || [];
+  const paginatedLogs = logs.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
   return (
     <View style={styles.container}>
@@ -42,15 +45,26 @@ export default function AuditLogsScreen() {
         </Pressable>
       </View>
 
+      {/* Pagination for scale */}
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: hPad, paddingVertical: 8 }}>
+        <Pressable onPress={() => setPage(p => Math.max(0, p-1))} disabled={page===0}>
+          <Text style={{ color: page===0 ? colors.textTertiary : colors.primary }}>Prev</Text>
+        </Pressable>
+        <Text style={{ color: colors.textTertiary }}>Page {page+1} ({paginatedLogs.length} / {logs.length})</Text>
+        <Pressable onPress={() => setPage(p => p+1)} disabled={paginatedLogs.length < PAGE_SIZE}>
+          <Text style={{ color: colors.primary }}>Next</Text>
+        </Pressable>
+      </View>
+
       <FlatList
-        data={logs}
+        data={paginatedLogs}
         keyExtractor={item => item.id}
         contentContainerStyle={{ paddingHorizontal: hPad, paddingVertical: 24, gap: 12 }}
         refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => void refetch()} />}
         ListEmptyComponent={
             <View style={styles.empty}>
                 <Text style={{ color: colors.textTertiary, fontFamily: FontFamily.medium }}>
-                    {isLoading ? 'Loading logs...' : 'No logs found'}
+                    {isLoading ? 'Loading logs...' : logs.length === 0 ? 'No logs found' : 'No logs on this page'}
                 </Text>
             </View>
         }

@@ -93,11 +93,9 @@ async function resolveUser(rawId: string): Promise<User> {
   try {
     return await (modulesApi.users.get(rawId) as Promise<User>);
   } catch (e: any) {
-    if (e instanceof ApiError && (e.status === 404 || e.status === 400 || e.status === 403)) {
-      // Fallback: support direct /user/<handle> or /cpu/<username> links (via the /api/users/handle route added for this)
-      const byHandle = await modulesApi.users.getByHandle(rawId).catch(() => null);
-      if (byHandle?.id) return byHandle as User;
-    }
+    // Fallback: support direct /user/<handle> or /cpu/<username> links
+    const byHandle = await modulesApi.users.getByHandle(rawId).catch(() => null);
+    if (byHandle?.id) return byHandle as User;
     throw e;
   }
 }

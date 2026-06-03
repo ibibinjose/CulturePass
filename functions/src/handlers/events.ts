@@ -1163,6 +1163,71 @@ export function createEventsRouter() {
     }
   });
 
+  // ── Host-facing promo codes for events (ticket discounts) ───────────────────
+  // Hosts can create/manage promos scoped to their events. Uses same promoCodes collection.
+  router.get('/events/:id/promos', requireAuth, async (req: Request, res: Response) => {
+    const eventId = qparam(req.params.id);
+    try {
+      const event = await eventsService.getById(eventId);
+      if (!event) return res.status(404).json({ error: 'Event not found' });
+      const isOrganizer = event.organizerId === req.user!.id;
+      const isAdmin = ['admin', 'superAdmin'].includes(req.user!.role || '');
+      if (!isOrganizer && !isAdmin) {
+        return res.status(403).json({ error: 'Not authorized' });
+      }
+      const snap = await db.collection('promoCodes')
+        .where('eventId', '==', eventId)
+        .orderBy('createdAt', 'desc')
+        .get();
+      const promos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      return res.json({ promos });
+    } catch (err) {
+      captureRouteError(err, 'GET /api/events/:id/promos');
+      return res.status(500).json({ error: 'Failed to list promos' });
+    }
+  });
+
+  router.post('/events/:id/promos', requireAuth, async (req: Request, res: Response) => {
+    const eventId = qparam(req.params.id);
+    const event = await eventsService.getById(eventId);
+    if (!event) return res.status(404).json({ error: 'Event not found' });
+    const isOrganizer = event.organizerId === req.user!.id;
+    const isAdmin = ['admin', 'superAdmin'].includes(req.user!.role || '');
+    if (!isOrganizer && !isAdmin) {
+      return res.status(403).json({ error: 'Not authorized to create promos for this event' });
+    }
+    const { code, discountType, discountValue, maxRedemptions, expiresAt, note } = req.body || {};
+    if (!code || !discountType || typeof discountValue !== 'number') {
+      return res.status(400).json({ error: 'code, discountType, discountValue required for ticket promo' });
+    }
+    const rawCode = String(code).trim().toUpperCase();
+    if (rawCode.length < 3) return res.status(400).json({ error: 'Code too short' });
+    const promoRef = db.collection('promoCodes').doc(rawCode);
+    const existing = await promoRef.get();
+    if (existing.exists) return res.status(409).json({ error: 'Code already exists' });
+    try {
+      await promoRef.set({
+        code: rawCode,
+        type: 'ticket_discount',
+        active: true,
+        isActive: true,
+        eventId,
+        discountType,
+        discountValue: Math.max(0, Number(discountValue)),
+        maxRedemptions: maxRedemptions ? Number(maxRedemptions) : null,
+        redeemedCount: 0,
+        expiresAt: expiresAt || null,
+        note: note || '',
+        createdBy: req.user!.id,
+        createdAt: nowIso(),
+      });
+      return res.status(201).json({ id: rawCode, code: rawCode });
+    } catch (err) {
+      captureRouteError(err, 'POST /api/events/:id/promos');
+      return res.status(500).json({ error: 'Failed to create promo' });
+    }
+  });
+
   return router;
 }
 

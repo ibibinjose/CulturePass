@@ -5,8 +5,11 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+import Animated, { FadeInDown, FadeInUp, useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { modulesApi } from '@/modules/api';
@@ -47,7 +50,7 @@ function ActivityCardSkeleton() {
   const colors = useColors();
   return (
     <View style={[s.card, { backgroundColor: colors.surface, borderColor: colors.borderLight }]}>
-      <Skeleton width="100%" height={140} borderRadius={CardTokens.radius} />
+      <Skeleton width="100%" height={155} borderRadius={CardTokens.radius} />
       <View style={s.cardBody}>
         <Skeleton width={60} height={12} borderRadius={4} />
         <Skeleton width="90%" height={16} borderRadius={4} style={{ marginTop: 8 }} />
@@ -75,36 +78,69 @@ const ActivityCard = React.memo(function ActivityCard({
   onDelete: (a: ActivityData) => void;
 }) {
   const colors = useColors();
+  const scale = useSharedValue(1);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const handlePressIn = () => {
+    scale.value = withSpring(0.985, { damping: 20, stiffness: 300 });
+  };
+  const handlePressOut = () => {
+    scale.value = withSpring(1, { damping: 18, stiffness: 250 });
+  };
 
   return (
-    <Pressable
+    <AnimatedPressable
       onPress={() => router.push({ pathname: '/activities/[id]', params: { id: activity.id } })}
-      style={({ pressed }) => [
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      style={[
         s.card,
         { backgroundColor: colors.surface, borderColor: colors.borderLight },
-        pressed && { opacity: 0.92 },
+        animatedStyle,
       ]}
       accessibilityRole="button"
       accessibilityLabel={`View ${activity.name}`}
     >
-      <Image
-        source={{ uri: activity.imageUrl || PLACEHOLDER_IMAGE }}
-        style={s.cardImage}
-        contentFit="cover"
-        transition={200}
-      />
-
-      {activity.isPromoted && (
-        <View style={[s.promotedBadge, { backgroundColor: CultureTokens.gold }]}>
-          <Ionicons name="star" size={10} color="#fff" />
-          <Text style={s.promotedText}>Featured</Text>
-        </View>
-      )}
+      <View style={s.imageContainer}>
+        <Image
+          source={{ uri: activity.imageUrl || PLACEHOLDER_IMAGE }}
+          style={s.cardImage}
+          contentFit="cover"
+          transition={200}
+        />
+        {/* Subtle depth gradient */}
+        <LinearGradient
+          colors={['transparent', 'rgba(0,0,0,0.15)', 'rgba(0,0,0,0.45)']}
+          locations={[0.5, 0.75, 1]}
+          style={s.imageOverlay}
+        />
+        {(!activity.priceLabel || activity.priceLabel.toLowerCase() === 'free') && (
+          <View style={[s.freeBadge, { backgroundColor: '#059669', left: 10, right: undefined }]}>
+            <Text style={s.freeBadgeText}>FREE</Text>
+          </View>
+        )}
+        {activity.isPromoted && (
+          <View style={[s.promotedBadge, { backgroundColor: CultureTokens.gold }]}>
+            <Ionicons name="star" size={10} color="#fff" />
+            <Text style={s.promotedText}>Featured</Text>
+          </View>
+        )}
+      </View>
 
       <View style={s.cardBody}>
-        {/* Category badge */}
-        <View style={[s.categoryBadge, { backgroundColor: CultureTokens.teal + '18', borderColor: CultureTokens.teal + '40' }]}>
-          <Text style={[s.categoryText, { color: CultureTokens.teal }]}>{activity.category}</Text>
+        {/* Category badge + optional culture tag */}
+        <View style={s.badgeRow}>
+          <View style={[s.categoryBadge, { backgroundColor: CultureTokens.teal + '18', borderColor: CultureTokens.teal + '40' }]}>
+            <Text style={[s.categoryText, { color: CultureTokens.teal }]}>{activity.category}</Text>
+          </View>
+          {activity.primaryCulture ? (
+            <View style={[s.cultureTag, { backgroundColor: CultureTokens.indigo + '12', borderColor: CultureTokens.indigo + '33' }]}>
+              <Text style={[s.cultureTagText, { color: CultureTokens.indigo }]} numberOfLines={1}>{activity.primaryCulture}</Text>
+            </View>
+          ) : null}
         </View>
 
         {/* Name */}
@@ -112,34 +148,74 @@ const ActivityCard = React.memo(function ActivityCard({
           {activity.name}
         </Text>
 
-        {/* Duration & Price */}
+        {/* Rich meta: location / schedule / duration / price */}
         <View style={s.metaRow}>
-          {activity.duration ? (
+          {activity.location ? (
             <View style={s.metaItem}>
-              <Ionicons name="time-outline" size={13} color={colors.textTertiary} />
+              <Ionicons name="location-outline" size={12} color={colors.textTertiary} />
+              <Text style={[s.metaText, { color: colors.textSecondary }]} numberOfLines={1}>{activity.location}</Text>
+            </View>
+          ) : null}
+          {activity.scheduleText || activity.recurrence ? (
+            <View style={s.metaItem}>
+              <Ionicons name="calendar-outline" size={12} color={colors.textTertiary} />
+              <Text style={[s.metaText, { color: colors.textSecondary }]} numberOfLines={1}>{activity.scheduleText || activity.recurrence}</Text>
+            </View>
+          ) : activity.duration ? (
+            <View style={s.metaItem}>
+              <Ionicons name="time-outline" size={12} color={colors.textTertiary} />
               <Text style={[s.metaText, { color: colors.textSecondary }]}>{activity.duration}</Text>
             </View>
           ) : null}
           <View style={s.metaItem}>
-            <Ionicons name="pricetag-outline" size={13} color={colors.textTertiary} />
+            <Ionicons name="pricetag-outline" size={12} color={colors.textTertiary} />
             <Text style={[s.metaText, { color: colors.textSecondary }]}>{activity.priceLabel || 'Free'}</Text>
           </View>
         </View>
 
-        {/* Rating */}
-        {activity.rating != null && activity.rating > 0 ? (
-          <View style={s.ratingRow}>
-            <Ionicons name="star" size={13} color={CultureTokens.gold} />
-            <Text style={[s.ratingText, { color: colors.text }]}>{activity.rating.toFixed(1)}</Text>
-            {activity.reviewsCount != null && activity.reviewsCount > 0 ? (
-              <Text style={[s.reviewsText, { color: colors.textTertiary }]}>
-                ({activity.reviewsCount})
-              </Text>
-            ) : null}
+        {/* Secondary info row: difficulty, age, participants */}
+        {(activity.difficulty || activity.ageGroup || activity.maxParticipants) && (
+          <View style={s.metaRow}>
+            {activity.difficulty && (
+              <View style={[s.tagPill, { backgroundColor: colors.surfaceElevated, borderColor: colors.borderLight }]}>
+                <Text style={[s.tagText, { color: colors.textSecondary }]}>{activity.difficulty}</Text>
+              </View>
+            )}
+            {activity.ageGroup && (
+              <View style={[s.tagPill, { backgroundColor: colors.surfaceElevated, borderColor: colors.borderLight }]}>
+                <Text style={[s.tagText, { color: colors.textSecondary }]}>{activity.ageGroup}</Text>
+              </View>
+            )}
+            {activity.maxParticipants && (
+              <View style={s.metaItem}>
+                <Ionicons name="people-outline" size={12} color={colors.textTertiary} />
+                <Text style={[s.metaText, { color: colors.textSecondary }]}>Up to {activity.maxParticipants}</Text>
+              </View>
+            )}
           </View>
-        ) : null}
+        )}
 
-        {/* Owner actions */}
+        {/* Rating + instructor if present */}
+        <View style={s.bottomMeta}>
+          {activity.rating != null && activity.rating > 0 ? (
+            <View style={s.ratingRow}>
+              <Ionicons name="star" size={13} color={CultureTokens.gold} />
+              <Text style={[s.ratingText, { color: colors.text }]}>{activity.rating.toFixed(1)}</Text>
+              {activity.reviewsCount != null && activity.reviewsCount > 0 ? (
+                <Text style={[s.reviewsText, { color: colors.textTertiary }]}>
+                  ({activity.reviewsCount})
+                </Text>
+              ) : null}
+            </View>
+          ) : null}
+          {activity.instructorName ? (
+            <Text style={[s.instructorText, { color: colors.textTertiary }]} numberOfLines={1}>
+              with {activity.instructorName}
+            </Text>
+          ) : null}
+        </View>
+
+        {/* Owner actions (subtle on web) */}
         {canEdit && (
           <View style={s.ownerActions}>
             <Pressable
@@ -161,7 +237,7 @@ const ActivityCard = React.memo(function ActivityCard({
           </View>
         )}
       </View>
-    </Pressable>
+    </AnimatedPressable>
   );
 });
 
@@ -231,6 +307,7 @@ export default function ActivitiesScreen() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [sortBy, setSortBy] = useState<'relevance' | 'rating' | 'newest'>('relevance');
 
   // Debounce search
   useEffect(() => {
@@ -271,6 +348,18 @@ export default function ActivitiesScreen() {
     );
   }, [activities, debouncedSearch]);
 
+  // ── Client-side sort ──
+  const sortedActivities = useMemo(() => {
+    let result = [...filteredActivities];
+    if (sortBy === 'rating') {
+      result.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0) || (b.reviewsCount ?? 0) - (a.reviewsCount ?? 0));
+    } else if (sortBy === 'newest') {
+      result.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+    }
+    // relevance is original order from API (e.g. promoted first?)
+    return result;
+  }, [filteredActivities, sortBy]);
+
   const filtersActive = selectedCategory !== 'All';
 
   // ── Delete mutation ──
@@ -308,8 +397,8 @@ export default function ActivitiesScreen() {
   // ── Render helpers ──
   const hasRenderedRef = useRef(false);
   useEffect(() => {
-    if (filteredActivities.length > 0) hasRenderedRef.current = true;
-  }, [filteredActivities.length]);
+    if (sortedActivities.length > 0) hasRenderedRef.current = true;
+  }, [sortedActivities.length]);
 
   const renderItem = useCallback(({ item, index }: ListRenderItemInfo<ActivityData>) => {
     const canEdit =
@@ -364,19 +453,19 @@ export default function ActivitiesScreen() {
   );
 
   const listFooter = useMemo(() => {
-    if (!isLoading && filteredActivities.length > 0) {
+    if (!isLoading && sortedActivities.length > 0) {
       return (
         <View style={s.listFooter}>
           <View style={[s.endLine, { backgroundColor: colors.divider }]} />
           <Text style={[s.listFooterText, { color: colors.textTertiary }]}>
-            {filteredActivities.length} activit{filteredActivities.length !== 1 ? 'ies' : 'y'} shown
+            {sortedActivities.length} activit{sortedActivities.length !== 1 ? 'ies' : 'y'} shown
           </Text>
           <View style={[s.endLine, { backgroundColor: colors.divider }]} />
         </View>
       );
     }
     return null;
-  }, [isLoading, filteredActivities.length, colors]);
+  }, [isLoading, sortedActivities.length, colors]);
 
   return (
     <ErrorBoundary>
@@ -394,9 +483,12 @@ export default function ActivitiesScreen() {
             />
             <View style={{ flex: 1 }}>
               <Text style={[s.headerTitle, { color: colors.text }]}>Activities</Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Text style={[s.headerSub, { color: colors.textSecondary }]} numberOfLines={2}>
+                Hands-on cultural experiences, workshops, tours &amp; community classes
+              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 }}>
                 <Ionicons name="location" size={11} color={CultureTokens.indigo} />
-                <Text style={[s.headerSub, { color: colors.textSecondary }]} numberOfLines={1}>
+                <Text style={[s.headerLocation, { color: colors.textTertiary }]} numberOfLines={1}>
                   {state.city
                     ? `${state.city}${state.country ? `, ${state.country}` : ''}`
                     : state.country || 'All locations'}
@@ -464,6 +556,50 @@ export default function ActivitiesScreen() {
             }}
           />
 
+          {/* ── Sort controls (improved UX) ── */}
+          <View style={[s.sortRow, { paddingHorizontal: hPad }]}>
+            <Text style={[s.sortLabel, { color: colors.textSecondary }]}>Sort by</Text>
+            {[
+              { key: 'relevance', label: 'Relevance' },
+              { key: 'rating', label: 'Top rated' },
+              { key: 'newest', label: 'Newest' },
+            ].map((opt) => {
+              const active = sortBy === opt.key;
+              return (
+                <Pressable
+                  key={opt.key}
+                  onPress={() => setSortBy(opt.key as any)}
+                  style={[
+                    s.sortChip,
+                    {
+                      backgroundColor: active ? colors.text : colors.surfaceElevated,
+                      borderColor: active ? colors.text : colors.borderLight,
+                    },
+                  ]}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: active }}
+                >
+                  <Text style={[s.sortChipText, { color: active ? colors.background : colors.textSecondary }]}>
+                    {opt.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+
+          {/* Section header for grid */}
+          {!isLoading && sortedActivities.length > 0 && (
+            <Text
+              style={[
+                s.sectionTitle,
+                { paddingHorizontal: hPad, color: colors.text, marginTop: 4, marginBottom: 4 },
+              ]}
+            >
+              {selectedCategory === 'All' ? 'Discover activities' : selectedCategory}{' '}
+              {sortBy !== 'relevance' ? `• ${sortBy}` : ''}
+            </Text>
+          )}
+
           {/* ── Activity grid ── */}
           {isLoading ? (
             <FlatList
@@ -479,7 +615,7 @@ export default function ActivitiesScreen() {
           ) : (
             <FlatList
               key={`activities-${numCols}`}
-              data={filteredActivities}
+              data={sortedActivities}
               renderItem={renderItem}
               keyExtractor={keyExtractor}
               numColumns={numCols}
@@ -550,6 +686,11 @@ const s = StyleSheet.create({
     lineHeight: 18,
     opacity: 0.7,
   },
+  headerLocation: {
+    fontFamily: FontFamily.medium,
+    fontSize: 11,
+    lineHeight: 14,
+  },
 
   // Search
   searchRow: {
@@ -595,14 +736,39 @@ const s = StyleSheet.create({
     borderRadius: CardTokens.radius,
     borderWidth: 1,
     overflow: 'hidden',
+    // subtle web lift
+    ...(Platform.OS === 'web' ? { boxShadow: '0 1px 3px rgba(0,0,0,0.08)' } as any : {}),
+  },
+  imageContainer: {
+    position: 'relative',
   },
   cardImage: {
     width: '100%',
-    height: 140,
+    height: 155,
+  },
+  imageOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: '55%',
+  },
+  freeBadge: {
+    position: 'absolute',
+    top: 10,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 999,
+  },
+  freeBadgeText: {
+    fontFamily: FontFamily.semibold,
+    fontSize: 9,
+    color: '#fff',
+    letterSpacing: 0.5,
   },
   cardBody: {
-    padding: 12,
-    gap: 6,
+    padding: 14,
+    gap: 8,
   },
   categoryBadge: {
     alignSelf: 'flex-start',
@@ -617,13 +783,32 @@ const s = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
+  badgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flexWrap: 'wrap',
+  },
+  cultureTag: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    borderWidth: 1,
+  },
+  cultureTagText: {
+    fontFamily: FontFamily.medium,
+    fontSize: 9,
+    letterSpacing: 0.3,
+  },
   cardName: {
     ...TextStyles.eventCardTitle,
   },
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 10,
+    flexWrap: 'wrap',
   },
   metaItem: {
     flexDirection: 'row',
@@ -634,6 +819,29 @@ const s = StyleSheet.create({
     fontFamily: FontFamily.medium,
     fontSize: 12,
     lineHeight: 16,
+  },
+  tagPill: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    borderWidth: 1,
+  },
+  tagText: {
+    fontFamily: FontFamily.medium,
+    fontSize: 10,
+    lineHeight: 13,
+  },
+  bottomMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  instructorText: {
+    fontFamily: FontFamily.medium,
+    fontSize: 11,
+    lineHeight: 14,
+    fontStyle: 'italic',
   },
   ratingRow: {
     flexDirection: 'row',
@@ -652,8 +860,8 @@ const s = StyleSheet.create({
   },
   promotedBadge: {
     position: 'absolute',
-    top: 8,
-    right: 8,
+    top: 10,
+    right: 10,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
@@ -730,5 +938,34 @@ const s = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     lineHeight: 19,
+  },
+
+  // Sort (new for better UX)
+  sortRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 8,
+  },
+  sortLabel: {
+    fontFamily: FontFamily.medium,
+    fontSize: 12,
+    marginRight: 4,
+  },
+  sortChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  sortChipText: {
+    fontFamily: FontFamily.semibold,
+    fontSize: 12,
+  },
+
+  sectionTitle: {
+    fontFamily: FontFamily.semibold,
+    fontSize: 15,
+    lineHeight: 20,
   },
 });

@@ -220,7 +220,7 @@ function weatherCodeToIcon(code: number): keyof typeof Ionicons.glyphMap {
 }
 
 function useSidebarWeather(coords: { lat: number; lon: number }) {
-  const [weather, setWeather] = useState<{ label: string; icon: keyof typeof Ionicons.glyphMap } | null>(null);
+  const [weather, setWeather] = useState<{ label: string; icon: keyof typeof Ionicons.glyphMap; timezone?: string } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -233,6 +233,7 @@ function useSidebarWeather(coords: { lat: number; lon: number }) {
 
         const data = (await res.json()) as {
           current_weather?: { temperature?: number; weathercode?: number };
+          timezone?: string;
         };
         const current = data.current_weather;
         if (!current || typeof current.temperature !== 'number' || typeof current.weathercode !== 'number') return;
@@ -241,6 +242,7 @@ function useSidebarWeather(coords: { lat: number; lon: number }) {
           setWeather({
             label: `${Math.round(current.temperature)}°C ${weatherCodeToLabel(current.weathercode)}`,
             icon: weatherCodeToIcon(current.weathercode),
+            timezone: data.timezone,
           });
         }
       } catch {
@@ -347,14 +349,16 @@ function WebSidebarContent() {
   const weatherCity = user?.city || onboardingState.city || DEFAULT_WEATHER_CITY;
   const weatherCoords = useMemo(() => resolveWeatherCoords(weatherCity), [weatherCity]);
   const weather = useSidebarWeather(weatherCoords);
-  const timeLabel = useMemo(
-    () => now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    [now],
-  );
-  const dateLabel = useMemo(
-    () => now.toLocaleDateString([], { weekday: 'short', day: 'numeric', month: 'short' }),
-    [now],
-  );
+  const timeLabel = useMemo(() => {
+    const opts: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-digit' };
+    if (weather?.timezone) opts.timeZone = weather.timezone;
+    return now.toLocaleTimeString([], opts);
+  }, [now, weather?.timezone]);
+  const dateLabel = useMemo(() => {
+    const opts: Intl.DateTimeFormatOptions = { weekday: 'short', day: 'numeric', month: 'short' };
+    if (weather?.timezone) opts.timeZone = weather.timezone;
+    return now.toLocaleDateString([], opts);
+  }, [now, weather?.timezone]);
 
   const hostHubNav = useMemo(
     () => (isOrganizer ? SIDEBAR_HOST_HUB_LINKS : SIDEBAR_HOST_ASPIRING_LINKS) as NavItem[],
@@ -495,8 +499,7 @@ function WebSidebarContent() {
         <View style={styles.headerActions}>
           <View style={[styles.headerMetaStack, { backgroundColor: isDark ? 'rgba(0,0,0,0.22)' : 'rgba(255,255,255,0.45)', borderColor: border }]}>
             <View style={styles.headerMetaLine}>
-              <Ionicons name="time-outline" size={12} color={colors.textSecondary} />
-              <Text style={[styles.headerMetaText, { color: colors.textSecondary }]} numberOfLines={1}>
+              <Text style={[styles.headerMetaText, { color: colors.textSecondary, marginLeft: 16 }]} numberOfLines={1}>
                 {timeLabel} · {dateLabel}
               </Text>
             </View>
@@ -814,7 +817,7 @@ const styles = StyleSheet.create({
   brandTextBlock: { flex: 1, minWidth: 0, gap: 0 },
   brandTagline: { fontSize: 10, fontFamily: 'Poppins_500Medium', letterSpacing: 0.2, lineHeight: 13, opacity: 0.65, marginTop: -1 },
   headerActions: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 4 },
-  headerMetaStack: { width: 128, gap: 3, paddingHorizontal: 9, paddingVertical: 6, borderRadius: Radius.md, borderWidth: 1 },
+  headerMetaStack: { gap: 3, paddingHorizontal: 9, paddingVertical: 6, borderRadius: Radius.md, borderWidth: 1 },
   headerMetaLine: { flexDirection: 'row', alignItems: 'center', gap: 4, minWidth: 0 },
   headerMetaText: { fontSize: 9, fontFamily: 'Poppins_600SemiBold', lineHeight: 12 },
   collapseBtn: { width: 24, height: 24, borderRadius: 6, alignItems: 'center', justifyContent: 'center' },

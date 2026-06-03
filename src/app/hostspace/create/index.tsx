@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import { useLocalSearchParams, router } from 'expo-router';
 import Head from 'expo-router/head';
 import { useQuery } from '@tanstack/react-query';
@@ -6,19 +6,18 @@ import { useQuery } from '@tanstack/react-query';
 import { ErrorBoundary } from '@/modules/core/ui/ErrorBoundary';
 import { HostspaceAccessGate } from '@/modules/host/components/HostspaceAccessGate';
 import { createLazyComponent } from '@/lib/lazy';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
 
 // Creator Trust: Post-publish success with banner + activation CTAs
 import { VerificationStatusBanner } from '@/modules/host/components/VerificationStatusBanner';
 import { trackPostPublishActivation } from '@/modules/host/services/formAnalyticsService';
 import { Button } from '@/design-system/ui/Button';
-import { CultureTokens, Spacing, Radius } from '@/design-system/tokens/theme';
+import { CultureTokens, Spacing } from '@/design-system/tokens/theme';
 import { useColors } from '@/hooks/useColors';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { withAlpha } from '@/lib/withAlpha';
-import { EntityTypeSelector, type EntityType } from '@/modules/host/components/EntityTypeSelector';
-import { WizardContainer } from '@/modules/host/components/FormWizard/WizardContainer';
+import type { EntityType } from '@/modules/host/components/EntityTypeSelector';
 import { APP_NAME, SITE_ORIGIN } from '@/lib/app-meta';
 import { useAuth } from '@/lib/auth';
 import { modulesApi } from '@/modules/api';
@@ -27,22 +26,59 @@ const HostspaceCreateWorkspace = createLazyComponent(
   () => import('@/modules/host/components/HostspaceCreateWorkspace')
 );
 
+const LazyWizardContainer = createLazyComponent(
+  () => import('@/modules/host/components/FormWizard/WizardContainer'),
+  'WizardContainer'
+);
+
+const LazyEntityTypeSelector = createLazyComponent(
+  () => import('@/modules/host/components/EntityTypeSelector'),
+  'EntityTypeSelector'
+);
+
+function WizardLoading() {
+  return (
+    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', minHeight: 300 }}>
+      <ActivityIndicator size="large" color="#4F46E5" />
+      <Text style={{ marginTop: 12, color: '#666', fontSize: 12 }}>Loading creation wizard…</Text>
+    </View>
+  );
+}
+
 // =============================================================================
-// PHASE 1 UNIFICATION + CREATOR TRUST
+// PHASE 1 UNIFICATION + CREATOR TRUST + MAPPING SPIKE (ADR-001)
 // =============================================================================
 // Rich persistent entity profiles (the livelihood-critical ones) MUST use the
 // full FormWizard. This is the canonical, single source of truth for:
 // - Draft recovery & auto-save
 // - Legal/compliance gates (Step 3)
 // - Verification transparency & status banners
-// - Versioning, accessibility, AI assist, progressive disclosure
+// - Versioning, accessibility, progressive disclosure
+// - NOW: live non-AI analytics (session, steps, validation, uploads, publish, abandon)
+//   via formAnalyticsService + getSessionAnalyticsMetrics (data-driven funnel visibility)
 //
-// The HostspaceCreateWorkspace is intentionally being evolved into a
-// "Creation Lab launcher" for quick content (events, offers, listings, activities)
-// under existing parent profiles. It must never host rich profile creation again.
+// CURRENT ENTRY POINT MAP (as of this spike, to inform full unification):
+// 1. Hostspace main (/hostspace/index.tsx): lists profiles/events, FAB -> CreateMenuSheet -> routes to /hostspace/create?...
+// 2. HostspaceCreateWorkspace (launcher in /hostspace/create , lazy loaded): CategoryGrid/Sidebar select -> if RICH_PROFILE_TYPES (community,organiser,venue,business,artist,professional) -> router.push /hostspace/create?profileType=XXX ; else quick forms or market.
+//    Also openCreateFlow for events/listings under parent profile.
+// 3. /hostspace/create/index.tsx (this file): handles ?profileType= -> EntityTypeSelector (lazy) or direct WizardContainer (lazy) ; ?category= -> workspace ; post-publish success UI.
+// 4. /hostspace/create/[category].tsx : for specific quick create?
+// 5. /hostspace/create/listing.tsx : marketplace listings wizard (CultureMarketListingWizard)
+// 6. Dedicated lighter forms (non-rich, content under profiles):
+//    - HostspaceEventCreateForm (events)
+//    - HostspaceCommunityCreateForm (but community is RICH, may overlap)
+//    - HostspaceOfferCreateForm
+//    - HostspaceActivityCreateForm
+//    - CultureMarketListingWizard (shopping)
+// 7. Other: CreateMenuSheet, HostItemActionSheet, action from profile cards, deep links, draft recovery, NationBuilders intent.
+// 8. From host dashboard actions, verification etc.
+//
+// Fragmentation: rich profiles have dual paths (workspace launcher vs direct wizard). Lighter content has dedicated forms.
+// Recommendation: fully deprecate rich in workspace, always ?profileType -> wizard. Lighter stay dedicated.
+// Analytics live on wizard side only; when unifying, dedicated can get light tracking too.
 //
 // All entry points (EntityTypeSelector, quick actions, deep links, draft recovery)
-// must route rich types here with ?profileType= so the wizard is unambiguous.
+// must route rich types here with ?profileType= so the wizard (with live analytics) is unambiguous.
 const RICH_PROFILE_TYPES: EntityType[] = ['business', 'venue', 'artist', 'professional', 'organiser', 'community'];
 
 function isRichProfileType(type: string | undefined): type is EntityType {
@@ -197,34 +233,38 @@ export default function HostspaceCreateIndex() {
               </Text>
             </ScrollView>
           ) : showEntitySelector ? (
-            <EntityTypeSelector
-              onSelect={handleEntityTypeSelect}
-              existingProfiles={myProfiles}
-              intent={typeof intent === 'string' ? intent : undefined}
-            />
+            <Suspense fallback={<WizardLoading />}>
+              <LazyEntityTypeSelector
+                onSelect={handleEntityTypeSelect}
+                existingProfiles={myProfiles}
+                intent={typeof intent === 'string' ? intent : undefined}
+              />
+            </Suspense>
           ) : isRichProfileType(raw) ? (
-            // Phase 1 Unification: Rich profiles now use the full FormWizard
-            <WizardContainer
-              entityType={raw}
-              draftId={draftId}
-              profileId={editProfileId}
-              onPublishSuccess={(profileId) => {
-                // Creator Trust: Deliver rich post-publish success with verification banner + activation CTAs
-                if (isRichProfileType(raw)) {
-                  setPublishedProfile({ id: profileId, entityType: raw as any });
-                } else {
-                  router.replace(`/hostspace` as any);
-                }
-              }}
-              onCancel={() => {
-                // Better back behavior: go back to selector if we came from it
-                if (isProfileWizard) {
-                  router.replace('/hostspace/create' as any);
-                } else {
-                  router.back();
-                }
-              }}
-            />
+            // Phase 1 Unification: Rich profiles now use the full FormWizard (lazied for bundle reduction)
+            <Suspense fallback={<WizardLoading />}>
+              <LazyWizardContainer
+                entityType={raw}
+                draftId={draftId}
+                profileId={editProfileId}
+                onPublishSuccess={(profileId) => {
+                  // Creator Trust: Deliver rich post-publish success with verification banner + activation CTAs
+                  if (isRichProfileType(raw)) {
+                    setPublishedProfile({ id: profileId, entityType: raw as any });
+                  } else {
+                    router.replace(`/hostspace` as any);
+                  }
+                }}
+                onCancel={() => {
+                  // Better back behavior: go back to selector if we came from it
+                  if (isProfileWizard) {
+                    router.replace('/hostspace/create' as any);
+                  } else {
+                    router.back();
+                  }
+                }}
+              />
+            </Suspense>
           ) : (
             <HostspaceCreateWorkspace initialCategory={raw} />
           )}

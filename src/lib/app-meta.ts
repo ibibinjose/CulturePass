@@ -54,6 +54,16 @@ export const MADE_IN = 'Made in Australia';
 /** Longer copyright-style footer when country reads better. */
 export const MADE_IN_WITH_COUNTRY = 'Made in Haymarket, Sydney';
 
+/** Company facts for consistency across About, Company Info, footers, etc. */
+export const COMPANY_FACTS = [
+  { label: 'Founded', value: '2023', icon: 'calendar' as const },
+  { label: 'Headquarters', value: 'Sydney, Australia', icon: 'location' as const },
+  { label: 'Team', value: '12', icon: 'people' as const },
+  { label: 'Global Reach', value: '195+', icon: 'earth' as const },
+];
+
+export const COMPANY_MISSION = "CulturePass is built to empower cultural diaspora communities by connecting people with the events, businesses, and organisations that celebrate their heritage. We believe culture is best experienced together.";
+
 /** Founder story page SEO. */
 export const FOUNDER_PAGE_TITLE = `Founder's Story — ${APP_AKA}`;
 export const FOUNDER_PAGE_DESCRIPTION =

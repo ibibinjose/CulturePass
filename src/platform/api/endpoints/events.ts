@@ -1,4 +1,4 @@
-import type { EventData, PaginatedEventsResponse, Ticket, EventAnalyticsData } from '@/shared/schema';
+import type { EventData, PaginatedEventsResponse, Ticket, EventAnalyticsData, PromoCode } from '@/shared/schema';
 import type { ApiRequestFn } from '../client';
 
 /** GET /api/events/:id/ticket-quote — server-side pricing (+ optional Firestore promo). */
@@ -108,6 +108,20 @@ export function createEventsNamespace(request: ApiRequestFn) {
       request<EventAnalyticsData>('GET', `api/events/${eventId}/analytics`),
     messageAttendees: (eventId: string, title: string, body: string) =>
       request<{ ok: boolean; recipientsCount: number }>('POST', `api/events/${eventId}/message`, { title, body }),
+
+    // Host promos (ticket discounts scoped to event)
+    promos: {
+      list: (eventId: string) =>
+        request<{ promos: PromoCode[] }>('GET', `api/events/${eventId}/promos`),
+      create: (eventId: string, data: {
+        code: string;
+        discountType: 'fixed' | 'percent';
+        discountValue: number;
+        maxRedemptions?: number | null;
+        expiresAt?: string | null;
+        note?: string;
+      }) => request<{ id: string; code: string }>('POST', `api/events/${eventId}/promos`, data),
+    },
   };
 }
 

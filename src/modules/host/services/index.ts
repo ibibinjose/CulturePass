@@ -107,7 +107,6 @@ export {
   trackAutoSave,
   trackApiCall,
   trackUpload,
-  trackAIAssistUsage,
   trackHelpClick,
   trackAlertTriggered,
   resetSessionCounters,
@@ -128,5 +127,4 @@ export {
   type StepTiming,
   type ValidationErrorEntry,
   type ApiTimingEntry,
-  type AIAssistUsageEntry,
 } from './formAnalyticsService';

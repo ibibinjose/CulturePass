@@ -6,7 +6,7 @@
  *
  * Standards: Accessible, optimistic updates, clear review notes, audit-friendly.
  */
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -27,7 +27,6 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { useColors } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
-import { useRole } from '@/hooks/useRole';
 import { api } from '@/lib/api';
 import { adminKeys } from '@/hooks/queries/keys';
 import {
@@ -53,6 +52,14 @@ export default function HostApplicationsAdmin() {
   const [reviewNote, setReviewNote] = useState('');
   const [action, setAction] = useState<ReviewAction>('approve');
   const [banner, setBanner] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  // Pagination for admin scale (client-side; can promote to server with limit/offset in API)
+  const [page, setPage] = useState(0);
+  const PAGE_SIZE = 20;
+
+  // Reset pagination on filter/search change
+  useEffect(() => {
+    setPage(0);
+  }, [filter, search]);
 
   const { data, isLoading, refetch, isRefetching } = useQuery({
     queryKey: ['admin', 'host-applications', filter],
@@ -61,7 +68,7 @@ export default function HostApplicationsAdmin() {
   });
 
   const applications = useMemo(() => {
-    const raw: HostApplication[] = (data as any)?.applications ?? [];
+    const raw: HostApplication[] = (data as { applications?: HostApplication[] })?.applications ?? [];
     const q = search.trim().toLowerCase();
     if (!q) return raw;
     return raw.filter((a) => {
@@ -80,6 +87,11 @@ export default function HostApplicationsAdmin() {
     });
   }, [data, search]);
 
+  const paginatedApplications = useMemo(() => {
+    const start = page * PAGE_SIZE;
+    return applications.slice(start, start + PAGE_SIZE);
+  }, [applications, page]);
+
   const reviewMutation = useMutation({
     mutationFn: async ({ id, action: act, note }: { id: string; action: ReviewAction; note?: string }) => {
       if (act === 'approve') {
@@ -87,6 +99,9 @@ export default function HostApplicationsAdmin() {
       } else {
         return api.hostApplications.reject(id, note);
       }
+    },
+    onError: (error: Error) => {
+      setBanner({ type: 'error', message: error.message || 'Review failed' });
     },
     onSuccess: (_res, vars) => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'host-applications'] });
@@ -99,10 +114,6 @@ export default function HostApplicationsAdmin() {
       });
       // auto-clear banner
       setTimeout(() => setBanner(null), 4500);
-    },
-    onError: (error: any) => {
-      setBanner({ type: 'error', message: error?.message || 'Review action failed. Check connection and try again.' });
-      setTimeout(() => setBanner(null), 6000);
     },
   });
 
@@ -181,7 +192,7 @@ export default function HostApplicationsAdmin() {
           {(['pending', 'approved', 'rejected', 'all'] as const).map((f) => (
             <Pressable
               key={f}
-              onPress={() => { setFilter(f as any); setSearch(''); }}
+              onPress={() => { setFilter(f); setSearch(''); }}
               style={[styles.filterChip, filter === f && styles.filterChipActive]}
             >
               <Text style={[styles.filterText, filter === f && styles.filterTextActive]}>
@@ -190,8 +201,21 @@ export default function HostApplicationsAdmin() {
             </Pressable>
           ))}
           <Text style={[styles.metaCount, { color: colors.textTertiary }]}>
-            {applications.length} shown {isRefetching ? '· refreshing…' : ''}
+            {applications.length} total · page {page + 1} ({paginatedApplications.length} shown) {isRefetching ? '· refreshing…' : ''}
           </Text>
+          {/* Basic pagination controls (admin scale) */}
+          <View style={{ flexDirection: 'row', gap: 8, marginLeft: 8 }}>
+            <Pressable
+              onPress={() => setPage(p => Math.max(0, p - 1))}
+              disabled={page === 0}
+              style={{ opacity: page === 0 ? 0.4 : 1 }}
+            >
+              <Text style={{ color: colors.primary, fontSize: 12 }}>← Prev</Text>
+            </Pressable>
+            <Pressable onPress={() => setPage(p => p + 1)} disabled={paginatedApplications.length < PAGE_SIZE}>
+              <Text style={{ color: colors.primary, fontSize: 12 }}>Next →</Text>
+            </Pressable>
+          </View>
         </View>
 
         {/* Feedback banner */}
@@ -204,6 +228,13 @@ export default function HostApplicationsAdmin() {
             </Pressable>
           </GlassView>
         )}
+
+        {/* Admin metrics surface: tie to host wizard analytics (unified funnel data live in hostspace/dashboard) */}
+        <GlassView intensity={10} style={{ margin: 12, padding: 8, borderRadius: 8, backgroundColor: colors.surface }}>
+          <Text style={{ color: colors.textSecondary, fontSize: 12 }}>
+            Host creation funnel metrics (rich profiles now unified to FormWizard with step timing, upload success, abandonment tracking): see /hostspace/dashboard for live Profile Analytics + wizard sessions.
+          </Text>
+        </GlassView>
 
         {isLoading ? (
           <View style={styles.center}>
@@ -218,7 +249,7 @@ export default function HostApplicationsAdmin() {
             </Text>
           </GlassView>
         ) : (
-          applications.map((app, index) => (
+          paginatedApplications.map((app, index) => (
             <Animated.View key={app.id} entering={FadeInDown.delay(index * 40).springify()}>
               <GlassView intensity={30} style={styles.card}>
                 <View style={styles.cardHeader}>

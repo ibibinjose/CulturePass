@@ -48,8 +48,11 @@ export default function UserDirectoryScreen() {
   const [search, setSearch] = useState('');
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [auditNote, setAuditNote] = useState(''); // E: Audit notes for changes
+  // Pagination (roadmap admin scale)
+  const [page, setPage] = useState(0);
+  const PAGE_SIZE = 20;
   const [showBulkConfirm, setShowBulkConfirm] = useState(false);
-  const [pendingBulkAction, setPendingBulkAction] = useState<{ type: string; value?: any } | null>(null);
+  const [pendingBulkAction, setPendingBulkAction] = useState<{ type: string; value?: unknown } | null>(null);
 
   // === Hardened Admin Directory State (A/B/C/D/E) ===
   const [activeFilters, setActiveFilters] = useState<{
@@ -98,10 +101,14 @@ export default function UserDirectoryScreen() {
       base = base.filter((u) => matchesQuery(u, searchTrim));
     }
 
+    // Client pagination for scale (can be server later via api.users.list({page, limit}))
+    const start = page * PAGE_SIZE;
+    return base.slice(start, start + PAGE_SIZE);
+
     // === A: Apply advanced filters ===
     base = base.filter((u) => {
       const roleMatch = activeFilters.roles.length === 0 || activeFilters.roles.includes(u.role || 'user');
-      const status = (u as any).status || 'active';
+      const status = (u as { status?: string }).status || 'active';
       const statusMatch = activeFilters.statuses.length === 0 || activeFilters.statuses.includes(status);
       const membership = u.membership?.tier || 'free';
       const membershipMatch = activeFilters.memberships.length === 0 || activeFilters.memberships.includes(membership);
@@ -110,7 +117,7 @@ export default function UserDirectoryScreen() {
 
     // === D: Apply sorting ===
     base.sort((a, b) => {
-      let valA: any, valB: any;
+      let valA: string | number, valB: string | number;
 
       if (sortBy === 'name') {
         valA = (a.displayName || a.username || '').toLowerCase();
@@ -210,7 +217,7 @@ export default function UserDirectoryScreen() {
     Alert.alert('Copied', 'Profile link copied to clipboard');
   };
 
-  const confirmBulkAction = (type: string, value?: any) => {
+  const confirmBulkAction = (type: string, value?: unknown) => {
     setPendingBulkAction({ type, value });
     setShowBulkConfirm(true);
   };
@@ -221,12 +228,12 @@ export default function UserDirectoryScreen() {
     const { type, value } = pendingBulkAction;
 
     try {
-      let promises: Promise<any>[] = [];
+      let promises: Promise<unknown>[] = [];
       const note = auditNote ? ` [Audit Note: ${auditNote}]` : '';
 
       if (type === 'role') {
         promises = Array.from(selectedIds).map(id =>
-          api.admin.patchUser(id, { role: value })
+          api.admin.patchUser(id, { role: value as any })
         );
       } else if (type === 'suspend') {
         promises = Array.from(selectedIds).map(id =>
@@ -234,7 +241,7 @@ export default function UserDirectoryScreen() {
         );
       } else if (type === 'grant') {
         promises = Array.from(selectedIds).map(id =>
-          api.admin.grantMembership(id, value, `Bulk grant by ${myRole}${note}`)
+          api.admin.grantMembership(id, value as number, `Bulk grant by ${myRole}${note}`)
         );
       }
 
@@ -243,8 +250,9 @@ export default function UserDirectoryScreen() {
       Alert.alert('Success', `Action "${type}" applied to ${selectedIds.size} users.`);
       clearSelection();
       setAuditNote('');
-    } catch (e: any) {
-      Alert.alert('Bulk Action Failed', e.message || 'Some updates failed.');
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Some updates failed.';
+      Alert.alert('Bulk Action Failed', msg);
     } finally {
       setBulkActionLoading(false);
       setShowBulkConfirm(false);
@@ -641,6 +649,10 @@ export default function UserDirectoryScreen() {
             color={colors.primary}
             colors={colors}
           />
+          {/* One metrics surface (roadmap): link to live host analytics + note on funnel data from wizard */}
+          <Pressable onPress={() => { /* navigate to hostspace dashboard or admin host metrics */ }} style={{ padding: 8, backgroundColor: colors.surface, borderRadius: 8, marginLeft: 8 }}>
+            <Text style={{ color: colors.primary, fontSize: 12 }}>Host/Profile Analytics + Wizard Funnels (live in hostspace/dashboard)</Text>
+          </Pressable>
           <StatCard
             label="Suspended"
             value={directory?.filter(u => (u as any).status === 'suspended').length || 0}
@@ -846,8 +858,17 @@ export default function UserDirectoryScreen() {
             </Text>
           </Pressable>
           <Text style={{ color: colors.textTertiary, fontSize: 12 }}>
-            Showing {users.length} users
+            Showing {users.length} (page {page + 1})
           </Text>
+          {/* Basic pagination controls (admin roadmap) */}
+          <View style={{ flexDirection: 'row', gap: 8, marginLeft: 12 }}>
+            <Pressable onPress={() => setPage(p => Math.max(0, p-1))} disabled={page===0}>
+              <Text style={{ color: page===0 ? colors.textTertiary : colors.primary }}>Prev</Text>
+            </Pressable>
+            <Pressable onPress={() => setPage(p => p+1)}>
+              <Text style={{ color: colors.primary }}>Next</Text>
+            </Pressable>
+          </View>
         </View>
       )}
 

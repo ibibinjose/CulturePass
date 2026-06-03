@@ -230,7 +230,7 @@ describe('deepLinkResolver.resolve', () => {
 
     const result = await deepLinkResolver.resolve('u', 'user-1');
     expect(result.status).toBe('resolved');
-    expect(result.targetRoute).toBe('/user/user-1');
+    expect(result.targetRoute).toBe('/cpu/user-1');
   });
 
   it('resolves organisation prefix correctly', async () => {
@@ -417,7 +417,7 @@ describe('deepLinkResolver.getTargetRoute', () => {
     expect(deepLinkResolver.getTargetRoute('c', 'comm-1')).toBe('/community/comm-1');
     expect(deepLinkResolver.getTargetRoute('b', 'biz-1')).toBe('/business/biz-1');
     expect(deepLinkResolver.getTargetRoute('v', 'venue-1')).toBe('/venue/venue-1');
-    expect(deepLinkResolver.getTargetRoute('u', 'user-1')).toBe('/user/user-1');
+    expect(deepLinkResolver.getTargetRoute('u', 'user-1')).toBe('/cpu/user-1');
     expect(deepLinkResolver.getTargetRoute('o', 'org-1')).toBe('/organiser/org-1');
     expect(deepLinkResolver.getTargetRoute('t', 'ticket-1')).toBe('/tickets/ticket-1');
   });

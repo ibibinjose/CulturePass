@@ -41,6 +41,9 @@ interface Step2MediaProps {
   validationErrors?: Record<string, string[]>;
   getFieldError: (field: string) => string | undefined;
   isValidating?: boolean;
+  // Analytics trackers forwarded for explicit upload + any api events in this step
+  trackUpload?: (status: 'success' | 'failure', fileType: string, fileSizeBytes?: number, durationMs?: number, errorMessage?: string) => void;
+  trackApiCall?: (entry: { endpoint: string; method: string; durationMs: number; statusCode: number; success: boolean }) => void;
 }
 
 /**
@@ -54,6 +57,10 @@ export function Step2Media({
   formData,
   updateFormData,
   getFieldError,
+  validationErrors,
+  isValidating,
+  trackUpload,
+  trackApiCall,
 }: Step2MediaProps) {
   const colors = useColors();
   const { isDesktop } = useLayout();
@@ -131,6 +138,8 @@ export function Step2Media({
           showCropTool={true}
           error={getFieldError('logoUrl')}
           hint="Upload a square logo (1:1 aspect ratio). PNG or JPEG, max 10MB."
+          trackUpload={trackUpload}
+          trackApiCall={trackApiCall}
         />
       </View>
 
@@ -152,6 +161,8 @@ export function Step2Media({
           showCropTool={true}
           error={getFieldError('heroImageUrl')}
           hint="Upload a wide banner image (16:9 aspect ratio). PNG or JPEG, max 10MB."
+          trackUpload={trackUpload}
+          trackApiCall={trackApiCall}
         />
       </View>
 
@@ -172,6 +183,8 @@ export function Step2Media({
           showCropTool={false}
           error={getFieldError('galleryImages')}
           hint="Add up to 12 images. First image will be featured. PNG or JPEG, max 10MB each."
+          trackUpload={trackUpload}
+          trackApiCall={trackApiCall}
         />
       </View>
 
@@ -191,6 +204,8 @@ export function Step2Media({
           showCropTool={false}
           error={getFieldError('videoUrl')}
           hint="Upload a video (MP4 or WebM, max 3 minutes, max 100MB) or paste a YouTube/Vimeo URL."
+          trackUpload={trackUpload}
+          trackApiCall={trackApiCall}
         />
       </View>
 

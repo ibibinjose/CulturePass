@@ -2,6 +2,13 @@
   "title": "Company Info",
   "heroTitle": "Giving people the power to build community.",
   "heroSub": "CulturePass is built to bring the world closer together, strengthening the social fabric of multicultural cities through cultural participation.",
+  "facts": [
+    { "label": "Founded", "value": "2023", "icon": "calendar", "color": "#6366F1" },
+    { "label": "Headquarters", "value": "Sydney, Australia", "icon": "location", "color": "#14B8A6" },
+    { "label": "Team", "value": "12", "icon": "people", "color": "#D4A017" },
+    { "label": "Reach", "value": "195+", "icon": "earth", "color": "#F43F5E" }
+  ],
+  "mission": "CulturePass is built to empower cultural diaspora communities by connecting people with the events, businesses, and organisations that celebrate their heritage. We believe culture is best experienced together.",
   "sections": [
     {
       "title": "Our Mission",
@@ -25,19 +32,29 @@
   "values": [
     {
       "title": "Belonging",
-      "icon": "home"
+      "icon": "home",
+      "desc": "Culture creates identity and a sense of home wherever you are."
     },
     {
       "title": "Inclusion",
-      "icon": "people"
+      "icon": "people",
+      "desc": "Everyone deserves to see their heritage reflected and celebrated."
     },
     {
       "title": "Preservation",
-      "icon": "library"
+      "icon": "library",
+      "desc": "We protect and amplify traditions, languages, and stories for future generations."
     },
     {
       "title": "Innovation",
-      "icon": "flash"
+      "icon": "flash",
+      "desc": "Technology that serves real human connection, not replaces it."
     }
-  ]
+  ],
+  "contact": {
+    "email": "hello@culturepass.app",
+    "phone": "+614 693 04 711",
+    "address": "Tech Central Level 1/477 Pitt St, Haymarket NSW 2000",
+    "support": "https://wa.me/61469304711"
+  }
 }

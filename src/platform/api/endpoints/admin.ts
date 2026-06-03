@@ -16,7 +16,7 @@ export function createAdminNamespace(request: ApiRequestFn) {
   }>('GET', 'api/admin/stats'),
 
   recomputeDailyStats: () =>
-    request<{ ok: boolean; date: string; stats: any }>('POST', 'api/admin/stats/recompute-daily'),
+    request<{ ok: boolean; date: string; stats: Record<string, unknown> }>('POST', 'api/admin/stats/recompute-daily'),
   systemHealth: () =>
     request<{
       generatedAt: string;
@@ -134,10 +134,15 @@ export function createAdminNamespace(request: ApiRequestFn) {
       codes: {
         id: string;
         code: string;
-        type: 'free_plus';
-        durationDays: number;
-        maxUses: number | null;
+        type: 'free_plus' | 'ticket_discount';
+        durationDays?: number;
+        discountType?: 'fixed' | 'percent';
+        discountValue?: number;
+        eventId?: string | null;
+        maxUses?: number | null;
+        maxRedemptions?: number | null;
         usedCount: number;
+        redeemedCount?: number;
         isActive: boolean;
         expiresAt: string | null;
         note: string;
@@ -147,9 +152,13 @@ export function createAdminNamespace(request: ApiRequestFn) {
     }>('GET', 'api/admin/promo-codes'),
   createPromoCode: (data: {
     code: string;
-    type: 'free_plus';
-    durationDays: number;
-    maxUses: number | null;
+    type: 'free_plus' | 'ticket_discount';
+    durationDays?: number;
+    discountType?: 'fixed' | 'percent';
+    discountValue?: number;
+    eventId?: string;
+    maxUses?: number | null;
+    maxRedemptions?: number | null;
     expiresAt: string | null;
     note: string;
   }) => request<{ id: string; code: string }>('POST', 'api/admin/promo-codes', data),

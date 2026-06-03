@@ -35,7 +35,17 @@ const EXCLUDE_DIRS = [
   'ios',
   'android',
   '.expo',
-  'coverage'
+  'coverage',
+  '.agents',
+  '.antigravitycli',
+  '.claude',
+  '.junie',
+  '.kiro',
+  '.firebase',
+  '.vscode',
+  '.idea',
+  '.run',
+  'temp-certs'
 ];
 
 // File extensions to scan
@@ -101,21 +111,29 @@ function scanFile(filePath) {
 }
 
 function scanDirectory(dirPath) {
-  const items = fs.readdirSync(dirPath);
   let findings = [];
-  
-  items.forEach(item => {
-    const itemPath = path.join(dirPath, item);
-    const stat = fs.statSync(itemPath);
+  try {
+    const items = fs.readdirSync(dirPath);
     
-    if (stat.isDirectory()) {
-      if (!EXCLUDE_DIRS.includes(item)) {
-        findings = findings.concat(scanDirectory(itemPath));
+    items.forEach(item => {
+      const itemPath = path.join(dirPath, item);
+      try {
+        const stat = fs.statSync(itemPath);
+        
+        if (stat.isDirectory()) {
+          if (!EXCLUDE_DIRS.includes(item)) {
+            findings = findings.concat(scanDirectory(itemPath));
+          }
+        } else if (stat.isFile() && shouldScanFile(itemPath)) {
+          findings = findings.concat(scanFile(itemPath));
+        }
+      } catch (e) {
+        // Skip files that cannot be stat'd (broken symlinks, missing permissions, deleted files)
       }
-    } else if (stat.isFile() && shouldScanFile(itemPath)) {
-      findings = findings.concat(scanFile(itemPath));
-    }
-  });
+    });
+  } catch (e) {
+    // Skip directories that cannot be read
+  }
   
   return findings;
 }

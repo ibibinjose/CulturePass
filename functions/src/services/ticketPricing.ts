@@ -117,6 +117,7 @@ export async function resolveTicketOrderPricingWithPromo(
 
   const promo = snap.data() as {
     active?: boolean;
+    isActive?: boolean;
     eventId?: string;
     discountType?: 'fixed' | 'percent';
     discountValue?: number;
@@ -124,7 +125,8 @@ export async function resolveTicketOrderPricingWithPromo(
     redeemedCount?: number;
   };
 
-  if (!promo.active) {
+  const isActive = promo.active !== false && promo.isActive !== false;
+  if (!isActive) {
     throw new PromoCodeError('Promo code is inactive', 'PROMO_NOT_APPLICABLE');
   }
   if (promo.eventId && promo.eventId !== event.id) {

@@ -141,23 +141,52 @@ function checkEnvironmentVariables() {
     'EXPO_PUBLIC_FIREBASE_PROJECT_ID',
   ];
 
+  // Try parsing environment variables from local .env files
+  const loadedEnv = { ...process.env };
+  const envFiles = ['.env.local', '.env'];
+  
+  envFiles.forEach((file) => {
+    const envPath = path.join(process.cwd(), file);
+    if (fs.existsSync(envPath)) {
+      try {
+        const content = fs.readFileSync(envPath, 'utf8');
+        content.split('\n').forEach((line) => {
+          const trimmed = line.trim();
+          if (trimmed && !trimmed.startsWith('#')) {
+            const firstEqual = trimmed.indexOf('=');
+            if (firstEqual > 0) {
+              const k = trimmed.substring(0, firstEqual).trim();
+              const v = trimmed.substring(firstEqual + 1).trim().replace(/^['"]|['"]$/g, '');
+              if (!loadedEnv[k]) {
+                loadedEnv[k] = v;
+              }
+            }
+          }
+        });
+      } catch (err) {
+        // Ignore file read errors
+      }
+    }
+  });
+
   let foundAny = false;
 
   requiredPublicVars.forEach((key) => {
-    if (process.env[key]) {
-      pass(`${key} is set`);
+    if (loadedEnv[key]) {
+      const source = process.env[key] ? 'shell' : 'local env file';
+      pass(`${key} is set (from ${source})`);
       foundAny = true;
     }
   });
 
   if (!foundAny) {
-    warn('No EXPO_PUBLIC_* Firebase variables detected in current shell.');
+    warn('No EXPO_PUBLIC_* Firebase variables detected in current shell or .env files.');
     info('  For local development you typically need a .env file or exported variables.');
     info('  See app.config.js and src/lib/config.ts for how these are consumed.');
   }
 
-  if (process.env.FIREBASE_PROJECT_ID) {
-    pass(`FIREBASE_PROJECT_ID = ${process.env.FIREBASE_PROJECT_ID}`);
+  if (loadedEnv.FIREBASE_PROJECT_ID) {
+    pass(`FIREBASE_PROJECT_ID = ${loadedEnv.FIREBASE_PROJECT_ID}`);
   }
 }
 

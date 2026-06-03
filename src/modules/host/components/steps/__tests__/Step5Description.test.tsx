@@ -21,6 +21,8 @@ jest.mock('@/hooks/useColors', () => ({
     borderLight: '#E0E0E0',
     error: '#FF5E5B',
   }),
+  useIsDark: () => false,
+  useColor: (key: string) => '#000000',
 }));
 
 jest.mock('@/hooks/useLayout', () => ({

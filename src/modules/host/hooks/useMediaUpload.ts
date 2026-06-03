@@ -115,7 +115,13 @@ function getMimeType(uri: string): string {
  * - Support for drag-and-drop (web) and camera/gallery (native)
  * - Web File API support for drag-and-drop uploads
  */
-export function useMediaUpload() {
+export interface MediaUploadAnalytics {
+  trackUpload?: (status: 'success' | 'failure', fileType: string, fileSizeBytes?: number, durationMs?: number, errorMessage?: string) => void;
+}
+
+export function useMediaUpload(analytics?: MediaUploadAnalytics) {
+  const trackUpload = analytics?.trackUpload;
+
   const [state, setState] = useState<MediaUploadState>({
     uploading: false,
     progress: 0,
@@ -378,9 +384,13 @@ export function useMediaUpload() {
       }
 
       setState({ uploading: true, progress: 0, error: null });
+      const uploadStart = Date.now();
+      const asset0 = pickerResult.assets?.[0] as { fileSize?: number } | undefined;
+      const fileSizeForTrack = asset0?.fileSize || undefined;
 
       if (!storage) {
         setState({ uploading: false, progress: 0, error: 'Storage not configured' });
+        trackUpload?.('failure', options?.type || 'unknown', fileSizeForTrack, Date.now() - uploadStart, 'Storage not configured');
         throw new Error('Firebase Storage is not configured');
       }
 
@@ -453,6 +463,8 @@ export function useMediaUpload() {
         const downloadURL = await getDownloadURL(storageRef);
 
         setState({ uploading: false, progress: 100, error: null });
+        const duration = Date.now() - uploadStart;
+        trackUpload?.('success', options?.type || 'unknown', fileSizeForTrack, duration);
 
         return {
           downloadURL,
@@ -462,11 +474,13 @@ export function useMediaUpload() {
         };
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Upload failed';
+        const duration = Date.now() - uploadStart;
+        trackUpload?.('failure', options?.type || 'unknown', fileSizeForTrack, duration, errorMessage);
         setState({ uploading: false, progress: 0, error: errorMessage });
         throw error;
       }
     },
-    [validateImage, validateVideo, compressImage],
+    [validateImage, validateVideo, compressImage, trackUpload],
   );
 
   /**
@@ -480,9 +494,12 @@ export function useMediaUpload() {
       options?: MediaUploadOptions,
     ): Promise<UploadResult> => {
       setState({ uploading: true, progress: 0, error: null });
+      const uploadStart = Date.now();
+      const fileSizeForTrack = file.size;
 
       if (!storage) {
         setState({ uploading: false, progress: 0, error: 'Storage not configured' });
+        trackUpload?.('failure', options?.type || 'unknown', fileSizeForTrack, Date.now() - uploadStart, 'Storage not configured');
         throw new Error('Firebase Storage is not configured');
       }
 
@@ -527,15 +544,19 @@ export function useMediaUpload() {
         const downloadURL = await getDownloadURL(storageRef);
 
         setState({ uploading: false, progress: 100, error: null });
+        const duration = Date.now() - uploadStart;
+        trackUpload?.('success', options?.type || 'unknown', fileSizeForTrack, duration);
 
         return { downloadURL };
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Upload failed';
+        const duration = Date.now() - uploadStart;
+        trackUpload?.('failure', options?.type || 'unknown', fileSizeForTrack, duration, errorMessage);
         setState({ uploading: false, progress: 0, error: errorMessage });
         throw error;
       }
     },
-    [validateWebFile],
+    [validateWebFile, trackUpload],
   );
 
   /**

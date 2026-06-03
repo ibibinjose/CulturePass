@@ -34,6 +34,9 @@ import { SITE_ORIGIN } from '@/lib/app-meta';
 import { RichTextEditor } from '../fields/RichTextEditor';
 import type { WizardStepProps } from '../FormWizard/WizardStep';
 
+const LazyArtistFields = React.lazy(() => import('../../components/entity-specific/ArtistFields')) as React.ComponentType<any>;
+const LazyBusinessFields = React.lazy(() => import('../../components/entity-specific/BusinessFields')) as React.ComponentType<any>;
+
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -549,6 +552,23 @@ export function Step5Description({
             /><Text style={[styles.sectionTitle, { color: colors.text }]}>SEO Preview</Text></View><Text style={[styles.sectionDescription, { color: colors.textSecondary }]}>How your profile will appear in search results</Text></View><LuxeCard variant="default" style={styles.seoPreview}><Text style={[styles.seoTitle, { color: Luxe.colors.dark.accent }]}>{formData.officialName || 'Your Profile Name'}</Text><Text style={[styles.seoUrl, { color: Luxe.colors.dark.emerald }]}>{SITE_ORIGIN.replace(/^https?:\/\//, '')}/@{formData.handle || 'yourhandle'}</Text><Text style={[styles.seoDescription, { color: colors.textSecondary }]}>{tagline || 'Your tagline will appear here'}{description && description.length > 0 && (
               <Text>{' — '}{description.substring(0, 100)}{description.length > 100 ? '...' : ''}</Text>
             )}</Text></LuxeCard></View>
+
+      {/* Entity-Specific Details (unification: lazy-loaded rich profile fields now in wizard for artist/business etc. to consolidate on FormWizard) */}
+      {(entityType === 'artist' || entityType === 'business') && (
+        <React.Suspense fallback={<View style={{ padding: 20 }}><Text style={{ color: colors.textSecondary }}>Loading entity details...</Text></View>}>
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Entity-Specific Details</Text>
+            </View>
+            {entityType === 'artist' && (
+              <LazyArtistFields formData={formData} updateFormData={updateFormData} getFieldError={getFieldError} />
+            )}
+            {entityType === 'business' && (
+              <LazyBusinessFields formData={formData} updateFormData={updateFormData} getFieldError={getFieldError} />
+            )}
+          </View>
+        </React.Suspense>
+      )}
 
       {/* Bottom Spacing */}
       <View style={styles.bottomSpacer} />

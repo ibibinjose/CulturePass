@@ -46,6 +46,26 @@ import {
   type PartialFormData,
 } from '../services/formStateSerializer';
 import { useAutoSave, type SaveStatus } from './useAutoSave';
+import {
+  trackFormSessionStarted,
+  trackStepStarted,
+  trackStepCompleted,
+  trackFormAbandoned,
+  trackFormSubmitted,
+  trackValidationError,
+  trackAutoSave,
+  trackUpload,
+  trackApiCall,
+  resetSessionCounters,
+  generateSessionId,
+  getDeviceInfo,
+  getSessionMetrics,
+  type FormSessionContext,
+  type WizardStep,
+  type FormEntityType,
+  type UploadStatus,
+  type ApiTimingEntry,
+} from '../services/formAnalyticsService';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -134,6 +154,11 @@ export interface UseFormWizardReturn extends FormWizardState {
   // Lifecycle Methods
   initialize: () => Promise<void>;
   cleanup: () => void;
+
+  // Analytics (for steps/fields to call explicit upload + api tracking; dev metrics)
+  trackUpload: (status: UploadStatus, fileType: string, fileSizeBytes?: number, durationMs?: number, errorMessage?: string) => void;
+  trackApiCall: (entry: ApiTimingEntry) => void;
+  getSessionAnalyticsMetrics: () => ReturnType<typeof getSessionMetrics>;
 }
 
 const DRAFT_STORAGE_PREFIX = '@culturepass_profile_draft';
@@ -178,6 +203,54 @@ export function useFormWizard({
   // Refs to track initialization
   const hasInitialized = useRef(false);
   const initialFormDataRef = useRef<string>('');
+
+  // ---------------------------------------------------------------------------
+  // Form Analytics Session (host wizard performance + trust funnel instrumentation)
+  // Non-AI. Captures step times, validation friction, auto-save reliability, publish funnel, abandonment.
+  // Data powers creator success metrics and host dashboard.
+  // ---------------------------------------------------------------------------
+  const analyticsSessionRef = useRef<FormSessionContext | null>(null);
+  const analyticsSubmittedRef = useRef(false);
+
+  const getAnalyticsContext = useCallback((): FormSessionContext => {
+    if (analyticsSessionRef.current) return analyticsSessionRef.current;
+
+    const userId = user?.id ?? 'anonymous';
+    const sessionId = generateSessionId();
+    const device = getDeviceInfo();
+    const entity: FormEntityType = entityType as FormEntityType;
+
+    const ctx: FormSessionContext = {
+      sessionId,
+      userId,
+      entityType: entity,
+      draftId: draftId ?? backendDraftId ?? undefined,
+      profileId: profileId ?? undefined,
+      device,
+    };
+    analyticsSessionRef.current = ctx;
+    return ctx;
+  }, [user?.id, entityType, draftId, profileId, backendDraftId]);
+
+  const trackUploadBound = useCallback((
+    status: UploadStatus,
+    fileType: string,
+    fileSizeBytes?: number,
+    durationMs?: number,
+    errorMessage?: string,
+  ) => {
+    const ctx = getAnalyticsContext();
+    trackUpload(ctx, status, fileType, fileSizeBytes, durationMs, errorMessage);
+  }, [getAnalyticsContext]);
+
+  const trackApiCallBound = useCallback((entry: ApiTimingEntry) => {
+    const ctx = getAnalyticsContext();
+    trackApiCall(ctx, entry);
+  }, [getAnalyticsContext]);
+
+  const getSessionAnalyticsMetrics = useCallback(() => {
+    return getSessionMetrics();
+  }, []);
 
   // ---------------------------------------------------------------------------
   // Load Existing Profile (for editing)
@@ -265,6 +338,12 @@ export function useFormWizard({
       return { ...result, profileId: profileIdToPublish };
     },
     onSuccess: (data) => {
+      // Analytics: successful publish (end of wizard funnel)
+      const ctx = getAnalyticsContext();
+      const totalDurationMs = Date.now() - (parseInt(ctx.sessionId.split('_')[1] || '0', 36) || Date.now());
+      trackFormSubmitted(ctx, Math.max(0, totalDurationMs));
+      analyticsSubmittedRef.current = true;
+
       // Clear draft after successful publish
       if (backendDraftId) {
         api.profiles.deleteDraft(backendDraftId).catch(() => {
@@ -294,11 +373,25 @@ export function useFormWizard({
     formData,
     isDirty,
     onSave: async (data) => {
-      await saveDraftMutation.mutateAsync({
-        formData: data,
-        currentStep,
-        completedSteps: Array.from(completedSteps),
-      });
+      const start = Date.now();
+      const endpoint = 'profiles.saveDraft';
+      try {
+        await saveDraftMutation.mutateAsync({
+          formData: data,
+          currentStep,
+          completedSteps: Array.from(completedSteps),
+        });
+        const duration = Date.now() - start;
+        const ctx = getAnalyticsContext();
+        trackAutoSave(ctx, 'success', duration);
+        trackApiCallBound({ endpoint, method: 'POST', durationMs: duration, statusCode: 200, success: true });
+      } catch (err) {
+        const duration = Date.now() - start;
+        const ctx = getAnalyticsContext();
+        trackAutoSave(ctx, 'failure', duration, err instanceof Error ? err.message : 'unknown');
+        trackApiCallBound({ endpoint, method: 'POST', durationMs: duration, statusCode: 500, success: false });
+        throw err;
+      }
     },
     enabled: !profileId, // Only auto-save for new profiles, not edits
   });
@@ -342,7 +435,7 @@ export function useFormWizard({
         // Phase 1 Business Migration Enhancement: Smart pre-fill from authenticated user profile
         else if (user && ['business', 'venue', 'artist', 'professional', 'organiser'].includes(entityType)) {
           // Transform user.socialLinks (Record<string, string>) to HostProfile socialLinks (Array<SocialLink>)
-          const socialLinksArray: any[] = [];
+          const socialLinksArray: Array<{ platform: string; url: string; verified: boolean }> = [];
           if (user.socialLinks) {
             Object.entries(user.socialLinks).forEach(([platform, url]) => {
               if (url && typeof url === 'string') {
@@ -377,18 +470,29 @@ export function useFormWizard({
             socialLinks: socialLinksArray,
             // Store a reference that this was pre-filled
             _preFilledFromUser: true,
-          } as any;
+          } as PartialFormData;
         }
       }
 
       setFormData(initialData);
       initialFormDataRef.current = serializeFormData(initialData);
       setIsDirty(false);
+
+      // Start analytics session for this wizard instance (funnel + perf instrumentation)
+      resetSessionCounters();
+      analyticsSubmittedRef.current = false;
+      analyticsSessionRef.current = null; // force fresh context with current ids
+      const ctx = getAnalyticsContext();
+      trackFormSessionStarted(ctx);
+      // Track initial step
+      trackStepStarted(ctx, (currentStep || 1) as WizardStep);
+
       hasInitialized.current = true;
       onInitialized?.();
     } finally {
       setIsInitializing(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entityType, existingProfile, existingDraft, user, onInitialized]);
 
   // Auto-initialize when dependencies are ready
@@ -397,6 +501,26 @@ export function useFormWizard({
       void initialize();
     }
   }, [isLoadingProfile, isLoadingDraft, initialize]);
+
+  // ---------------------------------------------------------------------------
+  // Form Analytics: Track step transitions (start/complete on navigation)
+  // ---------------------------------------------------------------------------
+  const previousStepRefForAnalytics = useRef<number>(1);
+  useEffect(() => {
+    if (!hasInitialized.current) return;
+    const ctx = getAnalyticsContext();
+    const prev = previousStepRefForAnalytics.current;
+    const curr = currentStep;
+
+    if (prev !== curr) {
+      // Mark previous as completed when advancing
+      if (curr > prev) {
+        trackStepCompleted(ctx, prev as WizardStep);
+      }
+      trackStepStarted(ctx, curr as WizardStep);
+      previousStepRefForAnalytics.current = curr;
+    }
+  }, [currentStep, getAnalyticsContext]);
 
   // ---------------------------------------------------------------------------
   // Save to Local Storage (backup)
@@ -457,12 +581,25 @@ export function useFormWizard({
       if (error instanceof ZodError) {
         const errors = error.flatten().fieldErrors;
         setValidationErrors(errors as Record<string, string[]>);
+
+        // Analytics: record validation errors for UX improvement (per-field freq)
+        const ctx = getAnalyticsContext();
+        Object.entries(errors).forEach(([field, messages]) => {
+          if (Array.isArray(messages) && messages.length > 0) {
+            trackValidationError(ctx, {
+              field,
+              step: currentStep as WizardStep,
+              errorType: 'zod',
+              message: messages[0],
+            });
+          }
+        });
       }
       return false;
     } finally {
       setIsValidating(false);
     }
-  }, [currentStep, entityType, formData]);
+  }, [currentStep, entityType, formData, getAnalyticsContext]);
 
   const goToNextStep = useCallback(async () => {
     const isValid = await validateCurrentStep();
@@ -592,9 +729,28 @@ export function useFormWizard({
   // ---------------------------------------------------------------------------
 
   const cleanup = useCallback(() => {
+    // Analytics: abandon if not successfully submitted/published (captures drop-off)
+    if (!analyticsSubmittedRef.current && hasInitialized.current) {
+      const ctx = getAnalyticsContext();
+      trackFormAbandoned(ctx, currentStep as WizardStep, 'cleanup_or_unmount');
+    }
     resetFormData();
     hasInitialized.current = false;
-  }, [resetFormData]);
+    analyticsSessionRef.current = null;
+  }, [resetFormData, getAnalyticsContext, currentStep]);
+
+  // ---------------------------------------------------------------------------
+  // Analytics unmount guard (in case cleanup not explicitly called by container)
+  // ---------------------------------------------------------------------------
+  useEffect(() => {
+    return () => {
+      if (!analyticsSubmittedRef.current && hasInitialized.current) {
+        const ctx = analyticsSessionRef.current ?? getAnalyticsContext();
+        trackFormAbandoned(ctx, currentStep as WizardStep, 'unmount');
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ---------------------------------------------------------------------------
   // Return
@@ -648,5 +804,10 @@ export function useFormWizard({
     // Lifecycle
     initialize,
     cleanup,
+
+    // Analytics instrumentation (bound to current session for steps/fields + dev inspection)
+    trackUpload: trackUploadBound,
+    trackApiCall: trackApiCallBound,
+    getSessionAnalyticsMetrics,
   };
 }

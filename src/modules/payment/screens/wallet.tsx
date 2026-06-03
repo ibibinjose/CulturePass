@@ -5,13 +5,16 @@ import {
   StyleSheet,
   ScrollView,
   Platform,
+  useWindowDimensions,
 } from 'react-native';
 import { M3Button, Skeleton } from '@/design-system/ui';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import * as Clipboard from 'expo-clipboard';
+import { Image } from 'expo-image';
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth';
 import { modulesApi,  type MembershipSummary, type RewardsSummary } from '@/modules/api';
@@ -19,11 +22,21 @@ import type { Ticket as ApiTicket } from '@/shared/schema';
 import { AuthGuard } from '@/modules/core/auth/AuthGuard';
 import { useColors } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
-import { CultureTokens, TextStyles } from '@/design-system/tokens/theme';
+import { CultureTokens, TextStyles, gradients, FontFamily } from '@/design-system/tokens/theme';
+import { Luxe } from '@/design-system/tokens/luxeHeritage';
 import { AppHeaderBar } from '@/modules/core/ui/AppHeaderBar';
 import QRCode from 'react-native-qrcode-svg';
 import { LinearGradient } from 'expo-linear-gradient';
 import { openExternalUrl } from '@/lib/openExternalUrl';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withRepeat,
+  withTiming,
+  withSequence,
+} from 'react-native-reanimated';
+
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -198,6 +211,143 @@ function StatBox({ value, label, icon, styles: s }: StatBoxProps & { styles: Ret
   );
 }
 
+// ─── Card Constants, Themes & EMV Helper ──────────────────────────────────────
+
+const CARD_WIDTH_FIXED = 330;
+const CARD_HEIGHT_LANDSCAPE = 210;
+const QR_SIZE_LANDSCAPE = 84;
+const AVATAR_SIZE_LANDSCAPE = 44;
+
+const emvStyles = StyleSheet.create({
+  emvChip: {
+    width: 36,
+    height: 26,
+    borderRadius: 5,
+    overflow: 'hidden',
+    position: 'relative',
+    borderWidth: 0.5,
+    borderColor: 'rgba(0,0,0,0.15)',
+  },
+  emvLineHorizontal: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: '50%',
+    height: 1,
+    backgroundColor: 'rgba(0,0,0,0.2)',
+  },
+  emvLineVerticalLeft: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: '30%',
+    width: 1,
+    backgroundColor: 'rgba(0,0,0,0.2)',
+  },
+  emvLineVerticalRight: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    right: '30%',
+    width: 1,
+    backgroundColor: 'rgba(0,0,0,0.2)',
+  },
+});
+
+const EMVChip = () => (
+  <View style={emvStyles.emvChip}>
+    <LinearGradient
+      colors={['#FFE066', '#F5C000', '#D4A017']}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={StyleSheet.absoluteFill}
+    />
+    <View style={emvStyles.emvLineHorizontal} />
+    <View style={emvStyles.emvLineVerticalLeft} />
+    <View style={emvStyles.emvLineVerticalRight} />
+  </View>
+);
+
+const DYNAMIC_CARD_THEMES: Record<string, {
+  cardGradients: [string, string, ...string[]];
+  accent: string;
+  border: string;
+  text: string;
+  glow: string;
+  chipColor: string;
+  chipBorder: string;
+  isDarkCard: boolean;
+}> = {
+  free: {
+    cardGradients: ['#1C1917', '#292524', '#1C1917'] as [string, string, ...string[]],
+    accent: (CultureTokens as any).terracottaGlow || '#E36A4E',
+    border: 'rgba(227, 106, 78, 0.25)',
+    text: '#F5F5F4',
+    glow: 'rgba(227, 106, 78, 0.15)',
+    chipColor: '#A8A29E',
+    chipBorder: '#78716C',
+    isDarkCard: true,
+  },
+  plus: {
+    cardGradients: ['#1E1B4B', '#311042', '#1E1B4B'] as [string, string, ...string[]],
+    accent: CultureTokens.coral,
+    border: 'rgba(255, 94, 91, 0.4)',
+    text: '#FFF0F0',
+    glow: 'rgba(79, 70, 229, 0.35)',
+    chipColor: '#E29578',
+    chipBorder: '#B06D53',
+    isDarkCard: true,
+  },
+  elite: {
+    cardGradients: ['#09090B', '#18181B', '#09090B'] as [string, string, ...string[]],
+    accent: CultureTokens.gold,
+    border: 'rgba(255, 200, 87, 0.45)',
+    text: '#FFFBEB',
+    glow: 'rgba(255, 200, 87, 0.25)',
+    chipColor: '#D4A017',
+    chipBorder: '#9E740C',
+    isDarkCard: true,
+  },
+  pro: {
+    cardGradients: ['#061F2E', '#0B3C5D', '#061F2E'] as [string, string, ...string[]],
+    accent: '#00F0FF',
+    border: 'rgba(0, 240, 255, 0.45)',
+    text: '#E0FAFF',
+    glow: 'rgba(0, 240, 255, 0.25)',
+    chipColor: '#00F0FF',
+    chipBorder: '#00B4D8',
+    isDarkCard: true,
+  },
+  premium: {
+    cardGradients: ['#1A0F0A', '#2C1810', '#1A0F0A'] as [string, string, ...string[]],
+    accent: CultureTokens.coral,
+    border: 'rgba(255, 94, 91, 0.5)',
+    text: '#FFF1EB',
+    glow: 'rgba(255, 94, 91, 0.22)',
+    chipColor: '#F2C078',
+    chipBorder: '#C17E3F',
+    isDarkCard: true,
+  },
+  vip: {
+    cardGradients: ['#0F0A02', '#1F1608', '#0F0A02'] as [string, string, ...string[]],
+    accent: CultureTokens.gold,
+    border: 'rgba(255, 200, 87, 0.55)',
+    text: '#FFFBEB',
+    glow: 'rgba(255, 200, 87, 0.3)',
+    chipColor: '#E8C36B',
+    chipBorder: '#B38A2E',
+    isDarkCard: true,
+  },
+};
+
+function resolveCardTheme(tier: string) {
+  const key = (tier || 'free').toLowerCase();
+  if (key in DYNAMIC_CARD_THEMES) return DYNAMIC_CARD_THEMES[key];
+  if (key === 'premium' || key === 'plus') return DYNAMIC_CARD_THEMES.plus;
+  if (key === 'vip' || key === 'elite') return DYNAMIC_CARD_THEMES.elite;
+  return DYNAMIC_CARD_THEMES.free;
+}
+
 // ─── Main screen ──────────────────────────────────────────────────────────────
 
 type WalletTab = 'upcoming' | 'past';
@@ -278,10 +428,127 @@ export default function WalletScreen() {
     };
   }, [memberSinceDate]);
   const displayTickets = tab === 'upcoming' ? upcoming : past;
-  const businessCardQrValue = useMemo(() => {
-    if (user?.username) return `https://culturepass.co/u/${encodeURIComponent(user.username)}`;
-    return `https://culturepass.co/u/${encodeURIComponent(userId ?? 'guest')}`;
-  }, [user?.username, userId]);
+
+  const { width: screenWidth } = useWindowDimensions();
+
+  // Reanimated Ambient Background Blobs Y/X Float
+  const blob1X = useSharedValue(0);
+  const blob1Y = useSharedValue(0);
+  const blob2X = useSharedValue(0);
+  const blob2Y = useSharedValue(0);
+
+  useEffect(() => {
+    blob1X.value = withRepeat(withSequence(withTiming(40, { duration: 7000 }), withTiming(-40, { duration: 7000 })), -1, true);
+    blob1Y.value = withRepeat(withSequence(withTiming(30, { duration: 8000 }), withTiming(-30, { duration: 8000 })), -1, true);
+    blob2X.value = withRepeat(withSequence(withTiming(-30, { duration: 9000 }), withTiming(30, { duration: 9000 })), -1, true);
+    blob2Y.value = withRepeat(withSequence(withTiming(45, { duration: 10000 }), withTiming(-45, { duration: 10000 })), -1, true);
+  }, [blob1X, blob1Y, blob2X, blob2Y]);
+
+  const animatedBlob1 = useAnimatedStyle(() => ({
+    transform: [{ translateX: blob1X.value }, { translateY: blob1Y.value }],
+  }));
+
+  const animatedBlob2 = useAnimatedStyle(() => ({
+    transform: [{ translateX: blob2X.value }, { translateY: blob2Y.value }],
+  }));
+
+  // Holographic shimmer and spring scale animations
+  const cardScale = useSharedValue(1);
+  const shimmerX = useSharedValue(-150);
+  const [cardFlipped, setCardFlipped] = useState(false);
+  const cardFlipVal = useSharedValue(0);
+
+  const triggerShimmer = useCallback(() => {
+    shimmerX.value = -150;
+    shimmerX.value = withTiming(350, { duration: 1000 });
+  }, [shimmerX]);
+
+  useEffect(() => {
+    triggerShimmer();
+  }, [triggerShimmer]);
+
+  const cardAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: cardScale.value }],
+  }));
+
+  const shimmerStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: shimmerX.value }],
+  }));
+
+  const handlePressIn = () => {
+    cardScale.value = withSpring(0.97, { damping: 12, stiffness: 100 });
+  };
+
+  const handlePressOut = () => {
+    cardScale.value = withSpring(1, { damping: 12, stiffness: 100 });
+  };
+
+  const toggleCardFlip = () => {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+    const nextVal = !cardFlipped;
+    setCardFlipped(nextVal);
+    cardFlipVal.value = withSpring(nextVal ? 1 : 0, { damping: 15, stiffness: 80 });
+    triggerShimmer();
+  };
+
+  const cardFrontStyle = useAnimatedStyle(() => {
+    const rotateValue = cardFlipVal.value * 180;
+    return {
+      transform: [
+        { perspective: 1000 },
+        { rotateY: `${rotateValue}deg` }
+      ],
+      opacity: cardFlipVal.value > 0.5 ? 0 : 1,
+      zIndex: cardFlipVal.value > 0.5 ? 0 : 1,
+    };
+  });
+
+  const cardBackStyle = useAnimatedStyle(() => {
+    const rotateValue = (cardFlipVal.value - 1) * 180;
+    return {
+      transform: [
+        { perspective: 1000 },
+        { rotateY: `${rotateValue}deg` }
+      ],
+      opacity: cardFlipVal.value > 0.5 ? 1 : 0,
+      zIndex: cardFlipVal.value > 0.5 ? 1 : 0,
+    };
+  });
+
+  const cpid = user?.culturePassId ?? 'CP-000000';
+  const name = user?.displayName ?? user?.username ?? 'CulturePass Member';
+  const username = user?.username ?? 'member';
+  const avatarUrl = user?.avatarUrl;
+
+  const initials = useMemo(
+    () => (name || 'U').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase(),
+    [name],
+  );
+
+  const qrValue = useMemo(
+    () => JSON.stringify({ type: 'culturepass_id', cpid, name, username }),
+    [cpid, name, username],
+  );
+
+  const cardTheme = useMemo(() => resolveCardTheme(membership?.tier || 'free'), [membership?.tier]);
+
+  const cardWidth = Math.min(
+    screenWidth - 40,
+    CARD_WIDTH_FIXED
+  );
+  const qrSizeLandscape = Math.min(cardWidth - 84, QR_SIZE_LANDSCAPE);
+
+  const [copied, setCopied] = useState(false);
+  const handleCopy = async () => {
+    if (Platform.OS !== 'web') {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }
+    await Clipboard.setStringAsync(cpid);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   useEffect(() => {
     return () => {
@@ -360,6 +627,44 @@ export default function WalletScreen() {
   return (
     <AuthGuard icon="wallet-outline" title="My Wallet" message="Sign in to access your wallet, tickets, and rewards.">
       <View style={styles.container}>
+        {/* Living ambient backdrop */}
+        <LinearGradient
+          colors={gradients.midnight}
+          style={StyleSheet.absoluteFill}
+        />
+
+        {/* Ambient living blurred blobs (Luxe Heritage premium aesthetic) */}
+        <View style={styles.ambientContainer} pointerEvents="none">
+          <Animated.View
+            style={[
+              styles.ambientBlob,
+              animatedBlob1,
+              {
+                backgroundColor: cardTheme.glow,
+                top: -80,
+                left: -60,
+                width: 320,
+                height: 320,
+                borderRadius: 160,
+              },
+            ]}
+          />
+          <Animated.View
+            style={[
+              styles.ambientBlob,
+              animatedBlob2,
+              {
+                backgroundColor: (Luxe.colors?.indigo || '#4A5EBF') + '18',
+                bottom: -50,
+                right: -70,
+                width: 350,
+                height: 350,
+                borderRadius: 175,
+              },
+            ]}
+          />
+        </View>
+
         <AppHeaderBar
           title="My Wallet"
           backFallback="/(tabs)/my-space"
@@ -405,64 +710,162 @@ export default function WalletScreen() {
             </View>
           ) : null}
 
-          {/* Membership card */}
-          <View style={styles.membershipCardWrap}>
-            <LinearGradient
-              colors={tierConfig.colors}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.membershipCard}
+          {/* Interactive 3D Flippable Membership Card */}
+          <View style={{ alignItems: 'center', marginHorizontal: 20, marginTop: 20, marginBottom: 20 }}>
+            <Pressable
+              onPressIn={handlePressIn}
+              onPressOut={handlePressOut}
+              onPress={toggleCardFlip}
+              style={{ width: cardWidth, height: CARD_HEIGHT_LANDSCAPE }}
+              accessibilityRole="button"
+              accessibilityLabel="Digital membership card. Tap to flip."
             >
-              <View style={styles.membershipTop}>
-                <View>
-                  <Text style={styles.membershipLabel}>CULTUREPASS ID</Text>
-                  <Text style={styles.membershipTier}>{tierConfig.label}</Text>
-                  <View style={styles.membershipMetaRow}>
-                    <Text style={styles.membershipMetaText}>
-                      Member since {memberSinceDate.toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}
-                    </Text>
-                    <View style={[styles.cycleBadge, { borderColor: 'rgba(255,255,255,0.3)', backgroundColor: 'rgba(255,255,255,0.1)' }]}>
-                      <Text style={[styles.cycleBadgeText, { color: '#FFFFFF' }]}>
-                        Day {loyaltyProgress.dayInCycle}
-                      </Text>
+              <Animated.View style={[{ width: cardWidth, height: CARD_HEIGHT_LANDSCAPE }, cardAnimatedStyle]}>
+                
+                {/* Front View */}
+                <Animated.View style={[StyleSheet.absoluteFill, cardFrontStyle]}>
+                  <View style={[styles.identityCard, { width: cardWidth, height: CARD_HEIGHT_LANDSCAPE, borderColor: cardTheme.border }]}>
+                    <LinearGradient colors={cardTheme.cardGradients} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
+                    {/* Specular highlights & Shimmer */}
+                    <LinearGradient colors={['rgba(255, 255, 255, 0.12)', 'rgba(255, 255, 255, 0.02)', 'transparent']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} pointerEvents="none" />
+                    <Animated.View style={[StyleSheet.absoluteFill, shimmerStyle, { width: '50%' }]} pointerEvents="none"><LinearGradient colors={['transparent', 'rgba(255, 255, 255, 0.06)', 'rgba(255, 255, 255, 0.22)', 'rgba(255, 255, 255, 0.06)', 'transparent']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={StyleSheet.absoluteFill} /></Animated.View>
+                    
+                    <View style={styles.cardInner}>
+                      <View style={styles.passHeaderContent}>
+                        <Text style={[styles.passType, { color: cardTheme.text }]}>
+                          <Text style={{ fontWeight: 'bold' }}>CULTURE</Text>
+                          <Text style={{ color: cardTheme.accent }}>PASS</Text>
+                          <Text> ID</Text>
+                        </Text>
+                        <Text style={[styles.passTier, { color: cardTheme.accent }]}>{tierConfig.label.toUpperCase()}</Text>
+                      </View>
+                      
+                      <View style={styles.passMiddle}>
+                        <View style={styles.leftCol}>
+                          <View style={styles.passUserRow}>
+                            <View style={[styles.passAvatarWrap, { borderColor: cardTheme.border }]}>
+                              {avatarUrl ? (
+                                <Image source={{ uri: avatarUrl }} style={styles.passAvatar} contentFit="cover" />
+                              ) : (
+                                <View style={[styles.passAvatarFallback, { backgroundColor: 'rgba(255,255,255,0.1)' }]}>
+                                  <Text style={[styles.passAvatarInitials, { color: cardTheme.text }]}>{initials}</Text>
+                                </View>
+                              )}
+                            </View>
+                            <View style={styles.passUserInfo}>
+                              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                                <Text style={[styles.passName, { color: cardTheme.text }]} numberOfLines={1}>{name}</Text>
+                                {(user as any)?.isVerified && <Ionicons name="checkmark-circle" size={12} color={cardTheme.accent} />}
+                              </View>
+                              <Text style={[styles.passHandle, { color: cardTheme.text, opacity: 0.7 }]}>@{username}</Text>
+                            </View>
+                          </View>
+                          
+                          <View style={styles.nfcLeftCol}>
+                            <Ionicons name="wifi" size={14} color={cardTheme.text} style={{ transform: [{ rotate: '90deg' }] }} />
+                            <Text style={[styles.nfcTextCol, { color: cardTheme.text, opacity: 0.7 }]}>NFC PASS ACTIVE</Text>
+                          </View>
+                        </View>
+                        
+                        <View style={[styles.rightCol, { gap: 8 }]}>
+                          <EMVChip />
+                          <Ionicons name="wifi-outline" size={24} color={cardTheme.text} style={{ opacity: 0.4, transform: [{ rotate: '90deg' }] }} />
+                        </View>
+                      </View>
+                      
+                      <View style={styles.cardFooterBanner}>
+                        <Ionicons name="lock-closed-outline" size={10} color={cardTheme.text} style={{ opacity: 0.5 }} />
+                        <Text style={[styles.cardFooterBannerText, { color: cardTheme.text, opacity: 0.6 }]}>WALLET READY • iOS / ANDROID COMPATIBLE</Text>
+                      </View>
                     </View>
                   </View>
-                </View>
-                <View style={styles.membershipIconWrap}>
-                  <Ionicons name={tierConfig.icon as keyof typeof Ionicons.glyphMap} size={28} color="rgba(255,255,255,1)" />
-                </View>
-              </View>
-
-              <View style={styles.cycleTrack}>
-                <View
-                  style={[
-                    styles.cycleFill,
-                    {
-                      width: `${loyaltyProgress.cyclePercent}%`,
-                      backgroundColor: '#FFFFFF',
-                      ...Platform.select({ web: { boxShadow: '0px 0px 4px rgba(255,255,255,0.5)' }, default: { shadowColor: '#FFF', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.5, shadowRadius: 4 } }),
-                    },
-                  ]}
-                />
-              </View>
-
-              <View style={styles.membershipBottom}>
-                <View>
-                  <Text style={styles.membershipStatLabel}>EVENTS</Text>
-                  <Text style={styles.membershipStatValue}>{membership?.eventsAttended ?? confirmed.length}</Text>
-                </View>
-                <View>
-                  <Text style={styles.membershipStatLabel}>CYCLE</Text>
-                  <Text style={styles.membershipStatValue}>Year {loyaltyProgress.completedCycles + 1}</Text>
-                </View>
-                {membership?.cashbackMultiplier != null && membership.cashbackMultiplier > 1 && (
-                  <View>
-                    <Text style={styles.membershipStatLabel}>REBATE</Text>
-                    <Text style={styles.membershipStatValue}>{((membership.cashbackMultiplier - 1) * 100).toFixed(0)}%</Text>
+                </Animated.View>
+                
+                {/* Back View */}
+                <Animated.View style={[StyleSheet.absoluteFill, cardBackStyle]}>
+                  <View style={[styles.identityCard, { width: cardWidth, height: CARD_HEIGHT_LANDSCAPE, borderColor: cardTheme.border }]}>
+                    <LinearGradient colors={cardTheme.cardGradients} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
+                    <View style={styles.magneticStrip} />
+                    
+                    <View style={[styles.cardInner, { paddingTop: 60 }]}>
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', flex: 1 }}>
+                        <View style={styles.signatureStrip}>
+                          <Text style={styles.signatureLabel}>AUTHORIZED SIGNATURE</Text>
+                          <Text style={styles.signatureText}>{name}</Text>
+                        </View>
+                        
+                        <View style={[styles.rightCol, { alignItems: 'center' }]}>
+                          <View style={styles.qrWhiteBackground}>
+                            <QRCode value={qrValue} size={qrSizeLandscape} color="#000000" backgroundColor="#FFFFFF" ecl="H" />
+                          </View>
+                          <Pressable onPress={handleCopy} style={styles.cpidMonospaceContainer} hitSlop={8}>
+                            <Text style={[styles.cpidMonospaceText, { color: cardTheme.text }]}>{cpid.slice(0, 3)}-{cpid.slice(3)}</Text>
+                            <Ionicons name={copied ? 'checkmark' : 'copy-outline'} size={11} color={copied ? '#30D158' : '#9CA3AF'} />
+                          </Pressable>
+                        </View>
+                      </View>
+                      
+                      <View style={[styles.cardFooterBanner, { marginTop: 6 }]}>
+                        <Text style={[styles.cardFooterBannerText, { color: cardTheme.text, opacity: 0.4, fontSize: 7 }]}>
+                          NOT TRANSFERABLE • SECURE QR CODE FOR ENTRY & CHECK-IN
+                        </Text>
+                      </View>
+                    </View>
                   </View>
-                )}
+                </Animated.View>
+
+              </Animated.View>
+            </Pressable>
+          </View>
+
+          {/* Membership Cycle & Progress Details */}
+          <View style={styles.progressContainer}>
+            <View style={styles.progressHeaderRow}>
+              <View>
+                <Text style={styles.progressLabel}>MEMBERSHIP PROGRESS</Text>
+                <Text style={styles.progressSubText}>
+                  Member since {memberSinceDate.toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}
+                </Text>
               </View>
-            </LinearGradient>
+              <View style={styles.progressBadge}>
+                <Text style={styles.progressBadgeText}>
+                  Day {loyaltyProgress.dayInCycle} of {LOYALTY_CYCLE_DAYS}
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.progressTrack}>
+              <View
+                style={[
+                  styles.progressFill,
+                  {
+                    width: `${loyaltyProgress.cyclePercent}%`,
+                    backgroundColor: CultureTokens.indigo,
+                  },
+                ]}
+              />
+            </View>
+
+            <View style={styles.progressStatsRow}>
+              <View style={styles.progressStatItem}>
+                <Text style={styles.progressStatLabel}>EVENTS ATTENDED</Text>
+                <Text style={styles.progressStatValue}>{membership?.eventsAttended ?? confirmed.length}</Text>
+              </View>
+              <View style={styles.progressStatDivider} />
+              <View style={styles.progressStatItem}>
+                <Text style={styles.progressStatLabel}>CURRENT CYCLE</Text>
+                <Text style={styles.progressStatValue}>Year {loyaltyProgress.completedCycles + 1}</Text>
+              </View>
+              {membership?.cashbackMultiplier != null && membership.cashbackMultiplier > 1 && (
+                <>
+                  <View style={styles.progressStatDivider} />
+                  <View style={styles.progressStatItem}>
+                    <Text style={styles.progressStatLabel}>CASHBACK REBATE</Text>
+                    <Text style={styles.progressStatValue}>{((membership.cashbackMultiplier - 1) * 100).toFixed(0)}%</Text>
+                  </View>
+                </>
+              )}
+            </View>
           </View>
 
           {/* Rewards strip */}
@@ -545,26 +948,7 @@ export default function WalletScreen() {
             </Pressable>
           </View>
 
-          <View style={styles.businessCardPreview}>
-            <View style={styles.businessCardHeader}>
-              <Text style={styles.businessCardTitle}>Smart Business Card</Text>
-              <Text style={styles.businessCardSub}>Share profile instantly via QR</Text>
-            </View>
-            <View style={styles.businessCardBody}>
-              <View style={styles.businessCardMeta}>
-                <Text style={styles.businessCardName}>{user?.displayName ?? user?.username ?? 'CulturePass Member'}</Text>
-                <Text style={styles.businessCardId}>{user?.culturePassId ?? userId ?? 'CP-ID'}</Text>
-              </View>
-              <View style={styles.businessCardQrWrap}>
-                <QRCode
-                  value={businessCardQrValue}
-                  size={86}
-                  color={colors.text}
-                  backgroundColor="transparent"
-                />
-              </View>
-            </View>
-          </View>
+
 
           {/* Tabs */}
           <View style={styles.tabsRow}>
@@ -685,48 +1069,264 @@ const getStyles = (colors: ReturnType<typeof useColors>) => StyleSheet.create({
     color: colors.text,
   },
 
-  // Membership card
-  membershipCardWrap: {
-    marginHorizontal: 20,
-    marginTop: 20,
-    marginBottom: 16,
+  // Ambient Container and Blobs
+  ambientContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    overflow: 'hidden',
+    zIndex: 0,
+  },
+  ambientBlob: {
+    position: 'absolute',
+    ...Platform.select({
+      web: { filter: 'blur(90px)' },
+      default: {},
+    }),
+    opacity: 0.45,
+  },
+
+  // 3D Flippable membership card
+  identityCard: {
     borderRadius: 20,
+    borderWidth: 1,
     overflow: 'hidden',
     ...Platform.select({
-      web: { boxShadow: '0 8px 24px rgba(44,42,114,0.25)' },
-      default: {
-        shadowColor: CultureTokens.indigo,
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.2,
-        shadowRadius: 16,
-        elevation: 8,
-      },
+      web: { boxShadow: '0px 10px 25px rgba(0,0,0,0.25)' },
+      default: { shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.2, shadowRadius: 12, elevation: 8 },
     }),
   },
-  membershipCard: {
-    padding: 24,
-    borderRadius: 20,
-    overflow: 'hidden',
-    minHeight: 160,
+  cardInner: {
+    flex: 1,
+    padding: 14,
+    justifyContent: 'space-between',
   },
-  membershipTop: {
+  passHeaderContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  passType: {
+    fontSize: 10,
+    fontFamily: FontFamily.bold,
+    letterSpacing: 1.2,
+  },
+  passTier: {
+    fontSize: 9,
+    fontFamily: FontFamily.bold,
+    letterSpacing: 0.8,
+  },
+  passMiddle: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 20,
+    alignItems: 'center',
+    flex: 1,
+    marginVertical: 4,
   },
-  membershipLabel:    { ...TextStyles.badge, letterSpacing: 1.2, color: 'rgba(255,255,255,0.75)', textTransform: 'uppercase' },
-  membershipTier:     { ...TextStyles.title, marginTop: 4, color: '#fff' },
-  membershipMetaRow:  { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10, flexWrap: 'wrap' },
-  membershipMetaText: { ...TextStyles.caption, color: 'rgba(255,255,255,0.85)' },
-  cycleBadge:         { borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
-  cycleBadgeText:     { ...TextStyles.badge },
-  membershipIconWrap: { width: 48, height: 48, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.2)' },
-  cycleTrack:         { height: 8, borderRadius: 999, overflow: 'hidden', backgroundColor: 'rgba(255,255,255,0.2)', marginBottom: 16 },
-  cycleFill:          { height: '100%', borderRadius: 999 },
-  membershipBottom:   { flexDirection: 'row', gap: 32 },
-  membershipStatLabel:{ ...TextStyles.tabLabel, letterSpacing: 0.8, color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase' },
-  membershipStatValue:{ ...TextStyles.title3, marginTop: 2, color: '#fff' },
+  leftCol: {
+    flex: 1,
+    justifyContent: 'space-between',
+    height: '100%',
+    paddingRight: 10,
+  },
+  rightCol: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  passUserRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  passAvatarWrap: {
+    width: AVATAR_SIZE_LANDSCAPE,
+    height: AVATAR_SIZE_LANDSCAPE,
+    borderRadius: AVATAR_SIZE_LANDSCAPE / 2,
+    overflow: 'hidden',
+    borderWidth: 1,
+  },
+  passAvatar: {
+    width: AVATAR_SIZE_LANDSCAPE,
+    height: AVATAR_SIZE_LANDSCAPE,
+  },
+  passAvatarFallback: {
+    width: AVATAR_SIZE_LANDSCAPE,
+    height: AVATAR_SIZE_LANDSCAPE,
+    borderRadius: AVATAR_SIZE_LANDSCAPE / 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  passAvatarInitials: {
+    fontSize: 15,
+    fontFamily: FontFamily.bold,
+  },
+  passUserInfo: {
+    flex: 1,
+    gap: 1,
+  },
+  passName: {
+    fontSize: 14,
+    fontFamily: FontFamily.bold,
+    lineHeight: 18,
+  },
+  passHandle: {
+    fontSize: 11,
+    fontFamily: FontFamily.medium,
+  },
+  nfcLeftCol: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 12,
+  },
+  nfcTextCol: {
+    fontSize: 8.5,
+    fontFamily: FontFamily.bold,
+    letterSpacing: 0.5,
+  },
+  qrWhiteBackground: {
+    padding: 5,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+  },
+  cpidMonospaceContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 6,
+  },
+  cpidMonospaceText: {
+    fontSize: 11,
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    letterSpacing: 1,
+    fontWeight: 'bold',
+  },
+  cardFooterBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingTop: 4,
+  },
+  cardFooterBannerText: {
+    fontSize: 8,
+    fontFamily: FontFamily.bold,
+    letterSpacing: 0.6,
+  },
+  magneticStrip: {
+    height: 38,
+    backgroundColor: '#0F172A',
+    position: 'absolute',
+    top: 18,
+    left: 0,
+    right: 0,
+  },
+  signatureStrip: {
+    height: 42,
+    backgroundColor: '#F8FAFC',
+    borderColor: '#CBD5E1',
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    justifyContent: 'center',
+    width: '58%',
+    borderRadius: 4,
+    position: 'absolute',
+    bottom: 24,
+    left: 14,
+  },
+  signatureLabel: {
+    fontSize: 6,
+    color: '#94A3B8',
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
+    marginBottom: 2,
+  },
+  signatureText: {
+    fontSize: 14,
+    color: '#0F172A',
+    fontStyle: 'italic',
+    fontFamily: Platform.OS === 'ios' ? 'Snell Roundhand' : 'serif',
+  },
+
+  // Progress Section styles
+  progressContainer: {
+    marginHorizontal: 20,
+    marginBottom: 16,
+    padding: 20,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    backgroundColor: colors.surface,
+    ...Platform.select({
+      web: { boxShadow: '0 4px 16px rgba(0,0,0,0.06)' },
+      default: { elevation: 2 },
+    }),
+  },
+  progressHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 14,
+  },
+  progressLabel: {
+    ...TextStyles.captionSemibold,
+    color: colors.textSecondary,
+    letterSpacing: 1,
+  },
+  progressSubText: {
+    ...TextStyles.caption,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  progressBadge: {
+    backgroundColor: colors.borderLight,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  progressBadgeText: {
+    ...TextStyles.badge,
+    color: colors.text,
+  },
+  progressTrack: {
+    height: 8,
+    borderRadius: 999,
+    backgroundColor: colors.borderLight,
+    overflow: 'hidden',
+    marginBottom: 16,
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 999,
+  },
+  progressStatsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: 4,
+  },
+  progressStatItem: {
+    flex: 1,
+    alignItems: 'flex-start',
+  },
+  progressStatLabel: {
+    ...TextStyles.badge,
+    color: colors.textTertiary,
+    letterSpacing: 0.5,
+  },
+  progressStatValue: {
+    ...TextStyles.title3,
+    color: colors.text,
+    marginTop: 2,
+  },
+  progressStatDivider: {
+    width: 1,
+    height: 28,
+    backgroundColor: colors.borderLight,
+    marginHorizontal: 12,
+  },
 
   // Rewards strip
   rewardsStrip: {
@@ -871,48 +1471,6 @@ const getStyles = (colors: ReturnType<typeof useColors>) => StyleSheet.create({
   ticketWalletBtnText: {
     ...TextStyles.badge,
     color: colors.text,
-  },
-
-  // Business Card preview
-  businessCardPreview: {
-    marginHorizontal: 20,
-    marginTop: 0,
-    marginBottom: 24,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.borderLight,
-    borderRadius: 20,
-    padding: 24,
-    gap: 16,
-    overflow: 'hidden',
-    ...Platform.select({
-      web: { boxShadow: '0 4px 16px rgba(44,42,114,0.12)' },
-      default: {
-        shadowColor: CultureTokens.indigo,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 12,
-        elevation: 4,
-      },
-    }),
-  },
-  businessCardHeader: { gap: 4 },
-  businessCardTitle: { ...TextStyles.captionSemibold, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: 1 },
-  businessCardSub: { ...TextStyles.chip, color: colors.textSecondary },
-  businessCardBody: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 20, marginTop: 8 },
-  businessCardMeta: { flex: 1, gap: 8 },
-  businessCardName: { ...TextStyles.title2, color: colors.text },
-  businessCardId: { ...TextStyles.cardTitle, color: CultureTokens.indigo, letterSpacing: 1.2 },
-  businessCardQrWrap: {
-    width: 104,
-    height: 104,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.background,
-    borderWidth: 1,
-    borderColor: colors.borderLight,
-    padding: 10,
   },
 
   // Empty state

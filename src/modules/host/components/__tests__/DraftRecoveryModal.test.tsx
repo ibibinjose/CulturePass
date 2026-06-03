@@ -20,6 +20,8 @@ jest.mock('@/hooks/useColors', () => ({
     background: '#F5F5F5',
     border: '#CCCCCC',
   }),
+  useIsDark: () => false,
+  useColor: (key: string) => '#000000',
 }));
 
 describe('DraftRecoveryModal', () => {

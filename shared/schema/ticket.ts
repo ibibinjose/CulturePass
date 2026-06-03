@@ -43,6 +43,7 @@ export interface Ticket {
   cashbackCents?: number;
   rewardPointsEarned?: number;
   rewardPointsAwardedAt?: string;
+  promoCode?: string | null;
 
   // Points redemption (CulturePass wallet)
   pointsRedeemed?: number;

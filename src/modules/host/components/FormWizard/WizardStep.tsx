@@ -108,6 +108,10 @@ export interface WizardStepProps {
   onPublish?: () => Promise<void>;
   isPublishing?: boolean;
   isSavingDraft?: boolean;
+
+  // Optional analytics trackers (provided by container when in wizard context for upload/API events)
+  trackUpload?: (status: 'success' | 'failure', fileType: string, fileSizeBytes?: number, durationMs?: number, errorMessage?: string) => void;
+  trackApiCall?: (entry: { endpoint: string; method: string; durationMs: number; statusCode: number; success: boolean }) => void;
 }
 
 // ---------------------------------------------------------------------------

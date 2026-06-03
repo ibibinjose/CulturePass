@@ -356,6 +356,7 @@ ticketsRouter.post('/tickets', requireAuth, slidingWindowRateLimit(60000, 20), a
         totalPriceCents: pricing.totalPriceCents,
         status:          'confirmed' as const,
         paymentStatus:   'paid'      as const,
+        promoCode:       pricing.promoCode || null,
         qrCode,
         cpTicketId:      qrCode,
         history:         [{ action: 'ticket_created', timestamp: nowIso(), actorId: 'system' }],
@@ -374,6 +375,12 @@ ticketsRouter.post('/tickets', requireAuth, slidingWindowRateLimit(60000, 20), a
 
       return newTicketPayload;
     });
+
+    if (ticket.promoCode) {
+      await db.collection('promoCodes').doc(ticket.promoCode).update({
+        redeemedCount: firestore.FieldValue.increment(1),
+      }).catch(err => console.error(`[tickets] failed to increment redeemedCount for promo ${ticket.promoCode}:`, err));
+    }
 
     const totalPriceCents = Number(ticket.totalPriceCents ?? ticket.priceCents ?? 0);
     const rewardPoints = await awardRewardsPoints(userId, totalPriceCents, {

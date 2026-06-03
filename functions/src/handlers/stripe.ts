@@ -877,6 +877,13 @@ export function createStripeRouter() {
                 } catch (err) {
                   console.error('[stripe] cultureExplorer.awardOnTicketPaid failed:', err);
                 }
+
+                // Increment ticket promo redemption count (for discount promos)
+                if (updatedTicket?.promoCode) {
+                  await db.collection('promoCodes').doc(updatedTicket.promoCode).update({
+                    redeemedCount: firestore.FieldValue.increment(1),
+                  }).catch(err => console.error(`[stripe] failed to increment redeemedCount for promo ${updatedTicket.promoCode}:`, err));
+                }
               }
 
               if (!updatedTicket.cashbackCreditedAt) {

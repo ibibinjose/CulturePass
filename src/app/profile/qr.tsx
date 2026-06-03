@@ -11,7 +11,7 @@
  * - Clean, standard size fields and premium action buttons
  */
 
-import React, { useMemo, useState, useEffect, useCallback } from 'react';
+import React, { useMemo, useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -214,40 +214,58 @@ export default function QRScreen() {
     return new Date(user.createdAt).toLocaleDateString(undefined, { month: 'short', year: 'numeric' });
   }, [user?.createdAt]);
 
-  // Safe wrappers: treat "Wallet not configured on server" (503 + code) as successful null data
-  // so we avoid ERROR logs / Sentry noise when the feature is intentionally disabled in a deploy.
-  const safeBusinessCardQuery = (kind: 'apple' | 'google') => async () => {
-    try {
-      return kind === 'apple'
-        ? ((await modulesApi.wallet.businessCardApple()) as { url: string })
-        : ((await modulesApi.wallet.businessCardGoogle()) as { url: string });
-    } catch (err: any) {
-      if (err instanceof ApiError && err.status === 503) {
-        const m = err.message || '';
-        if (m.includes('WALLET_APPLE_NOT_CONFIGURED') || m.includes('WALLET_GOOGLE_NOT_CONFIGURED')) {
-          return null;
-        }
+  const [flashMessage, setFlashMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const flashTimerRef = useRef<any>(null);
+  const [isApplePending, setIsApplePending] = useState(false);
+  const [isGooglePending, setIsGooglePending] = useState(false);
+
+  useEffect(() => {
+    return () => {
+      if (flashTimerRef.current) {
+        clearTimeout(flashTimerRef.current);
       }
-      throw err;
+    };
+  }, []);
+
+  const showFlash = (type: 'success' | 'error', text: string) => {
+    if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
+    setFlashMessage({ type, text });
+    flashTimerRef.current = setTimeout(() => setFlashMessage(null), 2600);
+  };
+
+  const handleAddAppleWalletCard = async () => {
+    if (!userId) return;
+    setIsApplePending(true);
+    try {
+      const result = await modulesApi.wallet.businessCardApple();
+      const opened = await openExternalUrl(result.url, { failureTitle: 'Could not open Apple Wallet' });
+      if (!opened) throw new Error('Unable to open Apple Wallet pass.');
+      if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      showFlash('success', 'Apple Wallet business card opened');
+    } catch (err: any) {
+      if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      showFlash('error', err instanceof Error ? err.message : 'Unable to open Apple Wallet pass.');
+    } finally {
+      setIsApplePending(false);
     }
   };
 
-  // Wallet pass credentials
-  const { data: appleWallet } = useQuery<{ url: string } | null>({
-    queryKey: ['/api/wallet/business-card/apple', userId],
-    queryFn: safeBusinessCardQuery('apple'),
-    enabled: !!userId && (Platform.OS === 'ios' || Platform.OS === 'web'),
-    staleTime: 8 * 60 * 1000,
-    retry: false,
-  });
-
-  const { data: googleWallet } = useQuery<{ url: string } | null>({
-    queryKey: ['/api/wallet/business-card/google', userId],
-    queryFn: safeBusinessCardQuery('google'),
-    enabled: !!userId && (Platform.OS === 'android' || Platform.OS === 'web'),
-    staleTime: 30 * 60 * 1000,
-    retry: false,
-  });
+  const handleAddGoogleWalletCard = async () => {
+    if (!userId) return;
+    setIsGooglePending(true);
+    try {
+      const result = await modulesApi.wallet.businessCardGoogle();
+      const opened = await openExternalUrl(result.url, { failureTitle: 'Could not open Google Wallet' });
+      if (!opened) throw new Error('Unable to open Google Wallet pass.');
+      if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      showFlash('success', 'Google Wallet business card opened');
+    } catch (err: any) {
+      if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      showFlash('error', err instanceof Error ? err.message : 'Unable to open Google Wallet pass.');
+    } finally {
+      setIsGooglePending(false);
+    }
+  };
 
   // Reanimated Ambient Background Blobs Y/X Float
   const blob1X = useSharedValue(0);
@@ -473,6 +491,31 @@ export default function QRScreen() {
             </View>
           ) : (
             <>
+              {flashMessage ? (
+                <View
+                  style={[
+                    s.flashBanner,
+                    {
+                      backgroundColor:
+                        flashMessage.type === 'success'
+                          ? CultureTokens.teal + '25'
+                          : CultureTokens.coral + '25',
+                      borderColor:
+                        flashMessage.type === 'success'
+                          ? CultureTokens.teal + '55'
+                          : CultureTokens.coral + '55',
+                    },
+                  ]}
+                >
+                  <Ionicons
+                    name={flashMessage.type === 'success' ? 'checkmark-circle' : 'alert-circle'}
+                    size={16}
+                    color={flashMessage.type === 'success' ? CultureTokens.teal : CultureTokens.coral}
+                  />
+                  <Text style={s.flashBannerText}>{flashMessage.text}</Text>
+                </View>
+              ) : null}
+
               {/* ========== WALLET-FIRST REDESIGN: Dual-Card Previews & Wallet Actions ========== */}
               <View style={{ alignItems: 'center', marginBottom: 12 }}>
                 <Text style={[s.walletHeroLabel, { color: colors.textTertiary }]}>YOUR CULTUREPASS DIGITAL PASSES</Text>
@@ -735,25 +778,25 @@ export default function QRScreen() {
                 </Text>
 
                 {/* Apple Wallet */}
-                {appleWallet?.url && showAppleWallet && (
+                {(Platform.OS === 'ios' || Platform.OS === 'web') && (
                   <Pressable
-                    onPress={async () => {
-                      if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                      await openExternalUrl(appleWallet.url, { failureTitle: 'Could not open Apple Wallet' });
-                    }}
+                    onPress={handleAddAppleWalletCard}
                     style={({ pressed }) => [
                       s.walletPrimaryBtn,
                       { backgroundColor: '#000000', borderColor: '#333' },
-                      pressed && { opacity: 0.85 },
+                      (pressed || isApplePending) && { opacity: 0.85 },
                     ]}
+                    disabled={isApplePending}
                     accessibilityRole="button"
                     accessibilityLabel="Add your CulturePass ID to Apple Wallet"
                   >
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                       <Ionicons name="logo-apple" size={22} color="#FFFFFF" />
-                      <View>
+                      <View style={{ flex: 1 }}>
                         <Text style={s.walletPrimaryTitle}>Add to Apple Wallet</Text>
-                        <Text style={s.walletPrimarySub}>Official .pkpass — works offline</Text>
+                        <Text style={s.walletPrimarySub}>
+                          {isApplePending ? 'Opening Wallet...' : 'Official .pkpass — works offline'}
+                        </Text>
                       </View>
                     </View>
                     <Ionicons name="chevron-forward" size={18} color="rgba(255,255,255,0.6)" />
@@ -761,39 +804,29 @@ export default function QRScreen() {
                 )}
 
                 {/* Google Wallet */}
-                {googleWallet?.url && showGoogleWallet && (
+                {(Platform.OS === 'android' || Platform.OS === 'web') && (
                   <Pressable
-                    onPress={async () => {
-                      if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                      await openExternalUrl(googleWallet.url, { failureTitle: 'Could not open Google Wallet' });
-                    }}
+                    onPress={handleAddGoogleWalletCard}
                     style={({ pressed }) => [
                       s.walletPrimaryBtn,
                       { backgroundColor: '#1A73E8', borderColor: '#1557B0' },
-                      pressed && { opacity: 0.9 },
+                      (pressed || isGooglePending) && { opacity: 0.9 },
                     ]}
+                    disabled={isGooglePending}
                     accessibilityRole="button"
                     accessibilityLabel="Save your CulturePass ID to Google Wallet"
                   >
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                       <Ionicons name="logo-google" size={20} color="#FFFFFF" />
-                      <View>
+                      <View style={{ flex: 1 }}>
                         <Text style={s.walletPrimaryTitle}>Save to Google Wallet</Text>
-                        <Text style={s.walletPrimarySub}>Secure pass • Instant access</Text>
+                        <Text style={s.walletPrimarySub}>
+                          {isGooglePending ? 'Saving to Wallet...' : 'Secure pass • Instant access'}
+                        </Text>
                       </View>
                     </View>
                     <Ionicons name="chevron-forward" size={18} color="rgba(255,255,255,0.7)" />
                   </Pressable>
-                )}
-
-                {/* Fallback Wallet Message */}
-                {(!appleWallet?.url && !googleWallet?.url) && (
-                  <View style={s.walletNotReady}>
-                    <Ionicons name="wallet-outline" size={18} color={colors.textTertiary} />
-                    <Text style={{ color: colors.textTertiary, fontSize: 12, marginTop: 4, textAlign: 'center' }}>
-                      Wallet passes are being prepared for your account.{'\n'}Check back shortly or contact support if this persists.
-                    </Text>
-                  </View>
                 )}
 
                 <Text style={s.walletLegal}>
@@ -1262,11 +1295,24 @@ const s = StyleSheet.create({
     lineHeight: 13,
     marginTop: 6,
   },
-  walletNotReady: {
-    alignItems: 'center',
-    padding: 12,
-    backgroundColor: 'rgba(255,255,255,0.02)',
+  flashBanner: {
+    width: '100%',
+    maxWidth: CARD_WIDTH_FIXED,
+    alignSelf: 'center',
+    marginVertical: 10,
+    borderWidth: 1,
     borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  flashBannerText: {
+    flex: 1,
+    fontSize: 12,
+    fontFamily: FontFamily.medium,
+    color: '#FFFFFF',
   },
   sectionLabel: {
     fontSize: 10,

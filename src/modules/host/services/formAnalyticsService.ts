@@ -11,11 +11,11 @@
  * - Auto-save success/failure rates
  * - API response times
  * - Upload success/failure rates
- * - AI assist usage by field
  * - Device/browser distribution
  * - Alert thresholds (5% error rate, 2s response time)
  *
  * Requirement: 38 (Monitoring and Observability)
+ * Note: AI assist tracking removed (no AI features in current scope).
  */
 
 import { Platform } from 'react-native';
@@ -89,14 +89,6 @@ export interface ApiTimingEntry {
   success: boolean;
 }
 
-/** AI assist usage entry */
-export interface AIAssistUsageEntry {
-  field: string;
-  step: WizardStep;
-  action: 'improve' | 'professional' | 'expand' | 'shorten' | 'tone_change';
-  accepted: boolean;
-}
-
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -127,7 +119,6 @@ const EVENTS = {
   FORM_AUTO_SAVE: 'hostspace_form_auto_save',
   FORM_API_CALL: 'hostspace_form_api_call',
   FORM_UPLOAD: 'hostspace_form_upload',
-  FORM_AI_ASSIST: 'hostspace_form_ai_assist',
   FORM_HELP_CLICK: 'hostspace_form_help_click',
   FORM_ALERT_TRIGGERED: 'hostspace_form_alert_triggered',
 
@@ -462,25 +453,6 @@ export function trackUpload(
   if (errorRate > ERROR_RATE_THRESHOLD && counter.total >= 5) {
     trackAlertTriggered(context, 'warning', 'upload_failure_rate', errorRate);
   }
-}
-
-/**
- * Track AI assist usage on a field.
- */
-export function trackAIAssistUsage(
-  context: FormSessionContext,
-  entry: AIAssistUsageEntry,
-): void {
-  captureEvent(EVENTS.FORM_AI_ASSIST, {
-    session_id: context.sessionId,
-    user_id: context.userId,
-    entity_type: context.entityType,
-    field: entry.field,
-    step: entry.step,
-    action: entry.action,
-    accepted: entry.accepted,
-    platform: context.device.platform,
-  });
 }
 
 /**

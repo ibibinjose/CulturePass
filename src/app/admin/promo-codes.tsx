@@ -13,6 +13,7 @@ import {
   Alert,
   Platform,
   Switch,
+  Pressable,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -30,14 +31,20 @@ import { withAlpha } from '@/lib/withAlpha';
 type PromoCode = {
   id: string;
   code: string;
-  type: 'free_plus';
-  durationDays: number;
-  maxUses: number | null;
+  type: 'free_plus' | 'ticket_discount';
+  durationDays?: number;
+  discountType?: 'fixed' | 'percent';
+  discountValue?: number;
+  eventId?: string | null;
+  maxUses?: number | null;
+  maxRedemptions?: number | null;
   usedCount: number;
+  redeemedCount?: number;
   isActive: boolean;
   expiresAt: string | null;
   note: string;
   createdAt: string;
+  createdBy?: string;
 };
 
 // ─── Create form ─────────────────────────────────────────────────────────────
@@ -45,12 +52,18 @@ type PromoCode = {
 function CreateCodeForm({ onDone }: { onDone: () => void }) {
   const m3Colors = useM3Colors();
   const queryClient = useQueryClient();
+  const [promoType, setPromoType] = useState<'free_plus' | 'ticket_discount'>('free_plus');
   const [code, setCode] = useState('');
   const [durationDays, setDurationDays] = useState('30');
   const [maxUses, setMaxUses] = useState('');
   const [note, setNote] = useState('');
   const [hasExpiry, setHasExpiry] = useState(false);
   const [expiryDate, setExpiryDate] = useState('');
+  // Ticket discount fields
+  const [discountType, setDiscountType] = useState<'fixed' | 'percent'>('percent');
+  const [discountValue, setDiscountValue] = useState('');
+  const [eventId, setEventId] = useState(''); // optional
+  const [maxRedemptions, setMaxRedemptions] = useState('');
 
   const parsedMaxUses = (() => {
     const t = maxUses.trim();
@@ -59,16 +72,38 @@ function CreateCodeForm({ onDone }: { onDone: () => void }) {
     return Number.isFinite(n) && n >= 1 ? n : null;
   })();
 
+  const parsedMaxRedemptions = (() => {
+    const t = maxRedemptions.trim();
+    if (!t) return null;
+    const n = parseInt(t, 10);
+    return Number.isFinite(n) && n >= 1 ? n : null;
+  })();
+
   const mutation = useMutation({
-    mutationFn: () =>
-      api.admin.createPromoCode({
+    mutationFn: () => {
+      const base = {
         code: code.trim().toUpperCase(),
-        type: 'free_plus',
-        durationDays: Math.max(1, parseInt(durationDays, 10) || 30),
+        type: promoType,
         maxUses: parsedMaxUses,
         expiresAt: hasExpiry && expiryDate.trim() ? new Date(expiryDate).toISOString() : null,
         note: note.trim(),
-      }),
+      };
+      if (promoType === 'free_plus') {
+        return api.admin.createPromoCode({
+          ...base,
+          durationDays: Math.max(1, parseInt(durationDays, 10) || 30),
+        });
+      } else {
+        const dv = parseFloat(discountValue);
+        return api.admin.createPromoCode({
+          ...base,
+          discountType,
+          discountValue: Number.isFinite(dv) ? dv : 0,
+          eventId: eventId.trim() || undefined,
+          maxRedemptions: parsedMaxRedemptions,
+        });
+      }
+    },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['admin', 'promo-codes'] });
       onDone();
@@ -84,11 +119,29 @@ function CreateCodeForm({ onDone }: { onDone: () => void }) {
   });
 
   const maxUsesOk = maxUses.trim() === '' || parsedMaxUses !== null;
-  const isValid = code.trim().length >= 3 && parseInt(durationDays, 10) > 0 && maxUsesOk;
+  const maxRedemptionsOk = maxRedemptions.trim() === '' || parsedMaxRedemptions !== null;
+  const isValid = code.trim().length >= 3 &&
+    (promoType === 'free_plus' ? (parseInt(durationDays, 10) > 0 && maxUsesOk) :
+      (['fixed','percent'].includes(discountType) && parseFloat(discountValue) > 0 && maxRedemptionsOk));
 
   return (
     <View style={[form.wrap, { backgroundColor: m3Colors.surfaceContainerLow, borderColor: m3Colors.outlineVariant }]}>
       <Text style={[form.heading, { color: m3Colors.onSurface }]}>New Promo Code</Text>
+
+      <View style={form.field}>
+        <Text style={[form.label, { color: m3Colors.onSurfaceVariant }]}>Type</Text>
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          {(['free_plus', 'ticket_discount'] as const).map(t => (
+            <Pressable
+              key={t}
+              onPress={() => setPromoType(t)}
+              style={[form.typeBtn, promoType === t && form.typeBtnActive, { borderColor: m3Colors.outlineVariant }]}
+            >
+              <Text style={[form.typeText, promoType === t && { color: m3Colors.onSurface }]}>{t === 'free_plus' ? 'Membership Free+' : 'Ticket Discount'}</Text>
+            </Pressable>
+          ))}
+        </View>
+      </View>
 
       <View style={form.field}>
         <Text style={[form.label, { color: m3Colors.onSurfaceVariant }]}>Code</Text>
@@ -103,30 +156,82 @@ function CreateCodeForm({ onDone }: { onDone: () => void }) {
         />
       </View>
 
-      <View style={form.row}>
-        <View style={[form.field, { flex: 1 }]}>
-          <Text style={[form.label, { color: m3Colors.onSurfaceVariant }]}>Days of Plus</Text>
-          <TextInput
-            value={durationDays}
-            onChangeText={setDurationDays}
-            keyboardType="number-pad"
-            placeholder="30"
-            placeholderTextColor={m3Colors.onSurfaceVariant}
-            style={[form.input, { backgroundColor: m3Colors.surfaceContainerHigh, color: m3Colors.onSurface, borderColor: m3Colors.outlineVariant }]}
-          />
+      {promoType === 'free_plus' ? (
+        <View style={form.row}>
+          <View style={[form.field, { flex: 1 }]}>
+            <Text style={[form.label, { color: m3Colors.onSurfaceVariant }]}>Days of Plus</Text>
+            <TextInput
+              value={durationDays}
+              onChangeText={setDurationDays}
+              keyboardType="number-pad"
+              placeholder="30"
+              placeholderTextColor={m3Colors.onSurfaceVariant}
+              style={[form.input, { backgroundColor: m3Colors.surfaceContainerHigh, color: m3Colors.onSurface, borderColor: m3Colors.outlineVariant }]}
+            />
+          </View>
+          <View style={[form.field, { flex: 1 }]}>
+            <Text style={[form.label, { color: m3Colors.onSurfaceVariant }]}>Max uses (blank = ∞)</Text>
+            <TextInput
+              value={maxUses}
+              onChangeText={setMaxUses}
+              keyboardType="number-pad"
+              placeholder="Unlimited"
+              placeholderTextColor={m3Colors.onSurfaceVariant}
+              style={[form.input, { backgroundColor: m3Colors.surfaceContainerHigh, color: m3Colors.onSurface, borderColor: m3Colors.outlineVariant }]}
+            />
+          </View>
         </View>
-        <View style={[form.field, { flex: 1 }]}>
-          <Text style={[form.label, { color: m3Colors.onSurfaceVariant }]}>Max uses (blank = ∞)</Text>
-          <TextInput
-            value={maxUses}
-            onChangeText={setMaxUses}
-            keyboardType="number-pad"
-            placeholder="Unlimited"
-            placeholderTextColor={m3Colors.onSurfaceVariant}
-            style={[form.input, { backgroundColor: m3Colors.surfaceContainerHigh, color: m3Colors.onSurface, borderColor: m3Colors.outlineVariant }]}
-          />
+      ) : (
+        <View>
+          <View style={form.row}>
+            <View style={[form.field, { flex: 1 }]}>
+              <Text style={[form.label, { color: m3Colors.onSurfaceVariant }]}>Discount Type</Text>
+              <View style={{ flexDirection: 'row', gap: 6 }}>
+                {(['percent', 'fixed'] as const).map(dt => (
+                  <Pressable key={dt} onPress={() => setDiscountType(dt)} style={[form.typeBtnSmall, discountType === dt && form.typeBtnActiveSmall, { borderColor: m3Colors.outlineVariant }]}>
+                    <Text style={{ fontSize: 12, color: discountType === dt ? m3Colors.onSurface : m3Colors.onSurfaceVariant }}>{dt === 'percent' ? '%' : 'Fixed $'}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+            <View style={[form.field, { flex: 1 }]}>
+              <Text style={[form.label, { color: m3Colors.onSurfaceVariant }]}>Value</Text>
+              <TextInput
+                value={discountValue}
+                onChangeText={setDiscountValue}
+                keyboardType="decimal-pad"
+                placeholder={discountType === 'percent' ? '20' : '5.00'}
+                placeholderTextColor={m3Colors.onSurfaceVariant}
+                style={[form.input, { backgroundColor: m3Colors.surfaceContainerHigh, color: m3Colors.onSurface, borderColor: m3Colors.outlineVariant }]}
+              />
+            </View>
+          </View>
+          <View style={form.row}>
+            <View style={[form.field, { flex: 1 }]}>
+              <Text style={[form.label, { color: m3Colors.onSurfaceVariant }]}>Event ID (optional)</Text>
+              <TextInput
+                value={eventId}
+                onChangeText={setEventId}
+                placeholder="evt_123"
+                placeholderTextColor={m3Colors.onSurfaceVariant}
+                autoCapitalize="none"
+                style={[form.input, { backgroundColor: m3Colors.surfaceContainerHigh, color: m3Colors.onSurface, borderColor: m3Colors.outlineVariant }]}
+              />
+            </View>
+            <View style={[form.field, { flex: 1 }]}>
+              <Text style={[form.label, { color: m3Colors.onSurfaceVariant }]}>Max redemptions</Text>
+              <TextInput
+                value={maxRedemptions}
+                onChangeText={setMaxRedemptions}
+                keyboardType="number-pad"
+                placeholder="Unlimited"
+                placeholderTextColor={m3Colors.onSurfaceVariant}
+                style={[form.input, { backgroundColor: m3Colors.surfaceContainerHigh, color: m3Colors.onSurface, borderColor: m3Colors.outlineVariant }]}
+              />
+            </View>
+          </View>
         </View>
-      </View>
+      )}
 
       <View style={form.field}>
         <Text style={[form.label, { color: m3Colors.onSurfaceVariant }]}>Note (internal)</Text>
@@ -196,6 +301,11 @@ const form = StyleSheet.create({
   },
   toggleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderTopWidth: 1, paddingTop: 14 },
   error: { fontSize: 13, fontFamily: FontFamily.medium, marginTop: 4 },
+  typeBtn: { flex: 1, paddingVertical: 8, borderWidth: 1, borderRadius: Radius.sm, alignItems: 'center' },
+  typeBtnActive: { backgroundColor: '#4F46E5', borderColor: '#4F46E5' },
+  typeText: { fontSize: 13, fontFamily: FontFamily.medium, color: '#666' },
+  typeBtnSmall: { paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1, borderRadius: 6, alignItems: 'center' },
+  typeBtnActiveSmall: { backgroundColor: '#4F46E5', borderColor: '#4F46E5' },
 });
 
 // ─── Code row ────────────────────────────────────────────────────────────────
@@ -203,7 +313,9 @@ const form = StyleSheet.create({
 function CodeRow({ item, onToggle }: { item: PromoCode; onToggle: (id: string, isActive: boolean) => void }) {
   const m3Colors = useM3Colors();
   const isExpired = item.expiresAt ? new Date(item.expiresAt) < new Date() : false;
-  const isFull = item.maxUses !== null && item.usedCount >= item.maxUses;
+  const max = item.maxRedemptions ?? item.maxUses;
+  const used = item.redeemedCount ?? item.usedCount;
+  const isFull = typeof max === 'number' && used >= max;
   const statusColor = !item.isActive ? m3Colors.error : isExpired || isFull ? CultureTokens.gold : CultureTokens.teal;
   const statusText = !item.isActive ? 'Disabled' : isExpired ? 'Expired' : isFull ? 'Used up' : 'Active';
 
@@ -218,16 +330,26 @@ function CodeRow({ item, onToggle }: { item: PromoCode; onToggle: (id: string, i
       </View>
 
       <View style={row.meta}>
-        <View style={row.chip}>
-          <Ionicons name="diamond" size={12} color={CultureTokens.indigo} />
-          <Text style={[row.chipText, { color: m3Colors.onSurfaceVariant }]}>
-            {item.durationDays}d Plus
-          </Text>
-        </View>
+        {item.type === 'free_plus' ? (
+          <View style={row.chip}>
+            <Ionicons name="diamond" size={12} color={CultureTokens.indigo} />
+            <Text style={[row.chipText, { color: m3Colors.onSurfaceVariant }]}>
+              {item.durationDays}d Plus
+            </Text>
+          </View>
+        ) : (
+          <View style={row.chip}>
+            <Ionicons name="pricetag" size={12} color={CultureTokens.teal} />
+            <Text style={[row.chipText, { color: m3Colors.onSurfaceVariant }]}>
+              {item.discountType === 'percent' ? `${item.discountValue}%` : `$${((item.discountValue||0)/100).toFixed(2)}`} off
+              {item.eventId ? ' (event)' : ''}
+            </Text>
+          </View>
+        )}
         <View style={row.chip}>
           <Ionicons name="people" size={12} color={m3Colors.onSurfaceVariant} />
           <Text style={[row.chipText, { color: m3Colors.onSurfaceVariant }]}>
-            {item.usedCount}{item.maxUses !== null ? `/${item.maxUses}` : ''} used
+            {(item.redeemedCount ?? item.usedCount)}{(item.maxRedemptions ?? item.maxUses) !== null ? `/${item.maxRedemptions ?? item.maxUses}` : ''} used
           </Text>
         </View>
         {item.expiresAt ? (
@@ -323,7 +445,7 @@ export default function PromoCodesScreen() {
         {[
           { label: 'Total codes', value: String(codes.length) },
           { label: 'Active', value: String(activeCodes.length), color: CultureTokens.teal },
-          { label: 'Total redeemed', value: String(codes.reduce((n, c) => n + c.usedCount, 0)) },
+          { label: 'Total redeemed', value: String(codes.reduce((n, c) => n + (c.redeemedCount ?? c.usedCount), 0)) },
         ].map((s, i) => (
           <React.Fragment key={s.label}>
             {i > 0 && <View style={[styles.statDiv, { backgroundColor: m3Colors.outlineVariant }]} />}

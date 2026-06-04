@@ -101,10 +101,6 @@ export default function UserDirectoryScreen() {
       base = base.filter((u) => matchesQuery(u, searchTrim));
     }
 
-    // Client pagination for scale (can be server later via api.users.list({page, limit}))
-    const start = page * PAGE_SIZE;
-    return base.slice(start, start + PAGE_SIZE);
-
     // === A: Apply advanced filters ===
     base = base.filter((u) => {
       const roleMatch = activeFilters.roles.length === 0 || activeFilters.roles.includes(u.role || 'user');
@@ -136,7 +132,9 @@ export default function UserDirectoryScreen() {
       return 0;
     });
 
-    return base;
+    // Client pagination for scale (can be server later via api.users.list({page, limit}))
+    const start = page * PAGE_SIZE;
+    return base.slice(start, start + PAGE_SIZE);
   }, [
     useRemoteSearch,
     searchData?.users,
@@ -145,6 +143,7 @@ export default function UserDirectoryScreen() {
     activeFilters,
     sortBy,
     sortDir,
+    page,
   ]);
 
   const isLoading = useRemoteSearch ? searchLoading : dirLoading;

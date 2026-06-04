@@ -66,7 +66,7 @@ import {
  */
 export const createProfileSchema = z.object({
   name: z.string().min(1),
-  entityType: z.enum(['community', 'organiser', 'venue', 'business', 'artist', 'professional']),
+  entityType: z.enum(['community', 'organiser', 'organizer', 'venue', 'business', 'artist', 'professional']),
   postcode: z.preprocess(
     (val) => (val === '' || val === null || val === undefined ? undefined : val),
     z.number().optional()
@@ -208,61 +208,76 @@ profilesRouter.get('/profiles/handle/:handle', async (req: Request, res: Respons
   }
 });
 
-// ── POST /api/profiles/create ──────────────────────────────────────────────
-// Create a new profile
-profilesRouter.post(
-  '/profiles/create',
+// ── GET /api/profiles/my ──────────────────────────────────────────────────
+// Get current user's profiles
+profilesRouter.get(
+  '/profiles/my',
   requireAuth,
-  moderationCheck,
   async (req: Request, res: Response) => {
-    let body: any;
     try {
-      body = createProfileBodySchema.parse(req.body ?? {});
+      const result = await profileService.list({ ownerId: req.user!.id });
+      return res.json({ profiles: result.items });
     } catch (err) {
-      if (respondIfValidationError(res, err)) return;
-      captureRouteError(err, 'POST /api/profiles/create validation');
-      return res.status(500).json({ error: 'Failed to parse profile payload' });
-    }
-
-    try {
-      // Check handle uniqueness
-      const handleExists = await validationService.checkHandleExists(body.handle);
-      if (handleExists) {
-        return res.status(400).json({ error: 'Handle already taken' });
-      }
-
-      // Create profile with initial organizer (the creator as lead)
-      const now = new Date().toISOString();
-      const initialOrganizers = [
-        {
-          userId: req.user!.id,
-          role: 'lead_organizer',
-          title: 'Lead Organizer',
-          addedAt: now,
-          addedBy: req.user!.id,
-        },
-        ...(body.organizers || []),
-      ];
-
-      const profile = await profileService.create({
-        ...body,
-        ownerId: req.user!.id,
-        organizers: initialOrganizers,
-        lastModifiedBy: req.user!.id,
-        viewCount: 0,
-        uniqueVisitorCount: 0,
-        contactClickCount: 0,
-        searchAppearances: 0,
-        engagementScore: 0,
-      } as any);
-
-      return res.status(201).json(profile);
-    } catch (err) {
-      captureRouteError(err, 'POST /api/profiles/create');
-      return res.status(500).json({ error: 'Failed to create profile' });
+      captureRouteError(err, 'GET /api/profiles/my');
+      return res.status(500).json({ error: 'Failed to fetch your profiles' });
     }
   }
 );
+
+// ── POST /api/profiles/create ──────────────────────────────────────────────
+// Create a new profile
+// Alias: POST /api/profiles (RESTful)
+const createProfileHandler = async (req: Request, res: Response) => {
+  let body: any;
+  try {
+    body = createProfileBodySchema.parse(req.body ?? {});
+  } catch (err) {
+    if (respondIfValidationError(res, err)) return;
+    captureRouteError(err, 'POST /api/profiles/create validation');
+    return res.status(500).json({ error: 'Failed to parse profile payload' });
+  }
+
+  try {
+    // Check handle uniqueness
+    const handleExists = await validationService.checkHandleExists(body.handle);
+    if (handleExists) {
+      return res.status(400).json({ error: 'Handle already taken' });
+    }
+
+    // Create profile with initial organizer (the creator as lead)
+    const now = new Date().toISOString();
+    const initialOrganizers = [
+      {
+        userId: req.user!.id,
+        role: 'lead_organizer',
+        title: 'Lead Organizer',
+        addedAt: now,
+        addedBy: req.user!.id,
+      },
+      ...(body.organizers || []),
+    ];
+
+    const profile = await profileService.create({
+      ...body,
+      ownerId: req.user!.id,
+      organizers: initialOrganizers,
+      lastModifiedBy: req.user!.id,
+      viewCount: 0,
+      uniqueVisitorCount: 0,
+      contactClickCount: 0,
+      searchAppearances: 0,
+      engagementScore: 0,
+    } as any);
+
+    return res.status(201).json(profile);
+  } catch (err) {
+    captureRouteError(err, 'POST /api/profiles/create');
+    return res.status(500).json({ error: 'Failed to create profile' });
+  }
+};
+
+profilesRouter.post('/profiles/create', requireAuth, moderationCheck, createProfileHandler);
+profilesRouter.post('/profiles', requireAuth, moderationCheck, createProfileHandler);
 
 // ── PUT /api/profiles/:id ──────────────────────────────────────────────────
 // Update an existing profile
@@ -310,6 +325,33 @@ profilesRouter.put(
     } catch (err) {
       captureRouteError(err, 'PUT /api/profiles/:id');
       return res.status(500).json({ error: 'Failed to update profile' });
+    }
+  }
+);
+
+// ── DELETE /api/profiles/:id ───────────────────────────────────────────────
+// Delete a profile
+profilesRouter.delete(
+  '/profiles/:id',
+  requireAuth,
+  async (req: Request, res: Response) => {
+    try {
+      const profileId = qparam(req.params.id);
+      const existing = await profileService.getById(profileId);
+      if (!existing) {
+        return res.status(404).json({ error: 'Profile not found' });
+      }
+
+      // Check ownership
+      if (!canManageProfile(req.user!, existing)) {
+        return res.status(403).json({ error: 'Forbidden: you do not own or manage this profile' });
+      }
+
+      await profileService.delete(profileId);
+      return res.json({ success: true });
+    } catch (err) {
+      captureRouteError(err, 'DELETE /api/profiles/:id');
+      return res.status(500).json({ error: 'Failed to delete profile' });
     }
   }
 );
@@ -569,22 +611,30 @@ profilesRouter.get(
 
 // ── POST /api/profiles/validate-abn ────────────────────────────────────────
 // Validate ABN format and lookup business details
-profilesRouter.post(
-  '/profiles/validate-abn',
-  requireAuth,
-  slidingWindowRateLimit(60000, 30),
-  async (req: Request, res: Response) => {
-    try {
-      const body = parseBody(validateAbnSchema, req.body ?? {});
-      const result = await validationService.validateABN(body.abn);
-      return res.json(result);
-    } catch (err) {
-      if (respondIfValidationError(res, err)) return;
-      captureRouteError(err, 'POST /api/profiles/validate-abn');
-      return res.status(500).json({ error: 'Failed to validate ABN' });
-    }
+// Alias: /api/profiles/abn-lookup (preferred by client)
+const validateAbnHandler = async (req: Request, res: Response) => {
+  try {
+    const body = parseBody(validateAbnSchema, req.body ?? {});
+    const result = await validationService.validateABN(body.abn);
+
+    // Map service result to client expectation (ABNLookupResponse)
+    return res.json({
+      ok: result.valid,
+      validated: result.valid,
+      entityName: result.businessName,
+      abn: body.abn,
+      error: result.error,
+      raw: result,
+    });
+  } catch (err) {
+    if (respondIfValidationError(res, err)) return;
+    captureRouteError(err, 'POST /api/profiles/validate-abn');
+    return res.status(500).json({ error: 'Failed to validate ABN' });
   }
-);
+};
+
+profilesRouter.post('/profiles/validate-abn', requireAuth, slidingWindowRateLimit(60000, 30), validateAbnHandler);
+profilesRouter.post('/profiles/abn-lookup', requireAuth, slidingWindowRateLimit(60000, 30), validateAbnHandler);
 
 // ── GET /api/profiles/:id/analytics ────────────────────────────────────────
 // Get analytics for a profile

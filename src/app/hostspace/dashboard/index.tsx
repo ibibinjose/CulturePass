@@ -17,13 +17,12 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { useQuery } from '@tanstack/react-query';
 
-import { useColors } from '@/hooks/useColors';
+import { useColors, useIsDark } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
 import { useAuth } from '@/lib/auth';
-import { CultureTokens, TextStyles, Spacing } from '@/design-system/tokens/theme';
-import { GlassView } from '@/design-system/ui/GlassView';
-import { Button } from '@/design-system/ui/Button';
-import { Skeleton } from '@/design-system/ui/Skeleton';
+import { CultureTokens, Spacing, FontFamily } from '@/design-system/tokens/theme';
+import { Luxe } from '@/design-system/tokens/luxeHeritage';
+import { GlassView, LuxeText, LuxeButton, Skeleton } from '@/design-system/ui';
 import { hostApi } from '@/modules/host/api';
 import { formatCurrency } from '@/lib/currency';
 import { formatCompactDate } from '@/lib/format';
@@ -39,7 +38,7 @@ const HOSTSPACE_DASHBOARD_HEAD_DESC =
 const HOSTSPACE_DASHBOARD_HEAD_URL = `${SITE_ORIGIN}/hostspace/dashboard`;
 
 // ---------------------------------------------------------------------------
-// Stat Card — Compact "Display Card"
+// Stat Card
 // ---------------------------------------------------------------------------
 
 function StatCard({
@@ -57,18 +56,18 @@ function StatCard({
 }) {
   const colors = useColors();
   return (
-    <GlassView intensity={12} style={[styles.statCard, { borderColor: colors.borderLight }]}>
+    <GlassView intensity={10} style={[styles.statCard, { borderColor: colors.borderLight, borderWidth: 1 }]}>
       <View style={[styles.statIcon, { backgroundColor: color + '12' }]}>
         <Ionicons name={icon} size={16} color={color} />
       </View>
       <View style={styles.statContent}>
-        <Text style={[styles.statValue, { color: colors.text }]} numberOfLines={1} ellipsizeMode="tail">
+        <LuxeText variant="title3" style={{ color: colors.text }} numberOfLines={1}>
           {value}
-        </Text>
+        </LuxeText>
         <View style={styles.statLabelRow}>
-          <Text style={[styles.statLabel, { color: colors.textTertiary }]}>{label.toUpperCase()}</Text>
+          <LuxeText variant="badgeCaps" style={{ color: colors.textTertiary, fontSize: 9 }}>{label}</LuxeText>
           {trend && (
-            <Text style={[styles.trendMini, { color: CultureTokens.teal }]}>{trend}</Text>
+            <LuxeText variant="caption" style={{ color: Luxe.colors.emerald, fontFamily: FontFamily.bold, fontSize: 9, marginLeft: 4 }}>{trend}</LuxeText>
           )}
         </View>
       </View>
@@ -85,54 +84,52 @@ function EventDisplayCard({ event }: { event: EventData }) {
   const isPublished = event.status === 'published';
 
   return (
-    <Pressable
+    <GlassView
+      intensity={8}
       onPress={() => router.push({ pathname: '/(domain)/event/[id]', params: { id: event.id } })}
-      style={({ pressed }) => [
-        styles.displayCard,
-        { backgroundColor: colors.surface, borderColor: colors.borderLight, opacity: pressed ? 0.9 : 1 }
-      ]}
+      style={[styles.displayCard, { borderColor: colors.borderLight, borderWidth: 1 }]}
+      contentStyle={{ padding: 0 }}
     >
       <View style={styles.displayCardImage}>
         {event.imageUrl ? (
           <Image source={{ uri: event.imageUrl }} style={StyleSheet.absoluteFill} contentFit="cover" />
         ) : (
-          <View style={[StyleSheet.absoluteFill, { backgroundColor: CultureTokens.indigo + '10', alignItems: 'center', justifyContent: 'center' }]}>
-            <Ionicons name="calendar" size={20} color={CultureTokens.indigo} />
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: Luxe.colors.indigo + '10', alignItems: 'center', justifyContent: 'center' }]}>
+            <Ionicons name="calendar" size={24} color={Luxe.colors.indigo} />
           </View>
         )}
-        <View style={[styles.statusBadge, { backgroundColor: isPublished ? CultureTokens.teal : CultureTokens.gold }]}>
-          <Text style={styles.statusBadgeText}>{isPublished ? 'LIVE' : 'DRAFT'}</Text>
-        </View>
+        <GlassView intensity={30} style={[styles.statusBadge, { backgroundColor: (isPublished ? Luxe.colors.emerald : Luxe.colors.gold) + 'CC' }]}>
+          <LuxeText variant="badgeCaps" style={{ color: '#fff', fontSize: 8 }}>{isPublished ? 'LIVE' : 'DRAFT'}</LuxeText>
+        </GlassView>
       </View>
 
       <View style={styles.displayCardBody}>
-        <Text style={[styles.displayCardTitle, { color: colors.text }]} numberOfLines={1}>{event.title}</Text>
-        <Text style={[styles.displayCardMeta, { color: colors.textSecondary }]}>
+        <LuxeText variant="bodyMedium" style={{ color: colors.text }} numberOfLines={1}>{event.title}</LuxeText>
+        <LuxeText variant="caption" style={{ color: colors.textSecondary }}>
           {event.date ? formatCompactDate(event.date) : 'Unscheduled'}
-        </Text>
+        </LuxeText>
 
         <View style={styles.displayCardFooter}>
           <View style={styles.miniMetric}>
             <Ionicons name="people-outline" size={12} color={colors.textTertiary} />
-            <Text style={[styles.miniMetricText, { color: colors.textTertiary }]}>{event.attending ?? 0}</Text>
+            <LuxeText variant="caption" style={{ color: colors.textTertiary }}>{event.attending ?? 0}</LuxeText>
           </View>
           <View style={styles.cardActions}>
-            <Button
+            <LuxeButton
               variant="ghost"
               size="sm"
-              style={[styles.smallIconBtn, { marginRight: 4 }]}
+              style={styles.smallIconBtn}
               onPress={() => router.push({ pathname: '/dashboard/event-analytics/[eventId]', params: { eventId: event.id } })}
-              accessibilityLabel="View event analytics"
             >
               <Ionicons name="analytics-outline" size={16} color={colors.textSecondary} />
-            </Button>
-            <Button variant="ghost" size="sm" style={styles.smallIconBtn} onPress={() => router.push({ pathname: '/event/create', params: { editId: event.id } })}>
+            </LuxeButton>
+            <LuxeButton variant="ghost" size="sm" style={styles.smallIconBtn} onPress={() => router.push({ pathname: '/event/create', params: { editId: event.id } })}>
               <Ionicons name="create-outline" size={16} color={colors.textSecondary} />
-            </Button>
+            </LuxeButton>
           </View>
         </View>
       </View>
-    </Pressable>
+    </GlassView>
   );
 }
 
@@ -142,6 +139,7 @@ function EventDisplayCard({ event }: { event: EventData }) {
 
 function HostDashboard() {
   const colors = useColors();
+  const isDark = useIsDark();
   const { hPad, isDesktop } = useLayout();
   const { userId } = useAuth();
 
@@ -161,7 +159,6 @@ function HostDashboard() {
   const myProfiles = useMemo(() => (profilesRes ?? []) as Profile[], [profilesRes]);
   const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
 
-  // Auto-select first profile for analytics view when loaded
   useEffect(() => {
     if (!selectedProfileId && myProfiles.length > 0) {
       setSelectedProfileId(myProfiles[0].id);
@@ -175,12 +172,8 @@ function HostDashboard() {
     activeReach: events.reduce((sum, e) => sum + (e.attending ?? 0), 0) * 3.4,
   }), [events]);
 
-  const haptic = () => {
-    if (Platform.OS !== 'web') void Haptics.selectionAsync();
-  };
-
   const handleRefresh = () => {
-    haptic();
+    if (Platform.OS !== 'web') void Haptics.selectionAsync();
     refetchEvents();
     refetchProfiles();
   };
@@ -197,90 +190,88 @@ function HostDashboard() {
         <link rel="canonical" href={HOSTSPACE_DASHBOARD_HEAD_URL} />
       </Head>
       <Stack.Screen options={{ title: 'Host Dashboard | CulturePass', headerShown: false }} />
+
       <LinearGradient
-        colors={[CultureTokens.indigo + '08', 'transparent']}
+        colors={isDark ? ['#0C0A09', '#1C1917'] : ['#FAF9F6', '#F5F1EE']}
         style={StyleSheet.absoluteFill}
-        pointerEvents="none"
       />
 
       <ScrollView
         contentContainerStyle={[
           styles.scroll,
-          { paddingHorizontal: hPad, maxWidth: isDesktop ? 1200 : undefined, alignSelf: 'center', width: '100%' }
+          { paddingHorizontal: hPad, maxWidth: 1200, alignSelf: 'center', width: '100%' }
         ]}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={isRefetching} onRefresh={handleRefresh} tintColor={CultureTokens.indigo} />
+          <RefreshControl refreshing={isRefetching} onRefresh={handleRefresh} tintColor={Luxe.colors.terracotta} />
         }
       >
-        {/* Header — Improved UX with small buttons */}
+        {/* Header */}
         <View style={styles.header}>
           <View>
-            <Text style={[styles.greeting, { color: colors.textTertiary }]}>COMMAND CENTER</Text>
-            <Text style={[styles.title, { color: colors.text }]}>Host Dashboard</Text>
+            <LuxeText variant="badgeCaps" style={{ color: colors.textTertiary, letterSpacing: 2 }}>COMMAND CENTER</LuxeText>
+            <LuxeText variant="display" style={{ color: colors.text }}>Dashboard</LuxeText>
           </View>
           <View style={styles.headerRight}>
-            <Button
-              variant="outline"
+            <LuxeButton
+              variant="tonal"
               size="sm"
               leftIcon="scan-outline"
               onPress={() => router.push('/scanner')}
-              style={styles.smallHeadBtn}
             >
               Scan
-            </Button>
-            <Button
-              variant="primary"
+            </LuxeButton>
+            <LuxeButton
+              variant="filled"
               size="sm"
               leftIcon="add"
               onPress={() => router.push('/hostspace/create')}
-              style={styles.smallHeadBtn}
             >
               Create
-            </Button>
+            </LuxeButton>
           </View>
         </View>
 
-        {/* Stats — single horizontal row (equal flex columns) */}
+        {/* Stats */}
         <View style={styles.statsRow}>
-          <StatCard label="Reach" value={Math.floor(stats.activeReach).toLocaleString()} icon="eye-outline" color={CultureTokens.indigo} trend="+12%" />
-          <StatCard label="Attendees" value={stats.totalAttendance.toLocaleString()} icon="people-outline" color={CultureTokens.teal} />
-          <StatCard label="Events" value={stats.totalEvents} icon="calendar-outline" color={CultureTokens.gold} />
-          <StatCard label="Revenue" value={formatCurrency(stats.estimatedRevenue)} icon="cash-outline" color={CultureTokens.coral} />
+          <StatCard label="Reach" value={Math.floor(stats.activeReach).toLocaleString()} icon="eye-outline" color={Luxe.colors.indigo} trend="+12%" />
+          <StatCard label="Attendees" value={stats.totalAttendance.toLocaleString()} icon="people-outline" color={Luxe.colors.emerald} />
+          <StatCard label="Events" value={stats.totalEvents} icon="calendar-outline" color={Luxe.colors.saffron} />
+          <StatCard label="Revenue" value={formatCurrency(stats.estimatedRevenue)} icon="cash-outline" color={Luxe.colors.terracotta} />
         </View>
 
-        {/* Quick Access Bar — Small Buttons */}
+        {/* Quick Access Bar */}
         <View style={styles.section}>
-          <View style={styles.quickAccessBar}>
-            <Text style={[styles.miniSectionTitle, { color: colors.textTertiary }]}>QUICK TOOLS</Text>
+          <GlassView intensity={5} style={styles.quickAccessBar} contentStyle={{ padding: 12, flexDirection: isDesktop ? 'row' : 'column', alignItems: isDesktop ? 'center' : 'flex-start', gap: 16 }}>
+            <LuxeText variant="badgeCaps" style={{ color: colors.textTertiary }}>QUICK TOOLS</LuxeText>
             <View style={styles.quickAccessButtons}>
-              <Button variant="ghost" size="sm" leftIcon="wallet-outline" onPress={() => router.push('/payment/wallet')}>Payouts</Button>
-              <Button variant="ghost" size="sm" leftIcon="help-circle-outline" onPress={() => router.push('/help')}>Support</Button>
-              <Button variant="ghost" size="sm" leftIcon="settings-outline" onPress={() => router.push('/settings')}>Settings</Button>
+              <LuxeButton variant="ghost" size="sm" leftIcon="wallet-outline" onPress={() => router.push('/payment/wallet')}>Payouts</LuxeButton>
+              <LuxeButton variant="ghost" size="sm" leftIcon="help-circle-outline" onPress={() => router.push('/help')}>Support</LuxeButton>
+              <LuxeButton variant="ghost" size="sm" leftIcon="settings-outline" onPress={() => router.push('/settings')}>Settings</LuxeButton>
             </View>
-          </View>
+          </GlassView>
         </View>
 
-        {/* Events Section — High-Visual Display Cards */}
+        {/* Events Section */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Recent Events</Text>
-            <Button variant="ghost" size="sm" onPress={() => router.push('/(domain)/events')}>
+            <LuxeText variant="title3" style={{ color: colors.text }}>Recent Events</LuxeText>
+            <LuxeButton variant="ghost" size="sm" onPress={() => router.push('/(domain)/events')}>
               View All
-            </Button>
+            </LuxeButton>
           </View>
 
           {eventsLoading ? (
             <View style={styles.displayCardGrid}>
-              {[1, 2, 3, 4].map(i => <Skeleton key={i} width={isDesktop ? '23%' : '47%'} height={180} borderRadius={24} />)}
+              {[1, 2, 3, 4].map(i => <Skeleton key={i} width={isDesktop ? '23%' : '48%'} height={180} borderRadius={20} />)}
             </View>
           ) : events.length === 0 ? (
             <View style={[styles.emptyBox, { borderColor: colors.borderLight }]}>
               <Ionicons name="calendar-outline" size={32} color={colors.textTertiary} />
-              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>Ready to launch?</Text>
-              <Button variant="primary" size="sm" style={{ marginTop: 8 }} onPress={() => router.push('/hostspace/create/event')}>
+              <LuxeText variant="body" style={{ color: colors.textSecondary }}>Ready to launch your first event?</LuxeText>
+              <LuxeButton variant="filled" size="sm" style={{ marginTop: 8 }} onPress={() => router.push('/hostspace/create/event')}>
                 Create Event
-              </Button>
+              </LuxeButton>
             </View>
           ) : (
             <View style={styles.displayCardGrid}>
@@ -288,7 +279,7 @@ function HostDashboard() {
                 <Animated.View
                   key={event.id}
                   entering={FadeInDown.delay(idx * 50)}
-                  style={isDesktop ? { width: '23.5%' } : { width: '48%' }}
+                  style={isDesktop ? { width: '23.5%' } : { width: '48.5%' }}
                 >
                   <EventDisplayCard event={event} />
                 </Animated.View>
@@ -297,31 +288,27 @@ function HostDashboard() {
           )}
         </View>
 
-        {/* Profile Analytics — Host Wizard / Post-Publish Performance (now wired and surfaced) */}
+        {/* Profile Analytics */}
         {myProfiles.length > 0 && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Profile Analytics</Text>
-              <Text style={[TextStyles.caption, { color: colors.textTertiary }]}>Wizard funnels + post-publish reach</Text>
+              <LuxeText variant="title3" style={{ color: colors.text }}>Profile Analytics</LuxeText>
             </View>
 
-            {/* Simple profile selector for multi-profile hosts */}
             {myProfiles.length > 1 && (
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: Spacing.sm }}>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
                 {myProfiles.map((p) => (
                   <Pressable
                     key={p.id}
                     onPress={() => setSelectedProfileId(p.id)}
                     style={[
                       { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, borderWidth: 1, borderColor: colors.borderLight },
-                      selectedProfileId === p.id && { backgroundColor: CultureTokens.violet, borderColor: CultureTokens.violet },
+                      selectedProfileId === p.id && { backgroundColor: Luxe.colors.plum, borderColor: Luxe.colors.plum },
                     ]}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Show analytics for ${p.name || p.handle || 'profile'}`}
                   >
-                    <Text style={[TextStyles.caption, { color: selectedProfileId === p.id ? '#fff' : colors.text }]} numberOfLines={1}>
+                    <LuxeText variant="caption" style={{ color: selectedProfileId === p.id ? '#fff' : colors.text }} numberOfLines={1}>
                       {p.name || p.handle || p.entityType}
-                    </Text>
+                    </LuxeText>
                   </Pressable>
                 ))}
               </View>
@@ -335,21 +322,21 @@ function HostDashboard() {
             ) : (
               <View style={[styles.emptyBox, { borderColor: colors.borderLight }]}>
                 <Ionicons name="bar-chart-outline" size={28} color={colors.textTertiary} />
-                <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No profile selected</Text>
+                <LuxeText variant="body" style={{ color: colors.textSecondary }}>No profile selected</LuxeText>
               </View>
             )}
           </View>
         )}
 
-        {/* Insights — Small Compact Card */}
-        <GlassView intensity={10} style={[styles.compactTip, { borderColor: colors.borderLight }]}>
-          <View style={[styles.tipIcon, { backgroundColor: CultureTokens.gold + '15' }]}>
-            <Ionicons name="bulb" size={16} color={CultureTokens.gold} />
+        {/* Tips */}
+        <GlassView intensity={10} style={[styles.compactTip, { borderColor: colors.borderLight, borderWidth: 1 }]}>
+          <View style={[styles.tipIcon, { backgroundColor: Luxe.colors.gold + '18' }]}>
+            <Ionicons name="bulb" size={16} color={Luxe.colors.gold} />
           </View>
-          <Text style={[styles.tipText, { color: colors.textSecondary }]}>
-            Mode-C visual assets see 40% higher engagement.
-          </Text>
-          <Button variant="ghost" size="sm" onPress={() => {}}>Update</Button>
+          <LuxeText variant="caption" style={{ color: colors.textSecondary, flex: 1 }}>
+            High-quality cover images increase profile engagement by up to 40%.
+          </LuxeText>
+          <LuxeButton variant="ghost" size="sm" onPress={() => {}}>Update</LuxeButton>
         </GlassView>
 
       </ScrollView>
@@ -370,9 +357,9 @@ export default function HostDashboardScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1 },
   scroll: {
-    paddingTop: 32,
+    paddingTop: 16,
     paddingBottom: 120,
-    gap: 20,
+    gap: 24,
   },
   header: {
     flexDirection: 'row',
@@ -382,39 +369,22 @@ const styles = StyleSheet.create({
   },
   headerRight: {
     flexDirection: 'row',
-    gap: 8,
-  },
-  smallHeadBtn: {
-    paddingHorizontal: 12,
-    minHeight: 36,
-  },
-  greeting: {
-    fontSize: 10,
-    fontFamily: 'Poppins_700Bold',
-    letterSpacing: 1.5,
-  },
-  title: {
-    ...TextStyles.title,
-    fontSize: 28,
-    lineHeight: 34,
-    letterSpacing: -0.5,
+    gap: 10,
   },
   statsRow: {
     flexDirection: 'row',
     flexWrap: 'nowrap',
-    gap: 10,
+    gap: 12,
     width: '100%',
-    alignItems: 'stretch',
   },
   statCard: {
     flex: 1,
     minWidth: 0,
     borderRadius: 20,
-    borderWidth: 1,
     padding: 12,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 10,
   },
   statIcon: {
     width: 34,
@@ -423,150 +393,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  statContent: {
-    flex: 1,
-  },
-  statValue: {
-    fontSize: 18,
-    fontFamily: 'Poppins_700Bold',
-  },
-  statLabelRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginTop: -2,
-  },
-  statLabel: {
-    fontSize: 9,
-    fontFamily: 'Poppins_600SemiBold',
-    letterSpacing: 0.5,
-  },
-  trendMini: {
-    fontSize: 9,
-    fontFamily: 'Poppins_700Bold',
-  },
-  section: {
-    gap: 12,
-  },
-  miniSectionTitle: {
-    fontSize: 10,
-    fontFamily: 'Poppins_700Bold',
-    letterSpacing: 1,
-    marginBottom: 4,
-  },
-  quickAccessBar: {
-    paddingHorizontal: 4,
-  },
-  quickAccessButtons: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 4,
-    marginLeft: -8, // Offset button padding
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  sectionTitle: {
-    ...TextStyles.title3,
-    fontSize: 18,
-  },
-  displayCardGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  displayCard: {
-    borderRadius: 24,
-    borderWidth: 1,
-    overflow: 'hidden',
-    minHeight: 180,
-  },
-  displayCardImage: {
-    height: 90,
-    backgroundColor: 'rgba(0,0,0,0.02)',
-  },
-  statusBadge: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    paddingHorizontal: 6,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  statusBadgeText: {
-    fontSize: 8,
-    fontFamily: 'Poppins_700Bold',
-    color: '#fff',
-  },
-  displayCardBody: {
-    padding: 12,
-    gap: 4,
-  },
-  displayCardTitle: {
-    fontFamily: 'Poppins_700Bold',
-    fontSize: 14,
-  },
-  displayCardMeta: {
-    fontSize: 11,
-    fontFamily: 'Poppins_400Regular',
-  },
-  displayCardFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 4,
-  },
-  miniMetric: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  miniMetricText: {
-    fontSize: 11,
-    fontFamily: 'Poppins_600SemiBold',
-  },
-  cardActions: {
-    flexDirection: 'row',
-  },
-  smallIconBtn: {
-    padding: 4,
-    minHeight: 24,
-    minWidth: 24,
-  },
-  emptyBox: {
-    borderRadius: 24,
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    padding: 32,
-    alignItems: 'center',
-    gap: 8,
-  },
-  emptyText: {
-    fontSize: 13,
-    fontFamily: 'Poppins_500Medium',
-  },
-  compactTip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    paddingLeft: 16,
-    borderRadius: 18,
-    borderWidth: 1,
-    gap: 12,
-  },
-  tipIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  tipText: {
-    flex: 1,
-    fontSize: 12,
-    fontFamily: 'Poppins_400Regular',
-  },
+  statContent: { flex: 1 },
+  statLabelRow: { flexDirection: 'row', alignItems: 'center', marginTop: -2 },
+  section: { gap: 16 },
+  quickAccessBar: { borderRadius: 20, overflow: 'hidden' },
+  quickAccessButtons: { flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
+  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  displayCardGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  displayCard: { borderRadius: 20, overflow: 'hidden', minHeight: 180 },
+  displayCardImage: { height: 90, backgroundColor: 'rgba(0,0,0,0.03)' },
+  statusBadge: { position: 'absolute', top: 8, left: 8, paddingHorizontal: 6, paddingVertical: 3, borderRadius: 4, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' },
+  displayCardBody: { padding: 12, gap: 4 },
+  displayCardFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 },
+  miniMetric: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  cardActions: { flexDirection: 'row', gap: 4 },
+  smallIconBtn: { minWidth: 32, minHeight: 32, padding: 0 },
+  emptyBox: { borderRadius: 20, borderWidth: 1.5, borderStyle: 'dashed', padding: 32, alignItems: 'center', gap: 8 },
+  compactTip: { flexDirection: 'row', alignItems: 'center', padding: 12, borderRadius: 16, gap: 12 },
+  tipIcon: { width: 32, height: 32, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
 });

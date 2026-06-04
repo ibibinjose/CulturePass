@@ -71,7 +71,7 @@ import {
 // Types
 // ---------------------------------------------------------------------------
 
-export type EntityType = 'community' | 'organiser' | 'venue' | 'business' | 'artist' | 'professional';
+export type EntityType = 'community' | 'organiser' | 'venue' | 'business' | 'artist' | 'professional' | 'organizer';
 
 export interface FormWizardState {
   // Navigation
@@ -170,7 +170,9 @@ function getTotalSteps(entityType: EntityType): number {
  * Get local storage key for draft
  */
 function getDraftStorageKey(userId: string | null, entityType: EntityType): string {
-  return `${DRAFT_STORAGE_PREFIX}:${userId ?? 'guest'}:${entityType}`;
+  // Normalize organizer/organiser for storage keys
+  const type = entityType === 'organizer' ? 'organiser' : entityType;
+  return `${DRAFT_STORAGE_PREFIX}:${userId ?? 'guest'}:${type}`;
 }
 
 /**
@@ -433,9 +435,10 @@ export function useFormWizard({
           }
         }
         // Phase 1 Business Migration Enhancement: Smart pre-fill from authenticated user profile
-        else if (user && ['business', 'venue', 'artist', 'professional', 'organiser'].includes(entityType)) {
+        else if (user && ['business', 'venue', 'artist', 'professional', 'organiser', 'organizer'].includes(entityType)) {
+
           // Transform user.socialLinks (Record<string, string>) to HostProfile socialLinks (Array<SocialLink>)
-          const socialLinksArray: Array<{ platform: string; url: string; verified: boolean }> = [];
+          const socialLinksArray: { platform: string; url: string; verified: boolean }[] = [];
           if (user.socialLinks) {
             Object.entries(user.socialLinks).forEach(([platform, url]) => {
               if (url && typeof url === 'string') {

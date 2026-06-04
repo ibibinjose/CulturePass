@@ -8,8 +8,6 @@ import { router } from 'expo-router';
 import Animated, { FadeInDown, FadeInUp, useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { modulesApi } from '@/modules/api';
@@ -26,6 +24,8 @@ import { Skeleton } from '@/design-system/ui/Skeleton';
 import { CultureTokens, FontFamily, TextStyles, CardTokens } from '@/design-system/tokens/theme';
 import { createLabCategoryHref } from '@/constants/navigation/createNav';
 import type { ActivityData } from '@/shared/schema';
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 const isWeb = Platform.OS === 'web';
 

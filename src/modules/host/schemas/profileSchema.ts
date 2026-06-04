@@ -72,7 +72,14 @@ export const urlSchema = z
 export const imageUrlSchema = z
   .string()
   .url('Invalid image URL')
-  .refine((url) => /\.(jpg|jpeg|png|webp|gif)$/i.test(url), 'Image must be JPG, PNG, WebP, or GIF');
+  .refine(
+    (url) => {
+      // For Firebase Storage URLs and others with query params, check the path part
+      const path = url.split('?')[0].split('#')[0];
+      return /\.(jpg|jpeg|png|webp|gif)$/i.test(path);
+    },
+    'Image must be JPG, PNG, WebP, or GIF'
+  );
 
 /**
  * ABN validation: 11 digits with checksum

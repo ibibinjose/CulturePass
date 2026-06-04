@@ -263,6 +263,7 @@ function getEntityDisplayLabel(entityType: EntityType): string {
   const map: Record<EntityType, string> = {
     community: 'community',
     organiser: 'organiser',
+    organizer: 'organiser',
     venue: 'venue',
     business: 'business',
     artist: 'artist',
@@ -270,6 +271,7 @@ function getEntityDisplayLabel(entityType: EntityType): string {
   };
   return map[entityType] || 'profile';
 }
+
 
 const styles = StyleSheet.create({
   container: {

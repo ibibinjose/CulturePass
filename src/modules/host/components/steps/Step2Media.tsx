@@ -25,11 +25,13 @@ import {
 } from 'react-native';
 import { useColors } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
+import { useAuth } from '@/lib/auth';
 import { Luxe } from '@/design-system/tokens/luxeHeritage';
 import { FontFamily, Radius, Spacing } from '@/design-system/tokens/theme';
 import { MediaUploadField } from '../fields/MediaUploadField';
 import type { EntityType } from '../../hooks/useFormWizard';
 import type { PartialFormData } from '../../services/formStateSerializer';
+
 
 /**
  * Props for Step2Media (subset of WizardStepProps without 'step')
@@ -65,10 +67,14 @@ export function Step2Media({
   const colors = useColors();
   const { isDesktop } = useLayout();
 
+  const { user } = useAuth();
+
   // Generate storage path for uploads
+  // For new profiles (drafts), use a user-scoped temp directory to satisfy security rules
   const storagePath = formData.id
     ? `profiles/${formData.id}`
-    : `profiles/temp-${Date.now()}`;
+    : `profiles/temp-${user?.id || 'anonymous'}-${Date.now()}`;
+
 
   // ---------------------------------------------------------------------------
   // Handlers

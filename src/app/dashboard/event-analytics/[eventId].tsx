@@ -2,12 +2,14 @@ import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useLocalSearchParams, router, Stack } from 'expo-router';
 import { EventAnalyticsDashboard } from '@/modules/events/components/EventAnalyticsDashboard';
-import { useColors } from '@/hooks/useColors';
+import { useColors, useIsDark } from '@/hooks/useColors';
 import { M3TopAppBar } from '@/design-system/ui/M3TopAppBar';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function EventAnalyticsScreen() {
   const { eventId } = useLocalSearchParams<{ eventId: string }>();
   const colors = useColors();
+  const isDark = useIsDark();
 
   if (!eventId) return null;
 
@@ -17,6 +19,10 @@ export default function EventAnalyticsScreen() {
         options={{
           headerShown: false,
         }}
+      />
+      <LinearGradient
+        colors={isDark ? ['#0C0A09', '#1C1917'] : ['#FAF9F6', '#F5F1EE']}
+        style={StyleSheet.absoluteFill}
       />
       <M3TopAppBar
         title="Event Analytics"

@@ -215,6 +215,9 @@ function RootLayoutNav() {
     const mainStyle = [webStyles.mainFlex, webStyles.mainFlexDesktop];
     return (
       <View style={{ flex: 1, flexDirection: 'column' }}>
+        <React.Suspense fallback={null}>
+          <NavigationMetadata />
+        </React.Suspense>
         <View
           style={[
             webStyles.outerContainer,

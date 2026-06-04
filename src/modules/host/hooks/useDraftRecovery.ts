@@ -129,9 +129,10 @@ export function useDraftRecovery({
       });
     },
     enabled,
-    staleTime: 0, // Always fetch fresh drafts
-    gcTime: 0, // Don't cache drafts
+    staleTime: 5000, // Keep fresh for 5 seconds to avoid spamming refetches during rapid edits
+    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
   });
+
 
   // Show recovery modal if drafts exist and autoShow is enabled
   useEffect(() => {

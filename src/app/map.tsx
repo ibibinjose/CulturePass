@@ -6,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { Luxe } from '@/design-system/tokens/luxeHeritage';
-import { FontFamily, Radius } from '@/design-system/tokens/theme';
+import { FontFamily, Radius, Spacing } from '@/design-system/tokens/theme';
 import { LuxeText, LuxeButton, LuxeCard, LuxeFilterChip, M3TopAppBar, Button } from '@/design-system/ui';
 import { modulesApi } from '@/modules/api';
 import { useState, useMemo } from 'react';
@@ -14,7 +14,7 @@ import * as Haptics from 'expo-haptics';
 import { NativeMapView } from '@/modules/core/components';
 import type { EventData } from '@/shared/schema';
 import { getPostcodesByPlace } from '@shared/location/australian-postcodes';
-import { useColors } from '@/hooks/useColors';
+import { useColors, useIsDark } from '@/hooks/useColors';
 import { useOnboarding } from '@/contexts/OnboardingContext';
 import { useLayout } from '@/hooks/useLayout';
 import { isIndigenousEvent } from '@/lib/indigenous';
@@ -79,7 +79,7 @@ function WebCityList({
   onClearFilters: () => void;
 }) {
   const selectedEvents = selectedCity ? (cityGroups[selectedCity]?.events || []) : [];
-  const allEventsSorted = useMemo(() => 
+  const allEventsSorted = useMemo(() =>
     groupEntries
       .flatMap((group) => group[1].events)
       .sort((a, b) => toSortableDate(a.date, a.time) - toSortableDate(b.date, b.time)),
@@ -97,14 +97,14 @@ function WebCityList({
         showsVerticalScrollIndicator={false}
       >
         {selectedCity && (
-          <GlassView style={{ marginBottom: 20 }} contentStyle={{ padding: 20, gap: 12 }}>
+          <GlassView style={{ marginBottom: 20, borderRadius: 20 }} contentStyle={{ padding: 20, gap: 12 }}>
             <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 24, fontFamily: FontFamily.bold, color: colors.text }}>{selectedCity}</Text>
-              <Text style={{ fontSize: 15, fontFamily: FontFamily.medium, color: colors.textSecondary }}>{selectedEvents.length} upcoming events</Text>
+              <LuxeText variant="title" style={{ color: colors.text }}>{selectedCity}</LuxeText>
+              <LuxeText variant="body" style={{ color: colors.textSecondary }}>{selectedEvents.length} upcoming events</LuxeText>
             </View>
             <View style={{ flexDirection: 'row', gap: 10 }}>
-              <Button variant="primary" size="sm" style={{ flex: 1 }} leftIcon="navigate" onPress={() => onOpenSystemMap(selectedCity)}>Maps</Button>
-              <Button variant="outline" size="sm" style={{ flex: 1 }} onPress={() => onSelectCity(null)}>Clear</Button>
+              <LuxeButton variant="filled" size="sm" style={{ flex: 1 }} leftIcon="navigate" onPress={() => onOpenSystemMap(selectedCity)}>Maps</LuxeButton>
+              <LuxeButton variant="tonal" size="sm" style={{ flex: 1 }} onPress={() => onSelectCity(null)}>Clear</LuxeButton>
             </View>
           </GlassView>
         )}
@@ -112,18 +112,18 @@ function WebCityList({
         {groupEntries.length === 0 || visibleEvents.length === 0 ? (
           <View style={{ alignItems: 'center', paddingTop: 80, gap: 16 }}>
             <Ionicons name="calendar-clear" size={48} color={colors.textTertiary} />
-            <Text style={{ fontSize: 18, fontFamily: FontFamily.bold, color: colors.text }}>No events found</Text>
-            <Button variant="outline" onPress={onClearFilters}>Reset Search</Button>
+            <LuxeText variant="title3" style={{ color: colors.text }}>No events found</LuxeText>
+            <LuxeButton variant="tonal" onPress={onClearFilters}>Reset Search</LuxeButton>
           </View>
         ) : (
           <>
-            <Text style={{ fontSize: 20, fontFamily: FontFamily.bold, color: colors.text, marginBottom: 16, marginLeft: 4 }}>
-              {selectedCity ? 'Local Results' : 'All Upcoming'}
-            </Text>
+            <LuxeText variant="badgeCaps" style={{ color: colors.textTertiary, marginBottom: 16, marginLeft: 4 }}>
+              {selectedCity ? 'LOCAL RESULTS' : 'ALL UPCOMING'}
+            </LuxeText>
 
             <View style={{ gap: 12 }}>
               {visibleEvents.map((event) => (
-                <GlassView key={event.id} contentStyle={{ padding: 0 }}>
+                <GlassView key={event.id} contentStyle={{ padding: 0, borderRadius: 16, overflow: 'hidden' }}>
                     <Pressable
                         style={({ pressed }) => [{ flexDirection: 'row', alignItems: 'stretch' }, pressed && { opacity: 0.9, transform: [{ scale: 0.99 }] }]}
                         onPress={() => onEventPress(event.id)}
@@ -137,16 +137,16 @@ function WebCityList({
                         )}
 
                         <View style={{ flex: 1, padding: 14, gap: 6, justifyContent: 'center' }}>
-                            <Text style={{ fontSize: 11, fontFamily: FontFamily.bold, color: colors.primary }}>{formatDate(event.date).toUpperCase()}</Text>
-                            <Text style={{ fontSize: 16, fontFamily: FontFamily.bold, color: colors.text }} numberOfLines={2}>
+                            <LuxeText variant="badgeCaps" style={{ color: colors.primary, fontSize: 10 }}>{formatDate(event.date)}</LuxeText>
+                            <LuxeText variant="bodyMedium" style={{ color: colors.text }} numberOfLines={2}>
                                 {event.title}
-                            </Text>
+                            </LuxeText>
                             {event.venue && (
                                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                                     <Ionicons name="location-outline" size={12} color={colors.textTertiary} />
-                                    <Text style={{ fontSize: 12, fontFamily: FontFamily.medium, color: colors.textSecondary }} numberOfLines={1}>
+                                    <LuxeText variant="caption" style={{ color: colors.textSecondary }} numberOfLines={1}>
                                         {event.venue}
-                                    </Text>
+                                    </LuxeText>
                                 </View>
                             )}
                         </View>
@@ -163,6 +163,7 @@ function WebCityList({
 
 export default function MapScreen() {
   const colors = useColors();
+  const isDark = useIsDark();
   const goBack = useSafeBack();
   const insets = useSafeAreaInsets();
   const isWeb = Platform.OS === 'web';
@@ -246,6 +247,10 @@ export default function MapScreen() {
       <NavigationMetadata />
       <Stack.Screen options={{ headerShown: false }} />
       <LinearGradient
+        colors={isDark ? ['#0C0A09', '#1C1917'] : ['#FAF9F6', '#F5F1EE']}
+        style={StyleSheet.absoluteFill}
+      />
+      <LinearGradient
         colors={[`${colors.primary}08`, 'transparent']}
         style={StyleSheet.absoluteFill}
         pointerEvents="none"
@@ -294,9 +299,9 @@ export default function MapScreen() {
       ) : isError ? (
         <View style={styles.centered}>
           <Ionicons name="cloud-offline-outline" size={48} color={colors.textTertiary} />
-          <Text style={[styles.errorText, { color: colors.textSecondary }]}>Could not load map events</Text>
+          <LuxeText variant="body" style={{ color: colors.textSecondary }}>Could not load map events</LuxeText>
           <Pressable onPress={() => refetch()} style={[styles.retryBtn, { backgroundColor: colors.primarySoft, borderColor: colors.primary + '30' }]}>
-            <Text style={{ color: colors.primary, fontSize: 14, fontFamily: FontFamily.semibold }}>Retry</Text>
+            <LuxeText variant="bodyMedium" style={{ color: colors.primary }}>Retry</LuxeText>
           </Pressable>
         </View>
       ) : Platform.OS === 'web' ? (
@@ -357,9 +362,7 @@ const styles = StyleSheet.create({
   header: { paddingBottom: 2, zIndex: 10 },
   headerContent: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   headerTitleBlock: { flex: 1, alignItems: 'center' },
-  headerTitle: { fontSize: 20, fontFamily: FontFamily.bold, letterSpacing: -0.5 },
-  headerSubtitle: { fontSize: 10, fontFamily: FontFamily.bold, letterSpacing: 1.5, opacity: 0.8 },
-  headBtn: { width: 40, height: 40, borderRadius: 12, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  backBtn: { width: 44, height: 44, borderRadius: 14, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
 
   searchField: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, height: 40, borderRadius: 12, gap: 10 },
   searchInput: { flex: 1, height: '100%' },
@@ -368,6 +371,6 @@ const styles = StyleSheet.create({
   countBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6, minWidth: 22, alignItems: 'center' },
 
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16 },
-  errorText: { fontSize: 15, fontFamily: FontFamily.medium, textAlign: 'center' },
   retryBtn: { paddingHorizontal: 24, paddingVertical: 10, borderRadius: 12, borderWidth: 1 },
 });
+

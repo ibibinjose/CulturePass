@@ -93,11 +93,13 @@ function getStepLabels(entityType: EntityType): string[] {
   const displayNames: Record<EntityType, string> = {
     community: 'Community',
     organiser: 'Organiser',
+    organizer: 'Organiser',
     venue: 'Venue',
     business: 'Business',
     artist: 'Artist',
     professional: 'Professional',
   };
+
   const typeName = displayNames[entityType] || entityType;
   const base = [
     `${typeName} Profile`,
@@ -161,6 +163,14 @@ export function WizardContainer({
     enabled: !draftId && !profileId, // Only fetch drafts if not already loading
   });
 
+  const handleOnInitialized = useCallback(() => {
+    if (__DEV__) console.log('[WizardContainer] Form initialized');
+  }, []);
+
+  const handleOnPublishSuccess = useCallback((id: string) => {
+    onPublishSuccess?.(id);
+  }, [onPublishSuccess]);
+
   // ---------------------------------------------------------------------------
   // Form Wizard State
   // ---------------------------------------------------------------------------
@@ -169,12 +179,8 @@ export function WizardContainer({
     entityType,
     profileId,
     draftId,
-    onPublishSuccess: (id) => {
-      onPublishSuccess?.(id);
-    },
-    onInitialized: () => {
-      if (__DEV__) console.log('[WizardContainer] Form initialized');
-    },
+    onPublishSuccess: handleOnPublishSuccess,
+    onInitialized: handleOnInitialized,
   });
 
   // ---------------------------------------------------------------------------
@@ -445,7 +451,12 @@ export function WizardContainer({
     [layout.isDesktop]
   );
 
-  if (wizard.isInitializing || wizard.isLoadingDraft || wizard.isLoadingProfile || draftRecovery.isLoading) {
+  // We only show a blocking loading state during initial load of the requested resource (draft/profile)
+  // or until the wizard hook has finished its initialization.
+  // We do NOT block on draftRecovery.isLoading because that's a background fetch for other drafts.
+  const isBlocking = wizard.isInitializing || wizard.isLoadingDraft || wizard.isLoadingProfile;
+
+  if (isBlocking) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.loadingContainer}>
@@ -457,6 +468,7 @@ export function WizardContainer({
       </View>
     );
   }
+
 
   // ---------------------------------------------------------------------------
   // Render

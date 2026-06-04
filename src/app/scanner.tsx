@@ -9,14 +9,15 @@ import {
   StyleSheet,
   TextInput,
 } from 'react-native';
-import { Stack , router } from 'expo-router';
+import { Stack, router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
 
 import { goBackOrReplace } from '@/lib/navigation';
 import { useLayout } from '@/hooks/useLayout';
-import { useColors } from '@/hooks/useColors';
+import { useColors, useIsDark } from '@/hooks/useColors';
 import { useRole } from '@/hooks/useRole';
 import { useContacts } from '@/contexts/ContactsContext';
 import { modulesApi } from '@/modules/api';
@@ -25,7 +26,10 @@ import { captureEvent } from '@/lib/analytics';
 import { useCameraPermissions } from 'expo-camera';
 import { AuthGuard } from '@/modules/core/auth/AuthGuard';
 import { M3TopAppBar } from '@/design-system/ui/M3TopAppBar';
-import { FontFamily, Radius } from '@/design-system/tokens/theme';
+import { LuxeText } from '@/design-system/ui/LuxeText';
+import { GlassView } from '@/design-system/ui/GlassView';
+import { Luxe } from '@/design-system/tokens/luxeHeritage';
+import { FontFamily, Radius, Spacing } from '@/design-system/tokens/theme';
 import { ScannerQuickNavBar, scannerScrollBottomPad } from '@/components/scanner/ScannerQuickNavBar';
 import { NavigationMetadata } from '@/components/NavigationMetadata';
 
@@ -59,6 +63,7 @@ export default function ScannerScreen() {
   const showQuickNav = !(isWeb && isDesktop);
   const scrollBottomPad = scannerScrollBottomPad(showQuickNav, bottomInset);
   const colors = useColors();
+  const isDark = useIsDark();
 
   const [mode, setMode] = useState<ScanMode>('culturepass');
   const [cameraActive, setCameraActive] = useState(false);
@@ -307,6 +312,11 @@ export default function ScannerScreen() {
       >
         <Stack.Screen options={{ headerShown: false }} />
 
+        <LinearGradient
+            colors={isDark ? ['#0C0A09', '#1C1917'] : ['#FAF9F6', '#F5F1EE']}
+            style={StyleSheet.absoluteFill}
+        />
+
         <M3TopAppBar
           title={mode === 'tickets' ? 'Gate check-in' : 'ID scanner'}
           onBack={() => goBackOrReplace('/(tabs)')}
@@ -329,14 +339,14 @@ export default function ScannerScreen() {
           ]}
         >
           <View style={styles.intro}>
-            <Text style={[styles.introTitle, { color: colors.text }]}>
+            <LuxeText variant="title" style={{ color: colors.text }}>
               {mode === 'tickets' ? 'Validate tickets' : 'Look up members'}
-            </Text>
-            <Text style={[styles.introSub, { color: colors.textSecondary }]}>
+            </LuxeText>
+            <LuxeText variant="body" style={{ color: colors.textSecondary }}>
               {mode === 'tickets'
                 ? 'Scan QR codes at the door or enter a ticket code.'
                 : 'Scan a member QR or enter their CulturePass ID.'}
-            </Text>
+            </LuxeText>
           </View>
 
           <ScannerModeTabs
@@ -350,9 +360,9 @@ export default function ScannerScreen() {
           />
 
           {mode === 'tickets' && (
-            <View style={styles.statsWrap}>
+            <GlassView intensity={10} style={styles.statsGlass}>
               <ScannerSessionStrip session={session} durationLabel={sessionDuration} />
-            </View>
+            </GlassView>
           )}
 
           {showPermission && <ScannerPermissionPrompt onRequestPermission={() => void ensureCameraPermission()} />}
@@ -430,15 +440,11 @@ const styles = StyleSheet.create({
   fullscreenRoot: { flex: 1, backgroundColor: '#000' },
   scroll: { paddingTop: 8, gap: 16 },
   intro: { gap: 4, paddingTop: 4 },
-  introTitle: {
-    fontSize: 22,
-    fontFamily: FontFamily.bold,
-    letterSpacing: -0.4,
+  statsGlass: {
+    borderRadius: Radius.lg,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.05)',
   },
-  introSub: {
-    fontSize: 15,
-    fontFamily: FontFamily.regular,
-    lineHeight: 22,
-  },
-  statsWrap: { marginTop: -4 },
 });
+

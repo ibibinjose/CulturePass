@@ -13,41 +13,49 @@ import {
   ScrollView,
   StyleSheet,
   TouchableOpacity,
+  Platform,
 } from 'react-native';
 import { router } from 'expo-router';
 import Head from 'expo-router/head';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useM3Colors } from '@/hooks/useM3Colors';
-import { useColors } from '@/hooks/useColors';
+import { LinearGradient } from 'expo-linear-gradient';
+
+import { useColors, useIsDark } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
-import { M3Button, M3Card } from '@/design-system/ui';
-import { M3Typography, Radius } from '@/design-system/tokens/theme';
+import { LuxeText } from '@/design-system/ui/LuxeText';
+import { LuxeButton } from '@/design-system/ui/LuxeButton';
+import { GlassView } from '@/design-system/ui/GlassView';
+import { Luxe, luxeDark, LuxeTextStyles } from '@/design-system/tokens/luxeHeritage';
+import { CultureTokens, FontFamily, Radius, Spacing } from '@/design-system/tokens/theme';
 import { APP_NAME } from '@/lib/app-meta';
 
 const NATION_BUILDERS_HEAD_TITLE = `Nation Builders Program · ${APP_NAME}`;
-const NATION_BUILDERS_HEAD_DESC = 
+const NATION_BUILDERS_HEAD_DESC =
   'Nation Builders is CulturePass.App\'s initiative to recognize and reward the essential people who keep Sydney running.';
 
 export default function NationBuildersProgramScreen() {
-  const m3Colors = useM3Colors();
   const colors = useColors();
-  const { hPad } = useLayout();
+  const isDark = useIsDark();
+  const { hPad, isDesktop, isTablet } = useLayout();
   const insets = useSafeAreaInsets();
 
   const handleJoinPress = () => {
-    // Primary CTA for businesses (acquisition) — send to host creation with Nation Builder Partner intent.
-    // This is the key entry point for bringing venues/businesses onto the platform.
     router.push('/hostspace/create?intent=nation-builder' as any);
   };
 
   const handleStaffClaim = () => {
-    // Staff / essential worker path — go to the membership upgrade flow to redeem code
     router.push('/membership/upgrade' as any);
   };
 
   const handleBackPress = () => {
     router.back();
+  };
+
+  const pageCol = {
+    width: '100%' as const,
+    maxWidth: 800,
+    alignSelf: 'center' as const,
   };
 
   return (
@@ -59,138 +67,158 @@ export default function NationBuildersProgramScreen() {
         <meta property="og:description" content={NATION_BUILDERS_HEAD_DESC} />
         <meta name="twitter:card" content="summary_large_image" />
       </Head>
-      
-      <ScrollView 
-        contentContainerStyle={{ 
-          paddingTop: insets.top + 16, 
-          paddingBottom: insets.bottom + 16,
-          paddingHorizontal: hPad,
-          flexGrow: 1 
+
+      <ScrollView
+        contentContainerStyle={{
+          paddingBottom: insets.bottom + 40,
         }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header Section */}
-        <View style={[styles.header, { marginBottom: 24 }]}>
-          <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={m3Colors.onSurface} />
-          </TouchableOpacity>
-          
-          <View style={styles.hero}>
-            <View style={[styles.badge, { backgroundColor: m3Colors.primaryContainer }]}>
-              <Text style={[styles.badgeText, { color: m3Colors.onPrimaryContainer }]}>
-                NATION BUILDERS
-              </Text>
-            </View>
-            
-            <Text style={[styles.heroTitle, { color: m3Colors.onSurface }]}>
-              You serve Sydney. Now let Sydney serve you back.
-            </Text>
-            
-            <Text style={[styles.heroSubtitle, { color: m3Colors.onSurfaceVariant }]}>
+        {/* ── Hero Section ────────────────────────────────────────────── */}
+        <View style={[styles.hero, { paddingTop: insets.top + 16, paddingHorizontal: hPad }]}>
+          <LinearGradient
+            colors={['#0F0B1A', '#2E0052', '#000000']}
+            style={StyleSheet.absoluteFill}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          />
+          <LinearGradient
+            colors={[Luxe.colors.terracotta + '33', 'transparent']}
+            style={StyleSheet.absoluteFill}
+          />
+
+          <View style={[styles.headerNav, pageCol]}>
+            <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
+              <GlassView style={styles.backGlass}>
+                <Ionicons name="arrow-back" size={20} color="#fff" />
+              </GlassView>
+            </TouchableOpacity>
+          </View>
+
+          <View style={[styles.heroContent, pageCol]}>
+            <GlassView intensity={20} style={styles.badge}>
+              <LuxeText variant="badgeCaps" style={{ color: Luxe.colors.terracotta }}>NATION BUILDERS</LuxeText>
+            </GlassView>
+
+            <LuxeText variant="displayHero" style={styles.heroTitle}>
+              You serve Sydney.{'\n'}Now let Sydney serve you back.
+            </LuxeText>
+
+            <LuxeText variant="body" style={styles.heroSubtitle}>
               The hands that keep Sydney alive deserve front-row seats to its culture.
-            </Text>
+            </LuxeText>
+
+            <View style={styles.heroCtas}>
+              <LuxeButton variant="filled" onPress={handleJoinPress} style={{ flex: 1 }}>
+                Partner with us
+              </LuxeButton>
+              <LuxeButton variant="glass" onPress={handleStaffClaim} style={{ flex: 1 }}>
+                Claim 50% discount
+              </LuxeButton>
+            </View>
           </View>
         </View>
 
-        {/* Program Overview Card */}
-        <M3Card variant="elevated" style={[styles.card, { marginBottom: 16 }]}>
-          <Text style={[styles.sectionTitle, { color: m3Colors.onSurface }]}>
-            Program Overview
-          </Text>
-          <Text style={[styles.description, { color: m3Colors.onSurfaceVariant }]}>
-            Nation Builders is CulturePass.App&apos;s initiative to recognise and reward the essential people who keep Sydney running — hospitality staff, retail teams, customer service, cleaners, security, transport workers, and more.
-          </Text>
-          <Text style={[styles.description, { color: m3Colors.onSurfaceVariant, marginTop: 8 }]}>
-            You serve our city every day. Now it&apos;s time for the city to give back.
-          </Text>
-        </M3Card>
+        <View style={{ paddingHorizontal: hPad, paddingTop: 32 }}>
+          <View style={pageCol}>
+            {/* Program Overview */}
+            <View style={styles.section}>
+              <LuxeText variant="title2" style={{ color: colors.text, marginBottom: 12 }}>Program Overview</LuxeText>
+              <LuxeText variant="body" style={{ color: colors.textSecondary }}>
+                Nation Builders is CulturePass.App&apos;s initiative to recognise and reward the essential people who keep Sydney running — hospitality staff, retail teams, customer service, cleaners, security, transport workers, and more.
+              </LuxeText>
+              <LuxeText variant="body" style={{ color: colors.textSecondary, marginTop: 8 }}>
+                You serve our city every day. Now it&apos;s time for the city to give back.
+              </LuxeText>
+            </View>
 
-        {/* What Nation Builders Receive Card */}
-        <M3Card variant="elevated" style={[styles.card, { marginBottom: 16 }]}>
-          <Text style={[styles.sectionTitle, { color: m3Colors.onSurface }]}>
-            What Nation Builders Receive with CulturePass+
-          </Text>
-          <View style={styles.bulletList}>
-            {[
-              'CulturePass+ Membership for $69/year (50% off for staff of partner businesses)',
-              '$100+ in value back every year through exclusive offers and experiences',
-              'Priority and discounted tickets to festivals, performances, workshops, and community gatherings',
-              'Exclusive access to off-peak cultural events (mid-week, daytime, quieter sessions)',
-              'Nation Builder badge on their profile',
-              'Quarterly cultural challenges + recognition stories',
-              'Birthday Gifts to claim every year',
-              'Annual Nation Builders celebration event'
-            ].map((item, index) => (
-              <View key={index} style={styles.bulletItem}>
-                <Ionicons name="checkmark-circle" size={16} color={m3Colors.primary} />
-                <Text style={[styles.bulletText, { color: m3Colors.onSurfaceVariant, marginLeft: 8 }]}>
-                  {item}
-                </Text>
+            {/* What Staff Receive */}
+            <GlassView style={styles.infoCard} contentStyle={{ padding: 24 }}>
+              <View style={styles.cardHeader}>
+                <View style={[styles.cardIcon, { backgroundColor: Luxe.colors.terracotta + '22' }]}>
+                  <Ionicons name="star" size={20} color={Luxe.colors.terracotta} />
+                </View>
+                <LuxeText variant="title3" style={{ color: colors.text }}>For Staff & Essential Workers</LuxeText>
               </View>
-            ))}
-          </View>
-          <Text style={[styles.note, { color: m3Colors.onSurfaceVariant, marginTop: 12 }]}>
-            Less than $1.35 a week for meaningful access to culture that fits around your roster.
-          </Text>
-        </M3Card>
 
-        {/* What Partner Businesses Receive Card */}
-        <M3Card variant="elevated" style={[styles.card, { marginBottom: 16 }]}>
-          <Text style={[styles.sectionTitle, { color: m3Colors.onSurface }]}>
-            What Partner Businesses Receive
-          </Text>
-          <View style={styles.bulletList}>
-            {[
-              'Free listing on CulturePass',
-              'Staff CulturePass+ perk as a powerful retention and recruitment tool',
-              'Ability to fill quiet hours with engaged CulturePass members',
-              'Increased visibility within Sydney\'s multicultural communities',
-              'Positive brand association with social impact'
-            ].map((item, index) => (
-              <View key={index} style={styles.bulletItem}>
-                <Ionicons name="checkmark-circle" size={16} color={m3Colors.primary} />
-                <Text style={[styles.bulletText, { color: m3Colors.onSurfaceVariant, marginLeft: 8 }]}>
-                  {item}
-                </Text>
+              <View style={styles.bulletList}>
+                {[
+                  'CulturePass+ Membership for $69/year (50% off)',
+                  '$100+ in value back every year through exclusive offers',
+                  'Priority and discounted tickets to festivals and performances',
+                  'Exclusive access to off-peak cultural events',
+                  'Nation Builder badge on your profile',
+                  'Annual Nation Builders celebration event',
+                ].map((item, index) => (
+                  <View key={index} style={styles.bulletItem}>
+                    <Ionicons name="checkmark-circle" size={18} color={Luxe.colors.emerald} />
+                    <LuxeText variant="body" style={{ color: colors.textSecondary, marginLeft: 10, flex: 1 }}>{item}</LuxeText>
+                  </View>
+                ))}
               </View>
-            ))}
+
+              <View style={styles.cardFooter}>
+                <LuxeText variant="caption" style={{ color: colors.textTertiary, fontStyle: 'italic' }}>
+                  Less than $1.35 a week for meaningful access to culture that fits around your roster.
+                </LuxeText>
+              </View>
+            </GlassView>
+
+            {/* What Partners Receive */}
+            <GlassView style={styles.infoCard} contentStyle={{ padding: 24 }}>
+              <View style={styles.cardHeader}>
+                <View style={[styles.cardIcon, { backgroundColor: Luxe.colors.emerald + '22' }]}>
+                  <Ionicons name="business" size={20} color={Luxe.colors.emerald} />
+                </View>
+                <LuxeText variant="title3" style={{ color: colors.text }}>For Partner Businesses</LuxeText>
+              </View>
+
+              <View style={styles.bulletList}>
+                {[
+                  'Free listing on CulturePass',
+                  'Staff CulturePass+ perk for retention and recruitment',
+                  'Fill quiet hours with engaged members',
+                  'Increased visibility within Sydney\'s multicultural communities',
+                  'Positive brand association with social impact',
+                ].map((item, index) => (
+                  <View key={index} style={styles.bulletItem}>
+                    <Ionicons name="checkmark-circle" size={18} color={Luxe.colors.emerald} />
+                    <LuxeText variant="body" style={{ color: colors.textSecondary, marginLeft: 10, flex: 1 }}>{item}</LuxeText>
+                  </View>
+                ))}
+              </View>
+            </GlassView>
+
+            {/* How to Join */}
+            <View style={styles.section}>
+              <LuxeText variant="title2" style={{ color: colors.text, marginBottom: 12 }}>How to Join</LuxeText>
+              <View style={styles.joinStep}>
+                <LuxeText variant="bodyMedium" style={{ color: colors.text }}>For Businesses:</LuxeText>
+                <LuxeText variant="body" style={{ color: colors.textSecondary }}>
+                  Apply to become a Partner. Your staff will get 50% off CulturePass+ and you&apos;ll get powerful retention tools.
+                </LuxeText>
+              </View>
+              <View style={[styles.joinStep, { marginTop: 16 }]}>
+                <LuxeText variant="bodyMedium" style={{ color: colors.text }}>For Staff:</LuxeText>
+                <LuxeText variant="body" style={{ color: colors.textSecondary }}>
+                  Once your workplace is a partner, use the code they provide to unlock your discount and badge.
+                </LuxeText>
+              </View>
+            </View>
+
+            {/* Final CTA */}
+            <View style={styles.footerCtas}>
+              <LuxeButton variant="filled" size="lg" onPress={handleJoinPress}>
+                Register your business
+              </LuxeButton>
+              <LuxeButton variant="tonal" size="lg" onPress={handleStaffClaim}>
+                I&apos;m staff — Claim my discount
+              </LuxeButton>
+              <LuxeText variant="caption" style={styles.hashtagText}>
+                #NationBuilders #CulturePass #SydneyCulture #ServeAndBelong
+              </LuxeText>
+            </View>
           </View>
-        </M3Card>
-
-        {/* How to Join Card */}
-        <M3Card variant="elevated" style={[styles.card, { marginBottom: 16 }]}>
-          <Text style={[styles.sectionTitle, { color: m3Colors.onSurface }]}>
-            How to Join
-          </Text>
-          <Text style={[styles.description, { color: m3Colors.onSurfaceVariant }]}>
-            <Text style={{ fontWeight: '600' }}>For Businesses &amp; Venues:</Text> Apply to become a Nation Builder Partner. Your staff will get 50% off CulturePass+ and you&apos;ll get powerful retention + visibility tools.
-          </Text>
-          <Text style={[styles.description, { color: m3Colors.onSurfaceVariant, marginTop: 12 }]}>
-            <Text style={{ fontWeight: '600' }}>For Staff &amp; Essential Workers:</Text> Once your workplace is a partner, use the code they provide (or the claim flow) to unlock your 50% CulturePass+ discount + Nation Builder badge.
-          </Text>
-        </M3Card>
-
-        {/* CTA Section — Dual audience for acquisition + conversion */}
-        <View style={{ paddingHorizontal: hPad, marginBottom: 24, gap: 12 }}>
-          <M3Button 
-            variant="filled" 
-            onPress={handleJoinPress}
-            style={styles.ctaButton}
-          >
-            {"I'm a Business / Venue Owner — Become a Partner"}
-          </M3Button>
-
-          <M3Button 
-            variant="outlined" 
-            onPress={handleStaffClaim}
-            style={styles.ctaButton}
-          >
-            {"I'm Staff / Essential Worker — Claim My 50% Off"}
-          </M3Button>
-          
-          <Text style={[styles.hashtagText, { color: m3Colors.onSurfaceVariant, textAlign: 'center', marginTop: 16 }]}>
-            #NationBuilders #CulturePass #CulturePassPlus #ServeAndBelong #SydneyCulture #NationBuildersSydney #MulticulturalSydney
-          </Text>
         </View>
       </ScrollView>
     </View>
@@ -198,77 +226,53 @@ export default function NationBuildersProgramScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: {
+  hero: { paddingBottom: 56, overflow: 'hidden' },
+  headerNav: { marginBottom: 24 },
+  backButton: { width: 44, height: 44 },
+  backGlass: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    borderWidth: 1,
     alignItems: 'center',
-    marginBottom: 24,
+    justifyContent: 'center',
   },
-  backButton: {
-    position: 'absolute',
-    left: 0,
-    zIndex: 10,
-    padding: 8,
-    borderRadius: 20,
-  },
-  hero: {
-    alignItems: 'center',
-    maxWidth: 500,
-    alignSelf: 'center',
-  },
+  heroContent: { gap: 16 },
   badge: {
+    alignSelf: 'flex-start',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: Radius.sm,
-    marginBottom: 16,
-  },
-  badgeText: {
-    ...M3Typography.labelSmall,
-    letterSpacing: 1.5,
-    textTransform: 'uppercase',
+    borderWidth: 1,
   },
   heroTitle: {
-    ...M3Typography.headlineMedium,
-    textAlign: 'center',
-    marginBottom: 8,
-    lineHeight: 32,
+    color: '#fff',
+    letterSpacing: -1,
   },
   heroSubtitle: {
-    ...M3Typography.titleLarge,
-    textAlign: 'center',
-    lineHeight: 24,
+    color: 'rgba(255,255,255,0.7)',
+    maxWidth: 540,
+    lineHeight: 25,
   },
-  card: {
-    marginHorizontal: 0,
-    borderRadius: Radius.lg,
-    padding: 16,
-  },
-  sectionTitle: {
-    ...M3Typography.headlineSmall,
-    marginBottom: 12,
-  },
-  description: {
-    ...M3Typography.bodyMedium,
-    lineHeight: 20,
-  },
-  bulletList: {
-    gap: 8,
-  },
-  bulletItem: {
+  heroCtas: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    gap: 12,
+    marginTop: 8,
+    flexWrap: 'wrap',
   },
-  bulletText: {
-    ...M3Typography.bodyMedium,
-    flex: 1,
-    lineHeight: 20,
-  },
-  note: {
-    ...M3Typography.bodySmall,
-    fontStyle: 'italic',
-  },
-  ctaButton: {
-    width: '100%',
-  },
+  section: { marginBottom: 32 },
+  infoCard: { marginBottom: 20, borderRadius: Radius.lg, borderWidth: 1, borderColor: 'rgba(0,0,0,0.05)' },
+  cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 20 },
+  cardIcon: { width: 40, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  bulletList: { gap: 12 },
+  bulletItem: { flexDirection: 'row', alignItems: 'flex-start' },
+  cardFooter: { marginTop: 20, paddingTop: 16, borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,0.05)' },
+  joinStep: { gap: 4 },
+  footerCtas: { marginTop: 16, gap: 12 },
   hashtagText: {
-    ...M3Typography.bodySmall,
+    textAlign: 'center',
+    marginTop: 24,
+    color: 'rgba(0,0,0,0.4)',
+    letterSpacing: 0.5,
   },
 });

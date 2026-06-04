@@ -121,6 +121,7 @@ function getEntityTypeDisplayName(entityType: EntityType): string {
   const displayNames: Record<EntityType, string> = {
     community: 'Community',
     organiser: 'Event Organiser',
+    organizer: 'Event Organiser',
     venue: 'Venue',
     business: 'Business',
     artist: 'Artist',
@@ -128,6 +129,7 @@ function getEntityTypeDisplayName(entityType: EntityType): string {
   };
   return displayNames[entityType] || entityType;
 }
+
 
 /**
  * Get step description based on entity type

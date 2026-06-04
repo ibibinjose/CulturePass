@@ -33,7 +33,7 @@ import {
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-export type LuxeButtonVariant = 'filled' | 'glass' | 'tonal' | 'outlined' | 'gold' | 'plum';
+export type LuxeButtonVariant = 'filled' | 'glass' | 'tonal' | 'outlined' | 'gold' | 'plum' | 'ghost';
 export type LuxeButtonSize = 'sm' | 'md' | 'lg';
 
 interface LuxeButtonProps {
@@ -110,6 +110,13 @@ const getVariantStyles = (variant: LuxeButtonVariant, isDark: boolean) => {
         border: 'transparent',
         isGradient: true,
         gradient: [DEEP_PLUM, '#4B0082'] as [string, string],
+      };
+    case 'ghost':
+      return {
+        background: 'transparent',
+        text: c.primary,
+        border: 'transparent',
+        isGradient: false,
       };
     default:
       return {

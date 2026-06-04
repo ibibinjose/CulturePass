@@ -262,22 +262,18 @@ function useSidebarWeather(coords: { lat: number; lon: number }) {
 }
 
 function useSafeNavigation() {
-  const [pathname, setPathname] = useState('/');
-  const [isReady, setIsReady] = useState(false);
-
   const routerPathname = useOptionalPathname();
-  const navState = useOptionalRootNavigationState();
+  const [pathname, setPathname] = useState(routerPathname || '/');
 
   useEffect(() => {
-    if (navState?.key) setIsReady(true);
     if (routerPathname) {
       setPathname(routerPathname);
     } else if (typeof window !== 'undefined') {
       setPathname(window.location.pathname);
     }
-  }, [navState?.key, routerPathname]);
+  }, [routerPathname]);
 
-  return { pathname, isReady };
+  return { pathname, isReady: true };
 }
 
 function useOptionalPathname() {
@@ -394,8 +390,7 @@ function WebSidebarContent() {
 
   const navigate = useCallback((route: string) => {
     if (searchQuery) setSearchQuery('');
-    if (route.startsWith('/(tabs)')) router.navigate(route as any);
-    else router.push(route as any);
+    router.push(route as any);
   }, [searchQuery]);
 
   const filterNav = useCallback((items: NavItem[]) => {
@@ -675,7 +670,7 @@ function SidebarProfileBlock({ user, colors, isDark, friendlyRole, onNavigate, o
   const displayName = user.displayName || user.username || 'User';
 
   const publicProfileRoute = user?.id
-    ? `/user/${user.handle && user.handleStatus === 'approved' ? user.handle.toLowerCase() : (user.culturePassId || user.id)}`
+    ? `/cpu/${user.handle && user.handleStatus === 'approved' ? user.handle.toLowerCase() : (user.culturePassId || user.id)}`
     : '/profile/edit';
 
   const border = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)';

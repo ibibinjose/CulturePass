@@ -21,7 +21,7 @@ import { Stack, useLocalSearchParams, usePathname, router } from 'expo-router';
 import Head from 'expo-router/head';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
-import { QueryClientProvider, useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { queryClient } from '@/lib/query-client';
 import { api } from '@/lib/api';
@@ -1075,7 +1075,7 @@ function SwipeToReveal({
           // Snap to revealed
           Animated.spring(translateX, {
             toValue: 0,
-            useNativeDriver: true,
+            useNativeDriver: Platform.OS !== 'web',
             tension: 120,
             friction: 8,
           }).start(() => setRevealed(true));
@@ -1083,7 +1083,7 @@ function SwipeToReveal({
           // Snap back
           Animated.spring(translateX, {
             toValue: 0,
-            useNativeDriver: true,
+            useNativeDriver: Platform.OS !== 'web',
             tension: 120,
             friction: 8,
           }).start();
@@ -1247,11 +1247,7 @@ const statItemStyles = StyleSheet.create({
 });
 
 export default function UserProfilePage() {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <UserPublicScreen />
-    </QueryClientProvider>
-  );
+  return <UserPublicScreen />;
 }
 
 // ─── styles (dynamic for colors) ──────────────────────────────────────────────

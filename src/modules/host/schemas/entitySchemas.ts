@@ -37,6 +37,7 @@ import {
 export const ENTITY_TYPES = [
   'community',
   'organiser',
+  'organizer',
   'venue',
   'business',
   'artist',
@@ -71,6 +72,15 @@ export const ENTITY_TYPE_METADATA: Record<EntityType, EntityTypeMetadata> = {
   },
   organiser: {
     type: 'organiser',
+    label: 'Organiser',
+    description: 'Event producers with credentials and insurance',
+    icon: 'calendar-outline',
+    category: 'communities',
+    requiresVerification: true,
+    requiresABN: false, // Optional unless paid events
+  },
+  organizer: {
+    type: 'organizer',
     label: 'Organiser',
     description: 'Event producers with credentials and insurance',
     icon: 'calendar-outline',
@@ -147,6 +157,19 @@ export const organiserFormSchema = z.object({
 });
 
 /**
+ * Organizer complete form schema
+ */
+export const organizerFormSchema = z.object({
+  ...step1IdentitySchema.shape,
+  ...step2MediaSchema.shape,
+  ...step3LegalOrganiserSchema.shape,
+  ...step4LocationSchema.shape,
+  ...step5DescriptionSchema.shape,
+  organiserData: organiserDataSchema,
+  entityType: z.literal('organizer'),
+});
+
+/**
  * Venue complete form schema
  */
 export const venueFormSchema = z.object({
@@ -211,6 +234,8 @@ export function getEntityFormSchema(entityType: EntityType) {
       return communityFormSchema;
     case 'organiser':
       return organiserFormSchema;
+    case 'organizer':
+      return organizerFormSchema;
     case 'venue':
       return venueFormSchema;
     case 'business':
@@ -232,6 +257,7 @@ export function getEntityDataSchema(entityType: EntityType) {
     case 'community':
       return communityDataSchema;
     case 'organiser':
+    case 'organizer':
       return organiserDataSchema;
     case 'venue':
       return venueDataSchema;
@@ -255,6 +281,7 @@ export function getEntityLegalSchema(entityType: EntityType) {
     case 'venue':
       return step3LegalBusinessSchema;
     case 'organiser':
+    case 'organizer':
       return step3LegalOrganiserSchema;
     case 'professional':
       return step3LegalProfessionalSchema;
@@ -269,6 +296,7 @@ export function getEntityLegalSchema(entityType: EntityType) {
  * Get the entity-specific data field name for a given entity type
  */
 export function getEntityDataFieldName(entityType: EntityType): string {
+  if (entityType === 'organizer') return 'organiserData';
   return `${entityType}Data`;
 }
 

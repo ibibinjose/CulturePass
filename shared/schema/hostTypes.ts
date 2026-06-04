@@ -7,10 +7,12 @@ import { z } from 'zod';
 export const HostEntityTypeSchema = z.enum([
   'community',
   'organiser',
+  'organizer',
   'venue',
   'business',
   'artist',
   'professional',
 ]);
+
 
 export type HostEntityType = z.infer<typeof HostEntityTypeSchema>;

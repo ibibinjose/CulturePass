@@ -161,12 +161,13 @@ export const CategoryColors = {
  * Entity type colors — used in community/profile listings to
  * colour-code organisations, venues, artists, etc.
  */
-export type EntityType = 'event' | 'venue' | 'community' | 'organizer' | 'host' | 'festival' | 'tradition' | 'organisation' | 'council' | 'government' | 'charity' | 'business';
+export type EntityType = 'event' | 'venue' | 'community' | 'organizer' | 'organiser' | 'host' | 'festival' | 'tradition' | 'organisation' | 'council' | 'government' | 'charity' | 'business';
 export const EntityTypeColors: Record<EntityType, string> = {
   event: CultureTokens.emeraldHarmony,
   venue: CultureTokens.richIndigo,
   community: CultureTokens.heritageGold,
   organizer: CultureTokens.deepSaffron,
+  organiser: CultureTokens.deepSaffron,
   host: CultureTokens.terracottaGlow,
   festival: CultureTokens.deepSaffron,
   tradition: "#8B5CF6",

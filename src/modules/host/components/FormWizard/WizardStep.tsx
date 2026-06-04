@@ -150,6 +150,8 @@ export function WizardStep({
   onPublish,
   isPublishing,
   isSavingDraft,
+  trackUpload,
+  trackApiCall,
 }: WizardStepProps) {
   const layout = useLayout();
 
@@ -167,7 +169,10 @@ export function WizardStep({
     onPublish,
     isPublishing,
     isSavingDraft,
+    trackUpload,
+    trackApiCall,
   };
+
 
   // ---------------------------------------------------------------------------
   // Render Step Content — wrapped in responsive container

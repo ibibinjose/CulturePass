@@ -16,32 +16,32 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { useQuery } from '@tanstack/react-query';
 
-import { useColors } from '@/hooks/useColors';
+import { useColors, useIsDark } from '@/hooks/useColors';
 import { useM3Colors } from '@/hooks/useM3Colors';
 import { useLayout } from '@/hooks/useLayout';
 import { useRole } from '@/hooks/useRole';
 import { useAuth } from '@/lib/auth';
 import { api } from '@/lib/api';
-import { CultureTokens, TextStyles, M3Typography, Radius, Spacing, FontFamily } from '@/design-system/tokens/theme';
-import { M3TopAppBar, M3Card, M3Button, Skeleton, GlassView, PageContainer, CulturePassWordmark } from '@/design-system/ui';
+import { CultureTokens, FontFamily } from '@/design-system/tokens/theme';
+import { M3TopAppBar, Skeleton, GlassView, PageContainer, LuxeText, LuxeButton, LuxeCard } from '@/design-system/ui';
+import { Luxe } from '@/design-system/tokens/luxeHeritage';
 import { ErrorBoundary } from '@/modules/core/ui/ErrorBoundary';
 import { HostspaceAccessGate } from '@/modules/host/components/HostspaceAccessGate';
-import { createLazyComponent } from '@/lib/lazy';
 import { hostApi } from '@/modules/host/api';
 import { canonicalEventPath, canonicalProfilePath } from '@/lib/publicPaths';
 import { formatCompactDate } from '@/lib/format';
 import { APP_NAME, SITE_ORIGIN } from '@/lib/app-meta';
 import type { EventData, Profile, HostApplication, ShopListing } from '@/shared/schema';
-import type { ProfileDraft } from '@/platform/api/endpoints/createProfilesNamespace';
 
 // Creator Trust: Ongoing verification status visibility in HostSpace dashboard
 import { VerificationStatusBanner } from '@/modules/host/components/VerificationStatusBanner';
 import { useHostItemActions } from '@/modules/host/components/useHostItemActions';
 
-const LazyDraftRecoveryModal = createLazyComponent(() => import('@/modules/host/components/DraftRecoveryModal'), 'DraftRecoveryModal');
-const LazyHostItemActionSheet = createLazyComponent(() => import('@/modules/host/components/HostItemActionSheet'), 'HostItemActionSheet');
-const LazyCreateMenuSheet = createLazyComponent(() => import('@/modules/host/components/CreateMenuSheet'), 'CreateMenuSheet');
-const LazyUniversalShareSheet = createLazyComponent(() => import('@/modules/host/components/UniversalShareSheet'), 'UniversalShareSheet');
+// Static imports to resolve bundling issues on Web
+import { DraftRecoveryModal } from '@/modules/host/components/DraftRecoveryModal';
+import { HostItemActionSheet } from '@/modules/host/components/HostItemActionSheet';
+import { CreateMenuSheet } from '@/modules/host/components/CreateMenuSheet';
+import { UniversalShareSheet } from '@/modules/host/components/UniversalShareSheet';
 
 type HostspaceSummary = {
   events: EventData[];
@@ -83,10 +83,10 @@ const PROFILE_ICON: Record<string, keyof typeof Ionicons.glyphMap> = {
 type ProfileStatus = 'draft' | 'published' | 'pending_verification' | 'suspended';
 
 const STATUS_CONFIG: Record<ProfileStatus, { label: string; color: string }> = {
-  draft: { label: 'DRAFT', color: CultureTokens.gold },
-  published: { label: 'LIVE', color: CultureTokens.teal },
-  pending_verification: { label: 'PENDING', color: CultureTokens.violet },
-  suspended: { label: 'SUSPENDED', color: CultureTokens.coral },
+  draft: { label: 'DRAFT', color: Luxe.colors.gold },
+  published: { label: 'LIVE', color: Luxe.colors.emerald },
+  pending_verification: { label: 'PENDING', color: Luxe.colors.indigo },
+  suspended: { label: 'SUSPENDED', color: Luxe.colors.terracotta },
 };
 
 // ---------------------------------------------------------------------------
@@ -141,13 +141,13 @@ function StatCard({
 }) {
   const colors = useColors();
   return (
-    <M3Card variant="outlined" style={styles.statCard}>
+    <GlassView intensity={10} style={[styles.statCard, { borderColor: colors.borderLight, borderWidth: 1 }]}>
       <View style={[styles.statIcon, { backgroundColor: color + '16' }]}>
         <Ionicons name={icon} size={18} color={color} />
       </View>
-      <Text style={[styles.statValue, { color: colors.text }]}>{value}</Text>
-      <Text style={[styles.statLabel, { color: colors.textTertiary }]}>{label}</Text>
-    </M3Card>
+      <LuxeText variant="title3" style={{ color: colors.text }}>{value}</LuxeText>
+      <LuxeText variant="badgeCaps" style={{ color: colors.textTertiary, fontSize: 10 }}>{label}</LuxeText>
+    </GlassView>
   );
 }
 
@@ -173,12 +173,11 @@ function ProfileManageCard({
 
   return (
     <Animated.View entering={FadeInDown.delay(index * 50).springify()} style={isDesktop ? styles.cardWrapDesktop : styles.cardWrap}>
-      <M3Card
-        variant="outlined"
+      <GlassView
+        intensity={8}
         onPress={() => routeToProfile(profile)}
-        style={styles.manageCard}
-        accessibilityLabel={`${profile.name}, ${profile.entityType}, status: ${statusConfig.label}`}
-        accessibilityRole="button"
+        style={[styles.manageCard, { borderColor: colors.borderLight, borderWidth: 1 }]}
+        contentStyle={{ padding: 0 }}
       >
         <View style={styles.mediaBox}>
           {profile.coverImageUrl || profile.imageUrl || profile.avatarUrl ? (
@@ -186,18 +185,18 @@ function ProfileManageCard({
               source={{ uri: profile.coverImageUrl ?? profile.imageUrl ?? profile.avatarUrl }}
               style={StyleSheet.absoluteFill}
               contentFit="cover"
-              accessibilityLabel={`${profile.name} cover image`}
             />
           ) : (
             <View style={[StyleSheet.absoluteFill, styles.mediaFallback]}>
-              <Ionicons name={icon} size={26} color={CultureTokens.indigo} />
+              <Ionicons name={icon} size={32} color={Luxe.colors.indigo} />
             </View>
           )}
-          <View style={[styles.statusPill, { backgroundColor: statusConfig.color }]}>
-            <Text style={styles.statusText}>{statusConfig.label}</Text>
-          </View>
 
-          {/* Unified Actions Menu (Edit / Share / Analytics / Team / Delete) */}
+          <GlassView intensity={30} style={[styles.statusPill, { backgroundColor: statusConfig.color + 'CC' }]}>
+            <LuxeText variant="badgeCaps" style={{ color: '#fff', fontSize: 9 }}>{statusConfig.label}</LuxeText>
+          </GlassView>
+
+          {/* Unified Actions Menu */}
           {onActionsPress && (
             <Pressable
               onPress={(e) => {
@@ -212,26 +211,25 @@ function ProfileManageCard({
           )}
         </View>
         <View style={styles.manageBody}>
-          <Text style={[styles.cardTitle, { color: colors.text }]} numberOfLines={1}>
+          <LuxeText variant="bodyMedium" style={{ color: colors.text }} numberOfLines={1}>
             {profile.name}
-          </Text>
-          <Text style={[styles.cardMeta, { color: colors.textSecondary }]} numberOfLines={1}>
+          </LuxeText>
+          <LuxeText variant="caption" style={{ color: colors.textSecondary }} numberOfLines={1}>
             {[profile.category ?? profile.entityType, profile.city, profile.country].filter(Boolean).join(' · ')}
-          </Text>
+          </LuxeText>
           <View style={styles.metricRow}>
             <View style={styles.miniMetric}>
               <Ionicons name="people-outline" size={13} color={colors.textTertiary} />
-              <Text style={[styles.metricText, { color: colors.textTertiary }]}>{profile.membersCount ?? profile.followersCount ?? 0}</Text>
+              <LuxeText variant="caption" style={{ color: colors.textTertiary }}>{profile.membersCount ?? profile.followersCount ?? 0}</LuxeText>
             </View>
             <View style={styles.miniMetric}>
               <Ionicons name="calendar-outline" size={13} color={colors.textTertiary} />
-              <Text style={[styles.metricText, { color: colors.textTertiary }]}>{profile.eventsCount ?? 0}</Text>
+              <LuxeText variant="caption" style={{ color: colors.textTertiary }}>{profile.eventsCount ?? 0}</LuxeText>
             </View>
           </View>
 
-          {/* Creator Trust: Ongoing verification status for published rich profiles (dashboard visibility) */}
           {status === 'published' && (
-            <View style={{ marginTop: Spacing.sm }}>
+            <View style={{ marginTop: 8 }}>
               <VerificationStatusBanner
                 status={(profile as any).verificationStatus === 'approved' ? 'approved' : 'not_started'}
                 entityType={profile.entityType as any}
@@ -243,7 +241,7 @@ function ProfileManageCard({
             </View>
           )}
         </View>
-      </M3Card>
+      </GlassView>
     </Animated.View>
   );
 }
@@ -268,26 +266,24 @@ function EventManageCard({
 
   return (
     <Animated.View entering={FadeInDown.delay(index * 50).springify()} style={isDesktop ? styles.cardWrapDesktop : styles.cardWrap}>
-      <M3Card
-        variant="outlined"
+      <GlassView
+        intensity={8}
         onPress={() => routeToEvent(event)}
-        style={styles.manageCard}
-        accessibilityLabel={`${event.title}, status: ${status === 'published' ? 'live' : 'draft'}`}
-        accessibilityRole="button"
+        style={[styles.manageCard, { borderColor: colors.borderLight, borderWidth: 1 }]}
+        contentStyle={{ padding: 0 }}
       >
         <View style={styles.mediaBox}>
           {event.imageUrl ? (
             <Image source={{ uri: event.imageUrl }} style={StyleSheet.absoluteFill} contentFit="cover" />
           ) : (
             <View style={[StyleSheet.absoluteFill, styles.mediaFallback]}>
-              <Ionicons name="calendar-outline" size={26} color={CultureTokens.coral} />
+              <Ionicons name="calendar-outline" size={32} color={Luxe.colors.terracotta} />
             </View>
           )}
-          <View style={[styles.statusPill, { backgroundColor: status === 'published' ? CultureTokens.teal : CultureTokens.gold }]}>
-            <Text style={styles.statusText}>{status === 'published' ? 'LIVE' : 'DRAFT'}</Text>
-          </View>
+          <GlassView intensity={30} style={[styles.statusPill, { backgroundColor: (status === 'published' ? Luxe.colors.emerald : Luxe.colors.gold) + 'CC' }]}>
+            <LuxeText variant="badgeCaps" style={{ color: '#fff', fontSize: 9 }}>{status === 'published' ? 'LIVE' : 'DRAFT'}</LuxeText>
+          </GlassView>
 
-          {/* Unified Actions Menu */}
           {onActionsPress && (
             <Pressable
               onPress={(e) => {
@@ -302,24 +298,24 @@ function EventManageCard({
           )}
         </View>
         <View style={styles.manageBody}>
-          <Text style={[styles.cardTitle, { color: colors.text }]} numberOfLines={1}>
+          <LuxeText variant="bodyMedium" style={{ color: colors.text }} numberOfLines={1}>
             {event.title}
-          </Text>
-          <Text style={[styles.cardMeta, { color: colors.textSecondary }]} numberOfLines={1}>
+          </LuxeText>
+          <LuxeText variant="caption" style={{ color: colors.textSecondary }} numberOfLines={1}>
             {[event.date ? formatCompactDate(event.date) : 'Unscheduled', event.city, event.country].filter(Boolean).join(' · ')}
-          </Text>
+          </LuxeText>
           <View style={styles.metricRow}>
             <View style={styles.miniMetric}>
               <Ionicons name="people-outline" size={13} color={colors.textTertiary} />
-              <Text style={[styles.metricText, { color: colors.textTertiary }]}>{event.attending ?? 0}</Text>
+              <LuxeText variant="caption" style={{ color: colors.textTertiary }}>{event.attending ?? 0}</LuxeText>
             </View>
             <View style={styles.miniMetric}>
               <Ionicons name="cash-outline" size={13} color={colors.textTertiary} />
-              <Text style={[styles.metricText, { color: colors.textTertiary }]}>{event.priceLabel ?? (event.isFree ? 'Free' : 'Paid')}</Text>
+              <LuxeText variant="caption" style={{ color: colors.textTertiary }}>{event.priceLabel ?? (event.isFree ? 'Free' : 'Paid')}</LuxeText>
             </View>
           </View>
         </View>
-      </M3Card>
+      </GlassView>
     </Animated.View>
   );
 }
@@ -332,7 +328,7 @@ function DraftRecoveryBanner({
   drafts,
   onResume,
 }: {
-  drafts: ProfileDraft[];
+  drafts: any[];
   onResume: () => void;
 }) {
   const colors = useColors();
@@ -343,53 +339,35 @@ function DraftRecoveryBanner({
 
   return (
     <Animated.View entering={FadeInDown.duration(400)}>
-      <M3Card
-        variant="filled"
-        style={[styles.draftBanner, { backgroundColor: CultureTokens.violet + '12' }]}
+      <GlassView
+        intensity={20}
         onPress={onResume}
-        accessibilityLabel={`You have ${drafts.length} incomplete draft${drafts.length > 1 ? 's' : ''}. Tap to continue.`}
-        accessibilityRole="button"
+        style={[styles.draftBanner, { borderColor: Luxe.colors.indigo + '33', borderWidth: 1 }]}
+        contentStyle={{ padding: 16 }}
       >
         <View style={styles.draftBannerContent}>
-          <View style={[styles.draftBannerIcon, { backgroundColor: CultureTokens.violet + '20' }]}>
-            <Ionicons name="document-text" size={20} color={CultureTokens.violet} />
+          <View style={[styles.draftBannerIcon, { backgroundColor: Luxe.colors.indigo + '18' }]}>
+            <Ionicons name="document-text" size={20} color={Luxe.colors.indigo} />
           </View>
           <View style={styles.draftBannerText}>
-            <Text style={[styles.draftBannerTitle, { color: colors.text }]}>
+            <LuxeText variant="bodyMedium" style={{ color: colors.text }}>
               Continue your {entityLabel} profile
-            </Text>
-            <Text style={[styles.draftBannerSubtitle, { color: colors.textSecondary }]}>
+            </LuxeText>
+            <LuxeText variant="caption" style={{ color: colors.textSecondary }}>
               {drafts.length === 1
                 ? 'You have an incomplete draft. Pick up where you left off.'
                 : `You have ${drafts.length} incomplete drafts.`}
-            </Text>
+            </LuxeText>
           </View>
-          <Ionicons name="arrow-forward-circle" size={28} color={CultureTokens.violet} />
+          <Ionicons name="arrow-forward-circle" size={32} color={Luxe.colors.indigo} />
         </View>
-      </M3Card>
+      </GlassView>
     </Animated.View>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Empty State
-// ---------------------------------------------------------------------------
-
-function EmptyState({ title, action, onPress }: { title: string; action: string; onPress: () => void }) {
-  const colors = useColors();
-  return (
-    <View style={[styles.emptyBox, { borderColor: colors.borderLight }]}>
-      <Ionicons name="add-circle-outline" size={30} color={CultureTokens.indigo} />
-      <Text style={[styles.emptyTitle, { color: colors.text }]}>{title}</Text>
-      <M3Button variant="filled" size="sm" leftIcon="add" onPress={onPress}>
-        {action}
-      </M3Button>
-    </View>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Quick Action Card (beautiful, tappable, host-focused)
+// Quick Action Card
 // ---------------------------------------------------------------------------
 
 function QuickAction({
@@ -404,83 +382,21 @@ function QuickAction({
   onPress: () => void;
 }) {
   const colors = useColors();
-  const m3 = useM3Colors();
 
   return (
-    <Pressable
+    <GlassView
+      intensity={10}
       onPress={onPress}
-      style={({ pressed }) => [
-        styles.quickActionCard,
-        {
-          backgroundColor: colors.surface,
-          borderColor: colors.border,
-          opacity: pressed ? 0.85 : 1,
-        },
-      ]}
-      android_ripple={{ color: 'rgba(0,0,0,0.05)' }}
+      style={[styles.quickActionCard, { borderColor: colors.borderLight, borderWidth: 1 }]}
+      contentStyle={{ padding: 16, alignItems: 'flex-start', gap: 12 }}
     >
       <View style={[styles.quickActionIcon, { backgroundColor: color + '18' }]}>
         <Ionicons name={icon} size={22} color={color} />
       </View>
-      <Text style={[styles.quickActionLabel, { color: m3.onSurface }]} numberOfLines={2}>
+      <LuxeText variant="chip" style={{ color: colors.text, fontFamily: FontFamily.semibold }} numberOfLines={2}>
         {label}
-      </Text>
-    </Pressable>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Create New Profile CTA
-// ---------------------------------------------------------------------------
-
-function CreateProfileCTA() {
-  const { isDesktop } = useLayout();
-
-  return (
-    <Animated.View entering={FadeInDown.delay(100).springify()}>
-      <LinearGradient
-        colors={[CultureTokens.violet, CultureTokens.coral]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.createCTA}
-      >
-        <View style={styles.createCTAContent}>
-          <View style={styles.createCTAIcon}>
-            <Ionicons name="add-circle" size={36} color="#FFFFFF" />
-          </View>
-          <View style={styles.createCTACopy}>
-            <Text style={styles.createCTATitle}>Create New Profile</Text>
-            <Text style={styles.createCTASubtitle}>
-              Launch a community, venue, business, artist, organiser, or professional profile.
-            </Text>
-          </View>
-          {isDesktop && (
-            <M3Button
-              variant="filled"
-              size="md"
-              leftIcon="add"
-              onPress={() => router.push('/hostspace/create' as never)}
-              style={styles.createCTAButton}
-              accessibilityLabel="Create a new host profile"
-            >
-              Get Started
-            </M3Button>
-          )}
-        </View>
-        {!isDesktop && (
-          <M3Button
-            variant="filled"
-            size="md"
-            leftIcon="add"
-            onPress={() => router.push('/hostspace/create' as never)}
-            style={styles.createCTAButtonMobile}
-            accessibilityLabel="Create a new host profile"
-          >
-            Get Started
-          </M3Button>
-        )}
-      </LinearGradient>
-    </Animated.View>
+      </LuxeText>
+    </GlassView>
   );
 }
 
@@ -490,13 +406,14 @@ function CreateProfileCTA() {
 
 function HostspaceWorkspace() {
   const colors = useColors();
+  const isDark = useIsDark();
   const m3Colors = useM3Colors();
   const { hPad, isDesktop, windowSizeClass } = useLayout();
   const { userId, user } = useAuth();
   const { isOrganizer } = useRole();
   const [showDraftModal, setShowDraftModal] = useState(false);
 
-  // Action Sheet state for unified Edit/Share/Analytics/Team/Delete
+  // Action Sheet state
   const [actionSheetItem, setActionSheetItem] = useState<{
     type: 'profile' | 'event';
     data: Profile | EventData;
@@ -505,7 +422,7 @@ function HostspaceWorkspace() {
   // Fast Create Menu
   const [showCreateMenu, setShowCreateMenu] = useState(false);
 
-  // Universal Share Sheet state (for Profile + Event + future Listings)
+  // Universal Share Sheet state
   const [shareItem, setShareItem] = useState<{
     title: string;
     url: string;
@@ -513,7 +430,6 @@ function HostspaceWorkspace() {
 
   const { getProfileActions, getEventActions } = useHostItemActions();
 
-  // Wrappers that replace the placeholder share behavior with the real UniversalShareSheet
   const getProfileActionsWithShare = (profile: Profile) => {
     const baseActions = getProfileActions(profile);
     return baseActions.map(action => 
@@ -523,7 +439,7 @@ function HostspaceWorkspace() {
             onPress: () => {
               const url = `${SITE_ORIGIN}/profile/${profile.handle || profile.id}`;
               setShareItem({ title: profile.name, url });
-              setActionSheetItem(null); // close action sheet first
+              setActionSheetItem(null);
             }
           }
         : action
@@ -546,14 +462,12 @@ function HostspaceWorkspace() {
     );
   };
 
-  // Fetch workspace summary (profiles + events)
   const { data, isLoading, isRefetching, refetch } = useQuery({
     queryKey: ['hostspace', 'workspace', userId],
     queryFn: () => fetchHostspaceSummary(userId!),
     enabled: Boolean(userId),
   });
 
-  // Fetch drafts for recovery prompts
   const { data: drafts = [] } = useQuery({
     queryKey: ['hostspace', 'drafts', userId],
     queryFn: () => hostApi.profiles.getDrafts(),
@@ -561,7 +475,6 @@ function HostspaceWorkspace() {
     staleTime: 30_000,
   });
 
-  // Host application status (for aspiring + recently approved organizers)
   const { data: myAppData } = useQuery({
     queryKey: ['host-application', 'me'],
     queryFn: () => api.hostApplications.myApplication(),
@@ -585,7 +498,6 @@ function HostspaceWorkspace() {
     setShowDraftModal(false);
     const draft = drafts.find((d) => d.id === draftId);
     if (draft) {
-      // Use profileType param for rich profiles (Phase 1 unification)
       const richTypes = ['business', 'venue', 'artist', 'professional', 'organizer', 'community'];
       if (richTypes.includes(draft.entityType)) {
         router.push(`/hostspace/create?profileType=${draft.entityType}&draftId=${draftId}` as never);
@@ -606,7 +518,6 @@ function HostspaceWorkspace() {
 
   const handleResumeDraft = useCallback(() => {
     if (drafts.length === 1) {
-      // Single draft — navigate directly
       const draft = drafts[0];
       const richTypes = ['business', 'venue', 'artist', 'professional', 'organizer', 'community'];
       if (richTypes.includes(draft.entityType)) {
@@ -615,7 +526,6 @@ function HostspaceWorkspace() {
         router.push(`/hostspace/create?category=${draft.entityType}&draftId=${draft.id}` as never);
       }
     } else {
-      // Multiple drafts — show selection modal
       setShowDraftModal(true);
     }
   }, [drafts]);
@@ -632,6 +542,12 @@ function HostspaceWorkspace() {
         <link rel="canonical" href={HOSTSPACE_HEAD_URL} />
       </Head>
       <Stack.Screen options={{ title: 'HostSpace | CulturePass', headerShown: false }} />
+
+      <LinearGradient
+        colors={isDark ? ['#0C0A09', '#1C1917'] : ['#FAF9F6', '#F5F1EE']}
+        style={StyleSheet.absoluteFill}
+      />
+
       <M3TopAppBar
         title="HostSpace"
         onBack={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)' as never))}
@@ -648,243 +564,217 @@ function HostspaceWorkspace() {
           { icon: 'scan-outline', onPress: () => router.push('/scanner' as never) },
         ]}
       />
-      <LinearGradient
-        colors={[CultureTokens.indigo + '10', CultureTokens.teal + '08', colors.background]}
-        style={StyleSheet.absoluteFill}
-        pointerEvents="none"
-      />
 
       <ScrollView
         contentContainerStyle={[
           styles.scroll,
-          { maxWidth: isDesktop ? 1120 : undefined, alignSelf: 'center', width: '100%' },
+          { maxWidth: 1120, alignSelf: 'center', width: '100%' },
         ]}
         refreshControl={
-          <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={CultureTokens.indigo} />
+          <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={Luxe.colors.terracotta} />
         }
         showsVerticalScrollIndicator={false}
       >
         <PageContainer compact noTopPadding>
-        {/* Hero + Personalized Dashboard Header */}
+
+        {/* Hero */}
         <Animated.View entering={FadeInUp.duration(500)} style={styles.hero}>
-          <View style={[styles.badge, { backgroundColor: m3Colors.secondaryContainer }]}>
-            <Text style={[styles.badgeText, { color: m3Colors.onSecondaryContainer }]}>HOST WORKSPACE</Text>
-          </View>
+          <GlassView intensity={10} style={styles.badge}>
+            <LuxeText variant="badgeCaps" style={{ color: Luxe.colors.terracotta }}>HOST WORKSPACE</LuxeText>
+          </GlassView>
           <View style={styles.heroRow}>
             <View style={styles.heroCopy}>
-              <Text style={[styles.greeting, { color: colors.textSecondary }]}>
-                {getHostGreeting(user?.displayName)}
-              </Text>
-              <Text style={[styles.title, { color: colors.text }]}>Your Host Command Center</Text>
-              <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-                Create events, manage communities, scan tickets, and grow your cultural impact.
-              </Text>
+              <LuxeText variant="caption" style={{ color: colors.textSecondary, letterSpacing: 1 }}>
+                {getHostGreeting(user?.displayName).toUpperCase()}
+              </LuxeText>
+              <LuxeText variant="display" style={{ color: colors.text }}>Command Center</LuxeText>
+              <LuxeText variant="body" style={{ color: colors.textSecondary, marginTop: 4 }}>
+                Create events, manage communities, and grow your cultural impact.
+              </LuxeText>
             </View>
-            <M3Button
+            <LuxeButton
               variant="filled"
               onPress={() => router.push('/hostspace/create' as never)}
               style={styles.createButton}
-              accessibilityLabel="Create in HostSpace"
+              leftIcon="add"
             >
               Create
-            </M3Button>
+            </LuxeButton>
           </View>
         </Animated.View>
 
-        {/* Draft Recovery Banner */}
+        {/* Draft Recovery */}
         {!isLoading && drafts.length > 0 && (
           <DraftRecoveryBanner drafts={drafts} onResume={handleResumeDraft} />
         )}
 
-        {/* Sandbox mode banner for users who haven't applied yet */}
+        {/* Sandbox mode banner */}
         {!isOrganizer && !myApplication && (
-          <View style={{ marginBottom: 16 }}>
-            <GlassView
-              intensity={25}
-              style={[
-                styles.statusBanner,
-                {
-                  borderColor: CultureTokens.violet + '60',
-                  backgroundColor: 'rgba(124, 58, 237, 0.08)',
-                },
-              ]}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
-                <Ionicons
-                  name="shield-half-outline"
-                  size={24}
-                  color={CultureTokens.violet}
-                  style={{ marginTop: 2 }}
-                />
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.statusTitle, { color: colors.text }]}>
-                    Welcome to HostSpace (Sandbox Mode)
-                  </Text>
-                  <Text style={[styles.statusSub, { color: colors.textSecondary, marginTop: 4, lineHeight: 18 }]}>
-                    Create profiles, events, and listings as drafts under your name. Apply to become a host to publish them live and sell tickets.
-                  </Text>
-                  <Pressable
-                    onPress={() => router.push('/hostspace/create' as any)}
-                    style={({ pressed }) => [
-                      styles.bannerCta,
-                      { opacity: pressed ? 0.9 : 1, backgroundColor: CultureTokens.indigo, marginTop: 10 }
-                    ]}
-                  >
-                    <Text style={styles.bannerCtaText}>Apply to become a Host</Text>
-                    <Ionicons name="arrow-forward" size={14} color="#fff" />
-                  </Pressable>
-                </View>
-              </View>
-            </GlassView>
-          </View>
+          <GlassView
+            intensity={25}
+            style={[styles.statusBanner, { borderColor: Luxe.colors.indigo + '33', borderWidth: 1, marginTop: 16 }]}
+            contentStyle={{ padding: 20, flexDirection: 'row', gap: 16 }}
+          >
+            <View style={[styles.statusIconBox, { backgroundColor: Luxe.colors.indigo + '18' }]}>
+              <Ionicons name="shield-half-outline" size={24} color={Luxe.colors.indigo} />
+            </View>
+            <View style={{ flex: 1, gap: 4 }}>
+              <LuxeText variant="bodyMedium" style={{ color: colors.text }}>Sandbox Mode</LuxeText>
+              <LuxeText variant="caption" style={{ color: colors.textSecondary, lineHeight: 18 }}>
+                Build your profiles and events as drafts. Apply to become a host to publish them live and sell tickets.
+              </LuxeText>
+              <LuxeButton
+                variant="tonal"
+                size="sm"
+                onPress={() => router.push('/hostspace/create' as any)}
+                style={{ marginTop: 8, alignSelf: 'flex-start' }}
+                rightIcon="arrow-forward"
+              >
+                Apply as Host
+              </LuxeButton>
+            </View>
+          </GlassView>
         )}
 
-        {/* Application Status + Celebration for newly approved hosts */}
+        {/* Application Status */}
         {myApplication && (
-          <View style={{ marginBottom: 16 }}>
-            <GlassView
-              intensity={myApplication.status === 'approved' ? 35 : 20}
-              style={[
-                styles.statusBanner,
-                {
-                  borderColor: myApplication.status === 'approved' ? '#10B981' : myApplication.status === 'rejected' ? CultureTokens.coral : CultureTokens.gold,
-                  backgroundColor: myApplication.status === 'approved' ? 'rgba(16,185,129,0.08)' : 'rgba(15,23,42,0.03)',
-                },
-              ]}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
+          <GlassView
+            intensity={myApplication.status === 'approved' ? 35 : 20}
+            style={[
+              styles.statusBanner,
+              {
+                borderColor: (myApplication.status === 'approved' ? Luxe.colors.emerald : myApplication.status === 'rejected' ? Luxe.colors.terracotta : Luxe.colors.gold) + '33',
+                borderWidth: 1,
+                marginTop: 16
+              },
+            ]}
+            contentStyle={{ padding: 20, flexDirection: 'row', gap: 16 }}
+          >
+            <View style={[styles.statusIconBox, { backgroundColor: (myApplication.status === 'approved' ? Luxe.colors.emerald : Luxe.colors.gold) + '18' }]}>
                 <Ionicons
                   name={myApplication.status === 'approved' ? 'trophy' : myApplication.status === 'rejected' ? 'close-circle' : 'time'}
                   size={24}
-                  color={myApplication.status === 'approved' ? '#10B981' : myApplication.status === 'rejected' ? CultureTokens.coral : CultureTokens.gold}
-                  style={{ marginTop: 2 }}
+                  color={myApplication.status === 'approved' ? Luxe.colors.emerald : myApplication.status === 'rejected' ? Luxe.colors.terracotta : Luxe.colors.gold}
                 />
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.statusTitle, { color: colors.text }]}>
-                    {myApplication.status === 'approved' ? '🎉 You are now a Host!' : `Host Request: ${myApplication.status.toUpperCase()}`}
-                  </Text>
-                  <Text style={[styles.statusSub, { color: colors.textSecondary, marginTop: 4, lineHeight: 18 }]}>
-                    {myApplication.status === 'pending' && 'Your host profile request is pending review. We usually respond within 24–48 hours. In the meantime, you can continue creating and editing your drafts in Sandbox Mode.'}
-                    {myApplication.status === 'approved' && 'Welcome to the Host community. Your full Host Studio, creation tools, and ticket scanner are unlocked.'}
-                    {myApplication.status === 'rejected' && `Your request needs updates: "${myApplication.reviewNote || 'Please update your details and re-submit.'}" You can still build drafts in Sandbox Mode.`}
-                  </Text>
-                  {myApplication.status === 'rejected' && (
-                    <Pressable
-                      onPress={() => router.push('/hostspace/create' as any)}
-                      style={({ pressed }) => [
-                        styles.bannerCta,
-                        { opacity: pressed ? 0.9 : 1, backgroundColor: CultureTokens.indigo, marginTop: 10 }
-                      ]}
-                    >
-                      <Text style={styles.bannerCtaText}>Update Application</Text>
-                      <Ionicons name="create-outline" size={14} color="#fff" />
-                    </Pressable>
-                  )}
-                </View>
-              </View>
-            </GlassView>
-          </View>
+            </View>
+            <View style={{ flex: 1, gap: 4 }}>
+              <LuxeText variant="bodyMedium" style={{ color: colors.text }}>
+                {myApplication.status === 'approved' ? '🎉 You are now a Host!' : `Host Request: ${myApplication.status.toUpperCase()}`}
+              </LuxeText>
+              <LuxeText variant="caption" style={{ color: colors.textSecondary, lineHeight: 18 }}>
+                {myApplication.status === 'pending' && 'Your host request is pending review. We usually respond within 24–48 hours.'}
+                {myApplication.status === 'approved' && 'Welcome to the community. Your Host Studio and creation tools are unlocked.'}
+                {myApplication.status === 'rejected' && `Needs updates: "${myApplication.reviewNote || 'Please update your details.'}"`}
+              </LuxeText>
+              {myApplication.status === 'rejected' && (
+                <LuxeButton
+                  variant="tonal"
+                  size="sm"
+                  onPress={() => router.push('/hostspace/create' as any)}
+                  style={{ marginTop: 8, alignSelf: 'flex-start' }}
+                  leftIcon="create-outline"
+                >
+                  Update Application
+                </LuxeButton>
+              )}
+            </View>
+          </GlassView>
         )}
 
-        {/* Quick Actions — the heart of the delightful Host experience */}
+        {/* Quick Actions */}
         <View style={styles.quickActionsSection}>
-          <Text style={[styles.sectionTitleSmall, { color: colors.textSecondary }]}>QUICK ACTIONS</Text>
+          <LuxeText variant="badgeCaps" style={{ color: colors.textTertiary, marginBottom: 12 }}>QUICK ACTIONS</LuxeText>
           <View style={styles.quickActionsGrid}>
             <QuickAction
               label="New Event"
               icon="calendar"
-              color={CultureTokens.indigo}
+              color={Luxe.colors.terracotta}
               onPress={() => router.push('/hostspace/create/event' as never)}
             />
             <QuickAction
               label="Scan Tickets"
               icon="scan"
-              color={CultureTokens.coral}
+              color={Luxe.colors.indigo}
               onPress={() => router.push('/scanner' as never)}
             />
             <QuickAction
               label="New Community"
               icon="people"
-              color={CultureTokens.violet}
+              color={Luxe.colors.plum}
               onPress={() => router.push('/hostspace/create?profileType=community' as never)}
             />
             <QuickAction
               label="Create Listing"
               icon="storefront"
-              color={CultureTokens.teal}
+              color={Luxe.colors.emerald}
               onPress={() => router.push('/hostspace/create/listing' as never)}
             />
           </View>
         </View>
 
-        {/* Consolidated Performance Overview (merged stats + insights) */}
-        {/* Elevated Host Stats — at-a-glance command center metrics */}
+        {/* Stats */}
         <View style={styles.statsRow}>
           <StatCard
             label="Published"
             value={events.filter(e => e.status === 'published').length}
             icon="radio-outline"
-            color={CultureTokens.indigo}
+            color={Luxe.colors.terracotta}
           />
           <StatCard
             label="Upcoming"
             value={events.filter(e => e.date && new Date(e.date) > new Date()).length}
             icon="calendar-outline"
-            color={CultureTokens.teal}
+            color={Luxe.colors.emerald}
           />
           <StatCard
-            label="Total Events"
+            label="Total"
             value={events.length}
-            icon="calendar"
-            color={CultureTokens.coral}
+            icon="stats-chart-outline"
+            color={Luxe.colors.indigo}
           />
           <StatCard
             label="Profiles"
             value={profiles.length}
             icon="grid-outline"
-            color={CultureTokens.violet}
+            color={Luxe.colors.plum}
           />
         </View>
 
-        {/* Simple Insights — Monitoring brought into the main view (no need to jump to separate dashboard) */}
-        <Pressable 
+        {/* Insights Bar */}
+        <GlassView
+          intensity={8}
           onPress={() => router.push('/hostspace/dashboard' as never)}
-          style={[styles.insightsBar, { backgroundColor: colors.surface, borderColor: colors.borderLight }]}
+          style={[styles.insightsBar, { borderColor: colors.borderLight, borderWidth: 1 }]}
+          contentStyle={{ padding: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
         >
-          <View style={styles.insightsContent}>
-            <Ionicons name="analytics-outline" size={16} color={CultureTokens.teal} />
-            <Text style={[styles.insightsText, { color: colors.text }]}>
-              {events.length > 0 
-                ? `${events.filter(e => e.status === 'published').length} live • Tap for reach & team activity` 
-                : 'View performance insights & team activity'}
-            </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
+            <View style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: Luxe.colors.emerald + '18', alignItems: 'center', justifyContent: 'center' }}>
+              <Ionicons name="analytics" size={16} color={Luxe.colors.emerald} />
+            </View>
+            <LuxeText variant="bodyMedium" style={{ color: colors.text, flex: 1 }}>
+              {events.length > 0 ? 'Tap for reach & performance insights' : 'View your creator analytics'}
+            </LuxeText>
           </View>
-          <Ionicons name="chevron-forward" size={16} color={colors.textTertiary} />
-        </Pressable>
+          <Ionicons name="chevron-forward" size={18} color={colors.textTertiary} />
+        </GlassView>
 
-        <View style={{ alignItems: 'flex-end', marginBottom: 12 }}>
-          <M3Button
-            variant="text"
-            onPress={() => router.push('/hostspace/dashboard' as never)}
-          >
-            View detailed analytics →
-          </M3Button>
-        </View>
-
-        {/* Communities Section */}
+        {/* Communities */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Communities you manage</Text>
-            <M3Button variant="text" size="sm" leftIcon="add" onPress={() => router.push('/hostspace/create?profileType=community' as never)}>
-              Community
-            </M3Button>
+            <LuxeText variant="title3" style={{ color: colors.text }}>Communities you manage</LuxeText>
+            <LuxeButton variant="ghost" size="sm" leftIcon="add" onPress={() => router.push('/hostspace/create?profileType=community' as never)}>
+              Create
+            </LuxeButton>
           </View>
           {isLoading ? (
             <View style={styles.grid}>
               {[1, 2, 3].map((item) => <Skeleton key={item} width={isDesktop ? '31%' : '100%'} height={214} borderRadius={24} />)}
             </View>
           ) : communities.length === 0 ? (
-            <EmptyState title="No communities yet." action="Create" onPress={() => setShowCreateMenu(true)} />
+            <View style={[styles.emptyBox, { borderColor: colors.borderLight }]}>
+              <LuxeText variant="body" style={{ color: colors.textSecondary }}>No communities yet.</LuxeText>
+              <LuxeButton variant="tonal" size="sm" onPress={() => setShowCreateMenu(true)}>Get started</LuxeButton>
+            </View>
           ) : (
             <View style={styles.grid}>
               {communities.map((profile, index) => (
@@ -900,18 +790,20 @@ function HostspaceWorkspace() {
           )}
         </View>
 
-        {/* Events Section */}
+        {/* Events */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Events you manage</Text>
-            {/* Removed duplicate "Event" button — use the main + in top bar instead for unified creation */}
+            <LuxeText variant="title3" style={{ color: colors.text }}>Events you manage</LuxeText>
           </View>
           {isLoading ? (
             <View style={styles.grid}>
               {[1, 2, 3].map((item) => <Skeleton key={item} width={isDesktop ? '31%' : '100%'} height={214} borderRadius={24} />)}
             </View>
           ) : events.length === 0 ? (
-            <EmptyState title="No events yet." action="Create" onPress={() => setShowCreateMenu(true)} />
+            <View style={[styles.emptyBox, { borderColor: colors.borderLight }]}>
+              <LuxeText variant="body" style={{ color: colors.textSecondary }}>No events yet.</LuxeText>
+              <LuxeButton variant="tonal" size="sm" onPress={() => setShowCreateMenu(true)}>Launch event</LuxeButton>
+            </View>
           ) : (
             <View style={styles.grid}>
               {events.map((event, index) => (
@@ -927,18 +819,20 @@ function HostspaceWorkspace() {
           )}
         </View>
 
-        {/* Listings & Profiles Section */}
+        {/* Listings */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Listings and profiles</Text>
-            {/* Removed duplicate "Listing" button — main + Create button in header is the single entry point */}
+            <LuxeText variant="title3" style={{ color: colors.text }}>Other profiles & listings</LuxeText>
           </View>
           {isLoading ? (
             <View style={styles.grid}>
               {[1, 2].map((item) => <Skeleton key={item} width={isDesktop ? '31%' : '100%'} height={214} borderRadius={24} />)}
             </View>
           ) : otherProfiles.length === 0 ? (
-            <EmptyState title="No listings or profiles yet." action="Create" onPress={() => setShowCreateMenu(true)} />
+            <View style={[styles.emptyBox, { borderColor: colors.borderLight }]}>
+              <LuxeText variant="body" style={{ color: colors.textSecondary }}>No other profiles yet.</LuxeText>
+              <LuxeButton variant="tonal" size="sm" onPress={() => setShowCreateMenu(true)}>Add profile</LuxeButton>
+            </View>
           ) : (
             <View style={styles.grid}>
               {otherProfiles.map((profile, index) => (
@@ -956,68 +850,56 @@ function HostspaceWorkspace() {
         </PageContainer>
       </ScrollView>
 
-      {/* Draft Recovery Modal */}
-      <Suspense fallback={null}>
-        <LazyDraftRecoveryModal
-          visible={showDraftModal}
-          drafts={drafts}
-          onSelectDraft={handleSelectDraft}
-          onStartFresh={handleStartFresh}
-          onDismiss={handleDismissDraftModal}
-        />
-      </Suspense>
+      {/* Modals & Sheets - Now Statically Imported */}
+      <DraftRecoveryModal
+        visible={showDraftModal}
+        drafts={drafts}
+        onSelectDraft={handleSelectDraft}
+        onStartFresh={handleStartFresh}
+        onDismiss={handleDismissDraftModal}
+      />
 
-      {/* Unified Action Sheet for all Host Creations - simplifies Edit/Share/Analytics/Team/Delete */}
       {actionSheetItem && (
-        <Suspense fallback={null}>
-          <LazyHostItemActionSheet
-            visible={!!actionSheetItem}
-            itemType={actionSheetItem.type}
-            itemName={
-              actionSheetItem.type === 'profile' 
-                ? (actionSheetItem.data as Profile).name 
-                : (actionSheetItem.data as EventData).title || 'Event'
-            }
-            onClose={() => setActionSheetItem(null)}
-            actions={
-              actionSheetItem.type === 'profile'
-                ? getProfileActionsWithShare(actionSheetItem.data as Profile)
-                : getEventActionsWithShare(actionSheetItem.data as EventData)
-            }
-          />
-        </Suspense>
-      )}
-
-      {/* Fast Create Menu - collapses the old split between wizard and quick content */}
-      <Suspense fallback={null}>
-        <LazyCreateMenuSheet 
-          visible={showCreateMenu} 
-          onClose={() => setShowCreateMenu(false)} 
-          availableProfiles={profiles.map(p => ({ id: p.id, name: p.name, entityType: p.entityType }))}
-          onCreateUnderProfile={(profileId, type) => {
-            setShowCreateMenu(false);
-            if (type === 'event') {
-              router.push(`/hostspace/create/event?parentProfile=${profileId}` as never);
-            } else {
-              router.push(`/hostspace/create/listing?parentProfile=${profileId}` as never);
-            }
-          }}
+        <HostItemActionSheet
+          visible={!!actionSheetItem}
+          itemType={actionSheetItem.type}
+          itemName={
+            actionSheetItem.type === 'profile'
+              ? (actionSheetItem.data as Profile).name
+              : (actionSheetItem.data as EventData).title || 'Event'
+          }
+          onClose={() => setActionSheetItem(null)}
+          actions={
+            actionSheetItem.type === 'profile'
+              ? getProfileActionsWithShare(actionSheetItem.data as Profile)
+              : getEventActionsWithShare(actionSheetItem.data as EventData)
+          }
         />
-      </Suspense>
-
-      {/* Universal Share Sheet - now properly used from ActionSheet (no more placeholder routes) */}
-      {shareItem && (
-        <Suspense fallback={null}>
-          <LazyUniversalShareSheet
-            visible={!!shareItem}
-            title={shareItem.title}
-            url={shareItem.url}
-            onClose={() => setShareItem(null)}
-          />
-        </Suspense>
       )}
 
-      {/* Mobile FAB for super fast creation (iOS/Android) */}
+      <CreateMenuSheet
+        visible={showCreateMenu}
+        onClose={() => setShowCreateMenu(false)}
+        availableProfiles={profiles.map(p => ({ id: p.id, name: p.name, entityType: p.entityType }))}
+        onCreateUnderProfile={(profileId, type) => {
+          setShowCreateMenu(false);
+          if (type === 'event') {
+            router.push(`/hostspace/create/event?parentProfile=${profileId}` as never);
+          } else {
+            router.push(`/hostspace/create/listing?parentProfile=${profileId}` as never);
+          }
+        }}
+      />
+
+      {shareItem && (
+        <UniversalShareSheet
+          visible={!!shareItem}
+          title={shareItem.title}
+          url={shareItem.url}
+          onClose={() => setShareItem(null)}
+        />
+      )}
+
       {!isDesktop && (
         <CreateFAB onPress={() => setShowCreateMenu(true)} />
       )}
@@ -1035,9 +917,7 @@ export default function HostspaceIndexScreen() {
   );
 }
 
-// Mobile-friendly FAB for fast creation (iOS/Android)
 function CreateFAB({ onPress }: { onPress: () => void }) {
-  const colors = useColors();
   return (
     <Pressable
       onPress={onPress}
@@ -1048,7 +928,7 @@ function CreateFAB({ onPress }: { onPress: () => void }) {
         width: 56,
         height: 56,
         borderRadius: 28,
-        backgroundColor: CultureTokens.indigo,
+        backgroundColor: Luxe.colors.terracotta,
         alignItems: 'center',
         justifyContent: 'center',
         shadowColor: '#000',
@@ -1058,402 +938,69 @@ function CreateFAB({ onPress }: { onPress: () => void }) {
         elevation: 8,
         zIndex: 100,
       }}
-      accessibilityLabel="Create new"
     >
       <Ionicons name="add" size={28} color="#fff" />
     </Pressable>
   );
 }
 
-
-// ---------------------------------------------------------------------------
-// Styles
-// ---------------------------------------------------------------------------
-
 const styles = StyleSheet.create({
   root: { flex: 1 },
   scroll: {
-    paddingTop: 32,
+    paddingTop: 16,
     paddingBottom: 120,
-    gap: 28,
+    gap: 32,
   },
-  hero: {
-    gap: 14,
-  },
+  hero: { gap: 16 },
   badge: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 10,
+    borderRadius: 8,
     alignSelf: 'flex-start',
-  },
-  badgeText: {
-    fontSize: 10,
-    fontFamily: 'Poppins_700Bold',
-    letterSpacing: 1,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
   },
   heroRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     justifyContent: 'space-between',
-    gap: 18,
+    gap: 20,
     flexWrap: 'wrap',
   },
-  heroCopy: {
-    flex: 1,
-    minWidth: 260,
-    gap: 8,
-  },
-  title: {
-    ...TextStyles.display,
-    fontSize: 40,
-    lineHeight: 46,
-    letterSpacing: 0,
-  },
-  subtitle: {
-    ...M3Typography.bodyLarge,
-    maxWidth: 680,
-  },
-  createButton: {
-    minWidth: Platform.OS === 'web' ? 150 : undefined,
-  },
-  // Draft Recovery Banner
-  draftBanner: {
-    borderRadius: Radius.lg,
-    overflow: 'hidden',
-  },
-  draftBannerContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: Spacing.md,
-    gap: Spacing.sm,
-  },
-  draftBannerIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: Radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  draftBannerText: {
-    flex: 1,
-    gap: 2,
-  },
-  draftBannerTitle: {
-    fontSize: 14,
-    fontFamily: 'Poppins_700Bold',
-    lineHeight: 20,
-  },
-  draftBannerSubtitle: {
-    fontSize: 12,
-    fontFamily: 'Poppins_400Regular',
-    lineHeight: 16,
-  },
-  // Create Profile CTA
-  createCTA: {
-    borderRadius: Radius.lg,
-    padding: Spacing.lg,
-    gap: Spacing.md,
-  },
-  createCTAContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-  },
-  createCTAIcon: {
-    width: 52,
-    height: 52,
-    borderRadius: Radius.md,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  createCTACopy: {
-    flex: 1,
-    gap: 4,
-  },
-  createCTATitle: {
-    fontSize: 18,
-    fontFamily: 'Poppins_700Bold',
-    color: '#FFFFFF',
-    lineHeight: 24,
-  },
-  createCTASubtitle: {
-    fontSize: 13,
-    fontFamily: 'Poppins_400Regular',
-    color: 'rgba(255,255,255,0.85)',
-    lineHeight: 18,
-  },
-  createCTAButton: {
-    backgroundColor: '#FFFFFF',
-    minWidth: 140,
-  },
-  actionMenuButton: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 10,
-  },
+  heroCopy: { flex: 1, minWidth: 260 },
+  createButton: { minWidth: 140 },
 
-  createCTAButtonMobile: {
-    backgroundColor: '#FFFFFF',
-    alignSelf: 'stretch',
-  },
-  // Stats
-  statsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  statCard: {
-    flex: 1,
-    minWidth: 160,
-    padding: 16,
-    borderRadius: 20,
-    gap: 8,
-  },
-  statIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  statValue: {
-    fontSize: 24,
-    lineHeight: 30,
-    fontFamily: 'Poppins_700Bold',
-    fontVariant: ['tabular-nums'],
-  },
-  statLabel: {
-    fontSize: 11,
-    fontFamily: 'Poppins_700Bold',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-  },
-  // Sections
-  section: {
-    gap: 14,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
-  sectionTitle: {
-    ...TextStyles.title3,
-    fontSize: 20,
-    lineHeight: 26,
-    flex: 1,
-  },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 14,
-  },
-  cardWrap: {
-    width: '100%',
-  },
-  cardWrapDesktop: {
-    width: '31.8%',
-    minWidth: 260,
-  },
-  manageCard: {
-    borderRadius: 24,
-    overflow: 'hidden',
-  },
-  mediaBox: {
-    height: 112,
-    backgroundColor: 'rgba(79, 70, 229, 0.08)',
-  },
-  mediaFallback: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(79, 70, 229, 0.08)',
-  },
-  statusPill: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  statusText: {
-    color: '#fff',
-    fontSize: 9,
-    fontFamily: 'Poppins_700Bold',
-    letterSpacing: 0.7,
-  },
-  manageBody: {
-    padding: 14,
-    gap: 6,
-  },
-  cardTitle: {
-    fontSize: 15,
-    lineHeight: 20,
-    fontFamily: 'Poppins_700Bold',
-  },
-  cardMeta: {
-    fontSize: 12,
-    lineHeight: 18,
-    fontFamily: 'Poppins_400Regular',
-  },
-  metricRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-    paddingTop: 2,
-  },
-  miniMetric: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-  },
-  metricText: {
-    fontSize: 11,
-    fontFamily: 'Poppins_600SemiBold',
-  },
-  emptyBox: {
-    borderWidth: 1.5,
-    borderStyle: 'dashed',
-    borderRadius: 24,
-    padding: 28,
-    alignItems: 'center',
-    gap: 12,
-  },
-  emptyTitle: {
-    fontSize: 14,
-    fontFamily: 'Poppins_600SemiBold',
-  },
+  draftBanner: { borderRadius: 16, overflow: 'hidden' },
+  draftBannerContent: { flexDirection: 'row', alignItems: 'center', gap: 16 },
+  draftBannerIcon: { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  draftBannerText: { flex: 1, gap: 2 },
 
-  // Application Status Banner (unified host journey)
-  statusBanner: {
-    borderWidth: 1.5,
-    borderRadius: Radius.lg,
-    padding: 14,
-    backgroundColor: 'rgba(15,23,42,0.03)',
-  },
-  statusTitle: {
-    fontFamily: FontFamily.semibold,
-    fontSize: 15,
-  },
-  statusSub: {
-    fontFamily: FontFamily.regular,
-    fontSize: 13,
-    marginTop: 2,
-    lineHeight: 18,
-  },
+  statsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  statCard: { flex: 1, minWidth: 150, borderRadius: 20, borderWidth: 1, padding: 16, gap: 10 },
+  statIcon: { width: 38, height: 38, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
 
-  // Greeting in hero
-  greeting: {
-    fontFamily: FontFamily.medium,
-    fontSize: 14,
-    marginBottom: 4,
-  },
+  section: { gap: 16 },
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 16 },
+  cardWrap: { width: '100%' },
+  cardWrapDesktop: { width: '31.5%' },
+  manageCard: { borderRadius: 20, overflow: 'hidden' },
+  mediaBox: { height: 120, backgroundColor: 'rgba(0,0,0,0.03)' },
+  mediaFallback: { alignItems: 'center', justifyContent: 'center' },
+  statusPill: { position: 'absolute', top: 12, left: 12, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 6, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' },
+  actionMenuButton: { position: 'absolute', top: 10, right: 10, width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(0,0,0,0.3)', alignItems: 'center', justifyContent: 'center', zIndex: 10 },
+  manageBody: { padding: 16, gap: 6 },
+  metricRow: { flexDirection: 'row', alignItems: 'center', gap: 16, paddingTop: 4 },
+  miniMetric: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  emptyBox: { borderWidth: 1.5, borderStyle: 'dashed', borderRadius: 20, padding: 32, alignItems: 'center', gap: 16 },
 
-  // Quick Actions Dashboard Section
-  quickActionsSection: {
-    marginBottom: 20,
-  },
-  sectionTitleSmall: {
-    fontFamily: FontFamily.medium,
-    fontSize: 11,
-    letterSpacing: 1.2,
-    textTransform: 'uppercase',
-    marginBottom: 10,
-  },
-  quickActionsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  quickActionCard: {
-    flex: 1,
-    minWidth: '47%',
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    padding: 16,
-    alignItems: 'flex-start',
-    gap: 12,
-  },
-  quickActionIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: Radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  quickActionLabel: {
-    fontFamily: FontFamily.semibold,
-    fontSize: 15,
-    lineHeight: 20,
-  },
+  statusBanner: { borderRadius: 16, overflow: 'hidden' },
+  statusIconBox: { width: 48, height: 48, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
 
-  // Lightweight internal navigation for HostSpace (best standard power-user feel)
-  hostNavChips: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 20,
-  },
-  hostChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 999,
-    backgroundColor: 'rgba(15,23,42,0.06)',
-  },
-  hostChipActive: {
-    backgroundColor: CultureTokens.indigo,
-  },
-  hostChipText: {
-    fontFamily: FontFamily.medium,
-    fontSize: 13,
-    color: 'rgba(15,23,42,0.75)',
-  },
-  hostChipTextActive: {
-    fontFamily: FontFamily.semibold,
-    fontSize: 13,
-    color: '#fff',
-  },
-  // Stubs for insights bar (referenced in JSX, migration in progress)
-  insightsBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 14,
-    borderRadius: 16,
-    borderWidth: 1,
-    marginTop: 8,
-  },
-  insightsContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    flex: 1,
-  },
-  insightsText: {
-    fontSize: 13,
-    flex: 1,
-  },
-  bannerCta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-  },
-  bannerCtaText: {
-    color: '#fff',
-    fontFamily: FontFamily.semibold,
-    fontSize: 13,
-  },
+  quickActionsSection: { marginBottom: 8 },
+  quickActionsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  quickActionCard: { flex: 1, minWidth: '47%', borderRadius: 16, borderWidth: 1 },
+  quickActionIcon: { width: 44, height: 44, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+
+  insightsBar: { borderRadius: 20, overflow: 'hidden', marginTop: 8 },
 });

@@ -464,7 +464,7 @@ export function validateFileUpload(options: {
 
 /** Common profile fields validation schema. */
 export const profileBaseSchema = z.object({
-  entityType: z.enum(['community', 'organiser', 'venue', 'business', 'artist', 'professional']),
+  entityType: z.enum(['community', 'organiser', 'organizer', 'venue', 'business', 'artist', 'professional']),
   officialName: z.string().min(2).max(120),
   handle: z.string().min(3).max(30).regex(/^[a-z0-9-]+$/),
   tradingName: z.string().max(120).optional(),
@@ -500,7 +500,7 @@ export const abnValidationSchema = z.object({
 /** Profile publish schema (stricter — all required fields must be present). */
 export const profilePublishSchema = z.object({
   formData: z.object({
-    entityType: z.enum(['community', 'organiser', 'venue', 'business', 'artist', 'professional']),
+    entityType: z.enum(['community', 'organiser', 'organizer', 'venue', 'business', 'artist', 'professional']),
     officialName: z.string().min(2).max(120),
     handle: z.string().min(3).max(30).regex(/^[a-z0-9-]+$/),
     tagline: z.string().min(1).max(120),
@@ -519,7 +519,7 @@ export const profilePublishSchema = z.object({
  */
 export const validateProfileCreate = validateRequest({
   schema: z.object({
-    entityType: z.enum(['community', 'organiser', 'venue', 'business', 'artist', 'professional']),
+    entityType: z.enum(['community', 'organiser', 'organizer', 'venue', 'business', 'artist', 'professional']),
     formData: z.record(z.unknown()),
   }),
   richTextFields: ['formData.description', 'formData.communityData.guidelines'],

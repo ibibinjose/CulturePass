@@ -14,10 +14,12 @@ import Animated, { FadeInUp } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { useColors } from '@/hooks/useColors';
+import { useColors, useIsDark } from '@/hooks/useColors';
 import { createLazyComponent } from '@/lib/lazy';
 import { useLayout } from '@/hooks/useLayout';
-import { CultureTokens, Spacing, Radius, TextStyles } from '@/design-system/tokens/theme';
+import { CultureTokens, Spacing, Radius } from '@/design-system/tokens/theme';
+import { Luxe } from '@/design-system/tokens/luxeHeritage';
+import { GlassView, LuxeText, LuxeButton } from '@/design-system/ui';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import {
@@ -62,6 +64,7 @@ function haptic() {
 
 export function HostspaceCreateWorkspace({ initialCategory }: { initialCategory?: string }) {
   const colors = useColors();
+  const isDark = useIsDark();
   const { user } = useAuth();
   const { hPad, isDesktop } = useLayout();
   const initialSelected = useMemo(() => findCategory(initialCategory), [initialCategory]);
@@ -137,9 +140,6 @@ export function HostspaceCreateWorkspace({ initialCategory }: { initialCategory?
     setSelectedId(category.id);
     setShowSelector(false);
 
-    // Creator Trust + Phase 1 Unification:
-    // Rich persistent profiles (community, venue, business, organiser, etc.) must go through the full FormWizard.
-    // The workspace is now a launcher/orchestrator for quick content, not the form host for profiles.
     const RICH_PROFILE_TYPES = ['community', 'organiser', 'venue', 'business', 'artist', 'professional'];
     if (RICH_PROFILE_TYPES.includes(category.entityType as string)) {
       router.push(`/hostspace/create?profileType=${category.entityType}` as never);
@@ -156,14 +156,11 @@ export function HostspaceCreateWorkspace({ initialCategory }: { initialCategory?
   const openCreateFlow = () => {
     haptic();
     if (!hostInfoVerified) {
-      Alert.alert('Verify host information', 'Please review and verify your exported host information before creating anything in HostSpace.');
+      Alert.alert('Verify host information', 'Please review and verify your information before creating anything.');
       return;
     }
     if (requiresParentProfile && !selectedParentProfile) {
-      Alert.alert(
-        'Create a host profile first',
-        'Create a community, association, organisation, business, venue, charity, government, council, club, or society before adding events, activities, offers, shopping, dining, travel, art, movies, or other listings under it.',
-      );
+      Alert.alert('Select a profile', 'Please select or create a host profile first.');
       return;
     }
     if (selected.entityType === 'event') {
@@ -298,20 +295,10 @@ export function HostspaceCreateWorkspace({ initialCategory }: { initialCategory?
   };
 
   const onDeleteListing = (profile: Profile) => {
-    Alert.alert(
-      'Delete listing',
-      `Delete "${profile.name}"? This cannot be undone.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => {
-            void deleteProfileMutation.mutateAsync(profile.id);
-          },
-        },
-      ],
-    );
+    Alert.alert('Delete listing', `Delete "${profile.name}"?`, [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', style: 'destructive', onPress: () => void deleteProfileMutation.mutateAsync(profile.id) },
+    ]);
   };
 
   const onEditShopListing = (listing: ShopListing) => {
@@ -320,20 +307,10 @@ export function HostspaceCreateWorkspace({ initialCategory }: { initialCategory?
   };
 
   const onDeleteShopListing = (listing: ShopListing) => {
-    Alert.alert(
-      'Remove listing',
-      `Remove "${listing.title}" from CultureMarket? Buyers will no longer see it.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Remove',
-          style: 'destructive',
-          onPress: () => {
-            void deleteShopListingMutation.mutateAsync(listing.id);
-          },
-        },
-      ],
-    );
+    Alert.alert('Remove listing', `Remove "${listing.title}"?`, [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Remove', style: 'destructive', onPress: () => void deleteShopListingMutation.mutateAsync(listing.id) },
+    ]);
   };
 
   const filteredCategories = useMemo(() => {
@@ -341,8 +318,6 @@ export function HostspaceCreateWorkspace({ initialCategory }: { initialCategory?
     const RICH_PROFILE_TYPES = ['community', 'organiser', 'venue', 'business', 'artist', 'professional'];
     return CREATE_CATEGORIES.filter((item) => {
       if (!activeGroups.includes('all') && !activeGroups.includes(item.group)) return false;
-      // Unification: rich profile entities must use the full FormWizard (with live analytics, drafts, legal gates, etc.)
-      // Workspace launcher is for quick non-profile content (events, offers, listings, activities) only.
       if (RICH_PROFILE_TYPES.includes(item.entityType as string)) return false;
       if (!q) return true;
       const haystack = `${item.label} ${item.purpose} ${item.description} ${item.aliases.join(' ')}`.toLowerCase();
@@ -352,13 +327,15 @@ export function HostspaceCreateWorkspace({ initialCategory }: { initialCategory?
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
-      <Stack.Screen options={{ title: 'Culture Business Hub | CulturePass', headerShown: false }} />
+      <Stack.Screen options={{ title: 'Host Workspace | CulturePass', headerShown: false }} />
       <LinearGradient
-        colors={[CultureTokens.indigo + '12', CultureTokens.teal + '06', colors.background]}
+        colors={isDark ? ['#0C0A09', '#1C1917'] : ['#FAF9F6', '#F5F1EE']}
         style={StyleSheet.absoluteFill}
       />
 
-      <Suspense fallback={null}><LazyHostspaceCreateTopChrome liveListingCount={liveListingCount} listingCountLoading={listingCountLoading} /></Suspense>
+      <Suspense fallback={null}>
+        <LazyHostspaceCreateTopChrome liveListingCount={liveListingCount} listingCountLoading={listingCountLoading} />
+      </Suspense>
 
       <ScrollView
         style={styles.scrollFlex}
@@ -366,7 +343,7 @@ export function HostspaceCreateWorkspace({ initialCategory }: { initialCategory?
           styles.scroll,
           {
             paddingHorizontal: hPad,
-            maxWidth: isDesktop ? 1280 : undefined,
+            maxWidth: 1280,
             alignSelf: 'center',
             width: '100%',
           },
@@ -374,57 +351,56 @@ export function HostspaceCreateWorkspace({ initialCategory }: { initialCategory?
         keyboardShouldPersistTaps="handled"
       >
         <Animated.View entering={FadeInUp.duration(600)} style={styles.introBlock}>
-          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-            First verify your host information, then create the community, association, organisation, business, venue,
-            charity, government, council, club, or society that will own your events and listings.
-          </Text>
+          <LuxeText variant="body" style={{ color: colors.textSecondary, textAlign: 'center', maxWidth: 640 }}>
+            Launch your cultural presence. Create profiles, events, and marketplace listings to connect with your community.
+          </LuxeText>
 
-          {/* Phase 1 Unification + Creator Trust callout: Rich profiles use the full guided wizard */}
-          <View style={[styles.unificationCallout, { backgroundColor: colors.surface, borderColor: colors.borderLight }]}>
-            <LinearGradient
-              colors={[CultureTokens.indigo, CultureTokens.violet]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={{ width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center' }}
-            >
-              <Ionicons name="shield-checkmark" size={14} color="#FFF" />
-            </LinearGradient>
-            <Text style={[styles.unificationCalloutText, { color: colors.textSecondary }]}>
-              Rich profiles use the guided 6-step creation wizard.
-            </Text>
-          </View>
+          <GlassView intensity={10} style={[styles.unificationCallout, { borderColor: colors.borderLight, borderWidth: 1 }]}>
+            <View style={[styles.calloutIconBox, { backgroundColor: Luxe.colors.indigo + '18' }]}>
+              <Ionicons name="sparkles" size={14} color={Luxe.colors.indigo} />
+            </View>
+            <LuxeText variant="caption" style={{ color: colors.textSecondary, fontFamily: Radius.sm ? 'Poppins_600SemiBold' : 'System' }}>
+              Rich profiles use the guided 6-step creation studio.
+            </LuxeText>
+          </GlassView>
         </Animated.View>
 
-        <Suspense fallback={null}><LazyHostspaceCreateVerifyCard
-          hostInfoVerified={hostInfoVerified}
-          onToggleVerified={() => setHostInfoVerified((prev) => !prev)}
-          hostInfoRows={hostInfoRows}
-        /></Suspense>
+        <Suspense fallback={null}>
+            <LazyHostspaceCreateVerifyCard
+                hostInfoVerified={hostInfoVerified}
+                onToggleVerified={() => setHostInfoVerified((prev) => !prev)}
+                hostInfoRows={hostInfoRows}
+            />
+        </Suspense>
 
         {showSelector && !isDesktop ? (
-          <Suspense fallback={null}><LazyHostspaceCreateCategoryGrid
-            categories={filteredCategories}
-            activeGroups={activeGroups}
-            onGroupToggle={toggleGroup}
-            onSelect={selectCategory}
-            query={query}
-            onQueryChange={setQuery}
-          /></Suspense>
+          <Suspense fallback={null}>
+            <LazyHostspaceCreateCategoryGrid
+                categories={filteredCategories}
+                activeGroups={activeGroups}
+                onGroupToggle={toggleGroup}
+                onSelect={selectCategory}
+                query={query}
+                onQueryChange={setQuery}
+            />
+          </Suspense>
         ) : (
           <View style={[styles.workspace, isDesktop && styles.workspaceDesktop]}>
-            <Suspense fallback={null}><LazyHostspaceCreateCategorySidebar
-              width={sideWidth}
-              navMinimized={navMinimized}
-              canMinimizeNav={canMinimizeNav}
-              onToggleNavMinimized={() => setNavMinimized((prev) => !prev)}
-              query={query}
-              onQueryChange={setQuery}
-              activeGroups={activeGroups}
-              onGroupToggle={toggleGroup}
-              categories={filteredCategories}
-              selectedId={selected.id}
-              onSelectCategory={selectCategory}
-            /></Suspense>
+            <Suspense fallback={null}>
+                <LazyHostspaceCreateCategorySidebar
+                    width={sideWidth}
+                    navMinimized={navMinimized}
+                    canMinimizeNav={canMinimizeNav}
+                    onToggleNavMinimized={() => setNavMinimized((prev) => !prev)}
+                    query={query}
+                    onQueryChange={setQuery}
+                    activeGroups={activeGroups}
+                    onGroupToggle={toggleGroup}
+                    categories={filteredCategories}
+                    selectedId={selected.id}
+                    onSelectCategory={selectCategory}
+                />
+            </Suspense>
 
             <HostspaceCreateFormPanel
               selected={selected}
@@ -448,21 +424,23 @@ export function HostspaceCreateWorkspace({ initialCategory }: { initialCategory?
             />
 
             {showOutputColumn ? (
-              <Suspense fallback={null}><LazyHostspaceCreateListingsColumn
-                selected={selected}
-                isMarket={selected.group === 'market'}
-                itemCount={selected.group === 'market' ? filteredShopListings.length : filteredListings.length}
-                shopListingsLoading={shopListingsLoading}
-                profilesLoading={profilesLoading}
-                userSignedIn={!!user}
-                filteredShopListings={filteredShopListings}
-                filteredListings={filteredListings}
-                onOpenCreateFlow={openCreateFlow}
-                onEditShopListing={onEditShopListing}
-                onDeleteShopListing={onDeleteShopListing}
-                onEditListing={onEditListing}
-                onDeleteListing={onDeleteListing}
-              /></Suspense>
+              <Suspense fallback={null}>
+                <LazyHostspaceCreateListingsColumn
+                    selected={selected}
+                    isMarket={selected.group === 'market'}
+                    itemCount={selected.group === 'market' ? filteredShopListings.length : filteredListings.length}
+                    shopListingsLoading={shopListingsLoading}
+                    profilesLoading={profilesLoading}
+                    userSignedIn={!!user}
+                    filteredShopListings={filteredShopListings}
+                    filteredListings={filteredListings}
+                    onOpenCreateFlow={openCreateFlow}
+                    onEditShopListing={onEditShopListing}
+                    onDeleteShopListing={onDeleteShopListing}
+                    onEditListing={onEditListing}
+                    onDeleteListing={onDeleteListing}
+                />
+              </Suspense>
             ) : null}
           </View>
         )}
@@ -474,60 +452,21 @@ export function HostspaceCreateWorkspace({ initialCategory }: { initialCategory?
 const styles = StyleSheet.create({
   root: { flex: 1 },
   scroll: {
-    paddingTop: 48,
+    paddingTop: 32,
     paddingBottom: 120,
     gap: 40,
   },
-  scrollFlex: {
-    flex: 1,
-  },
-  introBlock: {
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  subtitle: {
-    ...TextStyles.callout,
-    textAlign: 'center',
-    maxWidth: 600,
-    opacity: 0.8,
-  },
-  workspace: {
-    gap: 24,
-  },
-  workspaceDesktop: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-  emptyState: {
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    marginBottom: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  emptyStateText: {
-    fontSize: 12,
-    fontFamily: 'Poppins_500Medium',
-    flex: 1,
-  },
-
-  // Phase 1 Unification callout — sets clear expectation that rich profiles use the wizard
+  scrollFlex: { flex: 1 },
+  introBlock: { alignItems: 'center', gap: 16 },
+  workspace: { gap: 24 },
+  workspaceDesktop: { flexDirection: 'row', alignItems: 'flex-start' },
   unificationCallout: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
-    marginTop: Spacing.lg,
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    borderRadius: Radius.full,
-    borderWidth: 1,
+    gap: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 99,
   },
-  unificationCalloutText: {
-    fontSize: 13,
-    fontWeight: '500',
-    flex: 1,
-  },
+  calloutIconBox: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
 });

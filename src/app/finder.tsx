@@ -20,6 +20,9 @@ import { Button } from '@/design-system/ui/Button';
 import { useColors, useIsDark } from '@/hooks/useColors';
 import { CultureTokens } from '@/design-system/tokens/colors';
 import { Radius, FontFamily, InputTokens, gradients } from '@/design-system/tokens/theme';
+import { Luxe, LuxeTextStyles } from '@/design-system/tokens/luxeHeritage';
+import { LuxeText } from '@/design-system/ui/LuxeText';
+import { LuxeButton } from '@/design-system/ui/LuxeButton';
 import { goBackOrReplace } from '@/lib/navigation';
 import { GLOBAL_REGIONS } from '@/constants/locations';
 import { COMMON_LANGUAGES, getLanguage } from '@/constants/languages';
@@ -35,7 +38,6 @@ const isWeb = Platform.OS === 'web';
 
 const AU_STATES = GLOBAL_REGIONS.filter((item) => item.country === 'Australia');
 const QUICK_LANGUAGES = COMMON_LANGUAGES.slice(0, 20);
-
 
 const POPULAR_FINDER = ['Diwali', 'Bollywood', 'Sydney food', 'Perks', 'Tamil', 'Comedy'];
 
@@ -162,7 +164,7 @@ export default function FinderScreen() {
       <NavigationMetadata />
       <Stack.Screen options={{ headerShown: false }} />
       <LinearGradient
-        colors={isDark ? ['#0C0A09', '#1C1917'] : ['#FFFBF7', '#F5F5F4']}
+        colors={isDark ? ['#0C0A09', '#1C1917'] : ['#FAF9F6', '#F5F1EE']}
         style={StyleSheet.absoluteFill}
       />
       <LinearGradient
@@ -190,8 +192,8 @@ export default function FinderScreen() {
                 <Ionicons name="arrow-back" size={20} color={colors.primary} />
             </Pressable>
             <View style={styles.headerTitleBlock}>
-                <Text style={[styles.headerSubtitle, { color: colors.textTertiary }]}>PLATFORM</Text>
-                <Text style={[styles.headerTitle, { color: colors.text }]}>Finder</Text>
+                <LuxeText variant="badgeCaps" style={{ color: colors.textTertiary, letterSpacing: 2 }}>PLATFORM</LuxeText>
+                <LuxeText variant="title2" style={{ color: colors.text }}>Finder</LuxeText>
             </View>
             <LocationPicker
                 variant="icon"
@@ -211,9 +213,9 @@ export default function FinderScreen() {
                      style={[styles.segmentPill, active && { backgroundColor: colors.surface, borderColor: colors.borderLight, borderWidth: 1 }]}
                    >
                      <Ionicons name={id === 'search' ? 'search' : 'compass'} size={15} color={active ? colors.primary : colors.textTertiary} />
-                     <Text style={[styles.segmentLabel, { color: active ? colors.text : colors.textTertiary, fontFamily: active ? FontFamily.bold : FontFamily.medium }]}>
+                     <LuxeText variant="chip" style={{ color: active ? colors.text : colors.textTertiary, fontFamily: active ? FontFamily.bold : FontFamily.medium, marginLeft: 8 }}>
                         {id === 'search' ? 'Global Search' : 'Culture Hub'}
-                     </Text>
+                     </LuxeText>
                    </Pressable>
                  );
                })}
@@ -237,7 +239,7 @@ export default function FinderScreen() {
                         {
                             borderColor: focused ? colors.primary : colors.borderLight,
                             backgroundColor: colors.surface + 'B3',
-                            height: InputTokens.height,
+                            height: 56,
                             borderRadius: Radius.md,
                             marginBottom: 16,
                         }
@@ -264,26 +266,26 @@ export default function FinderScreen() {
 
               {debounced.length < 2 ? (
                 <>
-                  <Text style={[styles.groupLabel, { color: colors.textTertiary }]}>QUICK JUMP</Text>
+                  <LuxeText variant="badgeCaps" style={[styles.groupLabel, { color: colors.textTertiary }]}>QUICK JUMP</LuxeText>
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingBottom: 24, paddingRight: 32 }}>
                     {QUICK_DESTINATIONS.map((d) => (
                       <Pressable key={d.href} onPress={() => router.push(d.href as any)}>
-                        <GlassView contentStyle={{ padding: 16, alignItems: 'center', gap: 10, minWidth: 110 }}>
+                        <GlassView contentStyle={{ padding: 16, alignItems: 'center', gap: 10, minWidth: 110, borderRadius: 16 }}>
                             <View style={[styles.quickIcon, { backgroundColor: d.color + '15' }]}>
                                 <Ionicons name={d.icon as any} size={22} color={d.color} />
                             </View>
-                            <Text style={{ fontSize: 13, fontFamily: FontFamily.bold, color: colors.text }}>{d.label}</Text>
+                            <LuxeText variant="chip" style={{ color: colors.text, fontFamily: FontFamily.bold }}>{d.label}</LuxeText>
                         </GlassView>
                       </Pressable>
                     ))}
                   </ScrollView>
 
-                  <Text style={[styles.groupLabel, { color: colors.textTertiary }]}>POPULAR NOW</Text>
+                  <LuxeText variant="badgeCaps" style={[styles.groupLabel, { color: colors.textTertiary }]}>POPULAR NOW</LuxeText>
                   <View style={styles.trendGrid}>
                     {POPULAR_FINDER.map((term) => (
                       <Pressable key={term} onPress={() => setQuery(term)} style={({ pressed }) => [styles.trendPill, { backgroundColor: colors.primarySoft, borderColor: colors.primary + '15' }, pressed && { opacity: 0.8 }]}>
                         <Ionicons name="flash" size={14} color={CultureTokens.gold} />
-                        <Text style={{ fontSize: 13, fontFamily: FontFamily.medium, color: colors.text }}>{term}</Text>
+                        <LuxeText variant="chip" style={{ color: colors.text }}>{term}</LuxeText>
                       </Pressable>
                     ))}
                   </View>
@@ -297,7 +299,7 @@ export default function FinderScreen() {
                         <Pressable key={chip.key} onPress={() => setFilter(chip.key as any)}>
                           <GlassView intensity={active ? 30 : 10} style={[styles.filterChip, { backgroundColor: active ? colors.primary : colors.surface + '80', borderColor: active ? colors.primary : colors.borderLight }]}>
                             <Ionicons name={chip.icon as any} size={14} color={active ? '#FFFFFF' : colors.textTertiary} />
-                            <Text style={{ fontSize: 13, fontFamily: FontFamily.bold, color: active ? '#FFFFFF' : colors.text }}>{chip.label}</Text>
+                            <LuxeText variant="chip" style={{ color: active ? '#FFFFFF' : colors.text, fontFamily: FontFamily.bold, marginLeft: 6 }}>{chip.label}</LuxeText>
                           </GlassView>
                         </Pressable>
                       );
@@ -309,18 +311,18 @@ export default function FinderScreen() {
                   ) : searchError ? (
                     <View style={{ alignItems: 'center', paddingTop: 60, gap: 16 }}>
                         <Ionicons name="cloud-offline-outline" size={48} color={colors.textTertiary} />
-                        <Text style={{ fontSize: 16, fontFamily: FontFamily.medium, color: colors.textSecondary, textAlign: 'center' }}>Search unavailable. Check your connection.</Text>
+                        <LuxeText variant="body" style={{ color: colors.textSecondary, textAlign: 'center' }}>Search unavailable. Check your connection.</LuxeText>
                     </View>
                   ) : filteredHits.length === 0 ? (
                     <View style={{ alignItems: 'center', paddingTop: 60, gap: 16 }}>
                         <Ionicons name="search" size={48} color={colors.textTertiary} />
-                        <Text style={{ fontSize: 18, fontFamily: FontFamily.bold, color: colors.text }}>No matches found</Text>
+                        <LuxeText variant="title" style={{ color: colors.text }}>No matches found</LuxeText>
                     </View>
                   ) : (
                     <View style={{ gap: 12 }}>
                         {filteredHits.map((hit, idx) => (
                             <Animated.View key={`${hit.kind}-${hit.id}`} entering={FadeInDown.delay(Math.min(idx * 30, 300))}>
-                                <GlassView style={styles.hitOuter} contentStyle={{ padding: 0 }}>
+                                <GlassView style={styles.hitOuter} contentStyle={{ padding: 0, borderRadius: 16 }}>
                                     <Pressable
                                         onPress={() => navigateHit(hit)}
                                         style={({ pressed }) => [styles.hitRow, pressed && { backgroundColor: colors.primarySoft }]}
@@ -331,10 +333,10 @@ export default function FinderScreen() {
                                         <View style={{ flex: 1, gap: 3 }}>
                                             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                                                 <View style={[styles.hitDot, { backgroundColor: hit.accent }]} />
-                                                <Text style={{ fontSize: 10, fontFamily: FontFamily.bold, color: colors.textTertiary, textTransform: 'uppercase' }}>{hit.kind}</Text>
+                                                <LuxeText variant="badgeCaps" style={{ color: colors.textTertiary, fontSize: 9 }}>{hit.kind}</LuxeText>
                                             </View>
-                                            <Text style={{ fontSize: 16, fontFamily: FontFamily.bold, color: colors.text }} numberOfLines={1}>{hit.title}</Text>
-                                            <Text style={{ fontSize: 13, fontFamily: FontFamily.medium, color: colors.textSecondary }} numberOfLines={1}>{hit.subtitle}</Text>
+                                            <LuxeText variant="bodyMedium" style={{ color: colors.text }} numberOfLines={1}>{hit.title}</LuxeText>
+                                            <LuxeText variant="caption" style={{ color: colors.textSecondary }} numberOfLines={1}>{hit.subtitle}</LuxeText>
                                         </View>
                                         <Ionicons name="chevron-forward" size={18} color={colors.textTertiary} />
                                     </Pressable>
@@ -349,29 +351,29 @@ export default function FinderScreen() {
           ) : (
             <View style={{ gap: 32 }}>
                 <Animated.View entering={FadeInDown.duration(400)}>
-                    <GlassView style={{ overflow: 'hidden' }} contentStyle={{ padding: 0 }}>
-                        <LinearGradient colors={gradients.culturepassBrand} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 28, gap: 16 }}>
+                    <GlassView style={{ overflow: 'hidden', borderRadius: 24 }} contentStyle={{ padding: 0 }}>
+                        <LinearGradient colors={Luxe.gradients.plumOchre} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 28, gap: 16 }}>
                             <GlassView intensity={30} colorScheme="dark" style={styles.heroBadge}>
-                                <Text style={styles.heroBadgeText}>HUB BUILDER</Text>
+                                <LuxeText variant="badgeCaps" style={{ color: '#fff' }}>HUB BUILDER</LuxeText>
                             </GlassView>
-                            <Text style={{ fontSize: 28, fontFamily: FontFamily.bold, color: '#FFFFFF', letterSpacing: -0.8 }}>Create a focused hub</Text>
-                            <Text style={{ fontSize: 15, fontFamily: FontFamily.medium, color: 'rgba(255,255,255,0.9)', lineHeight: 22 }}>
+                            <LuxeText variant="display" style={{ color: '#FFFFFF' }}>Create a focused hub</LuxeText>
+                            <LuxeText variant="body" style={{ color: 'rgba(255,255,255,0.9)', lineHeight: 22 }}>
                                 Filter CulturePass by state and language to create a custom entry point for your community.
-                            </Text>
+                            </LuxeText>
                         </LinearGradient>
                     </GlassView>
                 </Animated.View>
 
                 <View style={{ gap: 16 }}>
-                    <Text style={[styles.groupLabel, { color: colors.textTertiary }]}>1. SELECT REGION</Text>
+                    <LuxeText variant="badgeCaps" style={[styles.groupLabel, { color: colors.textTertiary }]}>1. SELECT REGION</LuxeText>
                     <View style={styles.grid}>
                         {AU_STATES.map((st) => {
                             const active = st.value === stateCode;
                             return (
                                 <Pressable key={st.value} onPress={() => setStateCode(st.value)} style={{ width: '48%' }}>
-                                    <GlassView style={[active && { borderColor: colors.primary, borderWidth: 2 }]} contentStyle={{ padding: 16, gap: 4, alignItems: 'center' }}>
-                                        <Text style={{ fontSize: 18, fontFamily: FontFamily.bold, color: active ? colors.primary : colors.text }}>{st.value}</Text>
-                                        <Text style={{ fontSize: 12, fontFamily: FontFamily.medium, color: colors.textTertiary }}>{st.label}</Text>
+                                    <GlassView style={[{ borderRadius: 16 }, active && { borderColor: colors.primary, borderWidth: 2 }]} contentStyle={{ padding: 16, gap: 4, alignItems: 'center' }}>
+                                        <LuxeText variant="title3" style={{ color: active ? colors.primary : colors.text }}>{st.value}</LuxeText>
+                                        <LuxeText variant="caption" style={{ color: colors.textTertiary }}>{st.label}</LuxeText>
                                     </GlassView>
                                 </Pressable>
                             );
@@ -380,14 +382,14 @@ export default function FinderScreen() {
                 </View>
 
                 <View style={{ gap: 16 }}>
-                    <Text style={[styles.groupLabel, { color: colors.textTertiary }]}>2. SELECT CULTURE</Text>
+                    <LuxeText variant="badgeCaps" style={[styles.groupLabel, { color: colors.textTertiary }]}>2. SELECT CULTURE</LuxeText>
                     <View style={styles.trendGrid}>
                         {QUICK_LANGUAGES.map((lang) => {
                             const active = lang.id === languageId;
                             return (
                                 <Pressable key={lang.id} onPress={() => setLanguageId(lang.id)}>
                                     <GlassView intensity={active ? 30 : 10} style={[styles.filterChip, { backgroundColor: active ? colors.primary : colors.surface + '80', borderColor: active ? colors.primary : colors.borderLight }]}>
-                                        <Text style={{ fontSize: 14, fontFamily: FontFamily.bold, color: active ? '#FFFFFF' : colors.text }}>{lang.name}</Text>
+                                        <LuxeText variant="chip" style={{ color: active ? '#FFFFFF' : colors.text }}>{lang.name}</LuxeText>
                                     </GlassView>
                                 </Pressable>
                             );
@@ -396,15 +398,15 @@ export default function FinderScreen() {
                 </View>
 
                 <View style={{ gap: 16 }}>
-                    <Text style={[styles.groupLabel, { color: colors.textTertiary }]}>3. LAUNCH HUB</Text>
-                    <GlassView contentStyle={{ padding: 24, gap: 20 }}>
+                    <LuxeText variant="badgeCaps" style={[styles.groupLabel, { color: colors.textTertiary }]}>3. LAUNCH HUB</LuxeText>
+                    <GlassView contentStyle={{ padding: 24, gap: 20, borderRadius: 20 }}>
                         <View style={{ gap: 6 }}>
-                            <Text style={{ fontSize: 18, fontFamily: FontFamily.bold, color: colors.text }}>{selectedState?.label} · {selectedLanguage?.name}</Text>
-                            <Text style={{ fontSize: 13, fontFamily: FontFamily.medium, color: colors.primary }}>culturepass.app{previewUrl}</Text>
+                            <LuxeText variant="title3" style={{ color: colors.text }}>{selectedState?.label} · {selectedLanguage?.name}</LuxeText>
+                            <LuxeText variant="bodyMedium" style={{ color: colors.primary }}>culturepass.app{previewUrl}</LuxeText>
                         </View>
-                        <Button variant="primary" size="lg" fullWidth onPress={() => router.push(previewUrl)} leftIcon="rocket-outline">
+                        <LuxeButton variant="filled" size="lg" onPress={() => router.push(previewUrl as any)} leftIcon="rocket-outline">
                             Open Hub Page
-                        </Button>
+                        </LuxeButton>
                     </GlassView>
                 </View>
             </View>

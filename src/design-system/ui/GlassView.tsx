@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, type StyleProp, type ViewProps, type ViewStyle } from 'react-native';
+import { View, Pressable, type StyleProp, type ViewProps, type ViewStyle } from 'react-native';
 import { LiquidGlassTokens, glass as glassPresets } from '@/design-system/tokens/theme';
 import { useColors, useIsDark } from '@/hooks/useColors';
 import { withAlpha } from '@/lib/withAlpha';
@@ -21,6 +21,8 @@ export interface GlassViewProps extends ViewProps {
   tone?: 'auto' | 'light' | 'dark';
   /** Native-only glass effect configuration (no-op on web) */
   glassEffectStyle?: string;
+  /** Optional press handler */
+  onPress?: () => void;
 }
 
 /**
@@ -49,6 +51,7 @@ export function GlassView({
   tone = 'auto',
   tintColor,
   bordered = true,
+  onPress,
   ...props
 }: GlassViewProps) {
   const colors = useColors();
@@ -77,11 +80,15 @@ export function GlassView({
     WebkitBackdropFilter: `blur(${blurPx}px) saturate(${saturation}%)`,
   } as unknown as ViewProps['style'];
 
+  const Container = onPress ? Pressable : View;
+  const containerProps = onPress ? { onPress, ...props } : props;
+
   return (
-    <View {...props} style={[webStyle, style]}>
+    <Container {...containerProps} style={[webStyle, style]}>
       {contentStyle ? <View style={[{ flex: 1 }, contentStyle]}>{children}</View> : children}
-    </View>
+    </Container>
   );
 }
+
 
 export default GlassView;

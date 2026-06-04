@@ -39,7 +39,10 @@ export const verificationService = {
     }
 
     // Organisers with paid events require verification
-    if (profile.entityType === 'organiser' && profile.organiserData?.insuranceCertificate) {
+    if (
+      (profile.entityType === 'organiser' || profile.entityType === 'organizer') &&
+      profile.organiserData?.insuranceCertificate
+    ) {
       return true;
     }
 
@@ -76,6 +79,13 @@ export const verificationService = {
         { item: 'Membership model validated', checked: false },
       ],
       organiser: [
+        ...commonChecklist,
+        { item: 'Insurance certificate verified', checked: false },
+        { item: 'Insurance expiry date checked', checked: false },
+        { item: 'Producer credentials validated', checked: false },
+        { item: 'ABN verified (if applicable)', checked: false },
+      ],
+      organizer: [
         ...commonChecklist,
         { item: 'Insurance certificate verified', checked: false },
         { item: 'Insurance expiry date checked', checked: false },

@@ -53,12 +53,16 @@ service firebase.storage {
     function canWriteProfileMedia(profileId) {
       return isSignedIn() && (
         profileId == request.auth.uid ||
+        profileId.matches('temp-' + request.auth.uid + '-.*') ||
+        profileId.matches('temp-\\d+') || // Legacy timestamp-only temp IDs
         (
           firestore.exists(/databases/(default)/documents/profiles/$(profileId)) &&
           firestore.get(/databases/(default)/documents/profiles/$(profileId)).data.ownerId == request.auth.uid
         )
       );
     }
+
+
 
     function canWriteCommunityMedia(communityId) {
       return isSignedIn() && (

@@ -1,5 +1,76 @@
 [
   {
+    "hash": "8f04065",
+    "fullHash": "8f04065394714d1e12c2d803466428e10c72f152",
+    "author": "ibibinjose",
+    "email": "NeoTech@outlook.com.au",
+    "date": "2026-06-04T19:41:19+10:00",
+    "message": "refactor: extract buildCardHtml function to standardize card generation for export and printing",
+    "executor": "Human Developer",
+    "systemLabel": "ibibinjose",
+    "files": [
+      "src/app/profile/qr.tsx",
+      "src/design-system/tokens/colors.ts"
+    ]
+  },
+  {
+    "hash": "879545a",
+    "fullHash": "879545a6b31421b8aa06a64589f21ebef8ac4f16",
+    "author": "ibibinjose",
+    "email": "NeoTech@outlook.com.au",
+    "date": "2026-06-04T18:54:53+10:00",
+    "message": "feat: add affiliation field to user schema and display affiliation badges on digital profile cards",
+    "executor": "Human Developer",
+    "systemLabel": "ibibinjose",
+    "files": [
+      "functions/src/handlers/misc.ts",
+      "functions/src/handlers/users.ts",
+      "shared/schema/user.ts",
+      "src/app/profile/qr.tsx",
+      "src/app/user/[id].tsx",
+      "src/platform/api/endpoints/createProfilesNamespace.ts",
+      "src/platform/api/endpoints/misc.ts"
+    ]
+  },
+  {
+    "hash": "47437a8",
+    "fullHash": "47437a81c5e56744d60a6c241137d0fce12a5c3b",
+    "author": "ibibinjose",
+    "email": "NeoTech@outlook.com.au",
+    "date": "2026-06-04T16:26:14+10:00",
+    "message": "feat: enhance public profile security with swipe-to-reveal contact info, structured schema metadata, and improved social sharing.",
+    "executor": "Human Developer",
+    "systemLabel": "ibibinjose",
+    "files": [
+      "AGENTS.md",
+      "docs/ADRs/003-public-profile-security-and-digital-id.md",
+      "docs/ARCHITECTURE.md",
+      "firebase.json",
+      "src/app/+html.tsx",
+      "src/app/[handle].tsx",
+      "src/app/profile/qr.tsx",
+      "src/app/user/[id].tsx",
+      "src/lib/app-meta.ts",
+      "src/modules/payment/screens/wallet.tsx"
+    ]
+  },
+  {
+    "hash": "2866b0c",
+    "fullHash": "2866b0c2b4ec4e8d3b16b4f12842617ddc65c1cf",
+    "author": "ibibinjose",
+    "email": "NeoTech@outlook.com.au",
+    "date": "2026-06-04T11:37:27+10:00",
+    "message": "build: sync iOS widgets target version with parent app",
+    "executor": "Human Developer",
+    "systemLabel": "ibibinjose",
+    "files": [
+      "app.config.js",
+      "ios/CulturePass.xcodeproj/project.pbxproj",
+      "ios/Podfile.lock",
+      "src/constants/timesheetData.json"
+    ]
+  },
+  {
     "hash": "852cb54",
     "fullHash": "852cb546edbf795ca17ff41d36838c6c33b3af84",
     "author": "ibibinjose",

@@ -98,6 +98,7 @@ function getEntityTypeDisplayName(entityType: HostEntityType): string {
   const displayNames: Record<HostEntityType, string> = {
     community: 'Community',
     organiser: 'Event Organiser',
+    organizer: 'Event Organiser',
     venue: 'Venue',
     business: 'Business',
     artist: 'Artist',
@@ -105,6 +106,7 @@ function getEntityTypeDisplayName(entityType: HostEntityType): string {
   };
   return displayNames[entityType];
 }
+
 
 // ---------------------------------------------------------------------------
 // Component

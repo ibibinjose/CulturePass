@@ -7,6 +7,8 @@
  * for native builds (iOS/Android).
  */
 
+import { withXcodeProject } from "expo/config-plugins";
+
 // Check if we're running in a web environment by inspecting command line arguments
 const isWebEnvironment = process.argv.some(arg => 
   arg.includes('web') || 
@@ -16,10 +18,43 @@ const isWebEnvironment = process.argv.some(arg =>
 // If the platform is being specified as web, or if 'web' is in the arguments, exclude react-native-maps
 const shouldExcludeMapsPlugin = isWebEnvironment || 
   process.argv.includes('web') || 
-  (process.argv.includes('--platform') && process.argv[process.argv.indexOf('--platform') + 1] === 'web');
+  (process.argv[process.argv.indexOf('--platform') + 1] === 'web');
 
 const stripeMerchantIdentifier = process.env.EXPO_PUBLIC_STRIPE_MERCHANT_IDENTIFIER || "merchant.au.culturepass.app";
 const stripeAndroidPayMode = process.env.EXPO_PUBLIC_STRIPE_ANDROID_PAY_MODE === "production" ? "production" : "test";
+
+const withWidgetVersionSync = (config) => {
+  return withXcodeProject(config, (config) => {
+    const xcodeProject = config.modResults;
+    const buildNumber = config.ios?.buildNumber || "1";
+    const version = config.version || "1.0.0";
+
+    const configurations = xcodeProject.pbxXCBuildConfigurationSection();
+    let matchCount = 0;
+    for (const key in configurations) {
+      const buildConfig = configurations[key];
+      if (buildConfig && buildConfig.buildSettings) {
+        const infoplist = buildConfig.buildSettings.INFOPLIST_FILE;
+        const productName = buildConfig.buildSettings.PRODUCT_NAME;
+        const isWidgetsTarget =
+          productName === '"ExpoWidgetsTarget"' ||
+          productName === 'ExpoWidgetsTarget' ||
+          infoplist === 'ExpoWidgetsTarget/Info.plist' ||
+          (typeof infoplist === 'string' && infoplist.includes('ExpoWidgetsTarget'));
+
+        if (isWidgetsTarget) {
+          buildConfig.buildSettings.CURRENT_PROJECT_VERSION = `"${buildNumber}"`;
+          buildConfig.buildSettings.MARKETING_VERSION = `"${version}"`;
+          matchCount++;
+        }
+      }
+    }
+    if (matchCount > 0) {
+      console.log(`[withWidgetVersionSync] Synced ${matchCount} ExpoWidgetsTarget configuration blocks to buildNumber "${buildNumber}" and version "${version}"`);
+    }
+    return config;
+  });
+};
 
 export default function(appConfig) {
   const { config } = appConfig || {};
@@ -194,6 +229,7 @@ export default function(appConfig) {
     expo: {
       ...config.expo,
       plugins: [
+        withWidgetVersionSync,
         ...basePlugins,
         [
           "@sentry/react-native",

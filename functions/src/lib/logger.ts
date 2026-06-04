@@ -3,7 +3,6 @@
  *
  * Combines:
  * - firebase-functions logger (for Cloud Logging / GCP)
- * - Sentry for error tracking
  * - Correlation / request IDs for tracing
  *
  * Usage:
@@ -13,7 +12,6 @@
  */
 
 import { logger as firebaseLogger } from 'firebase-functions';
-import * as Sentry from '@sentry/node';
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
@@ -25,9 +23,6 @@ let currentCorrelationId: string | null = null;
 
 export function setCorrelationId(id: string | null) {
   currentCorrelationId = id;
-  if (id) {
-    Sentry.setTag('correlation_id', id);
-  }
 }
 
 function enrich(context?: LogContext) {
@@ -45,43 +40,15 @@ export const log = {
 
   info(message: string, context?: LogContext) {
     firebaseLogger.info(message, enrich(context));
-    Sentry.addBreadcrumb({
-      message,
-      category: 'backend',
-      level: 'info',
-      data: context,
-    });
   },
 
   warn(message: string, error?: unknown, context?: LogContext) {
     const enriched = enrich({ ...context, error: error ? String(error) : undefined });
     firebaseLogger.warn(message, enriched);
-
-    Sentry.addBreadcrumb({
-      message,
-      category: 'backend',
-      level: 'warning',
-      data: enriched,
-    });
-
-    if (error) {
-      Sentry.captureException(error, { level: 'warning', extra: enriched });
-    }
   },
 
   error(message: string, error: unknown, context?: LogContext) {
     const enriched = enrich({ ...context, error: error ? String(error) : undefined });
     firebaseLogger.error(message, enriched);
-
-    Sentry.addBreadcrumb({
-      message,
-      category: 'backend',
-      level: 'error',
-      data: enriched,
-    });
-
-    Sentry.captureException(error, { level: 'error', extra: enriched });
   },
 };
-
-// Re-export for convenience

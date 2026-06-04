@@ -1,9 +1,9 @@
 const path = require("path");
 const {
-  getSentryExpoConfig
-} = require("@sentry/react-native/metro");
+  getDefaultConfig
+} = require("expo/metro-config");
 
-const config = getSentryExpoConfig(__dirname);
+const config = getDefaultConfig(__dirname);
 
 // Enable resolving .mjs files (used by PostHog etc.)
 config.resolver.sourceExts = [...(config.resolver.sourceExts ?? []), 'mjs'];

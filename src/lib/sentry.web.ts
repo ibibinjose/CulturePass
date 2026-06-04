@@ -1,64 +1,9 @@
 /**
- * Sentry Initialization - Browser/Web
- *
- * This file is only used by the Expo web build.
- * It mirrors the native Sentry setup while using the browser-compatible package.
- *
- * Note: The user also provided a CDN script tag for manual loading:
- * <script src="https://js-de.sentry-cdn.com/c99b1f7bc7c59d6f5fd539e84f738c69.min.js" crossorigin="anonymous"></script>
- * We don't use it because we initialize the SDK programmatically via @sentry/react.
+ * Sentry Stub - Completely Mocked to Remove Dependency
  */
-import * as Sentry from '@sentry/react';
-import { Platform } from 'react-native';
-import Constants from 'expo-constants';
 
-const SENTRY_DSN = process.env.EXPO_PUBLIC_SENTRY_DSN || Constants.expoConfig?.extra?.sentryDsn;
-const isDev = __DEV__ || process.env.NODE_ENV === 'development';
-
-export function initSentry() {
-  if (!SENTRY_DSN) {
-    if (!isDev) {
-      console.warn('[Sentry] No DSN provided. Error tracking disabled in production.');
-    }
-    return;
-  }
-
-  // Release name must match what you create via release hook or sentry-cli in CI.
-  const release =
-    process.env.EXPO_PUBLIC_RELEASE ||
-    Constants.expoConfig?.version ||
-    'development';
-
-  Sentry.init({
-    dsn: SENTRY_DSN,
-    environment: isDev ? 'development' : process.env.EXPO_PUBLIC_ENV || 'production',
-    release: `${release}@${Platform.OS}`,
-    autoSessionTracking: true,
-    tracesSampleRate: isDev ? 1.0 : 0.1,
-    beforeSend(event, hint) {
-      if (isDev && !process.env.EXPO_PUBLIC_FORCE_SENTRY) {
-        return null;
-      }
-
-      if (event.request?.headers) {
-        delete event.request.headers['Authorization'];
-        delete event.request.headers['Cookie'];
-      }
-
-      return event;
-    },
-    integrations: (integrations) =>
-      integrations.filter((integration) => {
-        return !['Console', 'DebugSymbolicator'].includes(integration.name);
-      }),
-  });
-
-  Sentry.setTag('platform', Platform.OS);
-  Sentry.setTag('app_version', Constants.expoConfig?.version || 'unknown');
-
-  if (!isDev) {
-    console.log('[Sentry] Initialized successfully');
-  }
+export function initSentry(): void {
+  // no-op
 }
 
 export function setSentryUser(user: {
@@ -66,37 +11,23 @@ export function setSentryUser(user: {
   username?: string;
   role?: string;
   email?: string;
-} | null) {
-  if (!user) {
-    Sentry.setUser(null);
-    return;
-  }
-
-  Sentry.setUser({
-    id: user.id,
-    username: user.username,
-    email: user.email,
-    role: user.role,
-  });
-
-  Sentry.setTag('user_role', user.role || 'user');
+} | null): void {
+  // no-op
 }
 
-export function captureException(error: unknown, context?: Record<string, any>) {
-  if (context) {
-    Sentry.setContext('additional', context);
-  }
-  Sentry.captureException(error);
+export function captureException(error: unknown, context?: Record<string, any>): void {
+  // no-op
 }
 
-export function addBreadcrumb(message: string, category: string, data?: Record<string, any>) {
-  Sentry.addBreadcrumb({
-    message,
-    category,
-    level: 'info',
-    data,
-    timestamp: Date.now() / 1000,
-  });
+export function addBreadcrumb(message: string, category: string, data?: Record<string, any>): void {
+  // no-op
 }
 
-export { Sentry };
+export const Sentry = {
+  captureException(error: any, context?: any) {},
+  captureMessage(message: string, level?: any) {},
+  setTag(key: string, value: any) {},
+  setContext(name: string, context: any) {},
+  addBreadcrumb(breadcrumb: any) {},
+  setUser(user: any) {},
+};

@@ -373,10 +373,10 @@ describe('Validation API Endpoints', () => {
         .send({ abn: '51824753556' });
 
       expect(res.status).toBe(200);
-      expect(res.body.valid).toBe(true);
-      expect(res.body.businessName).toBe('Test Business CulturePass.App');
-      expect(res.body.status).toBe('Active');
-      expect(res.body.gstRegistered).toBe(true);
+      expect(res.body.validated).toBe(true);
+      expect(res.body.entityName).toBe('Test Business CulturePass.App');
+      expect(res.body.raw.status).toBe('Active');
+      expect(res.body.raw.gstRegistered).toBe(true);
     });
 
     it('rejects invalid ABN format (non-numeric)', async () => {
@@ -409,7 +409,7 @@ describe('Validation API Endpoints', () => {
         .send({ abn: '12345678901' });
 
       expect(res.status).toBe(200);
-      expect(res.body.valid).toBe(false);
+      expect(res.body.validated).toBe(false);
       expect(res.body.error).toContain('checksum');
     });
 

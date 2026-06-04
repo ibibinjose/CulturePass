@@ -31,7 +31,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import { router } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import type { User, Membership } from '@shared/schema';
+import type { User, Membership, Profile } from '@shared/schema';
 import QRCode from 'react-native-qrcode-svg';
 import * as Haptics from 'expo-haptics';
 import * as Clipboard from 'expo-clipboard';
@@ -193,27 +193,50 @@ function openPrintWindow(opts: {
   avatarUrl?: string | null;
   qrDataUrl: string;       // pre-rendered QR as data: URI (SVG)
   initials: string;
+  affiliation?: { name: string; avatarUrl?: string | null; entityType?: string | null } | null;
 }) {
   if (Platform.OS !== 'web') return;
 
-  const { cardType, name, username, cpid, tier, memberSince, avatarUrl, qrDataUrl, initials } = opts;
+  const { cardType, name, username, cpid, tier, memberSince, avatarUrl, qrDataUrl, initials, affiliation } = opts;
   const isLanyard = cardType === 'lanyard';
   const safeUsername = (username || 'user').replace(/[^a-z0-9_-]/gi, '').toLowerCase();
-  const cardLabel   = isLanyard ? 'Event Lanyard & Wallet Pass' : 'Digital Business Pass';
   const filename    = `culturepass-${safeUsername}-${isLanyard ? 'lanyard-pass' : 'business-pass'}`;
   const tierText    = (tier || 'Standard').toUpperCase();
 
-  // Avatar: either use the remote URL or a monogram circle
+  // Avatar: either use the base64 URI or a monogram circle
   const avatarHtml = avatarUrl
-    ? `<img src="${avatarUrl}" style="width:44px;height:44px;border-radius:50%;object-fit:cover;border:1px solid #E5E7EB;" crossorigin="anonymous" />`
+    ? `<img src="${avatarUrl}" style="width:44px;height:44px;border-radius:50%;object-fit:cover;border:1px solid #E5E7EB;" />`
     : `<div style="width:44px;height:44px;border-radius:50%;background:#EEF2FF;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#4F46E5;">${initials}</div>`;
 
   const avatarHtmlLg = avatarUrl
-    ? `<img src="${avatarUrl}" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:1.5px solid #E5E7EB;" crossorigin="anonymous" />`
+    ? `<img src="${avatarUrl}" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:1.5px solid #E5E7EB;" />`
     : `<div style="width:64px;height:64px;border-radius:50%;background:#EEF2FF;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#4F46E5;">${initials}</div>`;
 
+  // Affiliation logic
+  const affiliationBadgeHtml = (affiliation && cardType === 'business')
+    ? (affiliation.avatarUrl
+        ? `<img src="${affiliation.avatarUrl}" style="position:absolute;bottom:-2px;right:-2px;width:18px;height:18px;border-radius:4px;border:1px solid #FFFFFF;background:#FFFFFF;object-fit:cover;box-shadow:0 1px 3px rgba(0,0,0,0.15);" />`
+        : `<div style="position:absolute;bottom:-2px;right:-2px;width:18px;height:18px;border-radius:4px;border:1px solid #FFFFFF;background:#F3F4F6;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,0.15);"><svg style="width:10px;height:10px;color:#78716C;" fill="currentColor" viewBox="0 0 24 24"><path d="M12 7V3H2v18h20V7H12zm-2 12H4v-2h6v2zm0-4H4v-2h6v2zm0-4H4V9h6v2zm10 8h-8v-2h8v2zm0-4h-8v-2h8v2zm0-4h-8V9h8v2z"/></svg></div>`
+      )
+    : '';
+
+  const affiliationBadgeHtmlLg = (affiliation && cardType === 'lanyard')
+    ? (affiliation.avatarUrl
+        ? `<img src="${affiliation.avatarUrl}" style="position:absolute;bottom:-2px;right:-2px;width:24px;height:24px;border-radius:5px;border:1.5px solid #FFFFFF;background:#FFFFFF;object-fit:cover;box-shadow:0 1.5px 3.5px rgba(0,0,0,0.2);" />`
+        : `<div style="position:absolute;bottom:-2px;right:-2px;width:24px;height:24px;border-radius:5px;border:1.5px solid #FFFFFF;background:#F3F4F6;display:flex;align-items:center;justify-content:center;box-shadow:0 1.5px 3.5px rgba(0,0,0,0.2);"><svg style="width:14px;height:14px;color:#78716C;" fill="currentColor" viewBox="0 0 24 24"><path d="M12 7V3H2v18h20V7H12zm-2 12H4v-2h6v2zm0-4H4v-2h6v2zm0-4H4V9h6v2zm10 8h-8v-2h8v2zm0-4h-8v-2h8v2zm0-4h-8V9h8v2z"/></svg></div>`
+      )
+    : '';
+
+  const affiliationNameHtml = (affiliation && cardType === 'business')
+    ? `<div style="font-size:10px;color:#4B5563;margin-top:2px;display:flex;align-items:center;gap:4px;">🏢 ${affiliation.name}</div>`
+    : '';
+
+  const affiliationNameHtmlLg = (affiliation && cardType === 'lanyard')
+    ? `<div style="font-size:12px;color:#4B5563;margin-top:3px;display:flex;align-items:center;gap:4px;">🏢 ${affiliation.name}</div>`
+    : '';
+
   const businessCard = `
-    <div style="width:330px;height:210px;border-radius:20px;border:1px solid #E5E7EB;background:#FFFFFF;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;padding:14px;box-sizing:border-box;box-shadow:0 8px 24px rgba(0,0,0,0.12);">
+    <div style="width:330px;height:210px;border-radius:20px;border:1px solid #E5E7EB;background:#FFFFFF;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;padding:20px 18px;box-sizing:border-box;box-shadow:0 8px 24px rgba(0,0,0,0.12);">
       <!-- header -->
       <div style="display:flex;justify-content:space-between;align-items:center;">
         <span style="font-size:10px;font-weight:800;letter-spacing:1.2px;">
@@ -222,34 +245,31 @@ function openPrintWindow(opts: {
         <span style="font-size:9px;font-weight:700;letter-spacing:0.8px;color:#009CDE;">${tierText}</span>
       </div>
       <!-- middle -->
-      <div style="display:flex;justify-content:space-between;align-items:center;flex:1;margin:8px 0;">
-        <div style="flex:1;display:flex;flex-direction:column;justify-content:space-between;height:100%;padding-right:10px;">
-          <div style="display:flex;align-items:center;gap:10px;">
-            ${avatarHtml}
+      <div style="display:flex;justify-content:space-between;align-items:center;flex:1;margin-top:16px;">
+        <div style="flex:1;display:flex;flex-direction:column;justify-content:center;height:100%;padding-right:10px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div style="position:relative;width:44px;height:44px;">
+              ${avatarHtml}
+              ${affiliationBadgeHtml}
+            </div>
             <div>
-              <div style="font-size:14px;font-weight:700;color:#0B0F19;line-height:18px;">${name}</div>
-              <div style="font-size:11px;color:#4B5563;">@${username}</div>
+              <div style="font-size:15px;font-weight:700;color:#0B0F19;line-height:20px;">${name}</div>
+              <div style="font-size:12px;color:#4B5563;margin-top:2px;">@${username}</div>
+              ${affiliationNameHtml}
             </div>
           </div>
-          <div style="display:flex;align-items:center;gap:6px;margin-top:12px;">
-            <span style="font-size:8.5px;font-weight:700;letter-spacing:0.5px;color:#6B7280;">NFC PASS ACTIVE</span>
-          </div>
         </div>
-        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
-          <div style="padding:5px;background:#FFFFFF;border-radius:8px;border:1px solid #E5E7EB;">
-            <img src="${qrDataUrl}" width="84" height="84" style="display:block;" />
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;justify-content:center;">
+          <div style="padding:6px;background:#FFFFFF;border-radius:10px;border:1px solid #E5E7EB;">
+            <img src="${qrDataUrl}" width="88" height="88" style="display:block;" />
           </div>
           <span style="font-size:10px;font-family:monospace;font-weight:700;letter-spacing:1px;color:#0B0F19;">${cpid}</span>
         </div>
       </div>
-      <!-- footer -->
-      <div style="display:flex;align-items:center;justify-content:center;gap:6px;">
-        <span style="font-size:8px;font-weight:700;letter-spacing:0.6px;color:#9CA3AF;">WALLET READY • iOS / ANDROID COMPATIBLE</span>
-      </div>
     </div>`;
 
   const lanyardCard = `
-    <div style="width:330px;height:440px;border-radius:20px;border:1px solid #E5E7EB;background:#FFFFFF;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;padding:18px;box-sizing:border-box;box-shadow:0 8px 24px rgba(0,0,0,0.12);">
+    <div style="width:330px;height:440px;border-radius:20px;border:1px solid #E5E7EB;background:#FFFFFF;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;padding:26px 20px;box-sizing:border-box;box-shadow:0 8px 24px rgba(0,0,0,0.12);">
       <!-- header -->
       <div style="display:flex;justify-content:space-between;align-items:center;">
         <span style="font-size:10px;font-weight:800;letter-spacing:1.2px;">
@@ -258,28 +278,24 @@ function openPrintWindow(opts: {
         <span style="font-size:9px;font-weight:700;letter-spacing:0.8px;color:#009CDE;">${tierText}</span>
       </div>
       <!-- profile -->
-      <div style="display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:8px;">
-        ${avatarHtmlLg}
+      <div style="display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:20px;">
+        <div style="position:relative;width:64px;height:64px;">
+          ${avatarHtmlLg}
+          ${affiliationBadgeHtmlLg}
+        </div>
         <div style="text-align:center;">
-          <div style="font-size:18px;font-weight:700;color:#0B0F19;line-height:22px;">${name}</div>
-          <div style="font-size:12px;color:#4B5563;margin-top:2px;">@${username}</div>
-          <div style="font-size:10px;color:#9CA3AF;margin-top:4px;">Member Since ${memberSince}</div>
+          <div style="font-size:19px;font-weight:700;color:#0B0F19;line-height:24px;">${name}</div>
+          <div style="font-size:13px;color:#4B5563;margin-top:3px;">@${username}</div>
+          ${affiliationNameHtmlLg}
+          <div style="font-size:10.5px;color:#9CA3AF;margin-top:6px;">Member Since ${memberSince}</div>
         </div>
       </div>
       <!-- qr -->
-      <div style="display:flex;flex-direction:column;align-items:center;gap:6px;margin:12px 0;">
-        <div style="padding:5px;background:#FFFFFF;border-radius:8px;border:1px solid #E5E7EB;">
-          <img src="${qrDataUrl}" width="120" height="120" style="display:block;" />
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:20px;margin-bottom:10px;flex:1;justify-content:center;">
+        <div style="padding:6px;background:#FFFFFF;border-radius:10px;border:1px solid #E5E7EB;">
+          <img src="${qrDataUrl}" width="130" height="130" style="display:block;" />
         </div>
-        <span style="font-size:12px;font-family:monospace;font-weight:700;letter-spacing:1.5px;color:#0B0F19;">${cpid}</span>
-      </div>
-      <!-- nfc -->
-      <div style="display:flex;align-items:center;justify-content:center;gap:8px;padding:8px;border:1px solid #F3F4F6;background:#FAFAFA;border-radius:10px;">
-        <span style="font-size:9px;font-weight:700;letter-spacing:0.8px;color:#6B7280;">TAP TO SCAN • EVENT LANYARD PASS</span>
-      </div>
-      <!-- footer -->
-      <div style="display:flex;align-items:center;justify-content:center;padding-top:6px;">
-        <span style="font-size:8px;font-weight:700;letter-spacing:0.6px;color:#9CA3AF;">WALLET SECURE • iOS / ANDROID COMPATIBLE</span>
+        <span style="font-size:12.5px;font-family:monospace;font-weight:700;letter-spacing:1.5px;color:#0B0F19;margin-top:6px;">${cpid}</span>
       </div>
     </div>`;
 
@@ -331,7 +347,6 @@ function openPrintWindow(opts: {
   <script>
     // Set suggested filename via document.title (browsers use this for PDF filename)
     document.title = '${filename}';
-    // Auto-open print dialog after a short delay for images to load
     window.addEventListener('load', function() {
       setTimeout(function() { window.print(); }, 600);
     });
@@ -350,6 +365,212 @@ function openPrintWindow(opts: {
   win.document.close();
 }
 
+/** Build a self-contained image export window for a card — web only.
+ *  Opens a popup tab, renders the card, loads html2canvas from CDN,
+ *  takes a high-resolution transparent screenshot, downloads the PNG, and closes.
+ */
+function openSaveImageWindow(opts: {
+  cardType: 'business' | 'lanyard';
+  name: string;
+  username: string;
+  cpid: string;
+  tier: string;
+  memberSince: string;
+  avatarUrl?: string | null;
+  qrDataUrl: string;       // pre-rendered QR as data: URI (SVG)
+  initials: string;
+  affiliation?: { name: string; avatarUrl?: string | null; entityType?: string | null } | null;
+}) {
+  if (Platform.OS !== 'web') return;
+
+  const { cardType, name, username, cpid, tier, memberSince, avatarUrl, qrDataUrl, initials, affiliation } = opts;
+  const isLanyard = cardType === 'lanyard';
+  const safeUsername = (username || 'user').replace(/[^a-z0-9_-]/gi, '').toLowerCase();
+  const filename    = `culturepass-${safeUsername}-${isLanyard ? 'lanyard-pass' : 'business-pass'}`;
+  const tierText    = (tier || 'Standard').toUpperCase();
+
+  // Avatar: either use the base64 URI or a monogram circle
+  const avatarHtml = avatarUrl
+    ? `<img src="${avatarUrl}" style="width:44px;height:44px;border-radius:50%;object-fit:cover;border:1px solid #E5E7EB;" />`
+    : `<div style="width:44px;height:44px;border-radius:50%;background:#EEF2FF;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#4F46E5;">${initials}</div>`;
+
+  const avatarHtmlLg = avatarUrl
+    ? `<img src="${avatarUrl}" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:1.5px solid #E5E7EB;" />`
+    : `<div style="width:64px;height:64px;border-radius:50%;background:#EEF2FF;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#4F46E5;">${initials}</div>`;
+
+  // Affiliation logic
+  const affiliationBadgeHtml = (affiliation && cardType === 'business')
+    ? (affiliation.avatarUrl
+        ? `<img src="${affiliation.avatarUrl}" style="position:absolute;bottom:-2px;right:-2px;width:18px;height:18px;border-radius:4px;border:1px solid #FFFFFF;background:#FFFFFF;object-fit:cover;box-shadow:0 1px 3px rgba(0,0,0,0.15);" />`
+        : `<div style="position:absolute;bottom:-2px;right:-2px;width:18px;height:18px;border-radius:4px;border:1px solid #FFFFFF;background:#F3F4F6;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,0.15);"><svg style="width:10px;height:10px;color:#78716C;" fill="currentColor" viewBox="0 0 24 24"><path d="M12 7V3H2v18h20V7H12zm-2 12H4v-2h6v2zm0-4H4v-2h6v2zm0-4H4V9h6v2zm10 8h-8v-2h8v2zm0-4h-8v-2h8v2zm0-4h-8V9h8v2z"/></svg></div>`
+      )
+    : '';
+
+  const affiliationBadgeHtmlLg = (affiliation && cardType === 'lanyard')
+    ? (affiliation.avatarUrl
+        ? `<img src="${affiliation.avatarUrl}" style="position:absolute;bottom:-2px;right:-2px;width:24px;height:24px;border-radius:5px;border:1.5px solid #FFFFFF;background:#FFFFFF;object-fit:cover;box-shadow:0 1.5px 3.5px rgba(0,0,0,0.2);" />`
+        : `<div style="position:absolute;bottom:-2px;right:-2px;width:24px;height:24px;border-radius:5px;border:1.5px solid #FFFFFF;background:#F3F4F6;display:flex;align-items:center;justify-content:center;box-shadow:0 1.5px 3.5px rgba(0,0,0,0.2);"><svg style="width:14px;height:14px;color:#78716C;" fill="currentColor" viewBox="0 0 24 24"><path d="M12 7V3H2v18h20V7H12zm-2 12H4v-2h6v2zm0-4H4v-2h6v2zm0-4H4V9h6v2zm10 8h-8v-2h8v2zm0-4h-8v-2h8v2zm0-4h-8V9h8v2z"/></svg></div>`
+      )
+    : '';
+
+  const affiliationNameHtml = (affiliation && cardType === 'business')
+    ? `<div style="font-size:10px;color:#4B5563;margin-top:2px;display:flex;align-items:center;gap:4px;">🏢 ${affiliation.name}</div>`
+    : '';
+
+  const affiliationNameHtmlLg = (affiliation && cardType === 'lanyard')
+    ? `<div style="font-size:12px;color:#4B5563;margin-top:3px;display:flex;align-items:center;gap:4px;">🏢 ${affiliation.name}</div>`
+    : '';
+
+  const businessCard = `
+    <div id="card-export" style="width:330px;height:210px;border-radius:20px;border:1px solid #E5E7EB;background:#FFFFFF;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;padding:20px 18px;box-sizing:border-box;">
+      <!-- header -->
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:10px;font-weight:800;letter-spacing:1.2px;">
+          <span style="color:#FF3B30;">CULTURE</span><span style="color:#34C759;">PASS</span><span style="color:#009CDE;"> ID</span>
+        </span>
+        <span style="font-size:9px;font-weight:700;letter-spacing:0.8px;color:#009CDE;">${tierText}</span>
+      </div>
+      <!-- middle -->
+      <div style="display:flex;justify-content:space-between;align-items:center;flex:1;margin-top:16px;">
+        <div style="flex:1;display:flex;flex-direction:column;justify-content:center;height:100%;padding-right:10px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div style="position:relative;width:44px;height:44px;">
+              ${avatarHtml}
+              ${affiliationBadgeHtml}
+            </div>
+            <div>
+              <div style="font-size:15px;font-weight:700;color:#0B0F19;line-height:20px;">${name}</div>
+              <div style="font-size:12px;color:#4B5563;margin-top:2px;">@${username}</div>
+              ${affiliationNameHtml}
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;justify-content:center;">
+          <div style="padding:6px;background:#FFFFFF;border-radius:10px;border:1px solid #E5E7EB;">
+            <img src="${qrDataUrl}" width="88" height="88" style="display:block;" />
+          </div>
+          <span style="font-size:10px;font-family:monospace;font-weight:700;letter-spacing:1px;color:#0B0F19;">${cpid}</span>
+        </div>
+      </div>
+    </div>`;
+
+  const lanyardCard = `
+    <div id="card-export" style="width:330px;height:440px;border-radius:20px;border:1px solid #E5E7EB;background:#FFFFFF;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;padding:26px 20px;box-sizing:border-box;">
+      <!-- header -->
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:10px;font-weight:800;letter-spacing:1.2px;">
+          <span style="color:#FF3B30;">CULTURE</span><span style="color:#34C759;">PASS</span><span style="color:#009CDE;"> ID</span>
+        </span>
+        <span style="font-size:9px;font-weight:700;letter-spacing:0.8px;color:#009CDE;">${tierText}</span>
+      </div>
+      <!-- profile -->
+      <div style="display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:20px;">
+        <div style="position:relative;width:64px;height:64px;">
+          ${avatarHtmlLg}
+          ${affiliationBadgeHtmlLg}
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:19px;font-weight:700;color:#0B0F19;line-height:24px;">${name}</div>
+          <div style="font-size:13px;color:#4B5563;margin-top:3px;">@${username}</div>
+          ${affiliationNameHtmlLg}
+          <div style="font-size:10.5px;color:#9CA3AF;margin-top:6px;">Member Since ${memberSince}</div>
+        </div>
+      </div>
+      <!-- qr -->
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:20px;margin-bottom:10px;flex:1;justify-content:center;">
+        <div style="padding:6px;background:#FFFFFF;border-radius:10px;border:1px solid #E5E7EB;">
+          <img src="${qrDataUrl}" width="130" height="130" style="display:block;" />
+        </div>
+        <span style="font-size:12.5px;font-family:monospace;font-weight:700;letter-spacing:1.5px;color:#0B0F19;margin-top:6px;">${cpid}</span>
+      </div>
+    </div>`;
+
+  const cardHtml = isLanyard ? lanyardCard : businessCard;
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>Export Pass</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html, body {
+      width: 100vw; height: 100vh;
+      background: #0B0F19;
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      overflow: hidden;
+    }
+    .status-text {
+      color: #FFFFFF; font-size: 14px; margin-top: 16px;
+      font-weight: 500; letter-spacing: 0.5px;
+      opacity: 0.8;
+    }
+    .spinner {
+      border: 3px solid rgba(255,255,255,0.1);
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      border-left-color: #4F46E5;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+  <div class="spinner" id="spinner"></div>
+  <div class="status-text" id="status">Generating high-resolution image...</div>
+
+  <!-- Hidden rendering container -->
+  <div style="position: absolute; left: -9999px; top: -9999px;">
+    ${cardHtml}
+  </div>
+
+  <script>
+    window.addEventListener('load', function() {
+      // Small timeout to guarantee images are completely painted/decoded
+      setTimeout(function() {
+        const el = document.getElementById('card-export');
+        html2canvas(el, {
+          scale: 3,
+          backgroundColor: null,
+          useCORS: true,
+          logging: false
+        }).then(function(canvas) {
+          const dataUrl = canvas.toDataURL('image/png');
+          const link = document.createElement('a');
+          link.download = '${filename}.png';
+          link.href = dataUrl;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          
+          document.getElementById('spinner').style.display = 'none';
+          document.getElementById('status').innerText = 'Done!';
+          setTimeout(function() { window.close(); }, 800);
+        }).catch(function(err) {
+          console.error(err);
+          document.getElementById('status').innerText = 'Failed to generate image.';
+        });
+      }, 500);
+    });
+  </script>
+</body>
+</html>`;
+
+  const win = window.open('', '_blank', `width=360,height=300,toolbar=0,menubar=0,scrollbars=0`);
+  if (!win) {
+    alert('Popup blocker prevented the download. Please allow popups for this site.');
+    return;
+  }
+  win.document.open();
+  win.document.write(html);
+  win.document.close();
+}
+
 export default function QRScreen() {
   const colors = useColors();
   const isDark = useIsDark();
@@ -359,6 +580,7 @@ export default function QRScreen() {
   const topInset = safeInsets.top;
   const bottomInset = safeInsets.bottom;
   const [copied, setCopied] = useState(false);
+  const [resolvingAvatar, setResolvingAvatar] = useState(false);
   
   const cardTextColor = '#0B0F19';
   const cardSecondaryTextColor = '#4B5563';
@@ -373,13 +595,20 @@ export default function QRScreen() {
   const qrSizeVertical = Math.min(cardWidth - 84, isDesktop ? 140 : QR_SIZE_VERTICAL);
   const containerWidth = sideBySide ? cardWidth * 2 + 20 : cardWidth;
 
-  const { userId: authUserId, isRestoring } = useAuth();
+  const { userId: authUserId, isRestoring, updateUserProfile } = useAuth();
   const { data: user, isPending: userPending } = useQuery<User>({
     queryKey: ['/api/auth/me', 'profile-qr', authUserId],
     queryFn: () => modulesApi.auth.me(),
     enabled: Boolean(authUserId) && !isRestoring,
   });
   const userId = user?.id ?? authUserId;
+
+  const { data: myProfilesData } = useQuery({
+    queryKey: ['/api/profiles/my'],
+    queryFn: () => modulesApi.profiles.my(),
+    enabled: !!userId,
+  });
+  const myProfiles = myProfilesData ?? [];
 
   const { data: membership, isLoading: membershipLoading } = useQuery<Membership>({
     queryKey: [`/api/membership/${userId}`],
@@ -548,41 +777,73 @@ export default function QRScreen() {
     setTimeout(() => setCopied(false), 2200);
   };
 
-  const handlePrint = () => {
+  const handleSaveImage = async (cardType: 'business' | 'lanyard') => {
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       Share.share({
-        message: `CulturePass ID: ${name} (${cpid}). Profile: ${siteUrl(`/cpu/${cpid}`)}`,
-        title: 'Print CulturePass ID',
-      });
+        message: `My CulturePass ${cardType === 'lanyard' ? 'Event Lanyard' : 'Digital Business'} Pass\n${name} (${cpid})\n${siteUrl(`/cpu/${cpid}`)}`,
+      }).catch(() => {});
       return;
     }
-    // Web: open the business pass in a print-ready isolated window
-    // User can choose which to print; both cards accessible from download buttons
+    setResolvingAvatar(true);
+    let base64Avatar: string | null = null;
+    let base64AffiliationAvatar: string | null = null;
+    try {
+      if (avatarUrl) {
+        base64Avatar = await fetchImageAsDataUri(avatarUrl);
+      }
+      if (user?.affiliation?.avatarUrl) {
+        base64AffiliationAvatar = await fetchImageAsDataUri(user.affiliation.avatarUrl);
+      }
+    } catch (e) {
+      console.warn('Failed to fetch avatar as base64 data URI:', e);
+    } finally {
+      setResolvingAvatar(false);
+    }
+
     const qrImgUrl = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&ecc=H&data=${encodeURIComponent(qrValue)}`;
-    openPrintWindow({
-      cardType: 'business',
+    openSaveImageWindow({
+      cardType,
       name,
       username,
       cpid,
       tier: tierConf.label,
       memberSince,
-      avatarUrl: avatarUrl ?? null,
+      avatarUrl: base64Avatar,
       qrDataUrl: qrImgUrl,
       initials,
+      affiliation: user?.affiliation ? {
+        name: user.affiliation.name,
+        avatarUrl: base64AffiliationAvatar,
+        entityType: user.affiliation.entityType,
+      } : null,
     });
   };
 
-  const handleDownload = (cardType: 'business' | 'lanyard') => {
+  const handleDownloadPDF = async (cardType: 'business' | 'lanyard') => {
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       Share.share({
-        message: `My CulturePass ${cardType === 'lanyard' ? 'Event Lanyard & Wallet Pass' : 'Digital Business Pass'}\n${name} (${cpid})\n${siteUrl(`/cpu/${cpid}`)}`,
+        message: `My CulturePass ${cardType === 'lanyard' ? 'Event Lanyard' : 'Digital Business'} Pass\n${name} (${cpid})\n${siteUrl(`/cpu/${cpid}`)}`,
       }).catch(() => {});
       return;
     }
-    // Web: build an isolated print window with just the card
-    // Use QR server API to render QR as an img tag in the popup
+    setResolvingAvatar(true);
+    let base64Avatar: string | null = null;
+    let base64AffiliationAvatar: string | null = null;
+    try {
+      if (avatarUrl) {
+        base64Avatar = await fetchImageAsDataUri(avatarUrl);
+      }
+      if (user?.affiliation?.avatarUrl) {
+        base64AffiliationAvatar = await fetchImageAsDataUri(user.affiliation.avatarUrl);
+      }
+    } catch (e) {
+      console.warn('Failed to fetch avatar as base64 data URI:', e);
+    } finally {
+      setResolvingAvatar(false);
+    }
+
     const qrImgUrl = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&ecc=H&data=${encodeURIComponent(qrValue)}`;
     openPrintWindow({
       cardType,
@@ -591,10 +852,40 @@ export default function QRScreen() {
       cpid,
       tier: tierConf.label,
       memberSince,
-      avatarUrl: avatarUrl ?? null,
+      avatarUrl: base64Avatar,
       qrDataUrl: qrImgUrl,
       initials,
+      affiliation: user?.affiliation ? {
+        name: user.affiliation.name,
+        avatarUrl: base64AffiliationAvatar,
+        entityType: user.affiliation.entityType,
+      } : null,
     });
+  };
+
+  const handlePrint = async () => {
+    await handleDownloadPDF('business');
+  };
+
+  const handleSelectAffiliation = async (profile: Profile | null) => {
+    if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    try {
+      if (!profile) {
+        await updateUserProfile({ affiliation: null });
+        showFlash('success', 'Affiliation removed');
+      } else {
+        const affiliation = {
+          id: profile.id,
+          name: profile.name,
+          avatarUrl: profile.avatarUrl ?? null,
+          entityType: profile.entityType ?? null,
+        };
+        await updateUserProfile({ affiliation });
+        showFlash('success', `Affiliated with ${profile.name}`);
+      }
+    } catch (err: any) {
+      showFlash('error', err?.message ?? 'Failed to update affiliation');
+    }
   };
 
   return (
@@ -763,12 +1054,23 @@ export default function QRScreen() {
                           <View style={s.passMiddle}>
                             <View style={s.leftCol}>
                               <View style={s.passUserRow}>
-                                <View style={[s.passAvatarWrap, { borderColor: '#E5E7EB' }]}>
-                                  {avatarUrl ? (
-                                    <Image source={{ uri: avatarUrl }} style={s.passAvatar} contentFit="cover" transition={200} cachePolicy="memory-disk" />
-                                  ) : (
-                                    <View style={[s.passAvatarFallback, { backgroundColor: '#F3F4F6' }]}>
-                                      <Text style={[s.passAvatarInitials, { color: cardTextColor }]}>{initials}</Text>
+                                <View style={{ position: 'relative' }}>
+                                  <View style={[s.passAvatarWrap, { borderColor: '#E5E7EB' }]}>
+                                    {avatarUrl ? (
+                                      <Image source={{ uri: avatarUrl }} style={s.passAvatar} contentFit="cover" transition={200} cachePolicy="memory-disk" />
+                                    ) : (
+                                      <View style={[s.passAvatarFallback, { backgroundColor: '#F3F4F6' }]}>
+                                        <Text style={[s.passAvatarInitials, { color: cardTextColor }]}>{initials}</Text>
+                                      </View>
+                                    )}
+                                  </View>
+                                  {user?.affiliation && (
+                                    <View style={s.cardAffiliationBadge}>
+                                      {user.affiliation.avatarUrl ? (
+                                        <Image source={{ uri: user.affiliation.avatarUrl }} style={s.cardAffiliationBadgeImage} contentFit="cover" />
+                                      ) : (
+                                        <Ionicons name="business-outline" size={10} color="#78716C" />
+                                      )}
                                     </View>
                                   )}
                                 </View>
@@ -778,6 +1080,11 @@ export default function QRScreen() {
                                     {(user as any)?.isVerified && <Ionicons name="checkmark-circle" size={12} color="#009CDE" />}
                                   </View>
                                   <Text style={[s.passHandle, { color: cardSecondaryTextColor }]}>@{username}</Text>
+                                  {user?.affiliation && (
+                                    <Text style={[s.passAffiliationName, { color: cardSecondaryTextColor }]} numberOfLines={1}>
+                                      🏢 {user.affiliation.name}
+                                    </Text>
+                                  )}
                                 </View>
                               </View>
                             </View>
@@ -792,29 +1099,56 @@ export default function QRScreen() {
                               </Pressable>
                             </View>
                           </View>
-                          <View style={s.cardFooterBanner}>
-                            <Ionicons name="lock-closed-outline" size={10} color={cardTertiaryTextColor} />
-                            <Text style={[s.cardFooterBannerText, { color: cardTertiaryTextColor }]}>WALLET READY • iOS / ANDROID COMPATIBLE</Text>
-                          </View>
                         </View>
                       </View>
                     </Animated.View>
                   </Pressable>
 
-                  {/* Download button — Card 1 */}
-                  <Pressable
-                    style={({ pressed }) => [s.downloadBtn, { borderColor: cardTheme.accent + '50', opacity: pressed ? 0.8 : 1 }]}
-                    onPress={() => handleDownload('business')}
-                    accessibilityRole="button"
-                    accessibilityLabel="Download Digital Business Pass"
-                  >
-                    <View style={[s.downloadIconWrap, { backgroundColor: cardTheme.accent + '18' }]}>
-                      <Ionicons name="download-outline" size={16} color={cardTheme.accent} />
+                  {/* Actions for Card 1 */}
+                  {Platform.OS === 'web' ? (
+                    <View style={s.cardActionsRow}>
+                      <Pressable
+                        style={({ pressed }) => [s.cardActionSplitBtn, { borderColor: cardTheme.accent + '50', opacity: (pressed || resolvingAvatar) ? 0.7 : 1 }]}
+                        onPress={() => handleSaveImage('business')}
+                        disabled={resolvingAvatar}
+                        accessibilityRole="button"
+                        accessibilityLabel="Save Pass as PNG image"
+                      >
+                        {resolvingAvatar ? (
+                          <ActivityIndicator size="small" color={cardTheme.accent} />
+                        ) : (
+                          <Ionicons name="image-outline" size={14} color={cardTheme.accent} />
+                        )}
+                        <Text style={[s.cardActionSplitBtnText, { color: cardTheme.accent }]}>Save Image</Text>
+                      </Pressable>
+                      <Pressable
+                        style={({ pressed }) => [s.cardActionSplitBtn, { borderColor: cardTheme.accent + '50', opacity: (pressed || resolvingAvatar) ? 0.7 : 1 }]}
+                        onPress={() => handleDownloadPDF('business')}
+                        disabled={resolvingAvatar}
+                        accessibilityRole="button"
+                        accessibilityLabel="Save Pass as PDF document"
+                      >
+                        {resolvingAvatar ? (
+                          <ActivityIndicator size="small" color={cardTheme.accent} />
+                        ) : (
+                          <Ionicons name="document-text-outline" size={14} color={cardTheme.accent} />
+                        )}
+                        <Text style={[s.cardActionSplitBtnText, { color: cardTheme.accent }]}>Save PDF</Text>
+                      </Pressable>
                     </View>
-                    <Text style={[s.downloadBtnText, { color: cardTheme.accent }]}>
-                      {Platform.OS === 'web' ? 'Save / Print Pass' : 'Share Pass'}
-                    </Text>
-                  </Pressable>
+                  ) : (
+                    <Pressable
+                      style={({ pressed }) => [s.downloadBtn, { borderColor: cardTheme.accent + '50', opacity: pressed ? 0.8 : 1 }]}
+                      onPress={() => handleSaveImage('business')}
+                      accessibilityRole="button"
+                      accessibilityLabel="Share Digital Business Pass"
+                    >
+                      <View style={[s.downloadIconWrap, { backgroundColor: cardTheme.accent + '18' }]}>
+                        <Ionicons name="share-outline" size={16} color={cardTheme.accent} />
+                      </View>
+                      <Text style={[s.downloadBtnText, { color: cardTheme.accent }]}>Share Pass</Text>
+                    </Pressable>
+                  )}
                 </View>
 
                 {/* ── CARD 2: Event Lanyard & Wallet Pass ── */}
@@ -852,12 +1186,23 @@ export default function QRScreen() {
                             <Text style={[s.passTier, { color: '#009CDE' }]}>{tierConf.label.toUpperCase()}</Text>
                           </View>
                           <View style={s.passProfileVertical}>
-                            <View style={[s.passAvatarWrapVertical, { borderColor: '#E5E7EB' }]}>
-                              {avatarUrl ? (
-                                <Image source={{ uri: avatarUrl }} style={s.passAvatarVertical} contentFit="cover" transition={200} cachePolicy="memory-disk" />
-                              ) : (
-                                <View style={[s.passAvatarFallbackVertical, { backgroundColor: '#F3F4F6' }]}>
-                                  <Text style={[s.passAvatarInitialsVertical, { color: cardTextColor }]}>{initials}</Text>
+                            <View style={{ position: 'relative' }}>
+                              <View style={[s.passAvatarWrapVertical, { borderColor: '#E5E7EB' }]}>
+                                {avatarUrl ? (
+                                  <Image source={{ uri: avatarUrl }} style={s.passAvatarVertical} contentFit="cover" transition={200} cachePolicy="memory-disk" />
+                                ) : (
+                                  <View style={[s.passAvatarFallbackVertical, { backgroundColor: '#F3F4F6' }]}>
+                                    <Text style={[s.passAvatarInitialsVertical, { color: cardTextColor }]}>{initials}</Text>
+                                  </View>
+                                )}
+                              </View>
+                              {user?.affiliation && (
+                                <View style={s.cardAffiliationBadgeVertical}>
+                                  {user.affiliation.avatarUrl ? (
+                                    <Image source={{ uri: user.affiliation.avatarUrl }} style={s.cardAffiliationBadgeImageVertical} contentFit="cover" />
+                                  ) : (
+                                    <Ionicons name="business-outline" size={14} color="#78716C" />
+                                  )}
                                 </View>
                               )}
                             </View>
@@ -867,6 +1212,11 @@ export default function QRScreen() {
                                 {(user as any)?.isVerified && <Ionicons name="checkmark-circle" size={15} color="#009CDE" />}
                               </View>
                               <Text style={[s.passHandleVertical, { color: cardSecondaryTextColor }]}>@{username}</Text>
+                              {user?.affiliation && (
+                                <Text style={[s.passAffiliationNameVertical, { color: cardSecondaryTextColor }]} numberOfLines={1}>
+                                  🏢 {user.affiliation.name}
+                                </Text>
+                              )}
                               <Text style={[s.passMemberSinceVertical, { color: cardTertiaryTextColor }]}>Member Since {memberSince}</Text>
                             </View>
                           </View>
@@ -880,35 +1230,136 @@ export default function QRScreen() {
                               <Ionicons name={copied ? 'checkmark' : 'copy-outline'} size={12} color={copied ? '#30D158' : '#9CA3AF'} />
                             </Pressable>
                           </View>
-                          <View style={s.cardFooterBannerVertical}>
-                            <Ionicons name="lock-closed-outline" size={10} color={cardTertiaryTextColor} style={{ marginRight: 4 }} />
-                            <Text style={[s.cardFooterBannerTextVertical, { color: cardTertiaryTextColor }]}>WALLET SECURE • iOS / ANDROID COMPATIBLE</Text>
-                          </View>
                         </View>
                       </View>
                     </Animated.View>
                   </Pressable>
 
-                  {/* Download button — Card 2 */}
-                  <Pressable
-                    style={({ pressed }) => [s.downloadBtn, { borderColor: '#009CDE50', opacity: pressed ? 0.8 : 1 }]}
-                    onPress={() => handleDownload('lanyard')}
-                    accessibilityRole="button"
-                    accessibilityLabel="Download Event Lanyard Pass"
-                  >
-                    <View style={[s.downloadIconWrap, { backgroundColor: '#009CDE18' }]}>
-                      <Ionicons name="download-outline" size={16} color="#009CDE" />
+                  {/* Actions for Card 2 */}
+                  {Platform.OS === 'web' ? (
+                    <View style={s.cardActionsRow}>
+                      <Pressable
+                        style={({ pressed }) => [s.cardActionSplitBtn, { borderColor: '#009CDE50', opacity: (pressed || resolvingAvatar) ? 0.7 : 1 }]}
+                        onPress={() => handleSaveImage('lanyard')}
+                        disabled={resolvingAvatar}
+                        accessibilityRole="button"
+                        accessibilityLabel="Save Pass as PNG image"
+                      >
+                        {resolvingAvatar ? (
+                          <ActivityIndicator size="small" color="#009CDE" />
+                        ) : (
+                          <Ionicons name="image-outline" size={14} color="#009CDE" />
+                        )}
+                        <Text style={[s.cardActionSplitBtnText, { color: '#009CDE' }]}>Save Image</Text>
+                      </Pressable>
+                      <Pressable
+                        style={({ pressed }) => [s.cardActionSplitBtn, { borderColor: '#009CDE50', opacity: (pressed || resolvingAvatar) ? 0.7 : 1 }]}
+                        onPress={() => handleDownloadPDF('lanyard')}
+                        disabled={resolvingAvatar}
+                        accessibilityRole="button"
+                        accessibilityLabel="Save Pass as PDF document"
+                      >
+                        {resolvingAvatar ? (
+                          <ActivityIndicator size="small" color="#009CDE" />
+                        ) : (
+                          <Ionicons name="document-text-outline" size={14} color="#009CDE" />
+                        )}
+                        <Text style={[s.cardActionSplitBtnText, { color: '#009CDE' }]}>Save PDF</Text>
+                      </Pressable>
                     </View>
-                    <Text style={[s.downloadBtnText, { color: '#009CDE' }]}>
-                      {Platform.OS === 'web' ? 'Save / Print Pass' : 'Share Pass'}
-                    </Text>
-                  </Pressable>
+                  ) : (
+                    <Pressable
+                      style={({ pressed }) => [s.downloadBtn, { borderColor: '#009CDE50', opacity: pressed ? 0.8 : 1 }]}
+                      onPress={() => handleSaveImage('lanyard')}
+                      accessibilityRole="button"
+                      accessibilityLabel="Share Event Lanyard Pass"
+                    >
+                      <View style={[s.downloadIconWrap, { backgroundColor: '#009CDE18' }]}>
+                        <Ionicons name="share-outline" size={16} color="#009CDE" />
+                      </View>
+                      <Text style={[s.downloadBtnText, { color: '#009CDE' }]}>Share Pass</Text>
+                    </Pressable>
+                  )}
                 </View>
               </View>
 
               <Text style={[s.passHint, { color: cardTheme.accent + '88', width: containerWidth, marginBottom: 16 }]}>
                 Tap cards to trigger shimmer · Swipe to share · Integrated QR & NFC passes
               </Text>
+
+              {/* ── Affiliation Settings Selector ── */}
+              {myProfiles.length > 0 && (
+                <View style={[s.affiliationSelectorContainer, { width: containerWidth, borderColor: cardTheme.accent + '18' }]}>
+                  <View style={s.affiliationHeader}>
+                    <Ionicons name="business-outline" size={18} color={cardTheme.accent} />
+                    <Text style={[s.affiliationTitle, { color: '#FFFFFF' }]}>Pass Affiliation</Text>
+                  </View>
+                  <Text style={s.affiliationDesc}>
+                    Link your pass with one of your business or community profiles to show it on your digital pass.
+                  </Text>
+                  <View style={s.affiliationOptionsList}>
+                    {/* Option: None */}
+                    <Pressable
+                      onPress={() => handleSelectAffiliation(null)}
+                      style={({ pressed }) => [
+                        s.affiliationOptionRow,
+                        !user?.affiliation && s.affiliationOptionRowActive,
+                        pressed && { opacity: 0.8 }
+                      ]}
+                      accessibilityRole="radio"
+                      accessibilityState={{ checked: !user?.affiliation }}
+                    >
+                      <View style={s.affiliationOptionLeft}>
+                        <View style={[s.affiliationOptionAvatarFallback, { backgroundColor: '#374151' }]}>
+                          <Ionicons name="close-circle-outline" size={14} color="#9CA3AF" />
+                        </View>
+                        <Text style={[s.affiliationOptionName, !user?.affiliation ? { color: cardTheme.accent } : { color: '#E5E7EB' }]}>
+                          None (No Affiliation)
+                        </Text>
+                      </View>
+                      {!user?.affiliation && (
+                        <Ionicons name="checkmark-circle" size={18} color={cardTheme.accent} />
+                      )}
+                    </Pressable>
+
+                    {/* Option: profiles */}
+                    {myProfiles.map((p: Profile) => {
+                      const isSelected = user?.affiliation?.id === p.id;
+                      return (
+                        <Pressable
+                          key={p.id}
+                          onPress={() => handleSelectAffiliation(p)}
+                          style={({ pressed }) => [
+                            s.affiliationOptionRow,
+                            isSelected && s.affiliationOptionRowActive,
+                            pressed && { opacity: 0.8 }
+                          ]}
+                          accessibilityRole="radio"
+                          accessibilityState={{ checked: isSelected }}
+                        >
+                          <View style={s.affiliationOptionLeft}>
+                            {p.avatarUrl ? (
+                              <Image source={{ uri: p.avatarUrl }} style={s.affiliationOptionAvatar} contentFit="cover" />
+                            ) : (
+                              <View style={[s.affiliationOptionAvatarFallback, { backgroundColor: cardTheme.accent + '20' }]}>
+                                <Text style={[s.affiliationOptionInitials, { color: cardTheme.accent }]}>
+                                  {(p.name || 'P').charAt(0).toUpperCase()}
+                                </Text>
+                              </View>
+                            )}
+                            <Text style={[s.affiliationOptionName, isSelected ? { color: cardTheme.accent } : { color: '#E5E7EB' }]} numberOfLines={1}>
+                              {p.name}
+                            </Text>
+                          </View>
+                          {isSelected && (
+                            <Ionicons name="checkmark-circle" size={18} color={cardTheme.accent} />
+                          )}
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                </View>
+              )}
 
               {/* ── Wallet save CTAs ── */}
               <View style={[s.walletHero, { width: containerWidth, borderColor: cardTheme.accent + '18' }]}>
@@ -1187,4 +1638,155 @@ const s = StyleSheet.create({
   tagsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   tag: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 14, borderWidth: 1 },
   tagText: { fontSize: 11, fontFamily: FontFamily.semibold },
+
+  affiliationSelectorContainer: {
+    borderRadius: 20,
+    padding: 16,
+    borderWidth: 1,
+    gap: 12,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    ...Platform.select({
+      web: { boxShadow: '0 4px 20px rgba(0,0,0,0.2)' } as object,
+      default: {},
+    }),
+    marginBottom: 8,
+  },
+  affiliationHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  affiliationTitle: {
+    fontSize: 16,
+    fontFamily: FontFamily.bold,
+  },
+  affiliationDesc: {
+    fontSize: 12,
+    fontFamily: FontFamily.medium,
+    color: 'rgba(255,255,255,0.6)',
+    lineHeight: 16,
+  },
+  affiliationOptionsList: {
+    gap: 8,
+    marginTop: 4,
+  },
+  affiliationOptionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: 'rgba(255,255,255,0.02)',
+    ...Platform.select({
+      web: { cursor: 'pointer' } as object,
+      default: {},
+    }),
+  },
+  affiliationOptionRowActive: {
+    borderColor: 'rgba(255,255,255,0.15)',
+    backgroundColor: 'rgba(255,255,255,0.06)',
+  },
+  affiliationOptionLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    flex: 1,
+  },
+  affiliationOptionAvatar: {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+  },
+  affiliationOptionAvatarFallback: {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  affiliationOptionInitials: {
+    fontSize: 11,
+    fontFamily: FontFamily.bold,
+  },
+  affiliationOptionName: {
+    fontSize: 13,
+    fontFamily: FontFamily.semibold,
+    flex: 1,
+  },
+  cardAffiliationBadge: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    width: 18,
+    height: 18,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  cardAffiliationBadgeImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 3,
+  },
+  cardAffiliationBadgeVertical: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    width: 24,
+    height: 24,
+    borderRadius: 5,
+    borderWidth: 1.5,
+    borderColor: '#FFFFFF',
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  cardAffiliationBadgeImageVertical: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 4,
+  },
+  passAffiliationName: {
+    fontSize: 10,
+    fontFamily: FontFamily.semibold,
+    marginTop: 2,
+  },
+  passAffiliationNameVertical: {
+    fontSize: 12,
+    fontFamily: FontFamily.semibold,
+    marginTop: 3,
+  },
+  cardActionsRow: {
+    flexDirection: 'row',
+    gap: 10,
+    width: '100%',
+    marginTop: 6,
+  },
+  cardActionSplitBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    ...Platform.select({
+      web: { cursor: 'pointer' } as object,
+      default: {},
+    }),
+  },
+  cardActionSplitBtnText: {
+    fontFamily: FontFamily.semibold,
+    fontSize: 12,
+  },
 });

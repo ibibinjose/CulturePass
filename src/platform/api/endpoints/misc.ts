@@ -21,6 +21,8 @@ export function createMediaNamespace(request: ApiRequestFn) {
       width?: number;
       height?: number;
     }) => request<{ success?: boolean; id?: string }>('POST', 'api/media/attach', data),
+    base64: (url: string) =>
+      request<{ dataUrl: string }>('GET', `api/media/base64?url=${encodeURIComponent(url)}`),
   };
 }
 

@@ -24,6 +24,7 @@ export interface ProfileListParams {
   country?: string;
   search?: string;
   pageSize?: number;
+  ownerId?: string;
 }
 
 export interface ProfileDraft {
@@ -130,6 +131,7 @@ export function createProfilesNamespace(request: ApiRequestFn) {
       if (params?.city) qs.set('city', params.city);
       if (params?.country) qs.set('country', params.country);
       if (params?.search) qs.set('search', params.search);
+      if (params?.ownerId) qs.set('ownerId', params.ownerId);
       if (params?.pageSize != null) qs.set('pageSize', String(params.pageSize));
       const q = qs.toString();
       const res = await request<{ profiles: Profile[] }>('GET', `api/profiles${q ? `?${q}` : ''}`);

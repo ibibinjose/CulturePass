@@ -38,6 +38,12 @@ const userUpdateSchema = z.object({
   lgaCode: z.string().nullish(),
   councilId: z.string().nullish(),
   privacySettings: z.record(z.boolean()).nullish(),
+  affiliation: z.object({
+    id: z.string(),
+    name: z.string(),
+    avatarUrl: z.string().nullish(),
+    entityType: z.string().nullish(),
+  }).nullish().or(z.null()),
 });
 
 /** GET /api/users — list users (limited to 100) */

@@ -58,9 +58,17 @@ export interface UserSubscribedCity {
   subscribedAt: string;
 }
 
+export interface Affiliation {
+  id: string;
+  name: string;
+  avatarUrl?: string | null;
+  entityType?: string | null;
+}
+
 export interface User {
   id: string;
   username: string;
+  affiliation?: Affiliation | null;
   /** CulturePass handle — the canonical identifier displayed as +handle */
   handle?: string;
   /** Whether this handle has been approved by an admin (default: 'pending' on registration) */

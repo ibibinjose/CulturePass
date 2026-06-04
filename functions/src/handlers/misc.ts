@@ -1,6 +1,7 @@
 import { createHash } from 'crypto';
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
+import axios from 'axios';
 import { db, authAdmin } from '../admin';
 import { requireAuth, requireRole, isOwnerOrAdmin } from '../middleware/auth';
 import { moderationCheck } from '../middleware/moderation';
@@ -102,6 +103,44 @@ miscRouter.get('/media/:targetType/:targetId', async (req: Request, res: Respons
     return res.json(snap.docs.map(d => ({ id: d.id, ...d.data() })));
   } catch (err) {
     return res.status(500).json({ error: 'Failed to fetch media' });
+  }
+});
+
+/** GET /api/media/base64 — proxy a remote image URL to base64 data URL */
+miscRouter.get('/media/base64', requireAuth, async (req: Request, res: Response) => {
+  const imageUrl = req.query.url as string;
+  if (!imageUrl) {
+    return res.status(400).json({ error: 'url parameter is required' });
+  }
+
+  try {
+    const parsedUrl = new URL(imageUrl);
+    if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
+      return res.status(400).json({ error: 'Invalid URL protocol' });
+    }
+  } catch {
+    return res.status(400).json({ error: 'Invalid URL' });
+  }
+
+  try {
+    const response = await axios.get(imageUrl, {
+      responseType: 'arraybuffer',
+      timeout: 10000,
+      headers: {
+        'User-Agent': 'CulturePass-Base64Proxy/1.0',
+      },
+    });
+
+    const contentType = response.headers['content-type'] || 'image/jpeg';
+    if (!contentType.startsWith('image/')) {
+      return res.status(400).json({ error: 'Requested URL is not an image' });
+    }
+
+    const base64 = Buffer.from(response.data, 'binary').toString('base64');
+    return res.json({ dataUrl: `data:${contentType};base64,${base64}` });
+  } catch (err: any) {
+    captureRouteError(err, 'GET /media/base64');
+    return res.status(500).json({ error: 'Failed to fetch remote image' });
   }
 });
 

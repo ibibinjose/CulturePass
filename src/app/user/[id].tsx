@@ -35,13 +35,12 @@ import { siteUrl, canonicalUserPath, canonicalCPUPath } from '@/lib/publicPaths'
 import {
   profileShareDescription,
   profileShareImage,
-  profileShareMessage,
   profileShareTitle,
 } from '@/lib/profileShare';
 import { ErrorBoundary } from '@/modules/core/ui/ErrorBoundary';
 import { CultureTokens, SignatureGradient, FontFamily, Radius } from '@/design-system/tokens/theme';
 import { openExternalUrl } from '@/lib/openExternalUrl';
-import type { User } from '@/shared/schema';
+import type { User, Profile, EventData } from '@/shared/schema';
 import { useColors, useIsDark } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
 
@@ -49,7 +48,6 @@ import { useLayout } from '@/hooks/useLayout';
 const VIOLET   = CultureTokens.violet;
 const CORAL    = CultureTokens.coral;
 const TEAL     = CultureTokens.teal;
-const GOLD     = CultureTokens.gold;
 
 // Premium single-color for the CulturePass ID membership card
 const CPID_CARD_BG = '#162B6B'; // Deep trustworthy blue — strong CulturePass identity on public profiles
@@ -113,6 +111,9 @@ function initials(name: string) {
 function memberDate(d?: string) {
   if (!d) return '';
   return new Date(d).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+}
+function capitalize(s: string) {
+  return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
 // ─── screen ───────────────────────────────────────────────────────────────────
@@ -186,6 +187,21 @@ function UserPublicScreen() {
     enabled: !!user && !isOwner && !!currentUserId,
   });
   const isFollowing = followQ.data ?? false;
+
+  // Fetch profiles owned by this user
+  const { data: userProfiles = [] } = useQuery({
+    queryKey: ['user-profiles', user?.id],
+    queryFn: () => modulesApi.profiles.list({ ownerId: user?.id, pageSize: 50 }),
+    enabled: !!user?.id,
+  });
+
+  // Fetch events organized by this user
+  const { data: userEventsData } = useQuery({
+    queryKey: ['user-events', user?.id],
+    queryFn: () => modulesApi.events.list({ organizerId: user?.id, pageSize: 20 }),
+    enabled: !!user?.id,
+  });
+  const userEvents = userEventsData?.events ?? [];
 
   // === Security / Access Logging (anti-scraping / contact theft monitoring) ===
   // Fires a non-blocking report when a non-owner views the public profile.
@@ -316,6 +332,9 @@ function UserPublicScreen() {
 
   const handleExportToPhone = async () => {
     try {
+      // Save internally to the app's CRM contact repository
+      handleSaveContact();
+
       const res = await exportToAddressBook({
         displayName: displayName,
         email: user?.email,
@@ -689,143 +708,118 @@ function UserPublicScreen() {
               </View>
             ) : null}
 
-            {/* ── Digital Business Pass Preview — links to /profile/qr ─────────── */}
-            <Pressable
-              onPress={() => router.push('/profile/qr' as never)}
-              accessibilityRole="button"
-              accessibilityLabel="Open Digital Business Pass"
-              style={({ pressed }) => [
-                s.bizPassCard,
-                { opacity: pressed ? 0.88 : 1 },
-              ]}
-            >
-              {/* White business-card body */}
-              <View style={s.bizPassInner}>
-                {/* Left: avatar + name + handle */}
-                <View style={s.bizPassLeft}>
-                  <View style={s.bizPassAvatarWrap}>
-                    {displayUser?.avatarUrl ? (
-                      <Image
-                        source={{ uri: displayUser.avatarUrl }}
-                        style={s.bizPassAvatar}
-                        contentFit="cover"
-                      />
-                    ) : (
-                      <View style={[s.bizPassAvatarFallback, { backgroundColor: VIOLET + '20' }]}>
-                        <Text style={[s.bizPassAvatarInitials, { color: VIOLET }]}>{ini}</Text>
+            {/* ── Unified CulturePass Member ID Card ─────────────────────────── */}
+            <View style={[s.unifiedMemberCard, { borderColor: primaryColor + '20' }]}>
+              <View style={[s.cpidCardVertical, { backgroundColor: CPID_CARD_BG }]}>
+                {/* Gold accent line */}
+                <View style={s.cpidAccentGold} />
+
+                {/* Header */}
+                <View style={s.cpidBrandRow}>
+                  <View style={s.cpidBrandMark}>
+                    <Ionicons name="shield-checkmark" size={13} color="#D4AF37" />
+                  </View>
+                  <Text style={s.cpidBrand}>CulturePass ID</Text>
+                  <Text style={[s.cpidTierText, { color: '#009CDE' }]}>
+                    {tierConf.label.toUpperCase()}
+                  </Text>
+                </View>
+
+                {/* Profile section */}
+                <View style={s.cpidProfileVertical}>
+                  <View style={{ position: 'relative' }}>
+                    <View style={s.cpidAvatarWrapVertical}>
+                      {du?.avatarUrl ? (
+                        <Image source={{ uri: du.avatarUrl }} style={s.cpidAvatarVertical} contentFit="cover" />
+                      ) : (
+                        <View style={[s.cpidAvatarFallbackVertical, { backgroundColor: '#F3F4F6' }]}>
+                          <Text style={[s.cpidAvatarInitialsVertical, { color: '#0B0F19' }]}>{ini}</Text>
+                        </View>
+                      )}
+                    </View>
+                    {du.affiliation && (
+                      <View style={s.cpidAffiliationBadgeVertical}>
+                        {du.affiliation.avatarUrl ? (
+                          <Image source={{ uri: du.affiliation.avatarUrl }} style={s.cpidAffiliationBadgeImageVertical} contentFit="cover" />
+                        ) : (
+                          <Ionicons name="business-outline" size={14} color="#78716C" />
+                        )}
                       </View>
                     )}
                   </View>
-                  <View style={{ flex: 1 }}>
+                  
+                  <View style={s.cpidUserInfoVertical}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                      <Text style={s.bizPassName} numberOfLines={1}>{displayName}</Text>
-                      {user.isVerified && (
-                        <Ionicons name="checkmark-circle" size={11} color="#009CDE" />
-                      )}
+                      <Text style={s.cpidNameVertical} numberOfLines={1}>{displayName}</Text>
+                      {du.isVerified && <Ionicons name="checkmark-circle" size={14} color="#009CDE" />}
                     </View>
-                    <Text style={s.bizPassHandle}>@{user.handle ?? user.username}</Text>
-                    <Text style={s.bizPassTier} numberOfLines={1}>
-                      <Text style={{ color: '#FF3B30' }}>CULTURE</Text>
-                      <Text style={{ color: '#34C759' }}>PASS</Text>
-                      <Text style={{ color: '#009CDE' }}> ID</Text>
-                      {'  ·  '}
-                      <Text style={{ color: '#009CDE' }}>{tierConf.label.toUpperCase()}</Text>
-                    </Text>
-                  </View>
-                </View>
-
-                {/* Right: mini QR */}
-                <View style={s.bizPassQrWrap}>
-                  <QRCode
-                    value={JSON.stringify({ type: 'culturepass_id', cpid })}
-                    size={52}
-                    color="#0F172A"
-                    backgroundColor="#FFFFFF"
-                    ecl="H"
-                  />
-                </View>
-              </View>
-
-              {/* Footer strip */}
-              <View style={s.bizPassFooter}>
-                <Ionicons name="id-card-outline" size={12} color="#009CDE" />
-                <Text style={s.bizPassFooterText}>DIGITAL BUSINESS PASS</Text>
-                <View style={{ flex: 1 }} />
-                <Ionicons name="wifi" size={11} color="#9CA3AF" style={{ transform: [{ rotate: '90deg' }] }} />
-                <Text style={s.bizPassNfc}>NFC</Text>
-                <Ionicons name="chevron-forward" size={13} color="#9CA3AF" />
-              </View>
-            </Pressable>
-
-            {/* ── Bottom Card: Branded Public Profile (CPU) with QR ─────────────── */}
-            <View style={[s.bottomCard, { 
-              backgroundColor: isDark ? colors.surfaceElevated : '#FFFFFF',
-              borderColor: primaryColor + '20'
-            }]}>
-              <View style={s.bottomCardHeader}>
-                <View style={s.cpuPill}>
-                  <Ionicons name="finger-print" size={14} color={primaryColor} />
-                  <Text style={[s.cpuPillText, { color: primaryColor }]}>CulturePass User</Text>
-                </View>
-                <Text style={[s.bottomCardTitle, { color: textColor }]}>Public Profile</Text>
-              </View>
-
-              <View style={s.bottomCardContent}>
-                {/* QR Code Preview */}
-                <View style={s.qrContainer}>
-                  <QRCode
-                    value={cpuPublicUrl || nicePublicUrl || profileUrl}
-                    size={78}
-                    color={textColor}
-                    backgroundColor={isDark ? colors.surfaceElevated : '#FFFFFF'}
-                  />
-                </View>
-
-                <View style={{ flex: 1, gap: 8 }}>
-                  <Pressable 
-                    style={s.bottomLinkRow}
-                    onPress={() => {
-                      const url = cpuPublicUrl || nicePublicUrl || profileUrl;
-                      if (Platform.OS === 'web') {
-                        navigator.clipboard?.writeText(url).catch(() => {});
-                      } else {
-                        Share.share({ message: url }).catch(() => {});
-                      }
-                    }}
-                  >
-                    <View style={{ flex: 1 }}>
-                      <Text style={[s.bottomLink, { color: textColor }]} numberOfLines={1}>
-                        {(cpuPublicUrl || nicePublicUrl || profileUrl).replace(/^https?:\/\//, '')}
+                    <Text style={s.cpidHandleVertical}>@{du.handle ?? du.username}</Text>
+                    {du.affiliation && (
+                      <Text style={s.cpidAffiliationNameVertical} numberOfLines={1}>
+                        🏢 {du.affiliation.name}
                       </Text>
-                      {cpuPublicUrl && (
-                        <Text style={[s.bottomLinkHint, { color: primaryColor, fontWeight: '600' }]}>
-                          Official CPU link
-                        </Text>
-                      )}
-                    </View>
-                    <View style={s.copyButton}>
-                      <Ionicons name="copy-outline" size={18} color={primaryColor} />
-                    </View>
-                  </Pressable>
-
-                  <View style={s.bottomActions}>
-                    <Pressable style={s.bottomActionBtn} onPress={() => {
-                      const url = cpuPublicUrl || nicePublicUrl || profileUrl;
-                      Share.share({ message: url }).catch(() => {});
-                    }}>
-                      <Ionicons name="share-outline" size={16} color={mutedColor} />
-                      <Text style={[s.bottomActionText, { color: mutedColor }]}>Share</Text>
-                    </Pressable>
-                    
-                    {isOwner && (
-                      <Pressable style={s.bottomActionBtn} onPress={() => router.push('/profile/edit')}>
-                        <Ionicons name="create-outline" size={16} color={mutedColor} />
-                        <Text style={[s.bottomActionText, { color: mutedColor }]}>Edit</Text>
-                      </Pressable>
                     )}
+                    {memberSince ? <Text style={s.cpidMemberSinceVertical}>Member Since {memberSince}</Text> : null}
                   </View>
                 </View>
+
+                {/* QR Section */}
+                <View style={s.cpidQrSectionVertical}>
+                  <View style={s.cpidQrWhiteBackground}>
+                    <QRCode
+                      value={nicePublicUrl || profileUrl}
+                      size={100}
+                      color="#000000"
+                      backgroundColor="#FFFFFF"
+                      ecl="H"
+                    />
+                  </View>
+                  <Pressable 
+                    onPress={() => {
+                      if (Platform.OS === 'web') {
+                        navigator.clipboard?.writeText(cpid).catch(() => {});
+                        Alert.alert('Copied', 'CPID copied to clipboard');
+                      }
+                    }} 
+                    style={s.cpidMonospaceContainer} 
+                    hitSlop={8}
+                  >
+                    <Ionicons name="wifi" size={13} color="#B8C9E8" style={{ transform: [{ rotate: '90deg' }] }} />
+                    <Text style={s.cpidMonospaceTextVertical}>{cpid.slice(0, 3)}-{cpid.slice(3)}</Text>
+                  </Pressable>
+                </View>
               </View>
+
+              {/* Action buttons under the card */}
+              <View style={s.unifiedCardActions}>
+                <Pressable
+                  style={({ pressed }) => [s.unifiedCardBtn, { borderColor: borderColor, opacity: pressed ? 0.8 : 1 }]}
+                  onPress={handleShare}
+                >
+                  <Ionicons name="share-outline" size={14} color={textColor} />
+                  <Text style={[s.unifiedCardBtnText, { color: textColor }]}>Share Profile</Text>
+                </Pressable>
+                <Pressable
+                  style={({ pressed }) => [s.unifiedCardBtn, { borderColor: borderColor, opacity: pressed ? 0.8 : 1 }]}
+                  onPress={() => {
+                    if (Platform.OS === 'web') {
+                      navigator.clipboard?.writeText(nicePublicUrl || profileUrl).catch(() => {});
+                      Alert.alert('Copied', 'Profile link copied!');
+                    }
+                  }}
+                >
+                  <Ionicons name="copy-outline" size={14} color={textColor} />
+                  <Text style={[s.unifiedCardBtnText, { color: textColor }]}>Copy Link</Text>
+                </Pressable>
+              </View>
+
+              <Pressable
+                style={({ pressed }) => [s.unifiedCardFullBtn, { borderColor: VIOLET + '40', backgroundColor: VIOLET + '08', opacity: pressed ? 0.8 : 1 }]}
+                onPress={() => router.push('/profile/qr')}
+              >
+                <Ionicons name="qr-code-outline" size={14} color={VIOLET} />
+                <Text style={[s.unifiedCardFullBtnText, { color: VIOLET }]}>Save / Download Passes</Text>
+              </Pressable>
             </View>
 
             {/* ── Rich Contact Action Sheet (Message + Call with apps on the device) ── */}
@@ -921,51 +915,82 @@ function UserPublicScreen() {
               </View>
             </Modal>
 
-            {/* CulturePass ID card — Premium single-color treatment */}
-            <View style={[s.cpidCard, { backgroundColor: CPID_CARD_BG }]}>
-              {/* Subtle elegant top gold line */}
-              <View style={s.cpidAccentGold} />
-
-              {/* Brand header */}
-              <View style={s.cpidBrandRow}>
-                <View style={s.cpidBrandMark}>
-                  <Ionicons name="shield-checkmark" size={15} color="#D4AF37" />
-                </View>
-                <Text style={s.cpidBrand}>CulturePass</Text>
-                <View style={s.cpidBrandPill}>
-                  <Text style={s.cpidBrandPillText}>ID</Text>
-                </View>
-              </View>
-
-              {/* Body: QR + identity */}
-              <View style={s.cpidBody}>
-                <Pressable
-                  onPress={() => { router.push('/profile/qr'); }}
-                  accessibilityRole="button"
-                  accessibilityLabel="Open QR code"
-                  style={s.cpidQrWrap}
-                >
-                  <View style={s.cpidQrInner}>
-                    <QRCode
-                      value={JSON.stringify({ type: 'culturepass_id', cpid })}
-                      size={92}
-                      color="#0F172A"
-                      backgroundColor="#FFFFFF"
-                      ecl="H"
-                    />
-                  </View>
-                </Pressable>
-
-                <View style={s.cpidInfo}>
-                  <Text style={s.cpidIdLabel}>CULTUREPASS ID</Text>
-                  <Text style={s.cpidIdValue} numberOfLines={1}>{cpid}</Text>
-                  <Text style={s.cpidInfoName} numberOfLines={1}>{displayName}</Text>
-                  <Text style={s.cpidInfoMeta}>
-                    {tierConf.label}{memberSince ? ` · ${memberSince}` : ''}
-                  </Text>
+            {/* Associated profiles */}
+            {userProfiles.length > 0 && (
+              <View style={[s.sectionCard, { backgroundColor: cardBg, borderColor }]}>
+                <Text style={[s.sectionLabel, { color: mutedColor }]}>Associated Profiles</Text>
+                <View style={{ gap: 10, marginTop: 4 }}>
+                  {userProfiles.map((profile: Profile) => (
+                    <Pressable
+                      key={profile.id}
+                      onPress={() => router.push(`/profile/${profile.id}` as any)}
+                      style={({ pressed }) => [
+                        s.associatedProfileRow,
+                        pressed && { opacity: 0.8 }
+                      ]}
+                    >
+                      {profile.avatarUrl ? (
+                        <Image source={{ uri: profile.avatarUrl }} style={s.associatedProfileAvatar} contentFit="cover" />
+                      ) : (
+                        <View style={[s.associatedProfileAvatarFallback, { backgroundColor: primaryColor + '15' }]}>
+                          <Text style={[s.associatedProfileInitials, { color: primaryColor }]}>
+                            {(profile.name || 'P').charAt(0).toUpperCase()}
+                          </Text>
+                        </View>
+                      )}
+                      <View style={{ flex: 1, gap: 2 }}>
+                        <Text style={[s.associatedProfileName, { color: textColor }]} numberOfLines={1}>
+                          {profile.name}
+                        </Text>
+                        <Text style={[s.associatedProfileType, { color: mutedColor }]}>
+                          {profile.entityType ? capitalize(profile.entityType) : 'Profile'}
+                        </Text>
+                      </View>
+                      <Ionicons name="chevron-forward" size={14} color={mutedColor} />
+                    </Pressable>
+                  ))}
                 </View>
               </View>
-            </View>
+            )}
+
+            {/* Hosted events */}
+            {userEvents.length > 0 && (
+              <View style={[s.sectionCard, { backgroundColor: cardBg, borderColor }]}>
+                <Text style={[s.sectionLabel, { color: mutedColor }]}>Hosted Events</Text>
+                <View style={{ gap: 12, marginTop: 6 }}>
+                  {userEvents.map((ev: EventData) => (
+                    <Pressable
+                      key={ev.id}
+                      onPress={() => router.push(`/event/${ev.id}` as any)}
+                      style={({ pressed }) => [
+                        s.eventRow,
+                        pressed && { opacity: 0.8 }
+                      ]}
+                    >
+                      {ev.imageUrl ? (
+                        <Image source={{ uri: ev.imageUrl }} style={s.eventThumbnail} contentFit="cover" />
+                      ) : (
+                        <View style={[s.eventThumbnailFallback, { backgroundColor: primaryColor + '10' }]}>
+                          <Ionicons name="calendar-outline" size={18} color={primaryColor} />
+                        </View>
+                      )}
+                      <View style={{ flex: 1, gap: 2 }}>
+                        <Text style={[s.eventName, { color: textColor }]} numberOfLines={1}>
+                          {ev.title}
+                        </Text>
+                        <Text style={[s.eventMeta, { color: mutedColor }]} numberOfLines={1}>
+                          {ev.date} • {ev.city}
+                        </Text>
+                        <Text style={[s.eventPrice, { color: primaryColor }]}>
+                          {ev.priceCents && ev.priceCents > 0 ? `$${(ev.priceCents / 100).toFixed(2)}` : 'Free'}
+                        </Text>
+                      </View>
+                      <Ionicons name="chevron-forward" size={14} color={mutedColor} />
+                    </Pressable>
+                  ))}
+                </View>
+              </View>
+            )}
 
           </View>
           </View>{/* end page card */}
@@ -1815,6 +1840,247 @@ const getStyles = (colors: any, isDark: boolean) => {
     fontSize: 17,
     fontFamily: FONT_REG,
     color: textColor,
+  },
+
+  // Unified member card vertical styles
+  unifiedMemberCard: {
+    marginTop: 24,
+    marginBottom: 8,
+    borderRadius: Radius.xl,
+    borderWidth: 1,
+    padding: 16,
+    gap: 12,
+    backgroundColor: cardBg,
+    ...Platform.select({
+      web: { boxShadow: '0 4px 20px rgba(0,0,0,0.06)' } as any,
+    }),
+  },
+  cpidCardVertical: {
+    borderRadius: CARD_RADIUS,
+    paddingTop: 18,
+    paddingHorizontal: 18,
+    paddingBottom: 20,
+    overflow: 'hidden',
+    alignItems: 'center',
+    ...Platform.select({
+      web: { boxShadow: '0 10px 30px rgba(0,0,0,0.3)' } as object,
+      default: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.3, shadowRadius: 20, elevation: 10,
+      },
+    }),
+  },
+  cpidTierText: {
+    fontFamily: FONT_BOLD,
+    fontSize: 9,
+    letterSpacing: 0.8,
+  },
+  cpidProfileVertical: {
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 8,
+    width: '100%',
+  },
+  cpidAvatarWrapVertical: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    overflow: 'hidden',
+    borderWidth: 1.5,
+    borderColor: '#E5E7EB',
+  },
+  cpidAvatarVertical: {
+    width: 64,
+    height: 64,
+  },
+  cpidAvatarFallbackVertical: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cpidAvatarInitialsVertical: {
+    fontSize: 22,
+    fontFamily: FONT_BOLD,
+  },
+  cpidAffiliationBadgeVertical: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    width: 24,
+    height: 24,
+    borderRadius: 5,
+    borderWidth: 1.5,
+    borderColor: '#FFFFFF',
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  cpidAffiliationBadgeImageVertical: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 4,
+  },
+  cpidUserInfoVertical: {
+    alignItems: 'center',
+    gap: 2,
+  },
+  cpidNameVertical: {
+    fontSize: 18,
+    fontFamily: FONT_BOLD,
+    color: '#FFFFFF',
+    lineHeight: 22,
+  },
+  cpidHandleVertical: {
+    fontSize: 12,
+    fontFamily: FONT_MED,
+    color: '#B8C9E8',
+  },
+  cpidAffiliationNameVertical: {
+    fontSize: 12,
+    fontFamily: FONT_MED,
+    color: '#D4AF37',
+    marginTop: 2,
+  },
+  cpidMemberSinceVertical: {
+    fontSize: 10,
+    fontFamily: FONT_MED,
+    color: '#A8C5FF',
+    marginTop: 2,
+  },
+  cpidQrSectionVertical: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 18,
+    gap: 8,
+  },
+  cpidQrWhiteBackground: {
+    padding: 6,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+  },
+  cpidMonospaceContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 4,
+  },
+  cpidMonospaceTextVertical: {
+    fontSize: 12.5,
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    letterSpacing: 1.5,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  unifiedCardActions: {
+    flexDirection: 'row',
+    gap: 10,
+    width: '100%',
+    marginTop: 4,
+  },
+  unifiedCardBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+  },
+  unifiedCardBtnText: {
+    fontFamily: FONT_SEMI,
+    fontSize: 12,
+  },
+  unifiedCardFullBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 11,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    width: '100%',
+    marginTop: 4,
+  },
+  unifiedCardFullBtnText: {
+    fontFamily: FONT_SEMI,
+    fontSize: 12.5,
+  },
+  sectionCard: {
+    backgroundColor: cardBg,
+    borderRadius: CARD_RADIUS,
+    padding: 16,
+    gap: 10,
+    ...shadow,
+    marginTop: 12,
+  },
+  associatedProfileRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderColor: 'rgba(0,0,0,0.05)',
+  },
+  associatedProfileAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+  },
+  associatedProfileAvatarFallback: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  associatedProfileInitials: {
+    fontSize: 14,
+    fontFamily: FONT_BOLD,
+  },
+  associatedProfileName: {
+    fontSize: 14,
+    fontFamily: FONT_SEMI,
+  },
+  associatedProfileType: {
+    fontSize: 11,
+    fontFamily: FONT_MED,
+  },
+  eventRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 6,
+  },
+  eventThumbnail: {
+    width: 44,
+    height: 44,
+    borderRadius: 8,
+    backgroundColor: 'rgba(0,0,0,0.04)',
+  },
+  eventThumbnailFallback: {
+    width: 44,
+    height: 44,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  eventName: {
+    fontSize: 14,
+    fontFamily: FONT_SEMI,
+  },
+  eventMeta: {
+    fontSize: 11,
+    fontFamily: FONT_REG,
+  },
+  eventPrice: {
+    fontSize: 11,
+    fontFamily: FONT_SEMI,
   },
 });
 };  // close getStyles

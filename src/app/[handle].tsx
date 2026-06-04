@@ -1,7 +1,7 @@
 /**
  * Public path resolver — catches bare handles like /ibibinjose , /CP-xxx , +@ etc.
  * Uses getByHandle (new public /users/handle backend) + cpid, then redirects to canonical public URL (/cpu/seg or bare vanity).
- * /cpu/ and /CPU/ alias routes (delegating to renderer) + effect ensure /cpu/username (and CPID) "just work" at correct URL with business-card profile image in og: share metadata + security logging.
+ * /cpu/ alias route (delegating to renderer) + effect ensure /cpu/username (and CPID) "just work" at correct URL with business-card profile image in og: share metadata + security logging.
  */
 import { useEffect } from 'react';
 import { View, ActivityIndicator, Text, StyleSheet } from 'react-native';

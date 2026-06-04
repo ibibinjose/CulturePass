@@ -35,7 +35,7 @@ export const APP_WEB_DESCRIPTION =
   `Connecting global diaspora communities through cultural events, festivals, and shared belonging. Discover your city, connect with your roots.`;
 
 export const APP_WEB_KEYWORDS =
-  `${APP_AKA}, cultural events, diaspora communities, event organizers, community events, festivals, tickets, Australia, New Zealand, UK, UAE, Canada, cultural discovery`;
+  `${APP_AKA}, cultural events, diaspora communities, event organizers, community events, festivals, tickets, Australia, New Zealand, UK, UAE, Canada, cultural discovery, Indian events Sydney, multicultural events, cultural pass, digital business pass, community app, diaspora platform, belong anywhere, CPID, CulturePass ID, digital identity, cultural identity, first nations events, indigenous culture Australia, cultural calendar`;
 
 /** Subtitle / alternateName in structured data. */
 export const APP_WEB_TAGLINE = 'Belong anywhere.';

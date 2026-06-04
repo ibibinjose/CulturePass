@@ -124,10 +124,74 @@ CulturePass is a universal (iOS, Android, Web) platform that enables cultural cr
 - `hostProfiles` + `hostProfileDrafts` + `hostProfileVersions` (rich, versioned, draftable entities).
 - `hostVerificationTasks` (Layer 2 — triggered on publish for regulated entities).
 - Strong separation between internal rich `hostProfiles` and public directory `profiles`.
+- `users/{uid}.culturePassId` — format `CP-[A-Z0-9]{6,}` — resolved via `GET /api/cpid/lookup/:cpid`.
 
 ---
 
-## 5. The HostSpace System (Current Crown Jewel)
+## 6. Public Profile System (CPU — CulturePass User)
+
+### Route Architecture
+Public user profiles are served at `/cpu/[id]`. All route folders are lowercase — critical for case-sensitive Linux/Firebase Hosting (macOS is case-insensitive, so bugs only appear in production).
+
+```
+src/app/cpu/[id].tsx              → delegates to user/[id].tsx
+src/app/(shortlinks)/cpu/[id].tsx → delegates to user/[id].tsx
+src/app/user/[id].tsx             → canonical renderer
+```
+
+The renderer resolves `[id]` as: CPID (`CP-XXXXXX`) → handle → Firebase UID, in that order.
+
+### Contact Privacy
+Email and phone on public profiles use `SwipeToReveal` — masked by default, real values only rendered when `currentUserId` is truthy. Bots and unauthenticated users see `j***@***.com` only.
+
+### Digital Business Pass
+Bottom of every public profile shows a mini Digital Business Pass card linking to `/profile/qr`.
+
+---
+
+## 6a. Digital ID System (`/profile/qr`)
+
+Two pass formats: landscape Business Pass (330×210) and portrait Event Lanyard (330×440).
+
+**Print/Save as PDF**: Uses `openPrintWindow()` to open an isolated popup window containing only the card HTML, sized exactly to the card, with auto-triggered print dialog. Filename suggested as `culturepass-@username-business-pass`.
+
+> Never use `window.print()` from the main app — it prints the entire React Native Web shell.
+
+---
+
+## 6b. Payment & Wallet Surface Map
+
+| Route | Single Responsibility |
+|---|---|
+| `/payment/wallet` | Balance, cashback, rewards, loyalty, quick nav |
+| `/payment/transactions` | Full transaction history |
+| `/tickets` / `/tickets/[id]` | Ticket list + per-ticket Apple/Google Wallet |
+| `/profile/qr` | Digital ID + business card wallet add |
+| `/membership/upgrade` | Tier upgrades |
+
+---
+
+## 6c. Web Security (Firebase Hosting)
+
+`firebase.json` headers on both sites:
+- `Content-Security-Policy` (with `unsafe-inline` + `unsafe-eval` for RN Web + Reanimated)
+- `Strict-Transport-Security` (2-year HSTS with preload)
+- `X-Frame-Options: SAMEORIGIN`
+- `X-Content-Type-Options: nosniff`
+- `Referrer-Policy: strict-origin-when-cross-origin`
+
+> **Never set CSP via `<meta>` tag** — it breaks Metro `eval()` in dev and Reanimated in prod.
+
+---
+
+## 6d. SEO & Structured Data
+
+- **Global** (`+html.tsx`): Schema.org Organization + WebSite + MobileApplication, full OG + Twitter cards, hreflang, Apple Smart App Banner
+- **Per-profile** (`user/[id].tsx`): Schema.org Person with CPID identifier, `og:profile:username`, `og:image:alt` with "Digital Business Pass" branding
+
+---
+
+## 7. The HostSpace System (Current Crown Jewel)
 
 This is the most sophisticated subsystem in the product.
 

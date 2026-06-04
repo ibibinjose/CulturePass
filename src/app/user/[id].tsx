@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,8 @@ import {
   Platform,
   Linking,
   Modal,
+  Animated,
+  PanResponder,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -164,7 +166,7 @@ function UserPublicScreen() {
 
   const isOwner = !!currentUserId && !!user && currentUserId === user.id;
 
-  // General canonical enforcer (cleanup): snap whatever entrypoint (/user/, /cpu/, /CPU/, /u/ or bare) to the preferred /cpu/ public URL (for /cpu/username support, correct og:url in metadata for shares, business card profile image in previews, and security logs).
+  // General canonical enforcer (cleanup): snap whatever entrypoint (/user/, /cpu/, /u/ or bare) to the preferred /cpu/ public URL (for /cpu/username support, correct og:url in metadata for shares, business card profile image in previews, and security logs).
   // Delegation on alias routes means we render under the visited branded path; this effect keeps the bar + canonicals consistent.
   useEffect(() => {
     if (Platform.OS !== 'web' || isLoading || !user) return;
@@ -227,14 +229,15 @@ function UserPublicScreen() {
     const safeDu = displayUser as any;
     const url = siteUrl(canonicalUserPath(safeDu));
     const title = profileShareTitle(safeDu);
-    const text = profileShareDescription(safeDu);
+    const cpidText = cpid ? ` · ${cpid}` : '';
+    const text = `${profileShareDescription(safeDu)}\n\n🪪 Digital Business Pass${cpidText}\n${url}`;
     if (Platform.OS === 'web') {
-      if (navigator.share) navigator.share({ title, text, url }).catch(() => {});
+      if (navigator.share) navigator.share({ title, text: profileShareDescription(safeDu), url }).catch(() => {});
       else navigator.clipboard?.writeText(url).catch(() => {});
     } else if (Platform.OS === 'ios') {
       Share.share({ title, message: text, url }).catch(() => {});
     } else {
-      Share.share({ title, message: profileShareMessage(safeDu as any) }).catch(() => {});
+      Share.share({ title, message: text }).catch(() => {});
     }
   };
 
@@ -362,19 +365,50 @@ function UserPublicScreen() {
       <Head>
         <title>{shareTitle}</title>
         <meta name="description" content={shareDescription} />
+        <meta name="robots" content="index,follow,max-image-preview:large" />
         <meta property="og:type" content="profile" />
+        <meta property="og:profile:username" content={duForShare.handle ?? duForShare.username ?? ''} />
         <meta property="og:site_name" content="CulturePass" />
         <meta property="og:title" content={shareTitle} />
         <meta property="og:description" content={shareDescription} />
         <meta property="og:image" content={shareImage} />
-        <meta property="og:image:alt" content={`${displayName} profile on CulturePass`} />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:image:alt" content={`${displayName} — Digital Business Pass on CulturePass`} />
         <meta property="og:url" content={profileUrl} />
         <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:site" content="@culturepassapp" />
         <meta name="twitter:title" content={shareTitle} />
         <meta name="twitter:description" content={shareDescription} />
         <meta name="twitter:image" content={shareImage} />
+        <meta name="twitter:image:alt" content={`${displayName} — Digital Business Pass on CulturePass`} />
         <meta name="twitter:url" content={profileUrl} />
         <link rel="canonical" href={profileUrl} />
+        {/* Person structured data — helps Google Knowledge Panel for public profiles */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'Person',
+              name: displayName,
+              identifier: cpid,
+              url: profileUrl,
+              image: shareImage,
+              description: shareDescription,
+              ...(duForShare.handle && duForShare.handleStatus === 'approved'
+                ? { alternateName: `@${duForShare.handle}` }
+                : {}),
+              ...(locationText ? { homeLocation: { '@type': 'Place', name: locationText } } : {}),
+              ...(duForShare.website ? { sameAs: [duForShare.website] } : {}),
+              memberOf: {
+                '@type': 'Organization',
+                name: 'CulturePass',
+                url: 'https://culturepass.app',
+              },
+            }),
+          }}
+        />
       </Head>
 
       <View style={[s.fill, { backgroundColor: pageBg }]}>
@@ -557,11 +591,11 @@ function UserPublicScreen() {
 
             {/* stats */}
             <View style={[s.statsCard, { backgroundColor: cardBg, borderColor }]}>
-              <StatItem label="Followers" value={user.followersCount ?? 0} />
+              <StatItem label="Followers" value={user.followersCount ?? 0} textColor={textColor} mutedColor={mutedColor} />
               <View style={[s.statDivider, { backgroundColor: borderColor }]} />
-              <StatItem label="Following" value={user.followingCount ?? 0} />
+              <StatItem label="Following" value={user.followingCount ?? 0} textColor={textColor} mutedColor={mutedColor} />
               <View style={[s.statDivider, { backgroundColor: borderColor }]} />
-              <StatItem label="Events"    value={user.eventsAttended  ?? 0} />
+              <StatItem label="Events"    value={user.eventsAttended  ?? 0} textColor={textColor} mutedColor={mutedColor} />
             </View>
 
             {/* bio */}
@@ -590,30 +624,40 @@ function UserPublicScreen() {
               </Pressable>
             ) : null}
 
-            {/* email */}
+            {/* email — swipe-to-reveal: hides from bots/scrapers, real users swipe right */}
             {user.email ? (
-              <Pressable style={[s.linkPill, { backgroundColor: cardBg, borderColor }]} onPress={() => openExternalUrl(`mailto:${user.email}`)}>
-                <View style={[s.linkIcon, { backgroundColor: '#00D4AA18' }]}>
-                  <Ionicons name="mail-outline" size={18} color="#00D4AA" />
-                </View>
-                <Text style={[s.linkLabel, { color: textColor }]} numberOfLines={1}>
-                  {user.email}
-                </Text>
-                <Ionicons name="arrow-forward" size={15} color={mutedColor} />
-              </Pressable>
+              <SwipeToReveal
+                maskedValue={maskEmail(user.email)}
+                realValue={user.email}
+                icon="mail-outline"
+                iconColor="#00D4AA"
+                iconBg="#00D4AA18"
+                isLoggedIn={!!currentUserId}
+                onRevealAction={() => openExternalUrl(`mailto:${user.email}`)}
+                textColor={textColor}
+                mutedColor={mutedColor}
+                cardBg={cardBg}
+                borderColor={borderColor}
+                primaryColor={primaryColor}
+              />
             ) : null}
 
-            {/* phone */}
+            {/* phone — swipe-to-reveal */}
             {user.phone ? (
-              <Pressable style={[s.linkPill, { backgroundColor: cardBg, borderColor }]} onPress={() => openExternalUrl(`tel:${user.phone}`)}>
-                <View style={[s.linkIcon, { backgroundColor: primaryColor + '18' }]}>
-                  <Ionicons name="call-outline" size={18} color={primaryColor} />
-                </View>
-                <Text style={[s.linkLabel, { color: textColor }]} numberOfLines={1}>
-                  {user.phone}
-                </Text>
-                <Ionicons name="arrow-forward" size={15} color={mutedColor} />
-              </Pressable>
+              <SwipeToReveal
+                maskedValue={maskPhone(user.phone)}
+                realValue={user.phone}
+                icon="call-outline"
+                iconColor={primaryColor}
+                iconBg={primaryColor + '18'}
+                isLoggedIn={!!currentUserId}
+                onRevealAction={() => openExternalUrl(`tel:${user.phone}`)}
+                textColor={textColor}
+                mutedColor={mutedColor}
+                cardBg={cardBg}
+                borderColor={borderColor}
+                primaryColor={primaryColor}
+              />
             ) : null}
 
             {/* social links */}
@@ -644,6 +688,74 @@ function UserPublicScreen() {
                 </View>
               </View>
             ) : null}
+
+            {/* ── Digital Business Pass Preview — links to /profile/qr ─────────── */}
+            <Pressable
+              onPress={() => router.push('/profile/qr' as never)}
+              accessibilityRole="button"
+              accessibilityLabel="Open Digital Business Pass"
+              style={({ pressed }) => [
+                s.bizPassCard,
+                { opacity: pressed ? 0.88 : 1 },
+              ]}
+            >
+              {/* White business-card body */}
+              <View style={s.bizPassInner}>
+                {/* Left: avatar + name + handle */}
+                <View style={s.bizPassLeft}>
+                  <View style={s.bizPassAvatarWrap}>
+                    {displayUser?.avatarUrl ? (
+                      <Image
+                        source={{ uri: displayUser.avatarUrl }}
+                        style={s.bizPassAvatar}
+                        contentFit="cover"
+                      />
+                    ) : (
+                      <View style={[s.bizPassAvatarFallback, { backgroundColor: VIOLET + '20' }]}>
+                        <Text style={[s.bizPassAvatarInitials, { color: VIOLET }]}>{ini}</Text>
+                      </View>
+                    )}
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                      <Text style={s.bizPassName} numberOfLines={1}>{displayName}</Text>
+                      {user.isVerified && (
+                        <Ionicons name="checkmark-circle" size={11} color="#009CDE" />
+                      )}
+                    </View>
+                    <Text style={s.bizPassHandle}>@{user.handle ?? user.username}</Text>
+                    <Text style={s.bizPassTier} numberOfLines={1}>
+                      <Text style={{ color: '#FF3B30' }}>CULTURE</Text>
+                      <Text style={{ color: '#34C759' }}>PASS</Text>
+                      <Text style={{ color: '#009CDE' }}> ID</Text>
+                      {'  ·  '}
+                      <Text style={{ color: '#009CDE' }}>{tierConf.label.toUpperCase()}</Text>
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Right: mini QR */}
+                <View style={s.bizPassQrWrap}>
+                  <QRCode
+                    value={JSON.stringify({ type: 'culturepass_id', cpid })}
+                    size={52}
+                    color="#0F172A"
+                    backgroundColor="#FFFFFF"
+                    ecl="H"
+                  />
+                </View>
+              </View>
+
+              {/* Footer strip */}
+              <View style={s.bizPassFooter}>
+                <Ionicons name="id-card-outline" size={12} color="#009CDE" />
+                <Text style={s.bizPassFooterText}>DIGITAL BUSINESS PASS</Text>
+                <View style={{ flex: 1 }} />
+                <Ionicons name="wifi" size={11} color="#9CA3AF" style={{ transform: [{ rotate: '90deg' }] }} />
+                <Text style={s.bizPassNfc}>NFC</Text>
+                <Ionicons name="chevron-forward" size={13} color="#9CA3AF" />
+              </View>
+            </Pressable>
 
             {/* ── Bottom Card: Branded Public Profile (CPU) with QR ─────────────── */}
             <View style={[s.bottomCard, { 
@@ -863,19 +975,250 @@ function UserPublicScreen() {
   );
 }
 
-function StatItem({ label, value }: { label: string; value: number }) {
+// ─── contact info masking helpers ─────────────────────────────────────────────
+/** Mask email: j***@***.com */
+function maskEmail(email: string): string {
+  const [local, domain] = email.split('@');
+  if (!domain) return '***@***';
+  const maskedLocal = local.length > 1 ? local[0] + '***' : '***';
+  const parts = domain.split('.');
+  const maskedDomain = parts.length >= 2
+    ? '***.' + parts[parts.length - 1]
+    : '***';
+  return `${maskedLocal}@${maskedDomain}`;
+}
+
+/** Mask phone: keep country code prefix, hide rest */
+function maskPhone(phone: string): string {
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length < 4) return '***';
+  const visible = phone.startsWith('+') ? phone.slice(0, phone.indexOf(' ') + 1 || 3) : '';
+  return visible + '*** *** ***';
+}
+
+// ─── SwipeToReveal component ───────────────────────────────────────────────────
+/**
+ * Wraps sensitive contact info (email / phone).
+ * Shows masked value + lock icon by default.
+ * Authenticated users can swipe right (or tap the lock) to reveal the real value.
+ * Bots and unauthenticated scrapers never see the real data.
+ */
+interface SwipeToRevealProps {
+  maskedValue: string;
+  realValue: string;
+  icon: React.ComponentProps<typeof Ionicons>['name'];
+  iconColor: string;
+  iconBg: string;
+  isLoggedIn: boolean;
+  onRevealAction: () => void; // called when revealed & tapped (e.g. mailto:)
+  textColor: string;
+  mutedColor: string;
+  cardBg: string;
+  borderColor: string;
+  primaryColor: string;
+}
+
+function SwipeToReveal({
+  maskedValue,
+  realValue,
+  icon,
+  iconColor,
+  iconBg,
+  isLoggedIn,
+  onRevealAction,
+  textColor,
+  mutedColor,
+  cardBg,
+  borderColor,
+  primaryColor,
+}: SwipeToRevealProps) {
+  const [revealed, setRevealed] = useState(false);
+  const translateX = useRef(new Animated.Value(0)).current;
+  const REVEAL_THRESHOLD = 60; // px to swipe right to reveal
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_evt, gs) =>
+        !revealed && isLoggedIn && Math.abs(gs.dx) > 8 && Math.abs(gs.dx) > Math.abs(gs.dy),
+      onPanResponderMove: (_evt, gs) => {
+        if (!revealed && isLoggedIn && gs.dx > 0) {
+          translateX.setValue(Math.min(gs.dx, REVEAL_THRESHOLD + 20));
+        }
+      },
+      onPanResponderRelease: (_evt, gs) => {
+        if (!revealed && isLoggedIn && gs.dx >= REVEAL_THRESHOLD) {
+          // Snap to revealed
+          Animated.spring(translateX, {
+            toValue: 0,
+            useNativeDriver: true,
+            tension: 120,
+            friction: 8,
+          }).start(() => setRevealed(true));
+        } else {
+          // Snap back
+          Animated.spring(translateX, {
+            toValue: 0,
+            useNativeDriver: true,
+            tension: 120,
+            friction: 8,
+          }).start();
+        }
+      },
+    }),
+  ).current;
+
+  const handleTapLock = () => {
+    if (!isLoggedIn) return; // silently ignore for bots/unauthenticated
+    setRevealed(true);
+  };
+
+  const handleTapRevealed = () => {
+    if (revealed) onRevealAction();
+  };
+
+  // Progress indicator: light green tint as user swipes
+  const revealBg = translateX.interpolate({
+    inputRange: [0, REVEAL_THRESHOLD],
+    outputRange: [cardBg, primaryColor + '14'],
+    extrapolate: 'clamp',
+  });
+
+  return (
+    <Animated.View
+      style={[
+        swipeStyles.pill,
+        { backgroundColor: revealed ? cardBg : revealBg, borderColor },
+      ]}
+      {...(!revealed ? panResponder.panHandlers : {})}
+    >
+      {/* Swipe hint track (only when locked) */}
+      {!revealed && isLoggedIn && (
+        <Animated.View
+          style={[
+            swipeStyles.swipeTrack,
+            {
+              backgroundColor: primaryColor + '20',
+              width: translateX,
+            },
+          ]}
+          pointerEvents="none"
+        />
+      )}
+
+      <View style={[swipeStyles.iconWrap, { backgroundColor: iconBg }]}>
+        <Ionicons name={icon} size={18} color={iconColor} />
+      </View>
+
+      <Pressable style={swipeStyles.textArea} onPress={handleTapRevealed}>
+        {revealed ? (
+          <Text style={[swipeStyles.label, { color: textColor }]} numberOfLines={1}>
+            {realValue}
+          </Text>
+        ) : (
+          <View style={swipeStyles.maskedRow}>
+            <Text style={[swipeStyles.maskedText, { color: mutedColor }]} numberOfLines={1}>
+              {maskedValue}
+            </Text>
+            {isLoggedIn && (
+              <View style={[swipeStyles.swipeHint, { backgroundColor: primaryColor + '12' }]}>
+                <Ionicons name="chevron-forward" size={10} color={primaryColor} />
+                <Text style={[swipeStyles.swipeHintText, { color: primaryColor }]}>swipe</Text>
+              </View>
+            )}
+          </View>
+        )}
+      </Pressable>
+
+      {/* Right side: lock (locked) or arrow (revealed) */}
+      {revealed ? (
+        <Pressable onPress={handleTapRevealed} hitSlop={8}>
+          <Ionicons name="arrow-forward" size={15} color={mutedColor} />
+        </Pressable>
+      ) : (
+        <Pressable onPress={handleTapLock} hitSlop={12}>
+          <View style={[swipeStyles.lockBtn, { backgroundColor: isLoggedIn ? primaryColor + '12' : mutedColor + '18' }]}>
+            <Ionicons
+              name={isLoggedIn ? 'lock-closed' : 'lock-closed'}
+              size={14}
+              color={isLoggedIn ? primaryColor : mutedColor}
+            />
+          </View>
+        </Pressable>
+      )}
+    </Animated.View>
+  );
+}
+
+const swipeStyles = StyleSheet.create({
+  pill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    borderRadius: 20,
+    padding: 14,
+    borderWidth: 1,
+    overflow: 'hidden',
+    ...Platform.select({
+      web: { boxShadow: '0 2px 12px rgba(0,0,0,0.07)' } as object,
+      default: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.07,
+        shadowRadius: 12,
+        elevation: 3,
+      },
+    }),
+  },
+  swipeTrack: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    borderRadius: 20,
+  },
+  iconWrap: {
+    width: 42,
+    height: 42,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  textArea: { flex: 1 },
+  label: { fontFamily: 'Poppins_600SemiBold', fontSize: 15 },
+  maskedRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  maskedText: { fontFamily: 'Poppins_500Medium', fontSize: 14, letterSpacing: 0.3 },
+  swipeHint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 999,
+  },
+  swipeHintText: { fontFamily: 'Poppins_500Medium', fontSize: 10 },
+  lockBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
+
+
+function StatItem({ label, value, textColor, mutedColor }: { label: string; value: number; textColor: string; mutedColor: string }) {
   return (
     <View style={statItemStyles.statItem}>
-      <Text style={statItemStyles.statNum}>{fmt(value)}</Text>
-      <Text style={statItemStyles.statLabel}>{label}</Text>
+      <Text style={[statItemStyles.statNum, { color: textColor }]}>{fmt(value)}</Text>
+      <Text style={[statItemStyles.statLabel, { color: mutedColor }]}>{label}</Text>
     </View>
   );
 }
 
 const statItemStyles = StyleSheet.create({
   statItem: { flex: 1, alignItems: 'center', gap: 2 },
-  statNum:  { fontFamily: FONT_BOLD, fontSize: 22, color: '#1C1C1E', letterSpacing: -0.5 },
-  statLabel:{ fontFamily: FONT_REG, fontSize: 11, color: '#8B8FA8', letterSpacing: 0.3, textTransform: 'uppercase' },
+  statNum:  { fontFamily: FONT_BOLD, fontSize: 22, letterSpacing: -0.5 },
+  statLabel:{ fontFamily: FONT_REG, fontSize: 11, letterSpacing: 0.3, textTransform: 'uppercase' },
 });
 
 export default function UserProfilePage() {
@@ -909,8 +1252,8 @@ const getStyles = (colors: any, isDark: boolean) => {
   fill:   { flex: 1 },
   center: { alignItems: 'center', justifyContent: 'center', gap: 14, padding: 40 },
 
-  emptyTitle:   { fontFamily: FONT_BOLD, fontSize: 18, color: '#1C1C1E', textAlign: 'center' },
-  emptyBody:    { fontFamily: FONT_REG,  fontSize: 14, color: '#8B8FA8', textAlign: 'center' },
+  emptyTitle:   { fontFamily: FONT_BOLD, fontSize: 18, textAlign: 'center' },
+  emptyBody:    { fontFamily: FONT_REG,  fontSize: 14, textAlign: 'center' },
   ghostBtn:     { paddingHorizontal: 24, paddingVertical: 10, borderRadius: 50,
                   backgroundColor: VIOLET + '12', marginTop: 4 },
   ghostBtnText: { fontFamily: FONT_SEMI, fontSize: 14 },
@@ -1015,17 +1358,17 @@ const getStyles = (colors: any, isDark: boolean) => {
 
   // identity
   identityBlock: { alignItems: 'center', gap: 6, paddingTop: 4 },
-  displayName:   { fontFamily: FONT_BOLD, fontSize: 24, color: '#1C1C1E', textAlign: 'center', letterSpacing: -0.4 },
-  handle:        { fontFamily: FONT_MED, fontSize: 14, color: '#8B8FA8' },
+  displayName:   { fontFamily: FONT_BOLD, fontSize: 24, color: textColor, textAlign: 'center', letterSpacing: -0.4 },
+  handle:        { fontFamily: FONT_MED, fontSize: 14, color: mutedColor },
   metaRow:       { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  metaText:      { fontFamily: FONT_REG, fontSize: 13, color: '#8B8FA8' },
+  metaText:      { fontFamily: FONT_REG, fontSize: 13, color: mutedColor },
   tierPill: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
     marginTop: 4, paddingHorizontal: 12, paddingVertical: 5,
-    borderRadius: 50, borderWidth: 1.5, backgroundColor: '#FFFFFF',
+    borderRadius: 50, borderWidth: 1.5, backgroundColor: isDark ? colors.surfaceElevated : '#FFFFFF',
   },
   tierText:  { fontFamily: FONT_MED, fontSize: 12 },
-  tierSince: { fontFamily: FONT_REG, fontSize: 11, color: '#8B8FA8' },
+  tierSince: { fontFamily: FONT_REG, fontSize: 11, color: mutedColor },
   cpidPill: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
     backgroundColor: VIOLET + '10',
@@ -1070,7 +1413,7 @@ const getStyles = (colors: any, isDark: boolean) => {
     ...shadow,
   },
   statItem:   { flex: 1, alignItems: 'center', gap: 2 },
-  statNum:    { fontFamily: FONT_BOLD, fontSize: 22, color: '#1C1C1E', letterSpacing: -0.5 },
+  statNum:    { fontFamily: FONT_BOLD, fontSize: 22, color: textColor, letterSpacing: -0.5 },
   statLabel:  { fontFamily: FONT_REG, fontSize: 11, color: mutedColor, letterSpacing: 0.3,
                 textTransform: 'uppercase' },
   statDivider:{ width: 1, height: 32, backgroundColor: borderColor },
@@ -1084,7 +1427,7 @@ const getStyles = (colors: any, isDark: boolean) => {
     fontFamily: FONT_SEMI, fontSize: 11, color: mutedColor,
     letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 2,
   },
-  bioText: { fontFamily: FONT_REG, fontSize: 15, color: '#1C1C1E', lineHeight: 24 },
+  bioText: { fontFamily: FONT_REG, fontSize: 15, color: textColor, lineHeight: 24 },
 
   // link pills
   linkPill: {
@@ -1210,7 +1553,110 @@ const getStyles = (colors: any, isDark: boolean) => {
     marginTop: 2,
   },
 
-  // Public URL / username option card (new)
+  // ── Digital Business Pass preview card ────────────────────────────────────
+  bizPassCard: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    backgroundColor: '#FFFFFF',
+    ...Platform.select({
+      web: { boxShadow: '0 4px 20px rgba(0,0,0,0.12)' } as object,
+      default: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.12,
+        shadowRadius: 12,
+        elevation: 5,
+      },
+    }),
+  },
+  bizPassInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 14,
+    paddingTop: 14,
+    paddingBottom: 10,
+  },
+  bizPassLeft: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  bizPassAvatarWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  bizPassAvatar: {
+    width: 44,
+    height: 44,
+  },
+  bizPassAvatarFallback: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bizPassAvatarInitials: {
+    fontFamily: FONT_BOLD,
+    fontSize: 14,
+  },
+  bizPassName: {
+    fontFamily: FONT_BOLD,
+    fontSize: 13,
+    color: '#111827',
+    letterSpacing: -0.2,
+  },
+  bizPassHandle: {
+    fontFamily: FONT_MED,
+    fontSize: 11,
+    color: '#6B7280',
+    marginTop: 1,
+  },
+  bizPassTier: {
+    fontFamily: FONT_BOLD,
+    fontSize: 8.5,
+    letterSpacing: 0.8,
+    marginTop: 3,
+  },
+  bizPassQrWrap: {
+    padding: 5,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  bizPassFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6',
+    backgroundColor: '#FAFAFA',
+  },
+  bizPassFooterText: {
+    fontFamily: FONT_BOLD,
+    fontSize: 8.5,
+    color: '#009CDE',
+    letterSpacing: 1,
+  },
+  bizPassNfc: {
+    fontFamily: FONT_BOLD,
+    fontSize: 8,
+    color: '#9CA3AF',
+    letterSpacing: 0.5,
+  },
+
+  // ── Public URL / username option card (new) ─────────────────────────────
   publicUrlCard: {
     marginTop: 16,
     marginBottom: 8,
@@ -1294,7 +1740,7 @@ const getStyles = (colors: any, isDark: boolean) => {
   bottomLinkRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F4F1E9',
+    backgroundColor: isDark ? colors.surfaceElevated : '#F4F1E9',
     borderRadius: Radius.lg,
     padding: 14,
     gap: 12,
@@ -1329,7 +1775,7 @@ const getStyles = (colors: any, isDark: boolean) => {
     gap: 6,
     paddingVertical: 10,
     borderRadius: Radius.md,
-    backgroundColor: '#F4F1E9',
+    backgroundColor: isDark ? colors.surfaceElevated : '#F4F1E9',
   },
   bottomActionText: {
     fontFamily: FontFamily.medium,
@@ -1346,7 +1792,7 @@ const getStyles = (colors: any, isDark: boolean) => {
     backgroundColor: '#FFFFFF',
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#E8E3D9',
+    borderColor: isDark ? colors.borderLight : '#E8E3D9',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
@@ -1362,12 +1808,13 @@ const getStyles = (colors: any, isDark: boolean) => {
     paddingVertical: 17,
     gap: 14,
     borderTopWidth: 1,
-    borderColor: '#00000010',
+    borderColor: borderColor,
   },
   contactOptionText: {
     flex: 1,
     fontSize: 17,
     fontFamily: FONT_REG,
+    color: textColor,
   },
 });
 };  // close getStyles

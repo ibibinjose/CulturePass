@@ -68,11 +68,11 @@ const createShadow = (
  */
 /** Primary brand indigo — keep M3 `lightM3.primaryContainer` / brand chrome aligned. */
 const BRAND_INDIGO = "#4F46E5";
-const BRAND_VIOLET = "#9333EA";
+const BRAND_VIOLET = "#4F46E5"; // Unified with BRAND_INDIGO — no standalone purple
 const BRAND_CORAL = "#FF5E5B";
 const BRAND_GOLD = "#FFC857";
 const BRAND_TEAL = "#0D9488";
-const BRAND_PURPLE = "#A855F7";
+const BRAND_PURPLE = "#4F46E5"; // Remapped to indigo — purple removed from brand palette
 
 /**
  * Core Cultural Colors

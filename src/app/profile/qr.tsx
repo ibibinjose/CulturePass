@@ -39,7 +39,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useColors, useIsDark } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
 import { CultureTokens, gradients, FontFamily } from '@/design-system/tokens/theme';
-import { Luxe } from '@/design-system/tokens/luxeHeritage';
+
 import { Skeleton, PageContainer } from '@/design-system/ui';
 import { AppHeaderBar } from '@/modules/core/ui/AppHeaderBar';
 import { modulesApi, ApiError } from '@/modules/api';
@@ -178,10 +178,98 @@ function resolveCardTheme(tier: string) {
   return DYNAMIC_CARD_THEMES.free;
 }
 
-/** Build a self-contained print window for a card — web only.
- *  Opens a new tab with only the card HTML/CSS, sets document.title to the
- *  suggested PDF filename (culturepass-@username-business-pass.pdf), then
- *  auto-triggers the browser print dialog so the user can Save as PDF.
+/** Shared card HTML builder used by both PDF and image export popups */
+function buildCardHtml(opts: {
+  cardType: 'business' | 'lanyard';
+  name: string;
+  username: string;
+  cpid: string;
+  tier: string;
+  memberSince: string;
+  avatarUrl?: string | null;
+  qrDataUrl: string;
+  initials: string;
+  affiliation?: { name: string; avatarUrl?: string | null; entityType?: string | null } | null;
+}) {
+  const { cardType, name, username, cpid, tier, memberSince, avatarUrl, qrDataUrl, initials, affiliation } = opts;
+  const isLanyard = cardType === 'lanyard';
+  const tierText = (tier || 'Standard').toUpperCase();
+
+  const avatarImg = (size: number, fontSize: number) => avatarUrl
+    ? `<img src="${avatarUrl}" style="width:${size}px;height:${size}px;border-radius:50%;object-fit:cover;border:1.5px solid #E5E7EB;display:block;flex-shrink:0;" crossorigin="anonymous"/>`
+    : `<div style="width:${size}px;height:${size}px;border-radius:50%;background:#EEF2FF;display:flex;align-items:center;justify-content:center;font-size:${fontSize}px;font-weight:700;color:#4F46E5;flex-shrink:0;">${initials}</div>`;
+
+  const affiliationBadge = (w: number, h: number, br: number, border: number) => {
+    if (!affiliation) return '';
+    return affiliation.avatarUrl
+      ? `<img src="${affiliation.avatarUrl}" style="position:absolute;bottom:-2px;right:-2px;width:${w}px;height:${h}px;border-radius:${br}px;border:${border}px solid #fff;object-fit:cover;" crossorigin="anonymous"/>`
+      : `<div style="position:absolute;bottom:-2px;right:-2px;width:${w}px;height:${h}px;border-radius:${br}px;border:${border}px solid #fff;background:#F3F4F6;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#6B7280;">B</div>`;
+  };
+
+  const affiliationName = (fs: number) => affiliation
+    ? `<div style="font-size:${fs}px;color:#6B7280;margin-top:2px;">🏢 ${affiliation.name}</div>`
+    : '';
+
+  const header = `
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <span style="font-size:10px;font-weight:800;letter-spacing:1.2px;">
+        <span style="color:#FF3B30;">CULTURE</span><span style="color:#34C759;">PASS</span><span style="color:#009CDE;"> ID</span>
+      </span>
+      <span style="font-size:9px;font-weight:700;letter-spacing:0.8px;color:#009CDE;">${tierText}</span>
+    </div>`;
+
+  if (!isLanyard) {
+    return `
+<div id="card-root" style="width:330px;height:210px;border-radius:20px;border:1px solid #E5E7EB;background:#FFFFFF;display:flex;flex-direction:column;justify-content:space-between;padding:20px 18px;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;overflow:hidden;">
+  ${header}
+  <div style="display:flex;justify-content:space-between;align-items:center;flex:1;margin-top:14px;">
+    <div style="flex:1;display:flex;align-items:center;gap:12px;padding-right:10px;overflow:hidden;">
+      <div style="position:relative;width:44px;height:44px;flex-shrink:0;">
+        ${avatarImg(44, 16)}
+        ${affiliationBadge(18, 18, 4, 1)}
+      </div>
+      <div style="overflow:hidden;">
+        <div style="font-size:15px;font-weight:700;color:#0B0F19;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${name}</div>
+        <div style="font-size:12px;color:#4B5563;margin-top:2px;">@${username}</div>
+        ${affiliationName(10)}
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:5px;flex-shrink:0;">
+      <div style="padding:5px;background:#fff;border-radius:10px;border:1px solid #E5E7EB;">
+        <img id="qr-img" src="${qrDataUrl}" width="84" height="84" style="display:block;" crossorigin="anonymous"/>
+      </div>
+      <span style="font-size:9.5px;font-family:monospace;font-weight:700;letter-spacing:0.8px;color:#0B0F19;">${cpid}</span>
+    </div>
+  </div>
+</div>`;
+  } else {
+    return `
+<div id="card-root" style="width:330px;height:440px;border-radius:20px;border:1px solid #E5E7EB;background:#FFFFFF;display:flex;flex-direction:column;align-items:stretch;padding:24px 20px 20px;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;overflow:hidden;">
+  ${header}
+  <div style="display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:22px;">
+    <div style="position:relative;width:68px;height:68px;flex-shrink:0;">
+      ${avatarImg(68, 22)}
+      ${affiliationBadge(22, 22, 5, 1.5)}
+    </div>
+    <div style="text-align:center;">
+      <div style="font-size:20px;font-weight:700;color:#0B0F19;line-height:1.25;">${name}</div>
+      <div style="font-size:13px;color:#4B5563;margin-top:3px;">@${username}</div>
+      ${affiliationName(11)}
+      <div style="font-size:10px;color:#9CA3AF;margin-top:6px;">Member Since ${memberSince}</div>
+    </div>
+  </div>
+  <div style="display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:auto;padding-top:16px;">
+    <div style="padding:8px;background:#fff;border-radius:12px;border:1px solid #E5E7EB;">
+      <img id="qr-img" src="${qrDataUrl}" width="130" height="130" style="display:block;" crossorigin="anonymous"/>
+    </div>
+    <span style="font-size:12px;font-family:monospace;font-weight:700;letter-spacing:1.5px;color:#0B0F19;">${cpid}</span>
+  </div>
+</div>`;
+  }
+}
+
+/** Opens an isolated popup window to print/save the card as PDF.
+ *  Waits for QR image to load before triggering the print dialog.
  */
 function openPrintWindow(opts: {
   cardType: 'business' | 'lanyard';
@@ -191,117 +279,17 @@ function openPrintWindow(opts: {
   tier: string;
   memberSince: string;
   avatarUrl?: string | null;
-  qrDataUrl: string;       // pre-rendered QR as data: URI (SVG)
+  qrDataUrl: string;
   initials: string;
   affiliation?: { name: string; avatarUrl?: string | null; entityType?: string | null } | null;
 }) {
   if (Platform.OS !== 'web') return;
-
-  const { cardType, name, username, cpid, tier, memberSince, avatarUrl, qrDataUrl, initials, affiliation } = opts;
-  const isLanyard = cardType === 'lanyard';
-  const safeUsername = (username || 'user').replace(/[^a-z0-9_-]/gi, '').toLowerCase();
-  const filename    = `culturepass-${safeUsername}-${isLanyard ? 'lanyard-pass' : 'business-pass'}`;
-  const tierText    = (tier || 'Standard').toUpperCase();
-
-  // Avatar: either use the base64 URI or a monogram circle
-  const avatarHtml = avatarUrl
-    ? `<img src="${avatarUrl}" style="width:44px;height:44px;border-radius:50%;object-fit:cover;border:1px solid #E5E7EB;" />`
-    : `<div style="width:44px;height:44px;border-radius:50%;background:#EEF2FF;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#4F46E5;">${initials}</div>`;
-
-  const avatarHtmlLg = avatarUrl
-    ? `<img src="${avatarUrl}" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:1.5px solid #E5E7EB;" />`
-    : `<div style="width:64px;height:64px;border-radius:50%;background:#EEF2FF;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#4F46E5;">${initials}</div>`;
-
-  // Affiliation logic
-  const affiliationBadgeHtml = (affiliation && cardType === 'business')
-    ? (affiliation.avatarUrl
-        ? `<img src="${affiliation.avatarUrl}" style="position:absolute;bottom:-2px;right:-2px;width:18px;height:18px;border-radius:4px;border:1px solid #FFFFFF;background:#FFFFFF;object-fit:cover;box-shadow:0 1px 3px rgba(0,0,0,0.15);" />`
-        : `<div style="position:absolute;bottom:-2px;right:-2px;width:18px;height:18px;border-radius:4px;border:1px solid #FFFFFF;background:#F3F4F6;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,0.15);"><svg style="width:10px;height:10px;color:#78716C;" fill="currentColor" viewBox="0 0 24 24"><path d="M12 7V3H2v18h20V7H12zm-2 12H4v-2h6v2zm0-4H4v-2h6v2zm0-4H4V9h6v2zm10 8h-8v-2h8v2zm0-4h-8v-2h8v2zm0-4h-8V9h8v2z"/></svg></div>`
-      )
-    : '';
-
-  const affiliationBadgeHtmlLg = (affiliation && cardType === 'lanyard')
-    ? (affiliation.avatarUrl
-        ? `<img src="${affiliation.avatarUrl}" style="position:absolute;bottom:-2px;right:-2px;width:24px;height:24px;border-radius:5px;border:1.5px solid #FFFFFF;background:#FFFFFF;object-fit:cover;box-shadow:0 1.5px 3.5px rgba(0,0,0,0.2);" />`
-        : `<div style="position:absolute;bottom:-2px;right:-2px;width:24px;height:24px;border-radius:5px;border:1.5px solid #FFFFFF;background:#F3F4F6;display:flex;align-items:center;justify-content:center;box-shadow:0 1.5px 3.5px rgba(0,0,0,0.2);"><svg style="width:14px;height:14px;color:#78716C;" fill="currentColor" viewBox="0 0 24 24"><path d="M12 7V3H2v18h20V7H12zm-2 12H4v-2h6v2zm0-4H4v-2h6v2zm0-4H4V9h6v2zm10 8h-8v-2h8v2zm0-4h-8v-2h8v2zm0-4h-8V9h8v2z"/></svg></div>`
-      )
-    : '';
-
-  const affiliationNameHtml = (affiliation && cardType === 'business')
-    ? `<div style="font-size:10px;color:#4B5563;margin-top:2px;display:flex;align-items:center;gap:4px;">🏢 ${affiliation.name}</div>`
-    : '';
-
-  const affiliationNameHtmlLg = (affiliation && cardType === 'lanyard')
-    ? `<div style="font-size:12px;color:#4B5563;margin-top:3px;display:flex;align-items:center;gap:4px;">🏢 ${affiliation.name}</div>`
-    : '';
-
-  const businessCard = `
-    <div style="width:330px;height:210px;border-radius:20px;border:1px solid #E5E7EB;background:#FFFFFF;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;padding:20px 18px;box-sizing:border-box;box-shadow:0 8px 24px rgba(0,0,0,0.12);">
-      <!-- header -->
-      <div style="display:flex;justify-content:space-between;align-items:center;">
-        <span style="font-size:10px;font-weight:800;letter-spacing:1.2px;">
-          <span style="color:#FF3B30;">CULTURE</span><span style="color:#34C759;">PASS</span><span style="color:#009CDE;"> ID</span>
-        </span>
-        <span style="font-size:9px;font-weight:700;letter-spacing:0.8px;color:#009CDE;">${tierText}</span>
-      </div>
-      <!-- middle -->
-      <div style="display:flex;justify-content:space-between;align-items:center;flex:1;margin-top:16px;">
-        <div style="flex:1;display:flex;flex-direction:column;justify-content:center;height:100%;padding-right:10px;">
-          <div style="display:flex;align-items:center;gap:12px;">
-            <div style="position:relative;width:44px;height:44px;">
-              ${avatarHtml}
-              ${affiliationBadgeHtml}
-            </div>
-            <div>
-              <div style="font-size:15px;font-weight:700;color:#0B0F19;line-height:20px;">${name}</div>
-              <div style="font-size:12px;color:#4B5563;margin-top:2px;">@${username}</div>
-              ${affiliationNameHtml}
-            </div>
-          </div>
-        </div>
-        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;justify-content:center;">
-          <div style="padding:6px;background:#FFFFFF;border-radius:10px;border:1px solid #E5E7EB;">
-            <img src="${qrDataUrl}" width="88" height="88" style="display:block;" />
-          </div>
-          <span style="font-size:10px;font-family:monospace;font-weight:700;letter-spacing:1px;color:#0B0F19;">${cpid}</span>
-        </div>
-      </div>
-    </div>`;
-
-  const lanyardCard = `
-    <div style="width:330px;height:440px;border-radius:20px;border:1px solid #E5E7EB;background:#FFFFFF;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;padding:26px 20px;box-sizing:border-box;box-shadow:0 8px 24px rgba(0,0,0,0.12);">
-      <!-- header -->
-      <div style="display:flex;justify-content:space-between;align-items:center;">
-        <span style="font-size:10px;font-weight:800;letter-spacing:1.2px;">
-          <span style="color:#FF3B30;">CULTURE</span><span style="color:#34C759;">PASS</span><span style="color:#009CDE;"> ID</span>
-        </span>
-        <span style="font-size:9px;font-weight:700;letter-spacing:0.8px;color:#009CDE;">${tierText}</span>
-      </div>
-      <!-- profile -->
-      <div style="display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:20px;">
-        <div style="position:relative;width:64px;height:64px;">
-          ${avatarHtmlLg}
-          ${affiliationBadgeHtmlLg}
-        </div>
-        <div style="text-align:center;">
-          <div style="font-size:19px;font-weight:700;color:#0B0F19;line-height:24px;">${name}</div>
-          <div style="font-size:13px;color:#4B5563;margin-top:3px;">@${username}</div>
-          ${affiliationNameHtmlLg}
-          <div style="font-size:10.5px;color:#9CA3AF;margin-top:6px;">Member Since ${memberSince}</div>
-        </div>
-      </div>
-      <!-- qr -->
-      <div style="display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:20px;margin-bottom:10px;flex:1;justify-content:center;">
-        <div style="padding:6px;background:#FFFFFF;border-radius:10px;border:1px solid #E5E7EB;">
-          <img src="${qrDataUrl}" width="130" height="130" style="display:block;" />
-        </div>
-        <span style="font-size:12.5px;font-family:monospace;font-weight:700;letter-spacing:1.5px;color:#0B0F19;margin-top:6px;">${cpid}</span>
-      </div>
-    </div>`;
-
-  const cardHtml = isLanyard ? lanyardCard : businessCard;
-  const pageW    = isLanyard ? '330px' : '330px';
-  const pageH    = isLanyard ? '440px' : '210px';
+  const isLanyard = opts.cardType === 'lanyard';
+  const safeUsername = (opts.username || 'user').replace(/[^a-z0-9_-]/gi, '').toLowerCase();
+  const filename = `culturepass-${safeUsername}-${isLanyard ? 'lanyard-pass' : 'business-pass'}`;
+  const cardW = 330;
+  const cardH = isLanyard ? 440 : 210;
+  const cardHtml = buildCardHtml(opts);
 
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -310,31 +298,13 @@ function openPrintWindow(opts: {
   <title>${filename}</title>
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
-    html, body {
-      width:${pageW}; height:${pageH};
-      background:#ffffff;
-      display:flex; align-items:center; justify-content:center;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
-    }
-    @page {
-      size: ${isLanyard ? '330px 440px' : '330px 210px'};
-      margin: 0;
-    }
-    @media print {
-      html, body { width:${pageW}; height:${pageH}; }
-    }
-    .no-print {
-      position:fixed; bottom:16px; left:50%; transform:translateX(-50%);
-      display:flex; gap:10px;
-    }
-    .no-print button {
-      padding:10px 22px; border-radius:10px; font-size:13px; font-weight:600;
-      cursor:pointer; border:none;
-    }
+    html, body { width:${cardW}px; height:${cardH}px; background:#fff; overflow:hidden; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    @page { size:${cardW}px ${cardH}px; margin:0; }
+    #card-root { position:absolute !important; top:0 !important; left:0 !important; width:${cardW}px !important; height:${cardH}px !important; border-radius:0 !important; border:none !important; box-shadow:none !important; }
+    .no-print { position:fixed; bottom:0; left:0; right:0; padding:12px 16px; background:rgba(255,255,255,0.97); display:flex; gap:10px; justify-content:center; border-top:1px solid #E5E7EB; z-index:99; }
+    .no-print button { padding:10px 24px; border-radius:10px; font-size:13px; font-weight:600; cursor:pointer; border:none; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; }
     .btn-primary { background:#4F46E5; color:#fff; }
-    .btn-secondary { background:#F3F4F6; color:#374151; border:1px solid #E5E7EB; }
+    .btn-secondary { background:#F3F4F6; color:#374151; border:1px solid #E5E7EB !important; }
     @media print { .no-print { display:none !important; } }
   </style>
 </head>
@@ -345,29 +315,25 @@ function openPrintWindow(opts: {
     <button class="btn-secondary" onclick="window.close()">Close</button>
   </div>
   <script>
-    // Set suggested filename via document.title (browsers use this for PDF filename)
     document.title = '${filename}';
-    window.addEventListener('load', function() {
-      setTimeout(function() { window.print(); }, 600);
-    });
-  </script>
+    var qr = document.getElementById('qr-img');
+    function doPrint() { setTimeout(function(){ window.print(); }, 350); }
+    if (qr) { if (qr.complete && qr.naturalWidth > 0) { doPrint(); } else { qr.onload = doPrint; qr.onerror = function(){}; } }
+    else { doPrint(); }
+  <\/script>
 </body>
 </html>`;
 
-  const win = window.open('', '_blank', `width=${isLanyard ? 380 : 400},height=${isLanyard ? 560 : 340},toolbar=0,menubar=0,scrollbars=0`);
-  if (!win) {
-    // Popup blocked — fall back to print of current page with targeted CSS
-    window.print();
-    return;
-  }
+  const win = window.open('', '_blank', `width=${cardW + 2},height=${cardH + 60},toolbar=0,menubar=0,scrollbars=0,resizable=0`);
+  if (!win) { alert('Popup blocker prevented export. Please allow popups for this site.'); return; }
   win.document.open();
   win.document.write(html);
   win.document.close();
 }
 
-/** Build a self-contained image export window for a card — web only.
- *  Opens a popup tab, renders the card, loads html2canvas from CDN,
- *  takes a high-resolution transparent screenshot, downloads the PNG, and closes.
+/** Opens an isolated popup that draws the card on an HTML5 Canvas (3× scale)
+ *  and downloads it as a PNG. No html2canvas, no CORS issues —
+ *  all images are already base64 data URIs fetched before this call.
  */
 function openSaveImageWindow(opts: {
   cardType: 'business' | 'lanyard';
@@ -377,195 +343,169 @@ function openSaveImageWindow(opts: {
   tier: string;
   memberSince: string;
   avatarUrl?: string | null;
-  qrDataUrl: string;       // pre-rendered QR as data: URI (SVG)
+  qrDataUrl: string;
   initials: string;
   affiliation?: { name: string; avatarUrl?: string | null; entityType?: string | null } | null;
 }) {
   if (Platform.OS !== 'web') return;
+  const isLanyard = opts.cardType === 'lanyard';
+  const safeUsername = (opts.username || 'user').replace(/[^a-z0-9_-]/gi, '').toLowerCase();
+  const filename = `culturepass-${safeUsername}-${isLanyard ? 'lanyard-pass' : 'business-pass'}.png`;
+  const cardHtml = buildCardHtml(opts);
+  const cardW = 330;
+  const cardH = isLanyard ? 440 : 210;
+  const SCALE = 3;
 
-  const { cardType, name, username, cpid, tier, memberSince, avatarUrl, qrDataUrl, initials, affiliation } = opts;
-  const isLanyard = cardType === 'lanyard';
-  const safeUsername = (username || 'user').replace(/[^a-z0-9_-]/gi, '').toLowerCase();
-  const filename    = `culturepass-${safeUsername}-${isLanyard ? 'lanyard-pass' : 'business-pass'}`;
-  const tierText    = (tier || 'Standard').toUpperCase();
-
-  // Avatar: either use the base64 URI or a monogram circle
-  const avatarHtml = avatarUrl
-    ? `<img src="${avatarUrl}" style="width:44px;height:44px;border-radius:50%;object-fit:cover;border:1px solid #E5E7EB;" />`
-    : `<div style="width:44px;height:44px;border-radius:50%;background:#EEF2FF;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#4F46E5;">${initials}</div>`;
-
-  const avatarHtmlLg = avatarUrl
-    ? `<img src="${avatarUrl}" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:1.5px solid #E5E7EB;" />`
-    : `<div style="width:64px;height:64px;border-radius:50%;background:#EEF2FF;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#4F46E5;">${initials}</div>`;
-
-  // Affiliation logic
-  const affiliationBadgeHtml = (affiliation && cardType === 'business')
-    ? (affiliation.avatarUrl
-        ? `<img src="${affiliation.avatarUrl}" style="position:absolute;bottom:-2px;right:-2px;width:18px;height:18px;border-radius:4px;border:1px solid #FFFFFF;background:#FFFFFF;object-fit:cover;box-shadow:0 1px 3px rgba(0,0,0,0.15);" />`
-        : `<div style="position:absolute;bottom:-2px;right:-2px;width:18px;height:18px;border-radius:4px;border:1px solid #FFFFFF;background:#F3F4F6;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,0.15);"><svg style="width:10px;height:10px;color:#78716C;" fill="currentColor" viewBox="0 0 24 24"><path d="M12 7V3H2v18h20V7H12zm-2 12H4v-2h6v2zm0-4H4v-2h6v2zm0-4H4V9h6v2zm10 8h-8v-2h8v2zm0-4h-8v-2h8v2zm0-4h-8V9h8v2z"/></svg></div>`
-      )
-    : '';
-
-  const affiliationBadgeHtmlLg = (affiliation && cardType === 'lanyard')
-    ? (affiliation.avatarUrl
-        ? `<img src="${affiliation.avatarUrl}" style="position:absolute;bottom:-2px;right:-2px;width:24px;height:24px;border-radius:5px;border:1.5px solid #FFFFFF;background:#FFFFFF;object-fit:cover;box-shadow:0 1.5px 3.5px rgba(0,0,0,0.2);" />`
-        : `<div style="position:absolute;bottom:-2px;right:-2px;width:24px;height:24px;border-radius:5px;border:1.5px solid #FFFFFF;background:#F3F4F6;display:flex;align-items:center;justify-content:center;box-shadow:0 1.5px 3.5px rgba(0,0,0,0.2);"><svg style="width:14px;height:14px;color:#78716C;" fill="currentColor" viewBox="0 0 24 24"><path d="M12 7V3H2v18h20V7H12zm-2 12H4v-2h6v2zm0-4H4v-2h6v2zm0-4H4V9h6v2zm10 8h-8v-2h8v2zm0-4h-8v-2h8v2zm0-4h-8V9h8v2z"/></svg></div>`
-      )
-    : '';
-
-  const affiliationNameHtml = (affiliation && cardType === 'business')
-    ? `<div style="font-size:10px;color:#4B5563;margin-top:2px;display:flex;align-items:center;gap:4px;">🏢 ${affiliation.name}</div>`
-    : '';
-
-  const affiliationNameHtmlLg = (affiliation && cardType === 'lanyard')
-    ? `<div style="font-size:12px;color:#4B5563;margin-top:3px;display:flex;align-items:center;gap:4px;">🏢 ${affiliation.name}</div>`
-    : '';
-
-  const businessCard = `
-    <div id="card-export" style="width:330px;height:210px;border-radius:20px;border:1px solid #E5E7EB;background:#FFFFFF;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;padding:20px 18px;box-sizing:border-box;">
-      <!-- header -->
-      <div style="display:flex;justify-content:space-between;align-items:center;">
-        <span style="font-size:10px;font-weight:800;letter-spacing:1.2px;">
-          <span style="color:#FF3B30;">CULTURE</span><span style="color:#34C759;">PASS</span><span style="color:#009CDE;"> ID</span>
-        </span>
-        <span style="font-size:9px;font-weight:700;letter-spacing:0.8px;color:#009CDE;">${tierText}</span>
-      </div>
-      <!-- middle -->
-      <div style="display:flex;justify-content:space-between;align-items:center;flex:1;margin-top:16px;">
-        <div style="flex:1;display:flex;flex-direction:column;justify-content:center;height:100%;padding-right:10px;">
-          <div style="display:flex;align-items:center;gap:12px;">
-            <div style="position:relative;width:44px;height:44px;">
-              ${avatarHtml}
-              ${affiliationBadgeHtml}
-            </div>
-            <div>
-              <div style="font-size:15px;font-weight:700;color:#0B0F19;line-height:20px;">${name}</div>
-              <div style="font-size:12px;color:#4B5563;margin-top:2px;">@${username}</div>
-              ${affiliationNameHtml}
-            </div>
-          </div>
-        </div>
-        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;justify-content:center;">
-          <div style="padding:6px;background:#FFFFFF;border-radius:10px;border:1px solid #E5E7EB;">
-            <img src="${qrDataUrl}" width="88" height="88" style="display:block;" />
-          </div>
-          <span style="font-size:10px;font-family:monospace;font-weight:700;letter-spacing:1px;color:#0B0F19;">${cpid}</span>
-        </div>
-      </div>
-    </div>`;
-
-  const lanyardCard = `
-    <div id="card-export" style="width:330px;height:440px;border-radius:20px;border:1px solid #E5E7EB;background:#FFFFFF;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;padding:26px 20px;box-sizing:border-box;">
-      <!-- header -->
-      <div style="display:flex;justify-content:space-between;align-items:center;">
-        <span style="font-size:10px;font-weight:800;letter-spacing:1.2px;">
-          <span style="color:#FF3B30;">CULTURE</span><span style="color:#34C759;">PASS</span><span style="color:#009CDE;"> ID</span>
-        </span>
-        <span style="font-size:9px;font-weight:700;letter-spacing:0.8px;color:#009CDE;">${tierText}</span>
-      </div>
-      <!-- profile -->
-      <div style="display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:20px;">
-        <div style="position:relative;width:64px;height:64px;">
-          ${avatarHtmlLg}
-          ${affiliationBadgeHtmlLg}
-        </div>
-        <div style="text-align:center;">
-          <div style="font-size:19px;font-weight:700;color:#0B0F19;line-height:24px;">${name}</div>
-          <div style="font-size:13px;color:#4B5563;margin-top:3px;">@${username}</div>
-          ${affiliationNameHtmlLg}
-          <div style="font-size:10.5px;color:#9CA3AF;margin-top:6px;">Member Since ${memberSince}</div>
-        </div>
-      </div>
-      <!-- qr -->
-      <div style="display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:20px;margin-bottom:10px;flex:1;justify-content:center;">
-        <div style="padding:6px;background:#FFFFFF;border-radius:10px;border:1px solid #E5E7EB;">
-          <img src="${qrDataUrl}" width="130" height="130" style="display:block;" />
-        </div>
-        <span style="font-size:12.5px;font-family:monospace;font-weight:700;letter-spacing:1.5px;color:#0B0F19;margin-top:6px;">${cpid}</span>
-      </div>
-    </div>`;
-
-  const cardHtml = isLanyard ? lanyardCard : businessCard;
+  // ---- Canvas drawing script (runs inside the popup) ----
+  const drawScript = isLanyard
+    ? `
+      // LANYARD
+      var pad = 20, padTop = 24;
+      // bg + border
+      rr(ctx, 0, 0, W, H, 0);
+      ctx.fillStyle = '#FFFFFF'; ctx.fill();
+      rr(ctx, 0.5, 0.5, W-1, H-1, 0);
+      ctx.strokeStyle = '#E5E7EB'; ctx.lineWidth = 1; ctx.stroke();
+      // header brand
+      ctx.font = '800 10px -apple-system,sans-serif';
+      ctx.letterSpacing = '1.2px';
+      ctx.fillStyle='#FF3B30'; ctx.fillText('CULTURE', pad, padTop+10);
+      var cw = ctx.measureText('CULTURE').width;
+      ctx.fillStyle='#34C759'; ctx.fillText('PASS', pad+cw, padTop+10);
+      var pw = ctx.measureText('PASS').width;
+      ctx.fillStyle='#009CDE'; ctx.fillText(' ID', pad+cw+pw, padTop+10);
+      ctx.font='700 9px sans-serif'; ctx.letterSpacing='0.8px'; ctx.fillStyle='#009CDE';
+      var tierTxt='${opts.tier ? opts.tier.toUpperCase() : 'STANDARD'}';
+      ctx.fillText(tierTxt, W-pad-ctx.measureText(tierTxt).width, padTop+10);
+      // avatar centred
+      var avR=34, avCX=W/2, avCY=padTop+10+30+avR;
+      drawAvatar(ctx, avCX, avCY, avR, '${opts.initials}', imgs[0]);
+      // name/handle
+      var ny=avCY+avR+20;
+      ctx.textAlign='center';
+      ctx.font='700 20px -apple-system,sans-serif'; ctx.fillStyle='#0B0F19';
+      ctx.fillText('${opts.name.replace(/'/g, "\\'")}', W/2, ny);
+      ctx.font='400 13px sans-serif'; ctx.fillStyle='#4B5563';
+      ctx.fillText('@${opts.username}', W/2, ny+20);
+      ctx.font='400 10px sans-serif'; ctx.fillStyle='#9CA3AF';
+      ctx.fillText('Member Since ${opts.memberSince}', W/2, ny+38);
+      ctx.textAlign='left';
+      // QR
+      var qrS=130, qrX=(W-qrS)/2, qrY=ny+56;
+      ctx.fillStyle='#F9FAFB'; ctx.strokeStyle='#E5E7EB'; ctx.lineWidth=1;
+      rr(ctx,qrX-8,qrY-8,qrS+16,qrS+16,12); ctx.fill(); ctx.stroke();
+      if(imgs[1]&&imgs[1].complete&&imgs[1].naturalWidth>0){ctx.drawImage(imgs[1],qrX,qrY,qrS,qrS);}
+      ctx.font='700 12px monospace'; ctx.letterSpacing='1.5px'; ctx.fillStyle='#0B0F19';
+      ctx.textAlign='center'; ctx.fillText('${opts.cpid}', W/2, qrY+qrS+18); ctx.textAlign='left';
+    `
+    : `
+      // BUSINESS CARD
+      var padH=20, padV=18;
+      rr(ctx,0,0,W,H,0); ctx.fillStyle='#FFFFFF'; ctx.fill();
+      rr(ctx,0.5,0.5,W-1,H-1,0); ctx.strokeStyle='#E5E7EB'; ctx.lineWidth=1; ctx.stroke();
+      // header
+      ctx.font='800 10px -apple-system,sans-serif'; ctx.letterSpacing='1.2px';
+      ctx.fillStyle='#FF3B30'; ctx.fillText('CULTURE', padV, padH+10);
+      var cw=ctx.measureText('CULTURE').width;
+      ctx.fillStyle='#34C759'; ctx.fillText('PASS', padV+cw, padH+10);
+      var pw=ctx.measureText('PASS').width;
+      ctx.fillStyle='#009CDE'; ctx.fillText(' ID', padV+cw+pw, padH+10);
+      ctx.font='700 9px sans-serif'; ctx.letterSpacing='0.8px'; ctx.fillStyle='#009CDE';
+      var tierTxt='${opts.tier ? opts.tier.toUpperCase() : 'STANDARD'}';
+      ctx.fillText(tierTxt, W-padV-ctx.measureText(tierTxt).width, padH+10);
+      // avatar left-centre
+      var contentY=padH+10+16, contentH=H-contentY-padH;
+      var avR=22, avCX=padV+avR, avCY=contentY+contentH/2;
+      drawAvatar(ctx, avCX, avCY, avR, '${opts.initials}', imgs[0]);
+      // name/handle
+      var tx=avCX+avR+12;
+      ctx.font='700 15px -apple-system,sans-serif'; ctx.fillStyle='#0B0F19'; ctx.fillText('${opts.name.replace(/'/g, "\\'")}', tx, avCY-4);
+      ctx.font='400 12px sans-serif'; ctx.fillStyle='#4B5563'; ctx.fillText('@${opts.username}', tx, avCY+14);
+      // QR right
+      var qrS=84, qrBP=5, qrX=W-padV-qrS-qrBP*2, qrY=contentY+(contentH-qrS-20)/2;
+      ctx.fillStyle='#F9FAFB'; ctx.strokeStyle='#E5E7EB'; ctx.lineWidth=1;
+      rr(ctx,qrX-qrBP,qrY-qrBP,qrS+qrBP*2,qrS+qrBP*2,10); ctx.fill(); ctx.stroke();
+      if(imgs[1]&&imgs[1].complete&&imgs[1].naturalWidth>0){ctx.drawImage(imgs[1],qrX,qrY,qrS,qrS);}
+      ctx.font='700 9.5px monospace'; ctx.letterSpacing='0.8px'; ctx.fillStyle='#0B0F19';
+      ctx.textAlign='center'; ctx.fillText('${opts.cpid}', qrX-qrBP+(qrS+qrBP*2)/2, qrY+qrS+16); ctx.textAlign='left';
+    `;
 
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8"/>
-  <title>Export Pass</title>
+  <title>Saving…</title>
   <style>
-    * { margin:0; padding:0; box-sizing:border-box; }
-    html, body {
-      width: 100vw; height: 100vh;
-      background: #0B0F19;
-      display:flex; flex-direction:column; align-items:center; justify-content:center;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      overflow: hidden;
-    }
-    .status-text {
-      color: #FFFFFF; font-size: 14px; margin-top: 16px;
-      font-weight: 500; letter-spacing: 0.5px;
-      opacity: 0.8;
-    }
-    .spinner {
-      border: 3px solid rgba(255,255,255,0.1);
-      width: 32px; height: 32px;
-      border-radius: 50%;
-      border-left-color: #4F46E5;
-      animation: spin 1s linear infinite;
-    }
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
+    *{margin:0;padding:0;box-sizing:border-box;}
+    html,body{width:100vw;height:100vh;background:#09090B;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#fff;overflow:hidden;}
+    .spinner{width:36px;height:36px;border:3px solid rgba(255,255,255,0.12);border-top-color:#4F46E5;border-radius:50%;animation:spin 0.8s linear infinite;}
+    @keyframes spin{to{transform:rotate(360deg);}}
+    #msg{margin-top:14px;font-size:13px;opacity:0.65;letter-spacing:0.3px;}
+    #preview{display:none;margin-top:20px;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.6);max-width:90vw;max-height:320px;}
+    #actions{display:none;margin-top:16px;gap:10px;flex-direction:row;}
+    #actions button{padding:10px 22px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;border:none;font-family:inherit;}
+    .btn-dl{background:#4F46E5;color:#fff;}
+    .btn-close{background:rgba(255,255,255,0.08);color:#fff;border:1px solid rgba(255,255,255,0.15)!important;}
   </style>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
-  <div class="spinner" id="spinner"></div>
-  <div class="status-text" id="status">Generating high-resolution image...</div>
-
-  <!-- Hidden rendering container -->
-  <div style="position: absolute; left: -9999px; top: -9999px;">
-    ${cardHtml}
+  <div class="spinner" id="sp"></div>
+  <div id="msg">Generating image…</div>
+  <img id="preview" alt=""/>
+  <div id="actions">
+    <button class="btn-dl" id="btn-dl">⬇ Download Again</button>
+    <button class="btn-close" onclick="window.close()">Close</button>
   </div>
-
   <script>
-    window.addEventListener('load', function() {
-      // Small timeout to guarantee images are completely painted/decoded
-      setTimeout(function() {
-        const el = document.getElementById('card-export');
-        html2canvas(el, {
-          scale: 3,
-          backgroundColor: null,
-          useCORS: true,
-          logging: false
-        }).then(function(canvas) {
-          const dataUrl = canvas.toDataURL('image/png');
-          const link = document.createElement('a');
-          link.download = '${filename}.png';
-          link.href = dataUrl;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          
-          document.getElementById('spinner').style.display = 'none';
-          document.getElementById('status').innerText = 'Done!';
-          setTimeout(function() { window.close(); }, 800);
-        }).catch(function(err) {
-          console.error(err);
-          document.getElementById('status').innerText = 'Failed to generate image.';
+    var W=${cardW}, H=${cardH}, S=${SCALE};
+    var avatarSrc=${opts.avatarUrl ? `'${opts.avatarUrl}'` : 'null'};
+    var qrSrc='${opts.qrDataUrl}';
+
+    function rr(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();}
+
+    function drawAvatar(ctx,cx,cy,r,initials,img){
+      ctx.save();
+      ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.closePath();
+      if(img&&img.complete&&img.naturalWidth>0){ctx.clip();ctx.drawImage(img,cx-r,cy-r,r*2,r*2);}
+      else{ctx.fillStyle='#EEF2FF';ctx.fill();ctx.fillStyle='#4F46E5';ctx.font='700 '+(r*0.7)+'px sans-serif';ctx.textAlign='center';ctx.fillText(initials,cx,cy+r*0.25);ctx.textAlign='left';}
+      ctx.restore();
+      ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.strokeStyle='#E5E7EB';ctx.lineWidth=1.5;ctx.stroke();
+    }
+
+    function loadImg(src,cb){if(!src){cb(null);return;}var i=new Image();i.crossOrigin='anonymous';i.onload=function(){cb(i);};i.onerror=function(){cb(null);};i.src=src;}
+
+    function generate(imgs){
+      var canvas=document.createElement('canvas');
+      canvas.width=W*S;canvas.height=H*S;
+      var ctx=canvas.getContext('2d');
+      ctx.scale(S,S);
+      ${drawScript}
+      var dataUrl=canvas.toDataURL('image/png');
+      // show preview
+      var prev=document.getElementById('preview');
+      prev.src=dataUrl;prev.style.display='block';
+      document.getElementById('actions').style.display='flex';
+      document.getElementById('sp').style.display='none';
+      document.getElementById('msg').style.display='none';
+      // auto-download
+      function dl(){var a=document.createElement('a');a.download='${filename}';a.href=dataUrl;document.body.appendChild(a);a.click();document.body.removeChild(a);}
+      dl();
+      document.getElementById('btn-dl').onclick=dl;
+    }
+
+    window.addEventListener('load',function(){
+      loadImg(avatarSrc,function(avatarImg){
+        loadImg(qrSrc,function(qrImg){
+          generate([avatarImg,qrImg]);
         });
-      }, 500);
+      });
     });
-  </script>
+  <\/script>
 </body>
 </html>`;
 
-  const win = window.open('', '_blank', `width=360,height=300,toolbar=0,menubar=0,scrollbars=0`);
-  if (!win) {
-    alert('Popup blocker prevented the download. Please allow popups for this site.');
-    return;
-  }
+  const win = window.open('', '_blank', `width=420,height=${Math.min(cardH + 160, 700)},toolbar=0,menubar=0,scrollbars=0,resizable=1`);
+  if (!win) { alert('Popup blocker prevented the download. Please allow popups for this site.'); return; }
   win.document.open();
   win.document.write(html);
   win.document.close();
@@ -788,20 +728,20 @@ export default function QRScreen() {
     setResolvingAvatar(true);
     let base64Avatar: string | null = null;
     let base64AffiliationAvatar: string | null = null;
+    let base64Qr: string | null = null;
     try {
-      if (avatarUrl) {
-        base64Avatar = await fetchImageAsDataUri(avatarUrl);
-      }
-      if (user?.affiliation?.avatarUrl) {
-        base64AffiliationAvatar = await fetchImageAsDataUri(user.affiliation.avatarUrl);
-      }
+      if (avatarUrl) base64Avatar = await fetchImageAsDataUri(avatarUrl);
+      if (user?.affiliation?.avatarUrl) base64AffiliationAvatar = await fetchImageAsDataUri(user.affiliation.avatarUrl);
+      // Pre-fetch QR as base64 so Canvas stays CORS-clean
+      const qrFetchUrl = `https://api.qrserver.com/v1/create-qr-code/?size=390x390&ecc=H&data=${encodeURIComponent(qrValue)}`;
+      base64Qr = await fetchImageAsDataUri(qrFetchUrl);
     } catch (e) {
-      console.warn('Failed to fetch avatar as base64 data URI:', e);
+      console.warn('Failed to fetch assets as base64:', e);
     } finally {
       setResolvingAvatar(false);
     }
 
-    const qrImgUrl = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&ecc=H&data=${encodeURIComponent(qrValue)}`;
+    const qrImgUrl = base64Qr ?? `https://api.qrserver.com/v1/create-qr-code/?size=390x390&ecc=H&data=${encodeURIComponent(qrValue)}`;
     openSaveImageWindow({
       cardType,
       name,
@@ -863,9 +803,6 @@ export default function QRScreen() {
     });
   };
 
-  const handlePrint = async () => {
-    await handleDownloadPDF('business');
-  };
 
   const handleSelectAffiliation = async (profile: Profile | null) => {
     if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -895,56 +832,11 @@ export default function QRScreen() {
       message="Sign in to view and share your CulturePass Digital ID — your business card and conference badge."
     >
       <View style={s.root}>
-        {/* Print styles */}
-        {Platform.OS === 'web' && React.createElement('style', null, `
-          @media print {
-            body { background-color: #ffffff !important; }
-            body * { visibility: hidden !important; }
-            #print-badge-area, #print-badge-area * { visibility: visible !important; }
-            #print-badge-area {
-              position: absolute !important; left: 50% !important; top: 5% !important;
-              transform: translateX(-50%) scale(1.0) !important; width: 330px !important;
-              margin: 0 !important; box-shadow: none !important; background: transparent !important;
-              -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;
-            }
-            #card-1, #card-2 { border: 1px solid #888 !important; background-color: #ffffff !important; border-radius: 20px !important; box-shadow: none !important; }
-            #heading-1, #heading-2 { display: none !important; }
-            #print-spacer { height: 30px !important; display: block !important; }
-          }
-        `)}
 
-        {/* ── Rich tier-aware background ────────────────────────────────── */}
-        <LinearGradient
-          colors={cardTheme.bgGradient}
-          locations={[0, 0.5, 1]}
-          start={{ x: 0.2, y: 0 }}
-          end={{ x: 0.8, y: 1 }}
-          style={StyleSheet.absoluteFill}
-        />
-        {/* Subtle noise/grain overlay for premium depth */}
-        <LinearGradient
-          colors={['rgba(255,255,255,0.015)', 'transparent', 'rgba(255,255,255,0.008)']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={StyleSheet.absoluteFill}
-          pointerEvents="none"
-        />
+        {/* ── Pure black background — OLED-premium, no blur noise ──────── */}
+        <View style={StyleSheet.absoluteFill} pointerEvents="none" />
 
-        {/* Ambient living blobs — 3 blobs for richer depth */}
-        <View style={s.ambientContainer} pointerEvents="none">
-          <Animated.View style={[s.ambientBlob, animatedBlob1, {
-            backgroundColor: cardTheme.glow,
-            top: -100, left: -80, width: 380, height: 380, borderRadius: 190,
-          }]} />
-          <Animated.View style={[s.ambientBlob, animatedBlob2, {
-            backgroundColor: cardTheme.accent + '18',
-            bottom: -60, right: -80, width: 400, height: 400, borderRadius: 200,
-          }]} />
-          <Animated.View style={[s.ambientBlob, animatedBlob3, {
-            backgroundColor: (Luxe.colors?.indigo || '#4A5EBF') + '12',
-            top: '40%', left: '30%', width: 260, height: 260, borderRadius: 130,
-          }]} />
-        </View>
+
 
         <AppHeaderBar
           title={
@@ -1414,8 +1306,8 @@ export default function QRScreen() {
                 <View style={[s.actionsRow, { width: containerWidth }]}>
                   {([
                     { icon: 'share-outline', label: 'Share ID', color: colors.primary, onPress: handleShare },
-                    { icon: copied ? 'checkmark-circle' : 'copy-outline', label: copied ? 'Copied' : 'Copy CPID', color: colors.gold, onPress: handleCopy },
-                    { icon: 'print-outline', label: 'Print Pass', color: CultureTokens.coral, onPress: handlePrint },
+                    { icon: copied ? 'checkmark-circle' : 'copy-outline', label: copied ? 'Copied!' : 'Copy CPID', color: colors.gold, onPress: handleCopy },
+                    { icon: 'scan-outline', label: 'Scan QR', color: CultureTokens.teal, onPress: () => { if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push('/scanner'); } },
                   ] as const).map((btn) => (
                     <Pressable
                       key={btn.label}
@@ -1464,7 +1356,7 @@ export default function QRScreen() {
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1 },
+  root: { flex: 1, backgroundColor: '#000000' },
 
   ambientContainer: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
@@ -1580,7 +1472,7 @@ const s = StyleSheet.create({
 
   passUserRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   passAvatarWrap: { width: AVATAR_SIZE_LANDSCAPE, height: AVATAR_SIZE_LANDSCAPE, borderRadius: AVATAR_SIZE_LANDSCAPE / 2, overflow: 'hidden', borderWidth: 1 },
-  passAvatar: { width: AVATAR_SIZE_LANDSCAPE, height: AVATAR_SIZE_LANDSCAPE },
+  passAvatar: { width: AVATAR_SIZE_LANDSCAPE, height: AVATAR_SIZE_LANDSCAPE, borderRadius: AVATAR_SIZE_LANDSCAPE / 2 },
   passAvatarFallback: { width: AVATAR_SIZE_LANDSCAPE, height: AVATAR_SIZE_LANDSCAPE, borderRadius: AVATAR_SIZE_LANDSCAPE / 2, alignItems: 'center', justifyContent: 'center' },
   passAvatarInitials: { fontSize: 15, fontFamily: FontFamily.bold },
   passUserInfo: { flex: 1, gap: 1 },
@@ -1589,7 +1481,7 @@ const s = StyleSheet.create({
 
   passProfileVertical: { alignItems: 'center', gap: 10, marginTop: 8 },
   passAvatarWrapVertical: { width: AVATAR_SIZE_VERTICAL, height: AVATAR_SIZE_VERTICAL, borderRadius: AVATAR_SIZE_VERTICAL / 2, overflow: 'hidden', borderWidth: 1.5 },
-  passAvatarVertical: { width: AVATAR_SIZE_VERTICAL, height: AVATAR_SIZE_VERTICAL },
+  passAvatarVertical: { width: AVATAR_SIZE_VERTICAL, height: AVATAR_SIZE_VERTICAL, borderRadius: AVATAR_SIZE_VERTICAL / 2 },
   passAvatarFallbackVertical: { width: AVATAR_SIZE_VERTICAL, height: AVATAR_SIZE_VERTICAL, borderRadius: AVATAR_SIZE_VERTICAL / 2, alignItems: 'center', justifyContent: 'center' },
   passAvatarInitialsVertical: { fontSize: 22, fontFamily: FontFamily.bold },
   passUserInfoVertical: { alignItems: 'center', gap: 2 },

@@ -1,5 +1,122 @@
 [
   {
+    "hash": "c5da550",
+    "fullHash": "c5da55072c34a442bfd9bc8f538992554d580187",
+    "author": "ibibinjose",
+    "email": "NeoTech@outlook.com.au",
+    "date": "2026-06-06T00:11:28+10:00",
+    "message": "style(membership): compress upgrade page width for wide desktop screens",
+    "executor": "Human Developer",
+    "systemLabel": "ibibinjose",
+    "files": [
+      "src/app/membership/upgrade.tsx"
+    ]
+  },
+  {
+    "hash": "e0c3457",
+    "fullHash": "e0c3457aa71dd795099cb9f8044ecff6d9068ce3",
+    "author": "ibibinjose",
+    "email": "NeoTech@outlook.com.au",
+    "date": "2026-06-06T00:07:58+10:00",
+    "message": "feat(membership): improve upgrade UI/UX, add direct promo codes validation, and implement gold VIP card",
+    "executor": "Human Developer",
+    "systemLabel": "ibibinjose",
+    "files": [
+      "functions/src/handlers/membership.ts",
+      "src/app/membership/upgrade.tsx",
+      "src/hooks/useMembershipUpgrade.ts",
+      "src/platform/api/endpoints/payment.ts",
+      "src/repositories/MembershipRepository.ts",
+      "src/use-cases/PurchaseMembershipUseCase.ts",
+      "src/use-cases/__tests__/PurchaseMembershipUseCase.test.ts"
+    ]
+  },
+  {
+    "hash": "b677de4",
+    "fullHash": "b677de49a7b07e272d53075bf9638196e5a7cfd3",
+    "author": "ibibinjose",
+    "email": "NeoTech@outlook.com.au",
+    "date": "2026-06-05T23:54:59+10:00",
+    "message": "chore(functions): configure eslint 9 for typescript backend",
+    "executor": "Human Developer",
+    "systemLabel": "ibibinjose",
+    "files": [
+      "functions/eslint.config.js",
+      "functions/package.json",
+      "functions/tsconfig.eslint.json"
+    ]
+  },
+  {
+    "hash": "3706cfa",
+    "fullHash": "3706cfabf151b14a9b14ed80fee49b235dde0e17",
+    "author": "ibibinjose",
+    "email": "NeoTech@outlook.com.au",
+    "date": "2026-06-05T23:49:36+10:00",
+    "message": "docs: bump version to 1.3.0, update CHANGELOG, and fix static page lints",
+    "executor": "Human Developer",
+    "systemLabel": "ibibinjose",
+    "files": [
+      "CHANGELOG.md",
+      "package.json",
+      "src/app/(static)/founder.tsx",
+      "src/app/(static)/pitch.tsx"
+    ]
+  },
+  {
+    "hash": "7c0f71a",
+    "fullHash": "7c0f71a5096c70e1f01d18e45fda2fb400d5f07e",
+    "author": "ibibinjose",
+    "email": "NeoTech@outlook.com.au",
+    "date": "2026-06-05T23:44:32+10:00",
+    "message": "feat(branding): embed culturepass logo into QR codes across the app",
+    "executor": "Human Developer",
+    "systemLabel": "ibibinjose",
+    "files": [
+      "src/app/profile/public.tsx",
+      "src/app/profile/qr.tsx",
+      "src/app/user/[id].tsx",
+      "src/modules/communities/components/detail/CommunityDetailScreen.tsx",
+      "src/modules/host/components/ProfileQRCode.tsx",
+      "src/modules/profile/components/tabs/sections/ProfileIdentityContactSection.tsx"
+    ]
+  },
+  {
+    "hash": "5612025",
+    "fullHash": "56120252ab1ed86bf1155ae24a12ef0e7bc12888",
+    "author": "ibibinjose",
+    "email": "NeoTech@outlook.com.au",
+    "date": "2026-06-05T18:00:36+10:00",
+    "message": "feat(scanner): add email, phone, and website fields to contact lookup and display feat(scanner): enhance CulturePassContactCard with bio, email, phone, and website links fix(scanner): improve ScannerViewport input focus styling feat(scanner): extend CulturePassContact type to include email, phone, and website feat(scanner): update parseCulturePassInput to handle URLs with CPID chore(timesheet): update timesheetData.json with recent commit history feat(queries): add new admin query keys for indexes health and member monitoring style(web): adjust WebSidebar header meta styling for better alignment feat(api): implement new endpoints for indexes health and member monitoring actions feat(pitch): create PitchScreen component with detailed pitch content and animations",
+    "executor": "Human Developer",
+    "systemLabel": "ibibinjose",
+    "files": [
+      "firebase/firestore.indexes.json",
+      "functions/src/handlers/hostApplication.ts",
+      "functions/src/handlers/misc.ts",
+      "functions/src/handlers/profiles.ts",
+      "functions/src/handlers/tickets.ts",
+      "functions/src/handlers/users.ts",
+      "src/app/(static)/founder.tsx",
+      "src/app/(static)/pitch.tsx",
+      "src/app/_layout.tsx",
+      "src/app/admin/_layout.tsx",
+      "src/app/admin/index.tsx",
+      "src/app/admin/indexes-health.tsx",
+      "src/app/admin/member-monitoring.tsx",
+      "src/app/admin/team-monitoring.tsx",
+      "src/app/admin/users.tsx",
+      "src/app/scanner.tsx",
+      "src/components/scanner/CulturePassContactCard.tsx",
+      "src/components/scanner/ScannerViewport.tsx",
+      "src/components/scanner/types.ts",
+      "src/components/scanner/utils.ts",
+      "src/constants/timesheetData.json",
+      "src/hooks/queries/keys.ts",
+      "src/modules/core/layout/web/WebSidebar.tsx",
+      "src/platform/api/endpoints/admin.ts"
+    ]
+  },
+  {
     "hash": "1ee0f7b",
     "fullHash": "1ee0f7b680067b23f2c831d0d3126ed99a55175d",
     "author": "ibibinjose",

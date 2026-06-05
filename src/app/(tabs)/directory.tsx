@@ -259,7 +259,7 @@ export default function DirectoryScreen() {
     return (
       <Animated.View
         entering={entering}
-        style={useWebTwoColumnResults ? s.resultsGridItemWeb : undefined}
+        style={useWebTwoColumnResults ? s.resultsCardWrapperWeb : s.resultsCardWrapperMobile}
       >
         {item._type === 'event' ? (
           <M3EventCard event={item.data} variant="elevated" />
@@ -276,8 +276,14 @@ export default function DirectoryScreen() {
   );
 
   const listContentStyle = useMemo(
-    () => [s.list, { paddingHorizontal: hPad, paddingBottom: isWeb ? 40 : 100 }],
-    [hPad],
+    () => [
+      s.list,
+      {
+        paddingHorizontal: useWebTwoColumnResults ? Math.max(10, hPad - 10) : hPad,
+        paddingBottom: isWeb ? 40 : 100,
+      }
+    ],
+    [hPad, useWebTwoColumnResults],
   );
 
   const listHeader = useMemo(
@@ -360,28 +366,43 @@ export default function DirectoryScreen() {
         />
 
         <View style={{ paddingHorizontal: hPad, paddingTop: 16 }}>
-            <View style={[dirStyles.locationRow, { marginBottom: 8 }]}>
-                <Ionicons name="location" size={14} color={m3Colors.primary} />
-                <Text style={[dirStyles.locationText, { color: m3Colors.onSurfaceVariant }]}>
+            <View style={dirStyles.headerInfoRow}>
+              <View style={[dirStyles.locationBadge, { backgroundColor: colors.primarySoft, borderColor: colors.primary + '20' }]}>
+                <Ionicons name="location" size={14} color={colors.primary} />
+                <Text style={[dirStyles.locationText, { color: colors.primary }]}>
                   {onboardingState.city || 'Global'} • {onboardingState.country || 'All Regions'}
                 </Text>
+              </View>
+              {allItems.length > 0 && (
+                <View style={[dirStyles.countBadge, { backgroundColor: colors.surfaceElevated, borderColor: colors.borderLight }]}>
+                  <Text style={[dirStyles.countText, { color: colors.textTertiary }]}>
+                    {filtered.length} {filtered.length === 1 ? 'result' : 'results'}
+                  </Text>
+                </View>
+              )}
             </View>
             <View
               style={[
                 dirStyles.searchBar,
                 {
-                  backgroundColor: m3Colors.surfaceContainerHigh,
-                  borderWidth: 0,
-                  height: 56,
-                  borderRadius: 28,
+                  backgroundColor: colors.surfaceElevated,
+                  borderColor: searchFocused ? colors.primary : colors.borderLight,
+                  borderWidth: 1,
+                  height: 54,
+                  borderRadius: 27,
+                  shadowColor: colors.primary,
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: searchFocused ? 0.12 : 0.02,
+                  shadowRadius: 10,
+                  elevation: searchFocused ? 4 : 1,
                 },
               ]}
             >
-              <Ionicons name="search" size={24} color={searchFocused ? m3Colors.primary : m3Colors.onSurfaceVariant} />
+              <Ionicons name="search" size={24} color={searchFocused ? colors.primary : colors.textTertiary} />
               <TextInput
-                style={[dirStyles.searchInput, { color: m3Colors.onSurface, fontSize: 16, marginLeft: 12 }]}
+                style={[dirStyles.searchInput, { color: colors.text, fontSize: 16, marginLeft: 12 }]}
                 placeholder="Businesses, venues, artists…"
-                placeholderTextColor={m3Colors.onSurfaceVariant}
+                placeholderTextColor={colors.textTertiary}
                 value={search}
                 onChangeText={setSearch}
                 onFocus={() => setSearchFocused(true)}
@@ -391,7 +412,7 @@ export default function DirectoryScreen() {
               />
               {search.length > 0 ? (
                 <Pressable onPress={() => setSearch('')} hitSlop={14} accessibilityRole="button" accessibilityLabel="Clear search">
-                  <Ionicons name="close" size={24} color={m3Colors.onSurfaceVariant} />
+                  <Ionicons name="close" size={24} color={colors.textSecondary} />
                 </Pressable>
               ) : null}
             </View>
@@ -437,26 +458,18 @@ export default function DirectoryScreen() {
 
         {/* ── Content ── */}
         {isLoading ? (
-          <View style={[s.list, { paddingHorizontal: hPad, paddingBottom: isWeb ? 40 : 100 }]}>
+          <View style={[s.list, { paddingHorizontal: useWebTwoColumnResults ? Math.max(10, hPad - 10) : hPad, paddingBottom: isWeb ? 40 : 100 }]}>
             {useWebTwoColumnResults ? (
-              <>
-                {Array.from({ length: 3 }).map((_, row) => (
-                  <View
-                    key={row}
-                    style={{ flexDirection: 'row', gap: Spacing.md, marginBottom: Spacing.md }}
-                  >
-                    <View style={s.resultsGridItemWeb}>
-                      <EventCardSkeleton />
-                    </View>
-                    <View style={s.resultsGridItemWeb}>
-                      <EventCardSkeleton />
-                    </View>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', margin: -10 }}>
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <View key={i} style={s.resultsCardWrapperWeb}>
+                    <EventCardSkeleton />
                   </View>
                 ))}
-              </>
+              </View>
             ) : (
               Array.from({ length: 6 }).map((_, i) => (
-                <View key={i} style={{ marginBottom: 16 }}>
+                <View key={i} style={s.resultsCardWrapperMobile}>
                   <EventCardSkeleton />
                 </View>
               ))
@@ -539,17 +552,35 @@ const dirStyles = StyleSheet.create({
     height: '100%',
     padding: 0,
   },
-  locationRow: {
+  headerInfoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingLeft: 4,
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  locationBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 99,
+    borderWidth: 1,
   },
   locationText: {
     fontSize: 12,
     fontFamily: FontFamily.semibold,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 0.2,
+  },
+  countBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 99,
+    borderWidth: 1,
+  },
+  countText: {
+    fontSize: 11,
+    fontFamily: FontFamily.semibold,
   },
   iconBtn: {
     width: 44,

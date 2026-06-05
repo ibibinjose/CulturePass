@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -77,6 +78,71 @@ export function FilterDivider({ colors }: { colors: ReturnType<typeof useColors>
 
 // ─── FeaturedRail ─────────────────────────────────────────────────────────────
 
+export function FeaturedCard({
+  p,
+  colors,
+}: {
+  p: Profile;
+  colors: ReturnType<typeof useColors>;
+}) {
+  const [hovered, setHovered] = useState(false);
+  const color = (EntityTypeColors as Record<string, string>)[p.entityType] ?? CultureTokens.indigo;
+  const accent = ['artist', 'creator', 'brand'].includes(p.entityType) ? CultureTokens.gold : color;
+
+  return (
+    <Pressable
+      key={p.id}
+      onPress={() => router.push(routerProfileHref(p) as Parameters<typeof router.push>[0])}
+      onHoverIn={() => setHovered(true)}
+      onHoverOut={() => setHovered(false)}
+      style={({ pressed }) => [
+        fr.card,
+        { borderColor: colors.borderLight, backgroundColor: colors.surface },
+        pressed && { transform: [{ scale: 0.96 }] },
+        hovered && Platform.OS === 'web' && {
+          transform: [{ scale: 1.04 }],
+          borderColor: accent,
+          shadowOpacity: 0.2,
+          shadowRadius: 16,
+          shadowColor: accent,
+        },
+        Platform.OS !== 'web' && shadows.small,
+      ]}
+      accessibilityRole="button"
+      accessibilityLabel={`View ${p.name} profile`}
+    >
+      {p.imageUrl ? (
+        <Image source={{ uri: p.imageUrl }} style={StyleSheet.absoluteFill} contentFit="cover" transition={400} />
+      ) : (
+        <View style={[fr.imgPlaceholder, { backgroundColor: color + '15' }]}>
+          <Ionicons
+            name={(TYPE_ICONS[p.entityType] ?? 'business') as keyof typeof Ionicons.glyphMap}
+            size={36}
+            color={color}
+          />
+        </View>
+      )}
+      <LinearGradient
+        colors={['transparent', 'rgba(0,0,0,0.85)']}
+        style={StyleSheet.absoluteFill}
+        start={{ x: 0, y: 0.3 }}
+        end={{ x: 0, y: 1 }}
+      />
+      <View style={fr.cardInfo}>
+        {p.isVerified && (
+          <GlassView intensity={20} colorScheme="dark" style={fr.verifiedBadge}>
+            <Ionicons name="shield-checkmark" size={10} color="#FFFFFF" />
+          </GlassView>
+        )}
+        <Text style={[fr.cardName, { color: '#FFFFFF' }]} numberOfLines={2}>{p.name}</Text>
+        <Text style={[fr.cardType, { color: 'rgba(255,255,255,0.8)' }]} numberOfLines={1}>
+          {p.category ?? p.entityType}
+        </Text>
+      </View>
+    </Pressable>
+  );
+}
+
 export function FeaturedRail({
   profiles,
   colors,
@@ -100,53 +166,54 @@ export function FeaturedRail({
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={fr.scroll}
       >
-        {profiles.slice(0, 8).map(p => {
-          const color = (EntityTypeColors as Record<string, string>)[p.entityType] ?? CultureTokens.indigo;
-          return (
-            <Pressable
-              key={p.id}
-              onPress={() => router.push(routerProfileHref(p) as Parameters<typeof router.push>[0])}
-              style={({ pressed }) => [
-                fr.card,
-                { borderColor: colors.borderLight },
-                pressed && { opacity: 0.85, transform: [{ scale: 0.98 }] },
-              ]}
-              accessibilityRole="button"
-              accessibilityLabel={`View ${p.name} profile`}
-            >
-              {p.imageUrl ? (
-                <Image source={{ uri: p.imageUrl }} style={StyleSheet.absoluteFill} contentFit="cover" transition={400} />
-              ) : (
-                <View style={[fr.imgPlaceholder, { backgroundColor: color + '33' }]}>
-                  <Ionicons
-                    name={(TYPE_ICONS[p.entityType] ?? 'business') as keyof typeof Ionicons.glyphMap}
-                    size={30}
-                    color={color}
-                  />
-                </View>
-              )}
-              <LinearGradient
-                colors={['transparent', 'rgba(0,0,0,0.85)']}
-                style={StyleSheet.absoluteFill}
-                start={{ x: 0, y: 0.3 }}
-                end={{ x: 0, y: 1 }}
-              />
-              <View style={fr.cardInfo}>
-                {p.isVerified && (
-                  <GlassView intensity={20} colorScheme="dark" style={fr.verifiedBadge}>
-                    <Ionicons name="shield-checkmark" size={10} color="#FFFFFF" />
-                  </GlassView>
-                )}
-                <Text style={[fr.cardName, { color: '#FFFFFF' }]} numberOfLines={2}>{p.name}</Text>
-                <Text style={[fr.cardType, { color: 'rgba(255,255,255,0.8)' }]} numberOfLines={1}>
-                  {p.category ?? p.entityType}
-                </Text>
-              </View>
-            </Pressable>
-          );
-        })}
+        {profiles.slice(0, 8).map(p => (
+          <FeaturedCard key={p.id} p={p} colors={colors} />
+        ))}
       </ScrollView>
     </View>
+  );
+}
+
+export function CommunityCard({
+  c,
+  colors,
+}: {
+  c: Profile;
+  colors: ReturnType<typeof useColors>;
+}) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <Pressable
+      key={c.id}
+      onPress={() => router.push(routerProfileHref(c) as any)}
+      onHoverIn={() => setHovered(true)}
+      onHoverOut={() => setHovered(false)}
+      style={({ pressed }) => [
+        cr.communityItem,
+        pressed && { transform: [{ scale: 0.95 }] },
+        hovered && Platform.OS === 'web' && { transform: [{ scale: 1.05 }] },
+      ]}
+      accessibilityRole="button"
+      accessibilityLabel={`View ${c.name} community`}
+    >
+      <LinearGradient
+        colors={[CultureTokens.teal, CultureTokens.indigo, CultureTokens.gold]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={cr.communityRing}
+      >
+        <View style={[cr.communityIconInner, { backgroundColor: colors.background }]}>
+          {c.imageUrl ? (
+            <Image source={{ uri: c.imageUrl }} style={StyleSheet.absoluteFill} contentFit="cover" transition={300} />
+          ) : (
+            <Ionicons name="people" size={20} color={colors.textTertiary} />
+          )}
+        </View>
+      </LinearGradient>
+      <Text style={[cr.communityName, { color: colors.text }]} numberOfLines={1}>
+        {c.name}
+      </Text>
+    </Pressable>
   );
 }
 
@@ -167,7 +234,7 @@ export function CommunityRail({
           <Text style={[fr.title, { color: colors.text }]}>Communities</Text>
         </View>
         <Pressable onPress={() => router.push('/communities' as any)}>
-            <Text style={{ fontSize: 13, color: colors.primary, fontFamily: FontFamily.semibold }}>See all</Text>
+          <Text style={{ fontSize: 13, color: colors.primary, fontFamily: FontFamily.semibold }}>See all</Text>
         </Pressable>
       </View>
       <ScrollView
@@ -176,23 +243,7 @@ export function CommunityRail({
         contentContainerStyle={fr.scroll}
       >
         {communities.map(c => (
-          <Pressable
-            key={c.id}
-            onPress={() => router.push(routerProfileHref(c) as any)}
-            style={({ pressed }) => [
-              cr.communityItem,
-              pressed && { opacity: 0.8 },
-            ]}
-          >
-            <View style={[cr.communityIcon, { backgroundColor: colors.surfaceElevated, borderColor: colors.borderLight }]}>
-                {c.imageUrl ? (
-                    <Image source={{ uri: c.imageUrl }} style={StyleSheet.absoluteFill} contentFit="cover" />
-                ) : (
-                    <Ionicons name="people" size={24} color={colors.textTertiary} />
-                )}
-            </View>
-            <Text style={[cr.communityName, { color: colors.text }]} numberOfLines={1}>{c.name}</Text>
-          </Pressable>
+          <CommunityCard key={c.id} c={c} colors={colors} />
         ))}
       </ScrollView>
     </View>
@@ -200,9 +251,29 @@ export function CommunityRail({
 }
 
 const cr = StyleSheet.create({
-    communityItem: { width: 80, alignItems: 'center', gap: 8 },
-    communityIcon: { width: 64, height: 64, borderRadius: 32, overflow: 'hidden', borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-    communityName: { fontSize: 11, fontFamily: FontFamily.semibold, textAlign: 'center' },
+  communityItem: { width: 80, alignItems: 'center', gap: 8 },
+  communityRing: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    padding: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  communityIconInner: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  communityName: { fontSize: 11, fontFamily: FontFamily.semibold, textAlign: 'center', marginTop: 2 },
 });
 
 const fr = StyleSheet.create({
@@ -219,9 +290,9 @@ const fr = StyleSheet.create({
   title:      { fontSize: 18, fontFamily: FontFamily.bold, letterSpacing: -0.2 },
   scroll:     { paddingHorizontal: 20, gap: 12, paddingRight: 32 },
   card: {
-    width: 124,
-    height: 164,
-    borderRadius: Radius.lg,
+    width: 140,
+    height: 190,
+    borderRadius: 20,
     overflow: 'hidden',
     backgroundColor: 'transparent',
     borderWidth: 1,
@@ -365,6 +436,7 @@ export function DirectoryCard({
   profile: Profile;
   colors: ReturnType<typeof useColors>;
 }) {
+  const [hovered, setHovered] = useState(false);
   const color = (EntityTypeColors as Record<string, string>)[profile.entityType] ?? CultureTokens.indigo;
   const icon = TYPE_ICONS[profile.entityType] ?? 'business';
   const tags = getTags(profile);
@@ -388,12 +460,21 @@ export function DirectoryCard({
   return (
     <Pressable
       onPress={handlePress}
+      onHoverIn={() => setHovered(true)}
+      onHoverOut={() => setHovered(false)}
       style={({ pressed }) => [
         s.directoryCard,
         { backgroundColor: colors.surface, borderColor: colors.borderLight, borderWidth: 1 },
         isProfessional && { borderColor: CultureTokens.gold + '60', borderWidth: 1.5 },
         isCouncil && { borderColor: CultureTokens.indigo + '60', borderWidth: 1.5 },
-        pressed && { opacity: 0.95, transform: [{ scale: 0.99 }] },
+        pressed && { transform: [{ scale: 0.98 }] },
+        hovered && Platform.OS === 'web' && {
+          transform: [{ scale: 1.02 }],
+          borderColor: accent,
+          shadowOpacity: 0.15,
+          shadowRadius: 20,
+          shadowColor: accent,
+        },
         Platform.OS !== 'web' && shadows.small,
       ]}
       accessibilityRole="button"
@@ -616,14 +697,28 @@ export const s = StyleSheet.create({
   // ── Web 2-col grid (FlashList row: use flex so cells fill the row, not a fixed % width) ──
   resultsGridWeb:     { flexDirection: 'row', flexWrap: 'wrap' },
   resultsGridItemWeb: { flex: 1, minWidth: 0, alignSelf: 'stretch' },
+  resultsCardWrapperWeb: {
+    padding: 10,
+    flex: 1,
+    minWidth: 0,
+  },
+  resultsCardWrapperMobile: {
+    marginBottom: 16,
+    width: '100%',
+  },
 
   // ── Directory card (shared base) ──
   cardOuter: { width: '100%', position: 'relative', marginBottom: 16 },
   directoryCard: {
     width: '100%',
-    borderRadius: Radius.lg,
+    borderRadius: 20,
     borderWidth: 1,
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.04,
+    shadowRadius: 16,
+    elevation: 2,
   },
 
   // ── Event card ──
@@ -727,20 +822,24 @@ export const s = StyleSheet.create({
   profileCardInner: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    padding: 16,
-    gap: 16,
+    padding: 20,
+    gap: 18,
   },
   profileAvatar: {
-    width: 84,
-    height: 84,
-    borderRadius: Radius.md,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
   },
   profileIconBox: {
-    width: 84,
-    height: 84,
-    borderRadius: Radius.md,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: 'transparent',
   },
   profileCardContent: {
     flex: 1,
@@ -752,7 +851,7 @@ export const s = StyleSheet.create({
     gap: 6,
   },
   profileName: {
-    fontSize: 16,
+    fontSize: 18,
     fontFamily: FontFamily.bold,
     flexShrink: 1,
   },
@@ -765,8 +864,8 @@ export const s = StyleSheet.create({
   categoryBadge: {
     alignSelf: 'flex-start',
     paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
+    paddingVertical: 3,
+    borderRadius: 99,
   },
   categoryBadgeText: {
     fontSize: 10,
@@ -787,9 +886,9 @@ export const s = StyleSheet.create({
   },
   profileDesc: {
     fontSize: 13,
-    fontFamily: FontFamily.regular,
+    fontFamily: FontFamily.medium,
     lineHeight: 18,
-    opacity: 0.9,
+    opacity: 0.95,
   },
   profileMetaRow: {
     flexDirection: 'row',
@@ -819,9 +918,9 @@ export const s = StyleSheet.create({
     flexWrap: 'nowrap',
   },
   tagPill: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 99,
     overflow: 'hidden',
   },
   tagText: {

@@ -44,6 +44,28 @@ export function createAdminNamespace(request: ApiRequestFn) {
         count: number;
       }[];
     }>('GET', 'api/admin/compliance/summary'),
+  indexesHealth: () =>
+    request<{
+      generatedAt: string;
+      status: 'healthy' | 'fallback' | 'degraded';
+      summary: {
+        total: number;
+        healthy: number;
+        fallback: number;
+        degraded: number;
+      };
+      probes: {
+        id: string;
+        name: string;
+        collection: string;
+        description: string;
+        status: 'healthy' | 'fallback' | 'degraded';
+        queryMode: 'indexed' | 'fallback' | 'failed';
+        sampleCount: number;
+        latencyMs: number;
+        lastError?: string;
+      }[];
+    }>('GET', 'api/admin/indexes/health'),
   auditLogs: (params?: { limit?: number }) => {
     const qs = new URLSearchParams();
     if (params?.limit) qs.set('limit', String(params.limit));
@@ -64,6 +86,48 @@ export function createAdminNamespace(request: ApiRequestFn) {
 
   patchUser: (id: string, data: Partial<User> & { status?: 'active' | 'suspended' }) =>
     request<{ ok: boolean }>('PATCH', `api/admin/users/${encodeURIComponent(id)}`, data),
+  memberMonitoring: (params?: { filter?: 'all' | 'birthdays' | 'highly_active' | 'low_active'; search?: string; limit?: number }) => {
+    const qs = new URLSearchParams();
+    if (params?.filter) qs.set('filter', params.filter);
+    if (params?.search) qs.set('search', params.search);
+    if (params?.limit) qs.set('limit', String(params.limit));
+    const q = qs.toString();
+    return request<{
+      stats: {
+        totalMembers: number;
+        totalSpentCents: number;
+        currentMonthBirthdays: number;
+        totalAttended: number;
+        sampledUsers: number;
+        sampledTickets: number;
+        generatedAt: string;
+      };
+      members: {
+        id: string;
+        name: string;
+        username: string;
+        email: string;
+        birthday: string;
+        birthdayMonth: string | null;
+        attendedCount: number;
+        communitiesCount: number;
+        favoriteCategory: string;
+        interests: string[];
+        moneySpentCents: number;
+        timeSpentHours: number;
+        city: string;
+        country: string;
+        membershipTier: string;
+        status: string;
+      }[];
+    }>('GET', `api/admin/member-monitoring${q ? `?${q}` : ''}`);
+  },
+  queueMemberAction: (userId: string, action: 'birthday_voucher' | 'free_ticket_promo' | 'targeted_vouchers', note?: string) =>
+    request<{ ok: boolean; actionId: string; status: 'queued' }>(
+      'POST',
+      `api/admin/member-monitoring/${encodeURIComponent(userId)}/action`,
+      { action, note },
+    ),
 
   runGeohashBackfill: (body?: { forceGeoHash?: boolean; overwriteCoordinates?: boolean; limit?: number }) =>
     request<{ ok: boolean; result: unknown }>('POST', 'api/admin/jobs/geohash-backfill', body ?? {}),

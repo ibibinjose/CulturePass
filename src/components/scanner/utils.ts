@@ -38,6 +38,13 @@ export function parseVCard(data: string): CulturePassContact | null {
 
 export function parseCulturePassInput(input: string): CulturePassContact | null {
   const t = input.trim();
+
+  // Check if input is a URL containing a CPID (e.g. http://localhost:8081/cpu/CP-U58B35B)
+  const urlMatch = t.match(/(?:cpu|user|profile)\/(CP-[A-Z0-9]+)/i);
+  if (urlMatch) {
+    return { cpid: urlMatch[1].toUpperCase(), name: '' };
+  }
+
   if (t.startsWith('{')) {
     try {
       const j = JSON.parse(t);

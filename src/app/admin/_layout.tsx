@@ -7,7 +7,7 @@
  * Design: Indistinguishable from first-party Apple management tools.
  */
 import React from 'react';
-import { View, Text, Pressable, StyleSheet, ScrollView, Platform } from 'react-native';
+import { View, Text, Pressable, StyleSheet, ScrollView, Platform, TextInput } from 'react-native';
 import { Stack, router, usePathname } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
@@ -69,6 +69,14 @@ export default function AdminLayout() {
   });
   const moderationBadge = moderationQueue?.pendingReports ?? 0;
 
+  const [searchQuery, setSearchQuery] = React.useState('');
+
+  const filteredNav = React.useMemo(() => {
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) return ADMIN_NAV;
+    return ADMIN_NAV.filter(item => item.label.toLowerCase().includes(q));
+  }, [searchQuery]);
+
   // Role Protection
   if (!roleLoading && !hasAdminAccess) {
     return (
@@ -97,11 +105,35 @@ export default function AdminLayout() {
         </View>
       </View>
 
-      {/* Sidebar Search (client-side filter for now) */}
+      {/* Sidebar Search */}
       <View style={styles.searchContainer}>
         <View style={[styles.searchBar, { backgroundColor: colors.surface, borderColor: colors.borderLight }]}>
           <Ionicons name="search" size={16} color={colors.textTertiary} />
-          <Text style={[styles.searchPlaceholder, { color: colors.textTertiary }]}>Search admin...</Text>
+          <TextInput
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholder="Search admin..."
+            placeholderTextColor={colors.textTertiary}
+            style={{
+              flex: 1,
+              fontSize: 13,
+              color: colors.text,
+              fontFamily: FontFamily.regular,
+              paddingVertical: Platform.OS === 'web' ? 4 : 0,
+              ...Platform.select({
+                web: {
+                  outlineStyle: 'none',
+                },
+              }),
+            } as any}
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+          {searchQuery ? (
+            <Pressable onPress={() => setSearchQuery('')} hitSlop={8}>
+              <Ionicons name="close-circle" size={16} color={colors.textTertiary} />
+            </Pressable>
+          ) : null}
         </View>
       </View>
 
@@ -110,7 +142,7 @@ export default function AdminLayout() {
         showsVerticalScrollIndicator={false} 
         contentContainerStyle={styles.navScroll}
       >
-        {ADMIN_NAV.map((item) => {
+        {filteredNav.map((item) => {
           const active = pathname === item.route || (item.route === '/admin' && pathname === '/admin/index');
           const showBadge = item.route === '/admin/moderation' && moderationBadge > 0;
 

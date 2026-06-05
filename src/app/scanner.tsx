@@ -217,6 +217,9 @@ export default function ScannerScreen() {
       country: resolved.country,
       bio: resolved.bio,
       userId: resolved.userId,
+      email: resolved.email,
+      phone: resolved.phone,
+      website: resolved.website,
     };
   }, []);
 
@@ -236,6 +239,12 @@ export default function ScannerScreen() {
       setIsLookingUp(true);
       Keyboard.dismiss();
       const full = await lookupCpid(contact.cpid);
+      if (!full && !contact.name) {
+        Alert.alert('Not found', `CulturePass ID "${contact.cpid}" was not found.`);
+        setIsLookingUp(false);
+        cpLastScanned.current = '';
+        return;
+      }
       setCpContact(full ?? contact);
       setCpInput('');
       setIsLookingUp(false);

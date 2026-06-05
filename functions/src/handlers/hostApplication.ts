@@ -153,13 +153,38 @@ hostApplicationRouter.get('/host-applications', requireAuth, async (req, res) =>
     const limitRaw = Number(qstr(req.query.limit) || '100');
     const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(200, Math.floor(limitRaw))) : 100;
 
-    let q: FirebaseFirestore.Query = db.collection('hostApplications').orderBy('createdAt', 'desc').limit(limit);
-    if (status && ['pending', 'approved', 'rejected'].includes(status)) {
-      q = q.where('status', '==', status);
+    let applications: any[] = [];
+    try {
+      let q: FirebaseFirestore.Query = db.collection('hostApplications').orderBy('createdAt', 'desc').limit(limit);
+      if (status && ['pending', 'approved', 'rejected'].includes(status)) {
+        q = q.where('status', '==', status);
+      }
+      const snap = await q.get();
+      applications = snap.docs.map((d) => ({ id: d.id, ...(d.data() as object) }));
+    } catch (queryErr: any) {
+      console.warn('GET /host-applications composite query failed, falling back to in-memory filter & sort:', queryErr.message ?? queryErr);
+      
+      let fallbackQ: FirebaseFirestore.Query = db.collection('hostApplications');
+      if (status && ['pending', 'approved', 'rejected'].includes(status)) {
+        fallbackQ = fallbackQ.where('status', '==', status);
+      }
+      
+      // Fetch without orderBy (does not require composite index)
+      const snap = await fallbackQ.limit(Math.max(500, limit * 2)).get();
+      applications = snap.docs.map((d) => ({ id: d.id, ...(d.data() as object) }));
+      
+      // Sort in-memory descending by createdAt
+      applications.sort((a, b) => {
+        const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return timeB - timeA;
+      });
+      
+      if (applications.length > limit) {
+        applications = applications.slice(0, limit);
+      }
     }
 
-    const snap = await q.get();
-    const applications = snap.docs.map((d) => ({ id: d.id, ...(d.data() as object) }));
     return res.json({ applications, count: applications.length, limit });
   } catch (err) {
     captureRouteError(err, 'GET /host-applications');

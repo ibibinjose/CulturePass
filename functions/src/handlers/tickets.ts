@@ -129,23 +129,102 @@ ticketsRouter.post(
     const qrCode = String(req.body?.ticketCode ?? '').trim();
     if (!qrCode) return res.status(400).json({ valid: false, error: 'ticketCode is required' });
 
-    if (!isFirestoreConfigured) {
-      if (qrCode.startsWith('mock-')) {
-        return res.json({ valid: true, message: 'Mock ticket scanned successfully' });
+    // Local development/mock fallback when firestore is not configured OR code is a mock code
+    if (!isFirestoreConfigured || qrCode.startsWith('mock-')) {
+      if (qrCode.startsWith('mock-used')) {
+        return res.json({
+          valid: false,
+          outcome: 'duplicate',
+          message: 'Ticket has already been scanned',
+          ticket: {
+            id: 'mock-used-ticket',
+            eventTitle: 'Symphony Under the Stars',
+            eventDate: 'Friday, 12 Dec 2026',
+            eventTime: '7:30 PM',
+            eventVenue: 'Sydney Opera House',
+            tierName: 'General Admission',
+            ticketCode: qrCode,
+            status: 'used',
+          }
+        });
       }
-      return res.status(404).json({ valid: false, error: 'Invalid ticket code' });
+      if (qrCode.startsWith('mock-invalid')) {
+        return res.json({
+          valid: false,
+          outcome: 'rejected',
+          message: 'Invalid ticket code',
+        });
+      }
+      if (qrCode.startsWith('mock-cancelled')) {
+        return res.json({
+          valid: false,
+          outcome: 'rejected',
+          message: 'Ticket has been cancelled',
+          ticket: {
+            id: 'mock-cancelled-ticket',
+            eventTitle: 'Symphony Under the Stars',
+            eventDate: 'Friday, 12 Dec 2026',
+            eventTime: '7:30 PM',
+            eventVenue: 'Sydney Opera House',
+            tierName: 'VIP Lounge',
+            ticketCode: qrCode,
+            status: 'cancelled',
+          }
+        });
+      }
+      if (qrCode.startsWith('mock-')) {
+        return res.json({
+          valid: true,
+          outcome: 'accepted',
+          message: 'Mock ticket scanned successfully',
+          ticket: {
+            id: 'mock-ticket-id',
+            eventTitle: 'Symphony Under the Stars',
+            eventDate: 'Friday, 12 Dec 2026',
+            eventTime: '7:30 PM',
+            eventVenue: 'Sydney Opera House',
+            tierName: 'VIP Lounge',
+            ticketCode: qrCode,
+            status: 'confirmed',
+          }
+        });
+      }
+      return res.json({
+        valid: false,
+        outcome: 'rejected',
+        message: 'Invalid ticket code',
+      });
     }
 
     try {
       const ticket = await ticketsService.getByQrCode(qrCode);
       if (!ticket) {
-        return res.status(404).json({ valid: false, error: 'Invalid ticket code' });
+        return res.json({
+          valid: false,
+          outcome: 'rejected',
+          message: 'Invalid ticket code',
+        });
       }
       if (ticket.status !== 'confirmed') {
-        return res.status(400).json({ valid: false, error: `Ticket is ${ticket.status}`, ticket });
+        const outcome = ticket.status === 'used' ? 'duplicate' : 'rejected';
+        const message = ticket.status === 'used'
+          ? 'Ticket has already been scanned'
+          : `Ticket is ${ticket.status}`;
+        return res.json({
+          valid: false,
+          outcome,
+          message,
+          ticket,
+        });
       }
       const event = await eventsService.getById(ticket.eventId);
-      if (!event) return res.status(404).json({ valid: false, error: 'Event not found for ticket' });
+      if (!event) {
+        return res.json({
+          valid: false,
+          outcome: 'rejected',
+          message: 'Event not found for ticket',
+        });
+      }
       if (!isOwnerOrAdmin(req.user!, event.organizerId ?? event.createdBy ?? null)) {
         return res.status(403).json({ valid: false, error: 'Forbidden' });
       }
@@ -156,7 +235,12 @@ ticketsRouter.post(
         scannedBy: req.user!.id,
         outcome: 'accepted',
       });
-      return res.json({ valid: true, message: 'Ticket scanned successfully', ticket: updated });
+      return res.json({
+        valid: true,
+        outcome: 'accepted',
+        message: 'Ticket scanned successfully',
+        ticket: updated
+      });
     } catch (err) {
       captureRouteError(err, 'POST /api/tickets/scan');
       return res.status(500).json({ valid: false, error: 'Scan failed' });

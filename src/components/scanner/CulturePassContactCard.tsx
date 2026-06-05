@@ -1,4 +1,4 @@
-import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Platform, Linking } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInUp } from 'react-native-reanimated';
@@ -78,6 +78,58 @@ export function CulturePassContactCard({
               <Text style={[styles.locationText, { color: colors.textSecondary }]}>
                 {[contact.city, contact.country].filter(Boolean).join(', ')}
               </Text>
+            </View>
+          )}
+
+          {contact.bio ? (
+            <Text style={[styles.bioText, { color: colors.textSecondary }]}>{contact.bio}</Text>
+          ) : null}
+
+          {(contact.email || contact.phone || contact.website) && (
+            <View style={styles.linksSection}>
+              <View style={[styles.divider, { backgroundColor: colors.borderLight }]} />
+              <Text style={[styles.linksTitle, { color: colors.textTertiary }]}>CONNECT & LINKS</Text>
+              
+              <View style={styles.linksGrid}>
+                {contact.email ? (
+                  <Pressable
+                    style={[styles.linkBtn, { backgroundColor: colors.backgroundSecondary }]}
+                    onPress={() => Linking.openURL(`mailto:${contact.email}`)}
+                  >
+                    <Ionicons name="mail-outline" size={16} color={colors.primary} />
+                    <Text style={[styles.linkBtnText, { color: colors.text }]} numberOfLines={1}>
+                      {contact.email}
+                    </Text>
+                  </Pressable>
+                ) : null}
+
+                {contact.phone ? (
+                  <Pressable
+                    style={[styles.linkBtn, { backgroundColor: colors.backgroundSecondary }]}
+                    onPress={() => Linking.openURL(`tel:${contact.phone}`)}
+                  >
+                    <Ionicons name="call-outline" size={16} color={colors.primary} />
+                    <Text style={[styles.linkBtnText, { color: colors.text }]} numberOfLines={1}>
+                      {contact.phone}
+                    </Text>
+                  </Pressable>
+                ) : null}
+
+                {contact.website ? (
+                  <Pressable
+                    style={[styles.linkBtn, { backgroundColor: colors.backgroundSecondary }]}
+                    onPress={() => {
+                      const url = contact.website!.startsWith('http') ? contact.website! : `https://${contact.website}`;
+                      Linking.openURL(url);
+                    }}
+                  >
+                    <Ionicons name="globe-outline" size={16} color={colors.primary} />
+                    <Text style={[styles.linkBtnText, { color: colors.text }]} numberOfLines={1}>
+                      {contact.website}
+                    </Text>
+                  </Pressable>
+                ) : null}
+              </View>
             </View>
           )}
 
@@ -170,4 +222,51 @@ const styles = StyleSheet.create({
   },
   locationText: { fontSize: 13, fontFamily: FontFamily.regular },
   actions: { width: '100%', gap: 10, marginTop: 16 },
+  bioText: {
+    fontSize: 13,
+    fontFamily: FontFamily.regular,
+    textAlign: 'center',
+    lineHeight: 18,
+    marginTop: 6,
+    paddingHorizontal: 8,
+  },
+  linksSection: {
+    width: '100%',
+    marginTop: 8,
+    gap: 8,
+  },
+  divider: {
+    height: 1,
+    width: '100%',
+    marginVertical: 8,
+  },
+  linksTitle: {
+    fontSize: 10,
+    fontFamily: FontFamily.bold,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    marginLeft: 2,
+    marginBottom: 2,
+  },
+  linksGrid: {
+    width: '100%',
+    gap: 6,
+  },
+  linkBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: Radius.md,
+    ...Platform.select({
+      web: { cursor: 'pointer' } as Record<string, unknown>,
+      default: {},
+    }),
+  },
+  linkBtnText: {
+    fontSize: 13,
+    fontFamily: FontFamily.semibold,
+    flex: 1,
+  },
 });

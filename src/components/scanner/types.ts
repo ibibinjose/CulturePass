@@ -32,6 +32,9 @@ export type CulturePassContact = {
   country?: string;
   bio?: string;
   userId?: string;
+  email?: string;
+  phone?: string;
+  website?: string;
 };
 
 export type SessionStats = {

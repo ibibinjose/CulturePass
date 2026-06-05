@@ -494,7 +494,7 @@ function WebSidebarContent() {
         <View style={styles.headerActions}>
           <View style={[styles.headerMetaStack, { backgroundColor: isDark ? 'rgba(0,0,0,0.22)' : 'rgba(255,255,255,0.45)', borderColor: border }]}>
             <View style={styles.headerMetaLine}>
-              <Text style={[styles.headerMetaText, { color: colors.textSecondary, marginLeft: 16 }]} numberOfLines={1}>
+              <Text style={[styles.headerMetaText, { color: colors.textSecondary }]} numberOfLines={1}>
                 {timeLabel} · {dateLabel}
               </Text>
             </View>
@@ -812,7 +812,7 @@ const styles = StyleSheet.create({
   brandTextBlock: { flex: 1, minWidth: 0, gap: 0 },
   brandTagline: { fontSize: 10, fontFamily: 'Poppins_500Medium', letterSpacing: 0.2, lineHeight: 13, opacity: 0.65, marginTop: -1 },
   headerActions: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 4 },
-  headerMetaStack: { gap: 3, paddingHorizontal: 9, paddingVertical: 6, borderRadius: Radius.md, borderWidth: 1 },
+  headerMetaStack: { gap: 3, paddingHorizontal: 9, paddingVertical: 6, borderRadius: Radius.md, borderWidth: 1, marginRight: 'auto' },
   headerMetaLine: { flexDirection: 'row', alignItems: 'center', gap: 4, minWidth: 0 },
   headerMetaText: { fontSize: 9, fontFamily: 'Poppins_600SemiBold', lineHeight: 12 },
   collapseBtn: { width: 24, height: 24, borderRadius: 6, alignItems: 'center', justifyContent: 'center' },

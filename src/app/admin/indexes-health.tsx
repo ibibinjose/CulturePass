@@ -1,156 +1,151 @@
 /**
- * Admin Indexes Health Dashboard
- * ==============================
- * Shows the health of critical admin queries and whether they are running
- * in full mode or degraded fallback mode (due to missing/building Firestore indexes).
+ * Admin — Indexes Health
+ * ======================
+ * Runs protected Firestore query probes and reports indexed, fallback, or failed mode.
  */
-
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Pressable } from 'react-native';
+import { useQuery } from '@tanstack/react-query';
 import { useColors } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
-import { M3TopAppBar, GlassView } from '@/design-system/ui';
-import { FontFamily } from '@/design-system/tokens/theme';
+import { M3TopAppBar, GlassView, M3Button } from '@/design-system/ui';
+import { CultureTokens, FontFamily } from '@/design-system/tokens/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeBack } from '@/lib/navigation';
+import { api } from '@/lib/api';
+import { adminKeys } from '@/hooks/queries/keys';
 
-interface QueryHealth {
-  name: string;
-  collection: string;
-  status: 'healthy' | 'fallback' | 'unknown';
-  description: string;
-  lastError?: string;
+type ProbeStatus = 'healthy' | 'fallback' | 'degraded';
+
+function statusColor(status: ProbeStatus) {
+  if (status === 'healthy') return CultureTokens.teal;
+  if (status === 'fallback') return CultureTokens.gold;
+  return CultureTokens.coral;
 }
-
-const KNOWN_QUERIES: QueryHealth[] = [
-  {
-    name: 'Moderation Reports',
-    collection: 'reports',
-    status: 'healthy',
-    description: 'WHERE status + ORDER BY createdAt (defensive fallback + X-Query-Mode header)',
-  },
-  {
-    name: 'Audit Logs',
-    collection: 'auditLogs',
-    status: 'healthy',
-    description: 'ORDER BY createdAt (defensive fallback + X-Query-Mode header in admin + misc)',
-  },
-  {
-    name: 'Recent Transactions (Finance)',
-    collection: 'tickets',
-    status: 'healthy',
-    description: 'ORDER BY createdAt (finance view) — defensive fallback + header',
-  },
-  {
-    name: 'Verification Tasks',
-    collection: 'hostVerificationTasks',
-    status: 'healthy',
-    description: 'status/entityType/assignedTo + ORDER BY submittedAt (now with full try/catch in-memory fallback + header)',
-  },
-  {
-    name: 'Promo Codes',
-    collection: 'promoCodes',
-    status: 'healthy',
-    description: 'ORDER BY createdAt (inline fallback + X-Query-Mode header on degradation)',
-  },
-  {
-    name: 'User Directory (Admin filters)',
-    collection: 'users',
-    status: 'healthy',
-    description: 'Primarily client-side filter/sort on simple limit() fetch (low index risk; targeted indexes exist for role/status/membership)',
-  },
-  {
-    name: 'Profile Directory (Admin/Host lists)',
-    collection: 'profiles',
-    status: 'healthy',
-    description: 'Multiple filters + createdAt (profileService.list has defensive fallback)',
-  },
-  {
-    name: 'Public Reviews (event + profile)',
-    collection: 'reviews',
-    status: 'healthy',
-    description: 'Non-admin: (eventId|organizerId) + status + createdAt — now hardened with in-memory fallback',
-  },
-  {
-    name: 'Notifications + Social (contactSaves)',
-    collection: 'notifications / contactSaves',
-    status: 'healthy',
-    description: 'Non-admin high-traffic: userId/toUserId + createdAt (defensive fallback + logging)',
-  },
-];
 
 export default function IndexesHealthScreen() {
   const colors = useColors();
   const { hPad } = useLayout();
   const handleBack = useSafeBack('/admin');
+  const { data, isLoading, isFetching, refetch } = useQuery({
+    queryKey: adminKeys.indexesHealth(),
+    queryFn: () => api.admin.indexesHealth(),
+    refetchInterval: 120000,
+  });
+
+  const overall = data?.status ?? 'healthy';
+  const overallColor = statusColor(overall);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <M3TopAppBar
-        title="Indexes Health"
-        onBack={handleBack}
-      />
+      <M3TopAppBar title="Indexes Health" onBack={handleBack} />
 
-      <ScrollView contentContainerStyle={{ padding: hPad, gap: 16 }}>
-        <GlassView style={{ padding: 20 }}>
-          <Text style={{ fontSize: 16, fontFamily: FontFamily.semibold, color: colors.text }}>
-            Firestore Query Health Monitor
-          </Text>
-          <Text style={{ color: colors.textSecondary, marginTop: 8 }}>
-            This page shows critical admin queries and whether they are running optimally or in degraded (fallback) mode due to missing or building composite indexes.
-          </Text>
+      <ScrollView contentContainerStyle={{ padding: hPad, gap: 16, paddingBottom: 80 }}>
+        <GlassView style={{ padding: 20, gap: 12 }}>
+          <View style={styles.headerRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 18, fontFamily: FontFamily.semibold, color: colors.text }}>
+                Firestore Query Probes
+              </Text>
+              <Text style={{ color: colors.textSecondary, marginTop: 6, lineHeight: 20 }}>
+                Executes the same query shapes used by critical admin surfaces and reports whether each path is indexed, in fallback mode, or degraded.
+              </Text>
+            </View>
+            <View style={[styles.statusPill, { backgroundColor: colors.primarySoft }]}>
+              <View style={[styles.statusDot, { backgroundColor: overallColor }]} />
+              <Text style={[styles.statusText, { color: overallColor }]}>{overall.toUpperCase()}</Text>
+            </View>
+          </View>
+
+          <View style={styles.summaryRow}>
+            <Summary label="Healthy" value={data?.summary.healthy ?? 0} color={CultureTokens.teal} />
+            <Summary label="Fallback" value={data?.summary.fallback ?? 0} color={CultureTokens.gold} />
+            <Summary label="Degraded" value={data?.summary.degraded ?? 0} color={CultureTokens.coral} />
+          </View>
+
+          <M3Button variant="tonal" onPress={() => refetch()} disabled={isFetching} style={{ alignSelf: 'flex-start' }}>
+            {isFetching ? 'Running probes...' : 'Run Test Queries'}
+          </M3Button>
         </GlassView>
 
-        {KNOWN_QUERIES.map((q, index) => (
-          <GlassView key={index} style={{ padding: 16, gap: 8 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Text style={{ fontSize: 15, fontFamily: FontFamily.semibold, color: colors.text }}>
-                {q.name}
-              </Text>
-              <View style={{
-                paddingHorizontal: 10,
-                paddingVertical: 4,
-                borderRadius: 999,
-                backgroundColor: q.status === 'healthy' ? '#10B98122' : '#F59E0B22'
-              }}>
-                <Text style={{
-                  fontSize: 12,
-                  fontFamily: FontFamily.bold,
-                  color: q.status === 'healthy' ? '#10B981' : '#F59E0B'
-                }}>
-                  {q.status.toUpperCase()}
-                </Text>
-              </View>
-            </View>
+        {isLoading ? (
+          <View style={styles.loading}>
+            <ActivityIndicator color={colors.primary} />
+            <Text style={{ color: colors.textSecondary, marginTop: 8 }}>Running index probes...</Text>
+          </View>
+        ) : (
+          data?.probes.map((probe) => {
+            const probeColor = statusColor(probe.status);
+            return (
+              <GlassView key={probe.id} style={{ padding: 16, gap: 8 }}>
+                <View style={styles.probeHeader}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 15, fontFamily: FontFamily.semibold, color: colors.text }}>
+                      {probe.name}
+                    </Text>
+                    <Text style={{ color: colors.textSecondary, fontSize: 13, marginTop: 2 }}>
+                      {probe.collection} · {probe.description}
+                    </Text>
+                  </View>
+                  <View style={[styles.probeBadge, { backgroundColor: colors.primarySoft }]}>
+                    <Text style={{ fontSize: 11, fontFamily: FontFamily.bold, color: probeColor }}>
+                      {probe.status.toUpperCase()}
+                    </Text>
+                  </View>
+                </View>
 
-            <Text style={{ color: colors.textSecondary, fontSize: 13 }}>
-              Collection: <Text style={{ fontFamily: FontFamily.medium }}>{q.collection}</Text>
-            </Text>
-            <Text style={{ color: colors.textSecondary, fontSize: 13 }}>
-              {q.description}
-            </Text>
+                <View style={styles.metaRow}>
+                  <Meta icon="speedometer-outline" label={`${probe.latencyMs}ms`} />
+                  <Meta icon="albums-outline" label={`${probe.sampleCount} docs`} />
+                  <Meta icon="git-branch-outline" label={probe.queryMode} />
+                </View>
 
-            {q.lastError && (
-              <Text style={{ color: colors.error, fontSize: 12, marginTop: 4 }}>
-                Last issue: {q.lastError}
-              </Text>
-            )}
-          </GlassView>
-        ))}
+                {probe.lastError ? (
+                  <Text style={{ color: colors.error, fontSize: 12, lineHeight: 18 }}>
+                    {probe.lastError}
+                  </Text>
+                ) : null}
+              </GlassView>
+            );
+          })
+        )}
 
-        <Text style={{ color: colors.textTertiary, fontSize: 12, textAlign: 'center', marginTop: 20 }}>
-          Status reflects current protection level. All listed queries now use defensive try/catch + in-memory sort when composite indexes are missing. Check Network tab for X-Query-Mode: fallback response header on degraded queries.
+        <Text style={{ color: colors.textTertiary, fontSize: 12, textAlign: 'center', marginTop: 12 }}>
+          Last generated: {data?.generatedAt ? new Date(data.generatedAt).toLocaleString() : 'not yet'}
         </Text>
-
-        <Pressable
-          onPress={() => { /* TODO: trigger a test query */ }}
-          style={{ alignSelf: 'center', marginTop: 12 }}
-        >
-          <Text style={{ color: colors.primary, fontFamily: FontFamily.semibold }}>
-            Run Test Queries →
-          </Text>
-        </Pressable>
       </ScrollView>
     </View>
   );
+
+  function Summary({ label, value, color }: { label: string; value: number; color: string }) {
+    return (
+      <View style={[styles.summaryCard, { borderColor: colors.borderLight }]}>
+        <Text style={{ color, fontSize: 22, fontFamily: FontFamily.bold }}>{value}</Text>
+        <Text style={{ color: colors.textSecondary, fontSize: 12, fontFamily: FontFamily.medium }}>{label}</Text>
+      </View>
+    );
+  }
+
+  function Meta({ icon, label }: { icon: keyof typeof Ionicons.glyphMap; label: string }) {
+    return (
+      <Pressable accessibilityRole="text" style={[styles.metaPill, { backgroundColor: colors.backgroundSecondary }]}>
+        <Ionicons name={icon} size={13} color={colors.textTertiary} />
+        <Text style={{ color: colors.textSecondary, fontSize: 12, fontFamily: FontFamily.medium }}>{label}</Text>
+      </Pressable>
+    );
+  }
 }
+
+const styles = StyleSheet.create({
+  headerRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap' },
+  statusPill: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999 },
+  statusDot: { width: 8, height: 8, borderRadius: 4 },
+  statusText: { fontSize: 11, fontFamily: FontFamily.bold },
+  summaryRow: { flexDirection: 'row', gap: 10, flexWrap: 'wrap' },
+  summaryCard: { minWidth: 120, flex: 1, borderWidth: 1, borderRadius: 8, padding: 12, gap: 2 },
+  loading: { padding: 48, alignItems: 'center', justifyContent: 'center' },
+  probeHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
+  probeBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999 },
+  metaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  metaPill: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 999 },
+});

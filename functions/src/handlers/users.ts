@@ -87,9 +87,80 @@ usersRouter.get('/users/handle/:handle', async (req: Request, res: Response) => 
 /** GET /api/users/:id — fetch any user by ID */
 usersRouter.get('/users/:id', async (req: Request, res: Response) => {
   const id = String(req.params.id ?? '');
+
+  // Local development mock check
+  if (!isFirestoreConfigured && (id === 'mock-user-id' || id === 'mock-user-id-58b35b')) {
+    if (id === 'mock-user-id-58b35b') {
+      return res.json({
+        id: 'mock-user-id-58b35b',
+        displayName: 'Vikram Sharma',
+        username: 'vikramsharma',
+        email: 'vikram@sharma.in',
+        phone: '+61 491 570 888',
+        city: 'Sydney',
+        state: 'NSW',
+        country: 'Australia',
+        bio: 'Founder of CulturePassion. Passionate about bringing world cultures together through technology and community.',
+        culturePassId: 'CP-U58B35B',
+        membership: { tier: 'premium' },
+        avatarUrl: null,
+        website: 'https://culturepassion.org',
+      });
+    }
+    return res.json({
+      id: 'mock-user-id',
+      displayName: 'Aarav Nair',
+      username: 'aaravnair',
+      email: 'aarav.nair@culturepass.app',
+      phone: '+61 491 570 156',
+      city: 'Sydney',
+      state: 'NSW',
+      country: 'Australia',
+      bio: 'Cultural curator and community organizer. Building connection in Sydney.',
+      culturePassId: 'CP-MOCKUSER',
+      membership: { tier: 'premium' },
+      avatarUrl: null,
+    });
+  }
+
   try {
     const user = await usersService.getById(id);
-    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (!user) {
+      if (process.env.FUNCTIONS_EMULATOR || id === 'mock-user-id' || id === 'mock-user-id-58b35b') {
+        if (id === 'mock-user-id-58b35b') {
+          return res.json({
+            id: 'mock-user-id-58b35b',
+            displayName: 'Vikram Sharma',
+            username: 'vikramsharma',
+            email: 'vikram@sharma.in',
+            phone: '+61 491 570 888',
+            city: 'Sydney',
+            state: 'NSW',
+            country: 'Australia',
+            bio: 'Founder of CulturePassion. Passionate about bringing world cultures together through technology and community.',
+            culturePassId: 'CP-U58B35B',
+            membership: { tier: 'premium' },
+            avatarUrl: null,
+            website: 'https://culturepassion.org',
+          });
+        }
+        return res.json({
+          id: 'mock-user-id',
+          displayName: 'Aarav Nair',
+          username: 'aaravnair',
+          email: 'aarav.nair@culturepass.app',
+          phone: '+61 491 570 156',
+          city: 'Sydney',
+          state: 'NSW',
+          country: 'Australia',
+          bio: 'Cultural curator and community organizer. Building connection in Sydney.',
+          culturePassId: 'CP-MOCKUSER',
+          membership: { tier: 'premium' },
+          avatarUrl: null,
+        });
+      }
+      return res.status(404).json({ error: 'User not found' });
+    }
 
     let shareContacts = false;
     if (req.user) {

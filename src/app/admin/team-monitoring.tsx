@@ -25,11 +25,11 @@ import { router } from 'expo-router';
 import { useColors } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
 import { Ionicons } from '@expo/vector-icons';
-import { CultureTokens, FontFamily, Radius, Spacing } from '@/design-system/tokens/theme';
+import { CultureTokens, FontFamily, Radius } from '@/design-system/tokens/theme';
 import { GlassView } from '@/design-system/ui/GlassView';
 import { M3TopAppBar } from '@/design-system/ui';
 import { useAdminStats, useAuditLogs } from '@/modules/admin/hooks/useAdminStats';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { adminKeys } from '@/hooks/queries/keys';
 import { useRole } from '@/hooks/useRole';
@@ -66,7 +66,7 @@ function MetricCard({ label, value, sub, icon, color = CultureTokens.indigo, tre
 
 export default function TeamMonitoringDashboard() {
   const colors = useColors();
-  const { hPad, isDesktop } = useLayout();
+  const { hPad } = useLayout();
   const handleBack = useSafeBack('/admin');
   const { isSuperAdmin } = useRole();
   const queryClient = useQueryClient();
@@ -82,24 +82,6 @@ export default function TeamMonitoringDashboard() {
   });
 
   const [trendPeriod, setTrendPeriod] = useState<'30d' | '90d'>('30d');
-
-  // Extended team/organizer focused queries (extendable)
-  const { data: teamHealth } = useQuery({
-    queryKey: [...adminKeys.stats(), 'team-health'],
-    queryFn: async () => {
-      // In production this would be a dedicated aggregated endpoint.
-      // For now we surface what we have + derive signals from audit.
-      const recentTeamActions = (auditData?.logs || []).filter((l: any) =>
-        l.action?.includes('organizer') || l.action?.includes('team') || l.action?.includes('profile')
-      );
-      return {
-        multiOrganizerProfiles: Math.floor((stats?.users || 42000) * 0.014), // placeholder signal
-        recentTeamChanges: recentTeamActions.length,
-        activeOrganizers: Math.floor((stats?.users || 42000) * 0.023),
-      };
-    },
-    enabled: !!stats,
-  });
 
   const recentTeamChanges = (auditData?.logs || [])
     .filter((log: any) => 
@@ -175,16 +157,16 @@ export default function TeamMonitoringDashboard() {
           <Text style={[styles.pageTitle, { color: colors.text }]}>Team Health & Usage</Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
           <View style={[styles.pill, { backgroundColor: '#10B98122' }]}>
-            <Text style={[styles.pillText, { color: '#10B981' }]}>⚡ Fast via pre-aggregation</Text>
+            <Text style={[styles.pillText, { color: '#10B981' }]}>Pre-aggregated stats</Text>
           </View>
           <View style={[styles.pill, { backgroundColor: '#8B5CF622' }]}>
-            <Text style={[styles.pillText, { color: '#8B5CF6' }]}>📅 90-day historical trends</Text>
+            <Text style={[styles.pillText, { color: '#8B5CF6' }]}>90-day trends</Text>
           </View>
           <View style={[styles.pill, { backgroundColor: '#F59E0B22' }]}>
-            <Text style={[styles.pillText, { color: '#F59E0B' }]}>🔍 Granular role breakdown</Text>
+            <Text style={[styles.pillText, { color: '#F59E0B' }]}>Role breakdown</Text>
           </View>
           <View style={[styles.pill, { backgroundColor: '#EF444422' }]}>
-            <Text style={[styles.pillText, { color: '#EF4444' }]}>🔄 Actionable manual recompute</Text>
+            <Text style={[styles.pillText, { color: '#EF4444' }]}>Manual recompute</Text>
           </View>
         </View>
           <Text style={[styles.pageSubtitle, { color: colors.textSecondary }]}>
@@ -280,11 +262,11 @@ export default function TeamMonitoringDashboard() {
 
           <View style={styles.statRow}>
             <View style={styles.statItem}>
-              <Text style={[styles.statNumber, { color: CultureTokens.indigo }]}>{(stats as any)?.activeOrganizers ?? teamHealth?.activeOrganizers ?? '—'}</Text>
+              <Text style={[styles.statNumber, { color: CultureTokens.indigo }]}>{(stats as any)?.activeOrganizers ?? '—'}</Text>
               <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Active Organizers</Text>
             </View>
             <View style={styles.statItem}>
-              <Text style={[styles.statNumber, { color: CultureTokens.gold }]}>{(stats as any)?.multiOrganizerProfiles ?? teamHealth?.multiOrganizerProfiles ?? '—'}</Text>
+              <Text style={[styles.statNumber, { color: CultureTokens.gold }]}>{(stats as any)?.multiOrganizerProfiles ?? '—'}</Text>
               <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Multi-Org Entities</Text>
             </View>
           </View>

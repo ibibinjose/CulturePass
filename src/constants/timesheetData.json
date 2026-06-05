@@ -1,5 +1,40 @@
 [
   {
+    "hash": "1ee0f7b",
+    "fullHash": "1ee0f7b680067b23f2c831d0d3126ed99a55175d",
+    "author": "ibibinjose",
+    "email": "NeoTech@outlook.com.au",
+    "date": "2026-06-05T11:51:22+10:00",
+    "message": "fix: set displayName to username instead of nullable field in wallet handler",
+    "executor": "Human Developer",
+    "systemLabel": "ibibinjose",
+    "files": [
+      "functions/src/handlers/wallet.ts"
+    ]
+  },
+  {
+    "hash": "278658d",
+    "fullHash": "278658dee00557714e696fc788b30822ad452351",
+    "author": "ibibinjose",
+    "email": "NeoTech@outlook.com.au",
+    "date": "2026-06-05T11:40:09+10:00",
+    "message": "refactor: remove Sentry integration, update profile UI branding, and add copy-to-clipboard functionality to ID field.",
+    "executor": "Human Developer",
+    "systemLabel": "ibibinjose",
+    "files": [
+      "functions/.env.backup",
+      "functions/src/handlers/wallet.ts",
+      "package-lock.json",
+      "package.json",
+      "scripts/generate-local-wallet-certs.sh",
+      "scripts/server-dev.ts",
+      "src/app/profile/qr.tsx",
+      "src/app/user/[id].tsx",
+      "src/constants/timesheetData.json",
+      "temp-certs/wwdr.cer"
+    ]
+  },
+  {
     "hash": "fdc808a",
     "fullHash": "fdc808ae1cab267474010940b9b9415d3921de26",
     "author": "ibibinjose",

@@ -40,6 +40,13 @@ export default function AdminDashboard() {
     queryFn: () => api.admin.complianceSummary(),
     refetchInterval: 60000,
   });
+  const { data: verificationStats } = useQuery({
+    queryKey: adminKeys.verificationStats(),
+    queryFn: () => api.admin.verificationStats(),
+    refetchInterval: 60000,
+  });
+
+  const verificationPending = verificationStats?.pending ?? 0;
 
   const systemStatus = healthData?.checks?.every(c => c.healthy) ? 'Operational' : 'Degraded';
   const statusColor = systemStatus === 'Operational' ? '#10B981' : '#F59E0B';
@@ -248,26 +255,93 @@ export default function AdminDashboard() {
             </Pressable>
           </View>
 
-          {/* Quick Actions */}
-          <View style={styles.widget}>
-            <Text style={styles.widgetTitle}>Quick Actions</Text>
-            <View style={styles.quickActionsGrid}>
-              {[
-                { label: 'Push Notification', icon: 'megaphone', route: '/admin/notifications', color: CultureTokens.indigo },
-                { label: 'Review Reports', icon: 'shield-checkmark', route: '/admin/moderation', color: CultureTokens.coral },
-                { label: 'User Management', icon: 'people', route: '/admin/users', color: CultureTokens.teal },
-                { label: 'Promo Codes', icon: 'pricetag', route: '/admin/promo-codes', color: '#8B5CF6' },
-                { label: 'System Jobs', icon: 'pulse', route: '/admin/platform', color: CultureTokens.violet },
-                { label: 'Audit Logs', icon: 'list', route: '/admin/audit-logs', color: colors.textSecondary },
-              ].map((action, i) => (
-                <Pressable 
-                  key={i} 
-                  onPress={() => router.push(action.route as any)}
-                  style={[styles.quickAction, { backgroundColor: colors.surface }]}
-                >
-                  <Ionicons name={action.icon as any} size={18} color={action.color} />
-                  <Text style={[styles.quickActionLabel, { color: colors.text }]}>{action.label}</Text>
-                </Pressable>
+          {/* Mission Control Directory */}
+          <View style={[styles.widget, { minWidth: '100%', marginTop: 16 }]}>
+            <Text style={styles.widgetTitle}>MISSION CONTROL DIRECTORY</Text>
+            <View style={[styles.directoryContainer, !isDesktop && { flexDirection: 'column' }]}>
+              {(
+                [
+                  {
+                    title: 'CORE OPERATIONS',
+                    items: [
+                      { label: 'User Directory', icon: 'people', route: '/admin/users', color: CultureTokens.teal },
+                      { label: 'Host Applications', icon: 'person-add', route: '/admin/host-applications', color: CultureTokens.indigo },
+                      { label: 'Communities', icon: 'people-circle', route: '/admin/communities', color: CultureTokens.violet },
+                      { label: 'Moderation Queue', icon: 'shield-checkmark', route: '/admin/moderation', color: CultureTokens.coral, badge: complianceData?.pendingReports },
+                      { label: 'Verification Queue', icon: 'document-lock', route: '/admin/verification', color: CultureTokens.gold, badge: verificationPending },
+                    ]
+                  },
+                  {
+                    title: 'GROWTH & CAMPAIGNS',
+                    items: [
+                      { label: 'Campaign Push', icon: 'megaphone', route: '/admin/notifications', color: CultureTokens.indigo },
+                      { label: 'Promo Codes', icon: 'pricetag', route: '/admin/promo-codes', color: '#8B5CF6' },
+                      { label: 'Community Banner', icon: 'home', route: '/admin/community-banner', color: CultureTokens.teal },
+                      { label: 'Financial Terminal', icon: 'card', route: '/admin/finance', color: '#10B981' },
+                    ]
+                  },
+                  {
+                    title: 'DISCOVERY & INSIGHTS',
+                    items: [
+                      { label: 'Discovery Curation', icon: 'sparkles', route: '/admin/discover', color: CultureTokens.gold },
+                      { label: 'Team Monitoring', icon: 'people-circle', route: '/admin/team-monitoring', color: CultureTokens.violet },
+                      { label: 'Member Monitoring', icon: 'analytics', route: '/admin/member-monitoring', color: CultureTokens.indigo },
+                      { label: 'AI Timesheet & Logs', icon: 'time', route: '/admin/timesheet', color: colors.textSecondary },
+                    ]
+                  },
+                  {
+                    title: 'SYSTEM & COMPLIANCE',
+                    items: [
+                      { label: 'Audit Logs', icon: 'list', route: '/admin/audit-logs', color: colors.textSecondary },
+                      { label: 'Indexes Health', icon: 'pulse', route: '/admin/indexes-health', color: colors.primary },
+                      { label: 'System Health', icon: 'flash', route: '/admin/platform', color: CultureTokens.violet },
+                      { label: 'Compliance Hub', icon: 'lock-closed', route: '/admin/data-compliance', color: CultureTokens.coral },
+                    ]
+                  }
+                ] as {
+                  title: string;
+                  items: {
+                    label: string;
+                    icon: keyof typeof Ionicons.glyphMap;
+                    route: string;
+                    color: string;
+                    badge?: number;
+                  }[];
+                }[]
+              ).map((section, idx) => (
+                <View key={idx} style={[styles.directorySection, { flex: 1 }]}>
+                  <Text style={[styles.sectionHeaderTitle, { color: colors.textTertiary }]}>{section.title}</Text>
+                  <GlassView contentStyle={styles.sectionContent}>
+                    {section.items.map((item, i) => (
+                      <Pressable 
+                        key={i} 
+                        onPress={() => router.push(item.route)}
+                        style={({ pressed }) => [
+                          styles.directoryItem,
+                          i === section.items.length - 1 && { borderBottomWidth: 0 },
+                          { borderBottomColor: colors.borderLight },
+                          pressed && { opacity: 0.75 }
+                        ]}
+                      >
+                        <View style={[styles.itemIconContainer, { backgroundColor: item.color + '15' }]}>
+                          <Ionicons name={item.icon} size={16} color={item.color} />
+                        </View>
+                        <Text style={[styles.itemLabel, { color: colors.text }]} numberOfLines={1}>
+                          {item.label}
+                        </Text>
+                        {item.badge != null && item.badge > 0 ? (
+                          <View style={[styles.itemBadge, { backgroundColor: item.color }]}>
+                            <Text style={styles.itemBadgeText}>
+                              {item.badge}
+                            </Text>
+                          </View>
+                        ) : (
+                          <Ionicons name="chevron-forward" size={14} color={colors.textTertiary} />
+                        )}
+                      </Pressable>
+                    ))}
+                  </GlassView>
+                </View>
               ))}
             </View>
           </View>
@@ -405,25 +479,59 @@ const styles = StyleSheet.create({
   activityAction: { fontSize: 13, marginTop: 1 },
   activityTime: { fontSize: 12, opacity: 0.5 },
 
-  // Quick Actions
-  quickActionsGrid: {
+  // Directory
+  directoryContainer: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
+    gap: 16,
     marginTop: 8,
+    flexWrap: 'wrap',
   },
-  quickAction: {
-    flex: 1,
-    minWidth: '47%',
+  directorySection: {
+    minWidth: 220,
+    gap: 8,
+  },
+  sectionHeaderTitle: {
+    fontSize: 10.5,
+    fontFamily: FontFamily.bold,
+    letterSpacing: 1.2,
+    marginLeft: 4,
+    marginBottom: 4,
+  },
+  sectionContent: {
+    borderRadius: 12,
+    padding: 4,
+  },
+  directoryItem: {
     flexDirection: 'row',
     alignItems: 'center',
+    padding: 12,
     gap: 10,
-    padding: 14,
-    borderRadius: 12,
+    borderBottomWidth: 1,
   },
-  quickActionLabel: {
-    fontSize: 14,
+  itemIconContainer: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  itemLabel: {
+    flex: 1,
+    fontSize: 13.5,
     fontFamily: FontFamily.medium,
+  },
+  itemBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: 10,
+    minWidth: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  itemBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontFamily: FontFamily.bold,
   },
 
   // Misc

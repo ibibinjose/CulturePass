@@ -210,9 +210,13 @@ function RootLayoutNav() {
     </Stack>
   );
 
+  const isAdminRoute = pathname?.startsWith('/admin');
+
   if (shouldShowDesktopLayout) {
-    const contentStyle = webStyles.contentContainer;
-    const mainStyle = [webStyles.mainFlex, webStyles.mainFlexDesktop];
+    const contentStyle = isAdminRoute 
+      ? ({ flex: 1, minWidth: 0, minHeight: 0, flexDirection: 'column', alignSelf: 'stretch', paddingHorizontal: 0 } as const)
+      : webStyles.contentContainer;
+    const mainStyle = isAdminRoute ? webStyles.mainFlex : [webStyles.mainFlex, webStyles.mainFlexDesktop];
     return (
       <View style={{ flex: 1, flexDirection: 'column' }}>
         <React.Suspense fallback={null}>
@@ -233,9 +237,11 @@ function RootLayoutNav() {
             style={webStyles.ambientMesh}
             pointerEvents="none"
           />
-          <React.Suspense fallback={null}>
-            <WebSidebar />
-          </React.Suspense>
+          {!isAdminRoute && (
+            <React.Suspense fallback={null}>
+              <WebSidebar />
+            </React.Suspense>
+          )}
           <View style={contentStyle}>
             <View style={mainStyle}>
               {stackContent}

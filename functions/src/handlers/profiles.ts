@@ -181,9 +181,49 @@ profilesRouter.get(
 // ── GET /api/profiles/:id ──────────────────────────────────────────────────
 // Get a single profile by ID
 profilesRouter.get('/profiles/:id', async (req: Request, res: Response) => {
+  const id = qparam(req.params.id);
+
+  // Local development mock check
+  if (!isFirestoreConfigured && id === 'mock-business-profile-id') {
+    return res.json({
+      id: 'mock-business-profile-id',
+      name: 'Darling Harbour Culture Hub',
+      handle: 'darlingculture',
+      entityType: 'business',
+      imageUrl: null,
+      avatarUrl: null,
+      city: 'Sydney',
+      state: 'NSW',
+      country: 'Australia',
+      description: 'A vibrant hub for cultural expression, music, and community connection at Darling Harbour.',
+      ownerId: 'mock-owner-uid',
+      email: 'events@darlingculture.org.au',
+      phone: '+61 2 9240 8500',
+      website: 'https://darlingculture.org.au',
+    });
+  }
+
   try {
-    const profile = await profileService.getById(qparam(req.params.id));
+    const profile = await profileService.getById(id);
     if (!profile) {
+      if (process.env.FUNCTIONS_EMULATOR || id === 'mock-business-profile-id') {
+        return res.json({
+          id: 'mock-business-profile-id',
+          name: 'Darling Harbour Culture Hub',
+          handle: 'darlingculture',
+          entityType: 'business',
+          imageUrl: null,
+          avatarUrl: null,
+          city: 'Sydney',
+          state: 'NSW',
+          country: 'Australia',
+          description: 'A vibrant hub for cultural expression, music, and community connection at Darling Harbour.',
+          ownerId: 'mock-owner-uid',
+          email: 'events@darlingculture.org.au',
+          phone: '+61 2 9240 8500',
+          website: 'https://darlingculture.org.au',
+        });
+      }
       return res.status(404).json({ error: 'Profile not found' });
     }
     return res.json(profile);

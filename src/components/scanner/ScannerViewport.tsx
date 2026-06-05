@@ -17,9 +17,9 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/design-system/ui/Button';
-import { FontFamily, Radius, SignatureGradient } from '@/design-system/tokens/theme';
+import { CultureTokens, FontFamily, Radius, SignatureGradient } from '@/design-system/tokens/theme';
 import { SCAN_WELL, SCAN_FRAME_SIZE } from './scannerTheme';
 import type { ScanMode } from './types';
 
@@ -48,6 +48,7 @@ export function ScannerViewport({
   cameraDenied,
 }: Props) {
   const canSubmit = value.trim().length > 0 && !loading;
+  const [focused, setFocused] = useState(false);
 
   const pulse = useSharedValue(1);
   useEffect(() => {
@@ -109,7 +110,10 @@ export function ScannerViewport({
           <View style={styles.dockLine} />
         </View>
 
-        <View style={styles.inputShell}>
+        <View style={[
+          styles.inputShell,
+          focused && { borderColor: CultureTokens.violet, borderWidth: 1.5 }
+        ]}>
           <TextInput
             ref={inputRef}
             style={styles.input}
@@ -118,6 +122,8 @@ export function ScannerViewport({
             value={value}
             onChangeText={onChangeText}
             onSubmitEditing={canSubmit ? onSubmit : undefined}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
             returnKeyType="done"
             autoCapitalize="characters"
             autoCorrect={false}

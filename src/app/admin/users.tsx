@@ -3,7 +3,7 @@
  * ====================
  * Browse the user base, inspect profiles, adjust roles, suspend accounts, and grant membership.
  */
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -15,10 +15,15 @@ import {
   Alert,
   Platform,
   ScrollView,
+  Share,
+  ActivityIndicator,
 } from 'react-native';
+import { router } from 'expo-router';
+import { useAuth } from '@/lib/auth';
 import * as Clipboard from 'expo-clipboard';
 import { useColors } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { HeaderTokens, CultureTokens, FontFamily, Spacing, Radius } from '@/design-system/tokens/theme';
 import { GlassView } from '@/design-system/ui/GlassView';
@@ -44,6 +49,7 @@ function matchesQuery(user: User, q: string): boolean {
 export default function UserDirectoryScreen() {
   const colors = useColors();
   const { hPad, isDesktop } = useLayout();
+  const { userId: currentUserId } = useAuth();
   const contentPad = isDesktop ? Math.max(14, hPad - 12) : hPad;
   const [search, setSearch] = useState('');
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
@@ -93,7 +99,7 @@ export default function UserDirectoryScreen() {
     enabled: useRemoteSearch,
   });
 
-  const users = useMemo(() => {
+  const filteredAndSortedUsers = useMemo(() => {
     let base = useRemoteSearch ? (searchData?.users ?? []) : (directory ?? []);
 
     // Local filter (when not using remote search)
@@ -132,9 +138,7 @@ export default function UserDirectoryScreen() {
       return 0;
     });
 
-    // Client pagination for scale (can be server later via api.users.list({page, limit}))
-    const start = page * PAGE_SIZE;
-    return base.slice(start, start + PAGE_SIZE);
+    return base;
   }, [
     useRemoteSearch,
     searchData?.users,
@@ -143,8 +147,20 @@ export default function UserDirectoryScreen() {
     activeFilters,
     sortBy,
     sortDir,
-    page,
   ]);
+
+  const totalCount = filteredAndSortedUsers.length;
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+
+  const users = useMemo(() => {
+    const start = page * PAGE_SIZE;
+    return filteredAndSortedUsers.slice(start, start + PAGE_SIZE);
+  }, [filteredAndSortedUsers, page]);
+
+  // Reset page to 0 when search or filters change to avoid empty state bugs
+  useEffect(() => {
+    setPage(0);
+  }, [searchTrim, activeFilters]);
 
   const isLoading = useRemoteSearch ? searchLoading : dirLoading;
 
@@ -178,8 +194,10 @@ export default function UserDirectoryScreen() {
   // === C: Bulk action handlers with confirmation ===
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
 
-  const handleExportCSV = () => {
-    const list = selectedIds.size > 0 ? users.filter(u => selectedIds.has(u.id)) : users;
+  const handleExportCSV = async () => {
+    const list = selectedIds.size > 0 
+      ? filteredAndSortedUsers.filter(u => selectedIds.has(u.id)) 
+      : filteredAndSortedUsers;
     if (list.length === 0) return Alert.alert('Error', 'No users to export');
 
     const headers = ['ID', 'Name', 'Handle', 'Email', 'Role', 'Status', 'Joined'];
@@ -205,8 +223,14 @@ export default function UserDirectoryScreen() {
       link.click();
       document.body.removeChild(link);
     } else {
-      Alert.alert('CSV Export (Mock)', 'In a real environment, this would trigger expo-sharing.\n\nFirst 200 chars:\n' + csvContent.substring(0, 200));
-      console.log('CSV Export:', csvContent);
+      try {
+        await Share.share({
+          message: csvContent,
+          title: `CulturePass Users Export - ${new Date().toISOString().split('T')[0]}`
+        });
+      } catch (error: any) {
+        Alert.alert('Export Failed', error.message ?? 'Unknown error');
+      }
     }
   };
 
@@ -230,23 +254,46 @@ export default function UserDirectoryScreen() {
       let promises: Promise<unknown>[] = [];
       const note = auditNote ? ` [Audit Note: ${auditNote}]` : '';
 
+      const targets = Array.from(selectedIds).filter(id => {
+        if (id === currentUserId && (type === 'suspend' || type === 'role')) {
+          return false;
+        }
+        return true;
+      });
+
+      if (targets.length === 0 && selectedIds.has(currentUserId || '')) {
+        Alert.alert('Action Cancelled', 'You cannot apply this action to yourself.');
+        setBulkActionLoading(false);
+        setShowBulkConfirm(false);
+        setPendingBulkAction(null);
+        return;
+      }
+
+      if (selectedIds.has(currentUserId || '') && (type === 'suspend' || type === 'role')) {
+        Alert.alert('Warning', 'You cannot suspend or demote yourself. Your account will be skipped from this bulk operation.');
+      }
+
       if (type === 'role') {
-        promises = Array.from(selectedIds).map(id =>
+        promises = targets.map(id =>
           api.admin.patchUser(id, { role: value as any })
         );
       } else if (type === 'suspend') {
-        promises = Array.from(selectedIds).map(id =>
+        promises = targets.map(id =>
           api.admin.patchUser(id, { status: 'suspended' })
         );
+      } else if (type === 'reactivate') {
+        promises = targets.map(id =>
+          api.admin.patchUser(id, { status: 'active' })
+        );
       } else if (type === 'grant') {
-        promises = Array.from(selectedIds).map(id =>
+        promises = targets.map(id =>
           api.admin.grantMembership(id, value as number, `Bulk grant by ${myRole}${note}`)
         );
       }
 
       await Promise.all(promises);
       queryClient.invalidateQueries({ queryKey: adminKeys.usersDirectory() });
-      Alert.alert('Success', `Action "${type}" applied to ${selectedIds.size} users.`);
+      Alert.alert('Success', `Action "${type}" applied to ${targets.length} users.`);
       clearSelection();
       setAuditNote('');
     } catch (e: unknown) {
@@ -285,8 +332,55 @@ export default function UserDirectoryScreen() {
     onError: (e: Error) => Alert.alert('Grant failed', e.message ?? 'Unknown error'),
   });
 
+  const deleteUserMutation = useMutation({
+    mutationFn: (id: string) => api.account.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: adminKeys.usersDirectory() });
+      queryClient.invalidateQueries({ queryKey: searchKeys.all });
+      setSelectedUserId(null);
+      Alert.alert('Success', 'User deleted successfully.');
+    },
+    onError: (e: Error) => {
+      Alert.alert('Deletion failed', e.message ?? 'Unknown error');
+    }
+  });
+
+  const handleDeleteUser = (u: User) => {
+    if (u.id === currentUserId) {
+      Alert.alert('Error', 'You cannot delete your own account from the admin dashboard.');
+      return;
+    }
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined') {
+        const confirmDelete = window.confirm(`Are you absolutely sure you want to permanently delete user @${u.username}? This will wipe their Firebase Auth credentials and delete all Firestore records (GDPR compliance).`);
+        if (confirmDelete) {
+          deleteUserMutation.mutate(u.id);
+        }
+      }
+    } else {
+      Alert.alert(
+        'Confirm Permanent Deletion',
+        `Are you absolutely sure you want to permanently delete user @${u.username}? This will wipe their Firebase Auth credentials and delete all Firestore records (GDPR compliance).`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Delete Permanently', style: 'destructive', onPress: () => deleteUserMutation.mutate(u.id) }
+        ]
+      );
+    }
+  };
+
   const confirmPatch = useCallback(
     (label: string, id: string, data: Partial<User> & { status?: 'active' | 'suspended' }) => {
+      if (id === currentUserId) {
+        if (data.status === 'suspended') {
+          Alert.alert('Error', 'You cannot suspend your own account.');
+          return;
+        }
+        if (data.role && data.role !== 'platformAdmin' && data.role !== 'superAdmin' && data.role !== 'admin') {
+          Alert.alert('Error', 'You cannot demote yourself from administrative roles.');
+          return;
+        }
+      }
       const noteSuffix = auditNote ? ` (with audit note: ${auditNote})` : '';
       Alert.alert('Confirm', `${label}${noteSuffix}?`, [
         { text: 'Cancel', style: 'cancel' },
@@ -307,7 +401,7 @@ export default function UserDirectoryScreen() {
         },
       ]);
     },
-    [patchUser, auditNote],
+    [patchUser, auditNote, currentUserId],
   );
 
   const renderDetail = (u: User) => {
@@ -315,42 +409,43 @@ export default function UserDirectoryScreen() {
     const isPlus = u.membership?.tier === 'plus';
 
     return (
-      <ScrollView contentContainerStyle={styles.detailCard} showsVerticalScrollIndicator={false}>
-        <View style={styles.detailHeader}>
-          <View style={[styles.largeAvatar, { backgroundColor: colors.primarySoft }]}>
-            {u.avatarUrl ? (
-              <Text>📸</Text> // Placeholder for Image if wanted, but using letters for now
-            ) : (
-              <Text style={[styles.largeAvatarText, { color: colors.primary }]}>
-                {(u.displayName || u.username || '?').charAt(0).toUpperCase()}
-              </Text>
-            )}
-          </View>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        <GlassView contentStyle={styles.detailCard} style={isDesktop ? { marginHorizontal: 8, marginBottom: 20 } : { marginVertical: 8, marginBottom: 20 }}>
+          <View style={styles.detailHeader}>
+            <View style={[styles.largeAvatar, { backgroundColor: colors.primarySoft }]}>
+              {u.avatarUrl ? (
+                <Image source={{ uri: u.avatarUrl }} style={{ width: 80, height: 80, borderRadius: 40 }} />
+              ) : (
+                <Text style={[styles.largeAvatarText, { color: colors.primary }]}>
+                  {(u.displayName || u.username || '?').charAt(0).toUpperCase()}
+                </Text>
+              )}
+            </View>
             <View style={{ flex: 1, gap: Spacing.xs }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
-              <Text style={[styles.detailName, { color: colors.text }]} numberOfLines={1}>{u.displayName || '—'}</Text>
-              {u.isVerified && <Ionicons name="checkmark-circle" size={20} color={CultureTokens.emerald} />}
-            </View>
-            <Text style={[styles.detailHandle, { color: colors.textSecondary }]} numberOfLines={1}>
-              @{u.username || u.handle || 'unknown'} {u.email ? `• ${u.email}` : ''}
-            </Text>
-            <View style={styles.statusRow}>
-              <View
-                style={[
-                  styles.statusDot,
-                  { backgroundColor: acctStatus === 'suspended' ? CultureTokens.coral : CultureTokens.emerald },
-                ]}
-              />
-              <Text style={[styles.statusLabel, { color: colors.textTertiary }]}>
-                {(acctStatus === 'suspended' ? 'SUSPENDED' : 'ACTIVE').toUpperCase()}
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
+                <Text style={[styles.detailName, { color: colors.text }]} numberOfLines={1}>{u.displayName || '—'}</Text>
+                {u.isVerified && <Ionicons name="checkmark-circle" size={20} color={CultureTokens.emerald} />}
+              </View>
+              <Text style={[styles.detailHandle, { color: colors.textSecondary }]} numberOfLines={1}>
+                @{u.username || u.handle || 'unknown'} {u.email ? `• ${u.email}` : ''}
               </Text>
-              <View style={[styles.verticalDivider, { height: 10, backgroundColor: colors.borderLight }]} />
-              <Text style={[styles.statusLabel, { color: colors.textTertiary }]}>
-                {u.role?.toUpperCase() || 'USER'}
-              </Text>
+              <View style={styles.statusRow}>
+                <View
+                  style={[
+                    styles.statusDot,
+                    { backgroundColor: acctStatus === 'suspended' ? CultureTokens.coral : CultureTokens.emerald },
+                  ]}
+                />
+                <Text style={[styles.statusLabel, { color: colors.textTertiary }]}>
+                  {(acctStatus === 'suspended' ? 'SUSPENDED' : 'ACTIVE').toUpperCase()}
+                </Text>
+                <View style={[styles.verticalDivider, { height: 10, backgroundColor: colors.borderLight }]} />
+                <Text style={[styles.statusLabel, { color: colors.textTertiary }]}>
+                  {u.role?.toUpperCase() || 'USER'}
+                </Text>
+              </View>
             </View>
           </View>
-        </View>
 
         {/* Stats Grid */}
         <View style={styles.statsRow}>
@@ -446,7 +541,20 @@ export default function UserDirectoryScreen() {
           <View style={styles.controlSection}>
             <Text style={styles.controlSectionTitle}>ROLES & VERIFICATION</Text>
             <View style={styles.permissionsGrid}>
-              {(['user', 'organizer', 'moderator', 'business'] as User['role'][]).map(r => (
+              {(['user', 'organizer'] as User['role'][]).map(r => (
+                <M3Button
+                  key={r}
+                  variant={u.role === r ? "filled" : "tonal"}
+                  style={{ flex: 1 }}
+                  disabled={patchUser.isPending}
+                  onPress={() => confirmPatch(`Set role to ${r}`, u.id, { role: r })}
+                >
+                  {r?.charAt(0).toUpperCase()}{r?.slice(1)}
+                </M3Button>
+              ))}
+            </View>
+            <View style={styles.permissionsGrid}>
+              {(['moderator', 'business'] as User['role'][]).map(r => (
                 <M3Button
                   key={r}
                   variant={u.role === r ? "filled" : "tonal"}
@@ -559,7 +667,8 @@ export default function UserDirectoryScreen() {
                 variant="outlined"
                 style={{ flex: 1 }}
                 labelStyle={{ color: colors.error }}
-                onPress={() => Alert.alert('Nuclear Option', 'This would be a permanent data deletion (GDPR). Not implemented in this UI for safety.')}
+                disabled={deleteUserMutation.isPending}
+                onPress={() => handleDeleteUser(u)}
               >
                 Delete User
               </M3Button>
@@ -591,9 +700,10 @@ export default function UserDirectoryScreen() {
         <Text style={{ fontSize: 11, color: colors.textTertiary, fontFamily: FontFamily.medium }}>
           Console ID: {u.id} • Managed by {myRole}
         </Text>
-      </ScrollView>
-    );
-  };
+      </GlassView>
+    </ScrollView>
+  );
+};
 
   return (
     <View style={styles.container}>
@@ -640,7 +750,7 @@ export default function UserDirectoryScreen() {
 
       {/* Stats Ribbon (E) */}
       {isDesktop && stats && (
-        <View style={{ flexDirection: 'row', gap: 16, paddingHorizontal: contentPad, paddingTop: 16 }}>
+        <View style={{ flexDirection: 'row', gap: 16, paddingHorizontal: contentPad, paddingTop: 16, alignItems: 'center' }}>
           <StatCard
             label="Total Users"
             value={stats.users}
@@ -648,10 +758,6 @@ export default function UserDirectoryScreen() {
             color={colors.primary}
             colors={colors}
           />
-          {/* One metrics surface (roadmap): link to live host analytics + note on funnel data from wizard */}
-          <Pressable onPress={() => { /* navigate to hostspace dashboard or admin host metrics */ }} style={{ padding: 8, backgroundColor: colors.surface, borderRadius: 8, marginLeft: 8 }}>
-            <Text style={{ color: colors.primary, fontSize: 12 }}>Host/Profile Analytics + Wizard Funnels (live in hostspace/dashboard)</Text>
-          </Pressable>
           <StatCard
             label="Suspended"
             value={directory?.filter(u => (u as any).status === 'suspended').length || 0}
@@ -677,6 +783,15 @@ export default function UserDirectoryScreen() {
             color={CultureTokens.gold}
             colors={colors}
           />
+          <Pressable
+            onPress={() => router.push('/admin/host-applications')}
+            style={[styles.analyticsLink, { backgroundColor: colors.primarySoft, borderColor: colors.borderLight }]}
+          >
+            <Ionicons name="analytics" size={16} color={colors.primary} />
+            <Text style={{ color: colors.primary, fontSize: 12, fontFamily: FontFamily.medium }}>
+              Host Applications & Funnels
+            </Text>
+          </Pressable>
         </View>
       )}
 
@@ -706,6 +821,9 @@ export default function UserDirectoryScreen() {
           <M3Button variant="outlined" size="sm" disabled={bulkActionLoading} onPress={() => confirmBulkAction('suspend')}>
             Bulk Suspend
           </M3Button>
+          <M3Button variant="outlined" size="sm" disabled={bulkActionLoading} onPress={() => confirmBulkAction('reactivate')}>
+            Bulk Reactivate
+          </M3Button>
           <M3Button variant="filled" size="sm" disabled={bulkActionLoading} onPress={() => confirmBulkAction('grant', 30)}>
             Bulk +30d Plus
           </M3Button>
@@ -718,7 +836,7 @@ export default function UserDirectoryScreen() {
       {/* Bulk Confirmation Modal */}
       <Modal visible={showBulkConfirm} transparent animationType="fade">
         <View style={styles.modalOverlay}>
-          <GlassView style={styles.confirmModal}>
+          <GlassView style={{ width: '100%', maxWidth: 400 }} contentStyle={styles.confirmModal}>
             <Text style={[styles.modalTitle, { color: colors.text }]}>Confirm Bulk Action</Text>
             <Text style={{ color: colors.textSecondary, marginBottom: 16 }}>
               Apply &quot;{pendingBulkAction?.type}&quot; to {selectedIds.size} users? This cannot be undone easily.
@@ -857,15 +975,15 @@ export default function UserDirectoryScreen() {
             </Text>
           </Pressable>
           <Text style={{ color: colors.textTertiary, fontSize: 12 }}>
-            Showing {users.length} (page {page + 1})
+            Showing {users.length} of {totalCount} (page {page + 1} of {totalPages || 1})
           </Text>
           {/* Basic pagination controls (admin roadmap) */}
           <View style={{ flexDirection: 'row', gap: 8, marginLeft: 12 }}>
             <Pressable onPress={() => setPage(p => Math.max(0, p-1))} disabled={page===0}>
               <Text style={{ color: page===0 ? colors.textTertiary : colors.primary }}>Prev</Text>
             </Pressable>
-            <Pressable onPress={() => setPage(p => p+1)}>
-              <Text style={{ color: colors.primary }}>Next</Text>
+            <Pressable onPress={() => setPage(p => p+1)} disabled={page + 1 >= totalPages}>
+              <Text style={{ color: page + 1 >= totalPages ? colors.textTertiary : colors.primary }}>Next</Text>
             </Pressable>
           </View>
         </View>
@@ -888,10 +1006,16 @@ export default function UserDirectoryScreen() {
             contentContainerStyle={{ gap: isDesktop ? 4 : 12, paddingVertical: isDesktop ? 8 : 20 }}
             ListEmptyComponent={
               <View style={[styles.empty, isDesktop && styles.emptyDesktop]}>
-                <Ionicons name="people-outline" size={48} color={colors.textTertiary} />
-                <Text style={{ color: colors.textTertiary, marginTop: 12, fontFamily: FontFamily.medium }}>
-                  {isLoading ? 'Loading directory…' : 'No users match your filters'}
-                </Text>
+                {isLoading ? (
+                  <ActivityIndicator size="large" color={colors.primary} />
+                ) : (
+                  <>
+                    <Ionicons name="people-outline" size={48} color={colors.textTertiary} />
+                    <Text style={{ color: colors.textTertiary, marginTop: 12, fontFamily: FontFamily.medium }}>
+                      No users match your filters
+                    </Text>
+                  </>
+                )}
               </View>
             }
             renderItem={({ item }) => {
@@ -918,9 +1042,13 @@ export default function UserDirectoryScreen() {
                     </Pressable>
                     <View style={{ flex: 3, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                       <View style={[styles.avatarSmall, { backgroundColor: colors.backgroundSecondary }]}>
-                        <Text style={[styles.avatarTextSmall, { color: colors.textSecondary }]}>
-                          {(item.displayName || item.username || 'U').charAt(0).toUpperCase()}
-                        </Text>
+                        {item.avatarUrl ? (
+                          <Image source={{ uri: item.avatarUrl }} style={{ width: 32, height: 32, borderRadius: 16 }} />
+                        ) : (
+                          <Text style={[styles.avatarTextSmall, { color: colors.textSecondary }]}>
+                            {(item.displayName || item.username || 'U').charAt(0).toUpperCase()}
+                          </Text>
+                        )}
                       </View>
                       <View style={{ flex: 1 }}>
                         <Text style={[styles.userName, { color: colors.text }]} numberOfLines={1} ellipsizeMode="tail">{item.displayName || item.username}</Text>
@@ -957,9 +1085,9 @@ export default function UserDirectoryScreen() {
                 >
                   <GlassView
                     style={[
-                      styles.userItem,
                       active && { borderColor: colors.primary, borderWidth: 2 }
                     ]}
+                    contentStyle={styles.userItem}
                   >
                     <Pressable onPress={() => toggleSelect(item.id)} style={{ paddingRight: 8 }}>
                       <Ionicons
@@ -969,9 +1097,13 @@ export default function UserDirectoryScreen() {
                       />
                     </Pressable>
                     <View style={[styles.avatar, { backgroundColor: colors.backgroundSecondary }]}>
-                      <Text style={[styles.avatarText, { color: colors.textSecondary }]}>
-                        {(item.displayName || item.username || 'U').charAt(0).toUpperCase()}
-                      </Text>
+                      {item.avatarUrl ? (
+                        <Image source={{ uri: item.avatarUrl }} style={{ width: 40, height: 40, borderRadius: 20 }} />
+                      ) : (
+                        <Text style={[styles.avatarText, { color: colors.textSecondary }]}>
+                          {(item.displayName || item.username || 'U').charAt(0).toUpperCase()}
+                        </Text>
+                      )}
                     </View>
                     <View style={{ flex: 1, gap: 3 }}>
                       <Text style={[styles.userName, { color: colors.text }]}>
@@ -1016,13 +1148,13 @@ export default function UserDirectoryScreen() {
 
 function StatCard({ label, value, icon, color, colors }: { label: string; value: string | number; icon: any; color: string; colors: any }) {
   return (
-    <GlassView style={styles.statCard}>
+    <GlassView style={{ flex: 1, minWidth: 160 }} contentStyle={styles.statCard}>
       <View style={[styles.statIcon, { backgroundColor: color + '20' }]}>
         <Ionicons name={icon as any} size={20} color={color} />
       </View>
-      <View>
-        <Text style={[styles.statCardLabel, { color: colors.textTertiary }]}>{label}</Text>
-        <Text style={[styles.statCardValue, { color: colors.text }]}>{value}</Text>
+      <View style={{ flex: 1 }}>
+        <Text style={[styles.statCardLabel, { color: colors.textTertiary }]} numberOfLines={1}>{label}</Text>
+        <Text style={[styles.statCardValue, { color: colors.text }]} numberOfLines={1}>{value}</Text>
       </View>
     </GlassView>
   );
@@ -1304,5 +1436,15 @@ const styles = StyleSheet.create({
   verticalDivider: {
     width: 1,
     // backgroundColor supplied at call site
+  },
+  analyticsLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    alignSelf: 'center',
   },
 });

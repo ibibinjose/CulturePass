@@ -18,6 +18,8 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import QRCode from 'react-native-qrcode-svg';
 import { Stack, useLocalSearchParams, usePathname, router } from 'expo-router';
+import * as Clipboard from 'expo-clipboard';
+import * as Haptics from 'expo-haptics';
 import Head from 'expo-router/head';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
@@ -45,25 +47,26 @@ import { useColors, useIsDark } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
 
 // ─── palette (now using luxe + dynamic colors for consistency) ───────────────
-const VIOLET   = CultureTokens.violet;
-const CORAL    = CultureTokens.coral;
-const TEAL     = CultureTokens.teal;
+const VIOLET = CultureTokens.violet;
+const CORAL = CultureTokens.coral;
+const TEAL = CultureTokens.teal;
 
 // Premium single-color for the CulturePass ID membership card
-const CPID_CARD_BG = '#162B6B'; // Deep trustworthy blue — strong CulturePass identity on public profiles
+const CPID_CARD_BG = '#00ADEF'; // Deep trustworthy blue — strong CulturePass identity on public profiles
+const UN_BLUE = '#00ADEF'; // United Nations Blue for profile cover banner
 
 const FONT_BOLD = 'Poppins_700Bold';
 const FONT_SEMI = 'Poppins_600SemiBold';
-const FONT_MED  = 'Poppins_500Medium';
-const FONT_REG  = 'Poppins_400Regular';
+const FONT_MED = 'Poppins_500Medium';
+const FONT_REG = 'Poppins_400Regular';
 
 const SOCIAL_DEFS = [
-  { key: 'instagram', icon: 'logo-instagram' as const, label: 'Instagram',   color: '#E1306C' },
-  { key: 'twitter',   icon: 'logo-twitter'   as const, label: 'X / Twitter', color: '#1DA1F2' },
-  { key: 'tiktok',    icon: 'logo-tiktok'    as const, label: 'TikTok',      color: '#69C9D0' },
-  { key: 'youtube',   icon: 'logo-youtube'   as const, label: 'YouTube',     color: '#FF0000' },
-  { key: 'linkedin',  icon: 'logo-linkedin'  as const, label: 'LinkedIn',    color: '#0A66C2' },
-  { key: 'facebook',  icon: 'logo-facebook'  as const, label: 'Facebook',    color: '#1877F2' },
+  { key: 'instagram', icon: 'logo-instagram' as const, label: 'Instagram', color: '#E1306C' },
+  { key: 'twitter', icon: 'logo-twitter' as const, label: 'X / Twitter', color: '#1DA1F2' },
+  { key: 'tiktok', icon: 'logo-tiktok' as const, label: 'TikTok', color: '#69C9D0' },
+  { key: 'youtube', icon: 'logo-youtube' as const, label: 'YouTube', color: '#FF0000' },
+  { key: 'linkedin', icon: 'logo-linkedin' as const, label: 'LinkedIn', color: '#0A66C2' },
+  { key: 'facebook', icon: 'logo-facebook' as const, label: 'Facebook', color: '#1877F2' },
 ];
 
 const TIER_CFG: Record<string, {
@@ -71,16 +74,16 @@ const TIER_CFG: Record<string, {
   label: string;
   icon: React.ComponentProps<typeof Ionicons>['name'];
 }> = {
-  free:    { color: '#8B8FA8', label: 'Standard', icon: 'shield-outline' },
-  plus:    { color: TEAL,      label: 'Plus',     icon: 'star'           },
-  pro:     { color: VIOLET,    label: 'Pro',      icon: 'flash'          },
-  premium: { color: CORAL,     label: 'Premium',  icon: 'diamond'        },
-  vip:     { color: '#FFB347', label: 'VIP',      icon: 'trophy'         },
+  free: { color: '#8B8FA8', label: 'Standard', icon: 'shield-outline' },
+  plus: { color: TEAL, label: 'Plus', icon: 'star' },
+  pro: { color: VIOLET, label: 'Pro', icon: 'flash' },
+  premium: { color: CORAL, label: 'Premium', icon: 'diamond' },
+  vip: { color: '#FFB347', label: 'VIP', icon: 'trophy' },
 };
 
-const AVATAR_SIZE   = 88;
+const AVATAR_SIZE = 88;
 const AVATAR_BORDER = 4;
-const COLUMN_MAX    = 520;
+const COLUMN_MAX = 520;
 
 // ─── data ─────────────────────────────────────────────────────────────────────
 async function resolveUser(rawId: string): Promise<User> {
@@ -133,10 +136,10 @@ function UserPublicScreen() {
   const layout = useLayout();
 
   // Dynamic colors (replaces old broken TEXT/MUTED/PAGE_BG etc.)
-  const textColor   = colors.text;
-  const mutedColor  = colors.textSecondary;
-  const cardBg      = colors.surface;
-  const pageBg      = isDark ? colors.background : '#F8F5F0';
+  const textColor = colors.text;
+  const mutedColor = colors.textSecondary;
+  const cardBg = colors.surface;
+  const pageBg = isDark ? colors.background : '#F8F5F0';
   const borderColor = colors.borderLight;
   const primaryColor = VIOLET;
 
@@ -144,6 +147,7 @@ function UserPublicScreen() {
 
   // Rich multi-app Message / Call sheet (Link-in-bio style contact actions)
   const [contactSheet, setContactSheet] = useState<null | 'message' | 'call'>(null);
+  const [copied, setCopied] = useState(false);
 
   const { data: user, isLoading, error } = useQuery<User>({
     queryKey: ['user-public', rawId],
@@ -171,12 +175,31 @@ function UserPublicScreen() {
   // Delegation on alias routes means we render under the visited branded path; this effect keeps the bar + canonicals consistent.
   useEffect(() => {
     if (Platform.OS !== 'web' || isLoading || !user) return;
+
+    // Only redirect when still on a user/cpu/u profile path — don't hijack navigation away from this page.
+    const lowerPath = pathname.toLowerCase();
+    const userKeys = [
+      user.id,
+      user.username,
+      user.culturePassId,
+      rawId
+    ].filter((k): k is string => Boolean(k)).map(k => k.toLowerCase());
+
+    const isProfilePath = userKeys.some(key =>
+      lowerPath === `/cpu/${key}` ||
+      lowerPath === `/user/${key}` ||
+      lowerPath === `/u/${key}` ||
+      lowerPath === `/${key}`
+    );
+
+    if (!isProfilePath) return;
+
     const preferred = canonicalUserPath(displayUser as any);
     const cur = pathname.replace(/\/$/, '');
     if (cur !== preferred) {
       router.replace(preferred as never);
     }
-  }, [user, pathname, isLoading, displayUser]);
+  }, [user, pathname, isLoading, displayUser, rawId]);
 
   const isAdmin = isAppAdminEmail(currentUser?.email);
   const isPrivate = user?.privacySettings?.profileVisible === false && !isOwner && !isAdmin;
@@ -248,12 +271,12 @@ function UserPublicScreen() {
     const cpidText = cpid ? ` · ${cpid}` : '';
     const text = `${profileShareDescription(safeDu)}\n\n🪪 Digital Business Pass${cpidText}\n${url}`;
     if (Platform.OS === 'web') {
-      if (navigator.share) navigator.share({ title, text: profileShareDescription(safeDu), url }).catch(() => {});
-      else navigator.clipboard?.writeText(url).catch(() => {});
+      if (navigator.share) navigator.share({ title, text: profileShareDescription(safeDu), url }).catch(() => { });
+      else navigator.clipboard?.writeText(url).catch(() => { });
     } else if (Platform.OS === 'ios') {
-      Share.share({ title, message: text, url }).catch(() => {});
+      Share.share({ title, message: text, url }).catch(() => { });
     } else {
-      Share.share({ title, message: text }).catch(() => {});
+      Share.share({ title, message: text }).catch(() => { });
     }
   };
 
@@ -311,6 +334,14 @@ function UserPublicScreen() {
   const locationText = [du.city, du.country].filter(Boolean).join(', ');
   const memberSince = memberDate(du.createdAt);
   const cpid = du.culturePassId ?? `CP-${du.id.slice(0, 6).toUpperCase()}`;
+  const handleCopy = async () => {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+    await Clipboard.setStringAsync(cpid);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2200);
+  };
   const alreadySaved = isContactSaved(cpid);
   const handleSaveContact = () => {
     if (alreadySaved) return;
@@ -371,8 +402,8 @@ function UserPublicScreen() {
   // Keep for render/QR that reference them (will show cpu branded in bottom card)
   const hasNiceHandle = !!(duForShare.handle && duForShare.handleStatus === 'approved');
   const niceUsername = hasNiceHandle ? duForShare.handle!.toLowerCase() : null;
-  const nicePublicUrl = niceUsername 
-    ? siteUrl(`/${niceUsername}`) 
+  const nicePublicUrl = niceUsername
+    ? siteUrl(`/${niceUsername}`)
     : cpuPublicUrl;
   const shareTitle = profileShareTitle(duForShare);
   const shareDescription = profileShareDescription(duForShare);
@@ -438,6 +469,7 @@ function UserPublicScreen() {
           start={{ x: 0, y: 0 }}
           end={{ x: 0, y: 1 }}
           style={StyleSheet.absoluteFill}
+          pointerEvents="none"
         />
         {/* Very subtle diagonal accent for depth */}
         <LinearGradient
@@ -445,19 +477,20 @@ function UserPublicScreen() {
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={StyleSheet.absoluteFill}
+          pointerEvents="none"
         />
 
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ 
+          contentContainerStyle={{
             paddingBottom: safeInsets.bottom + 80,
-            paddingHorizontal: 16 
+            paddingHorizontal: 16
           }}
         >
           <View style={[
-            s.page, 
-            { 
-              backgroundColor: cardBg, 
+            s.page,
+            {
+              backgroundColor: cardBg,
               borderColor,
               maxWidth: layout.isDesktop ? 580 : '100%',
               alignSelf: 'center'
@@ -465,7 +498,7 @@ function UserPublicScreen() {
           ]}>
             {/* Hero gradient strip */}
             <LinearGradient
-              colors={SignatureGradient as unknown as [string, string]}
+              colors={[UN_BLUE, UN_BLUE]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={[s.heroStrip, { paddingTop: topInset + 12 }]}
@@ -484,7 +517,7 @@ function UserPublicScreen() {
             {/* Modern Hero Avatar Section */}
             <View style={s.avatarSection}>
               <View style={s.avatarWrapper}>
-                <View style={[s.avatarRing, { 
+                <View style={[s.avatarRing, {
                   borderColor: primaryColor + '25',
                   shadowColor: primaryColor,
                   shadowOffset: { width: 0, height: 4 },
@@ -503,7 +536,7 @@ function UserPublicScreen() {
                   ) : (
                     <LinearGradient
                       colors={[primaryColor, CORAL]}
-                      start={{ x: 0, y: 0 }} 
+                      start={{ x: 0, y: 0 }}
                       end={{ x: 1, y: 1 }}
                       style={s.avatarGradient}
                     >
@@ -524,475 +557,478 @@ function UserPublicScreen() {
             {/* content — padded, within the same 520px card */}
             <View style={s.column}>
 
-            {/* identity */}
-            <View style={s.identityBlock}>
-              <Text style={s.displayName}>{displayName}</Text>
-              {(user.handle ?? user.username) ? (
-                <Text style={s.handle}>@{user.handle ?? user.username}</Text>
-              ) : null}
-              {locationText ? (
-                <View style={s.metaRow}>
-                  <Ionicons name="location-outline" size={13} color={mutedColor} />
-                  <Text style={s.metaText}>{locationText}</Text>
-                </View>
-              ) : null}
+              {/* identity */}
+              <View style={s.identityBlock}>
+                <Text style={s.displayName}>{displayName}</Text>
+                {(user.handle ?? user.username) ? (
+                  <Text style={s.handle}>@{user.handle ?? user.username}</Text>
+                ) : null}
+                {locationText ? (
+                  <View style={s.metaRow}>
+                    <Ionicons name="location-outline" size={13} color={mutedColor} />
+                    <Text style={s.metaText}>{locationText}</Text>
+                  </View>
+                ) : null}
 
-              <View style={[s.tierPill, { borderColor: tierConf.color + '50' }]}>
-                <Ionicons name={tierConf.icon} size={12} color={tierConf.color} />
-                <Text style={[s.tierText, { color: tierConf.color }]}>{tierConf.label} Member</Text>
-                {memberSince ? <Text style={s.tierSince}> · {memberSince}</Text> : null}
+                <View style={[s.tierPill, { borderColor: tierConf.color + '50' }]}>
+                  <Ionicons name={tierConf.icon} size={12} color={tierConf.color} />
+                  <Text style={[s.tierText, { color: tierConf.color }]}>{tierConf.label} Member</Text>
+                  {memberSince ? <Text style={s.tierSince}> · {memberSince}</Text> : null}
+                </View>
+
+                <Pressable style={s.cpidPill}
+                  onPress={() => {
+                    if (Platform.OS === 'web') navigator.clipboard?.writeText(cpid).catch(() => { });
+                  }}>
+                  <Ionicons name="finger-print" size={12} color={VIOLET} />
+                  <Text style={s.cpidText}>{cpid}</Text>
+                </Pressable>
               </View>
 
-              <Pressable style={s.cpidPill}
-                onPress={() => {
-                  if (Platform.OS === 'web') navigator.clipboard?.writeText(cpid).catch(() => {});
-                }}>
-                <Ionicons name="finger-print" size={12} color={VIOLET} />
-                <Text style={s.cpidText}>{cpid}</Text>
-              </Pressable>
-            </View>
+              {/* action buttons */}
+              {currentUserId && !isOwner ? (
+                <View style={{ gap: 10 }}>
+                  <View style={s.actionRow}>
+                    {/* Message - opens rich multi-app options (iMessage, WhatsApp, Email, in-app) */}
+                    <Pressable
+                      style={s.msgBtn}
+                      onPress={() => setContactSheet('message')}
+                    >
+                      <Ionicons name="chatbubble-outline" size={15} color={textColor} />
+                      <Text style={[s.actionBtnText, { color: textColor }]}>Message</Text>
+                    </Pressable>
 
-            {/* action buttons */}
-            {isOwner ? (
-              <Pressable style={s.editBtn} onPress={() => router.push('/profile/edit')}>
-                <Ionicons name="create-outline" size={16} color={primaryColor} />
-                <Text style={[s.actionBtnText, { color: primaryColor }]}>Edit profile</Text>
-              </Pressable>
-            ) : currentUserId ? (
-              <View style={{ gap: 10 }}>
-                <View style={s.actionRow}> 
-                  {/* Message - opens rich multi-app options (iMessage, WhatsApp, Email, in-app) */}
-                  <Pressable 
-                    style={s.msgBtn} 
-                    onPress={() => setContactSheet('message')}
-                  >
-                    <Ionicons name="chatbubble-outline" size={15} color={textColor} />
-                    <Text style={[s.actionBtnText, { color: textColor }]}>Message</Text>
-                  </Pressable>
+                    {/* New Call button with app-aware options */}
+                    <Pressable
+                      style={[s.msgBtn, { backgroundColor: VIOLET + '10' }]}
+                      onPress={() => setContactSheet('call')}
+                    >
+                      <Ionicons name="call-outline" size={15} color={VIOLET} />
+                      <Text style={[s.actionBtnText, { color: VIOLET }]}>Call</Text>
+                    </Pressable>
 
-                  {/* New Call button with app-aware options */}
-                  <Pressable 
-                    style={[s.msgBtn, { backgroundColor: VIOLET + '10' }]} 
-                    onPress={() => setContactSheet('call')}
-                  >
-                    <Ionicons name="call-outline" size={15} color={VIOLET} />
-                    <Text style={[s.actionBtnText, { color: VIOLET }]}>Call</Text>
-                  </Pressable>
+                    <Pressable
+                      style={[s.followBtn, isFollowing && s.followBtnDone]}
+                      onPress={() => followMut.mutate({ action: isFollowing ? 'unfollow' : 'follow' })}
+                      disabled={followMut.isPending}
+                    >
+                      <Ionicons
+                        name={isFollowing ? 'checkmark' : 'person-add-outline'}
+                        size={15}
+                        color={isFollowing ? VIOLET : '#FFF'}
+                      />
+                      <Text style={[s.actionBtnText, { color: isFollowing ? VIOLET : '#FFF' }]}>
+                        {isFollowing ? 'Following' : 'Follow'}
+                      </Text>
+                    </Pressable>
+                  </View>
 
+                  {/* Save to Phone Address Book */}
                   <Pressable
-                    style={[s.followBtn, isFollowing && s.followBtnDone]}
-                    onPress={() => followMut.mutate({ action: isFollowing ? 'unfollow' : 'follow' })}
-                    disabled={followMut.isPending}
+                    style={s.exportBtn}
+                    onPress={handleExportToPhone}
                   >
-                    <Ionicons
-                      name={isFollowing ? 'checkmark' : 'person-add-outline'}
-                      size={15}
-                      color={isFollowing ? VIOLET : '#FFF'}
-                    />
-                    <Text style={[s.actionBtnText, { color: isFollowing ? VIOLET : '#FFF' }]}> 
-                      {isFollowing ? 'Following' : 'Follow'}
+                    <Ionicons name="download-outline" size={16} color={VIOLET} />
+                    <Text style={[s.actionBtnText, { color: VIOLET }]}>
+                      Save to Phone Contacts
                     </Text>
                   </Pressable>
                 </View>
+              ) : null}
 
-                {/* Save to Phone Address Book */}
-                <Pressable
-                  style={s.exportBtn}
-                  onPress={handleExportToPhone}
-                >
-                  <Ionicons name="download-outline" size={16} color={VIOLET} />
-                  <Text style={[s.actionBtnText, { color: VIOLET }]}>
-                    Save to Phone Contacts
-                  </Text>
-                </Pressable>
+              {/* stats */}
+              <View style={[s.statsCard, { backgroundColor: cardBg, borderColor }]}>
+                <StatItem label="Followers" value={user.followersCount ?? 0} textColor={textColor} mutedColor={mutedColor} />
+                <View style={[s.statDivider, { backgroundColor: borderColor }]} />
+                <StatItem label="Following" value={user.followingCount ?? 0} textColor={textColor} mutedColor={mutedColor} />
+                <View style={[s.statDivider, { backgroundColor: borderColor }]} />
+                <StatItem label="Events" value={user.eventsAttended ?? 0} textColor={textColor} mutedColor={mutedColor} />
               </View>
-            ) : null}
 
-            {/* stats */}
-            <View style={[s.statsCard, { backgroundColor: cardBg, borderColor }]}>
-              <StatItem label="Followers" value={user.followersCount ?? 0} textColor={textColor} mutedColor={mutedColor} />
-              <View style={[s.statDivider, { backgroundColor: borderColor }]} />
-              <StatItem label="Following" value={user.followingCount ?? 0} textColor={textColor} mutedColor={mutedColor} />
-              <View style={[s.statDivider, { backgroundColor: borderColor }]} />
-              <StatItem label="Events"    value={user.eventsAttended  ?? 0} textColor={textColor} mutedColor={mutedColor} />
-            </View>
-
-            {/* bio */}
-            {user.bio ? (
-              <View style={[s.card, { backgroundColor: cardBg, borderColor }]}>
-                <Text style={[s.sectionLabel, { color: mutedColor }]}>About</Text>
-                <Text style={[s.bioText, { color: textColor }]}>{user.bio}</Text>
-              </View>
-            ) : null}
-
-            {/* Links & Contact section — Link-in-bio style */}
-            <View style={{ marginTop: 20, marginBottom: 4 }}>
-              <Text style={[s.sectionLabel, { color: primaryColor, fontSize: 13, letterSpacing: 1 }]}>CONNECT &amp; LINKS</Text>
-            </View>
-
-            {/* website */}
-            {user.website ? (
-              <Pressable style={[s.linkPill, { backgroundColor: cardBg, borderColor }]} onPress={() => openExternalUrl(user.website!)}>
-                <View style={[s.linkIcon, { backgroundColor: primaryColor + '18' }]}>
-                  <Ionicons name="globe-outline" size={18} color={primaryColor} />
+              {/* bio */}
+              {user.bio ? (
+                <View style={[s.card, { backgroundColor: cardBg, borderColor }]}>
+                  <Text style={[s.sectionLabel, { color: mutedColor }]}>About</Text>
+                  <Text style={[s.bioText, { color: textColor }]}>{user.bio}</Text>
                 </View>
-                <Text style={[s.linkLabel, { color: textColor }]} numberOfLines={1}>
-                  {user.website.replace(/^https?:\/\//, '')}
-                </Text>
-                <Ionicons name="arrow-forward" size={15} color={mutedColor} />
-              </Pressable>
-            ) : null}
+              ) : null}
 
-            {/* email — swipe-to-reveal: hides from bots/scrapers, real users swipe right */}
-            {user.email ? (
-              <SwipeToReveal
-                maskedValue={maskEmail(user.email)}
-                realValue={user.email}
-                icon="mail-outline"
-                iconColor="#00D4AA"
-                iconBg="#00D4AA18"
-                isLoggedIn={!!currentUserId}
-                onRevealAction={() => openExternalUrl(`mailto:${user.email}`)}
-                textColor={textColor}
-                mutedColor={mutedColor}
-                cardBg={cardBg}
-                borderColor={borderColor}
-                primaryColor={primaryColor}
-              />
-            ) : null}
+              {/* Links & Contact section — Link-in-bio style */}
+              <View style={{ marginTop: 20, marginBottom: 4 }}>
+                <Text style={[s.sectionLabel, { color: primaryColor, fontSize: 13, letterSpacing: 1 }]}>CONNECT &amp; LINKS</Text>
+              </View>
 
-            {/* phone — swipe-to-reveal */}
-            {user.phone ? (
-              <SwipeToReveal
-                maskedValue={maskPhone(user.phone)}
-                realValue={user.phone}
-                icon="call-outline"
-                iconColor={primaryColor}
-                iconBg={primaryColor + '18'}
-                isLoggedIn={!!currentUserId}
-                onRevealAction={() => openExternalUrl(`tel:${user.phone}`)}
-                textColor={textColor}
-                mutedColor={mutedColor}
-                cardBg={cardBg}
-                borderColor={borderColor}
-                primaryColor={primaryColor}
-              />
-            ) : null}
-
-            {/* social links */}
-            {activeSocials.map((def) => {
-              const url = socialLinks[def.key];
-              return (
-                <Pressable key={def.key} style={[s.linkPill, { backgroundColor: cardBg, borderColor }]}
-                  onPress={() => url && openExternalUrl(url)}>
-                  <View style={[s.linkIcon, { backgroundColor: def.color + '18' }]}>
-                    <Ionicons name={def.icon} size={18} color={def.color} />
+              {/* website */}
+              {user.website ? (
+                <Pressable style={[s.linkPill, { backgroundColor: cardBg, borderColor }]} onPress={() => openExternalUrl(user.website!)}>
+                  <View style={[s.linkIcon, { backgroundColor: primaryColor + '18' }]}>
+                    <Ionicons name="globe-outline" size={18} color={primaryColor} />
                   </View>
-                  <Text style={[s.linkLabel, { color: textColor }]}>{def.label}</Text>
+                  <Text style={[s.linkLabel, { color: textColor }]} numberOfLines={1}>
+                    {user.website.replace(/^https?:\/\//, '')}
+                  </Text>
                   <Ionicons name="arrow-forward" size={15} color={mutedColor} />
                 </Pressable>
-              );
-            })}
+              ) : null}
 
-            {/* culture tags */}
-            {tags.length > 0 ? (
-              <View style={[s.card, { backgroundColor: cardBg, borderColor }]}>
-                <Text style={[s.sectionLabel, { color: mutedColor }]}>Culture signals</Text>
-                <View style={s.tagsWrap}>
-                  {tags.map((tag) => (
-                    <View key={tag} style={[s.tag, { backgroundColor: primaryColor + '10', borderColor: primaryColor + '25' }]}>
-                      <Text style={[s.tagText, { color: primaryColor }]}>{tag}</Text>
+              {/* email — swipe-to-reveal: hides from bots/scrapers, real users swipe right */}
+              {user.email ? (
+                <SwipeToReveal
+                  maskedValue={maskEmail(user.email)}
+                  realValue={user.email}
+                  icon="mail-outline"
+                  iconColor="#00D4AA"
+                  iconBg="#00D4AA18"
+                  isLoggedIn={!!currentUserId}
+                  onRevealAction={() => openExternalUrl(`mailto:${user.email}`)}
+                  textColor={textColor}
+                  mutedColor={mutedColor}
+                  cardBg={cardBg}
+                  borderColor={borderColor}
+                  primaryColor={primaryColor}
+                />
+              ) : null}
+
+              {/* phone — swipe-to-reveal */}
+              {user.phone ? (
+                <SwipeToReveal
+                  maskedValue={maskPhone(user.phone)}
+                  realValue={user.phone}
+                  icon="call-outline"
+                  iconColor={primaryColor}
+                  iconBg={primaryColor + '18'}
+                  isLoggedIn={!!currentUserId}
+                  onRevealAction={() => openExternalUrl(`tel:${user.phone}`)}
+                  textColor={textColor}
+                  mutedColor={mutedColor}
+                  cardBg={cardBg}
+                  borderColor={borderColor}
+                  primaryColor={primaryColor}
+                />
+              ) : null}
+
+              {/* social links */}
+              {activeSocials.map((def) => {
+                const url = socialLinks[def.key];
+                return (
+                  <Pressable key={def.key} style={[s.linkPill, { backgroundColor: cardBg, borderColor }]}
+                    onPress={() => url && openExternalUrl(url)}>
+                    <View style={[s.linkIcon, { backgroundColor: def.color + '18' }]}>
+                      <Ionicons name={def.icon} size={18} color={def.color} />
                     </View>
-                  ))}
-                </View>
-              </View>
-            ) : null}
+                    <Text style={[s.linkLabel, { color: textColor }]}>{def.label}</Text>
+                    <Ionicons name="arrow-forward" size={15} color={mutedColor} />
+                  </Pressable>
+                );
+              })}
 
-            {/* ── Unified CulturePass Member ID Card ─────────────────────────── */}
-            <View style={[s.unifiedMemberCard, { borderColor: primaryColor + '20' }]}>
-              <View style={[s.cpidCardVertical, { backgroundColor: CPID_CARD_BG }]}>
-                {/* Gold accent line */}
-                <View style={s.cpidAccentGold} />
-
-                {/* Header */}
-                <View style={s.cpidBrandRow}>
-                  <View style={s.cpidBrandMark}>
-                    <Ionicons name="shield-checkmark" size={13} color="#D4AF37" />
-                  </View>
-                  <Text style={s.cpidBrand}>CulturePass ID</Text>
-                  <Text style={[s.cpidTierText, { color: '#009CDE' }]}>
-                    {tierConf.label.toUpperCase()}
-                  </Text>
-                </View>
-
-                {/* Profile section */}
-                <View style={s.cpidProfileVertical}>
-                  <View style={{ position: 'relative' }}>
-                    <View style={s.cpidAvatarWrapVertical}>
-                      {du?.avatarUrl ? (
-                        <Image source={{ uri: du.avatarUrl }} style={s.cpidAvatarVertical} contentFit="cover" />
-                      ) : (
-                        <View style={[s.cpidAvatarFallbackVertical, { backgroundColor: '#F3F4F6' }]}>
-                          <Text style={[s.cpidAvatarInitialsVertical, { color: '#0B0F19' }]}>{ini}</Text>
-                        </View>
-                      )}
-                    </View>
-                    {du.affiliation && (
-                      <View style={s.cpidAffiliationBadgeVertical}>
-                        {du.affiliation.avatarUrl ? (
-                          <Image source={{ uri: du.affiliation.avatarUrl }} style={s.cpidAffiliationBadgeImageVertical} contentFit="cover" />
-                        ) : (
-                          <Ionicons name="business-outline" size={14} color="#78716C" />
-                        )}
+              {/* culture tags */}
+              {tags.length > 0 ? (
+                <View style={[s.card, { backgroundColor: cardBg, borderColor }]}>
+                  <Text style={[s.sectionLabel, { color: mutedColor }]}>Culture signals</Text>
+                  <View style={s.tagsWrap}>
+                    {tags.map((tag) => (
+                      <View key={tag} style={[s.tag, { backgroundColor: primaryColor + '10', borderColor: primaryColor + '25' }]}>
+                        <Text style={[s.tagText, { color: primaryColor }]}>{tag}</Text>
                       </View>
-                    )}
+                    ))}
                   </View>
-                  
-                  <View style={s.cpidUserInfoVertical}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                      <Text style={s.cpidNameVertical} numberOfLines={1}>{displayName}</Text>
-                      {du.isVerified && <Ionicons name="checkmark-circle" size={14} color="#009CDE" />}
-                    </View>
-                    <Text style={s.cpidHandleVertical}>@{du.handle ?? du.username}</Text>
-                    {du.affiliation && (
-                      <Text style={s.cpidAffiliationNameVertical} numberOfLines={1}>
-                        🏢 {du.affiliation.name}
+                </View>
+              ) : null}
+
+              {/* ── Unified CulturePass Member ID Card ─────────────────────────── */}
+              <View style={[s.unifiedMemberCard, { borderColor: primaryColor + '20' }]}>
+                <View style={s.bizPassCard}>
+                  <LinearGradient colors={['rgba(255,255,255,0.12)', 'rgba(255,255,255,0.02)', 'transparent']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} pointerEvents="none" />
+                  <View style={s.bizPassInner}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <Text style={{ fontSize: 10, fontFamily: FontFamily.bold, letterSpacing: 1.2 }}>
+                        <Text style={{ color: '#FF3B30' }}>CULTURE</Text>
+                        <Text style={{ color: '#34C759' }}>PASS</Text>
+                        <Text style={{ color: '#009CDE' }}> ID</Text>
                       </Text>
-                    )}
-                    {memberSince ? <Text style={s.cpidMemberSinceVertical}>Member Since {memberSince}</Text> : null}
+                      <Text style={{ fontSize: 9, fontFamily: FontFamily.bold, letterSpacing: 0.8, color: '#009CDE' }}>
+                        {tierConf.label.toUpperCase()}
+                      </Text>
+                    </View>
+
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flex: 1, marginTop: 14 }}>
+                      <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, paddingRight: 10, overflow: 'hidden' }}>
+                        <View style={{ position: 'relative', width: 44, height: 44, flexShrink: 0 }}>
+                          <View style={s.bizPassAvatarWrap}>
+                            {du?.avatarUrl ? (
+                              <Image source={{ uri: du.avatarUrl }} style={s.bizPassAvatar} contentFit="cover" transition={200} cachePolicy="memory-disk" />
+                            ) : (
+                              <View style={[s.bizPassAvatarFallback, { backgroundColor: '#F3F4F6' }]}>
+                                <Text style={[s.bizPassAvatarInitials, { color: '#0B0F19' }]}>{ini}</Text>
+                              </View>
+                            )}
+                          </View>
+                          {du.affiliation && (
+                            <View style={{
+                              position: 'absolute',
+                              bottom: -2,
+                              right: -2,
+                              width: 18,
+                              height: 18,
+                              borderRadius: 4,
+                              borderWidth: 1,
+                              borderColor: '#FFFFFF',
+                              backgroundColor: '#F3F4F6',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              overflow: 'hidden',
+                            }}>
+                              {du.affiliation.avatarUrl ? (
+                                <Image source={{ uri: du.affiliation.avatarUrl }} style={{ width: '100%', height: '100%', borderRadius: 3 }} contentFit="cover" />
+                              ) : (
+                                <Ionicons name="business-outline" size={10} color="#78716C" />
+                              )}
+                            </View>
+                          )}
+                        </View>
+
+                        <View style={{ flex: 1, overflow: 'hidden' }}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                            <Text style={s.bizPassName} numberOfLines={1}>{displayName}</Text>
+                            {du.isVerified && <Ionicons name="checkmark-circle" size={12} color="#009CDE" />}
+                          </View>
+                          <Text style={s.bizPassHandle}>@{du.handle ?? du.username}</Text>
+                          {du.affiliation && (
+                            <Text style={{ fontSize: 10, color: '#4B5563', marginTop: 2 }} numberOfLines={1}>
+                              🏢 {du.affiliation.name}
+                            </Text>
+                          )}
+                        </View>
+                      </View>
+
+                      <View style={{ flexDirection: 'column', alignItems: 'center', gap: 5, flexShrink: 0 }}>
+                        <View style={s.bizPassQrWrap}>
+                          <QRCode
+                            value={nicePublicUrl || profileUrl}
+                            size={84}
+                            color="#000000"
+                            backgroundColor="#FFFFFF"
+                            ecl="H"
+                          />
+                        </View>
+                        <Pressable onPress={handleCopy} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }} hitSlop={8}>
+                          <Ionicons name="wifi" size={12} color="#4B5563" style={{ transform: [{ rotate: '90deg' }] }} />
+                          <Text style={{ fontSize: 11, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', letterSpacing: 1, fontWeight: 'bold', color: '#0B0F19' }}>
+                            {cpid.slice(0, 3)}-{cpid.slice(3)}
+                          </Text>
+                          <Ionicons name={copied ? 'checkmark' : 'copy-outline'} size={11} color={copied ? '#30D158' : '#9CA3AF'} />
+                        </Pressable>
+                      </View>
+                    </View>
                   </View>
                 </View>
 
-                {/* QR Section */}
-                <View style={s.cpidQrSectionVertical}>
-                  <View style={s.cpidQrWhiteBackground}>
-                    <QRCode
-                      value={nicePublicUrl || profileUrl}
-                      size={100}
-                      color="#000000"
-                      backgroundColor="#FFFFFF"
-                      ecl="H"
-                    />
-                  </View>
-                  <Pressable 
+                {/* Action buttons under the card */}
+                <View style={s.unifiedCardActions}>
+                  <Pressable
+                    style={({ pressed }) => [s.unifiedCardBtn, { borderColor: borderColor, opacity: pressed ? 0.8 : 1 }]}
+                    onPress={handleShare}
+                  >
+                    <Ionicons name="share-outline" size={14} color={textColor} />
+                    <Text style={[s.unifiedCardBtnText, { color: textColor }]}>Share Profile</Text>
+                  </Pressable>
+                  <Pressable
+                    style={({ pressed }) => [s.unifiedCardBtn, { borderColor: borderColor, opacity: pressed ? 0.8 : 1 }]}
                     onPress={() => {
                       if (Platform.OS === 'web') {
-                        navigator.clipboard?.writeText(cpid).catch(() => {});
-                        Alert.alert('Copied', 'CPID copied to clipboard');
+                        navigator.clipboard?.writeText(nicePublicUrl || profileUrl).catch(() => { });
+                        Alert.alert('Copied', 'Profile link copied!');
                       }
-                    }} 
-                    style={s.cpidMonospaceContainer} 
-                    hitSlop={8}
+                    }}
                   >
-                    <Ionicons name="wifi" size={13} color="#B8C9E8" style={{ transform: [{ rotate: '90deg' }] }} />
-                    <Text style={s.cpidMonospaceTextVertical}>{cpid.slice(0, 3)}-{cpid.slice(3)}</Text>
+                    <Ionicons name="copy-outline" size={14} color={textColor} />
+                    <Text style={[s.unifiedCardBtnText, { color: textColor }]}>Copy Link</Text>
                   </Pressable>
                 </View>
+
+                {isOwner && (
+                  <Pressable
+                    style={({ pressed }) => [s.unifiedCardFullBtn, { borderColor: VIOLET + '40', backgroundColor: VIOLET + '08', opacity: pressed ? 0.8 : 1 }]}
+                    onPress={() => router.push('/profile/qr')}
+                  >
+                    <Ionicons name="qr-code-outline" size={14} color={VIOLET} />
+                    <Text style={[s.unifiedCardFullBtnText, { color: VIOLET }]}>Save / Download Passes</Text>
+                  </Pressable>
+                )}
               </View>
 
-              {/* Action buttons under the card */}
-              <View style={s.unifiedCardActions}>
-                <Pressable
-                  style={({ pressed }) => [s.unifiedCardBtn, { borderColor: borderColor, opacity: pressed ? 0.8 : 1 }]}
-                  onPress={handleShare}
-                >
-                  <Ionicons name="share-outline" size={14} color={textColor} />
-                  <Text style={[s.unifiedCardBtnText, { color: textColor }]}>Share Profile</Text>
-                </Pressable>
-                <Pressable
-                  style={({ pressed }) => [s.unifiedCardBtn, { borderColor: borderColor, opacity: pressed ? 0.8 : 1 }]}
-                  onPress={() => {
-                    if (Platform.OS === 'web') {
-                      navigator.clipboard?.writeText(nicePublicUrl || profileUrl).catch(() => {});
-                      Alert.alert('Copied', 'Profile link copied!');
-                    }
-                  }}
-                >
-                  <Ionicons name="copy-outline" size={14} color={textColor} />
-                  <Text style={[s.unifiedCardBtnText, { color: textColor }]}>Copy Link</Text>
-                </Pressable>
-              </View>
-
-              <Pressable
-                style={({ pressed }) => [s.unifiedCardFullBtn, { borderColor: VIOLET + '40', backgroundColor: VIOLET + '08', opacity: pressed ? 0.8 : 1 }]}
-                onPress={() => router.push('/profile/qr')}
+              {/* ── Rich Contact Action Sheet (Message + Call with apps on the device) ── */}
+              <Modal
+                visible={!!contactSheet}
+                transparent
+                animationType="slide"
+                onRequestClose={() => setContactSheet(null)}
               >
-                <Ionicons name="qr-code-outline" size={14} color={VIOLET} />
-                <Text style={[s.unifiedCardFullBtnText, { color: VIOLET }]}>Save / Download Passes</Text>
-              </Pressable>
-            </View>
-
-            {/* ── Rich Contact Action Sheet (Message + Call with apps on the device) ── */}
-            <Modal
-              visible={!!contactSheet}
-              transparent
-              animationType="slide"
-              onRequestClose={() => setContactSheet(null)}
-            >
-              <Pressable 
-                style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)' }} 
-                onPress={() => setContactSheet(null)} 
-              />
-              <View style={{
-                position: 'absolute',
-                bottom: 0,
-                left: 0,
-                right: 0,
-                backgroundColor: colors.surfaceElevated || '#fff',
-                borderTopLeftRadius: 22,
-                borderTopRightRadius: 22,
-                paddingBottom: safeInsets.bottom + 24,
-                paddingTop: 8,
-              }}>
-                <Text style={{ 
-                  fontSize: 17, 
-                  fontFamily: FontFamily.semibold, 
-                  color: colors.text, 
-                  textAlign: 'center',
-                  paddingVertical: 14,
-                  borderBottomWidth: 1,
-                  borderColor: colors.borderLight
+                <Pressable
+                  style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)' }}
+                  onPress={() => setContactSheet(null)}
+                />
+                <View style={{
+                  position: 'absolute',
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  backgroundColor: colors.surfaceElevated || '#fff',
+                  borderTopLeftRadius: 22,
+                  borderTopRightRadius: 22,
+                  paddingBottom: safeInsets.bottom + 24,
+                  paddingTop: 8,
                 }}>
-                  {contactSheet === 'message' ? 'Choose messaging method' : 'Choose calling method'}
-                </Text>
+                  <Text style={{
+                    fontSize: 17,
+                    fontFamily: FontFamily.semibold,
+                    color: colors.text,
+                    textAlign: 'center',
+                    paddingVertical: 14,
+                    borderBottomWidth: 1,
+                    borderColor: colors.borderLight
+                  }}>
+                    {contactSheet === 'message' ? 'Choose messaging method' : 'Choose calling method'}
+                  </Text>
 
-                {/* Dynamic options */}
-                {contactSheet === 'message' && (
-                  <>
-                    {currentUserId && (
-                      <Pressable onPress={() => { setContactSheet(null); router.push('/network' as never); }} style={s.contactOption}>
-                        <Ionicons name="chatbubble-ellipses-outline" size={22} color={colors.text} />
-                        <Text style={s.contactOptionText}>Message on CulturePass</Text>
-                      </Pressable>
-                    )}
-                    {phoneNumber && (
-                      <Pressable onPress={() => openExternal(`sms:${phoneNumber}`)} style={s.contactOption}>
-                        <Ionicons name="chatbubble-outline" size={22} color={colors.text} />
-                        <Text style={s.contactOptionText}>{Platform.OS === 'ios' ? 'iMessage / SMS' : 'Text Message'}</Text>
-                      </Pressable>
-                    )}
-                    {phoneNumber && (
-                      <Pressable onPress={() => openExternal(`https://wa.me/${phoneNumber.replace(/\D/g,'')}`)} style={s.contactOption}>
-                        <Ionicons name="logo-whatsapp" size={22} color="#25D366" />
-                        <Text style={s.contactOptionText}>WhatsApp</Text>
-                      </Pressable>
-                    )}
-                    {emailAddress && (
-                      <Pressable onPress={() => openExternal(`mailto:${emailAddress}`)} style={s.contactOption}>
-                        <Ionicons name="mail-outline" size={22} color={colors.text} />
-                        <Text style={s.contactOptionText}>Email</Text>
-                      </Pressable>
-                    )}
-                  </>
-                )}
+                  {/* Dynamic options */}
+                  {contactSheet === 'message' && (
+                    <>
+                      {currentUserId && (
+                        <Pressable onPress={() => { setContactSheet(null); router.push('/network' as never); }} style={s.contactOption}>
+                          <Ionicons name="chatbubble-ellipses-outline" size={22} color={colors.text} />
+                          <Text style={s.contactOptionText}>Message on CulturePass</Text>
+                        </Pressable>
+                      )}
+                      {phoneNumber && (
+                        <Pressable onPress={() => openExternal(`sms:${phoneNumber}`)} style={s.contactOption}>
+                          <Ionicons name="chatbubble-outline" size={22} color={colors.text} />
+                          <Text style={s.contactOptionText}>{Platform.OS === 'ios' ? 'iMessage / SMS' : 'Text Message'}</Text>
+                        </Pressable>
+                      )}
+                      {phoneNumber && (
+                        <Pressable onPress={() => openExternal(`https://wa.me/${phoneNumber.replace(/\D/g, '')}`)} style={s.contactOption}>
+                          <Ionicons name="logo-whatsapp" size={22} color="#25D366" />
+                          <Text style={s.contactOptionText}>WhatsApp</Text>
+                        </Pressable>
+                      )}
+                      {emailAddress && (
+                        <Pressable onPress={() => openExternal(`mailto:${emailAddress}`)} style={s.contactOption}>
+                          <Ionicons name="mail-outline" size={22} color={colors.text} />
+                          <Text style={s.contactOptionText}>Email</Text>
+                        </Pressable>
+                      )}
+                    </>
+                  )}
 
-                {contactSheet === 'call' && (
-                  <>
-                    {phoneNumber && (
-                      <Pressable onPress={() => openExternal(`tel:${phoneNumber}`)} style={s.contactOption}>
-                        <Ionicons name="call-outline" size={22} color={colors.text} />
-                        <Text style={s.contactOptionText}>Phone Call</Text>
-                      </Pressable>
-                    )}
-                    {phoneNumber && (
-                      <Pressable onPress={() => openExternal(`https://wa.me/${phoneNumber.replace(/\D/g,'')}?call`)} style={s.contactOption}>
-                        <Ionicons name="logo-whatsapp" size={22} color="#25D366" />
-                        <Text style={s.contactOptionText}>WhatsApp Call</Text>
-                      </Pressable>
-                    )}
-                    {phoneNumber && Platform.OS === 'ios' && (
-                      <Pressable onPress={() => openExternal(`facetime:${phoneNumber}`)} style={s.contactOption}>
-                        <Ionicons name="videocam-outline" size={22} color="#007AFF" />
-                        <Text style={s.contactOptionText}>FaceTime</Text>
-                      </Pressable>
-                    )}
-                  </>
-                )}
+                  {contactSheet === 'call' && (
+                    <>
+                      {phoneNumber && (
+                        <Pressable onPress={() => openExternal(`tel:${phoneNumber}`)} style={s.contactOption}>
+                          <Ionicons name="call-outline" size={22} color={colors.text} />
+                          <Text style={s.contactOptionText}>Phone Call</Text>
+                        </Pressable>
+                      )}
+                      {phoneNumber && (
+                        <Pressable onPress={() => openExternal(`https://wa.me/${phoneNumber.replace(/\D/g, '')}?call`)} style={s.contactOption}>
+                          <Ionicons name="logo-whatsapp" size={22} color="#25D366" />
+                          <Text style={s.contactOptionText}>WhatsApp Call</Text>
+                        </Pressable>
+                      )}
+                      {phoneNumber && Platform.OS === 'ios' && (
+                        <Pressable onPress={() => openExternal(`facetime:${phoneNumber}`)} style={s.contactOption}>
+                          <Ionicons name="videocam-outline" size={22} color="#007AFF" />
+                          <Text style={s.contactOptionText}>FaceTime</Text>
+                        </Pressable>
+                      )}
+                    </>
+                  )}
 
-                <Pressable onPress={() => setContactSheet(null)} style={[s.contactOption, { justifyContent: 'center', marginTop: 8 }]}>
-                  <Text style={{ color: colors.textSecondary, fontSize: 16 }}>Cancel</Text>
-                </Pressable>
-              </View>
-            </Modal>
+                  <Pressable onPress={() => setContactSheet(null)} style={[s.contactOption, { justifyContent: 'center', marginTop: 8 }]}>
+                    <Text style={{ color: colors.textSecondary, fontSize: 16 }}>Cancel</Text>
+                  </Pressable>
+                </View>
+              </Modal>
 
-            {/* Associated profiles */}
-            {userProfiles.length > 0 && (
-              <View style={[s.sectionCard, { backgroundColor: cardBg, borderColor }]}>
-                <Text style={[s.sectionLabel, { color: mutedColor }]}>Associated Profiles</Text>
-                <View style={{ gap: 10, marginTop: 4 }}>
-                  {userProfiles.map((profile: Profile) => (
-                    <Pressable
-                      key={profile.id}
-                      onPress={() => router.push(`/profile/${profile.id}` as any)}
-                      style={({ pressed }) => [
-                        s.associatedProfileRow,
-                        pressed && { opacity: 0.8 }
-                      ]}
-                    >
-                      {profile.avatarUrl ? (
-                        <Image source={{ uri: profile.avatarUrl }} style={s.associatedProfileAvatar} contentFit="cover" />
-                      ) : (
-                        <View style={[s.associatedProfileAvatarFallback, { backgroundColor: primaryColor + '15' }]}>
-                          <Text style={[s.associatedProfileInitials, { color: primaryColor }]}>
-                            {(profile.name || 'P').charAt(0).toUpperCase()}
+              {/* Associated profiles */}
+              {userProfiles.length > 0 && (
+                <View style={[s.sectionCard, { backgroundColor: cardBg, borderColor }]}>
+                  <Text style={[s.sectionLabel, { color: mutedColor }]}>Associated Profiles</Text>
+                  <View style={{ gap: 10, marginTop: 4 }}>
+                    {userProfiles.map((profile: Profile) => (
+                      <Pressable
+                        key={profile.id}
+                        onPress={() => router.push(`/profile/${profile.id}` as any)}
+                        style={({ pressed }) => [
+                          s.associatedProfileRow,
+                          pressed && { opacity: 0.8 }
+                        ]}
+                      >
+                        {profile.avatarUrl ? (
+                          <Image source={{ uri: profile.avatarUrl }} style={s.associatedProfileAvatar} contentFit="cover" />
+                        ) : (
+                          <View style={[s.associatedProfileAvatarFallback, { backgroundColor: primaryColor + '15' }]}>
+                            <Text style={[s.associatedProfileInitials, { color: primaryColor }]}>
+                              {(profile.name || 'P').charAt(0).toUpperCase()}
+                            </Text>
+                          </View>
+                        )}
+                        <View style={{ flex: 1, gap: 2 }}>
+                          <Text style={[s.associatedProfileName, { color: textColor }]} numberOfLines={1}>
+                            {profile.name}
+                          </Text>
+                          <Text style={[s.associatedProfileType, { color: mutedColor }]}>
+                            {profile.entityType ? capitalize(profile.entityType) : 'Profile'}
                           </Text>
                         </View>
-                      )}
-                      <View style={{ flex: 1, gap: 2 }}>
-                        <Text style={[s.associatedProfileName, { color: textColor }]} numberOfLines={1}>
-                          {profile.name}
-                        </Text>
-                        <Text style={[s.associatedProfileType, { color: mutedColor }]}>
-                          {profile.entityType ? capitalize(profile.entityType) : 'Profile'}
-                        </Text>
-                      </View>
-                      <Ionicons name="chevron-forward" size={14} color={mutedColor} />
-                    </Pressable>
-                  ))}
+                        <Ionicons name="chevron-forward" size={14} color={mutedColor} />
+                      </Pressable>
+                    ))}
+                  </View>
                 </View>
-              </View>
-            )}
+              )}
 
-            {/* Hosted events */}
-            {userEvents.length > 0 && (
-              <View style={[s.sectionCard, { backgroundColor: cardBg, borderColor }]}>
-                <Text style={[s.sectionLabel, { color: mutedColor }]}>Hosted Events</Text>
-                <View style={{ gap: 12, marginTop: 6 }}>
-                  {userEvents.map((ev: EventData) => (
-                    <Pressable
-                      key={ev.id}
-                      onPress={() => router.push(`/event/${ev.id}` as any)}
-                      style={({ pressed }) => [
-                        s.eventRow,
-                        pressed && { opacity: 0.8 }
-                      ]}
-                    >
-                      {ev.imageUrl ? (
-                        <Image source={{ uri: ev.imageUrl }} style={s.eventThumbnail} contentFit="cover" />
-                      ) : (
-                        <View style={[s.eventThumbnailFallback, { backgroundColor: primaryColor + '10' }]}>
-                          <Ionicons name="calendar-outline" size={18} color={primaryColor} />
+              {/* Hosted events */}
+              {userEvents.length > 0 && (
+                <View style={[s.sectionCard, { backgroundColor: cardBg, borderColor }]}>
+                  <Text style={[s.sectionLabel, { color: mutedColor }]}>Hosted Events</Text>
+                  <View style={{ gap: 12, marginTop: 6 }}>
+                    {userEvents.map((ev: EventData) => (
+                      <Pressable
+                        key={ev.id}
+                        onPress={() => router.push(`/event/${ev.id}` as any)}
+                        style={({ pressed }) => [
+                          s.eventRow,
+                          pressed && { opacity: 0.8 }
+                        ]}
+                      >
+                        {ev.imageUrl ? (
+                          <Image source={{ uri: ev.imageUrl }} style={s.eventThumbnail} contentFit="cover" />
+                        ) : (
+                          <View style={[s.eventThumbnailFallback, { backgroundColor: primaryColor + '10' }]}>
+                            <Ionicons name="calendar-outline" size={18} color={primaryColor} />
+                          </View>
+                        )}
+                        <View style={{ flex: 1, gap: 2 }}>
+                          <Text style={[s.eventName, { color: textColor }]} numberOfLines={1}>
+                            {ev.title}
+                          </Text>
+                          <Text style={[s.eventMeta, { color: mutedColor }]} numberOfLines={1}>
+                            {ev.date} • {ev.city}
+                          </Text>
+                          <Text style={[s.eventPrice, { color: primaryColor }]}>
+                            {ev.priceCents && ev.priceCents > 0 ? `$${(ev.priceCents / 100).toFixed(2)}` : 'Free'}
+                          </Text>
                         </View>
-                      )}
-                      <View style={{ flex: 1, gap: 2 }}>
-                        <Text style={[s.eventName, { color: textColor }]} numberOfLines={1}>
-                          {ev.title}
-                        </Text>
-                        <Text style={[s.eventMeta, { color: mutedColor }]} numberOfLines={1}>
-                          {ev.date} • {ev.city}
-                        </Text>
-                        <Text style={[s.eventPrice, { color: primaryColor }]}>
-                          {ev.priceCents && ev.priceCents > 0 ? `$${(ev.priceCents / 100).toFixed(2)}` : 'Free'}
-                        </Text>
-                      </View>
-                      <Ionicons name="chevron-forward" size={14} color={mutedColor} />
-                    </Pressable>
-                  ))}
+                        <Ionicons name="chevron-forward" size={14} color={mutedColor} />
+                      </Pressable>
+                    ))}
+                  </View>
                 </View>
-              </View>
-            )}
+              )}
 
-          </View>
+            </View>
           </View>{/* end page card */}
         </ScrollView>
       </View>
@@ -1242,8 +1278,8 @@ function StatItem({ label, value, textColor, mutedColor }: { label: string; valu
 
 const statItemStyles = StyleSheet.create({
   statItem: { flex: 1, alignItems: 'center', gap: 2 },
-  statNum:  { fontFamily: FONT_BOLD, fontSize: 22, letterSpacing: -0.5 },
-  statLabel:{ fontFamily: FONT_REG, fontSize: 11, letterSpacing: 0.3, textTransform: 'uppercase' },
+  statNum: { fontFamily: FONT_BOLD, fontSize: 22, letterSpacing: -0.5 },
+  statLabel: { fontFamily: FONT_REG, fontSize: 11, letterSpacing: 0.3, textTransform: 'uppercase' },
 });
 
 export default function UserProfilePage() {
@@ -1254,10 +1290,10 @@ export default function UserProfilePage() {
 const CARD_RADIUS = 20;
 
 const getStyles = (colors: any, isDark: boolean) => {
-  const textColor   = colors.text;
-  const mutedColor  = colors.textSecondary;
-  const cardBg      = colors.surface;
-  const pageBg      = isDark ? colors.background : '#F8F5F0';
+  const textColor = colors.text;
+  const mutedColor = colors.textSecondary;
+  const cardBg = colors.surface;
+  const pageBg = isDark ? colors.background : '#F8F5F0';
   const borderColor = colors.borderLight;
 
   const shadow = Platform.select({
@@ -1270,815 +1306,799 @@ const getStyles = (colors: any, isDark: boolean) => {
   });
 
   return StyleSheet.create({
-  fill:   { flex: 1 },
-  center: { alignItems: 'center', justifyContent: 'center', gap: 14, padding: 40 },
+    fill: { flex: 1 },
+    center: { alignItems: 'center', justifyContent: 'center', gap: 14, padding: 40 },
 
-  emptyTitle:   { fontFamily: FONT_BOLD, fontSize: 18, textAlign: 'center' },
-  emptyBody:    { fontFamily: FONT_REG,  fontSize: 14, textAlign: 'center' },
-  ghostBtn:     { paddingHorizontal: 24, paddingVertical: 10, borderRadius: 50,
-                  backgroundColor: VIOLET + '12', marginTop: 4 },
-  ghostBtnText: { fontFamily: FONT_SEMI, fontSize: 14 },
+    emptyTitle: { fontFamily: FONT_BOLD, fontSize: 18, textAlign: 'center' },
+    emptyBody: { fontFamily: FONT_REG, fontSize: 14, textAlign: 'center' },
+    ghostBtn: {
+      paddingHorizontal: 24, paddingVertical: 10, borderRadius: 50,
+      backgroundColor: VIOLET + '12', marginTop: 4
+    },
+    ghostBtnText: { fontFamily: FONT_SEMI, fontSize: 14 },
 
-  // scroll centres the page card
-  scroll: { alignItems: 'center' },
+    // scroll centres the page card
+    scroll: { alignItems: 'center' },
 
-  // single constrained card — hero + avatar + content all inside
-  page: {
-    width: '100%',
-    maxWidth: COLUMN_MAX,
-    ...Platform.select({
-      web: { boxShadow: '0 8px 40px rgba(100,60,200,0.10)' } as object,
-      default: {},
-    }),
-  },
+    // single constrained card — hero + avatar + content all inside
+    page: {
+      width: '100%',
+      maxWidth: COLUMN_MAX,
+      ...Platform.select({
+        web: { boxShadow: '0 8px 40px rgba(100,60,200,0.10)' } as object,
+        default: {},
+      }),
+    },
 
-  // hero fills the card width naturally (no explicit width needed)
-  heroStrip: { paddingBottom: 0 },
-  heroNav: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingBottom: 12,
-  },
-  navBtn: {
-    width: 40, height: 40, borderRadius: 20,
-    backgroundColor: 'rgba(0,0,0,0.25)',
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.20)',
-    alignItems: 'center', justifyContent: 'center',
-  },
+    // hero fills the card width naturally (no explicit width needed)
+    heroStrip: { paddingBottom: 0 },
+    heroNav: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      paddingHorizontal: 16,
+      paddingBottom: 12,
+    },
+    navBtn: {
+      width: 40, height: 40, borderRadius: 20,
+      backgroundColor: 'rgba(0,0,0,0.25)',
+      borderWidth: 1, borderColor: 'rgba(255,255,255,0.20)',
+      alignItems: 'center', justifyContent: 'center',
+    },
 
-  // avatar centred within the card, overlapping the hero bottom
-  avatarWrap: {
-    alignItems: 'center',
-    marginTop: -(AVATAR_SIZE / 2 + AVATAR_BORDER),
-  },
-  // Modern hero avatar wrappers (used by the current hero JSX)
-  avatarSection: {
-    alignItems: 'center',
-    marginTop: -42,
-    marginBottom: 8,
-  },
-  avatarWrapper: {
-    position: 'relative',
-  },
-  avatarRing: {
-    width:  AVATAR_SIZE + AVATAR_BORDER * 2,
-    height: AVATAR_SIZE + AVATAR_BORDER * 2,
-    borderRadius: (AVATAR_SIZE + AVATAR_BORDER * 2) / 2,
-    backgroundColor: pageBg,
-    alignItems: 'center', justifyContent: 'center',
-    ...Platform.select({
-      web: { boxShadow: '0 4px 20px rgba(147,51,234,0.25)' } as object,
-      default: {
-        shadowColor: VIOLET,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.25, shadowRadius: 16, elevation: 8,
-      },
-    }),
-  },
-  avatarImg: {
-    width: AVATAR_SIZE, height: AVATAR_SIZE,
-    borderRadius: AVATAR_SIZE / 2,
-  },
-  avatarGradient: {
-    width: AVATAR_SIZE, height: AVATAR_SIZE,
-    borderRadius: AVATAR_SIZE / 2,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  avatarText:   { fontFamily: FONT_BOLD, fontSize: 30, color: '#FFF', letterSpacing: 1 },
-  verifiedBadge: {
-    position: 'absolute',
-    bottom: 6,
-    right: 6,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-  verifiedInner: {
-    position: 'absolute',
-    bottom: -1,
-    right: -1,
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#10B981',
-  },
+    // avatar centred within the card, overlapping the hero bottom
+    avatarWrap: {
+      alignItems: 'center',
+      marginTop: -(AVATAR_SIZE / 2 + AVATAR_BORDER),
+    },
+    // Modern hero avatar wrappers (used by the current hero JSX)
+    avatarSection: {
+      alignItems: 'center',
+      marginTop: -42,
+      marginBottom: 8,
+    },
+    avatarWrapper: {
+      position: 'relative',
+    },
+    avatarRing: {
+      width: AVATAR_SIZE + AVATAR_BORDER * 2,
+      height: AVATAR_SIZE + AVATAR_BORDER * 2,
+      borderRadius: (AVATAR_SIZE + AVATAR_BORDER * 2) / 2,
+      backgroundColor: pageBg,
+      alignItems: 'center', justifyContent: 'center',
+      ...Platform.select({
+        web: { boxShadow: '0 4px 20px rgba(147,51,234,0.25)' } as object,
+        default: {
+          shadowColor: VIOLET,
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.25, shadowRadius: 16, elevation: 8,
+        },
+      }),
+    },
+    avatarImg: {
+      width: AVATAR_SIZE, height: AVATAR_SIZE,
+      borderRadius: AVATAR_SIZE / 2,
+    },
+    avatarGradient: {
+      width: AVATAR_SIZE, height: AVATAR_SIZE,
+      borderRadius: AVATAR_SIZE / 2,
+      alignItems: 'center', justifyContent: 'center',
+    },
+    avatarText: { fontFamily: FONT_BOLD, fontSize: 30, color: '#FFF', letterSpacing: 1 },
+    verifiedBadge: {
+      position: 'absolute',
+      bottom: 6,
+      right: 6,
+      backgroundColor: '#FFFFFF',
+      borderRadius: 12,
+      padding: 2,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.1,
+      shadowRadius: 3,
+      elevation: 2,
+    },
+    verifiedInner: {
+      position: 'absolute',
+      bottom: -1,
+      right: -1,
+      width: 10,
+      height: 10,
+      borderRadius: 5,
+      backgroundColor: '#10B981',
+    },
 
-  // content padding within the page card
-  column: {
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 8,
-    gap: 12,
-  },
+    // content padding within the page card
+    column: {
+      paddingHorizontal: 16,
+      paddingTop: 12,
+      paddingBottom: 8,
+      gap: 12,
+    },
 
-  // identity
-  identityBlock: { alignItems: 'center', gap: 6, paddingTop: 4 },
-  displayName:   { fontFamily: FONT_BOLD, fontSize: 24, color: textColor, textAlign: 'center', letterSpacing: -0.4 },
-  handle:        { fontFamily: FONT_MED, fontSize: 14, color: mutedColor },
-  metaRow:       { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  metaText:      { fontFamily: FONT_REG, fontSize: 13, color: mutedColor },
-  tierPill: {
-    flexDirection: 'row', alignItems: 'center', gap: 5,
-    marginTop: 4, paddingHorizontal: 12, paddingVertical: 5,
-    borderRadius: 50, borderWidth: 1.5, backgroundColor: isDark ? colors.surfaceElevated : '#FFFFFF',
-  },
-  tierText:  { fontFamily: FONT_MED, fontSize: 12 },
-  tierSince: { fontFamily: FONT_REG, fontSize: 11, color: mutedColor },
-  cpidPill: {
-    flexDirection: 'row', alignItems: 'center', gap: 5,
-    backgroundColor: VIOLET + '10',
-    paddingHorizontal: 12, paddingVertical: 5, borderRadius: 50,
-  },
-  cpidText: { fontFamily: FONT_MED, fontSize: 12, color: VIOLET, letterSpacing: 0.5 },
+    // identity
+    identityBlock: { alignItems: 'center', gap: 6, paddingTop: 4 },
+    displayName: { fontFamily: FONT_BOLD, fontSize: 24, color: textColor, textAlign: 'center', letterSpacing: -0.4 },
+    handle: { fontFamily: FONT_MED, fontSize: 14, color: mutedColor },
+    metaRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+    metaText: { fontFamily: FONT_REG, fontSize: 13, color: mutedColor },
+    tierPill: {
+      flexDirection: 'row', alignItems: 'center', gap: 5,
+      marginTop: 4, paddingHorizontal: 12, paddingVertical: 5,
+      borderRadius: 50, borderWidth: 1.5, backgroundColor: isDark ? colors.surfaceElevated : '#FFFFFF',
+    },
+    tierText: { fontFamily: FONT_MED, fontSize: 12 },
+    tierSince: { fontFamily: FONT_REG, fontSize: 11, color: mutedColor },
+    cpidPill: {
+      flexDirection: 'row', alignItems: 'center', gap: 5,
+      backgroundColor: VIOLET + '10',
+      paddingHorizontal: 12, paddingVertical: 5, borderRadius: 50,
+    },
+    cpidText: { fontFamily: FONT_MED, fontSize: 12, color: VIOLET, letterSpacing: 0.5 },
 
-  // action buttons
-  actionRow: { flexDirection: 'row', gap: 10 },
-  followBtn: {
-    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 7, paddingVertical: 13, borderRadius: 14,
-    backgroundColor: VIOLET,
-  },
-  followBtnDone: {
-    backgroundColor: VIOLET + '14',
-    borderWidth: 1.5, borderColor: VIOLET + '50',
-  },
-  msgBtn: {
-    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 7, paddingVertical: 13, borderRadius: 14,
-    backgroundColor: cardBg, borderWidth: 1.5, borderColor: borderColor,
-    ...shadow,
-  },
-  editBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 7, paddingVertical: 13, borderRadius: 14,
-    backgroundColor: VIOLET + '10', borderWidth: 1.5, borderColor: VIOLET + '30',
-  },
-  exportBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 7, paddingVertical: 13, borderRadius: 14,
-    backgroundColor: VIOLET + '10', borderWidth: 1.5, borderColor: VIOLET + '30',
-  },
-  actionBtnText: { fontFamily: FONT_SEMI, fontSize: 14 },
+    // action buttons
+    actionRow: { flexDirection: 'row', gap: 10 },
+    followBtn: {
+      flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+      gap: 7, paddingVertical: 13, borderRadius: 14,
+      backgroundColor: VIOLET,
+    },
+    followBtnDone: {
+      backgroundColor: VIOLET + '14',
+      borderWidth: 1.5, borderColor: VIOLET + '50',
+    },
+    msgBtn: {
+      flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+      gap: 7, paddingVertical: 13, borderRadius: 14,
+      backgroundColor: cardBg, borderWidth: 1.5, borderColor: borderColor,
+      ...shadow,
+    },
+    editBtn: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+      gap: 7, paddingVertical: 13, borderRadius: 14,
+      backgroundColor: VIOLET + '10', borderWidth: 1.5, borderColor: VIOLET + '30',
+    },
+    exportBtn: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+      gap: 7, paddingVertical: 13, borderRadius: 14,
+      backgroundColor: VIOLET + '10', borderWidth: 1.5, borderColor: VIOLET + '30',
+    },
+    actionBtnText: { fontFamily: FONT_SEMI, fontSize: 14 },
 
-  // stats
-  statsCard: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: cardBg, borderRadius: CARD_RADIUS,
-    paddingVertical: 16, paddingHorizontal: 8,
-    ...shadow,
-  },
-  statItem:   { flex: 1, alignItems: 'center', gap: 2 },
-  statNum:    { fontFamily: FONT_BOLD, fontSize: 22, color: textColor, letterSpacing: -0.5 },
-  statLabel:  { fontFamily: FONT_REG, fontSize: 11, color: mutedColor, letterSpacing: 0.3,
-                textTransform: 'uppercase' },
-  statDivider:{ width: 1, height: 32, backgroundColor: borderColor },
+    // stats
+    statsCard: {
+      flexDirection: 'row', alignItems: 'center',
+      backgroundColor: cardBg, borderRadius: CARD_RADIUS,
+      paddingVertical: 16, paddingHorizontal: 8,
+      ...shadow,
+    },
+    statItem: { flex: 1, alignItems: 'center', gap: 2 },
+    statNum: { fontFamily: FONT_BOLD, fontSize: 22, color: textColor, letterSpacing: -0.5 },
+    statLabel: {
+      fontFamily: FONT_REG, fontSize: 11, color: mutedColor, letterSpacing: 0.3,
+      textTransform: 'uppercase'
+    },
+    statDivider: { width: 1, height: 32, backgroundColor: borderColor },
 
-  // cards
-  card: {
-    backgroundColor: cardBg, borderRadius: CARD_RADIUS,
-    padding: 18, gap: 10, ...shadow,
-  },
-  sectionLabel: {
-    fontFamily: FONT_SEMI, fontSize: 11, color: mutedColor,
-    letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 2,
-  },
-  bioText: { fontFamily: FONT_REG, fontSize: 15, color: textColor, lineHeight: 24 },
+    // cards
+    card: {
+      backgroundColor: cardBg, borderRadius: CARD_RADIUS,
+      padding: 18, gap: 10, ...shadow,
+    },
+    sectionLabel: {
+      fontFamily: FONT_SEMI, fontSize: 11, color: mutedColor,
+      letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 2,
+    },
+    bioText: { fontFamily: FONT_REG, fontSize: 15, color: textColor, lineHeight: 24 },
 
-  // link pills
-  linkPill: {
-    flexDirection: 'row', alignItems: 'center', gap: 14,
-    backgroundColor: cardBg, borderRadius: CARD_RADIUS,
-    padding: 14, ...shadow,
-  },
-  linkIcon:  { width: 42, height: 42, borderRadius: 12,
-               alignItems: 'center', justifyContent: 'center' },
-  linkLabel: { flex: 1, fontFamily: FONT_SEMI, fontSize: 15, color: textColor },
+    // link pills
+    linkPill: {
+      flexDirection: 'row', alignItems: 'center', gap: 14,
+      backgroundColor: cardBg, borderRadius: CARD_RADIUS,
+      padding: 14, ...shadow,
+    },
+    linkIcon: {
+      width: 42, height: 42, borderRadius: 12,
+      alignItems: 'center', justifyContent: 'center'
+    },
+    linkLabel: { flex: 1, fontFamily: FONT_SEMI, fontSize: 15, color: textColor },
 
-  // culture tags
-  tagsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  tag: {
-    paddingHorizontal: 12, paddingVertical: 5,
-    borderRadius: 50, backgroundColor: VIOLET + '10',
-    borderWidth: 1, borderColor: VIOLET + '25',
-  },
-  tagText: { fontFamily: FONT_MED, fontSize: 12, color: VIOLET },
+    // culture tags
+    tagsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    tag: {
+      paddingHorizontal: 12, paddingVertical: 5,
+      borderRadius: 50, backgroundColor: VIOLET + '10',
+      borderWidth: 1, borderColor: VIOLET + '25',
+    },
+    tagText: { fontFamily: FONT_MED, fontSize: 12, color: VIOLET },
 
-  // CulturePass ID card — Premium single solid color treatment
-  cpidCard: {
-    borderRadius: CARD_RADIUS,
-    paddingTop: 18,
-    paddingHorizontal: 18,
-    paddingBottom: 20,
-    overflow: 'hidden',
-    ...Platform.select({
-      web: { boxShadow: '0 10px 40px rgba(0,0,0,0.35)' } as object,
-      default: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.35, shadowRadius: 24, elevation: 12,
-      },
-    }),
-  },
-  cpidAccentGold: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 3,
-    backgroundColor: '#D4AF37',
-  },
-  cpidBrandRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 14,
-  },
-  cpidBrandMark: {
-    width: 22,
-    height: 22,
-    borderRadius: 6,
-    backgroundColor: 'rgba(212,175,55,0.15)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cpidBrand: {
-    fontFamily: FONT_BOLD,
-    fontSize: 13,
-    color: '#E8E4D9',
-    letterSpacing: 0.8,
-    flex: 1,
-  },
-  cpidBrandPill: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 999,
-    backgroundColor: 'rgba(212,175,55,0.18)',
-  },
-  cpidBrandPillText: {
-    fontFamily: FONT_MED,
-    fontSize: 10,
-    color: '#D4AF37',
-    letterSpacing: 1,
-  },
-  cpidBody: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 14,
-  },
-  cpidQrWrap: {
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  cpidQrInner: {
-    backgroundColor: '#FFFFFF',
-    padding: 6,
-    borderRadius: 10,
-  },
-  cpidInfo: {
-    flex: 1,
-    gap: 2,
-    paddingTop: 2,
-  },
-  cpidIdLabel: {
-    fontFamily: FONT_MED,
-    fontSize: 9,
-    color: '#A8C5FF',
-    letterSpacing: 3,
-    textTransform: 'uppercase',
-  },
-  cpidIdValue: {
-    fontFamily: FONT_BOLD,
-    fontSize: 19,
-    color: '#D4AF37',
-    letterSpacing: 1.5,
-    marginTop: 1,
-  },
-  cpidInfoName: {
-    fontFamily: FONT_SEMI,
-    fontSize: 15,
-    color: '#FFFFFF',
-    letterSpacing: 0.2,
-    marginTop: 8,
-  },
-  cpidInfoMeta: {
-    fontFamily: FONT_MED,
-    fontSize: 12,
-    color: '#B8C9E8',
-    letterSpacing: 0.3,
-    marginTop: 2,
-  },
+    // CulturePass ID card — Premium single solid color treatment
+    cpidCard: {
+      borderRadius: CARD_RADIUS,
+      paddingTop: 18,
+      paddingHorizontal: 18,
+      paddingBottom: 20,
+      overflow: 'hidden',
+      ...Platform.select({
+        web: { boxShadow: '0 10px 40px rgba(0,0,0,0.35)' } as object,
+        default: {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 10 },
+          shadowOpacity: 0.35, shadowRadius: 24, elevation: 12,
+        },
+      }),
+    },
+    cpidAccentGold: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      height: 3,
+      backgroundColor: '#D4AF37',
+    },
+    cpidBrandRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      marginBottom: 14,
+    },
+    cpidBrandMark: {
+      width: 22,
+      height: 22,
+      borderRadius: 6,
+      backgroundColor: 'rgba(212,175,55,0.15)',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    cpidBrand: {
+      fontFamily: FONT_BOLD,
+      fontSize: 13,
+      color: '#E8E4D9',
+      letterSpacing: 0.8,
+      flex: 1,
+    },
+    cpidBrandPill: {
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+      borderRadius: 999,
+      backgroundColor: 'rgba(212,175,55,0.18)',
+    },
+    cpidBrandPillText: {
+      fontFamily: FONT_MED,
+      fontSize: 10,
+      color: '#D4AF37',
+      letterSpacing: 1,
+    },
+    cpidBody: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: 14,
+    },
+    cpidQrWrap: {
+      borderRadius: 12,
+      overflow: 'hidden',
+    },
+    cpidQrInner: {
+      backgroundColor: '#FFFFFF',
+      padding: 6,
+      borderRadius: 10,
+    },
+    cpidInfo: {
+      flex: 1,
+      gap: 2,
+      paddingTop: 2,
+    },
+    cpidIdLabel: {
+      fontFamily: FONT_MED,
+      fontSize: 9,
+      color: '#A8C5FF',
+      letterSpacing: 3,
+      textTransform: 'uppercase',
+    },
+    cpidIdValue: {
+      fontFamily: FONT_BOLD,
+      fontSize: 19,
+      color: '#D4AF37',
+      letterSpacing: 1.5,
+      marginTop: 1,
+    },
+    cpidInfoName: {
+      fontFamily: FONT_SEMI,
+      fontSize: 15,
+      color: '#FFFFFF',
+      letterSpacing: 0.2,
+      marginTop: 8,
+    },
+    cpidInfoMeta: {
+      fontFamily: FONT_MED,
+      fontSize: 12,
+      color: '#B8C9E8',
+      letterSpacing: 0.3,
+      marginTop: 2,
+    },
 
-  // ── Digital Business Pass preview card ────────────────────────────────────
-  bizPassCard: {
-    borderRadius: 16,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    backgroundColor: '#FFFFFF',
-    ...Platform.select({
-      web: { boxShadow: '0 4px 20px rgba(0,0,0,0.12)' } as object,
-      default: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.12,
-        shadowRadius: 12,
-        elevation: 5,
-      },
-    }),
-  },
-  bizPassInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingHorizontal: 14,
-    paddingTop: 14,
-    paddingBottom: 10,
-  },
-  bizPassLeft: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  bizPassAvatarWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  bizPassAvatar: {
-    width: 44,
-    height: 44,
-  },
-  bizPassAvatarFallback: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  bizPassAvatarInitials: {
-    fontFamily: FONT_BOLD,
-    fontSize: 14,
-  },
-  bizPassName: {
-    fontFamily: FONT_BOLD,
-    fontSize: 13,
-    color: '#111827',
-    letterSpacing: -0.2,
-  },
-  bizPassHandle: {
-    fontFamily: FONT_MED,
-    fontSize: 11,
-    color: '#6B7280',
-    marginTop: 1,
-  },
-  bizPassTier: {
-    fontFamily: FONT_BOLD,
-    fontSize: 8.5,
-    letterSpacing: 0.8,
-    marginTop: 3,
-  },
-  bizPassQrWrap: {
-    padding: 5,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  bizPassFooter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#F3F4F6',
-    backgroundColor: '#FAFAFA',
-  },
-  bizPassFooterText: {
-    fontFamily: FONT_BOLD,
-    fontSize: 8.5,
-    color: '#009CDE',
-    letterSpacing: 1,
-  },
-  bizPassNfc: {
-    fontFamily: FONT_BOLD,
-    fontSize: 8,
-    color: '#9CA3AF',
-    letterSpacing: 0.5,
-  },
+    bizPassCard: {
+      width: '100%',
+      maxWidth: 330,
+      height: 210,
+      alignSelf: 'center',
+      borderRadius: 20,
+      overflow: 'hidden',
+      borderWidth: 1,
+      borderColor: '#E5E7EB',
+      backgroundColor: '#FFFFFF',
+      ...Platform.select({
+        web: { boxShadow: '0px 12px 30px rgba(0,0,0,0.35)' } as object,
+        default: {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: 0.3,
+          shadowRadius: 16,
+          elevation: 10,
+        },
+      }),
+    },
+    bizPassInner: {
+      flex: 1,
+      padding: 14,
+      justifyContent: 'space-between',
+    },
+    bizPassLeft: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+    },
+    bizPassAvatarWrap: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      overflow: 'hidden',
+      borderWidth: 1,
+      borderColor: '#E5E7EB',
+    },
+    bizPassAvatar: {
+      width: 44,
+      height: 44,
+    },
+    bizPassAvatarFallback: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    bizPassAvatarInitials: {
+      fontFamily: FONT_BOLD,
+      fontSize: 14,
+    },
+    bizPassName: {
+      fontFamily: FONT_BOLD,
+      fontSize: 14,
+      color: '#0B0F19',
+      lineHeight: 18,
+    },
+    bizPassHandle: {
+      fontFamily: FONT_MED,
+      fontSize: 11,
+      color: '#4B5563',
+      marginTop: 1,
+    },
+    bizPassTier: {
+      fontFamily: FONT_BOLD,
+      fontSize: 8.5,
+      letterSpacing: 0.8,
+      marginTop: 3,
+    },
+    bizPassQrWrap: {
+      padding: 5,
+      backgroundColor: '#FFFFFF',
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: '#E5E7EB',
+    },
 
-  // ── Public URL / username option card (new) ─────────────────────────────
-  publicUrlCard: {
-    marginTop: 16,
-    marginBottom: 8,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    padding: 14,
-    gap: 8,
-  },
-  publicUrlHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  cpuBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 999,
-  },
-  cpuBadgeText: {
-    fontFamily: FontFamily.semibold,
-    fontSize: 10,
-    letterSpacing: 0.5,
-  },
-  publicUrlLabel: {
-    fontFamily: FontFamily.medium,
-    fontSize: 11,
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
-  },
-  publicUrlRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderRadius: Radius.md,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-  },
-  publicUrlValue: {
-    fontFamily: FontFamily.semibold,
-    fontSize: 15,
-    flex: 1,
-  },
-  // ── Improved Bottom CPU / Public Profile Card ─────────────────────────────
-  bottomCard: {
-    marginTop: 32,
-    marginBottom: 16,
-    borderRadius: Radius.xl,
-    borderWidth: 1,
-    padding: 20,
-    gap: 16,
-    ...Platform.select({
-      web: { boxShadow: '0 4px 20px rgba(0,0,0,0.06)' } as any,
-    }),
-  },
-  bottomCardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  cpuPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    backgroundColor: VIOLET + '12',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 999,
-  },
-  cpuPillText: {
-    fontFamily: FontFamily.semibold,
-    fontSize: 11,
-    letterSpacing: 0.3,
-  },
-  bottomCardTitle: {
-    fontFamily: FontFamily.semibold,
-    fontSize: 15,
-  },
-  bottomLinkRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: isDark ? colors.surfaceElevated : '#F4F1E9',
-    borderRadius: Radius.lg,
-    padding: 14,
-    gap: 12,
-  },
-  bottomLink: {
-    fontFamily: FontFamily.semibold,
-    fontSize: 15,
-  },
-  bottomLinkHint: {
-    fontFamily: FontFamily.medium,
-    fontSize: 12,
-    marginTop: 2,
-  },
-  copyButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: VIOLET + '10',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  bottomActions: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 4,
-  },
-  bottomActionBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 10,
-    borderRadius: Radius.md,
-    backgroundColor: isDark ? colors.surfaceElevated : '#F4F1E9',
-  },
-  bottomActionText: {
-    fontFamily: FontFamily.medium,
-    fontSize: 13,
-  },
+    // ── Public URL / username option card (new) ─────────────────────────────
+    publicUrlCard: {
+      marginTop: 16,
+      marginBottom: 8,
+      borderRadius: Radius.lg,
+      borderWidth: 1,
+      padding: 14,
+      gap: 8,
+    },
+    publicUrlHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+    },
+    cpuBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      paddingHorizontal: 8,
+      paddingVertical: 3,
+      borderRadius: 999,
+    },
+    cpuBadgeText: {
+      fontFamily: FontFamily.semibold,
+      fontSize: 10,
+      letterSpacing: 0.5,
+    },
+    publicUrlLabel: {
+      fontFamily: FontFamily.medium,
+      fontSize: 11,
+      letterSpacing: 0.8,
+      textTransform: 'uppercase',
+    },
+    publicUrlRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      borderRadius: Radius.md,
+      paddingHorizontal: 12,
+      paddingVertical: 12,
+    },
+    publicUrlValue: {
+      fontFamily: FontFamily.semibold,
+      fontSize: 15,
+      flex: 1,
+    },
+    // ── Improved Bottom CPU / Public Profile Card ─────────────────────────────
+    bottomCard: {
+      marginTop: 32,
+      marginBottom: 16,
+      borderRadius: Radius.xl,
+      borderWidth: 1,
+      padding: 20,
+      gap: 16,
+      ...Platform.select({
+        web: { boxShadow: '0 4px 20px rgba(0,0,0,0.06)' } as any,
+      }),
+    },
+    bottomCardHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+    },
+    cpuPill: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 5,
+      backgroundColor: VIOLET + '12',
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+      borderRadius: 999,
+    },
+    cpuPillText: {
+      fontFamily: FontFamily.semibold,
+      fontSize: 11,
+      letterSpacing: 0.3,
+    },
+    bottomCardTitle: {
+      fontFamily: FontFamily.semibold,
+      fontSize: 15,
+    },
+    bottomLinkRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: isDark ? colors.surfaceElevated : '#F4F1E9',
+      borderRadius: Radius.lg,
+      padding: 14,
+      gap: 12,
+    },
+    bottomLink: {
+      fontFamily: FontFamily.semibold,
+      fontSize: 15,
+    },
+    bottomLinkHint: {
+      fontFamily: FontFamily.medium,
+      fontSize: 12,
+      marginTop: 2,
+    },
+    copyButton: {
+      width: 40,
+      height: 40,
+      borderRadius: 12,
+      backgroundColor: VIOLET + '10',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    bottomActions: {
+      flexDirection: 'row',
+      gap: 12,
+      marginTop: 4,
+    },
+    bottomActionBtn: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 6,
+      paddingVertical: 10,
+      borderRadius: Radius.md,
+      backgroundColor: isDark ? colors.surfaceElevated : '#F4F1E9',
+    },
+    bottomActionText: {
+      fontFamily: FontFamily.medium,
+      fontSize: 13,
+    },
 
-  bottomCardContent: {
-    flexDirection: 'row',
-    gap: 16,
-    alignItems: 'flex-start',
-  },
-  qrContainer: {
-    padding: 10,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: isDark ? colors.borderLight : '#E8E3D9',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    elevation: 3,
-  },
+    bottomCardContent: {
+      flexDirection: 'row',
+      gap: 16,
+      alignItems: 'flex-start',
+    },
+    qrContainer: {
+      padding: 10,
+      backgroundColor: '#FFFFFF',
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: isDark ? colors.borderLight : '#E8E3D9',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.08,
+      shadowRadius: 6,
+      elevation: 3,
+    },
 
-  // Rich Message / Call action sheet options
-  contactOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 17,
-    gap: 14,
-    borderTopWidth: 1,
-    borderColor: borderColor,
-  },
-  contactOptionText: {
-    flex: 1,
-    fontSize: 17,
-    fontFamily: FONT_REG,
-    color: textColor,
-  },
+    // Rich Message / Call action sheet options
+    contactOption: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 24,
+      paddingVertical: 17,
+      gap: 14,
+      borderTopWidth: 1,
+      borderColor: borderColor,
+    },
+    contactOptionText: {
+      flex: 1,
+      fontSize: 17,
+      fontFamily: FONT_REG,
+      color: textColor,
+    },
 
-  // Unified member card vertical styles
-  unifiedMemberCard: {
-    marginTop: 24,
-    marginBottom: 8,
-    borderRadius: Radius.xl,
-    borderWidth: 1,
-    padding: 16,
-    gap: 12,
-    backgroundColor: cardBg,
-    ...Platform.select({
-      web: { boxShadow: '0 4px 20px rgba(0,0,0,0.06)' } as any,
-    }),
-  },
-  cpidCardVertical: {
-    borderRadius: CARD_RADIUS,
-    paddingTop: 18,
-    paddingHorizontal: 18,
-    paddingBottom: 20,
-    overflow: 'hidden',
-    alignItems: 'center',
-    ...Platform.select({
-      web: { boxShadow: '0 10px 30px rgba(0,0,0,0.3)' } as object,
-      default: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.3, shadowRadius: 20, elevation: 10,
-      },
-    }),
-  },
-  cpidTierText: {
-    fontFamily: FONT_BOLD,
-    fontSize: 9,
-    letterSpacing: 0.8,
-  },
-  cpidProfileVertical: {
-    alignItems: 'center',
-    gap: 10,
-    marginTop: 8,
-    width: '100%',
-  },
-  cpidAvatarWrapVertical: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    overflow: 'hidden',
-    borderWidth: 1.5,
-    borderColor: '#E5E7EB',
-  },
-  cpidAvatarVertical: {
-    width: 64,
-    height: 64,
-  },
-  cpidAvatarFallbackVertical: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cpidAvatarInitialsVertical: {
-    fontSize: 22,
-    fontFamily: FONT_BOLD,
-  },
-  cpidAffiliationBadgeVertical: {
-    position: 'absolute',
-    bottom: -2,
-    right: -2,
-    width: 24,
-    height: 24,
-    borderRadius: 5,
-    borderWidth: 1.5,
-    borderColor: '#FFFFFF',
-    backgroundColor: '#F3F4F6',
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-  cpidAffiliationBadgeImageVertical: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 4,
-  },
-  cpidUserInfoVertical: {
-    alignItems: 'center',
-    gap: 2,
-  },
-  cpidNameVertical: {
-    fontSize: 18,
-    fontFamily: FONT_BOLD,
-    color: '#FFFFFF',
-    lineHeight: 22,
-  },
-  cpidHandleVertical: {
-    fontSize: 12,
-    fontFamily: FONT_MED,
-    color: '#B8C9E8',
-  },
-  cpidAffiliationNameVertical: {
-    fontSize: 12,
-    fontFamily: FONT_MED,
-    color: '#D4AF37',
-    marginTop: 2,
-  },
-  cpidMemberSinceVertical: {
-    fontSize: 10,
-    fontFamily: FONT_MED,
-    color: '#A8C5FF',
-    marginTop: 2,
-  },
-  cpidQrSectionVertical: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 18,
-    gap: 8,
-  },
-  cpidQrWhiteBackground: {
-    padding: 6,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 10,
-  },
-  cpidMonospaceContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginTop: 4,
-  },
-  cpidMonospaceTextVertical: {
-    fontSize: 12.5,
-    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
-    letterSpacing: 1.5,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-  },
-  unifiedCardActions: {
-    flexDirection: 'row',
-    gap: 10,
-    width: '100%',
-    marginTop: 4,
-  },
-  unifiedCardBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 10,
-    borderRadius: 12,
-    borderWidth: 1,
-    backgroundColor: 'rgba(255,255,255,0.03)',
-  },
-  unifiedCardBtnText: {
-    fontFamily: FONT_SEMI,
-    fontSize: 12,
-  },
-  unifiedCardFullBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 11,
-    borderRadius: 12,
-    borderWidth: 1.5,
-    width: '100%',
-    marginTop: 4,
-  },
-  unifiedCardFullBtnText: {
-    fontFamily: FONT_SEMI,
-    fontSize: 12.5,
-  },
-  sectionCard: {
-    backgroundColor: cardBg,
-    borderRadius: CARD_RADIUS,
-    padding: 16,
-    gap: 10,
-    ...shadow,
-    marginTop: 12,
-  },
-  associatedProfileRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderColor: 'rgba(0,0,0,0.05)',
-  },
-  associatedProfileAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 8,
-  },
-  associatedProfileAvatarFallback: {
-    width: 36,
-    height: 36,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  associatedProfileInitials: {
-    fontSize: 14,
-    fontFamily: FONT_BOLD,
-  },
-  associatedProfileName: {
-    fontSize: 14,
-    fontFamily: FONT_SEMI,
-  },
-  associatedProfileType: {
-    fontSize: 11,
-    fontFamily: FONT_MED,
-  },
-  eventRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingVertical: 6,
-  },
-  eventThumbnail: {
-    width: 44,
-    height: 44,
-    borderRadius: 8,
-    backgroundColor: 'rgba(0,0,0,0.04)',
-  },
-  eventThumbnailFallback: {
-    width: 44,
-    height: 44,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  eventName: {
-    fontSize: 14,
-    fontFamily: FONT_SEMI,
-  },
-  eventMeta: {
-    fontSize: 11,
-    fontFamily: FONT_REG,
-  },
-  eventPrice: {
-    fontSize: 11,
-    fontFamily: FONT_SEMI,
-  },
-});
+    // Unified member card vertical styles
+    unifiedMemberCard: {
+      marginTop: 24,
+      marginBottom: 8,
+      borderRadius: Radius.xl,
+      borderWidth: 1,
+      padding: 16,
+      gap: 12,
+      backgroundColor: cardBg,
+      ...Platform.select({
+        web: { boxShadow: '0 4px 20px rgba(0,0,0,0.06)' } as any,
+      }),
+    },
+    cpidCardVertical: {
+      borderRadius: CARD_RADIUS,
+      paddingTop: 18,
+      paddingHorizontal: 18,
+      paddingBottom: 20,
+      overflow: 'hidden',
+      alignItems: 'center',
+      ...Platform.select({
+        web: { boxShadow: '0 10px 30px rgba(0,0,0,0.3)' } as object,
+        default: {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: 0.3, shadowRadius: 20, elevation: 10,
+        },
+      }),
+    },
+    cpidTierText: {
+      fontFamily: FONT_BOLD,
+      fontSize: 9,
+      letterSpacing: 0.8,
+    },
+    cpidProfileVertical: {
+      alignItems: 'center',
+      gap: 10,
+      marginTop: 8,
+      width: '100%',
+    },
+    cpidAvatarWrapVertical: {
+      width: 64,
+      height: 64,
+      borderRadius: 32,
+      overflow: 'hidden',
+      borderWidth: 1.5,
+      borderColor: '#E5E7EB',
+    },
+    cpidAvatarVertical: {
+      width: 64,
+      height: 64,
+    },
+    cpidAvatarFallbackVertical: {
+      width: 64,
+      height: 64,
+      borderRadius: 32,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    cpidAvatarInitialsVertical: {
+      fontSize: 22,
+      fontFamily: FONT_BOLD,
+    },
+    cpidAffiliationBadgeVertical: {
+      position: 'absolute',
+      bottom: -2,
+      right: -2,
+      width: 24,
+      height: 24,
+      borderRadius: 5,
+      borderWidth: 1.5,
+      borderColor: '#FFFFFF',
+      backgroundColor: '#F3F4F6',
+      alignItems: 'center',
+      justifyContent: 'center',
+      overflow: 'hidden',
+    },
+    cpidAffiliationBadgeImageVertical: {
+      width: '100%',
+      height: '100%',
+      borderRadius: 4,
+    },
+    cpidUserInfoVertical: {
+      alignItems: 'center',
+      gap: 2,
+    },
+    cpidNameVertical: {
+      fontSize: 18,
+      fontFamily: FONT_BOLD,
+      color: '#FFFFFF',
+      lineHeight: 22,
+    },
+    cpidHandleVertical: {
+      fontSize: 12,
+      fontFamily: FONT_MED,
+      color: '#B8C9E8',
+    },
+    cpidAffiliationNameVertical: {
+      fontSize: 12,
+      fontFamily: FONT_MED,
+      color: '#D4AF37',
+      marginTop: 2,
+    },
+    cpidMemberSinceVertical: {
+      fontSize: 10,
+      fontFamily: FONT_MED,
+      color: '#A8C5FF',
+      marginTop: 2,
+    },
+    cpidQrSectionVertical: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginTop: 18,
+      gap: 8,
+    },
+    cpidQrWhiteBackground: {
+      padding: 6,
+      backgroundColor: '#FFFFFF',
+      borderRadius: 10,
+    },
+    cpidMonospaceContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      marginTop: 4,
+    },
+    cpidMonospaceTextVertical: {
+      fontSize: 12.5,
+      fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+      letterSpacing: 1.5,
+      fontWeight: 'bold',
+      color: '#FFFFFF',
+    },
+    unifiedCardActions: {
+      flexDirection: 'row',
+      gap: 10,
+      width: '100%',
+      marginTop: 4,
+    },
+    unifiedCardBtn: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 6,
+      paddingVertical: 10,
+      borderRadius: 12,
+      borderWidth: 1,
+      backgroundColor: 'rgba(255,255,255,0.03)',
+    },
+    unifiedCardBtnText: {
+      fontFamily: FONT_SEMI,
+      fontSize: 12,
+    },
+    unifiedCardFullBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 6,
+      paddingVertical: 11,
+      borderRadius: 12,
+      borderWidth: 1.5,
+      width: '100%',
+      marginTop: 4,
+    },
+    unifiedCardFullBtnText: {
+      fontFamily: FONT_SEMI,
+      fontSize: 12.5,
+    },
+    sectionCard: {
+      backgroundColor: cardBg,
+      borderRadius: CARD_RADIUS,
+      padding: 16,
+      gap: 10,
+      ...shadow,
+      marginTop: 12,
+    },
+    associatedProfileRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      paddingVertical: 8,
+      borderBottomWidth: 1,
+      borderColor: 'rgba(0,0,0,0.05)',
+    },
+    associatedProfileAvatar: {
+      width: 36,
+      height: 36,
+      borderRadius: 8,
+    },
+    associatedProfileAvatarFallback: {
+      width: 36,
+      height: 36,
+      borderRadius: 8,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    associatedProfileInitials: {
+      fontSize: 14,
+      fontFamily: FONT_BOLD,
+    },
+    associatedProfileName: {
+      fontSize: 14,
+      fontFamily: FONT_SEMI,
+    },
+    associatedProfileType: {
+      fontSize: 11,
+      fontFamily: FONT_MED,
+    },
+    eventRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      paddingVertical: 6,
+    },
+    eventThumbnail: {
+      width: 44,
+      height: 44,
+      borderRadius: 8,
+      backgroundColor: 'rgba(0,0,0,0.04)',
+    },
+    eventThumbnailFallback: {
+      width: 44,
+      height: 44,
+      borderRadius: 8,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    eventName: {
+      fontSize: 14,
+      fontFamily: FONT_SEMI,
+    },
+    eventMeta: {
+      fontSize: 11,
+      fontFamily: FONT_REG,
+    },
+    eventPrice: {
+      fontSize: 11,
+      fontFamily: FONT_SEMI,
+    },
+  });
 };  // close getStyles
 
 

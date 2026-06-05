@@ -4,7 +4,7 @@
  */
 
 import { Router, type Request, type Response } from 'express';
-import { db } from '../admin';
+import { db, isFirestoreConfigured } from '../admin';
 import { requireAuth, requireRole } from '../middleware/auth';
 import {
   bootstrapGoogleBusinessCardClass,
@@ -21,6 +21,18 @@ export const walletRouter = Router();
 
 async function loadWalletPassUser(req: Request): Promise<WalletPassUser> {
   const u = req.user!;
+  if (!isFirestoreConfigured) {
+    return {
+      id: u.id,
+      username: u.username,
+      displayName: u.displayName ?? u.username,
+      email: u.email,
+      city: u.city ?? 'Sydney',
+      country: u.country ?? 'Australia',
+      culturePassId: 'CP-123456',
+      tier: 'elite',
+    };
+  }
   const snap = await db.collection('users').doc(u.id).get();
   const data = snap.data() ?? {};
   // Support both embedded membership.tier and top level for flexibility
@@ -70,14 +82,19 @@ walletRouter.get('/wallet/business-card/apple/pass', async (req: Request, res: R
       id: payload.sub,
       username: payload.username,
     };
-    const snap = await db.collection('users').doc(payload.sub).get();
-    if (snap.exists) {
-      const data = snap.data() ?? {};
-      user.displayName = (data.displayName as string | undefined) ?? (data.name as string | undefined) ?? payload.username;
-      user.email = data.email as string | undefined;
-      user.city = data.city as string | undefined;
-      user.country = data.country as string | undefined;
-      user.culturePassId = data.culturePassId as string | undefined;
+    if (isFirestoreConfigured) {
+      const snap = await db.collection('users').doc(payload.sub).get();
+      if (snap.exists) {
+        const data = snap.data() ?? {};
+        user.displayName = (data.displayName as string | undefined) ?? (data.name as string | undefined) ?? payload.username;
+        user.email = data.email as string | undefined;
+        user.city = data.city as string | undefined;
+        user.country = data.country as string | undefined;
+        user.culturePassId = data.culturePassId as string | undefined;
+      }
+    } else {
+      user.displayName = payload.username;
+      user.culturePassId = 'CP-123456';
     }
 
     const buffer = await generateAppleBusinessCardPass(user);

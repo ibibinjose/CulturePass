@@ -1,5 +1,38 @@
 [
   {
+    "hash": "fdc808a",
+    "fullHash": "fdc808ae1cab267474010940b9b9415d3921de26",
+    "author": "ibibinjose",
+    "email": "NeoTech@outlook.com.au",
+    "date": "2026-06-05T09:44:42+10:00",
+    "message": "chore: remove Sentry integration and associated configuration files",
+    "executor": "Human Developer",
+    "systemLabel": "ibibinjose",
+    "files": [
+      ".env.example",
+      ".github/workflows/eas-build.yml",
+      ".github/workflows/sentry-release.yml",
+      "SENTRY.md",
+      "android/app/build.gradle",
+      "android/sentry.properties",
+      "app.config.js",
+      "eas.json",
+      "functions/package-lock.json",
+      "functions/package.json",
+      "functions/src/__tests__/validation.test.ts",
+      "functions/src/lib/logger.ts",
+      "functions/src/middleware/requestId.ts",
+      "ios/sentry.properties",
+      "metro.config.js",
+      "package-lock.json",
+      "package.json",
+      "scripts/notify-sentry-release.sh",
+      "src/constants/timesheetData.json",
+      "src/lib/sentry.ts",
+      "src/lib/sentry.web.ts"
+    ]
+  },
+  {
     "hash": "8f68739",
     "fullHash": "8f68739d2f6e5ac603b0f434cbacce1e6ec4f241",
     "author": "ibibinjose",

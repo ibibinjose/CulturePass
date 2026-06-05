@@ -426,7 +426,7 @@ function openSaveImageWindow(opts: {
       ctx.fillStyle='#F9FAFB'; ctx.strokeStyle='#E5E7EB'; ctx.lineWidth=1;
       rr(ctx,qrX-qrBP,qrY-qrBP,qrS+qrBP*2,qrS+qrBP*2,10); ctx.fill(); ctx.stroke();
       if(imgs[1]&&imgs[1].complete&&imgs[1].naturalWidth>0){ctx.drawImage(imgs[1],qrX,qrY,qrS,qrS);}
-      ctx.font='700 9.5px monospace'; ctx.letterSpacing='0.8px'; ctx.fillStyle='#0B0F19';
+      ctx.font='700 9.5px monospace'; ctx.letterSpacing='0.8px'; ctx.fillStyle='#10190bff';
       ctx.textAlign='center'; ctx.fillText('${opts.cpid}', qrX-qrBP+(qrS+qrBP*2)/2, qrY+qrS+16); ctx.textAlign='left';
     `;
 
@@ -521,7 +521,7 @@ export default function QRScreen() {
   const bottomInset = safeInsets.bottom;
   const [copied, setCopied] = useState(false);
   const [resolvingAvatar, setResolvingAvatar] = useState(false);
-  
+
   const cardTextColor = '#0B0F19';
   const cardSecondaryTextColor = '#4B5563';
   const cardTertiaryTextColor = '#9CA3AF';
@@ -551,7 +551,8 @@ export default function QRScreen() {
   const myProfiles = myProfilesData ?? [];
 
   const { data: membership, isLoading: membershipLoading } = useQuery<Membership>({
-    queryKey: [`/api/membership/${userId}`],
+    queryKey: ['membership', userId],
+    queryFn: () => modulesApi.membership.get(userId!) as unknown as Promise<Membership>,
     enabled: !!userId,
   });
 
@@ -707,7 +708,7 @@ export default function QRScreen() {
         title: `${name} — CulturePass`,
         message: `${name} (@${username})\nCPID: ${cpid}\n\n🪪 Digital Business Pass\n${siteUrl(`/cpu/${cpid}`)}`,
       });
-    } catch {}
+    } catch { }
   };
 
   const handleCopy = async () => {
@@ -722,7 +723,7 @@ export default function QRScreen() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       Share.share({
         message: `My CulturePass ${cardType === 'lanyard' ? 'Event Lanyard' : 'Digital Business'} Pass\n${name} (${cpid})\n${siteUrl(`/cpu/${cpid}`)}`,
-      }).catch(() => {});
+      }).catch(() => { });
       return;
     }
     setResolvingAvatar(true);
@@ -765,7 +766,7 @@ export default function QRScreen() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       Share.share({
         message: `My CulturePass ${cardType === 'lanyard' ? 'Event Lanyard' : 'Digital Business'} Pass\n${name} (${cpid})\n${siteUrl(`/cpu/${cpid}`)}`,
-      }).catch(() => {});
+      }).catch(() => { });
       return;
     }
     setResolvingAvatar(true);
@@ -863,491 +864,491 @@ export default function QRScreen() {
           contentContainerStyle={[s.scroll, { paddingBottom: bottomInset + 40 }]}
         >
           <PageContainer compact noTopPadding>
-          {isLoading ? (
-            <View style={{ gap: 14, alignItems: 'center', paddingTop: 20 }}>
-              <Skeleton width={cardWidth} height={CARD_HEIGHT_LANDSCAPE} borderRadius={24} />
-              <Skeleton width={cardWidth} height={CARD_HEIGHT_VERTICAL} borderRadius={24} />
-              <View style={{ height: 26 }} />
-              <View style={{ flexDirection: 'row', gap: 10, width: cardWidth }}>
-                <Skeleton width="32%" height={66} borderRadius={14} />
-                <Skeleton width="32%" height={66} borderRadius={14} />
-                <Skeleton width="32%" height={66} borderRadius={14} />
-              </View>
-            </View>
-          ) : (
-            <>
-              {flashMessage ? (
-                <View style={[s.flashBanner, {
-                  backgroundColor: flashMessage.type === 'success' ? CultureTokens.teal + '25' : CultureTokens.coral + '25',
-                  borderColor: flashMessage.type === 'success' ? CultureTokens.teal + '55' : CultureTokens.coral + '55',
-                }]}>
-                  <Ionicons
-                    name={flashMessage.type === 'success' ? 'checkmark-circle' : 'alert-circle'}
-                    size={16}
-                    color={flashMessage.type === 'success' ? CultureTokens.teal : CultureTokens.coral}
-                  />
-                  <Text style={s.flashBannerText}>{flashMessage.text}</Text>
+            {isLoading ? (
+              <View style={{ gap: 14, alignItems: 'center', paddingTop: 20 }}>
+                <Skeleton width={cardWidth} height={CARD_HEIGHT_LANDSCAPE} borderRadius={24} />
+                <Skeleton width={cardWidth} height={CARD_HEIGHT_VERTICAL} borderRadius={24} />
+                <View style={{ height: 26 }} />
+                <View style={{ flexDirection: 'row', gap: 10, width: cardWidth }}>
+                  <Skeleton width="32%" height={66} borderRadius={14} />
+                  <Skeleton width="32%" height={66} borderRadius={14} />
+                  <Skeleton width="32%" height={66} borderRadius={14} />
                 </View>
-              ) : null}
-
-              {/* Hero label */}
-              <View style={{ alignItems: 'center', marginBottom: 12 }}>
-                <Text style={[s.walletHeroLabel, { color: cardTheme.accent + 'AA' }]}>
-                  YOUR CULTUREPASS DIGITAL PASSES
-                </Text>
-                <Text style={[s.walletHeroSub, { color: cardTheme.accent }]}>
-                  {tierConf.label.toUpperCase()} MEMBER PASSES
-                </Text>
               </View>
-
-              {/* ── Dual-card area: side-by-side on desktop, stacked on mobile ── */}
-              <View
-                id="print-badge-area"
-                nativeID="print-badge-area"
-                style={[
-                  s.printBadgeArea,
-                  { width: containerWidth, flexDirection: sideBySide ? 'row' : 'column', gap: sideBySide ? 20 : 0 },
-                ]}
-              >
-                {/* ── CARD 1: Digital Business Pass ── */}
-                <View style={[s.cardWrapper, { width: cardWidth }]}>
-                  {/* Label badge */}
-                  <View style={s.cardBadgeRow}>
-                    <View style={[s.cardBadge, { backgroundColor: '#009CDE20', borderColor: '#009CDE40' }]}>
-                      <Ionicons name="id-card-outline" size={11} color="#009CDE" />
-                      <Text style={[s.cardBadgeText, { color: '#009CDE' }]}>1. DIGITAL BUSINESS PASS</Text>
-                    </View>
-                    <Text style={[s.cardBadgeSubtitle, { color: cardTheme.accent + '99' }]}>CULTUREPASS ID</Text>
+            ) : (
+              <>
+                {flashMessage ? (
+                  <View style={[s.flashBanner, {
+                    backgroundColor: flashMessage.type === 'success' ? CultureTokens.teal + '25' : CultureTokens.coral + '25',
+                    borderColor: flashMessage.type === 'success' ? CultureTokens.teal + '55' : CultureTokens.coral + '55',
+                  }]}>
+                    <Ionicons
+                      name={flashMessage.type === 'success' ? 'checkmark-circle' : 'alert-circle'}
+                      size={16}
+                      color={flashMessage.type === 'success' ? CultureTokens.teal : CultureTokens.coral}
+                    />
+                    <Text style={s.flashBannerText}>{flashMessage.text}</Text>
                   </View>
+                ) : null}
 
-                  <Pressable
-                    onPressIn={handlePressIn}
-                    onPressOut={handlePressOut}
-                    onPress={handlePress}
-                    style={{ width: cardWidth }}
-                    accessibilityRole="button"
-                    accessibilityLabel="Digital landscape business card. Tap for shimmer effect."
-                  >
-                    <Animated.View style={[{ width: cardWidth }, cardAnimatedStyle]}>
-                      <View style={[s.identityCard, { width: cardWidth, height: CARD_HEIGHT_LANDSCAPE, backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' }]}>
-                        <LinearGradient colors={['rgba(255,255,255,0.12)', 'rgba(255,255,255,0.02)', 'transparent']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} pointerEvents="none" />
-                        <Animated.View style={[StyleSheet.absoluteFill, shimmerStyle, { width: '50%' }]} pointerEvents="none">
-                          <LinearGradient colors={['transparent', 'rgba(255,255,255,0.06)', 'rgba(255,255,255,0.22)', 'rgba(255,255,255,0.06)', 'transparent']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={StyleSheet.absoluteFill} />
-                        </Animated.View>
-                        <View style={s.cardInner}>
-                          <View style={s.passHeaderContent}>
-                            <Text style={s.passType}>
-                              <Text style={{ color: '#FF3B30' }}>CULTURE</Text>
-                              <Text style={{ color: '#34C759' }}>PASS</Text>
-                              <Text style={{ color: '#009CDE' }}> ID</Text>
-                            </Text>
-                            <Text style={[s.passTier, { color: '#009CDE' }]}>{tierConf.label.toUpperCase()}</Text>
-                          </View>
-                          <View style={s.passMiddle}>
-                            <View style={s.leftCol}>
-                              <View style={s.passUserRow}>
-                                <View style={{ position: 'relative' }}>
-                                  <View style={[s.passAvatarWrap, { borderColor: '#E5E7EB' }]}>
-                                    {avatarUrl ? (
-                                      <Image source={{ uri: avatarUrl }} style={s.passAvatar} contentFit="cover" transition={200} cachePolicy="memory-disk" />
-                                    ) : (
-                                      <View style={[s.passAvatarFallback, { backgroundColor: '#F3F4F6' }]}>
-                                        <Text style={[s.passAvatarInitials, { color: cardTextColor }]}>{initials}</Text>
+                {/* Hero label */}
+                <View style={{ alignItems: 'center', marginBottom: 12 }}>
+                  <Text style={[s.walletHeroLabel, { color: cardTheme.accent + 'AA' }]}>
+                    YOUR CULTUREPASS DIGITAL PASSES
+                  </Text>
+                  <Text style={[s.walletHeroSub, { color: cardTheme.accent }]}>
+                    {tierConf.label.toUpperCase()} MEMBER PASSES
+                  </Text>
+                </View>
+
+                {/* ── Dual-card area: side-by-side on desktop, stacked on mobile ── */}
+                <View
+                  id="print-badge-area"
+                  nativeID="print-badge-area"
+                  style={[
+                    s.printBadgeArea,
+                    { width: containerWidth, flexDirection: sideBySide ? 'row' : 'column', gap: sideBySide ? 20 : 0 },
+                  ]}
+                >
+                  {/* ── CARD 1: Digital Business Pass ── */}
+                  <View style={[s.cardWrapper, { width: cardWidth }]}>
+                    {/* Label badge */}
+                    <View style={s.cardBadgeRow}>
+                      <View style={[s.cardBadge, { backgroundColor: '#009CDE20', borderColor: '#009CDE40' }]}>
+                        <Ionicons name="id-card-outline" size={11} color="#009CDE" />
+                        <Text style={[s.cardBadgeText, { color: '#009CDE' }]}>1. DIGITAL BUSINESS PASS</Text>
+                      </View>
+                      <Text style={[s.cardBadgeSubtitle, { color: cardTheme.accent + '99' }]}>CULTUREPASS ID</Text>
+                    </View>
+
+                    <Pressable
+                      onPressIn={handlePressIn}
+                      onPressOut={handlePressOut}
+                      onPress={handlePress}
+                      style={{ width: cardWidth }}
+                      accessibilityRole="button"
+                      accessibilityLabel="Digital landscape business card. Tap for shimmer effect."
+                    >
+                      <Animated.View style={[{ width: cardWidth }, cardAnimatedStyle]}>
+                        <View style={[s.identityCard, { width: cardWidth, height: CARD_HEIGHT_LANDSCAPE, backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' }]}>
+                          <LinearGradient colors={['rgba(255,255,255,0.12)', 'rgba(255,255,255,0.02)', 'transparent']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} pointerEvents="none" />
+                          <Animated.View style={[StyleSheet.absoluteFill, shimmerStyle, { width: '50%' }]} pointerEvents="none">
+                            <LinearGradient colors={['transparent', 'rgba(255,255,255,0.06)', 'rgba(255,255,255,0.22)', 'rgba(255,255,255,0.06)', 'transparent']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={StyleSheet.absoluteFill} />
+                          </Animated.View>
+                          <View style={s.cardInner}>
+                            <View style={s.passHeaderContent}>
+                              <Text style={s.passType}>
+                                <Text style={{ color: '#FF3B30' }}>CULTURE</Text>
+                                <Text style={{ color: '#34C759' }}>PASS</Text>
+                                <Text style={{ color: '#009CDE' }}> ID</Text>
+                              </Text>
+                              <Text style={[s.passTier, { color: '#009CDE' }]}>{tierConf.label.toUpperCase()}</Text>
+                            </View>
+                            <View style={s.passMiddle}>
+                              <View style={s.leftCol}>
+                                <View style={s.passUserRow}>
+                                  <View style={{ position: 'relative' }}>
+                                    <View style={[s.passAvatarWrap, { borderColor: '#E5E7EB' }]}>
+                                      {avatarUrl ? (
+                                        <Image source={{ uri: avatarUrl }} style={s.passAvatar} contentFit="cover" transition={200} cachePolicy="memory-disk" />
+                                      ) : (
+                                        <View style={[s.passAvatarFallback, { backgroundColor: '#F3F4F6' }]}>
+                                          <Text style={[s.passAvatarInitials, { color: cardTextColor }]}>{initials}</Text>
+                                        </View>
+                                      )}
+                                    </View>
+                                    {user?.affiliation && (
+                                      <View style={s.cardAffiliationBadge}>
+                                        {user.affiliation.avatarUrl ? (
+                                          <Image source={{ uri: user.affiliation.avatarUrl }} style={s.cardAffiliationBadgeImage} contentFit="cover" />
+                                        ) : (
+                                          <Ionicons name="business-outline" size={10} color="#78716C" />
+                                        )}
                                       </View>
                                     )}
                                   </View>
-                                  {user?.affiliation && (
-                                    <View style={s.cardAffiliationBadge}>
-                                      {user.affiliation.avatarUrl ? (
-                                        <Image source={{ uri: user.affiliation.avatarUrl }} style={s.cardAffiliationBadgeImage} contentFit="cover" />
-                                      ) : (
-                                        <Ionicons name="business-outline" size={10} color="#78716C" />
-                                      )}
+                                  <View style={s.passUserInfo}>
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                                      <Text style={[s.passName, { color: cardTextColor }]} numberOfLines={1}>{name}</Text>
+                                      {(user as any)?.isVerified && <Ionicons name="checkmark-circle" size={12} color="#009CDE" />}
+                                    </View>
+                                    <Text style={[s.passHandle, { color: cardSecondaryTextColor }]}>@{username}</Text>
+                                    {user?.affiliation && (
+                                      <Text style={[s.passAffiliationName, { color: cardSecondaryTextColor }]} numberOfLines={1}>
+                                        🏢 {user.affiliation.name}
+                                      </Text>
+                                    )}
+                                  </View>
+                                </View>
+                              </View>
+                              <View style={s.rightCol}>
+                                <View style={s.qrWhiteBackground}>
+                                  <QRCode value={qrValue} size={qrSizeLandscape} color="#000000" backgroundColor="#FFFFFF" ecl="H" />
+                                </View>
+                                <Pressable onPress={handleCopy} style={s.cpidMonospaceContainer} hitSlop={8}>
+                                  <Ionicons name="wifi" size={12} color={cardSecondaryTextColor} style={{ transform: [{ rotate: '90deg' }] }} />
+                                  <Text style={[s.cpidMonospaceText, { color: cardTextColor }]}>{cpid.slice(0, 3)}-{cpid.slice(3)}</Text>
+                                  <Ionicons name={copied ? 'checkmark' : 'copy-outline'} size={11} color={copied ? '#30D158' : '#9CA3AF'} />
+                                </Pressable>
+                              </View>
+                            </View>
+                          </View>
+                        </View>
+                      </Animated.View>
+                    </Pressable>
+
+                    {/* Actions for Card 1 */}
+                    {Platform.OS === 'web' ? (
+                      <View style={s.cardActionsRow}>
+                        <Pressable
+                          style={({ pressed }) => [s.cardActionSplitBtn, { borderColor: cardTheme.accent + '50', opacity: (pressed || resolvingAvatar) ? 0.7 : 1 }]}
+                          onPress={() => handleSaveImage('business')}
+                          disabled={resolvingAvatar}
+                          accessibilityRole="button"
+                          accessibilityLabel="Save Pass as PNG image"
+                        >
+                          {resolvingAvatar ? (
+                            <ActivityIndicator size="small" color={cardTheme.accent} />
+                          ) : (
+                            <Ionicons name="image-outline" size={14} color={cardTheme.accent} />
+                          )}
+                          <Text style={[s.cardActionSplitBtnText, { color: cardTheme.accent }]}>Save Image</Text>
+                        </Pressable>
+                        <Pressable
+                          style={({ pressed }) => [s.cardActionSplitBtn, { borderColor: cardTheme.accent + '50', opacity: (pressed || resolvingAvatar) ? 0.7 : 1 }]}
+                          onPress={() => handleDownloadPDF('business')}
+                          disabled={resolvingAvatar}
+                          accessibilityRole="button"
+                          accessibilityLabel="Save Pass as PDF document"
+                        >
+                          {resolvingAvatar ? (
+                            <ActivityIndicator size="small" color={cardTheme.accent} />
+                          ) : (
+                            <Ionicons name="document-text-outline" size={14} color={cardTheme.accent} />
+                          )}
+                          <Text style={[s.cardActionSplitBtnText, { color: cardTheme.accent }]}>Save PDF</Text>
+                        </Pressable>
+                      </View>
+                    ) : (
+                      <Pressable
+                        style={({ pressed }) => [s.downloadBtn, { borderColor: cardTheme.accent + '50', opacity: pressed ? 0.8 : 1 }]}
+                        onPress={() => handleSaveImage('business')}
+                        accessibilityRole="button"
+                        accessibilityLabel="Share Digital Business Pass"
+                      >
+                        <View style={[s.downloadIconWrap, { backgroundColor: cardTheme.accent + '18' }]}>
+                          <Ionicons name="share-outline" size={16} color={cardTheme.accent} />
+                        </View>
+                        <Text style={[s.downloadBtnText, { color: cardTheme.accent }]}>Share Pass</Text>
+                      </Pressable>
+                    )}
+                  </View>
+
+                  {/* ── CARD 2: Event Lanyard & Wallet Pass ── */}
+                  <View style={[s.cardWrapper, { width: cardWidth, marginTop: sideBySide ? 0 : 8 }]}>
+                    {/* Label badge */}
+                    <View style={s.cardBadgeRow}>
+                      <View style={[s.cardBadge, { backgroundColor: cardTheme.accent + '20', borderColor: cardTheme.accent + '40' }]}>
+                        <Ionicons name="ribbon-outline" size={11} color={cardTheme.accent} />
+                        <Text style={[s.cardBadgeText, { color: cardTheme.accent }]}>2. EVENT LANYARD & WALLET PASS</Text>
+                      </View>
+                      <Text style={[s.cardBadgeSubtitle, { color: '#009CDE99' }]}>CULTUREPASS ID</Text>
+                    </View>
+
+                    <Pressable
+                      onPressIn={handlePressIn}
+                      onPressOut={handlePressOut}
+                      onPress={handlePress}
+                      style={{ width: cardWidth }}
+                      accessibilityRole="button"
+                      accessibilityLabel="Digital vertical lanyard event pass. Tap for shimmer effect."
+                    >
+                      <Animated.View style={[{ width: cardWidth }, cardAnimatedStyle]}>
+                        <View style={[s.identityCard, { width: cardWidth, height: CARD_HEIGHT_VERTICAL, backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' }]}>
+                          <LinearGradient colors={['rgba(255,255,255,0.12)', 'rgba(255,255,255,0.02)', 'transparent']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} pointerEvents="none" />
+                          <Animated.View style={[StyleSheet.absoluteFill, shimmerStyle, { width: '50%' }]} pointerEvents="none">
+                            <LinearGradient colors={['transparent', 'rgba(255,255,255,0.06)', 'rgba(255,255,255,0.22)', 'rgba(255,255,255,0.06)', 'transparent']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={StyleSheet.absoluteFill} />
+                          </Animated.View>
+                          <View style={s.cardInnerVertical}>
+                            <View style={s.passHeaderContent}>
+                              <Text style={s.passType}>
+                                <Text style={{ color: '#FF3B30' }}>CULTURE</Text>
+                                <Text style={{ color: '#34C759' }}>PASS</Text>
+                                <Text style={{ color: '#009CDE' }}> ID</Text>
+                              </Text>
+                              <Text style={[s.passTier, { color: '#009CDE' }]}>{tierConf.label.toUpperCase()}</Text>
+                            </View>
+                            <View style={s.passProfileVertical}>
+                              <View style={{ position: 'relative' }}>
+                                <View style={[s.passAvatarWrapVertical, { borderColor: '#E5E7EB' }]}>
+                                  {avatarUrl ? (
+                                    <Image source={{ uri: avatarUrl }} style={s.passAvatarVertical} contentFit="cover" transition={200} cachePolicy="memory-disk" />
+                                  ) : (
+                                    <View style={[s.passAvatarFallbackVertical, { backgroundColor: '#F3F4F6' }]}>
+                                      <Text style={[s.passAvatarInitialsVertical, { color: cardTextColor }]}>{initials}</Text>
                                     </View>
                                   )}
                                 </View>
-                                <View style={s.passUserInfo}>
-                                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                                    <Text style={[s.passName, { color: cardTextColor }]} numberOfLines={1}>{name}</Text>
-                                    {(user as any)?.isVerified && <Ionicons name="checkmark-circle" size={12} color="#009CDE" />}
+                                {user?.affiliation && (
+                                  <View style={s.cardAffiliationBadgeVertical}>
+                                    {user.affiliation.avatarUrl ? (
+                                      <Image source={{ uri: user.affiliation.avatarUrl }} style={s.cardAffiliationBadgeImageVertical} contentFit="cover" />
+                                    ) : (
+                                      <Ionicons name="business-outline" size={14} color="#78716C" />
+                                    )}
                                   </View>
-                                  <Text style={[s.passHandle, { color: cardSecondaryTextColor }]}>@{username}</Text>
-                                  {user?.affiliation && (
-                                    <Text style={[s.passAffiliationName, { color: cardSecondaryTextColor }]} numberOfLines={1}>
-                                      🏢 {user.affiliation.name}
-                                    </Text>
-                                  )}
+                                )}
+                              </View>
+                              <View style={s.passUserInfoVertical}>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                                  <Text style={[s.passNameVertical, { color: cardTextColor }]} numberOfLines={1}>{name}</Text>
+                                  {(user as any)?.isVerified && <Ionicons name="checkmark-circle" size={15} color="#009CDE" />}
                                 </View>
+                                <Text style={[s.passHandleVertical, { color: cardSecondaryTextColor }]}>@{username}</Text>
+                                {user?.affiliation && (
+                                  <Text style={[s.passAffiliationNameVertical, { color: cardSecondaryTextColor }]} numberOfLines={1}>
+                                    🏢 {user.affiliation.name}
+                                  </Text>
+                                )}
+                                <Text style={[s.passMemberSinceVertical, { color: cardTertiaryTextColor }]}>Member Since {memberSince}</Text>
                               </View>
                             </View>
-                            <View style={s.rightCol}>
+                            <View style={s.passMiddleVertical}>
                               <View style={s.qrWhiteBackground}>
-                                <QRCode value={qrValue} size={qrSizeLandscape} color="#000000" backgroundColor="#FFFFFF" ecl="H" />
+                                <QRCode value={qrValue} size={qrSizeVertical} color="#000000" backgroundColor="#FFFFFF" ecl="H" />
                               </View>
                               <Pressable onPress={handleCopy} style={s.cpidMonospaceContainer} hitSlop={8}>
-                                <Ionicons name="wifi" size={12} color={cardSecondaryTextColor} style={{ transform: [{ rotate: '90deg' }] }} />
-                                <Text style={[s.cpidMonospaceText, { color: cardTextColor }]}>{cpid.slice(0, 3)}-{cpid.slice(3)}</Text>
-                                <Ionicons name={copied ? 'checkmark' : 'copy-outline'} size={11} color={copied ? '#30D158' : '#9CA3AF'} />
+                                <Ionicons name="wifi" size={13} color={cardSecondaryTextColor} style={{ transform: [{ rotate: '90deg' }] }} />
+                                <Text style={[s.cpidMonospaceTextVertical, { color: cardTextColor }]}>{cpid.slice(0, 3)}-{cpid.slice(3)}</Text>
+                                <Ionicons name={copied ? 'checkmark' : 'copy-outline'} size={12} color={copied ? '#30D158' : '#9CA3AF'} />
                               </Pressable>
                             </View>
                           </View>
                         </View>
-                      </View>
-                    </Animated.View>
-                  </Pressable>
-
-                  {/* Actions for Card 1 */}
-                  {Platform.OS === 'web' ? (
-                    <View style={s.cardActionsRow}>
-                      <Pressable
-                        style={({ pressed }) => [s.cardActionSplitBtn, { borderColor: cardTheme.accent + '50', opacity: (pressed || resolvingAvatar) ? 0.7 : 1 }]}
-                        onPress={() => handleSaveImage('business')}
-                        disabled={resolvingAvatar}
-                        accessibilityRole="button"
-                        accessibilityLabel="Save Pass as PNG image"
-                      >
-                        {resolvingAvatar ? (
-                          <ActivityIndicator size="small" color={cardTheme.accent} />
-                        ) : (
-                          <Ionicons name="image-outline" size={14} color={cardTheme.accent} />
-                        )}
-                        <Text style={[s.cardActionSplitBtnText, { color: cardTheme.accent }]}>Save Image</Text>
-                      </Pressable>
-                      <Pressable
-                        style={({ pressed }) => [s.cardActionSplitBtn, { borderColor: cardTheme.accent + '50', opacity: (pressed || resolvingAvatar) ? 0.7 : 1 }]}
-                        onPress={() => handleDownloadPDF('business')}
-                        disabled={resolvingAvatar}
-                        accessibilityRole="button"
-                        accessibilityLabel="Save Pass as PDF document"
-                      >
-                        {resolvingAvatar ? (
-                          <ActivityIndicator size="small" color={cardTheme.accent} />
-                        ) : (
-                          <Ionicons name="document-text-outline" size={14} color={cardTheme.accent} />
-                        )}
-                        <Text style={[s.cardActionSplitBtnText, { color: cardTheme.accent }]}>Save PDF</Text>
-                      </Pressable>
-                    </View>
-                  ) : (
-                    <Pressable
-                      style={({ pressed }) => [s.downloadBtn, { borderColor: cardTheme.accent + '50', opacity: pressed ? 0.8 : 1 }]}
-                      onPress={() => handleSaveImage('business')}
-                      accessibilityRole="button"
-                      accessibilityLabel="Share Digital Business Pass"
-                    >
-                      <View style={[s.downloadIconWrap, { backgroundColor: cardTheme.accent + '18' }]}>
-                        <Ionicons name="share-outline" size={16} color={cardTheme.accent} />
-                      </View>
-                      <Text style={[s.downloadBtnText, { color: cardTheme.accent }]}>Share Pass</Text>
+                      </Animated.View>
                     </Pressable>
-                  )}
+
+                    {/* Actions for Card 2 */}
+                    {Platform.OS === 'web' ? (
+                      <View style={s.cardActionsRow}>
+                        <Pressable
+                          style={({ pressed }) => [s.cardActionSplitBtn, { borderColor: '#009CDE50', opacity: (pressed || resolvingAvatar) ? 0.7 : 1 }]}
+                          onPress={() => handleSaveImage('lanyard')}
+                          disabled={resolvingAvatar}
+                          accessibilityRole="button"
+                          accessibilityLabel="Save Pass as PNG image"
+                        >
+                          {resolvingAvatar ? (
+                            <ActivityIndicator size="small" color="#009CDE" />
+                          ) : (
+                            <Ionicons name="image-outline" size={14} color="#009CDE" />
+                          )}
+                          <Text style={[s.cardActionSplitBtnText, { color: '#009CDE' }]}>Save Image</Text>
+                        </Pressable>
+                        <Pressable
+                          style={({ pressed }) => [s.cardActionSplitBtn, { borderColor: '#009CDE50', opacity: (pressed || resolvingAvatar) ? 0.7 : 1 }]}
+                          onPress={() => handleDownloadPDF('lanyard')}
+                          disabled={resolvingAvatar}
+                          accessibilityRole="button"
+                          accessibilityLabel="Save Pass as PDF document"
+                        >
+                          {resolvingAvatar ? (
+                            <ActivityIndicator size="small" color="#009CDE" />
+                          ) : (
+                            <Ionicons name="document-text-outline" size={14} color="#009CDE" />
+                          )}
+                          <Text style={[s.cardActionSplitBtnText, { color: '#009CDE' }]}>Save PDF</Text>
+                        </Pressable>
+                      </View>
+                    ) : (
+                      <Pressable
+                        style={({ pressed }) => [s.downloadBtn, { borderColor: '#009CDE50', opacity: pressed ? 0.8 : 1 }]}
+                        onPress={() => handleSaveImage('lanyard')}
+                        accessibilityRole="button"
+                        accessibilityLabel="Share Event Lanyard Pass"
+                      >
+                        <View style={[s.downloadIconWrap, { backgroundColor: '#009CDE18' }]}>
+                          <Ionicons name="share-outline" size={16} color="#009CDE" />
+                        </View>
+                        <Text style={[s.downloadBtnText, { color: '#009CDE' }]}>Share Pass</Text>
+                      </Pressable>
+                    )}
+                  </View>
                 </View>
 
-                {/* ── CARD 2: Event Lanyard & Wallet Pass ── */}
-                <View style={[s.cardWrapper, { width: cardWidth, marginTop: sideBySide ? 0 : 8 }]}>
-                  {/* Label badge */}
-                  <View style={s.cardBadgeRow}>
-                    <View style={[s.cardBadge, { backgroundColor: cardTheme.accent + '20', borderColor: cardTheme.accent + '40' }]}>
-                      <Ionicons name="ribbon-outline" size={11} color={cardTheme.accent} />
-                      <Text style={[s.cardBadgeText, { color: cardTheme.accent }]}>2. EVENT LANYARD & WALLET PASS</Text>
-                    </View>
-                    <Text style={[s.cardBadgeSubtitle, { color: '#009CDE99' }]}>CULTUREPASS ID</Text>
-                  </View>
+                <Text style={[s.passHint, { color: cardTheme.accent + '88', width: containerWidth, marginBottom: 16 }]}>
+                  Tap cards to trigger shimmer · Swipe to share · Integrated QR & NFC passes
+                </Text>
 
-                  <Pressable
-                    onPressIn={handlePressIn}
-                    onPressOut={handlePressOut}
-                    onPress={handlePress}
-                    style={{ width: cardWidth }}
-                    accessibilityRole="button"
-                    accessibilityLabel="Digital vertical lanyard event pass. Tap for shimmer effect."
-                  >
-                    <Animated.View style={[{ width: cardWidth }, cardAnimatedStyle]}>
-                      <View style={[s.identityCard, { width: cardWidth, height: CARD_HEIGHT_VERTICAL, backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' }]}>
-                        <LinearGradient colors={['rgba(255,255,255,0.12)', 'rgba(255,255,255,0.02)', 'transparent']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} pointerEvents="none" />
-                        <Animated.View style={[StyleSheet.absoluteFill, shimmerStyle, { width: '50%' }]} pointerEvents="none">
-                          <LinearGradient colors={['transparent', 'rgba(255,255,255,0.06)', 'rgba(255,255,255,0.22)', 'rgba(255,255,255,0.06)', 'transparent']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={StyleSheet.absoluteFill} />
-                        </Animated.View>
-                        <View style={s.cardInnerVertical}>
-                          <View style={s.passHeaderContent}>
-                            <Text style={s.passType}>
-                              <Text style={{ color: '#FF3B30' }}>CULTURE</Text>
-                              <Text style={{ color: '#34C759' }}>PASS</Text>
-                              <Text style={{ color: '#009CDE' }}> ID</Text>
-                            </Text>
-                            <Text style={[s.passTier, { color: '#009CDE' }]}>{tierConf.label.toUpperCase()}</Text>
+                {/* ── Affiliation Settings Selector ── */}
+                {myProfiles.length > 0 && (
+                  <View style={[s.affiliationSelectorContainer, { width: containerWidth, borderColor: cardTheme.accent + '18' }]}>
+                    <View style={s.affiliationHeader}>
+                      <Ionicons name="business-outline" size={18} color={cardTheme.accent} />
+                      <Text style={[s.affiliationTitle, { color: '#FFFFFF' }]}>Pass Affiliation</Text>
+                    </View>
+                    <Text style={s.affiliationDesc}>
+                      Link your pass with one of your business or community profiles to show it on your digital pass.
+                    </Text>
+                    <View style={s.affiliationOptionsList}>
+                      {/* Option: None */}
+                      <Pressable
+                        onPress={() => handleSelectAffiliation(null)}
+                        style={({ pressed }) => [
+                          s.affiliationOptionRow,
+                          !user?.affiliation && s.affiliationOptionRowActive,
+                          pressed && { opacity: 0.8 }
+                        ]}
+                        accessibilityRole="radio"
+                        accessibilityState={{ checked: !user?.affiliation }}
+                      >
+                        <View style={s.affiliationOptionLeft}>
+                          <View style={[s.affiliationOptionAvatarFallback, { backgroundColor: '#374151' }]}>
+                            <Ionicons name="close-circle-outline" size={14} color="#9CA3AF" />
                           </View>
-                          <View style={s.passProfileVertical}>
-                            <View style={{ position: 'relative' }}>
-                              <View style={[s.passAvatarWrapVertical, { borderColor: '#E5E7EB' }]}>
-                                {avatarUrl ? (
-                                  <Image source={{ uri: avatarUrl }} style={s.passAvatarVertical} contentFit="cover" transition={200} cachePolicy="memory-disk" />
-                                ) : (
-                                  <View style={[s.passAvatarFallbackVertical, { backgroundColor: '#F3F4F6' }]}>
-                                    <Text style={[s.passAvatarInitialsVertical, { color: cardTextColor }]}>{initials}</Text>
-                                  </View>
-                                )}
-                              </View>
-                              {user?.affiliation && (
-                                <View style={s.cardAffiliationBadgeVertical}>
-                                  {user.affiliation.avatarUrl ? (
-                                    <Image source={{ uri: user.affiliation.avatarUrl }} style={s.cardAffiliationBadgeImageVertical} contentFit="cover" />
-                                  ) : (
-                                    <Ionicons name="business-outline" size={14} color="#78716C" />
-                                  )}
+                          <Text style={[s.affiliationOptionName, !user?.affiliation ? { color: cardTheme.accent } : { color: '#E5E7EB' }]}>
+                            None (No Affiliation)
+                          </Text>
+                        </View>
+                        {!user?.affiliation && (
+                          <Ionicons name="checkmark-circle" size={18} color={cardTheme.accent} />
+                        )}
+                      </Pressable>
+
+                      {/* Option: profiles */}
+                      {myProfiles.map((p: Profile) => {
+                        const isSelected = user?.affiliation?.id === p.id;
+                        return (
+                          <Pressable
+                            key={p.id}
+                            onPress={() => handleSelectAffiliation(p)}
+                            style={({ pressed }) => [
+                              s.affiliationOptionRow,
+                              isSelected && s.affiliationOptionRowActive,
+                              pressed && { opacity: 0.8 }
+                            ]}
+                            accessibilityRole="radio"
+                            accessibilityState={{ checked: isSelected }}
+                          >
+                            <View style={s.affiliationOptionLeft}>
+                              {p.avatarUrl ? (
+                                <Image source={{ uri: p.avatarUrl }} style={s.affiliationOptionAvatar} contentFit="cover" />
+                              ) : (
+                                <View style={[s.affiliationOptionAvatarFallback, { backgroundColor: cardTheme.accent + '20' }]}>
+                                  <Text style={[s.affiliationOptionInitials, { color: cardTheme.accent }]}>
+                                    {(p.name || 'P').charAt(0).toUpperCase()}
+                                  </Text>
                                 </View>
                               )}
+                              <Text style={[s.affiliationOptionName, isSelected ? { color: cardTheme.accent } : { color: '#E5E7EB' }]} numberOfLines={1}>
+                                {p.name}
+                              </Text>
                             </View>
-                            <View style={s.passUserInfoVertical}>
-                              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                                <Text style={[s.passNameVertical, { color: cardTextColor }]} numberOfLines={1}>{name}</Text>
-                                {(user as any)?.isVerified && <Ionicons name="checkmark-circle" size={15} color="#009CDE" />}
-                              </View>
-                              <Text style={[s.passHandleVertical, { color: cardSecondaryTextColor }]}>@{username}</Text>
-                              {user?.affiliation && (
-                                <Text style={[s.passAffiliationNameVertical, { color: cardSecondaryTextColor }]} numberOfLines={1}>
-                                  🏢 {user.affiliation.name}
-                                </Text>
-                              )}
-                              <Text style={[s.passMemberSinceVertical, { color: cardTertiaryTextColor }]}>Member Since {memberSince}</Text>
-                            </View>
-                          </View>
-                          <View style={s.passMiddleVertical}>
-                            <View style={s.qrWhiteBackground}>
-                              <QRCode value={qrValue} size={qrSizeVertical} color="#000000" backgroundColor="#FFFFFF" ecl="H" />
-                            </View>
-                            <Pressable onPress={handleCopy} style={s.cpidMonospaceContainer} hitSlop={8}>
-                              <Ionicons name="wifi" size={13} color={cardSecondaryTextColor} style={{ transform: [{ rotate: '90deg' }] }} />
-                              <Text style={[s.cpidMonospaceTextVertical, { color: cardTextColor }]}>{cpid.slice(0, 3)}-{cpid.slice(3)}</Text>
-                              <Ionicons name={copied ? 'checkmark' : 'copy-outline'} size={12} color={copied ? '#30D158' : '#9CA3AF'} />
-                            </Pressable>
-                          </View>
+                            {isSelected && (
+                              <Ionicons name="checkmark-circle" size={18} color={cardTheme.accent} />
+                            )}
+                          </Pressable>
+                        );
+                      })}
+                    </View>
+                  </View>
+                )}
+
+                {/* ── Wallet save CTAs ── */}
+                <View style={[s.walletHero, { width: containerWidth, borderColor: cardTheme.accent + '18' }]}>
+                  <Text style={[s.walletHeroTitle, { color: '#FFFFFF' }]}>Save to Wallet</Text>
+                  <Text style={s.walletHeroDesc}>
+                    Add your verified CulturePass Digital ID to Apple Wallet or Google Wallet for instant, offline access at events, venues, and check-ins.
+                  </Text>
+                  {(Platform.OS === 'ios' || Platform.OS === 'web') && (
+                    <Pressable
+                      onPress={handleAddAppleWalletCard}
+                      style={({ pressed }) => [s.walletPrimaryBtn, { backgroundColor: '#000000', borderColor: '#333' }, (pressed || isApplePending) && { opacity: 0.85 }]}
+                      disabled={isApplePending}
+                      accessibilityRole="button"
+                      accessibilityLabel="Add your CulturePass ID to Apple Wallet"
+                    >
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                        <Ionicons name="logo-apple" size={22} color="#FFFFFF" />
+                        <View style={{ flex: 1 }}>
+                          <Text style={s.walletPrimaryTitle}>Add to Apple Wallet</Text>
+                          <Text style={s.walletPrimarySub}>{isApplePending ? 'Opening Wallet...' : 'Official .pkpass — works offline'}</Text>
                         </View>
                       </View>
-                    </Animated.View>
-                  </Pressable>
-
-                  {/* Actions for Card 2 */}
-                  {Platform.OS === 'web' ? (
-                    <View style={s.cardActionsRow}>
-                      <Pressable
-                        style={({ pressed }) => [s.cardActionSplitBtn, { borderColor: '#009CDE50', opacity: (pressed || resolvingAvatar) ? 0.7 : 1 }]}
-                        onPress={() => handleSaveImage('lanyard')}
-                        disabled={resolvingAvatar}
-                        accessibilityRole="button"
-                        accessibilityLabel="Save Pass as PNG image"
-                      >
-                        {resolvingAvatar ? (
-                          <ActivityIndicator size="small" color="#009CDE" />
-                        ) : (
-                          <Ionicons name="image-outline" size={14} color="#009CDE" />
-                        )}
-                        <Text style={[s.cardActionSplitBtnText, { color: '#009CDE' }]}>Save Image</Text>
-                      </Pressable>
-                      <Pressable
-                        style={({ pressed }) => [s.cardActionSplitBtn, { borderColor: '#009CDE50', opacity: (pressed || resolvingAvatar) ? 0.7 : 1 }]}
-                        onPress={() => handleDownloadPDF('lanyard')}
-                        disabled={resolvingAvatar}
-                        accessibilityRole="button"
-                        accessibilityLabel="Save Pass as PDF document"
-                      >
-                        {resolvingAvatar ? (
-                          <ActivityIndicator size="small" color="#009CDE" />
-                        ) : (
-                          <Ionicons name="document-text-outline" size={14} color="#009CDE" />
-                        )}
-                        <Text style={[s.cardActionSplitBtnText, { color: '#009CDE' }]}>Save PDF</Text>
-                      </Pressable>
-                    </View>
-                  ) : (
-                    <Pressable
-                      style={({ pressed }) => [s.downloadBtn, { borderColor: '#009CDE50', opacity: pressed ? 0.8 : 1 }]}
-                      onPress={() => handleSaveImage('lanyard')}
-                      accessibilityRole="button"
-                      accessibilityLabel="Share Event Lanyard Pass"
-                    >
-                      <View style={[s.downloadIconWrap, { backgroundColor: '#009CDE18' }]}>
-                        <Ionicons name="share-outline" size={16} color="#009CDE" />
-                      </View>
-                      <Text style={[s.downloadBtnText, { color: '#009CDE' }]}>Share Pass</Text>
+                      <Ionicons name="chevron-forward" size={18} color="rgba(255,255,255,0.6)" />
                     </Pressable>
                   )}
-                </View>
-              </View>
-
-              <Text style={[s.passHint, { color: cardTheme.accent + '88', width: containerWidth, marginBottom: 16 }]}>
-                Tap cards to trigger shimmer · Swipe to share · Integrated QR & NFC passes
-              </Text>
-
-              {/* ── Affiliation Settings Selector ── */}
-              {myProfiles.length > 0 && (
-                <View style={[s.affiliationSelectorContainer, { width: containerWidth, borderColor: cardTheme.accent + '18' }]}>
-                  <View style={s.affiliationHeader}>
-                    <Ionicons name="business-outline" size={18} color={cardTheme.accent} />
-                    <Text style={[s.affiliationTitle, { color: '#FFFFFF' }]}>Pass Affiliation</Text>
-                  </View>
-                  <Text style={s.affiliationDesc}>
-                    Link your pass with one of your business or community profiles to show it on your digital pass.
-                  </Text>
-                  <View style={s.affiliationOptionsList}>
-                    {/* Option: None */}
+                  {(Platform.OS === 'android' || Platform.OS === 'web') && (
                     <Pressable
-                      onPress={() => handleSelectAffiliation(null)}
-                      style={({ pressed }) => [
-                        s.affiliationOptionRow,
-                        !user?.affiliation && s.affiliationOptionRowActive,
-                        pressed && { opacity: 0.8 }
-                      ]}
-                      accessibilityRole="radio"
-                      accessibilityState={{ checked: !user?.affiliation }}
-                    >
-                      <View style={s.affiliationOptionLeft}>
-                        <View style={[s.affiliationOptionAvatarFallback, { backgroundColor: '#374151' }]}>
-                          <Ionicons name="close-circle-outline" size={14} color="#9CA3AF" />
-                        </View>
-                        <Text style={[s.affiliationOptionName, !user?.affiliation ? { color: cardTheme.accent } : { color: '#E5E7EB' }]}>
-                          None (No Affiliation)
-                        </Text>
-                      </View>
-                      {!user?.affiliation && (
-                        <Ionicons name="checkmark-circle" size={18} color={cardTheme.accent} />
-                      )}
-                    </Pressable>
-
-                    {/* Option: profiles */}
-                    {myProfiles.map((p: Profile) => {
-                      const isSelected = user?.affiliation?.id === p.id;
-                      return (
-                        <Pressable
-                          key={p.id}
-                          onPress={() => handleSelectAffiliation(p)}
-                          style={({ pressed }) => [
-                            s.affiliationOptionRow,
-                            isSelected && s.affiliationOptionRowActive,
-                            pressed && { opacity: 0.8 }
-                          ]}
-                          accessibilityRole="radio"
-                          accessibilityState={{ checked: isSelected }}
-                        >
-                          <View style={s.affiliationOptionLeft}>
-                            {p.avatarUrl ? (
-                              <Image source={{ uri: p.avatarUrl }} style={s.affiliationOptionAvatar} contentFit="cover" />
-                            ) : (
-                              <View style={[s.affiliationOptionAvatarFallback, { backgroundColor: cardTheme.accent + '20' }]}>
-                                <Text style={[s.affiliationOptionInitials, { color: cardTheme.accent }]}>
-                                  {(p.name || 'P').charAt(0).toUpperCase()}
-                                </Text>
-                              </View>
-                            )}
-                            <Text style={[s.affiliationOptionName, isSelected ? { color: cardTheme.accent } : { color: '#E5E7EB' }]} numberOfLines={1}>
-                              {p.name}
-                            </Text>
-                          </View>
-                          {isSelected && (
-                            <Ionicons name="checkmark-circle" size={18} color={cardTheme.accent} />
-                          )}
-                        </Pressable>
-                      );
-                    })}
-                  </View>
-                </View>
-              )}
-
-              {/* ── Wallet save CTAs ── */}
-              <View style={[s.walletHero, { width: containerWidth, borderColor: cardTheme.accent + '18' }]}>
-                <Text style={[s.walletHeroTitle, { color: '#FFFFFF' }]}>Save to Wallet</Text>
-                <Text style={s.walletHeroDesc}>
-                  Add your verified CulturePass Digital ID to Apple Wallet or Google Wallet for instant, offline access at events, venues, and check-ins.
-                </Text>
-                {(Platform.OS === 'ios' || Platform.OS === 'web') && (
-                  <Pressable
-                    onPress={handleAddAppleWalletCard}
-                    style={({ pressed }) => [s.walletPrimaryBtn, { backgroundColor: '#000000', borderColor: '#333' }, (pressed || isApplePending) && { opacity: 0.85 }]}
-                    disabled={isApplePending}
-                    accessibilityRole="button"
-                    accessibilityLabel="Add your CulturePass ID to Apple Wallet"
-                  >
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                      <Ionicons name="logo-apple" size={22} color="#FFFFFF" />
-                      <View style={{ flex: 1 }}>
-                        <Text style={s.walletPrimaryTitle}>Add to Apple Wallet</Text>
-                        <Text style={s.walletPrimarySub}>{isApplePending ? 'Opening Wallet...' : 'Official .pkpass — works offline'}</Text>
-                      </View>
-                    </View>
-                    <Ionicons name="chevron-forward" size={18} color="rgba(255,255,255,0.6)" />
-                  </Pressable>
-                )}
-                {(Platform.OS === 'android' || Platform.OS === 'web') && (
-                  <Pressable
-                    onPress={handleAddGoogleWalletCard}
-                    style={({ pressed }) => [s.walletPrimaryBtn, { backgroundColor: '#1A73E8', borderColor: '#1557B0' }, (pressed || isGooglePending) && { opacity: 0.9 }]}
-                    disabled={isGooglePending}
-                    accessibilityRole="button"
-                    accessibilityLabel="Save your CulturePass ID to Google Wallet"
-                  >
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                      <Ionicons name="logo-google" size={20} color="#FFFFFF" />
-                      <View style={{ flex: 1 }}>
-                        <Text style={s.walletPrimaryTitle}>Save to Google Wallet</Text>
-                        <Text style={s.walletPrimarySub}>{isGooglePending ? 'Saving to Wallet...' : 'Secure pass • Instant access'}</Text>
-                      </View>
-                    </View>
-                    <Ionicons name="chevron-forward" size={18} color="rgba(255,255,255,0.7)" />
-                  </Pressable>
-                )}
-                <Text style={s.walletLegal}>
-                  By adding this pass you allow Wallet to display your CulturePass ID (name, CPID, tier, location, verification signature). Apple and Google manage the pass securely according to their privacy policies.
-                </Text>
-              </View>
-
-              {/* ── Action tools ── */}
-              <View style={{ marginTop: 12, width: containerWidth }}>
-                <Text style={[s.sectionLabel, { color: cardTheme.accent + '99' }]}>VERIFICATION & SHARING</Text>
-                <View style={[s.actionsRow, { width: containerWidth }]}>
-                  {([
-                    { icon: 'share-outline', label: 'Share ID', color: colors.primary, onPress: handleShare },
-                    { icon: copied ? 'checkmark-circle' : 'copy-outline', label: copied ? 'Copied!' : 'Copy CPID', color: colors.gold, onPress: handleCopy },
-                    { icon: 'scan-outline', label: 'Scan QR', color: CultureTokens.teal, onPress: () => { if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push('/scanner'); } },
-                  ] as const).map((btn) => (
-                    <Pressable
-                      key={btn.label}
-                      onPress={btn.onPress}
-                      style={({ pressed }) => [s.actionBtn, { borderColor: colors.borderLight, backgroundColor: colors.surfaceVariant, opacity: pressed ? 0.75 : 1 }]}
+                      onPress={handleAddGoogleWalletCard}
+                      style={({ pressed }) => [s.walletPrimaryBtn, { backgroundColor: '#1A73E8', borderColor: '#1557B0' }, (pressed || isGooglePending) && { opacity: 0.9 }]}
+                      disabled={isGooglePending}
                       accessibilityRole="button"
-                      accessibilityLabel={btn.label}
+                      accessibilityLabel="Save your CulturePass ID to Google Wallet"
                     >
-                      <View style={[s.actionIcon, { backgroundColor: btn.color + '12' }]}>
-                        <Ionicons name={btn.icon as any} size={18} color={btn.color} />
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                        <Ionicons name="logo-google" size={20} color="#FFFFFF" />
+                        <View style={{ flex: 1 }}>
+                          <Text style={s.walletPrimaryTitle}>Save to Google Wallet</Text>
+                          <Text style={s.walletPrimarySub}>{isGooglePending ? 'Saving to Wallet...' : 'Secure pass • Instant access'}</Text>
+                        </View>
                       </View>
-                      <Text style={[s.actionLabel, { color: colors.textSecondary }]}>{btn.label}</Text>
+                      <Ionicons name="chevron-forward" size={18} color="rgba(255,255,255,0.7)" />
                     </Pressable>
-                  ))}
-                </View>
-                <Pressable
-                  onPress={() => { if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push(`/cpu/${cpid}` as any); }}
-                  style={{ marginTop: 12, alignSelf: 'center' }}
-                >
-                  <Text style={{ color: cardTheme.accent, fontSize: 13, textDecorationLine: 'underline' }}>
-                    View public profile
+                  )}
+                  <Text style={s.walletLegal}>
+                    By adding this pass you allow Wallet to display your CulturePass ID (name, CPID, tier, location, verification signature). Apple and Google manage the pass securely according to their privacy policies.
                   </Text>
-                </Pressable>
-              </View>
+                </View>
 
-              {/* Interests */}
-              {interests.length > 0 && (
-                <View style={[s.tagsSection, { width: containerWidth, marginTop: 16 }]}>
-                  <Text style={[s.tagsHeading, { color: cardTheme.accent + '99' }]}>INTERESTS</Text>
-                  <View style={s.tagsRow}>
-                    {interests.map(interest => (
-                      <View key={interest} style={[s.tag, { backgroundColor: cardTheme.accent + '10', borderColor: cardTheme.accent + '20' }]}>
-                        <Text style={[s.tagText, { color: cardTheme.accent }]}>{capitalize(interest)}</Text>
-                      </View>
+                {/* ── Action tools ── */}
+                <View style={{ marginTop: 12, width: containerWidth }}>
+                  <Text style={[s.sectionLabel, { color: cardTheme.accent + '99' }]}>VERIFICATION & SHARING</Text>
+                  <View style={[s.actionsRow, { width: containerWidth }]}>
+                    {([
+                      { icon: 'share-outline', label: 'Share ID', color: colors.primary, onPress: handleShare },
+                      { icon: copied ? 'checkmark-circle' : 'copy-outline', label: copied ? 'Copied!' : 'Copy CPID', color: colors.gold, onPress: handleCopy },
+                      { icon: 'scan-outline', label: 'Scan QR', color: CultureTokens.teal, onPress: () => { if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push('/scanner'); } },
+                    ] as const).map((btn) => (
+                      <Pressable
+                        key={btn.label}
+                        onPress={btn.onPress}
+                        style={({ pressed }) => [s.actionBtn, { borderColor: colors.borderLight, backgroundColor: colors.surfaceVariant, opacity: pressed ? 0.75 : 1 }]}
+                        accessibilityRole="button"
+                        accessibilityLabel={btn.label}
+                      >
+                        <View style={[s.actionIcon, { backgroundColor: btn.color + '12' }]}>
+                          <Ionicons name={btn.icon as any} size={18} color={btn.color} />
+                        </View>
+                        <Text style={[s.actionLabel, { color: colors.textSecondary }]}>{btn.label}</Text>
+                      </Pressable>
                     ))}
                   </View>
+                  <Pressable
+                    onPress={() => { if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push(`/cpu/${cpid}` as any); }}
+                    style={{ marginTop: 12, alignSelf: 'center' }}
+                  >
+                    <Text style={{ color: cardTheme.accent, fontSize: 13, textDecorationLine: 'underline' }}>
+                      View public profile
+                    </Text>
+                  </Pressable>
                 </View>
-              )}
-            </>
-          )}
+
+                {/* Interests */}
+                {interests.length > 0 && (
+                  <View style={[s.tagsSection, { width: containerWidth, marginTop: 16 }]}>
+                    <Text style={[s.tagsHeading, { color: cardTheme.accent + '99' }]}>INTERESTS</Text>
+                    <View style={s.tagsRow}>
+                      {interests.map(interest => (
+                        <View key={interest} style={[s.tag, { backgroundColor: cardTheme.accent + '10', borderColor: cardTheme.accent + '20' }]}>
+                          <Text style={[s.tagText, { color: cardTheme.accent }]}>{capitalize(interest)}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  </View>
+                )}
+              </>
+            )}
           </PageContainer>
         </ScrollView>
       </View>

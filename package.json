@@ -151,6 +151,7 @@
     "babel-preset-expo": "~56.0.0",
     "concurrently": "10.0.0",
     "cross-env": "10.1.0",
+    "dotenv": "^17.4.2",
     "eslint": "9.39.4",
     "eslint-config-expo": "~56.0.4",
     "eslint-config-prettier": "10.1.8",

@@ -1,3 +1,9 @@
+import dotenv from 'dotenv';
+import path from 'path';
+
+// Load environment variables from functions/.env for local dev
+dotenv.config({ path: path.resolve(__dirname, '../functions/.env') });
+
 import { app } from '../functions/src/app';
 
 // Align Admin SDK with production project when no emulator/credentials env is set.

@@ -17,7 +17,6 @@ import {
   CultureTokens,
   FontFamily,
   Radius,
-  Spacing,
 } from '@/design-system/tokens/theme';
 import * as Haptics from 'expo-haptics';
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
@@ -38,6 +37,8 @@ import { isIndigenousProfile } from '@/lib/indigenous';
 import { useOnboarding } from '@/contexts/OnboardingContext';
 import { EventCardSkeleton } from '@/modules/events/components/EventCardSkeleton';
 import { useLocations } from '@/hooks/useLocations';
+import { useLocationPickerFlow } from '@/hooks/useLocationPickerFlow';
+import { LocationPickerModal } from '@/components/location/LocationPickerModal';
 import {
   DirectoryCard,
   DirectoryEmptyState,
@@ -75,6 +76,7 @@ export default function DirectoryScreen() {
   const { acknowledgement } = useLocations();
   const reducedMotion = useReducedMotion();
   const isCreator = useIsCreator();
+  const locationFlow = useLocationPickerFlow();
 
 
   const showAcknowledgement = ['Australia', 'New Zealand', 'Canada', 'AU', 'NZ', 'CA'].includes(onboardingState.country || 'Australia');
@@ -180,8 +182,8 @@ export default function DirectoryScreen() {
       }
     }
 
-    if (search.trim()) {
-      const q = search.toLowerCase();
+    if (debouncedSearch.trim()) {
+      const q = debouncedSearch.toLowerCase();
       results = results.filter((item) => {
         if (item._type === 'event') {
           const e = item.data;
@@ -204,7 +206,7 @@ export default function DirectoryScreen() {
     }
 
     return results;
-  }, [selectedType, search, allItems]);
+  }, [selectedType, debouncedSearch, allItems]);
 
   const featuredProfiles = useMemo(
     () => nonCommunityProfiles.filter(p => p.isVerified).slice(0, 8),
@@ -368,56 +370,148 @@ export default function DirectoryScreen() {
         />
 
         <View style={{ paddingHorizontal: hPad, paddingTop: 16 }}>
-            <View style={dirStyles.headerInfoRow}>
-              <View style={[dirStyles.locationBadge, { backgroundColor: colors.primarySoft, borderColor: colors.primary + '20' }]}>
-                <Ionicons name="location" size={14} color={colors.primary} />
-                <Text style={[dirStyles.locationText, { color: colors.primary }]}>
-                  {onboardingState.city || 'Global'} • {onboardingState.country || 'All Regions'}
+          {isDesktop ? (
+            /* Desktop/Web Layout: Unified Search and Location row */
+            <View style={{ gap: 12 }}>
+              <View style={dirStyles.headerInfoRow}>
+                <Text style={{ fontSize: 13, fontFamily: FontFamily.medium, color: colors.textSecondary }}>
+                  Explore cultural profiles, venues, and events.
                 </Text>
+                {allItems.length > 0 && (
+                  <View style={[dirStyles.countBadge, { backgroundColor: colors.surfaceElevated, borderColor: colors.borderLight }]}>
+                    <Text style={[dirStyles.countText, { color: colors.textTertiary }]}>
+                      {filtered.length} {filtered.length === 1 ? 'result' : 'results'}
+                    </Text>
+                  </View>
+                )}
               </View>
-              {allItems.length > 0 && (
-                <View style={[dirStyles.countBadge, { backgroundColor: colors.surfaceElevated, borderColor: colors.borderLight }]}>
-                  <Text style={[dirStyles.countText, { color: colors.textTertiary }]}>
-                    {filtered.length} {filtered.length === 1 ? 'result' : 'results'}
-                  </Text>
+              
+              <View
+                style={[
+                  dirStyles.searchLocationRowWeb,
+                  {
+                    backgroundColor: colors.surfaceElevated,
+                    borderColor: searchFocused ? colors.primary : colors.borderLight,
+                    shadowColor: colors.primary,
+                    shadowOpacity: searchFocused ? 0.12 : 0.02,
+                    shadowRadius: 10,
+                    elevation: searchFocused ? 4 : 1,
+                  },
+                ]}
+              >
+                {/* Search input section */}
+                <View style={dirStyles.searchSectionWeb}>
+                  <Ionicons name="search" size={20} color={searchFocused ? colors.primary : colors.textTertiary} />
+                  <TextInput
+                    style={[dirStyles.searchInput, { color: colors.text, fontSize: 15, marginLeft: 8 }]}
+                    placeholder="Search businesses, venues, artists…"
+                    placeholderTextColor={colors.textTertiary}
+                    value={search}
+                    onChangeText={setSearch}
+                    onFocus={() => setSearchFocused(true)}
+                    onBlur={() => setSearchFocused(false)}
+                    returnKeyType="search"
+                    accessibilityLabel="Search directory"
+                  />
+                  {search.length > 0 ? (
+                    <Pressable onPress={() => setSearch('')} hitSlop={14} accessibilityRole="button" accessibilityLabel="Clear search">
+                      <Ionicons name="close" size={20} color={colors.textSecondary} />
+                    </Pressable>
+                  ) : null}
                 </View>
-              )}
-            </View>
-            <View
-              style={[
-                dirStyles.searchBar,
-                {
-                  backgroundColor: colors.surfaceElevated,
-                  borderColor: searchFocused ? colors.primary : colors.borderLight,
-                  borderWidth: 1,
-                  height: 54,
-                  borderRadius: 27,
-                  shadowColor: colors.primary,
-                  shadowOffset: { width: 0, height: 4 },
-                  shadowOpacity: searchFocused ? 0.12 : 0.02,
-                  shadowRadius: 10,
-                  elevation: searchFocused ? 4 : 1,
-                },
-              ]}
-            >
-              <Ionicons name="search" size={24} color={searchFocused ? colors.primary : colors.textTertiary} />
-              <TextInput
-                style={[dirStyles.searchInput, { color: colors.text, fontSize: 16, marginLeft: 12 }]}
-                placeholder="Businesses, venues, artists…"
-                placeholderTextColor={colors.textTertiary}
-                value={search}
-                onChangeText={setSearch}
-                onFocus={() => setSearchFocused(true)}
-                onBlur={() => setSearchFocused(false)}
-                returnKeyType="search"
-                accessibilityLabel="Search directory"
-              />
-              {search.length > 0 ? (
-                <Pressable onPress={() => setSearch('')} hitSlop={14} accessibilityRole="button" accessibilityLabel="Clear search">
-                  <Ionicons name="close" size={24} color={colors.textSecondary} />
+
+                {/* Divider */}
+                <View style={[dirStyles.dividerWeb, { backgroundColor: colors.borderLight }]} />
+
+                {/* Location selector section */}
+                <Pressable
+                  onPress={locationFlow.open}
+                  style={({ pressed }) => [
+                    dirStyles.locationSectionWeb,
+                    { opacity: pressed ? 0.75 : 1 }
+                  ]}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Location: ${onboardingState.city || 'Global'}. Tap to change`}
+                >
+                  <Ionicons name="location-outline" size={20} color={colors.primary} />
+                  <Text style={[dirStyles.locationTextWeb, { color: colors.text }]} numberOfLines={1}>
+                    {onboardingState.city || 'Global'}
+                    {onboardingState.city && onboardingState.country ? ` • ${onboardingState.country}` : (onboardingState.country ? ` • ${onboardingState.country}` : '')}
+                  </Text>
+                  <Ionicons name="chevron-down" size={14} color={colors.textTertiary} style={{ marginLeft: 4 }} />
                 </Pressable>
-              ) : null}
+              </View>
             </View>
+          ) : (
+            /* Mobile/Tablet Layout: Stacked search and location indicators */
+            <View style={{ gap: 12 }}>
+              <View style={dirStyles.headerInfoRow}>
+                <Pressable
+                  onPress={locationFlow.open}
+                  style={({ pressed }) => [
+                    dirStyles.locationBadge,
+                    {
+                      backgroundColor: colors.primarySoft,
+                      borderColor: colors.primary + '20',
+                      opacity: pressed ? 0.75 : 1,
+                    }
+                  ]}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Location: ${onboardingState.city || 'Global'}. Tap to change`}
+                >
+                  <Ionicons name="location" size={14} color={colors.primary} />
+                  <Text style={[dirStyles.locationText, { color: colors.primary }]}>
+                    {onboardingState.city || 'Global'} • {onboardingState.country || 'All Regions'}
+                  </Text>
+                  <Ionicons name="chevron-down" size={10} color={colors.primary} style={{ marginLeft: 2 }} />
+                </Pressable>
+                
+                {allItems.length > 0 && (
+                  <View style={[dirStyles.countBadge, { backgroundColor: colors.surfaceElevated, borderColor: colors.borderLight }]}>
+                    <Text style={[dirStyles.countText, { color: colors.textTertiary }]}>
+                      {filtered.length} {filtered.length === 1 ? 'result' : 'results'}
+                    </Text>
+                  </View>
+                )}
+              </View>
+              
+              <View
+                style={[
+                  dirStyles.searchBar,
+                  {
+                    backgroundColor: colors.surfaceElevated,
+                    borderColor: searchFocused ? colors.primary : colors.borderLight,
+                    borderWidth: 1,
+                    height: 50,
+                    borderRadius: 25,
+                    shadowColor: colors.primary,
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: searchFocused ? 0.12 : 0.02,
+                    shadowRadius: 10,
+                    elevation: searchFocused ? 4 : 1,
+                  },
+                ]}
+              >
+                <Ionicons name="search" size={22} color={searchFocused ? colors.primary : colors.textTertiary} />
+                <TextInput
+                  style={[dirStyles.searchInput, { color: colors.text, fontSize: 15, marginLeft: 10 }]}
+                  placeholder="Businesses, venues, artists…"
+                  placeholderTextColor={colors.textTertiary}
+                  value={search}
+                  onChangeText={setSearch}
+                  onFocus={() => setSearchFocused(true)}
+                  onBlur={() => setSearchFocused(false)}
+                  returnKeyType="search"
+                  accessibilityLabel="Search directory"
+                />
+                {search.length > 0 ? (
+                  <Pressable onPress={() => setSearch('')} hitSlop={14} accessibilityRole="button" accessibilityLabel="Clear search">
+                    <Ionicons name="close" size={22} color={colors.textSecondary} />
+                  </Pressable>
+                ) : null}
+              </View>
+            </View>
+          )}
         </View>
 
         {/* ── Filter rail ── */}
@@ -516,6 +610,40 @@ export default function DirectoryScreen() {
             style={{ position: 'absolute', right: 24, bottom: 24 }}
           />
         )}
+
+        <LocationPickerModal
+          visible={locationFlow.visible}
+          onClose={locationFlow.close}
+          colors={colors}
+          isDark={isDark}
+          state={locationFlow.state}
+          step={locationFlow.step}
+          pendingCountry={locationFlow.pendingCountry}
+          citySearch={locationFlow.citySearch}
+          onCitySearch={locationFlow.setCitySearch}
+          scrollCommon={locationFlow.scrollCommon}
+          countries={locationFlow.countries}
+          preferCountryFirst={locationFlow.preferCountryFirst}
+          onSelectCountry={locationFlow.selectCountry}
+          regions={locationFlow.regions}
+          onSelectRegion={locationFlow.selectRegion}
+          pendingRegionMeta={locationFlow.pendingRegionMeta}
+          citiesFiltered={locationFlow.citiesFiltered}
+          onSelectCity={locationFlow.selectCity}
+          headerBack={locationFlow.headerBack}
+          modalTitle={locationFlow.modalTitle}
+          headerFlag={locationFlow.headerFlag}
+          handleDetectLocation={locationFlow.handleDetectLocation}
+          isDetecting={locationFlow.isDetecting}
+          locationsLoading={locationFlow.locationsLoading}
+          locationsError={locationFlow.locationsError}
+          country={locationFlow.resolvedCountry}
+          countryFlag={locationFlow.countryFlag}
+          currentStateCode={locationFlow.currentStateCode}
+          topInset={locationFlow.topInset}
+          bottomInsetNative={locationFlow.bottomInsetNative}
+          listPadBottom={locationFlow.listPadBottom}
+        />
       </View>
     </ErrorBoundary>
   );
@@ -603,5 +731,42 @@ const dirStyles = StyleSheet.create({
   filterSurface: {
     paddingVertical: 12,
     zIndex: 10,
+  },
+  searchLocationRowWeb: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 54,
+    borderRadius: 27,
+    borderWidth: 1.5,
+    paddingHorizontal: 6,
+    overflow: 'hidden',
+    shadowOffset: { width: 0, height: 4 },
+  },
+  searchSectionWeb: {
+    flex: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingLeft: 14,
+    gap: 8,
+    height: '100%',
+  },
+  dividerWeb: {
+    width: 1,
+    height: 24,
+    marginHorizontal: 12,
+  },
+  locationSectionWeb: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingRight: 14,
+    paddingLeft: 4,
+    gap: 8,
+    height: '100%',
+  },
+  locationTextWeb: {
+    flex: 1,
+    fontSize: 14,
+    fontFamily: FontFamily.medium,
   },
 });

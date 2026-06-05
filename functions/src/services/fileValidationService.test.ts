@@ -2,6 +2,15 @@
  * Unit tests for the File Validation Service.
  */
 
+jest.mock('firebase-functions', () => ({
+  logger: {
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+    log: jest.fn(),
+  },
+}));
+
 import { fileValidationService } from './fileValidationService';
 
 describe('fileValidationService', () => {

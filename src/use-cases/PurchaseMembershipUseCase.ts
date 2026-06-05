@@ -4,15 +4,19 @@ export type PurchaseResult =
   | { status: 'already_active' }
   | { status: 'checkout_required'; url: string }
   | { status: 'dev_mode_success' }
+  | { status: 'direct_redeemed' }
   | { status: 'error'; message: string };
 
 export class PurchaseMembershipUseCase {
-  async execute(billingPeriod: 'monthly' | 'yearly'): Promise<PurchaseResult> {
+  async execute(billingPeriod: 'monthly' | 'yearly', promoCode?: string): Promise<PurchaseResult> {
     try {
-      const data = await membershipRepository.subscribe(billingPeriod);
+      const data = await membershipRepository.subscribe(billingPeriod, promoCode);
       
       if (data.alreadyActive) {
         return { status: 'already_active' };
+      }
+      if (data.redeemedDirectly) {
+        return { status: 'direct_redeemed' };
       }
       if (data.checkoutUrl) {
         return { status: 'checkout_required', url: data.checkoutUrl };

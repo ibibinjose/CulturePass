@@ -84,6 +84,7 @@ membershipRouter.get('/membership/:userId', requireAuth, async (req: Request, re
 // ── POST /api/membership/subscribe ───────────────────────────────────────────
 const subscribeSchema = z.object({
   billingPeriod: z.enum(['monthly', 'yearly']),
+  promoCode: z.string().optional(),
 });
 
 membershipRouter.post('/membership/subscribe', requireAuth, requireRevocationCheck, async (req: Request, res: Response) => {
@@ -112,6 +113,90 @@ membershipRouter.post('/membership/subscribe', requireAuth, requireRevocationChe
     return res.status(503).json({ error: 'Payment service unavailable', code: 'STRIPE_NOT_CONFIGURED' });
   }
 
+  // Handle promo code directly if passed
+  let stripePromoCodeId: string | undefined;
+  let redeemedDirectly = false;
+  let directExpiry: string | null = null;
+
+  if (parsed.promoCode) {
+    const code = parsed.promoCode.trim().toUpperCase();
+    const snap = await db.collection('promoCodes')
+      .where('code', '==', code)
+      .where('isActive', '==', true)
+      .limit(1)
+      .get();
+
+    if (!snap.empty) {
+      const promo = snap.docs[0].data();
+      if (promo.expiresAt && new Date(promo.expiresAt) < new Date()) {
+        return res.status(400).json({ error: 'This promo code has expired' });
+      }
+      if (promo.maxUses !== null && (promo.usedCount ?? 0) >= promo.maxUses) {
+        return res.status(400).json({ error: 'This promo code has reached its usage limit' });
+      }
+      if ((promo.usedBy ?? []).includes(userId)) {
+        return res.status(400).json({ error: 'You have already used this promo code' });
+      }
+
+      if (promo.type === 'free_plus') {
+        const durationDays: number = promo.durationDays ?? 30;
+        const base =
+          user.membership?.isActive && user.membership?.expiresAt && new Date(user.membership.expiresAt) > new Date()
+            ? new Date(user.membership.expiresAt)
+            : new Date();
+        base.setDate(base.getDate() + durationDays);
+        directExpiry = base.toISOString();
+
+        await usersService.upsert(userId, {
+          membership: {
+            tier: 'plus',
+            isActive: true,
+            expiresAt: directExpiry,
+          },
+        });
+
+        await snap.docs[0].ref.update({
+          usedCount: (promo.usedCount ?? 0) + 1,
+          usedBy: [...(promo.usedBy ?? []), userId],
+        });
+
+        redeemedDirectly = true;
+      } else if (promo.type === 'stripe_coupon' && promo.stripeCouponId) {
+        stripePromoCodeId = promo.stripeCouponId;
+      } else if (promo.type === 'ticket_discount') {
+        return res.status(400).json({ error: 'This code is only valid for event tickets.' });
+      } else {
+        return res.status(400).json({ error: 'Unsupported promo code type' });
+      }
+    } else {
+      // Check Stripe directly
+      try {
+        const stripePromos = await stripeClient.promotionCodes.list({
+          code: code,
+          active: true,
+          limit: 1,
+        });
+        if (stripePromos.data.length > 0) {
+          stripePromoCodeId = stripePromos.data[0].id;
+        } else {
+          return res.status(400).json({ error: 'Invalid or expired promotional code' });
+        }
+      } catch (err) {
+        return res.status(400).json({ error: 'Invalid promotional code' });
+      }
+    }
+  }
+
+  if (redeemedDirectly && directExpiry) {
+    return res.json({
+      checkoutUrl: null,
+      alreadyActive: false,
+      devMode: false,
+      redeemedDirectly: true,
+      membership: buildMembershipResponse({ tier: 'plus', isActive: true, expiresAt: directExpiry }),
+    });
+  }
+
   const priceId = parsed.billingPeriod === 'yearly'
     ? process.env.STRIPE_PRICE_YEARLY_ID
     : process.env.STRIPE_PRICE_MONTHLY_ID;
@@ -137,7 +222,8 @@ membershipRouter.post('/membership/subscribe', requireAuth, requireRevocationChe
   const introCoupon = process.env.STRIPE_COUPON_FIRST_PREMIUM_HALF_OFF?.trim();
   const introEligible =
     Boolean(introCoupon) &&
-    !user.premiumIntroDiscountUsedAt;
+    !user.premiumIntroDiscountUsedAt &&
+    !stripePromoCodeId;
 
   try {
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
@@ -154,7 +240,13 @@ membershipRouter.post('/membership/subscribe', requireAuth, requireRevocationChe
       cancel_url: `${appUrl}/membership/upgrade?status=cancelled`,
     };
 
-    if (introEligible) {
+    if (stripePromoCodeId) {
+      if (stripePromoCodeId.startsWith('promo_')) {
+        sessionParams.discounts = [{ promotion_code: stripePromoCodeId }];
+      } else {
+        sessionParams.discounts = [{ coupon: stripePromoCodeId }];
+      }
+    } else if (introEligible) {
       sessionParams.discounts = [{ coupon: introCoupon! }];
     } else {
       sessionParams.allow_promotion_codes = true;
@@ -165,7 +257,7 @@ membershipRouter.post('/membership/subscribe', requireAuth, requireRevocationChe
     return res.json({
       checkoutUrl: session.url,
       sessionId: session.id,
-      introDiscountApplied: introEligible,
+      introDiscountApplied: introEligible && !stripePromoCodeId,
     });
   } catch (err) {
     captureRouteError(err, 'membership/subscribe');
@@ -293,7 +385,7 @@ membershipRouter.post('/membership/admin-grant', requireAuth, async (req: Reques
 });
 
 // ── POST /api/membership/redeem-code ─────────────────────────────────────────
-// Authenticated user redeems a promo code for free Plus access.
+// Authenticated user redeems a promo code for free Plus access or validates Stripe discount.
 membershipRouter.post('/membership/redeem-code', requireAuth, async (req: Request, res: Response) => {
   const rawCode = req.body?.code;
   if (!rawCode || typeof rawCode !== 'string') {
@@ -310,6 +402,37 @@ membershipRouter.post('/membership/redeem-code', requireAuth, async (req: Reques
       .get();
 
     if (snap.empty) {
+      // Check Stripe directly
+      if (stripeClient) {
+        try {
+          const stripePromos = await stripeClient.promotionCodes.list({
+            code: code,
+            active: true,
+            limit: 1,
+          });
+          if (stripePromos.data.length > 0) {
+            const promoObj = stripePromos.data[0];
+            const coupon = (promoObj as any).coupon;
+            let discountDetail = 'Discount applied';
+            if (coupon.percent_off) {
+              discountDetail = `${coupon.percent_off}% off`;
+            } else if (coupon.amount_off) {
+              const formattedAmount = (coupon.amount_off / 100).toLocaleString('en-US', { style: 'currency', currency: coupon.currency || 'USD' });
+              discountDetail = `${formattedAmount} off`;
+            }
+            return res.json({
+              success: true,
+              type: 'stripe_discount',
+              durationDays: 0,
+              expiresAt: '',
+              message: `Coupon "${code}" (${discountDetail}) validated! Click Unlock to checkout.`,
+              membership: buildMembershipResponse({ tier: 'free', isActive: false, expiresAt: null }),
+            });
+          }
+        } catch (err) {
+          // Fall through
+        }
+      }
       return res.status(404).json({ error: 'Code not found or no longer active' });
     }
 
@@ -358,6 +481,15 @@ membershipRouter.post('/membership/redeem-code', requireAuth, async (req: Reques
         durationDays,
         expiresAt: expiresIso,
         membership: buildMembershipResponse({ tier: 'plus', isActive: true, expiresAt: expiresIso }),
+      });
+    } else if (promo['type'] === 'stripe_coupon') {
+      return res.json({
+        success: true,
+        type: 'stripe_discount',
+        durationDays: 0,
+        expiresAt: '',
+        message: `Stripe discount "${code}" validated! Click Unlock to checkout.`,
+        membership: buildMembershipResponse({ tier: 'free', isActive: false, expiresAt: null }),
       });
     }
 

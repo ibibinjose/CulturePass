@@ -20,6 +20,7 @@ export function useMembershipUpgrade() {
   const { userId, isAuthenticated } = useAuth();
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly');
   const [loading, setLoading] = useState(false);
+  const [appliedPromoCode, setAppliedPromoCode] = useState<string>('');
   const isMountedRef = useRef(false);
 
   useEffect(() => {
@@ -65,7 +66,7 @@ export function useMembershipUpgrade() {
     });
     try {
       await HapticManager.medium();
-      const result = await purchaseMembershipUseCase.execute(billingPeriod);
+      const result = await purchaseMembershipUseCase.execute(billingPeriod, appliedPromoCode);
 
       if (result.status === 'already_active') {
         await queryClient.invalidateQueries({ queryKey: ['membership', userId] });
@@ -99,6 +100,10 @@ export function useMembershipUpgrade() {
           return pollForUpdate();
         };
         await pollForUpdate();
+      } else if (result.status === 'direct_redeemed') {
+        await queryClient.invalidateQueries({ queryKey: ['membership', userId] });
+        await HapticManager.success();
+        Alert.alert('Welcome to CulturePass+!', 'Your promo code was redeemed directly! Enjoy all benefits. 🎉');
       } else if (result.status === 'dev_mode_success') {
         await queryClient.invalidateQueries({ queryKey: ['membership', userId] });
         await HapticManager.success();
@@ -112,7 +117,7 @@ export function useMembershipUpgrade() {
     } finally {
       setLoadingSafe(false);
     }
-  }, [userId, billingPeriod, pathname, setLoadingSafe]);
+  }, [userId, billingPeriod, pathname, setLoadingSafe, appliedPromoCode]);
 
   const executeCancel = useCallback(async () => {
     if (!userId) return;
@@ -184,5 +189,7 @@ export function useMembershipUpgrade() {
     loading,
     executeSubscribe,
     executeCancel,
+    appliedPromoCode,
+    setAppliedPromoCode,
   };
 }

@@ -23,7 +23,7 @@ describe('PurchaseMembershipUseCase', () => {
     const result = await purchaseMembershipUseCase.execute('monthly');
 
     expect(result).toEqual({ status: 'already_active' });
-    expect(membershipRepository.subscribe).toHaveBeenCalledWith('monthly');
+    expect(membershipRepository.subscribe).toHaveBeenCalledWith('monthly', undefined);
   });
 
   it('should return checkout_required with url when checkoutUrl is provided', async () => {
@@ -35,7 +35,7 @@ describe('PurchaseMembershipUseCase', () => {
     const result = await purchaseMembershipUseCase.execute('yearly');
 
     expect(result).toEqual({ status: 'checkout_required', url: checkoutUrl });
-    expect(membershipRepository.subscribe).toHaveBeenCalledWith('yearly');
+    expect(membershipRepository.subscribe).toHaveBeenCalledWith('yearly', undefined);
   });
 
   it('should return dev_mode_success when devMode is true', async () => {
@@ -46,7 +46,7 @@ describe('PurchaseMembershipUseCase', () => {
     const result = await purchaseMembershipUseCase.execute('monthly');
 
     expect(result).toEqual({ status: 'dev_mode_success' });
-    expect(membershipRepository.subscribe).toHaveBeenCalledWith('monthly');
+    expect(membershipRepository.subscribe).toHaveBeenCalledWith('monthly', undefined);
   });
 
   it('should return error when repository returns unknown state', async () => {
@@ -72,5 +72,16 @@ describe('PurchaseMembershipUseCase', () => {
     const result = await purchaseMembershipUseCase.execute('monthly');
 
     expect(result).toEqual({ status: 'error', message: 'Failed to start subscription' });
+  });
+
+  it('should forward promoCode to the repository when provided', async () => {
+    (membershipRepository.subscribe as jest.Mock).mockResolvedValue({
+      devMode: true,
+    });
+
+    const result = await purchaseMembershipUseCase.execute('monthly', 'PROMO50');
+
+    expect(result).toEqual({ status: 'dev_mode_success' });
+    expect(membershipRepository.subscribe).toHaveBeenCalledWith('monthly', 'PROMO50');
   });
 });

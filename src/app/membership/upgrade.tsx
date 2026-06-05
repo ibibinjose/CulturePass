@@ -93,6 +93,7 @@ function PlanStatusCard({
   earlyAccessHours: number;
 }) {
   const colors = useColors();
+  const { user, userId } = useAuth();
   const renewalLabel = expiresAt
     ? new Date(expiresAt).toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' })
     : 'No expiry set';
@@ -102,36 +103,62 @@ function PlanStatusCard({
   const cashbackPct = Math.round(cashbackRate * 100);
 
   return (
-    <LuxeCard variant="glass" tone="auto" style={planCard.wrap}>
-      {/* Plan name row */}
-      <View style={planCard.topRow}>
-        <View style={planCard.nameRow}>
-          <View style={[planCard.iconBubble, { backgroundColor: colors.gold + '18' }]}>
-            <Ionicons name="diamond" size={18} color={colors.gold} />
+    <View style={cardStyles.container}>
+      <LinearGradient
+        colors={['#E5A93B', '#FFF2B2', '#C59024', '#FBEAA1', '#9E6D0F']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={cardStyles.card}
+      >
+        {/* Shimmer/Reflection Overlay */}
+        <LinearGradient
+          colors={['rgba(255,255,255,0.35)', 'rgba(255,255,255,0.08)', 'transparent']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0.5, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
+        
+        {/* Header: Chip & Brand */}
+        <View style={cardStyles.header}>
+          <View style={cardStyles.chip} />
+          <View style={cardStyles.brand}>
+            <Ionicons name="diamond" size={20} color="#5C4008" />
+            <Text style={cardStyles.brandText}>CulturePass+</Text>
           </View>
-          <LuxeText variant="title3" style={[planCard.planName, { color: colors.text }]}>CulturePass+</LuxeText>
         </View>
-        <View style={[planCard.activeBadge, { borderColor: CultureTokens.teal + '40', backgroundColor: CultureTokens.teal + '20' }]}>
-          <View style={planCard.activeDot} />
-          <LuxeText variant="badge" style={planCard.activeText}>Active</LuxeText>
+
+        {/* Card Number / ID */}
+        <Text style={cardStyles.cardNo}>
+          MEMBER  {userId ? userId.substring(userId.length - 8).toUpperCase() : 'CP-PLUS'}
+        </Text>
+
+        {/* Footer: Name & Expiry */}
+        <View style={cardStyles.footer}>
+          <View style={cardStyles.holder}>
+            <Text style={cardStyles.label}>CARDHOLDER</Text>
+            <Text style={cardStyles.name} numberOfLines={1}>
+              {(user?.displayName || user?.username || 'Valued Member').toUpperCase()}
+            </Text>
+          </View>
+          <View style={cardStyles.valid}>
+            <Text style={cardStyles.label}>RENEWS</Text>
+            <Text style={cardStyles.date}>{expiresAt ? new Date(expiresAt).toLocaleDateString('en-AU', { month: '2-digit', year: '2-digit' }) : 'N/A'}</Text>
+          </View>
         </View>
-      </View>
+      </LinearGradient>
 
-      <View style={[planCard.divider, { backgroundColor: colors.borderLight }]} />
+      {/* Days left warning if active & expiring soon */}
+      {daysLeft !== null && daysLeft <= 14 ? (
+        <View style={[cardStyles.alertBanner, { backgroundColor: colors.warning + '15', borderColor: colors.warning + '40', marginTop: 14 }]}>
+          <Ionicons name="alert-circle" size={16} color={colors.warning} />
+          <LuxeText variant="caption" style={{ color: colors.warning }}>
+            Your membership renews in {daysLeft} days on {renewalLabel}.
+          </LuxeText>
+        </View>
+      ) : null}
 
-      {/* Renewal */}
-      <View style={planCard.metaRow}>
-        <Ionicons name="calendar-outline" size={14} color={colors.textTertiary} />
-        <LuxeText variant="caption" style={[planCard.metaText, { color: colors.textSecondary }]}>
-          Renews {renewalLabel}
-          {daysLeft !== null && daysLeft <= 14
-            ? <LuxeText style={{ color: colors.gold }}> · {daysLeft}d left</LuxeText>
-            : null}
-        </LuxeText>
-      </View>
-
-      {/* Stats */}
-      <View style={[planCard.statsRow, { backgroundColor: colors.surfaceVariant }]}>
+      {/* Stats Row */}
+      <View style={[planCard.statsRow, { backgroundColor: colors.surfaceVariant, marginTop: 20 }]}>
         <View style={planCard.stat}>
           <LuxeText variant="title" style={[planCard.statValue, { color: colors.text }]}>{eventsAttended}</LuxeText>
           <LuxeText variant="caption" style={[planCard.statLabel, { color: colors.textTertiary }]}>Events attended</LuxeText>
@@ -147,9 +174,111 @@ function PlanStatusCard({
           <LuxeText variant="caption" style={[planCard.statLabel, { color: colors.textTertiary }]}>Early access</LuxeText>
         </View>
       </View>
-    </LuxeCard>
+    </View>
   );
 }
+
+const cardStyles = StyleSheet.create({
+  container: {
+    marginBottom: 28,
+  },
+  card: {
+    borderRadius: 20,
+    padding: 24,
+    height: 200,
+    justifyContent: 'space-between',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 15,
+    elevation: 8,
+    position: 'relative',
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  chip: {
+    width: 45,
+    height: 35,
+    borderRadius: 8,
+    backgroundColor: 'rgba(92, 64, 8, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(92, 64, 8, 0.3)',
+  },
+  brand: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  brandText: {
+    fontSize: 16,
+    fontFamily: FontFamily.bold,
+    color: '#3d2a05',
+    letterSpacing: -0.5,
+  },
+  cardNo: {
+    fontSize: 20,
+    fontFamily: FontFamily.bold,
+    color: '#3d2a05',
+    letterSpacing: 2,
+    marginVertical: 12,
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+  },
+  holder: {
+    flex: 1,
+    marginRight: 12,
+  },
+  valid: {
+    alignItems: 'flex-end',
+  },
+  label: {
+    fontSize: 9,
+    fontFamily: FontFamily.bold,
+    color: '#5C4008',
+    opacity: 0.8,
+    letterSpacing: 1,
+    marginBottom: 4,
+  },
+  name: {
+    fontSize: 15,
+    fontFamily: FontFamily.bold,
+    color: '#3d2a05',
+    letterSpacing: 0.5,
+  },
+  date: {
+    fontSize: 14,
+    fontFamily: FontFamily.bold,
+    color: '#3d2a05',
+  },
+  alertBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  discountBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: CultureTokens.teal + '40',
+    backgroundColor: CultureTokens.teal + '10',
+    marginBottom: 16,
+  },
+});
 
 const planCard = StyleSheet.create({
   wrap: {
@@ -185,7 +314,19 @@ const planCard = StyleSheet.create({
 
 // ─── Promo code widget ─────────────────────────────────────────────────────────
 
-function PromoCodeWidget({ userId, onFreeActivation }: { userId: string | null; onFreeActivation: () => void }) {
+// ─── Promo code widget ─────────────────────────────────────────────────────────
+
+function PromoCodeWidget({
+  userId,
+  appliedPromoCode,
+  setAppliedPromoCode,
+  onFreeActivation,
+}: {
+  userId: string | null;
+  appliedPromoCode: string;
+  setAppliedPromoCode: (code: string) => void;
+  onFreeActivation: () => void;
+}) {
   const colors = useColors();
   const [expanded, setExpanded] = useState(false);
   const [code, setCode] = useState('');
@@ -196,12 +337,19 @@ function PromoCodeWidget({ userId, onFreeActivation }: { userId: string | null; 
     mutationFn: (c: string) => api.membership.redeemCode(c),
     onSuccess: (data) => {
       setError(null);
-      setSuccessMsg(`CulturePass+ activated for ${data.durationDays} days! 🎉`);
-      setCode('');
-      setTimeout(onFreeActivation, 1600);
+      if (data.type === 'free_plus') {
+        setSuccessMsg(`CulturePass+ activated for ${data.durationDays} days! 🎉`);
+        setCode('');
+        setAppliedPromoCode('');
+        setTimeout(onFreeActivation, 1600);
+      } else if (data.type === 'stripe_discount') {
+        setSuccessMsg(data.message || 'Stripe discount code applied! Click Unlock below to proceed.');
+        setAppliedPromoCode(code.trim().toUpperCase());
+      }
     },
     onError: (err: Error) => {
       const msg = err.message ?? 'Invalid or expired code';
+      setAppliedPromoCode('');
       if (msg.toLowerCase().includes('not found') || msg.toLowerCase().includes('no longer active')) {
         setError('Code not found or no longer active. Check for typos and try again.');
       } else if (msg.toLowerCase().includes('already used')) {
@@ -234,7 +382,9 @@ function PromoCodeWidget({ userId, onFreeActivation }: { userId: string | null; 
           <View style={[pc.toggleIcon, { backgroundColor: colors.gold + '18' }]}>
             <Ionicons name="pricetag-outline" size={17} color={colors.gold} />
           </View>
-          <LuxeText variant="bodyMedium" style={[pc.toggleLabel, { color: colors.textSecondary }]}>Have a promo or gift code?</LuxeText>
+          <LuxeText variant="bodyMedium" style={[pc.toggleLabel, { color: colors.textSecondary }]}>
+            {appliedPromoCode ? `Code "${appliedPromoCode}" Applied` : 'Have a promo or gift code?'}
+          </LuxeText>
         </View>
         <Ionicons
           name={expanded ? 'chevron-up' : 'chevron-down'}
@@ -249,25 +399,25 @@ function PromoCodeWidget({ userId, onFreeActivation }: { userId: string | null; 
             <TextInput
               value={code}
               onChangeText={v => { setCode(v); setError(null); setSuccessMsg(null); }}
-              placeholder="e.g. CULTURE30"
+              placeholder={appliedPromoCode ? `Applied: ${appliedPromoCode}` : "e.g. CULTURE30"}
               placeholderTextColor={colors.textTertiary}
               autoCapitalize="characters"
               autoCorrect={false}
               returnKeyType="done"
               onSubmitEditing={handleRedeem}
               editable={!mutation.isPending}
-              style={[pc.input, { color: colors.text, backgroundColor: colors.surfaceVariant, borderColor: error ? '#EF4444' : colors.borderLight }]}
+              style={[pc.input, { color: colors.text, backgroundColor: colors.surfaceVariant, borderColor: error ? '#EF4444' : (appliedPromoCode ? CultureTokens.teal : colors.borderLight) }]}
               accessibilityLabel="Promo or gift code"
             />
             <LuxeButton
-              variant="filled"
+              variant={appliedPromoCode ? "outlined" : "filled"}
               tone="auto"
               size="sm"
               onPress={handleRedeem}
               disabled={!code.trim() || mutation.isPending || !userId}
               loading={mutation.isPending}
             >
-              Apply
+              {appliedPromoCode ? 'Change' : 'Apply'}
             </LuxeButton>
           </View>
 
@@ -287,7 +437,7 @@ function PromoCodeWidget({ userId, onFreeActivation }: { userId: string | null; 
 
           <LuxeText variant="caption" style={[pc.hint, { color: colors.textTertiary }]}>
             Gift codes activate Plus instantly.{' '}
-            Stripe discount codes can be entered after clicking &quot;Unlock CulturePass+&quot;.
+            Stripe promo codes will be applied automatically at checkout.
           </LuxeText>
         </View>
       )}
@@ -351,6 +501,7 @@ export default function UpgradeScreen() {
     isPlus, memberCount, billingPeriod, setBillingPeriod,
     price, perMonth, loading,
     executeSubscribe, executeCancel,
+    appliedPromoCode, setAppliedPromoCode,
   } = useMembershipUpgrade();
 
   const params = useLocalSearchParams<{ status?: 'success' | 'cancelled'; session_id?: string }>();
@@ -707,7 +858,10 @@ export default function UpgradeScreen() {
               {billingPeriod === 'yearly' ? 'PER YEAR' : 'PER MONTH'}
             </LuxeText>
             {billingPeriod === 'yearly' ? (
-              <LuxeText variant="body" style={[pricing.equiv, { color: colors.textSecondary }]}>{"That's"} just {perMonth} per month</LuxeText>
+              <View style={{ alignItems: 'center', gap: 6 }}>
+                <LuxeText variant="body" style={[pricing.equiv, { color: colors.textSecondary }]}>{"That's"} just {perMonth} per month</LuxeText>
+                <LuxeText variant="caption" style={{ color: CultureTokens.teal }}>Billed annually. You save $26.88/year!</LuxeText>
+              </View>
             ) : null}
           </LuxeCard>
         </Animated.View>
@@ -735,11 +889,24 @@ export default function UpgradeScreen() {
 
         {/* Promo / gift code */}
         <Animated.View entering={FadeInDown.delay(460)}>
-          <PromoCodeWidget userId={userId} onFreeActivation={handleFreeActivation} />
+          <PromoCodeWidget
+            userId={userId}
+            appliedPromoCode={appliedPromoCode}
+            setAppliedPromoCode={setAppliedPromoCode}
+            onFreeActivation={handleFreeActivation}
+          />
         </Animated.View>
 
         {/* CTA */}
         <Animated.View entering={FadeInDown.delay(520)} style={page.ctaArea}>
+          {appliedPromoCode ? (
+            <View style={cardStyles.discountBadge}>
+              <Ionicons name="checkmark-circle" size={16} color={CultureTokens.teal} />
+              <LuxeText variant="caption" style={{ color: CultureTokens.teal }}>
+                Discount code &quot;{appliedPromoCode}&quot; will be applied at checkout.
+              </LuxeText>
+            </View>
+          ) : null}
           <LuxeButton
             variant="filled"
             tone="auto"

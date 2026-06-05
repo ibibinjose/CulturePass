@@ -25,7 +25,7 @@ async function loadWalletPassUser(req: Request): Promise<WalletPassUser> {
     return {
       id: u.id,
       username: u.username,
-      displayName: u.displayName ?? u.username,
+      displayName: u.username,
       email: u.email,
       city: u.city ?? 'Sydney',
       country: u.country ?? 'Australia',

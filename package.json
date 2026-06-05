@@ -169,8 +169,8 @@
     "node": ">=22.14.0 <23"
   },
   "overrides": {
-    "@xmldom/xmldom": "0.8.10",
+    "@xmldom/xmldom": "^0.8.13",
     "@expo/plist": "^0.3.1",
-    "uuid": "^10.0.0"
+    "uuid": "^11.1.1"
   }
 }

@@ -4,10 +4,19 @@ All notable changes to CulturePass will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
 ## [Unreleased]
 
+## [1.3.0] - 2026-06-05
+
 ### Added
+- **End-to-End Scanner Improvements**:
+  - Refactored the ticket scanner backend (`/api/tickets/scan`) to return `200 OK` with descriptive validation outcomes (duplicate, invalid, cancelled) instead of `400/404` errors, avoiding client-side fetch exceptions and enabling graceful status card rendering.
+  - Included the full ticket object in validation failure responses to assist gate staff in resolving entry disputes.
+  - Updated `parseCulturePassInput` to extract CPIDs from scanned user/profile URLs (e.g. `http://localhost:8081/cpu/CP-U58B35B`), allowing direct QR scans of digital business card passes.
+  - Retained the `email`, `phone`, and `website` fields resolved from CPIDs and displayed them in a premium **CONNECT & LINKS** section on `CulturePassContactCard` with active links.
+  - Added comprehensive mock support for testing: scanning mock ticket codes (`mock-used`, `mock-cancelled`, `mock-invalid`) returns descriptive mock cards, and looking up user ID `CP-U58B35B` returns Vikram Sharma's full profile details (email, phone, bio, website).
+- **Branding Enhancements**: Embedded the CulturePass logo in the center of generated QR codes across the entire application (Profile passes, user screens, community detail, and host passes).
+- **Web Sidebar Polish**: Left-aligned the date, time, and weather metadata block in `WebSidebar` (removed `marginLeft: 16` offset and set `marginRight: 'auto'` to position the block cleanly on the left under the logo).
 - Host wizard analytics now fully instrumented and surfaced:
   - Comprehensive tracking in `useFormWizard` (session start, step start/complete, validation errors by field, auto-save success/failure with timing, publish funnel with duration, abandonment on unmount/cancel with last step + reason).
   - Auto-save tracking wrapped in the hook's save path.

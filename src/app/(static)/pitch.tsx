@@ -238,7 +238,7 @@ export default function PitchScreen() {
           </View>
           <Text style={[styles.h2, { color: colors.text }]}>Why Culture? Why Now?</Text>
           <Text style={styles.p}>
-            Culture remains one of humanity's most powerful connecting forces, yet it remains fragmented across thousands of disconnected channels, offline communities, and niche platforms.
+            Culture remains one of humanity&apos;s most powerful connecting forces, yet it remains fragmented across thousands of disconnected channels, offline communities, and niche platforms.
           </Text>
 
           <View style={[styles.grid, { maxWidth: isDesktop ? 1000 : '100%', gap: 20 }]}>

@@ -261,7 +261,7 @@ export default function FounderStory() {
                       style={{ marginRight: 4 }}
                     />
                     <Text style={[styles.tabText, activeTab === 'story' && styles.tabTextActive, activeTab === 'story' && { color: 'white' }]}>
-                      Founder's Story
+                      Founder&apos;s Story
                     </Text>
                   </Pressable>
                 </View>

@@ -132,6 +132,11 @@ export function ProfileQRCode({
           color={foregroundColor}
           backgroundColor={backgroundColor}
           ecl="H"
+          logo={require('@/assets/images/culturepass-logo.png')}
+          logoSize={size * 0.22}
+          logoBorderRadius={Radius.sm}
+          logoBackgroundColor={backgroundColor}
+          logoMargin={2}
           getRef={(ref) => {
             qrRef.current = ref as unknown as QRCode;
           }}

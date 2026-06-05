@@ -378,6 +378,12 @@ export default function CommunityDetailScreen() {
                     size={68}
                     color={colors.text}
                     backgroundColor={colors.surface}
+                    ecl="H"
+                    logo={require('@/assets/images/culturepass-logo.png')}
+                    logoSize={68 * 0.22}
+                    logoBorderRadius={4}
+                    logoBackgroundColor={colors.surface}
+                    logoMargin={2}
                   />
                 </View>
                 <View style={{ flex: 1, gap: 6 }}>

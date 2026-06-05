@@ -387,6 +387,12 @@ export default function PublicProfileScreen() {
                     size={72}
                     color={colors.text}
                     backgroundColor={colors.surface}
+                    ecl="H"
+                    logo={require('@/assets/images/culturepass-logo.png')}
+                    logoSize={72 * 0.22}
+                    logoBorderRadius={4}
+                    logoBackgroundColor={colors.surface}
+                    logoMargin={2}
                   />
                 </View>
 

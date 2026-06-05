@@ -25,6 +25,8 @@ import {
   ActivityIndicator,
   useWindowDimensions,
 } from 'react-native';
+// eslint-disable-next-line no-restricted-imports
+import { Image as RNImage } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -188,10 +190,11 @@ function buildCardHtml(opts: {
   memberSince: string;
   avatarUrl?: string | null;
   qrDataUrl: string;
+  logoDataUrl?: string | null;
   initials: string;
   affiliation?: { name: string; avatarUrl?: string | null; entityType?: string | null } | null;
 }) {
-  const { cardType, name, username, cpid, tier, memberSince, avatarUrl, qrDataUrl, initials, affiliation } = opts;
+  const { cardType, name, username, cpid, tier, memberSince, avatarUrl, qrDataUrl, logoDataUrl, initials, affiliation } = opts;
   const isLanyard = cardType === 'lanyard';
   const tierText = (tier || 'Standard').toUpperCase();
 
@@ -235,8 +238,9 @@ function buildCardHtml(opts: {
       </div>
     </div>
     <div style="display:flex;flex-direction:column;align-items:center;gap:5px;flex-shrink:0;">
-      <div style="padding:5px;background:#fff;border-radius:10px;border:1px solid #E5E7EB;">
+      <div style="position:relative;padding:5px;background:#fff;border-radius:10px;border:1px solid #E5E7EB;">
         <img id="qr-img" src="${qrDataUrl}" width="84" height="84" style="display:block;" crossorigin="anonymous"/>
+        ${logoDataUrl ? `<img src="${logoDataUrl}" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:18px;height:18px;border-radius:4px;background:#fff;padding:2px;" crossorigin="anonymous"/>` : ''}
       </div>
       <span style="font-size:9.5px;font-family:monospace;font-weight:700;letter-spacing:0.8px;color:#0B0F19;">${cpid}</span>
     </div>
@@ -259,8 +263,9 @@ function buildCardHtml(opts: {
     </div>
   </div>
   <div style="display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:auto;padding-top:16px;">
-    <div style="padding:8px;background:#fff;border-radius:12px;border:1px solid #E5E7EB;">
+    <div style="position:relative;padding:8px;background:#fff;border-radius:12px;border:1px solid #E5E7EB;">
       <img id="qr-img" src="${qrDataUrl}" width="130" height="130" style="display:block;" crossorigin="anonymous"/>
+      ${logoDataUrl ? `<img src="${logoDataUrl}" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:28px;height:28px;border-radius:6px;background:#fff;padding:2px;" crossorigin="anonymous"/>` : ''}
     </div>
     <span style="font-size:12px;font-family:monospace;font-weight:700;letter-spacing:1.5px;color:#0B0F19;">${cpid}</span>
   </div>
@@ -280,6 +285,7 @@ function openPrintWindow(opts: {
   memberSince: string;
   avatarUrl?: string | null;
   qrDataUrl: string;
+  logoDataUrl?: string | null;
   initials: string;
   affiliation?: { name: string; avatarUrl?: string | null; entityType?: string | null } | null;
 }) {
@@ -344,6 +350,7 @@ function openSaveImageWindow(opts: {
   memberSince: string;
   avatarUrl?: string | null;
   qrDataUrl: string;
+  logoUrl?: string | null;
   initials: string;
   affiliation?: { name: string; avatarUrl?: string | null; entityType?: string | null } | null;
 }) {
@@ -395,6 +402,15 @@ function openSaveImageWindow(opts: {
       ctx.fillStyle='#F9FAFB'; ctx.strokeStyle='#E5E7EB'; ctx.lineWidth=1;
       rr(ctx,qrX-8,qrY-8,qrS+16,qrS+16,12); ctx.fill(); ctx.stroke();
       if(imgs[1]&&imgs[1].complete&&imgs[1].naturalWidth>0){ctx.drawImage(imgs[1],qrX,qrY,qrS,qrS);}
+      if(imgs[2]&&imgs[2].complete&&imgs[2].naturalWidth>0){
+        var logoS = qrS * 0.22;
+        var logoX = qrX + (qrS - logoS)/2;
+        var logoY = qrY + (qrS - logoS)/2;
+        ctx.fillStyle = '#FFFFFF';
+        rr(ctx, logoX - 2, logoY - 2, logoS + 4, logoS + 4, 4);
+        ctx.fill();
+        ctx.drawImage(imgs[2], logoX, logoY, logoS, logoS);
+      }
       ctx.font='700 12px monospace'; ctx.letterSpacing='1.5px'; ctx.fillStyle='#0B0F19';
       ctx.textAlign='center'; ctx.fillText('${opts.cpid}', W/2, qrY+qrS+18); ctx.textAlign='left';
     `
@@ -426,6 +442,15 @@ function openSaveImageWindow(opts: {
       ctx.fillStyle='#F9FAFB'; ctx.strokeStyle='#E5E7EB'; ctx.lineWidth=1;
       rr(ctx,qrX-qrBP,qrY-qrBP,qrS+qrBP*2,qrS+qrBP*2,10); ctx.fill(); ctx.stroke();
       if(imgs[1]&&imgs[1].complete&&imgs[1].naturalWidth>0){ctx.drawImage(imgs[1],qrX,qrY,qrS,qrS);}
+      if(imgs[2]&&imgs[2].complete&&imgs[2].naturalWidth>0){
+        var logoS = qrS * 0.22;
+        var logoX = qrX + (qrS - logoS)/2;
+        var logoY = qrY + (qrS - logoS)/2;
+        ctx.fillStyle = '#FFFFFF';
+        rr(ctx, logoX - 2, logoY - 2, logoS + 4, logoS + 4, 4);
+        ctx.fill();
+        ctx.drawImage(imgs[2], logoX, logoY, logoS, logoS);
+      }
       ctx.font='700 9.5px monospace'; ctx.letterSpacing='0.8px'; ctx.fillStyle='#10190bff';
       ctx.textAlign='center'; ctx.fillText('${opts.cpid}', qrX-qrBP+(qrS+qrBP*2)/2, qrY+qrS+16); ctx.textAlign='left';
     `;
@@ -460,6 +485,7 @@ function openSaveImageWindow(opts: {
     var W=${cardW}, H=${cardH}, S=${SCALE};
     var avatarSrc=${opts.avatarUrl ? `'${opts.avatarUrl}'` : 'null'};
     var qrSrc='${opts.qrDataUrl}';
+    var logoSrc=${opts.logoUrl ? `'${opts.logoUrl}'` : 'null'};
 
     function rr(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();}
 
@@ -496,7 +522,9 @@ function openSaveImageWindow(opts: {
     window.addEventListener('load',function(){
       loadImg(avatarSrc,function(avatarImg){
         loadImg(qrSrc,function(qrImg){
-          generate([avatarImg,qrImg]);
+          loadImg(logoSrc,function(logoImg){
+            generate([avatarImg,qrImg,logoImg]);
+          });
         });
       });
     });
@@ -730,12 +758,17 @@ export default function QRScreen() {
     let base64Avatar: string | null = null;
     let base64AffiliationAvatar: string | null = null;
     let base64Qr: string | null = null;
+    let base64Logo: string | null = null;
     try {
       if (avatarUrl) base64Avatar = await fetchImageAsDataUri(avatarUrl);
       if (user?.affiliation?.avatarUrl) base64AffiliationAvatar = await fetchImageAsDataUri(user.affiliation.avatarUrl);
       // Pre-fetch QR as base64 so Canvas stays CORS-clean
       const qrFetchUrl = `https://api.qrserver.com/v1/create-qr-code/?size=390x390&ecc=H&data=${encodeURIComponent(qrValue)}`;
       base64Qr = await fetchImageAsDataUri(qrFetchUrl);
+
+      const logoAsset = require('@/assets/images/culturepass-logo.png');
+      const logoUri = RNImage.resolveAssetSource(logoAsset).uri;
+      base64Logo = await fetchImageAsDataUri(logoUri);
     } catch (e) {
       console.warn('Failed to fetch assets as base64:', e);
     } finally {
@@ -752,6 +785,7 @@ export default function QRScreen() {
       memberSince,
       avatarUrl: base64Avatar,
       qrDataUrl: qrImgUrl,
+      logoUrl: base64Logo,
       initials,
       affiliation: user?.affiliation ? {
         name: user.affiliation.name,
@@ -772,6 +806,7 @@ export default function QRScreen() {
     setResolvingAvatar(true);
     let base64Avatar: string | null = null;
     let base64AffiliationAvatar: string | null = null;
+    let base64Logo: string | null = null;
     try {
       if (avatarUrl) {
         base64Avatar = await fetchImageAsDataUri(avatarUrl);
@@ -779,8 +814,11 @@ export default function QRScreen() {
       if (user?.affiliation?.avatarUrl) {
         base64AffiliationAvatar = await fetchImageAsDataUri(user.affiliation.avatarUrl);
       }
+      const logoAsset = require('@/assets/images/culturepass-logo.png');
+      const logoUri = RNImage.resolveAssetSource(logoAsset).uri;
+      base64Logo = await fetchImageAsDataUri(logoUri);
     } catch (e) {
-      console.warn('Failed to fetch avatar as base64 data URI:', e);
+      console.warn('Failed to fetch avatar or logo as base64 data URI:', e);
     } finally {
       setResolvingAvatar(false);
     }
@@ -795,6 +833,7 @@ export default function QRScreen() {
       memberSince,
       avatarUrl: base64Avatar,
       qrDataUrl: qrImgUrl,
+      logoDataUrl: base64Logo,
       initials,
       affiliation: user?.affiliation ? {
         name: user.affiliation.name,
@@ -983,7 +1022,18 @@ export default function QRScreen() {
                               </View>
                               <View style={s.rightCol}>
                                 <View style={s.qrWhiteBackground}>
-                                  <QRCode value={qrValue} size={qrSizeLandscape} color="#000000" backgroundColor="#FFFFFF" ecl="H" />
+                                  <QRCode
+                                    value={qrValue}
+                                    size={qrSizeLandscape}
+                                    color="#000000"
+                                    backgroundColor="#FFFFFF"
+                                    ecl="H"
+                                    logo={require('@/assets/images/culturepass-logo.png')}
+                                    logoSize={qrSizeLandscape * 0.22}
+                                    logoBorderRadius={4}
+                                    logoBackgroundColor="#FFFFFF"
+                                    logoMargin={2}
+                                  />
                                 </View>
                                 <Pressable onPress={handleCopy} style={s.cpidMonospaceContainer} hitSlop={8}>
                                   <Ionicons name="wifi" size={12} color={cardSecondaryTextColor} style={{ transform: [{ rotate: '90deg' }] }} />
@@ -1115,7 +1165,18 @@ export default function QRScreen() {
                             </View>
                             <View style={s.passMiddleVertical}>
                               <View style={s.qrWhiteBackground}>
-                                <QRCode value={qrValue} size={qrSizeVertical} color="#000000" backgroundColor="#FFFFFF" ecl="H" />
+                                <QRCode
+                                  value={qrValue}
+                                  size={qrSizeVertical}
+                                  color="#000000"
+                                  backgroundColor="#FFFFFF"
+                                  ecl="H"
+                                  logo={require('@/assets/images/culturepass-logo.png')}
+                                  logoSize={qrSizeVertical * 0.22}
+                                  logoBorderRadius={6}
+                                  logoBackgroundColor="#FFFFFF"
+                                  logoMargin={2}
+                                />
                               </View>
                               <Pressable onPress={handleCopy} style={s.cpidMonospaceContainer} hitSlop={8}>
                                 <Ionicons name="wifi" size={13} color={cardSecondaryTextColor} style={{ transform: [{ rotate: '90deg' }] }} />

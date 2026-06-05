@@ -810,6 +810,11 @@ function UserPublicScreen() {
                             color="#000000"
                             backgroundColor="#FFFFFF"
                             ecl="H"
+                            logo={require('@/assets/images/culturepass-logo.png')}
+                            logoSize={84 * 0.22}
+                            logoBorderRadius={4}
+                            logoBackgroundColor="#FFFFFF"
+                            logoMargin={2}
                           />
                         </View>
                         <Pressable onPress={handleCopy} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }} hitSlop={8}>

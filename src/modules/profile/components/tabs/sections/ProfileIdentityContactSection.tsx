@@ -66,6 +66,12 @@ export const ProfileIdentityContactSection = React.memo(({
                 size={64}
                 backgroundColor="transparent"
                 color="#000000"
+                ecl="H"
+                logo={require('@/assets/images/culturepass-logo.png')}
+                logoSize={64 * 0.22}
+                logoBorderRadius={3}
+                logoBackgroundColor="#FFFFFF"
+                logoMargin={1.5}
               />
             </View>
           </View>

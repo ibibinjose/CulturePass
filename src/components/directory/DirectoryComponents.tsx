@@ -15,12 +15,11 @@ import { CultureTokens, EntityTypeColors, FontFamily, FontSize, LineHeight, Radi
 import * as Haptics from 'expo-haptics';
 import { useColors } from '@/hooks/useColors';
 import type { Profile, EventData } from '@/shared/schema';
-import { Button } from '@/design-system/ui/Button';
-import { M3Button } from '@/design-system/ui/M3Button';
 import { formatPrice } from '@/lib/dateUtils';
 import { routerProfileHref } from '@/lib/publicPaths';
 import { GlassView } from '@/design-system/ui/GlassView';
 import { SaveToggle } from '@/design-system/ui/SaveToggle';
+import { M3Button } from '@/design-system/ui/M3Button';
 
 export const isWeb = Platform.OS === 'web';
 
@@ -67,6 +66,78 @@ export function getOptionalString(record: Record<string, unknown>, key: string):
   const value = record[key];
   return typeof value === 'string' && value.trim().length > 0 ? value : null;
 }
+
+// ─── Stylesheets (cr & fr defined early to prevent reference errors) ───
+
+const cr = StyleSheet.create({
+  communityItem: { width: 80, alignItems: 'center', gap: 8 },
+  communityRing: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    padding: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  communityIconInner: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  communityName: { fontSize: 11, fontFamily: FontFamily.semibold, textAlign: 'center', marginTop: 2 },
+});
+
+const fr = StyleSheet.create({
+  wrap:       { marginBottom: 12, paddingTop: 4 },
+  header:     {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    marginBottom: 14,
+  },
+  headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  accentBar:  { width: 3, height: 20, borderRadius: 2 },
+  title:      { fontSize: 18, fontFamily: FontFamily.bold, letterSpacing: -0.2 },
+  scroll:     { paddingHorizontal: 20, gap: 12, paddingRight: 32 },
+  card: {
+    width: 140,
+    height: 190,
+    borderRadius: 20,
+    overflow: 'hidden',
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    ...Platform.select({
+      ios:     shadows.small,
+      android: { elevation: 3 },
+      web:     { boxShadow: '0 4px 12px rgba(0,0,0,0.12)' },
+    }),
+  },
+  imgPlaceholder: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center' },
+  cardInfo:       { position: 'absolute', bottom: 12, left: 12, right: 12 },
+  verifiedBadge:  {
+    width: 20, height: 20, borderRadius: 10,
+    alignItems: 'center', justifyContent: 'center',
+    marginBottom: 6,
+    overflow: 'hidden',
+  },
+  cardName: { fontSize: 13, fontFamily: FontFamily.bold, lineHeight: 17 },
+  cardType: {
+    fontSize: 10,
+    fontFamily: FontFamily.medium,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginTop: 2,
+  },
+});
 
 // ─── FilterDivider ────────────────────────────────────────────────────────────
 
@@ -174,6 +245,8 @@ export function FeaturedRail({
   );
 }
 
+// ─── CommunityRail ────────────────────────────────────────────────────────────
+
 export function CommunityCard({
   c,
   colors,
@@ -250,77 +323,7 @@ export function CommunityRail({
   );
 }
 
-const cr = StyleSheet.create({
-  communityItem: { width: 80, alignItems: 'center', gap: 8 },
-  communityRing: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
-    padding: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  communityIconInner: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    overflow: 'hidden',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  communityName: { fontSize: 11, fontFamily: FontFamily.semibold, textAlign: 'center', marginTop: 2 },
-});
-
-const fr = StyleSheet.create({
-  wrap:       { marginBottom: 12, paddingTop: 4 },
-  header:     {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    marginBottom: 14,
-  },
-  headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  accentBar:  { width: 3, height: 20, borderRadius: 2 },
-  title:      { fontSize: 18, fontFamily: FontFamily.bold, letterSpacing: -0.2 },
-  scroll:     { paddingHorizontal: 20, gap: 12, paddingRight: 32 },
-  card: {
-    width: 140,
-    height: 190,
-    borderRadius: 20,
-    overflow: 'hidden',
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    ...Platform.select({
-      ios:     shadows.small,
-      android: { elevation: 3 },
-      web:     { boxShadow: '0 4px 12px rgba(0,0,0,0.12)' },
-    }),
-  },
-  imgPlaceholder: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center' },
-  cardInfo:       { position: 'absolute', bottom: 12, left: 12, right: 12 },
-  verifiedBadge:  {
-    width: 20, height: 20, borderRadius: 10,
-    alignItems: 'center', justifyContent: 'center',
-    marginBottom: 6,
-    overflow: 'hidden',
-  },
-  cardName: { fontSize: 13, fontFamily: FontFamily.bold, lineHeight: 17 },
-  cardType: {
-    fontSize: 10,
-    fontFamily: FontFamily.medium,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginTop: 2,
-  },
-});
-
-// ─── DirectoryEventCard ───────────────────────────────────────────────────────
+// ─── DirectoryEventCard (Unused fallback) ─────────────────────────────────────
 
 export function DirectoryEventCard({
   event,
@@ -364,7 +367,6 @@ export function DirectoryEventCard({
         accessibilityLabel={`View event: ${event.title}`}
       >
         <View style={s.eventCardInner}>
-          {/* Left: image thumbnail with date overlay, or plain date block */}
           {hasImage ? (
             <View style={s.eventImgBlock}>
               <Image source={{ uri: event.imageUrl! }} style={StyleSheet.absoluteFill} contentFit="cover" transition={300} />
@@ -390,7 +392,6 @@ export function DirectoryEventCard({
             </GlassView>
           )}
 
-          {/* Content */}
           <View style={s.eventCardContent}>
             {event.category ? (
               <View style={[s.eventCatBadge, { backgroundColor: colors.primarySoft, borderColor: colors.primary + '20', borderWidth: 1 }]}>
@@ -446,6 +447,7 @@ export function DirectoryCard({
   const isProfessional = ['artist', 'creator', 'brand'].includes(profile.entityType);
   const accent = isProfessional ? CultureTokens.gold : color;
   const followersCount = (profileRecord.followersCount as number | undefined) ?? 0;
+  const coverUrl = (profileRecord.coverImageUrl as string | undefined) ?? null;
 
   const handlePress = () => {
     if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -465,14 +467,14 @@ export function DirectoryCard({
       style={({ pressed }) => [
         s.directoryCard,
         { backgroundColor: colors.surface, borderColor: colors.borderLight, borderWidth: 1 },
-        isProfessional && { borderColor: CultureTokens.gold + '60', borderWidth: 1.5 },
-        isCouncil && { borderColor: CultureTokens.indigo + '60', borderWidth: 1.5 },
+        isProfessional && { borderColor: CultureTokens.gold + '50', borderWidth: 1 },
+        isCouncil && { borderColor: CultureTokens.indigo + '50', borderWidth: 1 },
         pressed && { transform: [{ scale: 0.98 }] },
         hovered && Platform.OS === 'web' && {
-          transform: [{ scale: 1.02 }],
+          transform: [{ translateY: -6 }],
           borderColor: accent,
-          shadowOpacity: 0.15,
-          shadowRadius: 20,
+          shadowOpacity: 0.18,
+          shadowRadius: 24,
           shadowColor: accent,
         },
         Platform.OS !== 'web' && shadows.small,
@@ -480,36 +482,42 @@ export function DirectoryCard({
       accessibilityRole="button"
       accessibilityLabel={`View ${profile.name} profile`}
     >
-      {(isCouncil || isProfessional) && (
+      {/* Top Banner Cover */}
+      {coverUrl ? (
+        <View style={s.coverWrapper}>
+          <Image source={{ uri: coverUrl }} style={StyleSheet.absoluteFill} contentFit="cover" transition={300} />
+          <LinearGradient colors={['rgba(0,0,0,0.1)', 'transparent']} style={StyleSheet.absoluteFill} />
+        </View>
+      ) : (
         <LinearGradient
-          colors={isProfessional
-            ? [`${CultureTokens.gold}08`, 'transparent']
-            : [`${CultureTokens.indigo}08`, 'transparent']}
-          style={StyleSheet.absoluteFill}
+          colors={[accent + '40', accent + '10']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
+          style={s.coverWrapper}
         />
       )}
 
       <View style={s.profileCardInner}>
-        {/* Avatar / Icon */}
-        {profile.imageUrl ? (
-          <Image
-            source={{ uri: profile.imageUrl }}
-            style={s.profileAvatar}
-            contentFit="cover"
-            accessibilityLabel={`${profile.name} logo`}
-            transition={300}
-          />
-        ) : (
-          <View style={[s.profileIconBox, { backgroundColor: color + '12', borderWidth: 1, borderColor: color + '25' }]}>
-            <Ionicons
-              name={isCouncil ? 'shield-checkmark' : (icon as keyof typeof Ionicons.glyphMap)}
-              size={28}
-              color={color}
+        {/* Avatar overlapping the banner */}
+        <View style={s.avatarContainer}>
+          {profile.imageUrl ? (
+            <Image
+              source={{ uri: profile.imageUrl }}
+              style={[s.profileAvatar, { borderColor: colors.surface }]}
+              contentFit="cover"
+              accessibilityLabel={`${profile.name} logo`}
+              transition={300}
             />
-          </View>
-        )}
+          ) : (
+            <View style={[s.profileIconBox, { backgroundColor: color + '12', borderColor: colors.surface, borderWidth: 3 }]}>
+              <Ionicons
+                name={isCouncil ? 'shield-checkmark' : (icon as keyof typeof Ionicons.glyphMap)}
+                size={24}
+                color={color}
+              />
+            </View>
+          )}
+        </View>
 
         {/* Content */}
         <View style={s.profileCardContent}>
@@ -527,7 +535,7 @@ export function DirectoryCard({
           </View>
 
           <View style={s.profileBadgeRow}>
-            <View style={[s.categoryBadge, { backgroundColor: accent + '12', borderWidth: 1, borderColor: accent + '25' }]}>
+            <View style={[s.categoryBadge, { backgroundColor: accent + '10', borderWidth: 1, borderColor: accent + '20' }]}>
               <Text style={[s.categoryBadgeText, { color: accent }]} numberOfLines={1}>
                 {profile.category ?? profile.entityType}
               </Text>
@@ -548,7 +556,21 @@ export function DirectoryCard({
             </Text>
           ) : null}
 
-          <View style={s.profileMetaRow}>
+          {/* Tags list as horizontal wrap pills */}
+          {tags.length > 0 && (
+            <View style={s.tagsRowInline}>
+              {tags.slice(0, 3).map(tag => (
+                <View key={tag} style={[s.tagPillInline, { backgroundColor: colors.surfaceVariant, borderColor: colors.borderLight }]}>
+                  <Text style={[s.tagTextInline, { color: colors.textSecondary }]}>{tag}</Text>
+                </View>
+              ))}
+              {tags.length > 3 && (
+                <Text style={[s.moreTagsText, { color: accent }]}>+{tags.length - 3}</Text>
+              )}
+            </View>
+          )}
+
+          <View style={[s.profileCardFooter, { borderTopColor: colors.borderLight }]}>
             {profile.rating != null ? (
               <View style={s.starsRow}>
                 {renderStars(profile.rating)}
@@ -564,18 +586,7 @@ export function DirectoryCard({
                   ? `${(followersCount / 1000).toFixed(1)}k`
                   : followersCount}{' '}followers
               </Text>
-            ) : tags.length > 0 ? (
-              <View style={s.tagsRow}>
-                {tags.slice(0, 2).map(tag => (
-                  <GlassView key={tag} intensity={5} style={[s.tagPill, { backgroundColor: colors.surfaceElevated, borderWidth: 1, borderColor: colors.borderLight }]}>
-                    <Text style={[s.tagText, { color: colors.textSecondary }]}>{tag}</Text>
-                  </GlassView>
-                ))}
-                {tags.length > 2 ? (
-                  <Text style={[s.moreTagsText, { color }]}>+{tags.length - 2}</Text>
-                ) : null}
-              </View>
-            ) : null}
+            ) : <View />}
 
             <Text style={[s.viewLink, { color: colors.primary }]}>View →</Text>
           </View>
@@ -818,32 +829,39 @@ export const s = StyleSheet.create({
     zIndex: 20,
   },
 
-  // ── Profile card ──
-  profileCardInner: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    padding: 20,
-    gap: 18,
+  // ── Profile card with split layout ──
+  coverWrapper: {
+    height: 72,
+    width: '100%',
+    overflow: 'hidden',
+  },
+  avatarContainer: {
+    marginTop: -32,
+    marginLeft: 12,
+    marginBottom: 6,
+    zIndex: 10,
+    alignSelf: 'flex-start',
   },
   profileAvatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    borderWidth: 3,
   },
   profileIconBox: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: 'transparent',
+    borderWidth: 3,
+  },
+  profileCardInner: {
+    paddingHorizontal: 16,
+    paddingBottom: 16,
   },
   profileCardContent: {
-    flex: 1,
-    gap: 6,
+    gap: 8,
   },
   profileNameRow: {
     flexDirection: 'row',
@@ -890,10 +908,33 @@ export const s = StyleSheet.create({
     lineHeight: 18,
     opacity: 0.95,
   },
-  profileMetaRow: {
+  tagsRowInline: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flexWrap: 'wrap',
+    marginTop: 4,
+  },
+  tagPillInline: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    borderWidth: 1,
+  },
+  tagTextInline: {
+    fontSize: 10,
+    fontFamily: FontFamily.medium,
+  },
+  moreTagsText: {
+    fontSize: 11,
+    fontFamily: FontFamily.bold,
+  },
+  profileCardFooter: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    borderTopWidth: 1,
+    paddingTop: 8,
     marginTop: 6,
   },
   starsRow: {
@@ -909,27 +950,6 @@ export const s = StyleSheet.create({
   followersText: {
     fontSize: 12,
     fontFamily: FontFamily.medium,
-  },
-  tagsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    flex: 1,
-    flexWrap: 'nowrap',
-  },
-  tagPill: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 99,
-    overflow: 'hidden',
-  },
-  tagText: {
-    fontSize: 11,
-    fontFamily: FontFamily.medium,
-  },
-  moreTagsText: {
-    fontSize: 11,
-    fontFamily: FontFamily.bold,
   },
   viewLink: {
     fontSize: 13,

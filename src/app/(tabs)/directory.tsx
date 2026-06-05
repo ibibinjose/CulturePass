@@ -82,7 +82,8 @@ export default function DirectoryScreen() {
   const isDesktopWeb = isWeb && isDesktop;
   const shellMaxWidth = isDesktopWeb ? 1120 : isTablet ? 840 : width;
 
-  const useWebTwoColumnResults = isWeb && shellMaxWidth >= 900;
+  const useWebThreeColumnResults = isWeb && shellMaxWidth >= 1050;
+  const useWebTwoColumnResults = isWeb && shellMaxWidth >= 768 && shellMaxWidth < 1050;
 
   const [selectedType, setSelectedType] = useState('All');
   const [search, setSearch] = useState('');
@@ -256,10 +257,11 @@ export default function DirectoryScreen() {
       !hasRenderedRef.current && !reducedMotion && Platform.OS !== 'web'
         ? FadeInDown.delay(Math.min(index * 40, 400)).springify().damping(18)
         : undefined;
+    const isMultiColumn = useWebThreeColumnResults || useWebTwoColumnResults;
     return (
       <Animated.View
         entering={entering}
-        style={useWebTwoColumnResults ? s.resultsCardWrapperWeb : s.resultsCardWrapperMobile}
+        style={isMultiColumn ? s.resultsCardWrapperWeb : s.resultsCardWrapperMobile}
       >
         {item._type === 'event' ? (
           <M3EventCard event={item.data} variant="elevated" />
@@ -268,7 +270,7 @@ export default function DirectoryScreen() {
         )}
       </Animated.View>
     );
-  }, [reducedMotion, useWebTwoColumnResults, colors]);
+  }, [reducedMotion, useWebThreeColumnResults, useWebTwoColumnResults, colors]);
 
   const flashListKeyExtractor = useCallback(
     (item: DirectoryItem) => (item._type === 'event' ? `event-${item.data.id}` : `profile-${item.data.id}`),
@@ -279,11 +281,11 @@ export default function DirectoryScreen() {
     () => [
       s.list,
       {
-        paddingHorizontal: useWebTwoColumnResults ? Math.max(10, hPad - 10) : hPad,
+        paddingHorizontal: (useWebThreeColumnResults || useWebTwoColumnResults) ? Math.max(10, hPad - 10) : hPad,
         paddingBottom: isWeb ? 40 : 100,
       }
     ],
-    [hPad, useWebTwoColumnResults],
+    [hPad, useWebThreeColumnResults, useWebTwoColumnResults],
   );
 
   const listHeader = useMemo(
@@ -458,11 +460,19 @@ export default function DirectoryScreen() {
 
         {/* ── Content ── */}
         {isLoading ? (
-          <View style={[s.list, { paddingHorizontal: useWebTwoColumnResults ? Math.max(10, hPad - 10) : hPad, paddingBottom: isWeb ? 40 : 100 }]}>
-            {useWebTwoColumnResults ? (
+          <View style={[s.list, { paddingHorizontal: (useWebThreeColumnResults || useWebTwoColumnResults) ? Math.max(10, hPad - 10) : hPad, paddingBottom: isWeb ? 40 : 100 }]}>
+            {useWebThreeColumnResults ? (
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', margin: -10 }}>
                 {Array.from({ length: 6 }).map((_, i) => (
-                  <View key={i} style={s.resultsCardWrapperWeb}>
+                  <View key={i} style={[s.resultsCardWrapperWeb, { width: '33.33%' }]}>
+                    <EventCardSkeleton />
+                  </View>
+                ))}
+              </View>
+            ) : useWebTwoColumnResults ? (
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', margin: -10 }}>
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <View key={i} style={[s.resultsCardWrapperWeb, { width: '50%' }]}>
                     <EventCardSkeleton />
                   </View>
                 ))}
@@ -484,7 +494,7 @@ export default function DirectoryScreen() {
               ListHeaderComponent={listHeader}
               ListEmptyComponent={listEmpty}
               ListFooterComponent={listFooter}
-              numColumns={useWebTwoColumnResults ? 2 : 1}
+              numColumns={useWebThreeColumnResults ? 3 : useWebTwoColumnResults ? 2 : 1}
               contentContainerStyle={listContentStyle}
               showsVerticalScrollIndicator={false}
               refreshControl={

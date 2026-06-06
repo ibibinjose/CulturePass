@@ -255,7 +255,7 @@ export function EntityTypeSelector({ onSelect, existingProfiles = [], intent }: 
           <Text style={[styles.topBarTitle, { color: colors.text }]}>
             {isNationBuilder ? 'Nation Builder Partner' : 'Create a Page'}
           </Text>
-          <View style={{ width: 40 }} /> {/* Spacer */}
+          <View style={{ width: 40 }} />
         </View>
       </View>
 

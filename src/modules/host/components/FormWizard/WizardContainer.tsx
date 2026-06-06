@@ -509,7 +509,7 @@ export function WizardContainer({
               {!!profileId ? 'Edit' : 'Create'} {wizard.entityType.charAt(0).toUpperCase() + wizard.entityType.slice(1)}
             </Text>
           </View>
-          <View style={{ width: 40 }} /> {/* Spacer */}
+          <View style={{ width: 40 }} />
         </View>
       </View>
 

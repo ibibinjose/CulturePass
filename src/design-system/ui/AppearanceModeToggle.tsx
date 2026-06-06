@@ -26,6 +26,7 @@ export function AppearanceModeToggle({ compact }: Props) {
   return (
     <Pressable
       onPress={onToggle}
+      hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
       style={({ pressed }) => [
         styles.hit,
         compact && styles.hitCompact,
@@ -51,12 +52,12 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 4,
+    marginRight: 8,
   },
   hitCompact: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    marginRight: 2,
+    marginRight: 6,
   },
 });

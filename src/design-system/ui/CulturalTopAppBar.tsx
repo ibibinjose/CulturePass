@@ -104,7 +104,7 @@ export const CulturalTopAppBar: React.FC<CulturalTopAppBarProps> = ({
           <Pressable
             onPress={onBack}
             style={styles.iconButton}
-            hitSlop={AccessibilityTokens.minTapTarget}
+            hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
             accessibilityRole="button"
             accessibilityLabel="Back"
           >
@@ -139,7 +139,7 @@ export const CulturalTopAppBar: React.FC<CulturalTopAppBarProps> = ({
               key={index}
               onPress={action.onPress}
               style={styles.iconButton}
-              hitSlop={AccessibilityTokens.minTapTarget}
+              hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
               accessibilityRole="button"
               accessibilityLabel={action.accessibilityLabel || action.icon}
             >
@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
     height: 40,
     alignItems: 'center',
     justifyContent: 'center',
-    marginHorizontal: 4,
+    marginHorizontal: 8,
     borderRadius: 20,
   },
   actionsContainer: {

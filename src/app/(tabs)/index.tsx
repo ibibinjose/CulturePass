@@ -320,18 +320,43 @@ export default function DiscoverScreen() {
             title={activeFilter === 'all' ? <CulturePassWordmark size="sm" showSuffix={true} /> : topBarTitle}
             variant="small"
             titleLeading={
-              <Image
-                source={require('@/assets/images/culturepass-logo.png')}
-                style={{ width: 40, height: 40, borderRadius: 20, marginLeft: 8 }}
-                contentFit="contain"
-              />
+              activeFilter === 'all' ? (
+                <Image
+                  source={require('@/assets/images/culturepass-logo.png')}
+                  style={{ width: 40, height: 40, borderRadius: 20, marginLeft: 8 }}
+                  contentFit="contain"
+                />
+              ) : undefined
+            }
+            onBack={
+              activeFilter !== 'all'
+                ? () => {
+                    setActiveFilter('all');
+                    setSearchQuery('');
+                  }
+                : undefined
             }
             denseWeb={Platform.OS === 'web'}
             webChromeless={Platform.OS === 'web'}
             trailingStart={<AppearanceModeToggle compact />}
             actions={[
-              { icon: 'search', onPress: () => setActiveFilter('search') },
-              { icon: 'notifications-outline', onPress: () => router.push('/notifications') },
+              {
+                icon: activeFilter === 'search' ? 'close' : 'search',
+                onPress: () => {
+                  if (activeFilter === 'search') {
+                    setActiveFilter('all');
+                    setSearchQuery('');
+                  } else {
+                    setActiveFilter('search');
+                  }
+                },
+                accessibilityLabel: activeFilter === 'search' ? 'Close search' : 'Search',
+              },
+              {
+                icon: 'notifications-outline',
+                onPress: () => router.push('/notifications'),
+                accessibilityLabel: 'Notifications',
+              },
             ]}
           />
         </View>

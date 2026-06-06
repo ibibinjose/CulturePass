@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
+## [1.3.1] - 2026-06-06
+
+### Added
+- **Premium Directory UI/UX**: Rebuilt the Directory screen at `/directory` with a responsive grid (3-column layout on desktop, 2-column on tablet, 1-column on mobile), split banner/avatar card styles, and VIP horizontal carousels (Featured and Community).
+- **Interactive Location Selection**: Integrated `LocationPickerModal` and `useLocationPickerFlow` directly into the Directory screen, making the header location badge clickable and automatically updating search queries.
+- **Improved Test Run Quality**: Mocked the `firebase-functions` logger in file validation service tests to suppress warning logs in console outputs.
+- **Dependency Security Fixes**: Resolved 16 security vulnerability alerts by specifying overrides for `@xmldom/xmldom` and `uuid` packages.
+
+### Fixed
+- **EAS Build Upload Casing**: Resolved git/filesystem naming casing mismatch for `cpu/[id].tsx` and `(shortlinks)/cpu/[id].tsx` that caused build failures on macOS.
+
 ## [1.3.0] - 2026-06-05
 
 ### Added

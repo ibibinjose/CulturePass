@@ -234,7 +234,7 @@ export default function(appConfig) {
       ],
       name: "CulturePass",
       slug: "culturepass",
-      version: "1.3.0",
+      version: "1.3.1",
       description: "Discover cultural events and communities built for diaspora cities. Organizers reach the right audience; attendees find festivals, tickets, and belonging in one place.",
       orientation: "portrait",
       icon: "./assets/images/icon.png",

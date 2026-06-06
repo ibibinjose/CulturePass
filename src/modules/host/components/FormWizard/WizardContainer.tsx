@@ -33,9 +33,11 @@ import {
   Alert,
   AppState,
   ActivityIndicator,
+  Pressable,
   type AppStateStatus,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 
@@ -479,6 +481,38 @@ export function WizardContainer({
 
   const stepContent = (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* Top Bar */}
+      <View
+        style={[
+          styles.topBar,
+          {
+            paddingTop: topInset,
+            backgroundColor: colors.surface,
+            borderColor: colors.border,
+          },
+        ]}
+      >
+        <View style={styles.topBarInner}>
+          <Pressable
+            onPress={handleCancel}
+            style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.7 }]}
+            accessibilityRole="button"
+            accessibilityLabel="Exit wizard"
+          >
+            <Ionicons name="close" size={24} color={colors.text} />
+          </Pressable>
+          <View style={styles.topBarTitles}>
+            <Text style={[styles.topBarEyebrow, { color: colors.primary }]} numberOfLines={1}>
+              {!!profileId ? 'Editing Profile' : 'Guided Wizard'}
+            </Text>
+            <Text style={[styles.topBarTitle, { color: colors.text }]} numberOfLines={1}>
+              {!!profileId ? 'Edit' : 'Create'} {wizard.entityType.charAt(0).toUpperCase() + wizard.entityType.slice(1)}
+            </Text>
+          </View>
+          <View style={{ width: 40 }} /> {/* Spacer */}
+        </View>
+      </View>
+
       {/* Draft Recovery Modal */}
       <DraftRecoveryModal
         visible={draftRecovery.showRecoveryModal}
@@ -492,7 +526,7 @@ export function WizardContainer({
         style={[
           styles.progressContainer,
           {
-            paddingTop: topInset + Luxe.spacing.md,
+            paddingTop: Luxe.spacing.md,
             backgroundColor: colors.surface,
             borderBottomColor: colors.border,
           },
@@ -599,6 +633,41 @@ export function WizardContainer({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  topBar: {
+    borderBottomWidth: 1,
+    zIndex: 10,
+  },
+  topBarInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    height: 56,
+    paddingHorizontal: 16,
+  },
+  backBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  topBarTitles: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginHorizontal: 16,
+  },
+  topBarEyebrow: {
+    fontSize: 9,
+    fontFamily: 'Poppins_700Bold',
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+  },
+  topBarTitle: {
+    fontSize: 16,
+    fontFamily: 'Poppins_600SemiBold',
+    textAlign: 'center',
   },
   loadingContainer: {
     flex: 1,

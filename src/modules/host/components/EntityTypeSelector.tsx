@@ -226,11 +226,44 @@ export function EntityTypeSelector({ onSelect, existingProfiles = [], intent }: 
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* Top Bar */}
+      <View 
+        style={[
+          styles.topBar, 
+          { 
+            paddingTop: topInset, 
+            backgroundColor: colors.surface, 
+            borderColor: colors.borderLight 
+          }
+        ]}
+      >
+        <View style={styles.topBarInner}>
+          <Pressable
+            onPress={() => {
+              if (router.canGoBack()) {
+                router.back();
+              } else {
+                router.push('/hostspace' as never);
+              }
+            }}
+            style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.7 }]}
+            accessibilityRole="button"
+            accessibilityLabel="Back to host workspace"
+          >
+            <Ionicons name="chevron-back" size={24} color={colors.text} />
+          </Pressable>
+          <Text style={[styles.topBarTitle, { color: colors.text }]}>
+            {isNationBuilder ? 'Nation Builder Partner' : 'Create a Page'}
+          </Text>
+          <View style={{ width: 40 }} /> {/* Spacer */}
+        </View>
+      </View>
+
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingTop: topInset + Spacing.xl, paddingHorizontal: hPad },
+          { paddingTop: Spacing.xl, paddingHorizontal: hPad },
         ]}
         showsVerticalScrollIndicator={false}
       >
@@ -420,6 +453,30 @@ export function EntityTypeSelector({ onSelect, existingProfiles = [], intent }: 
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+  },
+  topBar: {
+    borderBottomWidth: 1,
+    zIndex: 10,
+  },
+  topBarInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    height: 56,
+    paddingHorizontal: 16,
+  },
+  backBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  topBarTitle: {
+    ...TextStyles.title3,
+    fontSize: 18,
+    textAlign: 'center',
     flex: 1,
   },
   scrollView: {

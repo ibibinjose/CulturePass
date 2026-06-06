@@ -3,8 +3,11 @@ module.exports = function (api) {
   return {
     presets: ['babel-preset-expo'],
     plugins: [
-      // Ensure TypeScript transform happens before class feature transforms
-      // to handle the 'declare' keyword in libraries like expo-file-system.
+      // Ensure Flow and TypeScript transforms happen before class feature transforms
+      // to strip type-only annotations before class properties transforms run.
+      // For Flow, this prevents type-only fields from being transformed into class
+      // properties (which can crash when prototype properties are read-only, like Event.js).
+      ['@babel/plugin-transform-flow-strip-types', { all: false }],
       // We use isTSX: true and allExtensions: true so it also handles JS/JSX files
       // without getting confused by JSX tags (thinking they are type parameters).
       ['@babel/plugin-transform-typescript', { allowDeclareFields: true, isTSX: true, allExtensions: true }],

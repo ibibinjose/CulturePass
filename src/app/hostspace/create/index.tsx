@@ -100,7 +100,11 @@ export default function HostspaceCreateIndex() {
     if (isProfileWizard) {
       router.replace('/hostspace/create' as any);
     } else {
-      router.back();
+      if (router.canGoBack()) {
+        router.back();
+      } else {
+        router.replace('/hostspace' as any);
+      }
     }
   }, [isProfileWizard]);
 

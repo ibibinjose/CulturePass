@@ -321,6 +321,16 @@ export function WizardContainer({
   );
 
   const handleCancel = useCallback(() => {
+    const performCancelNavigation = () => {
+      if (onCancel) {
+        onCancel();
+      } else if (router.canGoBack()) {
+        router.back();
+      } else {
+        router.replace('/hostspace' as any);
+      }
+    };
+
     if (wizard.isDirty) {
       const confirmCancel = () => {
         if (Platform.OS === 'web') {
@@ -328,8 +338,7 @@ export function WizardContainer({
             'You have unsaved changes. Are you sure you want to exit?'
           );
           if (confirmed) {
-            onCancel?.();
-            router.back();
+            performCancelNavigation();
           }
         } else {
           Alert.alert(
@@ -341,8 +350,7 @@ export function WizardContainer({
                 text: 'Exit',
                 style: 'destructive',
                 onPress: () => {
-                  onCancel?.();
-                  router.back();
+                  performCancelNavigation();
                 },
               },
             ]
@@ -351,8 +359,7 @@ export function WizardContainer({
       };
       confirmCancel();
     } else {
-      onCancel?.();
-      router.back();
+      performCancelNavigation();
     }
   }, [wizard.isDirty, onCancel, router]);
 

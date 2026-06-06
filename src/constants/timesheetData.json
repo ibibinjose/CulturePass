@@ -1,5 +1,88 @@
 [
   {
+    "hash": "f6e4862",
+    "fullHash": "f6e4862631ecfaf20418b45453fee905fad1a72b",
+    "author": "ibibinjose",
+    "email": "NeoTech@outlook.com.au",
+    "date": "2026-06-06T13:43:15+10:00",
+    "message": "fix(validation): allow null and empty values for optional fields on step 3",
+    "executor": "Human Developer",
+    "systemLabel": "ibibinjose",
+    "files": [
+      "src/modules/host/schemas/profileSchema.ts",
+      "src/modules/host/services/__tests__/validationService.test.ts"
+    ]
+  },
+  {
+    "hash": "f19cb0b",
+    "fullHash": "f19cb0bb4ca9d1e2d89f581da3028b35f10daf61",
+    "author": "ibibinjose",
+    "email": "NeoTech@outlook.com.au",
+    "date": "2026-06-06T13:39:52+10:00",
+    "message": "fix(ui): remove trailing space before spacer comment causing unexpected text node in View",
+    "executor": "Human Developer",
+    "systemLabel": "ibibinjose",
+    "files": [
+      "src/modules/host/components/EntityTypeSelector.tsx",
+      "src/modules/host/components/FormWizard/WizardContainer.tsx"
+    ]
+  },
+  {
+    "hash": "7055eef",
+    "fullHash": "7055eefbfa2c4052eedcb5571da1a9591b8abc0b",
+    "author": "ibibinjose",
+    "email": "NeoTech@outlook.com.au",
+    "date": "2026-06-06T13:36:20+10:00",
+    "message": "fix(validation): allow spaces in ABN and fix empty optional ABN validation",
+    "executor": "Human Developer",
+    "systemLabel": "ibibinjose",
+    "files": [
+      "src/modules/host/schemas/profileSchema.ts",
+      "src/modules/host/services/__tests__/validationService.test.ts"
+    ]
+  },
+  {
+    "hash": "87f530f",
+    "fullHash": "87f530f74df476914387261f9616583353b6b8c8",
+    "author": "ibibinjose",
+    "email": "NeoTech@outlook.com.au",
+    "date": "2026-06-06T13:32:03+10:00",
+    "message": "style: add unified top bars to EntityTypeSelector and WizardContainer",
+    "executor": "Human Developer",
+    "systemLabel": "ibibinjose",
+    "files": [
+      "src/modules/host/components/EntityTypeSelector.tsx",
+      "src/modules/host/components/FormWizard/WizardContainer.tsx"
+    ]
+  },
+  {
+    "hash": "78bb234",
+    "fullHash": "78bb23400eb29f6ae463b93117e29fbaa82ce1a5",
+    "author": "ibibinjose",
+    "email": "NeoTech@outlook.com.au",
+    "date": "2026-06-06T12:51:05+10:00",
+    "message": "fix(Button): resolve Reanimated styling crash on native platforms",
+    "executor": "Human Developer",
+    "systemLabel": "ibibinjose",
+    "files": [
+      "src/design-system/ui/Button.native.tsx"
+    ]
+  },
+  {
+    "hash": "78e55cb",
+    "fullHash": "78e55cb863b373604e4096be2052b1d46971fa31",
+    "author": "ibibinjose",
+    "email": "NeoTech@outlook.com.au",
+    "date": "2026-06-06T12:39:22+10:00",
+    "message": "style: improve web and mobile search and location bars in directory page",
+    "executor": "Human Developer",
+    "systemLabel": "ibibinjose",
+    "files": [
+      "src/app/(tabs)/directory.tsx",
+      "src/constants/timesheetData.json"
+    ]
+  },
+  {
     "hash": "b9188d3",
     "fullHash": "b9188d313ae6d43b210848fed1f32f692047a078",
     "author": "ibibinjose",

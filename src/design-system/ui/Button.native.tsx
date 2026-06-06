@@ -91,7 +91,7 @@ export function Button({
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       disabled={isDisabled}
-      style={({ pressed }) => [
+      style={[
         styles.base,
         {
           minHeight: buttonHeight,

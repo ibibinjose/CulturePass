@@ -84,6 +84,10 @@ export interface WizardNavigationProps {
    * Publish button handler (final step)
    */
   onPublish: () => void;
+  /**
+   * Skip button handler
+   */
+  onSkip?: () => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -101,6 +105,7 @@ export const WizardNavigation = memo(function WizardNavigation({
   onNext,
   onCancel,
   onPublish,
+  onSkip,
 }: WizardNavigationProps) {
   const layout = useLayout();
 
@@ -110,7 +115,9 @@ export const WizardNavigation = memo(function WizardNavigation({
 
   if (layout.isDesktop) {
     return (
-      <View style={styles.desktopContainer} accessibilityRole="toolbar" accessibilityLabel="Wizard navigation"><View style={styles.leftSection}><LuxeButton
+      <View style={styles.desktopContainer} accessibilityRole="toolbar" accessibilityLabel="Wizard navigation">
+        <View style={styles.leftSection}>
+          <LuxeButton
             variant="outlined"
             size="md"
             onPress={onCancel}
@@ -118,7 +125,10 @@ export const WizardNavigation = memo(function WizardNavigation({
             accessibilityLabel={navigationButtonLabel('cancel')}
           >
             Cancel
-          </LuxeButton></View><View style={styles.rightSection}>{!isFirstStep && (
+          </LuxeButton>
+        </View>
+        <View style={styles.rightSection}>
+          {!isFirstStep && (
             <LuxeButton
               variant="tonal"
               size="md"
@@ -129,7 +139,19 @@ export const WizardNavigation = memo(function WizardNavigation({
             >
               Back
             </LuxeButton>
-          )}{isLastStep ? (
+          )}
+          {!isLastStep && onSkip && (
+            <LuxeButton
+              variant="outlined"
+              size="md"
+              onPress={onSkip}
+              disabled={isValidating || isPublishing}
+              accessibilityLabel="Skip this step"
+            >
+              Skip
+            </LuxeButton>
+          )}
+          {isLastStep ? (
             <LuxeButton
               variant="filled"
               size="md"
@@ -152,7 +174,9 @@ export const WizardNavigation = memo(function WizardNavigation({
             >
               Next
             </LuxeButton>
-          )}</View></View>
+          )}
+        </View>
+      </View>
     );
   }
 
@@ -161,7 +185,8 @@ export const WizardNavigation = memo(function WizardNavigation({
   // ---------------------------------------------------------------------------
 
   return (
-    <View style={styles.mobileContainer} accessibilityRole="toolbar" accessibilityLabel="Wizard navigation">{isLastStep ? (
+    <View style={styles.mobileContainer} accessibilityRole="toolbar" accessibilityLabel="Wizard navigation">
+      {isLastStep ? (
         <LuxeButton
           variant="filled"
           size="lg"
@@ -176,19 +201,34 @@ export const WizardNavigation = memo(function WizardNavigation({
           Publish Profile
         </LuxeButton>
       ) : (
-        <LuxeButton
-          variant="filled"
-          size="lg"
-          fullWidth
-          onPress={onNext}
-          loading={isValidating}
-          rightIcon="arrow-forward"
-          style={{ minHeight: MIN_TOUCH_TARGET }}
-          accessibilityLabel={navigationButtonLabel('next', { currentStep, totalSteps })}
-        >
-          Next
-        </LuxeButton>
-      )}<View style={styles.mobileSecondaryRow}>{!isFirstStep && (
+        <View style={{ flexDirection: 'row', gap: Luxe.spacing.sm }}>
+          {onSkip && (
+            <LuxeButton
+              variant="outlined"
+              size="lg"
+              onPress={onSkip}
+              disabled={isValidating || isPublishing}
+              style={{ flex: 1, minHeight: MIN_TOUCH_TARGET }}
+              accessibilityLabel="Skip this step"
+            >
+              Skip
+            </LuxeButton>
+          )}
+          <LuxeButton
+            variant="filled"
+            size="lg"
+            onPress={onNext}
+            loading={isValidating}
+            rightIcon="arrow-forward"
+            style={{ flex: 2, minHeight: MIN_TOUCH_TARGET }}
+            accessibilityLabel={navigationButtonLabel('next', { currentStep, totalSteps })}
+          >
+            Next
+          </LuxeButton>
+        </View>
+      )}
+      <View style={styles.mobileSecondaryRow}>
+        {!isFirstStep && (
           <LuxeButton
             variant="tonal"
             size="md"
@@ -200,7 +240,8 @@ export const WizardNavigation = memo(function WizardNavigation({
           >
             Back
           </LuxeButton>
-        )}<LuxeButton
+        )}
+        <LuxeButton
           variant="outlined"
           size="md"
           onPress={onCancel}
@@ -209,7 +250,9 @@ export const WizardNavigation = memo(function WizardNavigation({
           accessibilityLabel={navigationButtonLabel('cancel')}
         >
           Cancel
-        </LuxeButton></View></View>
+        </LuxeButton>
+      </View>
+    </View>
   );
 });
 

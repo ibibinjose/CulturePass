@@ -128,6 +128,9 @@ describe('step3LegalOrganiserSchema ABN validation', () => {
       { publicEmail: 'organiser@test.com', phoneNumber: '+61400000000', whatsappNumber: '' },
       { publicEmail: 'organiser@test.com', phoneNumber: '+61400000000', gstId: null },
       { publicEmail: 'organiser@test.com', phoneNumber: '+61400000000', gstId: '' },
+      { publicEmail: 'organiser@test.com', phoneNumber: '+61400000000', emailVerified: null },
+      { publicEmail: 'organiser@test.com', phoneNumber: '+61400000000', phoneVerified: null },
+      { publicEmail: 'organiser@test.com', phoneNumber: '+61400000000', gstRegistered: null },
       { publicEmail: 'organiser@test.com', phoneNumber: '+61400000000' }
     ];
 

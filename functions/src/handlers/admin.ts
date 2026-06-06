@@ -15,6 +15,7 @@ import {
 import { verificationService } from '../services/verificationService';
 import { logger } from 'firebase-functions';
 import { runGeohashBackfill } from '../jobs/geohashBackfill';
+import { profilesService } from '../services/profiles';
 
 // Define request body types for better type safety
 interface AdminRequest extends Request {
@@ -798,5 +799,73 @@ adminRouter.put('/admin/verification/tasks/:id/checklist', async (req: Request, 
     const errorObj = err as { message?: string };
     const status = errorObj?.message?.includes('not found') ? 404 : 500;
     return res.status(status).json({ error: errorObj?.message || 'Failed to update checklist' });
+  }
+});
+
+/**
+ * POST /api/admin/profiles/:id/block
+ * Block (suspend) a profile.
+ */
+adminRouter.post('/admin/profiles/:id/block', async (req: Request, res: Response) => {
+  if (!isFirestoreConfigured) return res.status(503).json({ error: 'Firestore unavailable' });
+  const profileId = req.params.id;
+  if (!profileId) return res.status(400).json({ error: 'Profile id required' });
+  try {
+    const existing = await profilesService.getById(profileId);
+    if (!existing) {
+      return res.status(404).json({ error: 'Profile not found' });
+    }
+    const updated = await profilesService.update(profileId, {
+      status: 'suspended',
+    });
+    await db.collection('auditLogs').add({
+      action: 'profile_blocked',
+      userId: req.user!.id,
+      userName: req.user!.username || req.user!.id,
+      targetId: profileId,
+      targetType: 'profile',
+      metadata: { previousStatus: existing.status || null },
+      createdAt: nowIso(),
+    });
+    logger.info(`Profile ${profileId} suspended/blocked by ${req.user!.id}`);
+    return res.json({ ok: true, profile: updated });
+  } catch (err: unknown) {
+    logger.error('admin/profiles/block', err);
+    const errorObj = err as { message?: string };
+    return res.status(500).json({ error: errorObj?.message || 'Failed to block profile' });
+  }
+});
+
+/**
+ * POST /api/admin/profiles/:id/unblock
+ * Unblock (unsuspend) a profile.
+ */
+adminRouter.post('/admin/profiles/:id/unblock', async (req: Request, res: Response) => {
+  if (!isFirestoreConfigured) return res.status(503).json({ error: 'Firestore unavailable' });
+  const profileId = req.params.id;
+  if (!profileId) return res.status(400).json({ error: 'Profile id required' });
+  try {
+    const existing = await profilesService.getById(profileId);
+    if (!existing) {
+      return res.status(404).json({ error: 'Profile not found' });
+    }
+    const updated = await profilesService.update(profileId, {
+      status: 'published',
+    });
+    await db.collection('auditLogs').add({
+      action: 'profile_unblocked',
+      userId: req.user!.id,
+      userName: req.user!.username || req.user!.id,
+      targetId: profileId,
+      targetType: 'profile',
+      metadata: { previousStatus: existing.status || null },
+      createdAt: nowIso(),
+    });
+    logger.info(`Profile ${profileId} unsuspended/unblocked by ${req.user!.id}`);
+    return res.json({ ok: true, profile: updated });
+  } catch (err: unknown) {
+    logger.error('admin/profiles/unblock', err);
+    const errorObj = err as { message?: string };
+    return res.status(500).json({ error: errorObj?.message || 'Failed to unblock profile' });
   }
 });

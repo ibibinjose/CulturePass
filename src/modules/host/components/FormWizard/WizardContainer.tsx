@@ -260,6 +260,10 @@ export function WizardContainer({
     wizard.goToPreviousStep();
   }, [wizard]);
 
+  const handleSkip = useCallback(() => {
+    wizard.skipStep();
+  }, [wizard]);
+
   const handlePublish = useCallback(async () => {
     if (!isOrganizer) {
       if (Platform.OS === 'web') {
@@ -602,6 +606,7 @@ export function WizardContainer({
           onNext={handleNext}
           onCancel={handleCancel}
           onPublish={handlePublish}
+          onSkip={handleSkip}
         /></View>
 
       {/* Auto-Save Indicator */}

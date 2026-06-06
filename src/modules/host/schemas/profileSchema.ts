@@ -16,6 +16,21 @@
 
 import { z } from 'zod';
 
+/**
+ * Boolean validation: handles null, undefined, string coercion, and defaults to false
+ */
+export const booleanSchema = z.preprocess(
+  (val) => {
+    if (val === null || val === undefined) return false;
+    if (typeof val === 'boolean') return val;
+    if (typeof val === 'string') {
+      return val.toLowerCase() === 'true';
+    }
+    return !!val;
+  },
+  z.boolean().default(false)
+);
+
 // ---------------------------------------------------------------------------
 // Common Field Schemas
 // ---------------------------------------------------------------------------
@@ -209,11 +224,11 @@ export const step2MediaSchema = z.object({
 
 export const step3LegalBaseSchema = z.object({
   publicEmail: emailSchema,
-  emailVerified: z.boolean().default(false),
+  emailVerified: booleanSchema,
   phoneNumber: phoneSchema,
-  phoneVerified: z.boolean().default(false),
+  phoneVerified: booleanSchema,
   whatsappNumber: phoneSchema.optional().nullable().or(z.literal('')),
-  gstRegistered: z.boolean().default(false),
+  gstRegistered: booleanSchema,
   gstId: z.string().optional().nullable().or(z.literal('')),
   licences: z.array(licenceSchema).default([]),
 });

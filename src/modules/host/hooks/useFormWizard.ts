@@ -128,6 +128,7 @@ export interface UseFormWizardReturn extends FormWizardState {
   goToStep: (step: number) => void;
   goToNextStep: () => Promise<void>;
   goToPreviousStep: () => void;
+  skipStep: () => void;
 
   // Form Data Methods
   updateFormData: (data: Partial<PartialFormData>) => void;
@@ -620,6 +621,12 @@ export function useFormWizard({
     }
   }, [currentStep]);
 
+  const skipStep = useCallback(() => {
+    setCompletedSteps((prev) => new Set([...prev, currentStep]));
+    setCurrentStep((prev) => Math.min(prev + 1, getTotalSteps(entityType)));
+    setValidationErrors({});
+  }, [currentStep, entityType]);
+
   // ---------------------------------------------------------------------------
   // Form Data Methods
   // ---------------------------------------------------------------------------
@@ -717,15 +724,22 @@ export function useFormWizard({
   const publish = useCallback(async () => {
     // Validate all steps before publishing
     for (let step = 1; step <= getTotalSteps(entityType); step++) {
-      setCurrentStep(step);
-      const isValid = await validateCurrentStep();
-      if (!isValid) {
+      try {
+        const schema = getStepSchema(step, entityType);
+        await schema.parseAsync(formData);
+      } catch (error) {
+        // If validation fails, navigate the user to the failing step so they see the errors
+        setCurrentStep(step);
+        if (error instanceof ZodError) {
+          const errors = error.flatten().fieldErrors;
+          setValidationErrors(errors as Record<string, string[]>);
+        }
         throw new Error(`Validation failed at step ${step}`);
       }
     }
 
     await publishMutation.mutateAsync();
-  }, [validateCurrentStep, publishMutation, entityType]);
+  }, [formData, entityType, publishMutation]);
 
   // ---------------------------------------------------------------------------
   // Cleanup
@@ -781,6 +795,7 @@ export function useFormWizard({
     goToStep,
     goToNextStep,
     goToPreviousStep,
+    skipStep,
 
     // Form Data
     updateFormData,

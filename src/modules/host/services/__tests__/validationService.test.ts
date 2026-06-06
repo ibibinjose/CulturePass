@@ -31,6 +31,7 @@ import {
   MEDIA_CONSTRAINTS,
   VALIDATION_TIMING,
 } from '../../schemas/validationRules';
+import { abnSchema, step3LegalOrganiserSchema } from '../../schemas/profileSchema';
 
 // ---------------------------------------------------------------------------
 // ABN Validation
@@ -60,6 +61,64 @@ describe('validateABNChecksum', () => {
 
   it('returns false for empty string', () => {
     expect(validateABNChecksum('')).toBe(false);
+  });
+});
+
+describe('abnSchema', () => {
+  it('validates a valid ABN with spaces', () => {
+    expect(() => abnSchema.parse('15 119 804 762')).not.toThrow();
+  });
+
+  it('validates a valid ABN without spaces', () => {
+    expect(() => abnSchema.parse('15119804762')).not.toThrow();
+  });
+
+  it('fails for invalid ABN format', () => {
+    expect(() => abnSchema.parse('123')).toThrow('ABN must be 11 digits');
+  });
+
+  it('fails for invalid ABN checksum', () => {
+    expect(() => abnSchema.parse('15 119 804 763')).toThrow('Invalid ABN checksum');
+  });
+});
+
+describe('step3LegalOrganiserSchema ABN validation', () => {
+  it('allows empty string ABN for organiser', () => {
+    const result = step3LegalOrganiserSchema.safeParse({
+      publicEmail: 'organiser@test.com',
+      phoneNumber: '+61400000000',
+      abn: '',
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('allows undefined ABN for organiser', () => {
+    const result = step3LegalOrganiserSchema.safeParse({
+      publicEmail: 'organiser@test.com',
+      phoneNumber: '+61400000000',
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('validates valid formatted ABN for organiser', () => {
+    const result = step3LegalOrganiserSchema.safeParse({
+      publicEmail: 'organiser@test.com',
+      phoneNumber: '+61400000000',
+      abn: '15 119 804 762',
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.abn).toBe('15119804762');
+    }
+  });
+
+  it('rejects invalid ABN for organiser', () => {
+    const result = step3LegalOrganiserSchema.safeParse({
+      publicEmail: 'organiser@test.com',
+      phoneNumber: '+61400000000',
+      abn: '123',
+    });
+    expect(result.success).toBe(false);
   });
 });
 

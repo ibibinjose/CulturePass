@@ -84,17 +84,20 @@ export const imageUrlSchema = z
 /**
  * ABN validation: 11 digits with checksum
  */
-export const abnSchema = z
-  .string()
-  .regex(/^\d{11}$/, 'ABN must be 11 digits')
-  .refine((abn) => {
-    // ABN checksum validation algorithm
-    const weights = [10, 1, 3, 5, 7, 9, 11, 13, 15, 17, 19];
-    const digits = abn.split('').map(Number);
-    digits[0] -= 1; // Subtract 1 from first digit
-    const sum = digits.reduce((acc, digit, i) => acc + digit * weights[i], 0);
-    return sum % 89 === 0;
-  }, 'Invalid ABN checksum');
+export const abnSchema = z.preprocess(
+  (val) => (typeof val === 'string' ? val.replace(/\s/g, '') : val),
+  z
+    .string()
+    .refine((abn) => /^\d{11}$/.test(abn), 'ABN must be 11 digits')
+    .refine((abn) => {
+      // ABN checksum validation algorithm
+      const weights = [10, 1, 3, 5, 7, 9, 11, 13, 15, 17, 19];
+      const digits = abn.split('').map(Number);
+      digits[0] -= 1; // Subtract 1 from first digit
+      const sum = digits.reduce((acc, digit, i) => acc + digit * weights[i], 0);
+      return sum % 89 === 0;
+    }, 'Invalid ABN checksum')
+);
 
 /**
  * Date validation: ISO 8601 format, not in future
@@ -221,7 +224,7 @@ export const step3LegalBusinessSchema = step3LegalBaseSchema.extend({
 });
 
 export const step3LegalOrganiserSchema = step3LegalBaseSchema.extend({
-  abn: abnSchema.optional(),
+  abn: abnSchema.optional().or(z.literal('')),
 });
 
 export const step3LegalVenueSchema = step3LegalBaseSchema.extend({

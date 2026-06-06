@@ -120,6 +120,23 @@ describe('step3LegalOrganiserSchema ABN validation', () => {
     });
     expect(result.success).toBe(false);
   });
+
+  it('allows null and undefined values for optional/nullable fields', () => {
+    const testCases = [
+      { publicEmail: 'organiser@test.com', phoneNumber: '+61400000000', abn: null },
+      { publicEmail: 'organiser@test.com', phoneNumber: '+61400000000', whatsappNumber: null },
+      { publicEmail: 'organiser@test.com', phoneNumber: '+61400000000', whatsappNumber: '' },
+      { publicEmail: 'organiser@test.com', phoneNumber: '+61400000000', gstId: null },
+      { publicEmail: 'organiser@test.com', phoneNumber: '+61400000000', gstId: '' },
+      { publicEmail: 'organiser@test.com', phoneNumber: '+61400000000' }
+    ];
+
+    testCases.forEach((data) => {
+      const res = step3LegalOrganiserSchema.safeParse(data);
+      expect(res.success).toBe(res.success); // Keep it resilient, assert success is true
+      expect(res.success).toBe(true);
+    });
+  });
 });
 
 // ---------------------------------------------------------------------------

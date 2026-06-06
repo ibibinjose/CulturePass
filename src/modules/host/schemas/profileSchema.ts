@@ -176,7 +176,7 @@ export const licenceSchema = z.object({
   type: z.string().min(1, 'Licence type is required'),
   number: z.string().min(1, 'Licence number is required'),
   documentUrl: z.string().url('Invalid document URL'),
-  expiryDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  expiryDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable().or(z.literal('')),
   verified: z.boolean().default(false),
 });
 
@@ -212,9 +212,9 @@ export const step3LegalBaseSchema = z.object({
   emailVerified: z.boolean().default(false),
   phoneNumber: phoneSchema,
   phoneVerified: z.boolean().default(false),
-  whatsappNumber: phoneSchema.optional(),
+  whatsappNumber: phoneSchema.optional().nullable().or(z.literal('')),
   gstRegistered: z.boolean().default(false),
-  gstId: z.string().optional(),
+  gstId: z.string().optional().nullable().or(z.literal('')),
   licences: z.array(licenceSchema).default([]),
 });
 
@@ -224,7 +224,7 @@ export const step3LegalBusinessSchema = step3LegalBaseSchema.extend({
 });
 
 export const step3LegalOrganiserSchema = step3LegalBaseSchema.extend({
-  abn: abnSchema.optional().or(z.literal('')),
+  abn: abnSchema.optional().nullable().or(z.literal('')),
 });
 
 export const step3LegalVenueSchema = step3LegalBaseSchema.extend({

@@ -1,5 +1,90 @@
 [
   {
+    "hash": "a3328f6",
+    "fullHash": "a3328f6ba7681305ad9c9fedbdc27c1fceaeaf70",
+    "author": "ibibinjose",
+    "email": "NeoTech@outlook.com.au",
+    "date": "2026-06-06T01:08:28+10:00",
+    "message": "fix(git): resolve filename casing inconsistencies for cpu/[id].tsx and stage package updates",
+    "executor": "Human Developer",
+    "systemLabel": "ibibinjose",
+    "files": [
+      "package-lock.json",
+      "package.json",
+      "src/app/(shortlinks)/cpu/[id].tsx",
+      "src/app/cpu/[id].tsx"
+    ]
+  },
+  {
+    "hash": "01a7c0b",
+    "fullHash": "01a7c0b5f964a7153cdba53997861f0a2d6acac9",
+    "author": "ibibinjose",
+    "email": "NeoTech@outlook.com.au",
+    "date": "2026-06-06T00:51:47+10:00",
+    "message": "build(deps): update package overrides to resolve security vulnerabilities for @xmldom/xmldom and uuid",
+    "executor": "Human Developer",
+    "systemLabel": "ibibinjose",
+    "files": [
+      "package-lock.json",
+      "package.json"
+    ]
+  },
+  {
+    "hash": "bd5339d",
+    "fullHash": "bd5339d562bc1276394f7d4ada3d6df38891b32a",
+    "author": "ibibinjose",
+    "email": "NeoTech@outlook.com.au",
+    "date": "2026-06-06T00:38:48+10:00",
+    "message": "test(functions): mock firebase-functions logger to suppress console warning output",
+    "executor": "Human Developer",
+    "systemLabel": "ibibinjose",
+    "files": [
+      "functions/src/services/fileValidationService.test.ts"
+    ]
+  },
+  {
+    "hash": "e07894a",
+    "fullHash": "e07894a302d1c603259ac31a99e45a6f1f5dd355",
+    "author": "ibibinjose",
+    "email": "NeoTech@outlook.com.au",
+    "date": "2026-06-06T00:30:01+10:00",
+    "message": "style(directory): unify web search and location bar, make mobile location badge interactive",
+    "executor": "Human Developer",
+    "systemLabel": "ibibinjose",
+    "files": [
+      "src/app/(tabs)/directory.tsx"
+    ]
+  },
+  {
+    "hash": "67d873d",
+    "fullHash": "67d873dc2cd1b960d412cdd377118b741ffaccca",
+    "author": "ibibinjose",
+    "email": "NeoTech@outlook.com.au",
+    "date": "2026-06-06T00:26:10+10:00",
+    "message": "style(directory): rebuild directory page with premium cards, VIP rails, and 3-col desktop layout",
+    "executor": "Human Developer",
+    "systemLabel": "ibibinjose",
+    "files": [
+      "src/app/(tabs)/directory.tsx",
+      "src/components/directory/DirectoryComponents.tsx"
+    ]
+  },
+  {
+    "hash": "2eca56c",
+    "fullHash": "2eca56c1f23d84dc5d20380a6cf97d7e07920553",
+    "author": "ibibinjose",
+    "email": "NeoTech@outlook.com.au",
+    "date": "2026-06-06T00:20:55+10:00",
+    "message": "style(directory): improve directory ui/ux, grid card layout, and premium rings",
+    "executor": "Human Developer",
+    "systemLabel": "ibibinjose",
+    "files": [
+      "src/app/(tabs)/directory.tsx",
+      "src/components/directory/DirectoryComponents.tsx",
+      "src/constants/timesheetData.json"
+    ]
+  },
+  {
     "hash": "c5da550",
     "fullHash": "c5da55072c34a442bfd9bc8f538992554d580187",
     "author": "ibibinjose",

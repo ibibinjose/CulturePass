@@ -91,6 +91,9 @@ export default function DirectoryScreen() {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [searchFocused, setSearchFocused] = useState(false);
+  const searchInputRef = useRef<TextInput>(null);
+  const [searchHovered, setSearchHovered] = useState(false);
+  const [locationHovered, setLocationHovered] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(search), 400);
@@ -390,19 +393,35 @@ export default function DirectoryScreen() {
                 style={[
                   dirStyles.searchLocationRowWeb,
                   {
-                    backgroundColor: colors.surfaceElevated,
-                    borderColor: searchFocused ? colors.primary : colors.borderLight,
+                    backgroundColor: isDark ? 'rgba(30, 30, 32, 0.75)' : 'rgba(255, 255, 255, 0.82)',
+                    borderColor: searchFocused ? colors.primary : (searchHovered || locationHovered ? colors.primary + '60' : colors.borderLight),
                     shadowColor: colors.primary,
                     shadowOpacity: searchFocused ? 0.12 : 0.02,
                     shadowRadius: 10,
                     elevation: searchFocused ? 4 : 1,
+                    // CSS-specific backdrop-filter for premium web glassmorphism
+                    ...(Platform.OS === 'web' ? { backdropFilter: 'blur(20px)' } : {}),
                   },
                 ]}
               >
                 {/* Search input section */}
-                <View style={dirStyles.searchSectionWeb}>
+                <Pressable
+                  onPress={() => searchInputRef.current?.focus()}
+                  onHoverIn={() => setSearchHovered(true)}
+                  onHoverOut={() => setSearchHovered(false)}
+                  style={[
+                    dirStyles.searchSectionWeb,
+                    {
+                      backgroundColor: searchFocused || searchHovered ? (isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)') : 'transparent',
+                      borderRadius: 27,
+                      // smooth background transition on hover/focus on Web
+                      ...(Platform.OS === 'web' ? { transition: 'background-color 0.2s ease, border-color 0.2s ease' } : {}),
+                    }
+                  ]}
+                >
                   <Ionicons name="search" size={20} color={searchFocused ? colors.primary : colors.textTertiary} />
                   <TextInput
+                    ref={searchInputRef}
                     style={[dirStyles.searchInput, { color: colors.text, fontSize: 15, marginLeft: 8 }]}
                     placeholder="Search businesses, venues, artists…"
                     placeholderTextColor={colors.textTertiary}
@@ -418,17 +437,33 @@ export default function DirectoryScreen() {
                       <Ionicons name="close" size={20} color={colors.textSecondary} />
                     </Pressable>
                   ) : null}
-                </View>
+                </Pressable>
 
                 {/* Divider */}
-                <View style={[dirStyles.dividerWeb, { backgroundColor: colors.borderLight }]} />
+                <View 
+                  style={[
+                    dirStyles.dividerWeb, 
+                    { 
+                      backgroundColor: colors.borderLight, 
+                      opacity: (!searchFocused && !searchHovered && !locationHovered) ? 1 : 0,
+                      ...(Platform.OS === 'web' ? { transition: 'opacity 0.2s ease' } : {}),
+                    }
+                  ]} 
+                />
 
                 {/* Location selector section */}
                 <Pressable
                   onPress={locationFlow.open}
+                  onHoverIn={() => setLocationHovered(true)}
+                  onHoverOut={() => setLocationHovered(false)}
                   style={({ pressed }) => [
                     dirStyles.locationSectionWeb,
-                    { opacity: pressed ? 0.75 : 1 }
+                    { 
+                      backgroundColor: locationHovered ? (isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)') : 'transparent',
+                      borderRadius: 27,
+                      opacity: pressed ? 0.75 : 1,
+                      ...(Platform.OS === 'web' ? { transition: 'background-color 0.2s ease' } : {}),
+                    }
                   ]}
                   accessibilityRole="button"
                   accessibilityLabel={`Location: ${onboardingState.city || 'Global'}. Tap to change`}
@@ -451,19 +486,21 @@ export default function DirectoryScreen() {
                   style={({ pressed }) => [
                     dirStyles.locationBadge,
                     {
-                      backgroundColor: colors.primarySoft,
-                      borderColor: colors.primary + '20',
-                      opacity: pressed ? 0.75 : 1,
+                      backgroundColor: isDark ? 'rgba(79, 70, 229, 0.15)' : 'rgba(79, 70, 229, 0.08)',
+                      borderColor: colors.primary + '30',
+                      opacity: pressed ? 0.8 : 1,
+                      paddingVertical: 8,
+                      paddingHorizontal: 14,
                     }
                   ]}
                   accessibilityRole="button"
                   accessibilityLabel={`Location: ${onboardingState.city || 'Global'}. Tap to change`}
                 >
                   <Ionicons name="location" size={14} color={colors.primary} />
-                  <Text style={[dirStyles.locationText, { color: colors.primary }]}>
+                  <Text style={[dirStyles.locationText, { color: colors.primary, fontSize: 13 }]}>
                     {onboardingState.city || 'Global'} • {onboardingState.country || 'All Regions'}
                   </Text>
-                  <Ionicons name="chevron-down" size={10} color={colors.primary} style={{ marginLeft: 2 }} />
+                  <Ionicons name="chevron-down" size={12} color={colors.primary} style={{ marginLeft: 2 }} />
                 </Pressable>
                 
                 {allItems.length > 0 && (
@@ -475,7 +512,8 @@ export default function DirectoryScreen() {
                 )}
               </View>
               
-              <View
+              <Pressable
+                onPress={() => searchInputRef.current?.focus()}
                 style={[
                   dirStyles.searchBar,
                   {
@@ -494,6 +532,7 @@ export default function DirectoryScreen() {
               >
                 <Ionicons name="search" size={22} color={searchFocused ? colors.primary : colors.textTertiary} />
                 <TextInput
+                  ref={searchInputRef}
                   style={[dirStyles.searchInput, { color: colors.text, fontSize: 15, marginLeft: 10 }]}
                   placeholder="Businesses, venues, artists…"
                   placeholderTextColor={colors.textTertiary}
@@ -509,7 +548,7 @@ export default function DirectoryScreen() {
                     <Ionicons name="close" size={22} color={colors.textSecondary} />
                   </Pressable>
                 ) : null}
-              </View>
+              </Pressable>
             </View>
           )}
         </View>

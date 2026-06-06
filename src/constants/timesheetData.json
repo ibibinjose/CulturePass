@@ -1,5 +1,48 @@
 [
   {
+    "hash": "b9188d3",
+    "fullHash": "b9188d313ae6d43b210848fed1f32f692047a078",
+    "author": "ibibinjose",
+    "email": "NeoTech@outlook.com.au",
+    "date": "2026-06-06T12:15:57+10:00",
+    "message": "fix: resolve WebSocket Event.js TypeError crash on web/dev client and bump version to 1.3.2",
+    "executor": "Human Developer",
+    "systemLabel": "ibibinjose",
+    "files": [
+      "babel.config.js",
+      "package.json"
+    ]
+  },
+  {
+    "hash": "5b250d3",
+    "fullHash": "5b250d38be266a59b7a3ca9f2cfa16555fb9b916",
+    "author": "ibibinjose",
+    "email": "NeoTech@outlook.com.au",
+    "date": "2026-06-06T12:10:11+10:00",
+    "message": "build: add release-update utility script and update timesheetData",
+    "executor": "Human Developer",
+    "systemLabel": "ibibinjose",
+    "files": [
+      "scripts/release-update.mjs",
+      "src/constants/timesheetData.json"
+    ]
+  },
+  {
+    "hash": "9808a77",
+    "fullHash": "9808a77ccc7f125c3b99348996669d41f89d1da5",
+    "author": "ibibinjose",
+    "email": "NeoTech@outlook.com.au",
+    "date": "2026-06-06T12:09:56+10:00",
+    "message": "bump: version 1.3.1 release and changelog update",
+    "executor": "Human Developer",
+    "systemLabel": "ibibinjose",
+    "files": [
+      "CHANGELOG.md",
+      "app.config.js",
+      "package.json"
+    ]
+  },
+  {
     "hash": "a3328f6",
     "fullHash": "a3328f6ba7681305ad9c9fedbdc27c1fceaeaf70",
     "author": "ibibinjose",

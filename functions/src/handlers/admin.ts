@@ -808,7 +808,8 @@ adminRouter.put('/admin/verification/tasks/:id/checklist', async (req: Request, 
  */
 adminRouter.post('/admin/profiles/:id/block', async (req: Request, res: Response) => {
   if (!isFirestoreConfigured) return res.status(503).json({ error: 'Firestore unavailable' });
-  const profileId = req.params.id;
+  const rawProfileId = req.params.id;
+  const profileId = Array.isArray(rawProfileId) ? rawProfileId[0] : rawProfileId;
   if (!profileId) return res.status(400).json({ error: 'Profile id required' });
   try {
     const existing = await profilesService.getById(profileId);
@@ -842,7 +843,8 @@ adminRouter.post('/admin/profiles/:id/block', async (req: Request, res: Response
  */
 adminRouter.post('/admin/profiles/:id/unblock', async (req: Request, res: Response) => {
   if (!isFirestoreConfigured) return res.status(503).json({ error: 'Firestore unavailable' });
-  const profileId = req.params.id;
+  const rawProfileId = req.params.id;
+  const profileId = Array.isArray(rawProfileId) ? rawProfileId[0] : rawProfileId;
   if (!profileId) return res.status(400).json({ error: 'Profile id required' });
   try {
     const existing = await profilesService.getById(profileId);

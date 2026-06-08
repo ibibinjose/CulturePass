@@ -34,6 +34,8 @@ export interface ListingFormState {
   tagline: string;
   cultureTags: string[];
   cultureIds: string[];
+  indigenousTags: string[];
+  isIndigenousOwned: boolean;
   description: string;
   mission: string;
   founderStory: string;
@@ -113,6 +115,8 @@ export function defaultListingForm(
     tagline: '',
     cultureTags: [],
     cultureIds: [],
+    indigenousTags: [],
+    isIndigenousOwned: false,
     description: '',
     mission: '',
     founderStory: '',

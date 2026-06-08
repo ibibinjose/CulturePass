@@ -31,7 +31,26 @@ import { hostApi } from '@/modules/host/api';
 import { canonicalEventPath, canonicalProfilePath } from '@/lib/publicPaths';
 import { formatCompactDate } from '@/lib/format';
 import { APP_NAME, SITE_ORIGIN } from '@/lib/app-meta';
-import type { EventData, Profile, HostApplication, ShopListing } from '@/shared/schema';
+import type { EventData, Profile, HostApplication, ShopListing, HostPage } from '@/shared/schema';
+import {
+  HostspaceManageTabs,
+  HostspaceManageTabHint,
+  filterHostspaceManageItems,
+  type HostspaceManageTab,
+} from '@/modules/host/components/HostspaceManageTabs';
+import { CultureFlagBadge } from '@/components/culture/CultureFlagBadge';
+import {
+  resolveEventCultureFlag,
+  resolveHostPageCultureFlag,
+  resolveProfileCultureFlag,
+} from '@/lib/cultureIdentity';
+import {
+  navigateToCreateById,
+  navigateToCreationLab,
+  navigateToEditHostPage,
+  navigateToEditShopListing,
+  navigateToResumeDraft,
+} from '@/lib/creationRouting';
 
 // Creator Trust: Ongoing verification status visibility in HostSpace dashboard
 import { VerificationStatusBanner } from '@/modules/host/components/VerificationStatusBanner';
@@ -46,7 +65,8 @@ import { UniversalShareSheet } from '@/modules/host/components/UniversalShareShe
 type HostspaceSummary = {
   events: EventData[];
   profiles: Profile[];
-  listings: ShopListing[];
+  pages: HostPage[];
+  shopListings: ShopListing[];
 };
 
 // Personalized greeting for hosts
@@ -103,7 +123,11 @@ function dedupeEvents(events: EventData[]): EventData[] {
 }
 
 async function fetchHostspaceSummary(userId: string): Promise<HostspaceSummary> {
-  const profiles = await hostApi.profiles.my();
+  const [profiles, pages, shopResult] = await Promise.all([
+    hostApi.profiles.my(),
+    hostApi.hostPages.my(),
+    api.cultureShop.getListings({ mine: true, limit: 48 }),
+  ]);
   const eventResponses = await Promise.all([
     hostApi.events.list(userId),
     ...profiles.map((profile) => hostApi.events.listForPublisher(profile.id)),
@@ -111,8 +135,9 @@ async function fetchHostspaceSummary(userId: string): Promise<HostspaceSummary> 
 
   return {
     profiles,
+    pages,
     events: dedupeEvents(eventResponses.flatMap((response) => response.events ?? [])),
-    listings: [],
+    shopListings: shopResult?.listings ?? [],
   };
 }
 
@@ -122,6 +147,14 @@ function routeToProfile(profile: Profile) {
 
 function routeToEvent(event: EventData) {
   router.push(canonicalEventPath(event) as never);
+}
+
+function routeToHostPage(page: HostPage) {
+  navigateToEditHostPage(page.entityType, page.id, 'hostspace_manage_page_card');
+}
+
+function routeToShopListing(listing: ShopListing) {
+  navigateToEditShopListing(listing.id, 'hostspace_manage_market_card');
 }
 
 // ---------------------------------------------------------------------------
@@ -170,6 +203,7 @@ function ProfileManageCard({
   const icon = PROFILE_ICON[profile.entityType] ?? 'grid-outline';
   const status = (profile.status ?? 'draft') as ProfileStatus;
   const statusConfig = STATUS_CONFIG[status] ?? STATUS_CONFIG.draft;
+  const cultureFlag = resolveProfileCultureFlag(profile);
 
   return (
     <Animated.View entering={FadeInDown.delay(index * 50).springify()} style={isDesktop ? styles.cardWrapDesktop : styles.cardWrap}>
@@ -195,6 +229,12 @@ function ProfileManageCard({
           <GlassView intensity={30} style={[styles.statusPill, { backgroundColor: statusConfig.color + 'CC' }]}>
             <LuxeText variant="badgeCaps" style={{ color: '#fff', fontSize: 9 }}>{statusConfig.label}</LuxeText>
           </GlassView>
+
+          {cultureFlag ? (
+            <View style={styles.cultureFlagWrap}>
+              <CultureFlagBadge emoji={cultureFlag} size="sm" accessibilityLabel="Profile culture flag" />
+            </View>
+          ) : null}
 
           {/* Unified Actions Menu */}
           {onActionsPress && (
@@ -263,6 +303,7 @@ function EventManageCard({
 }) {
   const colors = useColors();
   const status = event.status ?? 'draft';
+  const cultureFlag = resolveEventCultureFlag(event);
 
   return (
     <Animated.View entering={FadeInDown.delay(index * 50).springify()} style={isDesktop ? styles.cardWrapDesktop : styles.cardWrap}>
@@ -283,6 +324,12 @@ function EventManageCard({
           <GlassView intensity={30} style={[styles.statusPill, { backgroundColor: (status === 'published' ? Luxe.colors.emerald : Luxe.colors.gold) + 'CC' }]}>
             <LuxeText variant="badgeCaps" style={{ color: '#fff', fontSize: 9 }}>{status === 'published' ? 'LIVE' : 'DRAFT'}</LuxeText>
           </GlassView>
+
+          {cultureFlag ? (
+            <View style={styles.cultureFlagWrap}>
+              <CultureFlagBadge emoji={cultureFlag} size="sm" accessibilityLabel="Event culture flag" />
+            </View>
+          ) : null}
 
           {onActionsPress && (
             <Pressable
@@ -314,6 +361,135 @@ function EventManageCard({
               <LuxeText variant="caption" style={{ color: colors.textTertiary }}>{event.priceLabel ?? (event.isFree ? 'Free' : 'Paid')}</LuxeText>
             </View>
           </View>
+        </View>
+      </GlassView>
+    </Animated.View>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Host Page Manage Card
+// ---------------------------------------------------------------------------
+
+type HostPageStatus = 'draft' | 'published' | 'blocked' | 'archived';
+
+const HOST_PAGE_STATUS_CONFIG: Record<HostPageStatus, { label: string; color: string }> = {
+  draft: { label: 'DRAFT', color: Luxe.colors.gold },
+  published: { label: 'LIVE', color: Luxe.colors.emerald },
+  blocked: { label: 'BLOCKED', color: Luxe.colors.terracotta },
+  archived: { label: 'ARCHIVED', color: Luxe.colors.indigo },
+};
+
+function PageManageCard({
+  page,
+  index,
+  isDesktop,
+}: {
+  page: HostPage;
+  index: number;
+  isDesktop: boolean;
+}) {
+  const colors = useColors();
+  const status = (page.status ?? 'draft') as HostPageStatus;
+  const statusConfig = HOST_PAGE_STATUS_CONFIG[status] ?? HOST_PAGE_STATUS_CONFIG.draft;
+  const cultureFlag = resolveHostPageCultureFlag(page.formData);
+  const icon = PROFILE_ICON[page.entityType] ?? 'document-text-outline';
+  const imageUrl = page.formData.coverUrl ?? page.formData.logoUrl;
+
+  return (
+    <Animated.View entering={FadeInDown.delay(index * 50).springify()} style={isDesktop ? styles.cardWrapDesktop : styles.cardWrap}>
+      <GlassView
+        intensity={8}
+        onPress={() => routeToHostPage(page)}
+        style={[styles.manageCard, { borderColor: colors.borderLight, borderWidth: 1 }]}
+        contentStyle={{ padding: 0 }}
+      >
+        <View style={styles.mediaBox}>
+          {imageUrl ? (
+            <Image source={{ uri: imageUrl }} style={StyleSheet.absoluteFill} contentFit="cover" />
+          ) : (
+            <View style={[StyleSheet.absoluteFill, styles.mediaFallback]}>
+              <Ionicons name={icon} size={32} color={Luxe.colors.indigo} />
+            </View>
+          )}
+          <GlassView intensity={30} style={[styles.statusPill, { backgroundColor: statusConfig.color + 'CC' }]}>
+            <LuxeText variant="badgeCaps" style={{ color: '#fff', fontSize: 9 }}>{statusConfig.label}</LuxeText>
+          </GlassView>
+          {cultureFlag ? (
+            <View style={styles.cultureFlagWrap}>
+              <CultureFlagBadge emoji={cultureFlag} size="sm" accessibilityLabel="Page culture flag" />
+            </View>
+          ) : null}
+        </View>
+        <View style={styles.manageBody}>
+          <LuxeText variant="bodyMedium" style={{ color: colors.text }} numberOfLines={1}>
+            {page.formData.name}
+          </LuxeText>
+          <LuxeText variant="caption" style={{ color: colors.textSecondary }} numberOfLines={1}>
+            {[page.entityType, page.handle ? `@${page.handle}` : null].filter(Boolean).join(' · ')}
+          </LuxeText>
+        </View>
+      </GlassView>
+    </Animated.View>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// CultureMarket Listing Manage Card
+// ---------------------------------------------------------------------------
+
+function ShopListingManageCard({
+  listing,
+  index,
+  isDesktop,
+}: {
+  listing: ShopListing;
+  index: number;
+  isDesktop: boolean;
+}) {
+  const colors = useColors();
+  const status = listing.status ?? 'draft';
+  const statusColor =
+    status === 'active' ? Luxe.colors.emerald : status === 'sold' ? Luxe.colors.indigo : Luxe.colors.gold;
+  const typeIcon: keyof typeof Ionicons.glyphMap =
+    listing.type === 'service' ? 'construct-outline' : listing.type === 'link' ? 'link-outline' : 'bag-outline';
+
+  return (
+    <Animated.View entering={FadeInDown.delay(index * 50).springify()} style={isDesktop ? styles.cardWrapDesktop : styles.cardWrap}>
+      <GlassView
+        intensity={8}
+        onPress={() => routeToShopListing(listing)}
+        style={[styles.manageCard, { borderColor: colors.borderLight, borderWidth: 1 }]}
+        contentStyle={{ padding: 0 }}
+      >
+        <View style={styles.mediaBox}>
+          {listing.imageUrl ? (
+            <Image source={{ uri: listing.imageUrl }} style={StyleSheet.absoluteFill} contentFit="cover" />
+          ) : (
+            <View style={[StyleSheet.absoluteFill, styles.mediaFallback]}>
+              <Ionicons name={typeIcon} size={32} color={Luxe.colors.emerald} />
+            </View>
+          )}
+          <GlassView intensity={30} style={[styles.statusPill, { backgroundColor: statusColor + 'CC' }]}>
+            <LuxeText variant="badgeCaps" style={{ color: '#fff', fontSize: 9 }}>{status.toUpperCase()}</LuxeText>
+          </GlassView>
+        </View>
+        <View style={styles.manageBody}>
+          <LuxeText variant="bodyMedium" style={{ color: colors.text }} numberOfLines={1}>
+            {listing.title}
+          </LuxeText>
+          <LuxeText variant="caption" style={{ color: colors.textSecondary }} numberOfLines={1}>
+            {[
+              listing.type,
+              listing.isFree
+                ? 'Free'
+                : listing.priceCents != null
+                  ? `$${(listing.priceCents / 100).toFixed(2)}`
+                  : null,
+            ]
+              .filter(Boolean)
+              .join(' · ')}
+          </LuxeText>
         </View>
       </GlassView>
     </Animated.View>
@@ -412,6 +588,7 @@ function HostspaceWorkspace() {
   const { userId, user } = useAuth();
   const { isOrganizer } = useRole();
   const [showDraftModal, setShowDraftModal] = useState(false);
+  const [manageTab, setManageTab] = useState<HostspaceManageTab>('all');
 
   // Action Sheet state
   const [actionSheetItem, setActionSheetItem] = useState<{
@@ -428,39 +605,12 @@ function HostspaceWorkspace() {
     url: string;
   } | null>(null);
 
-  const { getProfileActions, getEventActions } = useHostItemActions();
-
-  const getProfileActionsWithShare = (profile: Profile) => {
-    const baseActions = getProfileActions(profile);
-    return baseActions.map(action => 
-      action.key === 'share' 
-        ? {
-            ...action,
-            onPress: () => {
-              const url = `${SITE_ORIGIN}/profile/${profile.handle || profile.id}`;
-              setShareItem({ title: profile.name, url });
-              setActionSheetItem(null);
-            }
-          }
-        : action
-    );
-  };
-
-  const getEventActionsWithShare = (event: EventData) => {
-    const baseActions = getEventActions(event);
-    return baseActions.map(action => 
-      action.key === 'share' 
-        ? {
-            ...action,
-            onPress: () => {
-              const url = canonicalEventPath(event);
-              setShareItem({ title: event.title || 'Event', url });
-              setActionSheetItem(null);
-            }
-          }
-        : action
-    );
-  };
+  const { getProfileActions, getEventActions } = useHostItemActions({
+    onShare: (item) => {
+      setShareItem(item);
+      setActionSheetItem(null);
+    },
+  });
 
   const { data, isLoading, isRefetching, refetch } = useQuery({
     queryKey: ['hostspace', 'workspace', userId],
@@ -485,31 +635,77 @@ function HostspaceWorkspace() {
 
   const profiles = useMemo(() => data?.profiles ?? [], [data?.profiles]);
   const events = useMemo(() => data?.events ?? [], [data?.events]);
-  const communities = useMemo(
-    () => profiles.filter((profile) => profile.entityType === 'community'),
-    [profiles],
+  const pages = useMemo(() => data?.pages ?? [], [data?.pages]);
+  const shopListings = useMemo(() => data?.shopListings ?? [], [data?.shopListings]);
+
+  const filteredManage = useMemo(
+    () =>
+      filterHostspaceManageItems({
+        tab: manageTab,
+        pages,
+        events,
+        profiles,
+        shopListings,
+      }),
+    [manageTab, pages, events, profiles, shopListings],
   );
-  const otherProfiles = useMemo(
-    () => profiles.filter((profile) => profile.entityType !== 'community'),
-    [profiles],
-  );
+
+  const manageOffers = useMemo(() => {
+    if (manageTab !== 'all') return [];
+    return profiles.filter((p) => {
+      const sub = (p.subCategory ?? p.category ?? '').toLowerCase();
+      return sub.includes('offer') || sub.includes('perk') || sub.includes('deal');
+    });
+  }, [manageTab, profiles]);
+
+  const manageEmptyCopy: Record<HostspaceManageTab, { message: string; action: string; onPress: () => void }> = {
+    all: { message: 'Nothing published yet.', action: 'Get started', onPress: () => setShowCreateMenu(true) },
+    pages: {
+      message: 'No Pages yet.',
+      action: 'Create Page',
+      onPress: () => navigateToCreationLab('hostspace_empty_pages'),
+    },
+    events: {
+      message: 'No events yet.',
+      action: 'Launch event',
+      onPress: () => navigateToCreateById('event', { source: 'hostspace_empty_events' }),
+    },
+    listings: {
+      message: 'No directory listings yet.',
+      action: 'Add listing',
+      onPress: () => navigateToCreationLab('hostspace_empty_listings'),
+    },
+    offers: {
+      message: 'No offers yet.',
+      action: 'Create offer',
+      onPress: () => navigateToCreateById('offer', { source: 'hostspace_empty_offers' }),
+    },
+    market: {
+      message: 'No CultureMarket listings yet.',
+      action: 'List on Market',
+      onPress: () => navigateToCreateById('market-product', { source: 'hostspace_empty_market' }),
+    },
+  };
+
+  const hasFilteredContent =
+    filteredManage.pages.length > 0 ||
+    filteredManage.events.length > 0 ||
+    filteredManage.profiles.length > 0 ||
+    filteredManage.shopListings.length > 0 ||
+    (filteredManage.communities?.length ?? 0) > 0 ||
+    manageOffers.length > 0;
 
   const handleSelectDraft = useCallback((draftId: string) => {
     setShowDraftModal(false);
     const draft = drafts.find((d) => d.id === draftId);
     if (draft) {
-      const richTypes = ['business', 'venue', 'artist', 'professional', 'organizer', 'community'];
-      if (richTypes.includes(draft.entityType)) {
-        router.push(`/hostspace/create?profileType=${draft.entityType}&draftId=${draftId}` as never);
-      } else {
-        router.push(`/hostspace/create?category=${draft.entityType}&draftId=${draftId}` as never);
-      }
+      navigateToResumeDraft({ entityType: draft.entityType, id: draftId }, 'hostspace_draft_modal');
     }
   }, [drafts]);
 
   const handleStartFresh = useCallback(() => {
     setShowDraftModal(false);
-    router.push('/hostspace/create' as never);
+    navigateToCreationLab('hostspace_draft_modal_fresh');
   }, []);
 
   const handleDismissDraftModal = useCallback(() => {
@@ -518,13 +714,10 @@ function HostspaceWorkspace() {
 
   const handleResumeDraft = useCallback(() => {
     if (drafts.length === 1) {
-      const draft = drafts[0];
-      const richTypes = ['business', 'venue', 'artist', 'professional', 'organizer', 'community'];
-      if (richTypes.includes(draft.entityType)) {
-        router.push(`/hostspace/create?profileType=${draft.entityType}&draftId=${draft.id}` as never);
-      } else {
-        router.push(`/hostspace/create?category=${draft.entityType}&draftId=${draft.id}` as never);
-      }
+      navigateToResumeDraft(
+        { entityType: drafts[0].entityType, id: drafts[0].id },
+        'hostspace_draft_banner',
+      );
     } else {
       setShowDraftModal(true);
     }
@@ -560,7 +753,7 @@ function HostspaceWorkspace() {
           />
         }
         actions={[
-          { icon: 'add-circle-outline', onPress: () => router.push('/hostspace/create' as never) },
+          { icon: 'add-circle-outline', onPress: () => navigateToCreationLab('hostspace_appbar') },
           { icon: 'scan-outline', onPress: () => router.push('/scanner' as never) },
         ]}
       />
@@ -594,7 +787,7 @@ function HostspaceWorkspace() {
             </View>
             <LuxeButton
               variant="filled"
-              onPress={() => router.push('/hostspace/create' as never)}
+              onPress={() => navigateToCreationLab('hostspace_hero_create')}
               style={styles.createButton}
               leftIcon="add"
             >
@@ -626,7 +819,7 @@ function HostspaceWorkspace() {
               <LuxeButton
                 variant="tonal"
                 size="sm"
-                onPress={() => router.push('/hostspace/create' as any)}
+                onPress={() => router.push('/pages/create' as any)}
                 style={{ marginTop: 8, alignSelf: 'flex-start' }}
                 rightIcon="arrow-forward"
               >
@@ -670,7 +863,7 @@ function HostspaceWorkspace() {
                 <LuxeButton
                   variant="tonal"
                   size="sm"
-                  onPress={() => router.push('/hostspace/create' as any)}
+                  onPress={() => router.push('/pages/create' as any)}
                   style={{ marginTop: 8, alignSelf: 'flex-start' }}
                   leftIcon="create-outline"
                 >
@@ -689,7 +882,7 @@ function HostspaceWorkspace() {
               label="New Event"
               icon="calendar"
               color={Luxe.colors.terracotta}
-              onPress={() => router.push('/hostspace/create/event' as never)}
+              onPress={() => navigateToCreateById('event', { source: 'hostspace_quick_event' })}
             />
             <QuickAction
               label="Scan Tickets"
@@ -701,13 +894,13 @@ function HostspaceWorkspace() {
               label="New Community"
               icon="people"
               color={Luxe.colors.plum}
-              onPress={() => router.push('/hostspace/create?profileType=community' as never)}
+              onPress={() => navigateToCreateById('community', { source: 'hostspace_quick_community' })}
             />
             <QuickAction
               label="Create Listing"
               icon="storefront"
               color={Luxe.colors.emerald}
-              onPress={() => router.push('/hostspace/create/listing' as never)}
+              onPress={() => navigateToCreateById('market-product', { source: 'hostspace_quick_market' })}
             />
           </View>
         </View>
@@ -758,92 +951,139 @@ function HostspaceWorkspace() {
           <Ionicons name="chevron-forward" size={18} color={colors.textTertiary} />
         </GlassView>
 
-        {/* Communities */}
+        {/* Unified manage — Pages | Events | Listings | Offers | Market */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <LuxeText variant="title3" style={{ color: colors.text }}>Communities you manage</LuxeText>
-            <LuxeButton variant="ghost" size="sm" leftIcon="add" onPress={() => router.push('/hostspace/create?profileType=community' as never)}>
+            <LuxeText variant="title3" style={{ color: colors.text }}>Manage your culture</LuxeText>
+            <LuxeButton variant="ghost" size="sm" leftIcon="add" onPress={() => navigateToCreationLab('hostspace_manage_header')}>
               Create
             </LuxeButton>
           </View>
-          {isLoading ? (
-            <View style={styles.grid}>
-              {[1, 2, 3].map((item) => <Skeleton key={item} width={isDesktop ? '31%' : '100%'} height={214} borderRadius={24} />)}
-            </View>
-          ) : communities.length === 0 ? (
-            <View style={[styles.emptyBox, { borderColor: colors.borderLight }]}>
-              <LuxeText variant="body" style={{ color: colors.textSecondary }}>No communities yet.</LuxeText>
-              <LuxeButton variant="tonal" size="sm" onPress={() => setShowCreateMenu(true)}>Get started</LuxeButton>
-            </View>
-          ) : (
-            <View style={styles.grid}>
-              {communities.map((profile, index) => (
-                <ProfileManageCard 
-                  key={profile.id} 
-                  profile={profile} 
-                  index={index} 
-                  isDesktop={isDesktop} 
-                  onActionsPress={(p) => setActionSheetItem({ type: 'profile', data: p })} 
-                />
-              ))}
-            </View>
-          )}
-        </View>
+          <HostspaceManageTabs
+            activeTab={manageTab}
+            onTabChange={setManageTab}
+            colors={{ onSurface: colors.text, onSurfaceVariant: colors.textSecondary }}
+          />
+          <HostspaceManageTabHint tab={manageTab} />
 
-        {/* Events */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <LuxeText variant="title3" style={{ color: colors.text }}>Events you manage</LuxeText>
-          </View>
           {isLoading ? (
             <View style={styles.grid}>
-              {[1, 2, 3].map((item) => <Skeleton key={item} width={isDesktop ? '31%' : '100%'} height={214} borderRadius={24} />)}
-            </View>
-          ) : events.length === 0 ? (
-            <View style={[styles.emptyBox, { borderColor: colors.borderLight }]}>
-              <LuxeText variant="body" style={{ color: colors.textSecondary }}>No events yet.</LuxeText>
-              <LuxeButton variant="tonal" size="sm" onPress={() => setShowCreateMenu(true)}>Launch event</LuxeButton>
-            </View>
-          ) : (
-            <View style={styles.grid}>
-              {events.map((event, index) => (
-                <EventManageCard 
-                  key={event.id} 
-                  event={event} 
-                  index={index} 
-                  isDesktop={isDesktop} 
-                  onActionsPress={(e) => setActionSheetItem({ type: 'event', data: e })} 
-                />
+              {[1, 2, 3].map((item) => (
+                <Skeleton key={item} width={isDesktop ? '31%' : '100%'} height={214} borderRadius={24} />
               ))}
             </View>
-          )}
-        </View>
+          ) : !hasFilteredContent ? (
+            <View style={[styles.emptyBox, { borderColor: colors.borderLight }]}>
+              <LuxeText variant="body" style={{ color: colors.textSecondary }}>
+                {manageEmptyCopy[manageTab].message}
+              </LuxeText>
+              <LuxeButton variant="tonal" size="sm" onPress={manageEmptyCopy[manageTab].onPress}>
+                {manageEmptyCopy[manageTab].action}
+              </LuxeButton>
+            </View>
+          ) : (
+            <View style={styles.manageSections}>
+              {filteredManage.pages.length > 0 ? (
+                <View style={styles.manageSubsection}>
+                  {manageTab === 'all' ? (
+                    <LuxeText variant="badgeCaps" style={{ color: colors.textTertiary }}>PAGES</LuxeText>
+                  ) : null}
+                  <View style={styles.grid}>
+                    {filteredManage.pages.map((page, index) => (
+                      <PageManageCard key={page.id} page={page} index={index} isDesktop={isDesktop} />
+                    ))}
+                  </View>
+                </View>
+              ) : null}
 
-        {/* Listings */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <LuxeText variant="title3" style={{ color: colors.text }}>Other profiles & listings</LuxeText>
-          </View>
-          {isLoading ? (
-            <View style={styles.grid}>
-              {[1, 2].map((item) => <Skeleton key={item} width={isDesktop ? '31%' : '100%'} height={214} borderRadius={24} />)}
-            </View>
-          ) : otherProfiles.length === 0 ? (
-            <View style={[styles.emptyBox, { borderColor: colors.borderLight }]}>
-              <LuxeText variant="body" style={{ color: colors.textSecondary }}>No other profiles yet.</LuxeText>
-              <LuxeButton variant="tonal" size="sm" onPress={() => setShowCreateMenu(true)}>Add profile</LuxeButton>
-            </View>
-          ) : (
-            <View style={styles.grid}>
-              {otherProfiles.map((profile, index) => (
-                <ProfileManageCard 
-                  key={profile.id} 
-                  profile={profile} 
-                  index={index} 
-                  isDesktop={isDesktop} 
-                  onActionsPress={(p) => setActionSheetItem({ type: 'profile', data: p })} 
-                />
-              ))}
+              {filteredManage.events.length > 0 ? (
+                <View style={styles.manageSubsection}>
+                  {manageTab === 'all' ? (
+                    <LuxeText variant="badgeCaps" style={{ color: colors.textTertiary }}>EVENTS</LuxeText>
+                  ) : null}
+                  <View style={styles.grid}>
+                    {filteredManage.events.map((event, index) => (
+                      <EventManageCard
+                        key={event.id}
+                        event={event}
+                        index={index}
+                        isDesktop={isDesktop}
+                        onActionsPress={(e) => setActionSheetItem({ type: 'event', data: e })}
+                      />
+                    ))}
+                  </View>
+                </View>
+              ) : null}
+
+              {(filteredManage.communities?.length ?? 0) > 0 ? (
+                <View style={styles.manageSubsection}>
+                  {manageTab === 'all' ? (
+                    <LuxeText variant="badgeCaps" style={{ color: colors.textTertiary }}>COMMUNITIES</LuxeText>
+                  ) : null}
+                  <View style={styles.grid}>
+                    {filteredManage.communities!.map((profile, index) => (
+                      <ProfileManageCard
+                        key={profile.id}
+                        profile={profile}
+                        index={index}
+                        isDesktop={isDesktop}
+                        onActionsPress={(p) => setActionSheetItem({ type: 'profile', data: p })}
+                      />
+                    ))}
+                  </View>
+                </View>
+              ) : null}
+
+              {filteredManage.profiles.length > 0 ? (
+                <View style={styles.manageSubsection}>
+                  {manageTab === 'all' || manageTab === 'listings' || manageTab === 'offers' ? (
+                    <LuxeText variant="badgeCaps" style={{ color: colors.textTertiary }}>
+                      {manageTab === 'offers' ? 'OFFERS' : 'LISTINGS'}
+                    </LuxeText>
+                  ) : null}
+                  <View style={styles.grid}>
+                    {filteredManage.profiles.map((profile, index) => (
+                      <ProfileManageCard
+                        key={profile.id}
+                        profile={profile}
+                        index={index}
+                        isDesktop={isDesktop}
+                        onActionsPress={(p) => setActionSheetItem({ type: 'profile', data: p })}
+                      />
+                    ))}
+                  </View>
+                </View>
+              ) : null}
+
+              {manageOffers.length > 0 ? (
+                <View style={styles.manageSubsection}>
+                  <LuxeText variant="badgeCaps" style={{ color: colors.textTertiary }}>OFFERS</LuxeText>
+                  <View style={styles.grid}>
+                    {manageOffers.map((profile, index) => (
+                      <ProfileManageCard
+                        key={profile.id}
+                        profile={profile}
+                        index={index}
+                        isDesktop={isDesktop}
+                        onActionsPress={(p) => setActionSheetItem({ type: 'profile', data: p })}
+                      />
+                    ))}
+                  </View>
+                </View>
+              ) : null}
+
+              {filteredManage.shopListings.length > 0 ? (
+                <View style={styles.manageSubsection}>
+                  {manageTab === 'all' ? (
+                    <LuxeText variant="badgeCaps" style={{ color: colors.textTertiary }}>CULTUREMARKET</LuxeText>
+                  ) : null}
+                  <View style={styles.grid}>
+                    {filteredManage.shopListings.map((listing, index) => (
+                      <ShopListingManageCard key={listing.id} listing={listing} index={index} isDesktop={isDesktop} />
+                    ))}
+                  </View>
+                </View>
+              ) : null}
             </View>
           )}
         </View>
@@ -871,8 +1111,8 @@ function HostspaceWorkspace() {
           onClose={() => setActionSheetItem(null)}
           actions={
             actionSheetItem.type === 'profile'
-              ? getProfileActionsWithShare(actionSheetItem.data as Profile)
-              : getEventActionsWithShare(actionSheetItem.data as EventData)
+              ? getProfileActions(actionSheetItem.data as Profile)
+              : getEventActions(actionSheetItem.data as EventData)
           }
         />
       )}
@@ -884,9 +1124,15 @@ function HostspaceWorkspace() {
         onCreateUnderProfile={(profileId, type) => {
           setShowCreateMenu(false);
           if (type === 'event') {
-            router.push(`/hostspace/create/event?parentProfile=${profileId}` as never);
+            navigateToCreateById('event', {
+              source: 'hostspace_create_under_profile_event',
+              parentProfileId: profileId,
+            });
           } else {
-            router.push(`/hostspace/create/listing?parentProfile=${profileId}` as never);
+            navigateToCreateById('market-product', {
+              source: 'hostspace_create_under_profile_market',
+              parentProfileId: profileId,
+            });
           }
         }}
       />
@@ -980,6 +1226,8 @@ const styles = StyleSheet.create({
   statIcon: { width: 38, height: 38, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
 
   section: { gap: 16 },
+  manageSections: { gap: 24 },
+  manageSubsection: { gap: 12 },
   sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 16 },
   cardWrap: { width: '100%' },
@@ -988,6 +1236,7 @@ const styles = StyleSheet.create({
   mediaBox: { height: 120, backgroundColor: 'rgba(0,0,0,0.03)' },
   mediaFallback: { alignItems: 'center', justifyContent: 'center' },
   statusPill: { position: 'absolute', top: 12, left: 12, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 6, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' },
+  cultureFlagWrap: { position: 'absolute', top: 10, right: 44, zIndex: 9 },
   actionMenuButton: { position: 'absolute', top: 10, right: 10, width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(0,0,0,0.3)', alignItems: 'center', justifyContent: 'center', zIndex: 10 },
   manageBody: { padding: 16, gap: 6 },
   metricRow: { flexDirection: 'row', alignItems: 'center', gap: 16, paddingTop: 4 },

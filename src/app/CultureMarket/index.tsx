@@ -18,7 +18,7 @@ import {
   TextInput,
   type TextStyle,
 } from 'react-native';
-import { router, type Href } from 'expo-router';
+import { router } from 'expo-router';
 import Head from 'expo-router/head';
 import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import { useQuery } from '@tanstack/react-query';
@@ -49,6 +49,7 @@ import type { ShopListing } from '@/shared/schema';
 import { MARKET_CATEGORIES } from '@/shared/schema/cultureShopListing';
 import { ShopListingCard } from '@/modules/marketplace/ShopListingCard';
 import { APP_NAME, SITE_ORIGIN } from '@/lib/app-meta';
+import { navigateToCreateById } from '@/lib/creationRouting';
 
 const MARKET_INDEX_TITLE = `CultureMarket · ${APP_NAME}`;
 const MARKET_INDEX_DESC =
@@ -534,7 +535,9 @@ function CultureMarketScreenInner() {
     [isDesktop],
   );
 
-  const hostListingHref = '/hostspace/create/listing' as Href;
+  const openHostListingWizard = useCallback(() => {
+    navigateToCreateById('market-listing', { source: 'culture_market_index' });
+  }, []);
 
   const [activeCat, setActiveCat] = useState<string | null>(null);
   const [activeSubCat, setActiveSubCat] = useState<string | null>(null);
@@ -607,7 +610,7 @@ function CultureMarketScreenInner() {
   }, [allQuery, featuredQuery]);
 
   const openListing = useCallback((l: ShopListing) => {
-    router.push(`/CultureMarket/${l.id}` as Href);
+    router.push(`/CultureMarket/${l.id}` as never);
   }, []);
 
   // Group search-filtered listings by parent category (used when no filter active)
@@ -694,7 +697,7 @@ function CultureMarketScreenInner() {
             <Text style={styles.headerTitle}>CultureMarket</Text>
             {canManage ? (
               <Pressable
-                onPress={() => router.push(hostListingHref)}
+                onPress={openHostListingWizard}
                 style={({ pressed }) => [styles.iconBtn, { opacity: pressed ? 0.8 : 1 }]}
                 accessibilityLabel="Create CultureMarket listing"
               >
@@ -725,7 +728,7 @@ function CultureMarketScreenInner() {
               <LuxeButton
                 variant="filled"
                 leftIcon="add-circle-outline"
-                onPress={() => router.push(hostListingHref)}
+                onPress={openHostListingWizard}
                 style={{ minWidth: 180 }}
               >
                 List your business
@@ -857,7 +860,7 @@ function CultureMarketScreenInner() {
                             : `Be the first to list in ${activeCatMeta?.label ?? activeCat}`}
                         </Text>
                         <Pressable
-                          onPress={() => router.push(hostListingHref)}
+                          onPress={openHostListingWizard}
                           style={({ pressed }) => [
                             styles.emptyBtn,
                             {
@@ -950,7 +953,7 @@ function CultureMarketScreenInner() {
                           Be the first cultural business to list here.
                         </Text>
                         <Pressable
-                          onPress={() => router.push(hostListingHref)}
+                          onPress={openHostListingWizard}
                           style={({ pressed }) => [
                             styles.emptyBtn,
                             { borderColor: CultureTokens.violet, opacity: pressed ? 0.8 : 1 },
@@ -1015,7 +1018,7 @@ function CultureMarketScreenInner() {
                 ))}
               </View>
               <Pressable
-                onPress={() => router.push(hostListingHref)}
+                onPress={openHostListingWizard}
                 style={({ pressed }) => [styles.sellCta, { opacity: pressed ? 0.88 : 1 }]}
                 accessibilityRole="button"
               >

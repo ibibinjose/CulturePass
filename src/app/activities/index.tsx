@@ -1,10 +1,10 @@
-import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   StyleSheet, Text, View, Pressable, Platform,
-  FlatList, Alert, type ListRenderItemInfo, RefreshControl, TextInput,
+  ScrollView, Alert, RefreshControl, TextInput, ActivityIndicator,
 } from 'react-native';
 import { Image } from 'expo-image';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import Animated, { FadeInDown, FadeInUp, useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -22,7 +22,7 @@ import { BackButton } from '@/design-system/ui/BackButton';
 import { CreatorFAB } from '@/design-system/ui/CreatorActions';
 import { Skeleton } from '@/design-system/ui/Skeleton';
 import { CultureTokens, FontFamily, TextStyles, CardTokens } from '@/design-system/tokens/theme';
-import { createLabCategoryHref } from '@/constants/navigation/createNav';
+import { navigateToCreateById } from '@/lib/creationRouting';
 import type { ActivityData } from '@/shared/schema';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -42,7 +42,18 @@ const ACTIVITY_CATEGORIES = [
 ];
 
 const SKELETON_COUNT = 6;
-const PLACEHOLDER_IMAGE = 'https://via.placeholder.com/400x240/1a1a2e/eee?text=Activity';
+const PLACEHOLDER_IMAGE =
+  'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&q=80&w=800';
+
+const CATEGORY_FROM_QUERY: Record<string, string> = {
+  classes: 'Classes',
+  class: 'Classes',
+  tours: 'Tours',
+  outdoor: 'Outdoor',
+  wellness: 'Wellness',
+  cultural: 'Cultural',
+  sports: 'Sports',
+};
 
 // ─── Skeleton card ────────────────────────────────────────────────────────────
 
@@ -93,7 +104,7 @@ const ActivityCard = React.memo(function ActivityCard({
 
   return (
     <AnimatedPressable
-      onPress={() => router.push({ pathname: '/activities/[id]', params: { id: activity.id } })}
+      onPress={() => router.push(`/activities/${activity.id}`)}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       style={[
@@ -258,11 +269,15 @@ const ListEmpty = React.memo(function ListEmpty({
   searchQuery,
   colors,
   onClearFilters,
+  onCreate,
+  locationLabel,
 }: {
   filtersActive: boolean;
   searchQuery: string;
   colors: ReturnType<typeof useColors>;
   onClearFilters: () => void;
+  onCreate: () => void;
+  locationLabel: string;
 }) {
   const showReset = filtersActive || searchQuery.trim().length > 0;
   const description = emptyStateMessage(searchQuery, filtersActive);
@@ -273,7 +288,9 @@ const ListEmpty = React.memo(function ListEmpty({
         <Ionicons name="compass-outline" size={28} color={colors.textTertiary} />
       </View>
       <Text style={[s.emptyTitle, { color: colors.text }]}>No activities found</Text>
-      <Text style={[s.emptyDesc, { color: colors.textSecondary }]}>{description}</Text>
+      <Text style={[s.emptyDesc, { color: colors.textSecondary }]}>
+        {showReset ? description : `No activities listed in ${locationLabel} yet. Be the first to host a workshop, tour, or class.`}
+      </Text>
       {showReset ? (
         <Pressable
           style={[s.resetBtn, { backgroundColor: CultureTokens.indigo + '14', borderColor: CultureTokens.indigo + '40' }]}
@@ -284,7 +301,17 @@ const ListEmpty = React.memo(function ListEmpty({
           <Ionicons name="refresh-outline" size={14} color={CultureTokens.indigo} />
           <Text style={[s.resetBtnText, { color: CultureTokens.indigo }]}>Reset filters</Text>
         </Pressable>
-      ) : null}
+      ) : (
+        <Pressable
+          style={[s.createBtn, { backgroundColor: CultureTokens.teal }]}
+          onPress={onCreate}
+          accessibilityRole="button"
+          accessibilityLabel="Create an activity"
+        >
+          <Ionicons name="add" size={18} color="#fff" />
+          <Text style={s.createBtnText}>Create an activity</Text>
+        </Pressable>
+      )}
     </View>
   );
 });
@@ -299,12 +326,28 @@ export default function ActivitiesScreen() {
   const { state } = useOnboarding();
   const { isDesktop, hPad } = useLayout();
   const { user, hasRole } = useAuth();
+  const searchParams = useLocalSearchParams<{ category?: string | string[] }>();
 
   const numCols = isDesktop ? 3 : 2;
   const colGap = isDesktop ? 20 : 12;
 
+  const initialCategory = useMemo(() => {
+    const raw = Array.isArray(searchParams.category) ? searchParams.category[0] : searchParams.category;
+    if (!raw) return 'All';
+    const mapped = CATEGORY_FROM_QUERY[raw.toLowerCase()];
+    if (mapped) return mapped;
+    const match = ACTIVITY_CATEGORIES.find(
+      (c) => c.id.toLowerCase() === raw.toLowerCase() || c.label.toLowerCase() === raw.toLowerCase(),
+    );
+    return match?.id ?? 'All';
+  }, [searchParams.category]);
+
   // ── Filter state ──
-  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedCategory, setSelectedCategory] = useState(initialCategory);
+
+  useEffect(() => {
+    setSelectedCategory(initialCategory);
+  }, [initialCategory]);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [sortBy, setSortBy] = useState<'relevance' | 'rating' | 'newest'>('relevance');
@@ -370,8 +413,12 @@ export default function ActivitiesScreen() {
     },
   });
 
+  const handleCreate = useCallback(() => {
+    navigateToCreateById('activity', { source: 'activities_index_cta' });
+  }, []);
+
   const handleEdit = useCallback((activity: ActivityData) => {
-    router.push({ pathname: '/activities/[id]', params: { id: activity.id, edit: '1' } });
+    router.push(`/activities/${activity.id}`);
   }, []);
 
   const handleDelete = useCallback((activity: ActivityData) => {
@@ -392,80 +439,14 @@ export default function ActivitiesScreen() {
   const clearFilters = useCallback(() => {
     setSelectedCategory('All');
     setSearchQuery('');
-  }, []);
-
-  // ── Render helpers ──
-  const hasRenderedRef = useRef(false);
-  useEffect(() => {
-    if (sortedActivities.length > 0) hasRenderedRef.current = true;
-  }, [sortedActivities.length]);
-
-  const renderItem = useCallback(({ item, index }: ListRenderItemInfo<ActivityData>) => {
-    const canEdit =
-      !!user &&
-      (user.id === item.ownerId || hasRole('admin', 'platformAdmin', 'moderator'));
-
-    const entering = !hasRenderedRef.current
-      ? FadeInDown.delay(Math.min(index * 60, 400)).springify().damping(18)
-      : undefined;
-
-    return (
-      <Animated.View entering={entering} style={s.flexOne}>
-        <ActivityCard
-          activity={item}
-          canEdit={canEdit}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-        />
-      </Animated.View>
-    );
-  }, [user, hasRole, handleEdit, handleDelete]);
-
-  const renderSkeletonItem = useCallback(() => (
-    <View style={s.flexOne}>
-      <ActivityCardSkeleton />
-    </View>
-  ), []);
-
-  const skeletonData = useMemo(() => Array.from({ length: SKELETON_COUNT }), []);
-  const keyExtractor = useCallback((item: ActivityData) => item.id, []);
-  const skeletonKeyExtractor = useCallback((_: unknown, i: number) => `sk-${i}`, []);
-
-  const colWrapperStyle = useMemo(
-    () => (numCols > 1 ? { gap: colGap } : undefined),
-    [numCols, colGap],
-  );
-  const listContentStyle = useMemo(
-    () => [s.list, { paddingHorizontal: hPad, gap: colGap, paddingBottom: bottomInset + 100 }],
-    [hPad, colGap, bottomInset],
-  );
-
-  const listEmpty = useMemo(
-    () => (
-      <ListEmpty
-        filtersActive={filtersActive}
-        searchQuery={debouncedSearch}
-        colors={colors}
-        onClearFilters={clearFilters}
-      />
-    ),
-    [filtersActive, debouncedSearch, colors, clearFilters],
-  );
-
-  const listFooter = useMemo(() => {
-    if (!isLoading && sortedActivities.length > 0) {
-      return (
-        <View style={s.listFooter}>
-          <View style={[s.endLine, { backgroundColor: colors.divider }]} />
-          <Text style={[s.listFooterText, { color: colors.textTertiary }]}>
-            {sortedActivities.length} activit{sortedActivities.length !== 1 ? 'ies' : 'y'} shown
-          </Text>
-          <View style={[s.endLine, { backgroundColor: colors.divider }]} />
-        </View>
-      );
+    if (searchParams.category) {
+      router.replace('/activities');
     }
-    return null;
-  }, [isLoading, sortedActivities.length, colors]);
+  }, [searchParams.category]);
+
+  const locationLabel = state.city
+    ? `${state.city}${state.country ? `, ${state.country}` : ''}`
+    : state.country || 'your area';
 
   return (
     <ErrorBoundary>
@@ -484,53 +465,80 @@ export default function ActivitiesScreen() {
             <View style={{ flex: 1 }}>
               <Text style={[s.headerTitle, { color: colors.text }]}>Activities</Text>
               <Text style={[s.headerSub, { color: colors.textSecondary }]} numberOfLines={2}>
-                Hands-on cultural experiences, workshops, tours &amp; community classes
+                Workshops, tours, classes, and cultural experiences near you
               </Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 }}>
                 <Ionicons name="location" size={11} color={CultureTokens.indigo} />
                 <Text style={[s.headerLocation, { color: colors.textTertiary }]} numberOfLines={1}>
-                  {state.city
-                    ? `${state.city}${state.country ? `, ${state.country}` : ''}`
-                    : state.country || 'All locations'}
+                  {locationLabel}
+                  {!isLoading && sortedActivities.length > 0 ? ` · ${sortedActivities.length} found` : ''}
                 </Text>
               </View>
             </View>
+            <Pressable
+              onPress={() => refetch()}
+              style={[s.iconBtn, { backgroundColor: colors.surface + 'B0', borderColor: colors.borderLight }]}
+              accessibilityRole="button"
+              accessibilityLabel="Refresh activities"
+            >
+              {isRefetching
+                ? <ActivityIndicator size="small" color={CultureTokens.indigo} />
+                : <Ionicons name="refresh" size={18} color={colors.text} />}
+            </Pressable>
           </View>
 
-          {/* ── Search ── */}
-          <View style={[s.searchRow, { backgroundColor: colors.surfaceElevated, borderColor: colors.borderLight }]}>
-            <Ionicons name="search-outline" size={18} color={colors.textTertiary} />
-            <TextInput
-              style={[s.searchInput, { color: colors.text }]}
-              placeholder="Search activities…"
-              placeholderTextColor={colors.textTertiary}
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              returnKeyType="search"
-              accessibilityLabel="Search activities"
-            />
-            {searchQuery.length > 0 && (
-              <Pressable onPress={() => setSearchQuery('')} accessibilityLabel="Clear search">
-                <Ionicons name="close-circle" size={18} color={colors.textTertiary} />
+          <View style={[s.quickLinks, { paddingHorizontal: 0 }]}>
+            {[
+              { label: 'Discover', route: '/(tabs)', icon: 'compass-outline' as const },
+              { label: 'Events', route: '/events', icon: 'calendar-outline' as const },
+              { label: 'Map', route: '/map', icon: 'map-outline' as const },
+            ].map((link) => (
+              <Pressable
+                key={link.route}
+                onPress={() => router.push(link.route as never)}
+                style={[s.quickLink, { backgroundColor: colors.surfaceElevated, borderColor: colors.borderLight }]}
+                accessibilityRole="link"
+                accessibilityLabel={link.label}
+              >
+                <Ionicons name={link.icon} size={14} color={CultureTokens.indigo} />
+                <Text style={[s.quickLinkText, { color: colors.textSecondary }]}>{link.label}</Text>
               </Pressable>
-            )}
+            ))}
           </View>
         </Animated.View>
 
-        {/* ── Centred content shell ── */}
         <View style={[s.shell, isDesktop && s.shellDesktop]}>
+          <View style={[s.searchWrap, { paddingHorizontal: hPad }]}>
+            <View style={[s.searchRow, { backgroundColor: colors.surfaceElevated, borderColor: colors.borderLight }]}>
+              <Ionicons name="search-outline" size={18} color={colors.textTertiary} />
+              <TextInput
+                style={[s.searchInput, { color: colors.text }]}
+                placeholder="Search activities…"
+                placeholderTextColor={colors.textTertiary}
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                returnKeyType="search"
+                accessibilityLabel="Search activities"
+              />
+              {searchQuery.length > 0 && (
+                <Pressable onPress={() => setSearchQuery('')} accessibilityLabel="Clear search">
+                  <Ionicons name="close-circle" size={18} color={colors.textTertiary} />
+                </Pressable>
+              )}
+            </View>
+          </View>
 
-          {/* ── Category filter chips ── */}
-          <FlatList
+          <ScrollView
             horizontal
-            data={ACTIVITY_CATEGORIES}
-            keyExtractor={(item) => item.id}
             showsHorizontalScrollIndicator={false}
+            style={s.chipScroll}
             contentContainerStyle={[s.chipRow, { paddingHorizontal: hPad }]}
-            renderItem={({ item }) => {
+          >
+            {ACTIVITY_CATEGORIES.map((item) => {
               const active = selectedCategory === item.id;
               return (
                 <Pressable
+                  key={item.id}
                   onPress={() => setSelectedCategory(item.id)}
                   style={[
                     s.chip,
@@ -543,20 +551,15 @@ export default function ActivitiesScreen() {
                   accessibilityLabel={`Filter by ${item.label}`}
                   accessibilityState={{ selected: active }}
                 >
-                  <Ionicons
-                    name={item.icon}
-                    size={14}
-                    color={active ? '#fff' : colors.textSecondary}
-                  />
+                  <Ionicons name={item.icon} size={14} color={active ? '#fff' : colors.textSecondary} />
                   <Text style={[s.chipText, { color: active ? '#fff' : colors.textSecondary }]}>
                     {item.label}
                   </Text>
                 </Pressable>
               );
-            }}
-          />
+            })}
+          </ScrollView>
 
-          {/* ── Sort controls (improved UX) ── */}
           <View style={[s.sortRow, { paddingHorizontal: hPad }]}>
             <Text style={[s.sortLabel, { color: colors.textSecondary }]}>Sort by</Text>
             {[
@@ -568,7 +571,7 @@ export default function ActivitiesScreen() {
               return (
                 <Pressable
                   key={opt.key}
-                  onPress={() => setSortBy(opt.key as any)}
+                  onPress={() => setSortBy(opt.key as typeof sortBy)}
                   style={[
                     s.sortChip,
                     {
@@ -587,64 +590,76 @@ export default function ActivitiesScreen() {
             })}
           </View>
 
-          {/* Section header for grid */}
-          {!isLoading && sortedActivities.length > 0 && (
-            <Text
-              style={[
-                s.sectionTitle,
-                { paddingHorizontal: hPad, color: colors.text, marginTop: 4, marginBottom: 4 },
-              ]}
-            >
-              {selectedCategory === 'All' ? 'Discover activities' : selectedCategory}{' '}
-              {sortBy !== 'relevance' ? `• ${sortBy}` : ''}
-            </Text>
-          )}
-
-          {/* ── Activity grid ── */}
-          {isLoading ? (
-            <FlatList
-              key={`skeleton-${numCols}`}
-              data={skeletonData}
-              renderItem={renderSkeletonItem}
-              keyExtractor={skeletonKeyExtractor}
-              numColumns={numCols}
-              columnWrapperStyle={colWrapperStyle}
-              contentContainerStyle={listContentStyle}
-              scrollEnabled={false}
-            />
-          ) : (
-            <FlatList
-              key={`activities-${numCols}`}
-              data={sortedActivities}
-              renderItem={renderItem}
-              keyExtractor={keyExtractor}
-              numColumns={numCols}
-              columnWrapperStyle={colWrapperStyle}
-              contentContainerStyle={listContentStyle}
-              refreshControl={
-                <RefreshControl
-                  refreshing={isRefetching}
-                  onRefresh={refetch}
-                  tintColor={CultureTokens.indigo}
-                />
-              }
-              showsVerticalScrollIndicator={false}
-              initialNumToRender={8}
-              maxToRenderPerBatch={6}
-              windowSize={5}
-              removeClippedSubviews={!isWeb}
-              ListFooterComponent={listFooter}
-              ListEmptyComponent={listEmpty}
-            />
-          )}
+          <ScrollView
+            style={s.listScroll}
+            contentContainerStyle={[
+              s.list,
+              { paddingHorizontal: hPad, paddingBottom: bottomInset + 100, gap: colGap },
+            ]}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={CultureTokens.indigo} />
+            }
+          >
+            {isLoading ? (
+              <View style={[s.grid, { gap: colGap }, numCols === 3 && s.gridDesktop3, numCols === 2 && s.gridMobile2]}>
+                {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
+                  <View
+                    key={`sk-${i}`}
+                    style={[s.gridItem, { width: numCols === 3 ? '31.5%' : '48%' }]}
+                  >
+                    <ActivityCardSkeleton />
+                  </View>
+                ))}
+              </View>
+            ) : sortedActivities.length === 0 ? (
+              <ListEmpty
+                filtersActive={filtersActive}
+                searchQuery={debouncedSearch}
+                colors={colors}
+                onClearFilters={clearFilters}
+                onCreate={handleCreate}
+                locationLabel={locationLabel}
+              />
+            ) : (
+              <>
+                <Text style={[s.sectionTitle, { color: colors.text }]}>
+                  {selectedCategory === 'All' ? 'Discover activities' : selectedCategory}
+                  {sortBy !== 'relevance' ? ` · ${sortBy === 'rating' ? 'top rated' : 'newest'}` : ''}
+                </Text>
+                <View style={[s.grid, { gap: colGap }, numCols === 3 && s.gridDesktop3, numCols === 2 && s.gridMobile2]}>
+                  {sortedActivities.map((item) => {
+                    const canEdit =
+                      !!user &&
+                      (user.id === item.ownerId || hasRole('admin', 'platformAdmin', 'moderator'));
+                    return (
+                      <View
+                        key={item.id}
+                        style={[s.gridItem, { width: numCols === 3 ? '31.5%' : '48%' }]}
+                      >
+                        <ActivityCard
+                          activity={item}
+                          canEdit={canEdit}
+                          onEdit={handleEdit}
+                          onDelete={handleDelete}
+                        />
+                      </View>
+                    );
+                  })}
+                </View>
+                <View style={s.listFooter}>
+                  <View style={[s.endLine, { backgroundColor: colors.divider }]} />
+                  <Text style={[s.listFooterText, { color: colors.textTertiary }]}>
+                    {sortedActivities.length} activit{sortedActivities.length !== 1 ? 'ies' : 'y'}
+                  </Text>
+                  <View style={[s.endLine, { backgroundColor: colors.divider }]} />
+                </View>
+              </>
+            )}
+          </ScrollView>
         </View>
 
-        {/* ── Creator FAB ── */}
-        <CreatorFAB
-          label="Add Activity"
-          onPress={() => router.push(createLabCategoryHref('activity') as never)}
-          icon="add"
-        />
+        <CreatorFAB label="Add Activity" onPress={handleCreate} icon="add" />
       </View>
     </ErrorBoundary>
   );
@@ -654,7 +669,6 @@ export default function ActivitiesScreen() {
 
 const s = StyleSheet.create({
   container: { flex: 1 },
-  flexOne: { flex: 1 },
 
   // Header
   header: {
@@ -664,6 +678,36 @@ const s = StyleSheet.create({
     gap: 10,
   },
   headerRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  iconBtn: {
+    width: 42,
+    height: 42,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    overflow: 'hidden',
+    zIndex: 10,
+  },
+  quickLinks: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 4,
+  },
+  quickLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  quickLinkText: {
+    fontFamily: FontFamily.medium,
+    fontSize: 12,
+    lineHeight: 16,
+  },
   backBtn: {
     width: 42,
     height: 42,
@@ -692,7 +736,7 @@ const s = StyleSheet.create({
     lineHeight: 14,
   },
 
-  // Search
+  searchWrap: { paddingTop: 12, paddingBottom: 4 },
   searchRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -708,13 +752,14 @@ const s = StyleSheet.create({
     fontSize: 15,
     lineHeight: 20,
     padding: 0,
+    ...(isWeb ? { outlineStyle: 'none' as any } : {}),
   },
 
   // Shell
   shell: { flex: 1 },
   shellDesktop: { maxWidth: 1200, width: '100%', alignSelf: 'center' as const },
 
-  // Chips
+  chipScroll: { flexGrow: 0 },
   chipRow: { paddingVertical: 10, gap: 8 },
   chip: {
     flexDirection: 'row',
@@ -887,8 +932,19 @@ const s = StyleSheet.create({
     justifyContent: 'center',
   },
 
-  // List
-  list: { paddingTop: 16, gap: 16 },
+  listScroll: { flex: 1 },
+  list: { paddingTop: 12, gap: 16 },
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    width: '100%',
+  },
+  gridDesktop3: {},
+  gridMobile2: {},
+  gridItem: {
+    flexGrow: 1,
+    minWidth: 150,
+  },
   listFooter: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -939,8 +995,23 @@ const s = StyleSheet.create({
     letterSpacing: 0.5,
     lineHeight: 19,
   },
+  createBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 22,
+    paddingVertical: 14,
+    borderRadius: 14,
+    marginTop: 12,
+  },
+  createBtnText: {
+    fontFamily: FontFamily.semibold,
+    fontSize: 14,
+    color: '#fff',
+    lineHeight: 18,
+  },
 
-  // Sort (new for better UX)
+  // Sort
   sortRow: {
     flexDirection: 'row',
     alignItems: 'center',

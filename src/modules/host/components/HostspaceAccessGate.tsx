@@ -246,7 +246,7 @@ function HostspaceGateScreen({ intent = 'hub' }: { intent?: HostspaceGateIntent 
 
               <View style={{ gap: 12, width: '100%', marginTop: 24 }}>
                 <Pressable
-                  onPress={() => router.push('/hostspace/create' as never)}
+                  onPress={() => router.push('/pages/create' as never)}
                   style={({ pressed }) => [
                     styles.primaryCta,
                     { backgroundColor: CultureTokens.indigo, opacity: pressed ? 0.9 : 1 }
@@ -340,7 +340,7 @@ function HostspaceGateScreen({ intent = 'hub' }: { intent?: HostspaceGateIntent 
 
                 <View style={{ flexDirection: 'row', gap: 10, flexWrap: 'wrap' }}>
                   <Pressable
-                    onPress={() => router.push({ pathname: '/(onboarding)/signup', params: { role: 'organizer', redirectTo: '/hostspace/create', intent: 'host' } } as never)}
+                    onPress={() => router.push({ pathname: '/(onboarding)/signup', params: { role: 'organizer', redirectTo: '/pages/create', intent: 'host' } } as never)}
                     style={({ pressed }) => ({ height: 44, borderRadius: 999, paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: CultureTokens.indigo, opacity: pressed ? 0.9 : 1 })}
                   >
                     <Ionicons name="rocket-outline" size={16} color="#fff" />
@@ -349,7 +349,7 @@ function HostspaceGateScreen({ intent = 'hub' }: { intent?: HostspaceGateIntent 
 
                   {!isAuthenticated && (
                     <Pressable
-                      onPress={() => router.push({ pathname: '/(onboarding)/login', params: { redirectTo: '/hostspace/create' } } as never)}
+                      onPress={() => router.push({ pathname: '/(onboarding)/login', params: { redirectTo: '/pages/create' } } as never)}
                       style={({ pressed }) => ({ height: 44, borderRadius: 999, paddingHorizontal: 18, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: colors.border, backgroundColor: colors.surface, opacity: pressed ? 0.85 : 1 })}
                     >
                       <Text style={{ fontFamily: FontFamily.semibold, fontSize: 14, color: colors.text }}>Sign in</Text>
@@ -392,7 +392,7 @@ function HostspaceGateScreen({ intent = 'hub' }: { intent?: HostspaceGateIntent 
 
               <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
                 <Pressable
-                  onPress={() => router.push({ pathname: '/(onboarding)/signup', params: { role: 'organizer', redirectTo: '/hostspace/create', intent: 'host' } } as never)}
+                  onPress={() => router.push({ pathname: '/(onboarding)/signup', params: { role: 'organizer', redirectTo: '/pages/create', intent: 'host' } } as never)}
                   style={({ pressed }) => ({ height: 44, borderRadius: 999, paddingHorizontal: 18, flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: CultureTokens.indigo, opacity: pressed ? 0.9 : 1 })}
                 >
                   <Ionicons name="rocket-outline" size={16} color="#fff" />
@@ -401,7 +401,7 @@ function HostspaceGateScreen({ intent = 'hub' }: { intent?: HostspaceGateIntent 
 
                 {!isAuthenticated && (
                   <Pressable
-                    onPress={() => router.push({ pathname: '/(onboarding)/login', params: { redirectTo: '/hostspace/create' } } as never)}
+                    onPress={() => router.push({ pathname: '/(onboarding)/login', params: { redirectTo: '/pages/create' } } as never)}
                     style={({ pressed }) => ({ height: 44, borderRadius: 999, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: colors.border, backgroundColor: colors.surface, opacity: pressed ? 0.85 : 1 })}
                   >
                     <Text style={{ fontFamily: FontFamily.semibold, fontSize: 14, color: colors.text }}>Sign in</Text>
@@ -448,7 +448,7 @@ export interface HostspaceAccessGateProps {
 
 /**
  * Host-space routes must require **signed-in + organizer (or higher)** role.
- * `/hostspace` used this gate; `/hostspace/create` previously did not — fixed here.
+ * `/hostspace` used this gate; `/pages/create` previously did not — fixed here.
  */
 export function HostspaceAccessGate({ children, intent = 'hub' }: HostspaceAccessGateProps) {
   const { isAuthenticated, isLoading, isRestoring } = useAuth();
@@ -463,7 +463,7 @@ export function HostspaceAccessGate({ children, intent = 'hub' }: HostspaceAcces
         pathname: '/(onboarding)/signup',
         params: {
           role: 'organizer',
-          redirectTo: '/hostspace/create',
+          redirectTo: '/pages/create',
           intent: 'host'
         }
       } as never);

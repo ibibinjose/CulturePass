@@ -265,6 +265,14 @@ export function createAdminNamespace(request: ApiRequestFn) {
   updateVerificationChecklist: (taskId: string, checklist: { item: string; checked: boolean; notes?: string }[]) =>
     request<{ ok: boolean }>('PUT', `api/admin/verification/tasks/${taskId}/checklist`, { checklist }),
 
+  // Host Pages (Create a Page moderation)
+  getHostPage: (pageId: string) =>
+    request<import('@/shared/schema').HostPage>('GET', `api/admin/host-pages/${encodeURIComponent(pageId)}`),
+  blockHostPage: (pageId: string, reason: string) =>
+    request<{ ok: boolean }>('POST', `api/admin/host-pages/${encodeURIComponent(pageId)}/block`, { reason }),
+  unblockHostPage: (pageId: string) =>
+    request<{ ok: boolean }>('POST', `api/admin/host-pages/${encodeURIComponent(pageId)}/unblock`),
+
   communityHomeBanners: () =>
     request<{ banners: CommunityHomeBanner[] }>('GET', 'api/admin/community-home-banners'),
   createCommunityHomeBanner: (data: {

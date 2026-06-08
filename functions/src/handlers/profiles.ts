@@ -35,6 +35,7 @@ import { eventsService } from '../services/events';
 /** Public directory profiles (`profiles` collection) — not HostSpace `hostProfiles`. */
 import { profilesService as directoryProfilesService } from '../services/profiles';
 import { isFirestoreConfigured } from '../admin';
+import { allowInlineDemoFallback, resolveDemoProfileById } from '../dev/demoFixtures';
 import {
   qparam,
   qstr,
@@ -44,13 +45,7 @@ import {
 } from './utils';
 import {
   HostProfileSchema,
-  HostProfileFormDataSchema,
 } from '../../../shared/schema/hostProfile';
-import {
-  ProfileDraftSchema,
-  CreateProfileDraftSchema,
-  UpdateProfileDraftSchema,
-} from '../../../shared/schema/hostProfileDraft';
 import {
   CreateProfileVersionSchema,
 } from '../../../shared/schema/hostProfileVersion';
@@ -109,6 +104,26 @@ const validateHandleSchema = z.object({
 
 const validateAbnSchema = z.object({
   abn: z.string().regex(/^\d{11}$/),
+});
+
+/** Local Zod v3 — shared/schema draft schemas use Zod v4 and break parseBody in functions. */
+const profileDraftDeviceInfoSchema = z
+  .object({
+    platform: z.string(),
+    userAgent: z.string(),
+  })
+  .optional();
+
+const saveProfileDraftBodySchema = z.object({
+  entityType: z
+    .enum(['community', 'organiser', 'organizer', 'venue', 'business', 'artist', 'professional'])
+    .optional(),
+  formData: z.record(z.unknown()).optional(),
+  currentStep: z.number().int().min(1).max(10).optional(),
+  completedSteps: z.array(z.number().int().min(1).max(10)).optional(),
+  updatedAt: z.string().optional(),
+  expiresAt: z.string().optional(),
+  deviceInfo: profileDraftDeviceInfoSchema,
 });
 
 // ---------------------------------------------------------------------------
@@ -183,46 +198,18 @@ profilesRouter.get(
 profilesRouter.get('/profiles/:id', async (req: Request, res: Response) => {
   const id = qparam(req.params.id);
 
-  // Local development mock check
-  if (!isFirestoreConfigured && id === 'mock-business-profile-id') {
-    return res.json({
-      id: 'mock-business-profile-id',
-      name: 'Darling Harbour Culture Hub',
-      handle: 'darlingculture',
-      entityType: 'business',
-      imageUrl: null,
-      avatarUrl: null,
-      city: 'Sydney',
-      state: 'NSW',
-      country: 'Australia',
-      description: 'A vibrant hub for cultural expression, music, and community connection at Darling Harbour.',
-      ownerId: 'mock-owner-uid',
-      email: 'events@darlingculture.org.au',
-      phone: '+61 2 9240 8500',
-      website: 'https://darlingculture.org.au',
-    });
+  if (!isFirestoreConfigured) {
+    const demo = resolveDemoProfileById(id);
+    if (demo) return res.json(demo);
+    return res.status(404).json({ error: 'Profile not found' });
   }
 
   try {
     const profile = await profileService.getById(id);
     if (!profile) {
-      if (process.env.FUNCTIONS_EMULATOR || id === 'mock-business-profile-id') {
-        return res.json({
-          id: 'mock-business-profile-id',
-          name: 'Darling Harbour Culture Hub',
-          handle: 'darlingculture',
-          entityType: 'business',
-          imageUrl: null,
-          avatarUrl: null,
-          city: 'Sydney',
-          state: 'NSW',
-          country: 'Australia',
-          description: 'A vibrant hub for cultural expression, music, and community connection at Darling Harbour.',
-          ownerId: 'mock-owner-uid',
-          email: 'events@darlingculture.org.au',
-          phone: '+61 2 9240 8500',
-          website: 'https://darlingculture.org.au',
-        });
+      if (allowInlineDemoFallback()) {
+        const demo = resolveDemoProfileById(id);
+        if (demo) return res.json(demo);
       }
       return res.status(404).json({ error: 'Profile not found' });
     }
@@ -404,7 +391,7 @@ profilesRouter.post(
   async (req: Request, res: Response) => {
     try {
       const profileId = qparam(req.params.id);
-      const body = UpdateProfileDraftSchema.omit({ id: true, userId: true }).parse(req.body ?? {});
+      const body = parseBody(saveProfileDraftBodySchema, req.body ?? {});
 
       const draft = await draftService.saveDraft({
         ...body,

@@ -1,21 +1,11 @@
-import { useLocalSearchParams } from 'expo-router';
+import { Redirect, useLocalSearchParams } from 'expo-router';
 
-import { ErrorBoundary } from '@/modules/core/ui/ErrorBoundary';
-import { HostspaceAccessGate } from '@/modules/host/components/HostspaceAccessGate';
-import { HostspaceCreateWorkspace } from '@/modules/host/components/HostspaceCreateWorkspace';
+import { resolveLegacyHostspaceCreateHref } from '@/constants/navigation/createNav';
 
-export default function HostspaceCreateCategory() {
-  const { category } = useLocalSearchParams<{ category?: string | string[] }>();
-  const raw = Array.isArray(category) ? category[0] : category;
-  return (
-    <ErrorBoundary
-      onError={(error, stackTrace) => {
-        console.error('Hostspace create category route failed', error, stackTrace);
-      }}
-    >
-      <HostspaceAccessGate intent="creationLab">
-        <HostspaceCreateWorkspace initialCategory={raw} />
-      </HostspaceAccessGate>
-    </ErrorBoundary>
-  );
+/** Legacy `/hostspace/create/:category` → `/pages/create?category=…`. */
+export default function LegacyHostspaceCreateCategoryRedirect() {
+  const params = useLocalSearchParams<{ category?: string | string[] }>();
+  const raw = Array.isArray(params.category) ? params.category[0] : params.category;
+  const href = resolveLegacyHostspaceCreateHref(params, raw);
+  return <Redirect href={href as never} />;
 }

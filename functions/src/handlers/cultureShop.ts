@@ -28,6 +28,7 @@ import type {
   ShopListingsResponse,
 } from '../../../shared/schema/cultureShopListing';
 import { buildMarketplaceFeed, mockMarketplaceFeed } from '../services/cultureShopFeed';
+import { allowInlineDemoFallback } from '../dev/demoFixtures';
 
 export const cultureShopRouter = Router();
 
@@ -159,13 +160,14 @@ cultureShopRouter.get(['/culture-market/feed', '/culture-shop/feed'], async (req
     return res.json(feed);
   } catch (err) {
     captureRouteError(err, 'GET /culture-shop/feed');
-    return res.json(mockMarketplaceFeed());
+    return res.json(allowInlineDemoFallback() ? mockMarketplaceFeed() : { sections: [], heroTagline: '' });
   }
 });
 
 cultureShopRouter.get('/culture-shop/daily-deals', async (_req, res) => {
+  const inlineDeals = () => (allowInlineDemoFallback() ? mockDailyDeals() : []);
   try {
-    if (!isFirestoreConfigured) return res.json({ deals: mockDailyDeals() });
+    if (!isFirestoreConfigured) return res.json({ deals: inlineDeals() });
     const snap = await db.collection('dailyDeals').where('status', '==', 'active').limit(120).get();
     const now = Date.now();
     const deals = snap.docs
@@ -175,10 +177,10 @@ cultureShopRouter.get('/culture-shop/daily-deals', async (_req, res) => {
         return !Number.isNaN(s) && !Number.isNaN(e) && s <= now && e >= now;
       })
       .sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0));
-    return res.json({ deals: deals.length ? deals : mockDailyDeals() });
+    return res.json({ deals: deals.length ? deals : inlineDeals() });
   } catch (err) {
     captureRouteError(err, 'GET /culture-shop/daily-deals');
-    return res.json({ deals: mockDailyDeals() });
+    return res.json({ deals: inlineDeals() });
   }
 });
 

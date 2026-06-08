@@ -61,6 +61,9 @@ export interface FormData {
   hostInfo: HostDraft;
   cultureTagIds: string[];
   languageTagIds: string[];
+  nationalityId: string;
+  indigenousTags: string[];
+  isIndigenousOwned: boolean;
   accessibilityIds: string[];
   /** Adds server tag `CultureToday` for the global calendar */
   cultureTodayPromo: boolean;
@@ -120,6 +123,9 @@ export const defaultForm: FormData = {
   hostInfo: { name: '', contactEmail: '', contactPhone: '', websiteUrl: '' },
   cultureTagIds: [],
   languageTagIds: [],
+  nationalityId: '',
+  indigenousTags: [],
+  isIndigenousOwned: false,
   accessibilityIds: [],
   cultureTodayPromo: false,
   cultureXInvite: false,

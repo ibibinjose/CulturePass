@@ -92,7 +92,8 @@ function runIntegrationTests() {
     'integration-api-routes.ts',
     'integration-checkout.ts',
     'integration-event-creation.ts',
-    'integration-scanner.ts'
+    'integration-scanner.ts',
+    'integration-host-pages.ts',
   ];
 
   integrationTestFiles.forEach(file => {

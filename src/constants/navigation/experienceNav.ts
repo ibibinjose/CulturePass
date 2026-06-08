@@ -123,6 +123,7 @@ export const SIDEBAR_BROWSE_LINKS: SidebarNavLink[] = [
     matchPrefix: true,
   },
   { label: 'All Events', icon: 'calendar-number-outline', iconActive: 'calendar-number', route: '/events', matchPrefix: true },
+  { label: 'Activities', icon: 'compass-outline', iconActive: 'compass', route: '/activities', matchPrefix: true },
   { label: 'Map', icon: 'map-outline', iconActive: 'map', route: '/map' },
   { label: 'Directory', icon: 'grid-outline', iconActive: 'grid', route: '/(tabs)/directory', matchPrefix: true },
 ];

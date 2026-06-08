@@ -40,6 +40,7 @@ import { createHostDraftsNamespace } from '../platform/api/endpoints/hostDrafts'
 import { createDeepLinksNamespace } from '../platform/api/endpoints/deepLinks';
 import { createNotificationsResolveNamespace } from '../platform/api/endpoints/notificationsResolve';
 import { createProfilesNamespace } from '../platform/api/endpoints/createProfilesNamespace';
+import { createHostPagesNamespace } from '../platform/api/endpoints/createHostPagesNamespace';
 import { createAdminNamespace } from '../platform/api/endpoints/admin';
 import { createCultureNamespace } from '../platform/api/endpoints/culture';
 import { createFeedNamespace } from '../platform/api/endpoints/feed';
@@ -129,6 +130,7 @@ const media = createMediaNamespace(request);
 const paymentMethods = createPaymentMethodsNamespace(request);
 const rollout = createRolloutNamespace(request);
 const profiles = createProfilesNamespace(request);
+const hostPages = createHostPagesNamespace(request);
 const communities = createCommunitiesNamespace(request);
 const privacy = createPrivacyNamespace(request);
 const account = createAccountNamespace(request);
@@ -180,6 +182,7 @@ export const api = {
   cultureMarket: cultureShop,
   hostApplications,
   profiles,
+  hostPages,
   communities,
   privacy,
   account,

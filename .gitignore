@@ -44,9 +44,17 @@ credentials/
 *.keystore
 *.p8
 *.p12
+*.key
+mykey.key
 GoogleService-Info.plist
 google-services.json
 google-play-service-account.json
+
+# Wallet provisioning temp dir — GCP SA keys, pass exports, signer PEMs
+temp-certs/*.json
+temp-certs/*.p12
+temp-certs/*.pem
+temp-certs/pass-from-keychain.p12
 
 # Firebase deploy cache
 .firebase/

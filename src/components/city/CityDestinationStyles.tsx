@@ -13,10 +13,10 @@ export const CITY_HERO_FG_SOFT = 'rgba(255,255,255,0.9)';
 export const CITY_HERO_FG_MUTED = 'rgba(255,255,255,0.78)';
 export const CITY_HERO_BADGE_ON_GOLD = '#0F172A';
 
-/** iOS bar-button / thin-material light over imagery (matches system chrome on photos). */
-export const CITY_HERO_CHROME_MATERIAL = 'rgba(79,70,229,0.42)';
-export const CITY_HERO_CHROME_MATERIAL_TRACK = 'rgba(79,70,229,0.28)';
-export const CITY_HERO_CHROME_MATERIAL_BORDER = 'rgba(255,94,91,0.46)';
+/** Heritage chrome over photographic heroes — terracotta warmth + indigo depth */
+export const CITY_HERO_CHROME_MATERIAL = 'rgba(227,106,78,0.38)';
+export const CITY_HERO_CHROME_MATERIAL_TRACK = 'rgba(74,94,191,0.32)';
+export const CITY_HERO_CHROME_MATERIAL_BORDER = 'rgba(255,255,255,0.28)';
 
 const heroReadableShadow = Platform.select({
   web: { textShadow: '0 1px 2px rgba(0,0,0,0.9), 0 2px 16px rgba(0,0,0,0.55)' } as const,

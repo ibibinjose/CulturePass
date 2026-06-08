@@ -1,0 +1,60 @@
+/** Cultural tag presets for Page Pro Wizard (M3FilterChip auto-suggest) */
+export const PAGE_CULTURAL_TAG_PRESETS = [
+  'Indian',
+  'Chinese',
+  'Vietnamese',
+  'Filipino',
+  'Greek',
+  'Italian',
+  'Middle Eastern',
+  'African',
+  'Pacific Islander',
+  'Indigenous',
+  'Multicultural',
+  'Korean',
+  'Arabic',
+  'Tamil',
+  'Persian',
+  'Nepali',
+  'Sri Lankan',
+  'Youth',
+  'Women',
+  'Seniors',
+  'Family-Friendly',
+  'Faith',
+  'LGBTQIA+',
+  'Newcomers & Migrants',
+] as const;
+
+/** Language tag presets */
+export const PAGE_LANGUAGE_TAG_PRESETS = [
+  'English',
+  'Malayalam',
+  'Hindi',
+  'Tamil',
+  'Mandarin',
+  'Cantonese',
+  'Vietnamese',
+  'Arabic',
+  'Greek',
+  'Italian',
+  'Spanish',
+  'French',
+  'Tagalog',
+  'Korean',
+  'Japanese',
+  'Urdu',
+  'Bengali',
+  'Punjabi',
+] as const;
+
+/** Category presets by entity type (max 3 selections) */
+export const PAGE_CATEGORY_PRESETS: Record<string, readonly string[]> = {
+  community: ['Community', 'Heritage', 'Youth', 'Faith', 'Professional', 'Charity'],
+  organiser: ['Festivals', 'Cultural Events', 'Music', 'Workshop', 'Religious', 'Food'],
+  organizer: ['Festivals', 'Cultural Events', 'Music', 'Workshop', 'Religious', 'Food'],
+  venue: ['Venue', 'Gallery', 'Theatre', 'Club', 'Studio', 'Live Music'],
+  business: ['Restaurant', 'Retail', 'Services', 'Beauty', 'Grocery', 'Producer'],
+  artist: ['Music', 'Dance', 'Visual Arts', 'Theatre', 'Film', 'Literature'],
+  professional: ['Artist', 'Educator', 'Consultant', 'Photographer', 'Designer', 'Wellness'],
+};

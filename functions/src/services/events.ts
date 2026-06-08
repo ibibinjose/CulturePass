@@ -28,6 +28,8 @@ export interface FirestoreEvent {
   cultureTag?: string[];
   tags?: string[];
   indigenousTags?: string[];
+  nationalityId?: string;
+  isIndigenousOwned?: boolean;
   languageTags?: string[];
   geoHash?: string;
   eventType?: string;

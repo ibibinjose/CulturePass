@@ -17,7 +17,7 @@ import { useLayout } from '@/hooks/useLayout';
 import { useAuth } from '@/lib/auth';
 import { useIsCreator } from '@/hooks/useCanEdit';
 import { useRole } from '@/hooks/useRole';
-import { createLabCategoryHref } from '@/constants/navigation/createNav';
+import { navigateToCreateById } from '@/lib/creationRouting';
 import { usePerks } from '@/hooks/queries/usePerks';
 import { ErrorBoundary } from '@/modules/core/ui/ErrorBoundary';
 import { BackButton } from '@/design-system/ui/BackButton';
@@ -544,7 +544,7 @@ function OffersScreen() {
         <CreatorFAB
           label="Add Offer"
           icon="pricetag-outline"
-          onPress={() => router.push(createLabCategoryHref('offer') as never)}
+          onPress={() => navigateToCreateById('offer', { source: 'offers_index_cta' })}
         />
       )}
     </View>

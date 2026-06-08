@@ -20,6 +20,7 @@ export * from './eventAnalytics';
 export * from './feedItem';
 export * from './feedSection';
 export * from './hostApplication';
+export * from './hostPage';
 export * from './hostProfile';
 export * from './hostProfileAnalytics';
 export * from './hostProfileDraft';

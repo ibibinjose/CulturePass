@@ -1,6 +1,5 @@
 import {
   View,
-  Text,
   Platform,
   Alert,
   Keyboard,
@@ -8,9 +7,11 @@ import {
   KeyboardAvoidingView,
   StyleSheet,
   TextInput,
+  ActivityIndicator,
 } from 'react-native';
 import { Stack, router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -20,7 +21,7 @@ import { useLayout } from '@/hooks/useLayout';
 import { useColors, useIsDark } from '@/hooks/useColors';
 import { useRole } from '@/hooks/useRole';
 import { useContacts } from '@/contexts/ContactsContext';
-import { modulesApi } from '@/modules/api';
+import { modulesApi, ApiError } from '@/modules/api';
 import { captureAttend } from '@/lib/analytics-funnel';
 import { captureEvent } from '@/lib/analytics';
 import { useCameraPermissions } from 'expo-camera';
@@ -29,7 +30,9 @@ import { M3TopAppBar } from '@/design-system/ui/M3TopAppBar';
 import { LuxeText } from '@/design-system/ui/LuxeText';
 import { GlassView } from '@/design-system/ui/GlassView';
 import { Luxe } from '@/design-system/tokens/luxeHeritage';
-import { FontFamily, Radius, Spacing } from '@/design-system/tokens/theme';
+import { Radius } from '@/design-system/tokens/theme';
+import { SCAN_MODE_ACCENT } from '@/components/scanner/scannerTheme';
+import { Ionicons } from '@expo/vector-icons';
 import { ScannerQuickNavBar, scannerScrollBottomPad } from '@/components/scanner/ScannerQuickNavBar';
 import { NavigationMetadata } from '@/components/NavigationMetadata';
 
@@ -52,11 +55,29 @@ import { resolveContactFromCpid } from '@/modules/contacts/lib/resolveContactFro
 import { contactDisplayName } from '@/modules/contacts/lib/contactDisplayName';
 
 const SCAN_COOLDOWN_MS = 1800;
-const CONTENT_MAX = 480;
+const CONTENT_MAX = 520;
+
+function formatScanError(err: unknown): string {
+  if (err instanceof ApiError) {
+    if (err.isUnauthorized) return 'Sign in required to scan tickets.';
+    if (err.isForbidden) return 'Organizer access required for gate check-in.';
+    if (err.isNotFound) return 'Ticket not found.';
+    if (err.isServerError) return 'Server error — try again in a moment.';
+    return err.message || 'Scan failed.';
+  }
+  if (err instanceof Error) {
+    if (err.message.includes('Network') || err.message.includes('Failed to fetch')) {
+      return 'Network error — check your connection and try again.';
+    }
+    return err.message || 'Scan failed. Try again.';
+  }
+  return 'Scan failed. Try again.';
+}
 
 export default function ScannerScreen() {
   const insets = useSafeAreaInsets();
-  const bottomInset = Platform.OS === 'web' ? 34 : insets.bottom;
+  const webInsets = useSafeAreaInsetsWeb();
+  const bottomInset = Platform.OS === 'web' ? webInsets.bottom : insets.bottom;
   const { isOrganizer } = useRole();
   const canUseStaffScanner = isOrganizer;
   const { hPad, isDesktop, isWeb, isNative } = useLayout();
@@ -106,11 +127,24 @@ export default function ScannerScreen() {
   const ensureCameraPermission = useCallback(async (): Promise<boolean> => {
     if (permission?.granted) return true;
     const result = await requestPermission();
-    if (!result.granted && Platform.OS !== 'web') {
-      Alert.alert('Camera permission', 'Enable camera access in Settings to scan QR codes.');
+    if (!result.granted) {
+      Alert.alert(
+        'Camera access needed',
+        Platform.OS === 'web'
+          ? 'Allow camera access in your browser to scan QR codes, or use manual entry below.'
+          : 'Enable camera access in Settings to scan QR codes.',
+      );
     }
     return result.granted;
   }, [permission, requestPermission]);
+
+  const handleCameraMountError = useCallback((message: string) => {
+    setCameraActive(false);
+    Alert.alert(
+      'Camera unavailable',
+      message || 'Could not start the camera. Use manual entry below.',
+    );
+  }, []);
 
   const doTicketScan = useCallback(
     async (code: string) => {
@@ -156,7 +190,16 @@ export default function ScannerScreen() {
         }
         setTicketCode('');
         setCameraActive(false);
-      } catch {
+      } catch (err) {
+        const result: TicketScanResult = {
+          valid: false,
+          message: formatScanError(err),
+          outcome: 'rejected',
+          scannedAt: new Date().toISOString(),
+        };
+        setTicketResult(result);
+        setScanHistory(prev => [result, ...prev.slice(0, 24)]);
+        setSession(prev => ({ ...prev, rejected: prev.rejected + 1 }));
         if (!isWeb) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       } finally {
         setIsScanning(false);
@@ -285,9 +328,13 @@ export default function ScannerScreen() {
   const embeddedCamera = cameraActive && cameraGranted && !fullscreenCamera && !ticketResult && !cpContact;
   const showViewport = !cameraActive && !ticketResult && !cpContact;
   const showPermission = cameraActive && !cameraGranted && permission != null && !ticketResult && !cpContact;
+  const showCameraLoading =
+    cameraActive && !cameraGranted && permission == null && !ticketResult && !cpContact;
 
   const onBarcodeScanned = mode === 'tickets' ? handleTicketBarcodeScanned : handleCpBarcodeScanned;
   const cameraBusy = isScanning || isLookingUp;
+
+  const modeAccent = SCAN_MODE_ACCENT[mode];
 
   const headerActions =
     mode === 'tickets'
@@ -305,6 +352,7 @@ export default function ScannerScreen() {
             scanningEnabled={!cameraBusy}
             onBarcodeScanned={onBarcodeScanned}
             onClose={closeCamera}
+            onMountError={handleCameraMountError}
             hint={mode === 'tickets' ? 'Scan ticket QR at the gate' : 'Scan member CulturePass QR'}
           />
         </View>
@@ -348,13 +396,24 @@ export default function ScannerScreen() {
           ]}
         >
           <View style={styles.intro}>
+            <View style={[styles.modeBadge, { backgroundColor: modeAccent + '14', borderColor: modeAccent + '30' }]}>
+              <Ionicons
+                name={mode === 'tickets' ? 'ticket-outline' : 'person-circle-outline'}
+                size={14}
+                color={modeAccent}
+              />
+              <LuxeText variant="badgeCaps" style={{ color: modeAccent, fontSize: 10, letterSpacing: 1.2 }}>
+                {mode === 'tickets' ? 'Gate check-in' : 'Member lookup'}
+              </LuxeText>
+            </View>
             <LuxeText variant="title" style={{ color: colors.text }}>
               {mode === 'tickets' ? 'Validate tickets' : 'Look up members'}
             </LuxeText>
-            <LuxeText variant="body" style={{ color: colors.textSecondary }}>
+            <View style={[styles.accentLine, { backgroundColor: modeAccent }]} />
+            <LuxeText variant="body" style={{ color: colors.textSecondary, lineHeight: 22 }}>
               {mode === 'tickets'
-                ? 'Scan QR codes at the door or enter a ticket code.'
-                : 'Scan a member QR or enter their CulturePass ID.'}
+                ? 'Scan QR codes at the door or enter a ticket code manually.'
+                : 'Scan a member QR or enter their CulturePass ID to connect.'}
             </LuxeText>
           </View>
 
@@ -369,9 +428,21 @@ export default function ScannerScreen() {
           />
 
           {mode === 'tickets' && (
-            <GlassView intensity={10} style={styles.statsGlass}>
+            <GlassView
+              intensity={10}
+              style={[styles.statsGlass, { borderColor: Luxe.colors.terracotta + '22' }]}
+            >
               <ScannerSessionStrip session={session} durationLabel={sessionDuration} />
             </GlassView>
+          )}
+
+          {showCameraLoading && (
+            <View style={[styles.cameraLoading, { borderColor: colors.borderLight }]}>
+              <ActivityIndicator size="large" color={modeAccent} />
+              <LuxeText variant="body" style={{ color: colors.textSecondary }}>
+                Starting camera…
+              </LuxeText>
+            </View>
           )}
 
           {showPermission && <ScannerPermissionPrompt onRequestPermission={() => void ensureCameraPermission()} />}
@@ -381,6 +452,7 @@ export default function ScannerScreen() {
               scanningEnabled={!cameraBusy}
               onBarcodeScanned={onBarcodeScanned}
               onClose={closeCamera}
+              onMountError={handleCameraMountError}
               hint={mode === 'tickets' ? 'Scan ticket QR' : 'Scan member QR'}
             />
           )}
@@ -447,13 +519,38 @@ export default function ScannerScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1 },
   fullscreenRoot: { flex: 1, backgroundColor: '#000' },
-  scroll: { paddingTop: 8, gap: 16 },
-  intro: { gap: 4, paddingTop: 4 },
+  scroll: { paddingTop: 8, gap: 18 },
+  intro: { gap: 8, paddingTop: 4 },
+  modeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+  },
+  accentLine: {
+    width: 40,
+    height: 3,
+    borderRadius: 2,
+    marginTop: -2,
+    marginBottom: 2,
+  },
   statsGlass: {
     borderRadius: Radius.lg,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.05)',
+  },
+  cameraLoading: {
+    minHeight: 280,
+    borderRadius: Radius.xl,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    padding: 24,
   },
 });
 

@@ -12,6 +12,7 @@ import { getRolloutConfig, isFeatureEnabledForUser } from '../services/rollout';
 import { adminService } from '../services/admin';
 import { usersService } from '../services/firestore';
 import { getActiveCommunityHomeBanner } from '../services/communityHomeBanner';
+import { allowInlineDemoFallback, resolveCpidDemoLookup } from '../dev/demoFixtures';
 
 export const miscRouter = Router();
 
@@ -346,6 +347,49 @@ miscRouter.get('/rollout/config', (req: Request, res: Response) => {
   return res.json({ ...config, userId, features });
 });
 
+/** GET /api/rollout/flags — feature flags for client (host-pages-v1, eventcard-v2, etc.) */
+miscRouter.get('/rollout/flags', (req: Request, res: Response) => {
+  const userId = String(req.query.userId ?? 'guest');
+  const segment = String(req.query.segment ?? 'guest');
+  const config = getRolloutConfig();
+
+  const flagKeys = [
+    'host-pages-v1',
+    'eventcard-v2',
+    'eventcard-luxe',
+    'discovery',
+    'perks',
+    'council',
+    'calendar',
+    'scanner',
+    'sydney-beta',
+    'wallet-v2',
+    'native-maps',
+    'tiered-pricing',
+    'kerala-events',
+  ];
+
+  const flags: Record<string, boolean> = {};
+  for (const key of flagKeys) {
+    flags[key] = isFeatureEnabledForUser(key, userId);
+  }
+
+  // Internal/dev override: host-pages-v1 enabled in non-production or internal phase
+  if (process.env.HOST_PAGES_V1 === 'true' || config.phase === 'internal') {
+    flags['host-pages-v1'] = true;
+  }
+
+  return res.json({
+    rollout: {
+      phase: config.phase,
+      percentage: config.percentage,
+    },
+    flags,
+    experiments: {},
+    userSegment: segment === 'guest' ? 'guest' : segment,
+  });
+});
+
 /**
  * POST /api/culture-x/subscribe
  * Opt-in for CultureX invitation / heads-up emails (marketing / product updates).
@@ -435,35 +479,33 @@ miscRouter.get('/community-home-banner', async (_req: Request, res: Response) =>
 /** GET /api/cpid/lookup/:cpid — lookup entity by CulturePass ID */
 miscRouter.get('/cpid/lookup/:cpid', async (req: Request, res: Response) => {
   const cpid = String(req.params.cpid ?? '').toUpperCase();
-  
-  // Local development mock check
-  if (!isFirestoreConfigured || cpid.startsWith('CP-MOCK') || cpid === 'CP-U58B35B') {
-    if (cpid === 'CP-MOCKBIZ') {
-      return res.json({ entityType: 'profile', targetId: 'mock-business-profile-id' });
+
+  if (!isFirestoreConfigured) {
+    const demo = resolveCpidDemoLookup(cpid);
+    if (demo) return res.json(demo);
+    if (allowInlineDemoFallback() && cpid.startsWith('CP-MOCK')) {
+      return res.json({ entityType: 'user', targetId: 'mock-user-id' });
     }
-    if (cpid === 'CP-U58B35B') {
-      return res.json({ entityType: 'user', targetId: 'mock-user-id-58b35b' });
-    }
-    return res.json({ entityType: 'user', targetId: 'mock-user-id' });
+    return res.status(404).json({ error: 'CPID not found' });
   }
 
   try {
     const userSnap = await db.collection('users').where('culturePassId', '==', cpid).limit(1).get();
     if (!userSnap.empty) return res.json({ entityType: 'user', targetId: userSnap.docs[0].id });
-    
+
     const profileSnap = await db.collection('profiles').where('cpid', '==', cpid).limit(1).get();
     if (!profileSnap.empty) return res.json({ entityType: 'profile', targetId: profileSnap.docs[0].id });
-    
-    // Return a mock user for local development if not found in db but starts with CP-
-    if (process.env.FUNCTIONS_EMULATOR) {
-      return res.json({ entityType: 'user', targetId: 'mock-user-id' });
+
+    if (allowInlineDemoFallback()) {
+      const demo = resolveCpidDemoLookup(cpid);
+      if (demo) return res.json(demo);
     }
 
     return res.status(404).json({ error: 'CPID not found' });
   } catch {
-    // Graceful fallback for local development emulator
-    if (process.env.FUNCTIONS_EMULATOR) {
-      return res.json({ entityType: 'user', targetId: 'mock-user-id' });
+    if (allowInlineDemoFallback()) {
+      const demo = resolveCpidDemoLookup(cpid);
+      if (demo) return res.json(demo);
     }
     return res.status(500).json({ error: 'Lookup failed' });
   }

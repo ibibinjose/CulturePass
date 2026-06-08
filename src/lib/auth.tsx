@@ -18,6 +18,7 @@ import { log } from '@/lib/logger';
 import { api, ApiError } from '@/lib/api';
 import type { User, UserRole, MembershipTier } from '@/shared/schema';
 import { logError } from '@/lib/reporting';
+import { readE2EAuthSession } from '@/lib/e2e-fixtures';
 
 /**
  * CulturePass Auth — Firebase Auth SDK
@@ -144,6 +145,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Firebase Auth state observer
   // ------------------------------------------------------------------
   useEffect(() => {
+    const e2eSession = readE2EAuthSession();
+    if (e2eSession) {
+      setSession(e2eSession);
+      setAccessToken(e2eSession.accessToken);
+      setEmailVerified(true);
+      setIsRestoring(false);
+      setProfileSyncStatus('ok');
+      return;
+    }
+
     if (!firebaseAuth) {
       setAccessToken(null);
       setTokenRefresher(null);

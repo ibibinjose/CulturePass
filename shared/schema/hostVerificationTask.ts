@@ -18,13 +18,36 @@ export const VerificationChecklistItemSchema = z.object({
 
 export type VerificationChecklistItem = z.infer<typeof VerificationChecklistItemSchema>;
 
-export const VerificationTaskSchema = z.object({
-  id: z.string(),
-  profileId: z.string(),
+const verificationTaskStatusSchema = z.enum([
+  'pending',
+  'in-review',
+  'approved',
+  'rejected',
+  'more-info-needed',
+]);
+
+function requireProfileOrPageId(
+  data: { profileId?: string; pageId?: string },
+  ctx: z.RefinementCtx,
+) {
+  if (!data.profileId && !data.pageId) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['profileId'],
+      message: 'Either profileId or pageId is required',
+    });
+  }
+}
+
+const verificationTaskBodyShape = {
+  /** HostSpace rich profile (legacy wizard) */
+  profileId: z.string().optional(),
+  /** Unified Create a Page flow */
+  pageId: z.string().optional(),
   entityType: z.lazy(() => HostEntityTypeSchema),
   submittedBy: z.string(), // Firebase Auth UID
   submittedAt: z.string(), // ISO 8601 timestamp
-  status: z.enum(['pending', 'in-review', 'approved', 'rejected', 'more-info-needed']).default('pending'),
+  status: verificationTaskStatusSchema.default('pending'),
   assignedTo: z.string().optional(), // Admin user ID
   documents: z.array(z.string().url()).default([]), // URLs to uploaded documents
   checklist: z.array(VerificationChecklistItemSchema).default([]),
@@ -32,36 +55,55 @@ export const VerificationTaskSchema = z.object({
   rejectionReason: z.string().optional(),
   completedAt: z.string().optional(), // ISO 8601 timestamp
   slaDeadline: z.string(), // ISO 8601 timestamp (48 hours standard, 24 hours premium)
-});
+};
+
+export const VerificationTaskSchema = z
+  .object({
+    id: z.string(),
+    ...verificationTaskBodyShape,
+  })
+  .superRefine(requireProfileOrPageId);
 
 export type VerificationTask = z.infer<typeof VerificationTaskSchema>;
 
-// Schema for creating a new verification task
-export const CreateVerificationTaskSchema = VerificationTaskSchema.omit({
-  id: true,
-  submittedAt: true,
-  completedAt: true,
-});
+// Schema for creating a new verification task (Zod v4: cannot .omit() refined schemas)
+export const CreateVerificationTaskSchema = z
+  .object({
+    profileId: verificationTaskBodyShape.profileId,
+    pageId: verificationTaskBodyShape.pageId,
+    entityType: verificationTaskBodyShape.entityType,
+    submittedBy: verificationTaskBodyShape.submittedBy,
+    status: verificationTaskBodyShape.status,
+    assignedTo: verificationTaskBodyShape.assignedTo,
+    documents: verificationTaskBodyShape.documents,
+    checklist: verificationTaskBodyShape.checklist,
+    adminNotes: verificationTaskBodyShape.adminNotes,
+    rejectionReason: verificationTaskBodyShape.rejectionReason,
+    slaDeadline: verificationTaskBodyShape.slaDeadline,
+  })
+  .superRefine(requireProfileOrPageId);
 
 export type CreateVerificationTask = z.infer<typeof CreateVerificationTaskSchema>;
 
 // Schema for updating a verification task (admin actions)
-export const UpdateVerificationTaskSchema = VerificationTaskSchema.partial()
-  .required({
-    id: true,
-  })
-  .omit({
-    submittedAt: true,
-    submittedBy: true,
-    profileId: true,
-    entityType: true,
-  });
+export const UpdateVerificationTaskSchema = z.object({
+  id: z.string(),
+  pageId: z.string().optional(),
+  status: verificationTaskStatusSchema.optional(),
+  assignedTo: z.string().optional(),
+  documents: z.array(z.string().url()).optional(),
+  checklist: z.array(VerificationChecklistItemSchema).optional(),
+  adminNotes: z.string().optional(),
+  rejectionReason: z.string().optional(),
+  completedAt: z.string().optional(),
+  slaDeadline: z.string().optional(),
+});
 
 export type UpdateVerificationTask = z.infer<typeof UpdateVerificationTaskSchema>;
 
 // Schema for verification task filters (admin dashboard)
 export const VerificationTaskFiltersSchema = z.object({
-  status: z.enum(['pending', 'in-review', 'approved', 'rejected', 'more-info-needed']).optional(),
+  status: verificationTaskStatusSchema.optional(),
   entityType: z.lazy(() => HostEntityTypeSchema).optional(),
   assignedTo: z.string().optional(),
   overdueSla: z.boolean().optional(),

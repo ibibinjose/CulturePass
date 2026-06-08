@@ -22,6 +22,11 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { adminKeys } from '@/hooks/queries/keys';
 import type { VerificationTask } from '@/shared/schema';
+import {
+  getVerificationSourceType,
+  getVerificationSubjectId,
+  getVerificationSubjectLabel,
+} from '@/modules/admin/utils/verificationTaskPresentation';
 
 const SafeFadeInDown = FadeInDown ?? FadeIn;
 
@@ -115,6 +120,7 @@ export default function VerificationQueueScreen() {
       const hay = [
         t.id,
         t.profileId,
+        t.pageId,
         t.entityType,
         t.submittedBy,
         t.adminNotes || '',
@@ -270,12 +276,16 @@ function VerificationTaskCard({ task, onPress }: { task: VerificationTask; onPre
   const colors = useColors();
   const overdue = isOverdueSla(task);
   const statusColor = getStatusColor(task.status);
+  const sourceType = getVerificationSourceType(task);
+  const subjectLabel = getVerificationSubjectLabel(task);
+  const subjectId = getVerificationSubjectId(task);
 
   return (
     <Pressable
       onPress={onPress}
-      accessibilityLabel={`Review verification for ${ENTITY_TYPE_LABELS[task.entityType] ?? task.entityType} profile`}
+      accessibilityLabel={`Review verification for ${ENTITY_TYPE_LABELS[task.entityType] ?? task.entityType} ${subjectLabel.toLowerCase()}`}
       accessibilityRole="button"
+      testID={`verification-task-${task.id}`}
     >
       <GlassView
         style={[styles.taskCard, overdue && { borderColor: CultureTokens.coral, borderWidth: 1 }]}
@@ -285,7 +295,7 @@ function VerificationTaskCard({ task, onPress }: { task: VerificationTask; onPre
           <View style={styles.taskCardLeft}>
             <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
             <Text style={[styles.entityTypeLabel, { color: colors.textTertiary }]}>
-              {(ENTITY_TYPE_LABELS[task.entityType] ?? task.entityType).toUpperCase()}
+              {(ENTITY_TYPE_LABELS[task.entityType] ?? task.entityType).toUpperCase()} · {subjectLabel.toUpperCase()}
             </Text>
             {overdue && (
               <View style={styles.overdueBadge}>
@@ -301,7 +311,7 @@ function VerificationTaskCard({ task, onPress }: { task: VerificationTask; onPre
 
         <View style={styles.taskCardBody}>
           <Text style={[styles.profileId, { color: colors.text }]} numberOfLines={1}>
-            Profile: {task.profileId}
+            {sourceType === 'hostPage' ? 'Page' : 'Profile'}: {subjectId}
           </Text>
           <View style={styles.taskMeta}>
             <View style={[styles.statusBadge, { backgroundColor: statusColor + '18' }]}>

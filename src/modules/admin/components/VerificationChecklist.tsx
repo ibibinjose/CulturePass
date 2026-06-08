@@ -22,9 +22,19 @@ interface VerificationChecklistProps {
   onChange?: (updatedChecklist: VerificationChecklistItem[]) => void;
   /** Whether the checklist is disabled (non-interactive) */
   disabled?: boolean;
+  /** Optional section title (e.g. Host Page vs Profile) */
+  title?: string;
+  /** Optional subtitle under the title */
+  subtitle?: string;
 }
 
-export function VerificationChecklist({ checklist, onChange, disabled }: VerificationChecklistProps) {
+export function VerificationChecklist({
+  checklist,
+  onChange,
+  disabled,
+  title = 'Verification Checklist',
+  subtitle,
+}: VerificationChecklistProps) {
   const colors = useColors();
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
 
@@ -56,7 +66,12 @@ export function VerificationChecklist({ checklist, onChange, disabled }: Verific
     <GlassView intensity={8} style={styles.card} contentStyle={styles.cardContent}>
       {/* Header with progress */}
       <View style={styles.header}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>Verification Checklist</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>{title}</Text>
+          {subtitle ? (
+            <Text style={[styles.subtitle, { color: colors.textTertiary }]}>{subtitle}</Text>
+          ) : null}
+        </View>
         <View style={styles.progressInfo}>
           <Text style={[styles.progressText, { color: colors.textSecondary }]}>
             {completedCount}/{totalCount}
@@ -187,6 +202,7 @@ const styles = StyleSheet.create({
 
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   sectionTitle: { fontSize: 15, fontFamily: FontFamily.bold },
+  subtitle: { fontSize: 11, fontFamily: FontFamily.medium, marginTop: 2 },
   progressInfo: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   progressText: { fontSize: 12, fontFamily: FontFamily.bold },
 

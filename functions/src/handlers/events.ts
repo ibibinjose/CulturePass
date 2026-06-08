@@ -71,6 +71,8 @@ type DevAppEvent = {
   cultureTag?: string[];
   tags?: string[];
   indigenousTags?: string[];
+  nationalityId?: string;
+  isIndigenousOwned?: boolean;
   languageTags?: string[];
   eventType?: string;
   capacity?: number;
@@ -174,6 +176,8 @@ const createEventSchema = z.object({
   tags:        z.array(z.string().max(50)).max(20).optional(),
   cultureTag:  z.array(z.string().max(50)).max(20).optional(),
   indigenousTags: z.array(z.string().max(50)).max(10).optional(),
+  nationalityId: z.string().max(40).optional(),
+  isIndigenousOwned: z.coerce.boolean().optional(),
   languageTags:   z.array(z.string().max(50)).max(10).optional(),
   organizer:   optionalStringField(200),
   externalTicketUrl: z.string().url().optional().or(z.literal('')).or(z.null()),
@@ -633,6 +637,8 @@ export function createEventsRouter() {
           tiers:     Array.isArray(b.tiers)        ? b.tiers        : undefined,
           tags:      Array.isArray(b.tags)         ? b.tags         : undefined,
           indigenousTags: Array.isArray(b.indigenousTags) ? b.indigenousTags : undefined,
+          nationalityId: b.nationalityId ? String(b.nationalityId) : undefined,
+          isIndigenousOwned: b.isIndigenousOwned != null ? Boolean(b.isIndigenousOwned) : undefined,
           languageTags:   Array.isArray(b.languageTags)   ? b.languageTags   : undefined,
           cultureTag: Array.isArray(b.cultureTag)  ? b.cultureTag  : undefined,
           geoHash:   b.geoHash   ? String(b.geoHash)   : undefined,
@@ -767,6 +773,8 @@ export function createEventsRouter() {
         ...(Array.isArray(b.tags)       && { tags:       b.tags }),
         ...(Array.isArray(b.cultureTag) && { cultureTag: b.cultureTag }),
         ...(Array.isArray(b.indigenousTags) && { indigenousTags: b.indigenousTags }),
+        ...(b.nationalityId != null && { nationalityId: b.nationalityId ? String(b.nationalityId) : null }),
+        ...(b.isIndigenousOwned != null && { isIndigenousOwned: Boolean(b.isIndigenousOwned) }),
         ...(Array.isArray(b.languageTags)   && { languageTags: b.languageTags }),
         ...(Array.isArray(b.artists)        && { artists: b.artists }),
         ...(Array.isArray(b.eventSponsors)  && { eventSponsors: b.eventSponsors }),

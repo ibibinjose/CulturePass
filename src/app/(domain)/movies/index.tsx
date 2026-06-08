@@ -20,7 +20,7 @@ import { ErrorBoundary } from '@/modules/core/ui/ErrorBoundary';
 import { BackButton } from '@/design-system/ui/BackButton';
 import { CreatorFAB } from '@/design-system/ui/CreatorActions';
 import type { MovieData } from '@/shared/schema';
-import { createLabCategoryHref } from '@/constants/navigation/createNav';
+import { navigateToCreateById } from '@/lib/creationRouting';
 import { CultureTokens, FontFamily, TextStyles } from '@/design-system/tokens/theme';
 
 const isWeb = Platform.OS === 'web';
@@ -432,7 +432,7 @@ export default function MoviesScreen() {
           <CreatorFAB
             label="Add Movie"
             icon="film-outline"
-            onPress={() => router.push(createLabCategoryHref('movie') as never)}
+            onPress={() => navigateToCreateById('movie', { source: 'movies_index_cta' })}
           />
         )}
       </View>

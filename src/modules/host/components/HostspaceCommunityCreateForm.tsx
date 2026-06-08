@@ -26,6 +26,7 @@ import {
 import { Button } from '@/design-system/ui/Button';
 import { GlassView } from '@/design-system/ui/GlassView';
 import { useAuth } from '@/lib/auth';
+import { navigateToCreateById } from '@/lib/creationRouting';
 
 // Unification (ADR-001): This dedicated form for rich 'community' entity is legacy.
 // All rich profiles (community, etc.) should use the full FormWizard for consistency, analytics, drafts, legal gates.
@@ -222,7 +223,7 @@ export function HostspaceCommunityCreateForm({ onReview }: { onReview?: () => vo
         <Text style={{ color: '#92400E', flex: 1, fontSize: 13 }}>
           Note: Rich communities now use the full guided FormWizard (with analytics, auto-save, legal gates). This legacy form is for compat only.
         </Text>
-        <Pressable onPress={() => router.push('/hostspace/create?profileType=community' as any)} style={{ backgroundColor: '#92400E', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 4 }}>
+        <Pressable onPress={() => navigateToCreateById('community', { source: 'hostspace_community_form_link' })} style={{ backgroundColor: '#92400E', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 4 }}>
           <Text style={{ color: 'white', fontSize: 12 }}>Use Wizard</Text>
         </Pressable>
       </View>

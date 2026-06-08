@@ -24,6 +24,8 @@ export interface CommunityCreateInput {
   languageIds?: string[];
   diasporaGroupIds?: string[];
   cultureTags?: string[];
+  indigenousTags?: string[];
+  isIndigenousOwned?: boolean;
   languages?: string[];
   website?: string;
   instagram?: string;

@@ -13,7 +13,7 @@ import { app } from './app';
 // Ensure all v2 functions run in the same region as Firestore
 setGlobalOptions({ region: 'australia-southeast1' });
 
-// Export the API function using the v2 HTTPS function API
+// Wallet credentials load from functions/.env on deploy (see scripts/setup-wallet-secrets.sh).
 export const api = https.onRequest(app);
 
 export * from './triggers';

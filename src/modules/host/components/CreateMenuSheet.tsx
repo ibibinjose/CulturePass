@@ -6,6 +6,8 @@ import * as Haptics from 'expo-haptics';
 
 import { useColors } from '@/hooks/useColors';
 import { CultureTokens, Spacing, Radius } from '@/design-system/tokens/theme';
+import { findCategory } from '@/modules/host/config/hostspaceCreateCategories.config';
+import { navigateToCreate } from '@/lib/creationRouting';
 
 interface CreateMenuSheetProps {
   visible: boolean;
@@ -26,38 +28,49 @@ export function CreateMenuSheet({ visible, onClose, availableProfiles = [], onCr
   const hasProfiles = availableProfiles.length > 0;
 
   const options = [
-    { 
-      label: 'New Profile', 
-      icon: 'person-add-outline' as const, 
+    {
+      label: 'New Profile',
+      icon: 'person-add-outline' as const,
       desc: 'Community, Business, Artist, Venue...',
-      onPress: () => handlePress('/hostspace/create' as const)
+      onPress: () => {
+        onClose();
+        navigateToCreate(findCategory('community'), { source: 'hostspace_create_menu_profile' });
+      },
     },
-    { 
-      label: 'New Event', 
-      icon: 'calendar-outline' as const, 
+    {
+      label: 'New Event',
+      icon: 'calendar-outline' as const,
       desc: hasProfiles ? 'Under one of your profiles' : 'Festival, workshop, gathering',
       onPress: () => {
+        onClose();
+        const eventCategory = findCategory('event');
         if (hasProfiles && onCreateUnderProfile) {
-          // Smart default: pre-select first profile or let user choose
           const defaultProfile = availableProfiles[0];
-          onCreateUnderProfile(defaultProfile.id, 'event');
+          navigateToCreate(eventCategory, {
+            source: 'hostspace_create_menu_event',
+            parentProfileId: defaultProfile.id,
+          });
         } else {
-          handlePress('/hostspace/create?category=event' as const);
+          navigateToCreate(eventCategory, { source: 'hostspace_create_menu_event' });
         }
-      }
+      },
     },
-    { 
-      label: 'New Listing', 
-      icon: 'pricetag-outline' as const, 
+    {
+      label: 'New Listing',
+      icon: 'pricetag-outline' as const,
       desc: 'Sell products or services on CultureMarket',
       onPress: () => {
-        if (hasProfiles && onCreateUnderProfile) {
-          const defaultProfile = availableProfiles[0];
-          onCreateUnderProfile(defaultProfile.id, 'listing');
+        onClose();
+        const marketCategory = findCategory('market-product');
+        if (hasProfiles) {
+          navigateToCreate(marketCategory, {
+            source: 'hostspace_create_menu_market',
+            parentProfileId: availableProfiles[0]?.id,
+          });
         } else {
-          handlePress('/hostspace/create?category=market' as const);
+          navigateToCreate(marketCategory, { source: 'hostspace_create_menu_market' });
         }
-      }
+      },
     },
   ];
 

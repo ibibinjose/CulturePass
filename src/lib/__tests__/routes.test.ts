@@ -31,7 +31,7 @@ describe('Route Utilities', () => {
     test('should return safe internal paths beginning with /', () => {
       expect(sanitizeInternalRedirect('/profile')).toBe('/profile');
       expect(sanitizeInternalRedirect('/tickets/123')).toBe('/tickets/123');
-      expect(sanitizeInternalRedirect('/hostspace/create')).toBe('/hostspace/create');
+      expect(sanitizeInternalRedirect('/pages/create')).toBe('/pages/create');
       expect(sanitizeInternalRedirect('/membership/plans')).toBe('/membership/plans');
     });
 
@@ -70,10 +70,10 @@ describe('Route Utilities', () => {
     });
 
     test('should handle complex redirect paths', () => {
-      const result = routeWithRedirect('/login', '/hostspace/create?profileType=creator');
+      const result = routeWithRedirect('/login', '/pages/create?entityType=creator');
       expect(result).toEqual({
         pathname: '/login',
-        params: { redirectTo: '/hostspace/create?profileType=creator' }
+        params: { redirectTo: '/pages/create?entityType=creator' }
       });
     });
   });

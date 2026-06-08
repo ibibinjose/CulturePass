@@ -9,6 +9,10 @@ import { formatDateForCountry } from '@/lib/dateUtils';
 import { FormData, EVENT_TYPES } from './types';
 import { ReviewRow } from './ReviewRow';
 import type { CreateStyles } from './styles';
+import {
+  formatIndigenousTags,
+  getNationalityLabel,
+} from '@/lib/cultureIdentity';
 
 interface Props {
   form: FormData;
@@ -119,6 +123,23 @@ export function StepReview({ form, colors, s, availableCultures, publishError }:
           colors={colors}
         />
       )}
+      {form.nationalityId ? (
+        <ReviewRow
+          label="Nationality"
+          value={getNationalityLabel(form.nationalityId) ?? form.nationalityId}
+          colors={colors}
+        />
+      ) : null}
+      {form.indigenousTags.length > 0 ? (
+        <ReviewRow
+          label="Indigenous tags"
+          value={formatIndigenousTags(form.indigenousTags)}
+          colors={colors}
+        />
+      ) : null}
+      {form.isIndigenousOwned ? (
+        <ReviewRow label="Indigenous-owned" value="Yes — shown with cultural flag on cards" colors={colors} />
+      ) : null}
       {form.cultureTodayPromo ? (
         <ReviewRow label="Culture Today" value={`Tagged “${CULTURE_TODAY_EVENT_TAG}” for the calendar`} colors={colors} />
       ) : null}

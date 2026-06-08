@@ -22,6 +22,7 @@ import type { ListingFormState } from './types';
 import type { CommunityCategory, CommunityJoinMode, CommunityLegalStatus, Profile } from '@/shared/schema';
 import { COMMUNITY_LEGAL_STATUS_LABELS } from '@/shared/schema/profile';
 import { ALL_NATIONALITIES, CULTURES, getCulturesForNationality, searchNationalities } from '@/constants/cultures';
+import { CultureIndigenousFields } from '@/components/culture/CultureIndigenousFields';
 import { COMMON_LANGUAGES, LANGUAGES, searchLanguages } from '@/constants/languages';
 import { SubmitCard, SubmitSectionLabel, SubmitField } from '@/components/submit/FormPrimitives';
 import { modulesApi } from '@/modules/api';
@@ -809,6 +810,44 @@ export function ListingStepEntityExtras({ form, setField, colors, s }: Base) {
       {form.entityType === 'community' ? (
         <Text style={[s.requiredLegend, { color: colors.textTertiary, marginBottom: 14 }]}>* Required fields</Text>
       ) : null}
+
+      <CultureIndigenousFields
+        value={{
+          nationalityId: form.nationalityId || undefined,
+          cultureIds: form.cultureIds,
+          indigenousTags: form.indigenousTags,
+          languageIds: form.languageIds,
+          isIndigenousOwned: form.isIndigenousOwned,
+        }}
+        onChange={(patch) => {
+          if (patch.nationalityId !== undefined) setField('nationalityId', patch.nationalityId ?? '');
+          if (patch.cultureIds !== undefined) {
+            setField('cultureIds', patch.cultureIds);
+            setField(
+              'cultureTags',
+              patch.cultureIds.map((id) => CULTURES[id]?.label ?? id),
+            );
+          }
+          if (patch.indigenousTags !== undefined) setField('indigenousTags', patch.indigenousTags);
+          if (patch.isIndigenousOwned !== undefined) setField('isIndigenousOwned', patch.isIndigenousOwned);
+          if (patch.languageIds !== undefined) {
+            setField('languageIds', patch.languageIds);
+            setField(
+              'languages',
+              patch.languageIds.map((id) => LANGUAGES[id]?.name ?? id),
+            );
+          }
+        }}
+        colors={{
+          text: colors.text,
+          textSecondary: colors.textSecondary,
+          textTertiary: colors.textTertiary,
+          border: colors.borderLight,
+          background: colors.background,
+          surface: colors.surface,
+        }}
+        testID="listing-culture-indigenous-fields"
+      />
 
       {form.entityType === 'community' ? (
         <>

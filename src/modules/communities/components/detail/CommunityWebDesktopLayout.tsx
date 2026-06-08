@@ -30,6 +30,7 @@ import type { Community, EventData } from '@/shared/schema';
 import { listingCreateNavigateParams } from '@/constants/navigation/experienceNav';
 import { GlassView } from '@/design-system/ui/GlassView';
 import { useColors, useIsDark } from '@/hooks/useColors';
+import { navigateToCreateById } from '@/lib/creationRouting';
 
 function normCityToken(v: string | undefined) {
   return String(v ?? '').trim().toLowerCase();
@@ -684,7 +685,7 @@ export function CommunityWebDesktopLayout({
               {[
                 { label: 'Post', icon: 'create-outline', action: () => router.push(listingCreateNavigateParams('community') as never) },
                 { label: 'Photo', icon: 'image-outline', action: () => router.push(listingCreateNavigateParams('community') as never) },
-                { label: 'Event', icon: 'calendar-outline', action: () => router.push('/event/create') },
+                { label: 'Event', icon: 'calendar-outline', action: () => navigateToCreateById('event', { source: 'community_desktop_quick_event' }) },
                 { label: 'Explore', icon: 'bar-chart-outline', action: () => openSearch(`${cityName} community`) },
               ].map((item) => (
                 <Pressable key={item.label} onPress={item.action} accessibilityRole="button">

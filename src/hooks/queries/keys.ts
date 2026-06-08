@@ -166,4 +166,5 @@ export const adminKeys = {
   verificationTasks: (params: Record<string, unknown>) => [...adminKeys.all, 'verification', 'tasks', params] as const,
   verificationTask: (id: string) => [...adminKeys.all, 'verification', 'task', id] as const,
   verificationStats: () => [...adminKeys.all, 'verification', 'stats'] as const,
+  hostPage: (id: string) => [...adminKeys.all, 'hostPage', id] as const,
 };

@@ -12,7 +12,8 @@ import { CameraView } from 'expo-camera';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { CultureTokens, FontFamily, Radius } from '@/design-system/tokens/theme';
+import { FontFamily, Radius } from '@/design-system/tokens/theme';
+import { Luxe } from '@/design-system/tokens/luxeHeritage';
 import { SCAN_WELL } from './scannerTheme';
 
 const CORNER = 28;
@@ -24,6 +25,7 @@ type Props = {
   scanningEnabled: boolean;
   hint?: string;
   fullscreen?: boolean;
+  onMountError?: (message: string) => void;
 };
 
 export function ScannerCameraPanel({
@@ -32,6 +34,7 @@ export function ScannerCameraPanel({
   scanningEnabled,
   hint = 'Hold steady · QR inside frame',
   fullscreen = false,
+  onMountError,
 }: Props) {
   const insets = useSafeAreaInsets();
 
@@ -56,8 +59,10 @@ export function ScannerCameraPanel({
       <CameraView
         style={StyleSheet.absoluteFill}
         facing="back"
+        mute
         barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
         onBarcodeScanned={scanningEnabled ? onBarcodeScanned : undefined}
+        onMountError={({ message }) => onMountError?.(message)}
       />
 
       <LinearGradient
@@ -111,7 +116,7 @@ function Corner({ position }: { position: 'tl' | 'tr' | 'bl' | 'br' }) {
         isTop && !isRight && { borderTopWidth: CORNER_W, borderLeftWidth: CORNER_W, borderTopLeftRadius: 14 },
         !isTop && isRight && { borderBottomWidth: CORNER_W, borderRightWidth: CORNER_W, borderBottomRightRadius: 14 },
         !isTop && !isRight && { borderBottomWidth: CORNER_W, borderLeftWidth: CORNER_W, borderBottomLeftRadius: 14 },
-        { borderColor: '#FFFFFF' },
+        { borderColor: Luxe.colors.terracotta },
       ]}
     />
   );
@@ -160,10 +165,10 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: CultureTokens.emerald,
+    backgroundColor: Luxe.colors.emerald,
   },
   liveDotPaused: {
-    backgroundColor: CultureTokens.gold,
+    backgroundColor: Luxe.colors.gold,
   },
   liveText: {
     color: '#FFF',
@@ -191,8 +196,8 @@ const styles = StyleSheet.create({
     left: 12,
     right: 12,
     height: 2,
-    backgroundColor: CultureTokens.violet,
-    shadowColor: CultureTokens.violet,
+    backgroundColor: Luxe.colors.terracotta,
+    shadowColor: Luxe.colors.terracotta,
     shadowOpacity: 0.9,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 0 },

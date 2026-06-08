@@ -6,7 +6,7 @@
  *  - create/*           → HostspaceAccessGate (same; blocks anonymous browsing)
  *  - dashboard/index    → protected by HostspaceCreateWorkspace
  *
- * Note: The old /hostspace/apply flow was fully consolidated into /hostspace/create.
+ * Note: The old /hostspace/apply flow was fully consolidated into /pages/create.
  */
 import { Stack } from 'expo-router';
 

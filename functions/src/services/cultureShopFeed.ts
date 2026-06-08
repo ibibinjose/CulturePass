@@ -1,4 +1,5 @@
 import { db, isFirestoreConfigured } from '../admin';
+import { allowInlineDemoFallback } from '../dev/demoFixtures';
 import { shoppingService } from './shopping';
 import type {
   MarketplaceFeedResponse,
@@ -211,7 +212,11 @@ export async function buildMarketplaceFeed(opts: {
   }
 
   if (sections.length === 0) {
-    return mockMarketplaceFeed();
+    if (allowInlineDemoFallback()) return mockMarketplaceFeed();
+    return {
+      sections: [],
+      heroTagline: 'Save on brands you love — fashion, food, tech and experiences near you.',
+    };
   }
 
   return {

@@ -39,6 +39,7 @@ import { uploadsRouter } from './handlers/uploads';
 import { walletRouter } from './handlers/wallet';
 import { adminRouter } from './handlers/admin';
 import { hostApplicationRouter } from './handlers/hostApplication';
+import { hostPagesRouter } from './handlers/host-pages';
 import { cultureShopRouter } from './handlers/cultureShop';
 import { waitlistRouter } from './handlers/waitlist';
 import { reviewsRouter } from './handlers/reviews';
@@ -310,6 +311,7 @@ mount('/', walletRouter);
 mount('/', adminRouter);
 mount('/', cultureShopRouter);
 mount('/', hostApplicationRouter);
+mount('/', hostPagesRouter);
 mount('/', waitlistRouter);
 mount('/', reviewsRouter);
 

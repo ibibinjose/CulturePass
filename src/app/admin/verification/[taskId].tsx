@@ -28,6 +28,12 @@ import { api } from '@/lib/api';
 import { adminKeys } from '@/hooks/queries/keys';
 import { createLazyComponent } from '@/lib/lazy';
 import type { VerificationTask, VerificationChecklistItem } from '@/shared/schema';
+import { HostPageVerificationPanel } from '@/modules/admin/components/HostPageVerificationPanel';
+import {
+  getVerificationEntitySubtitle,
+  getVerificationSourceType,
+  getVerificationSubjectLabel,
+} from '@/modules/admin/utils/verificationTaskPresentation';
 
 const VerificationChecklist = createLazyComponent(
   () => import('@/modules/admin/components/VerificationChecklist')
@@ -93,7 +99,12 @@ export default function VerificationTaskDetailScreen() {
     mutationFn: () => api.admin.approveVerification(taskId!, adminNotes || undefined),
     onSuccess: () => {
       invalidateAll();
-      setBanner({ type: 'success', message: 'Verification approved. Profile is now live.' });
+      setBanner({
+        type: 'success',
+        message: task?.pageId
+          ? 'Verification approved. Host Page is now live.'
+          : 'Verification approved. Profile is now live.',
+      });
       setTimeout(() => router.back(), 1200);
     },
     onError: (e: Error) => setBanner({ type: 'error', message: e.message ?? 'Failed to approve' }),
@@ -155,6 +166,8 @@ export default function VerificationTaskDetailScreen() {
     task.status !== 'approved' && task.status !== 'rejected';
   const isActionable = task.status === 'pending' || task.status === 'in-review' || task.status === 'more-info-needed';
   const statusColor = getStatusColor(task.status);
+  const isHostPageTask = getVerificationSourceType(task) === 'hostPage';
+  const entityLabel = ENTITY_TYPE_LABELS[task.entityType] ?? task.entityType;
 
   return (
     <ScrollView
@@ -189,9 +202,17 @@ export default function VerificationTaskDetailScreen() {
           )}
         </View>
         <Text style={[styles.entityLabel, { color: colors.textSecondary }]}>
-          {ENTITY_TYPE_LABELS[task.entityType] ?? task.entityType} Profile
+          {getVerificationEntitySubtitle(task, entityLabel)}
         </Text>
       </GlassView>
+
+      {isHostPageTask && task.pageId ? (
+        <HostPageVerificationPanel
+          pageId={task.pageId}
+          taskId={task.id}
+          isActionable={isActionable}
+        />
+      ) : null}
 
       {/* Action feedback banner (consistent with other admin tools) */}
       {banner && (
@@ -208,7 +229,8 @@ export default function VerificationTaskDetailScreen() {
       <GlassView intensity={8} style={styles.infoCard} contentStyle={styles.infoCardContent}>
         <Text style={[styles.sectionTitle, { color: colors.text }]}>Task Details</Text>
         <InfoRow label="Task ID" value={task.id} colors={colors} />
-        <InfoRow label="Profile ID" value={task.profileId} colors={colors} />
+        <InfoRow label="Profile ID" value={task.profileId ?? '—'} colors={colors} />
+        {task.pageId ? <InfoRow label="Page ID" value={task.pageId} colors={colors} /> : null}
         <InfoRow label="Entity Type" value={ENTITY_TYPE_LABELS[task.entityType] ?? task.entityType} colors={colors} />
         <InfoRow label="Submitted By" value={task.submittedBy} colors={colors} />
         <InfoRow label="Submitted At" value={new Date(task.submittedAt).toLocaleString()} colors={colors} />
@@ -255,6 +277,12 @@ export default function VerificationTaskDetailScreen() {
         checklist={task.checklist}
         onChange={isActionable ? handleChecklistChange : undefined}
         disabled={!isActionable}
+        title={isHostPageTask ? 'Host Page Verification Checklist' : 'Profile Verification Checklist'}
+        subtitle={
+          isHostPageTask
+            ? 'Review branding, tags, membership model, and cultural accuracy for this Page.'
+            : 'Review legal, compliance, and identity documents for this profile.'
+        }
       />
 
       {/* Admin Notes */}

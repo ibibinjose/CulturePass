@@ -41,8 +41,15 @@ import {
 } from '@/modules/communities/hooks/useCommunities';
 import { useCityPage, LISTING_TYPE_ROWS, type ListingTypeKey, type ExploreCategoryKey } from '@/hooks/useCityPage';
 import { PopularEventsRail } from '@/components/city/PopularEventsRail';
-import { CultureTokens } from '@/design-system/tokens/colors';
-import { M3Typography, Radius, gradients, FontFamily } from '@/design-system/tokens/theme';
+import { M3Typography, Radius, FontFamily } from '@/design-system/tokens/theme';
+import { Luxe } from '@/design-system/tokens/luxeHeritage';
+import {
+  CITY_HERO_OVERLAY,
+  CITY_STAT_COLORS,
+  EXPLORE_CATEGORY_ACCENT,
+  LISTING_TYPE_META,
+} from '@/components/city/cityTheme';
+import { CITY_HERO_BADGE_ON_GOLD } from '@/components/city/CityDestinationStyles';
 import { useSaved } from '@/contexts/SavedContext';
 import type { Community, EventData } from '@/shared/schema';
 import { CULTUREX_EXPLORES_CULTURE_TAG } from '@/shared/schema';
@@ -104,15 +111,18 @@ function StatPill({
       onPress={onPress}
       style={({ pressed }) => [
         s.statPill,
-        { backgroundColor: m3Colors.surfaceContainerLow, borderColor: m3Colors.outlineVariant },
-        pressed && { opacity: 0.7, transform: [{ scale: 0.98 }] },
+        {
+          backgroundColor: withAlpha(color, 0.1),
+          borderColor: withAlpha(color, 0.28),
+        },
+        pressed && { opacity: 0.82, transform: [{ scale: 0.98 }] },
       ]}
     >
-      <View style={[s.statIcon, { backgroundColor: withAlpha(color, 0.12) }]}>
+      <View style={[s.statIcon, { backgroundColor: withAlpha(color, 0.16) }]}>
         <Ionicons name={icon} size={16} color={color} />
       </View>
       <View style={s.statText}>
-        <Text style={[M3Typography.labelLarge, { color: m3Colors.onSurface }]}>{value}</Text>
+        <Text style={[M3Typography.labelLarge, { color }]}>{value}</Text>
         <Text style={[M3Typography.labelSmall, { color: m3Colors.onSurfaceVariant }]}>{label}</Text>
       </View>
     </Pressable>
@@ -123,8 +133,8 @@ function EmptyOrbitCard({ onDiscover }: { onDiscover: () => void }) {
   const m3Colors = useM3Colors();
   return (
     <M3Card variant="filled" style={s.emptyOrbitCard}>
-      <View style={[s.emptyOrbitIcon, { backgroundColor: m3Colors.primaryContainer }]}>
-        <Ionicons name="people-outline" size={24} color={m3Colors.onPrimaryContainer} />
+      <View style={[s.emptyOrbitIcon, { backgroundColor: Luxe.colors.indigo + '18' }]}>
+        <Ionicons name="people-outline" size={24} color={Luxe.colors.indigo} />
       </View>
       <Text style={[M3Typography.titleMedium, { color: m3Colors.onSurface, textAlign: 'center' }]}>Connect with hubs</Text>
       <Text style={[M3Typography.bodySmall, { color: m3Colors.onSurfaceVariant, textAlign: 'center' }]}>
@@ -314,8 +324,8 @@ export default function MyCityScreen() {
           <View style={[s.hero, { height: isExpanded ? 520 : 440 }]}>
             <Image source={{ uri: page.heroImage }} style={StyleSheet.absoluteFill} contentFit="cover" transition={400} />
             <LinearGradient
-              colors={['rgba(0,0,0,0.3)', 'rgba(0,0,0,0.1)', 'rgba(0,0,0,0.85)']}
-              locations={[0, 0.4, 1]}
+              colors={CITY_HERO_OVERLAY}
+              locations={[0, 0.38, 1]}
               style={StyleSheet.absoluteFill}
             />
 
@@ -332,15 +342,15 @@ export default function MyCityScreen() {
                   onPress={() => router.push('/cities')}
                   style={({ pressed }) => [{ opacity: pressed ? 0.9 : 1 }]}
                 >
-                  <M3Card variant="elevated" style={[s.locPill, { gap: 8, paddingRight: 12 }]}>
+                  <M3Card variant="elevated" style={[s.locPill, { gap: 8, paddingRight: 12, borderColor: Luxe.colors.terracotta + '28' }]}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                      <Ionicons name="location" size={14} color={m3Colors.primary} />
+                      <Ionicons name="location" size={14} color={Luxe.colors.terracotta} />
                       <Text style={[M3Typography.labelLarge, { color: m3Colors.onSurface }]} numberOfLines={1}>
                         {effectiveCity}
                       </Text>
                     </View>
                     <View style={{ width: 1, height: 14, backgroundColor: m3Colors.outlineVariant }} />
-                    <Text style={[M3Typography.labelMedium, { color: m3Colors.primary, fontFamily: FontFamily.bold }]}>
+                    <Text style={[M3Typography.labelMedium, { color: Luxe.colors.terracotta, fontFamily: FontFamily.bold }]}>
                       Explore
                     </Text>
                   </M3Card>
@@ -363,8 +373,11 @@ export default function MyCityScreen() {
                     s.heroBadge,
                     {
                       backgroundColor: isViewingNonHome
-                        ? m3Colors.secondaryContainer
-                        : m3Colors.primaryContainer,
+                        ? Luxe.colors.indigo + 'CC'
+                        : Luxe.colors.gold,
+                      borderColor: isViewingNonHome
+                        ? Luxe.colors.indigo
+                        : Luxe.colors.gold,
                     },
                   ]}
                 >
@@ -372,10 +385,9 @@ export default function MyCityScreen() {
                     style={[
                       M3Typography.labelSmall,
                       {
-                        color: isViewingNonHome
-                          ? m3Colors.onSecondaryContainer
-                          : m3Colors.onPrimaryContainer,
+                        color: isViewingNonHome ? '#FFFFFF' : CITY_HERO_BADGE_ON_GOLD,
                         letterSpacing: 1.5,
+                        fontFamily: FontFamily.bold,
                       },
                     ]}
                   >
@@ -400,14 +412,34 @@ export default function MyCityScreen() {
                 )}
               </Animated.View>
 
-              <Animated.View entering={FadeInDown.delay(400).springify()} style={{ marginTop: 24 }}>
-                <M3Button
-                  variant={subscribed ? 'tonal' : 'filled'}
-                  leftIcon={subscribed ? 'notifications' : 'notifications-outline'}
-                  onPress={handleSubscribe}
-                >
-                  {subscribed ? 'Subscribed' : 'Get Updates'}
-                </M3Button>
+              <Animated.View entering={FadeInDown.delay(400).springify()} style={{ marginTop: 24, width: '100%', maxWidth: 280 }}>
+                {subscribed ? (
+                  <M3Button
+                    variant="tonal"
+                    leftIcon="notifications"
+                    onPress={handleSubscribe}
+                    style={{ borderColor: Luxe.colors.emerald + '44' }}
+                  >
+                    Subscribed
+                  </M3Button>
+                ) : (
+                  <Pressable
+                    onPress={handleSubscribe}
+                    style={({ pressed }) => [pressed && { opacity: 0.92, transform: [{ scale: 0.98 }] }]}
+                    accessibilityRole="button"
+                    accessibilityLabel="Get city updates"
+                  >
+                    <LinearGradient
+                      colors={Luxe.gradients.terracottaBronze}
+                      start={{ x: 0, y: 0.5 }}
+                      end={{ x: 1, y: 0.5 }}
+                      style={s.subscribeBtn}
+                    >
+                      <Ionicons name="notifications-outline" size={18} color="#FFFFFF" />
+                      <Text style={s.subscribeBtnText}>Get Updates</Text>
+                    </LinearGradient>
+                  </Pressable>
+                )}
               </Animated.View>
             </PageContainer>
             </View>
@@ -416,10 +448,10 @@ export default function MyCityScreen() {
           {/* ── Stats ─────────────────────────────────────────────────────── */}
           <View style={[s.statsStrip, { backgroundColor: m3Colors.surface, borderBottomColor: m3Colors.outlineVariant }]}>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[s.statsContent, { paddingHorizontal: hPad, paddingRight: hPad + 40 }]}>
-              <StatPill icon="calendar" value={page.allEvents.length} label="Events" color={m3Colors.primary} />
-              <StatPill icon="people" value={joinedCommunities.length || '—'} label="Your Hubs" color={m3Colors.secondary} />
-              <StatPill icon="globe" value={page.uniqueCultureTags.length} label="Cultures" color={m3Colors.tertiary} />
-              <StatPill icon="sparkles" value={cultureXEventCount} label="CultureX" color={CultureTokens.coral} />
+              <StatPill icon="calendar" value={page.allEvents.length} label="Events" color={CITY_STAT_COLORS.events} />
+              <StatPill icon="people" value={joinedCommunities.length || '—'} label="Your Hubs" color={CITY_STAT_COLORS.hubs} />
+              <StatPill icon="globe" value={page.uniqueCultureTags.length} label="Cultures" color={CITY_STAT_COLORS.cultures} />
+              <StatPill icon="sparkles" value={cultureXEventCount} label="CultureX" color={CITY_STAT_COLORS.cultureX} />
             </ScrollView>
           </View>
 
@@ -433,11 +465,17 @@ export default function MyCityScreen() {
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={[
                 s.exploreRow,
-                { paddingHorizontal: hPad, paddingVertical: 8, paddingRight: hPad + 32 },
+                {
+                  paddingHorizontal: hPad,
+                  paddingVertical: 8,
+                  paddingRight: hPad + 32,
+                  borderBottomColor: m3Colors.outlineVariant,
+                },
               ]}
             >
               {EXPLORE_CATEGORY_LINKS.map((item) => {
                 const active = activeExploreCategory === item.key;
+                const accent = EXPLORE_CATEGORY_ACCENT[item.key];
                 return (
                   <Pressable
                     key={item.key}
@@ -449,27 +487,22 @@ export default function MyCityScreen() {
                     accessibilityState={{ selected: active }}
                   >
                     {active ? (
-                      <LinearGradient
-                        colors={gradients.culturepassBrand}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 1 }}
-                        style={s.exploreChipGradient}
-                      >
+                      <View style={[s.exploreChipGradient, { backgroundColor: accent }]}>
                         <Ionicons name={item.icon} size={14} color="#fff" />
                         <Text style={s.exploreChipOnGradient}>{item.label}</Text>
-                      </LinearGradient>
+                      </View>
                     ) : (
                       <View
                         style={[
                           s.exploreChipIdle,
                           {
-                            backgroundColor: m3Colors.surfaceVariant,
-                            borderColor: m3Colors.outlineVariant,
+                            backgroundColor: withAlpha(accent, 0.08),
+                            borderColor: withAlpha(accent, 0.22),
                           },
                         ]}
                       >
-                        <Ionicons name={item.icon} size={14} color={m3Colors.onSurfaceVariant} />
-                        <Text style={[s.exploreChipIdleText, { color: m3Colors.onSurfaceVariant }]}>
+                        <Ionicons name={item.icon} size={14} color={accent} />
+                        <Text style={[s.exploreChipIdleText, { color: m3Colors.onSurface }]}>
                           {item.label}
                         </Text>
                       </View>
@@ -526,39 +559,47 @@ export default function MyCityScreen() {
                 <M3SectionHeader title="Browse by Type" subtitle="Explore your city's cultural listings" />
               </View>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: hPad, gap: 12, paddingVertical: 8, paddingRight: hPad + 40 }}>
-                {LISTING_TYPE_ROWS.map((row) => (
-                  <Pressable
-                    key={row.key}
-                    onPress={() => openListingTypeResults(row.key)}
-                    style={({ pressed }) => [
-                      {
-                        width: 220,
-                        borderWidth: 1.5,
-                        borderColor: m3Colors.outlineVariant,
-                        borderRadius: Radius.lg,
-                        padding: 16,
-                        backgroundColor: m3Colors.surfaceContainerLow,
-                        opacity: pressed ? 0.9 : 1,
-                      },
-                    ]}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Open ${row.title} results`}
-                  >
-                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                      <Text style={[M3Typography.titleSmall, { color: m3Colors.onSurface }]}>
-                        {row.title}
-                      </Text>
-                      <View style={{ borderRadius: Radius.full, paddingHorizontal: 8, paddingVertical: 2, backgroundColor: m3Colors.primaryContainer }}>
-                        <Text style={[M3Typography.labelSmall, { color: m3Colors.onPrimaryContainer, fontFamily: FontFamily.bold }]}>
-                          {page.listingResultCounts[row.key]}
+                {LISTING_TYPE_ROWS.map((row) => {
+                  const meta = LISTING_TYPE_META[row.key];
+                  return (
+                    <Pressable
+                      key={row.key}
+                      onPress={() => openListingTypeResults(row.key)}
+                      style={({ pressed }) => [
+                        s.listingCard,
+                        {
+                          borderColor: withAlpha(meta.color, 0.28),
+                          backgroundColor: withAlpha(meta.color, 0.06),
+                          opacity: pressed ? 0.9 : 1,
+                        },
+                      ]}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Open ${row.title} results`}
+                    >
+                      <View style={[s.listingAccent, { backgroundColor: meta.color }]} />
+                      <View style={s.listingBody}>
+                        <View style={s.listingHeader}>
+                          <View style={[s.listingIcon, { backgroundColor: withAlpha(meta.color, 0.14) }]}>
+                            <Ionicons name={meta.icon} size={16} color={meta.color} />
+                          </View>
+                          <View style={{ flex: 1, minWidth: 0 }}>
+                            <Text style={[M3Typography.titleSmall, { color: m3Colors.onSurface }]}>
+                              {row.title}
+                            </Text>
+                          </View>
+                          <View style={[s.listingCount, { backgroundColor: withAlpha(meta.color, 0.16) }]}>
+                            <Text style={[M3Typography.labelSmall, { color: meta.color, fontFamily: FontFamily.bold }]}>
+                              {page.listingResultCounts[row.key]}
+                            </Text>
+                          </View>
+                        </View>
+                        <Text style={[M3Typography.bodySmall, { color: m3Colors.onSurfaceVariant }]} numberOfLines={2}>
+                          {row.description}
                         </Text>
                       </View>
-                    </View>
-                    <Text style={[M3Typography.bodySmall, { color: m3Colors.onSurfaceVariant }]} numberOfLines={2}>
-                      {row.description}
-                    </Text>
-                  </Pressable>
-                ))}
+                    </Pressable>
+                  );
+                })}
               </ScrollView>
             </View>
           )}
@@ -614,14 +655,19 @@ export default function MyCityScreen() {
         <Animated.View entering={FadeInDown.delay(800)} style={[s.fab, { bottom: safeInsets.bottom + tabBarHeight + 16 }]}>
           <Pressable
             onPress={() => router.push({ pathname: '/map', params: { city: cityName } })}
-            style={({ pressed }) => [
-              s.fabBtn,
-              { backgroundColor: m3Colors.primaryContainer },
-              pressed && { scale: 0.95, opacity: 0.9 }
-            ]}
+            style={({ pressed }) => [pressed && { opacity: 0.92, transform: [{ scale: 0.96 }] }]}
+            accessibilityRole="button"
+            accessibilityLabel="Open city map"
           >
-            <Ionicons name="map" size={24} color={m3Colors.onPrimaryContainer} />
-            <Text style={[M3Typography.labelLarge, { color: m3Colors.onPrimaryContainer, marginLeft: 8 }]}>Map</Text>
+            <LinearGradient
+              colors={Luxe.gradients.emeraldIndigo}
+              start={{ x: 0, y: 0.5 }}
+              end={{ x: 1, y: 0.5 }}
+              style={s.fabBtn}
+            >
+              <Ionicons name="map" size={22} color="#FFFFFF" />
+              <Text style={s.fabBtnText}>Map</Text>
+            </LinearGradient>
           </Pressable>
         </Animated.View>
       </View>
@@ -637,7 +683,27 @@ const s = StyleSheet.create({
   heroNavCenter: { flex: 1, alignItems: 'center' },
   locPill: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 8, borderRadius: Radius.full },
   heroContent: { paddingBottom: 40, alignItems: 'center', gap: 8 },
-  heroBadge: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: Radius.sm, marginBottom: 8 },
+  heroBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: Radius.sm,
+    marginBottom: 8,
+    borderWidth: 1,
+  },
+  subscribeBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: Radius.full,
+  },
+  subscribeBtnText: {
+    color: '#FFFFFF',
+    fontFamily: FontFamily.bold,
+    fontSize: 15,
+  },
   heroGreetingRow: { marginTop: 8 },
 
   statsStrip: { borderBottomWidth: 1, paddingVertical: 12 },
@@ -654,7 +720,6 @@ const s = StyleSheet.create({
     gap: 8,
     flexGrow: 1,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(0,0,0,0.05)',
   },
   exploreChipGradient: {
     flexDirection: 'row',
@@ -694,22 +759,51 @@ const s = StyleSheet.create({
   emptyOrbitCard: { width: ORBIT_CARD_W, padding: 24, alignItems: 'center', gap: 12 },
   emptyOrbitIcon: { width: 56, height: 56, borderRadius: Radius.lg, alignItems: 'center', justifyContent: 'center' },
 
+  listingCard: {
+    width: 220,
+    flexDirection: 'row',
+    borderWidth: 1.5,
+    borderRadius: Radius.lg,
+    overflow: 'hidden',
+  },
+  listingAccent: { width: 4 },
+  listingBody: { flex: 1, padding: 14, gap: 6 },
+  listingHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  listingIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  listingCount: {
+    borderRadius: Radius.full,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+
   fab: { position: 'absolute', right: 16, zIndex: 1000 },
-  fabBtn: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    paddingHorizontal: 20, 
-    height: 56, 
-    borderRadius: 28, 
+  fabBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    height: 56,
+    borderRadius: 28,
+    gap: 8,
     ...Platform.select({
-      web: { boxShadow: '0 3px 4.5px rgba(0,0,0,0.3)' },
+      web: { boxShadow: '0 6px 20px rgba(10,140,127,0.35)' },
       default: {
-        elevation: 6, 
-        shadowColor: '#000', 
-        shadowOffset: { width: 0, height: 3 }, 
-        shadowOpacity: 0.3, 
-        shadowRadius: 4.5 
-      }
-    })
+        elevation: 6,
+        shadowColor: Luxe.colors.emerald,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.35,
+        shadowRadius: 8,
+      },
+    }),
+  },
+  fabBtnText: {
+    color: '#FFFFFF',
+    fontFamily: FontFamily.bold,
+    fontSize: 15,
   },
 });

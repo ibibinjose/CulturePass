@@ -16,6 +16,7 @@ import { verificationService } from '../services/verificationService';
 import { logger } from 'firebase-functions';
 import { runGeohashBackfill } from '../jobs/geohashBackfill';
 import { profilesService } from '../services/profiles';
+import { hostPageService } from '../services/host-page.service';
 
 // Define request body types for better type safety
 interface AdminRequest extends Request {
@@ -34,8 +35,9 @@ interface AdminRequest extends Request {
 
 export const adminRouter = Router();
 
-// All admin routes require at least 'admin' role
-adminRouter.use(requireRole('admin'));
+// Scope role guard to /admin/* only — a bare router.use() would block every
+// later-mounted /api route (e.g. /api/host-pages/*) for non-admin users.
+adminRouter.use('/admin', requireRole('admin'));
 
 /**
  * GET /api/admin/stats
@@ -799,6 +801,77 @@ adminRouter.put('/admin/verification/tasks/:id/checklist', async (req: Request, 
     const errorObj = err as { message?: string };
     const status = errorObj?.message?.includes('not found') ? 404 : 500;
     return res.status(status).json({ error: errorObj?.message || 'Failed to update checklist' });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Host Pages (unified Create a Page — admin moderation)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** GET /api/admin/host-pages/:id — fetch page for verification review */
+adminRouter.get('/admin/host-pages/:id', async (req: Request, res: Response) => {
+  if (!isFirestoreConfigured) return res.status(503).json({ error: 'Firestore unavailable' });
+  const pageId = (req.params['id'] as string) || '';
+  if (!pageId) return res.status(400).json({ error: 'Page id required' });
+  try {
+    const page = await hostPageService.getById(pageId);
+    if (!page) return res.status(404).json({ error: 'Page not found' });
+    return res.json(page);
+  } catch (err) {
+    logger.error('admin/host-pages/get', err);
+    return res.status(500).json({ error: 'Failed to fetch host page' });
+  }
+});
+
+/** POST /api/admin/host-pages/:id/block */
+adminRouter.post('/admin/host-pages/:id/block', async (req: Request, res: Response) => {
+  if (!isFirestoreConfigured) return res.status(503).json({ error: 'Firestore unavailable' });
+  const pageId = (req.params['id'] as string) || '';
+  const { reason } = req.body || {};
+  if (!pageId) return res.status(400).json({ error: 'Page id required' });
+  if (!reason || typeof reason !== 'string') {
+    return res.status(400).json({ error: 'reason is required' });
+  }
+  try {
+    const page = await hostPageService.blockPage(pageId, req.user!.id, reason);
+    if (!page) return res.status(404).json({ error: 'Page not found' });
+    await db.collection('auditLogs').add({
+      action: 'host_page_blocked',
+      userId: req.user!.id,
+      userName: req.user!.username || req.user!.id,
+      targetId: pageId,
+      targetType: 'hostPage',
+      metadata: { reason },
+      createdAt: nowIso(),
+    });
+    return res.json({ ok: true, page });
+  } catch (err) {
+    logger.error('admin/host-pages/block', err);
+    return res.status(500).json({ error: 'Failed to block host page' });
+  }
+});
+
+/** POST /api/admin/host-pages/:id/unblock */
+adminRouter.post('/admin/host-pages/:id/unblock', async (req: Request, res: Response) => {
+  if (!isFirestoreConfigured) return res.status(503).json({ error: 'Firestore unavailable' });
+  const pageId = (req.params['id'] as string) || '';
+  if (!pageId) return res.status(400).json({ error: 'Page id required' });
+  try {
+    const page = await hostPageService.unblockPage(pageId, req.user!.id);
+    if (!page) return res.status(404).json({ error: 'Page not found' });
+    await db.collection('auditLogs').add({
+      action: 'host_page_unblocked',
+      userId: req.user!.id,
+      userName: req.user!.username || req.user!.id,
+      targetId: pageId,
+      targetType: 'hostPage',
+      metadata: {},
+      createdAt: nowIso(),
+    });
+    return res.json({ ok: true, page });
+  } catch (err) {
+    logger.error('admin/host-pages/unblock', err);
+    return res.status(500).json({ error: 'Failed to unblock host page' });
   }
 });
 

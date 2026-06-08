@@ -1,14 +1,17 @@
 /**
- * Create navigation — canonical routes and legacy `/create/*` resolution.
+ * Create navigation — canonical routes and legacy redirects.
  *
- * Canonical UI: HostSpace Creation Lab (`CREATE_LAB_PATHNAME` + optional category segment).
- * Wizards: full-screen `/event/create`, `/(domain)/listing/create`, CultureMarket listing lab.
+ * Canonical: `/pages/create` (Create a Page selector + wizard; content via `?category=`).
+ * Wizards: `/event/create`, `/(domain)/listing/create`, `/pages/create/listing`.
  */
 
-/** HostSpace Creation Lab (category picker + gates into wizards). */
-export const CREATE_LAB_PATHNAME = '/hostspace/create' as const;
+/** Unified Create a Page + content launcher. */
+export const CREATE_LAB_PATHNAME = '/pages/create' as const;
 
-/** CultureMarket product/service/link wizard (nested under the lab stack). */
+/** @deprecated Use CREATE_LAB_PATHNAME — kept for legacy URL redirects. */
+export const LEGACY_CREATE_LAB_PATHNAME = '/hostspace/create' as const;
+
+/** CultureMarket product/service/link wizard. */
 export const CULTURE_MARKET_LISTING_LAB_PATHNAME = `${CREATE_LAB_PATHNAME}/listing` as const;
 
 /** Public path used in marketing / experienceNav for listing wizard. */
@@ -19,11 +22,24 @@ export const DOMAIN_LISTING_WIZARD_PATHNAME = '/(domain)/listing/create' as cons
 
 export const EVENT_WIZARD_PATHNAME = '/event/create' as const;
 
-/** `/hostspace/create/{segment}` — segment matches `CreateCategory.id` or aliases (see HostspaceCreateWorkspace). */
+/** Query-param category deep link — e.g. `/pages/create?category=event`. */
 export function createLabCategoryHref(segment: string): string {
   const id = segment.trim().replace(/^\/+|\/+$/g, '');
   if (!id) return CREATE_LAB_PATHNAME;
-  return `${CREATE_LAB_PATHNAME}/${id}`;
+  return `${CREATE_LAB_PATHNAME}?category=${encodeURIComponent(id)}`;
+}
+
+/** Page wizard deep link — e.g. `/pages/create?entityType=venue&template=indie-venue`. */
+export function createPageWizardHref(
+  entityType: string,
+  opts?: { template?: string; draftId?: string; pageId?: string; intent?: string },
+): string {
+  const qs = new URLSearchParams({ entityType });
+  if (opts?.template) qs.set('template', opts.template);
+  if (opts?.draftId) qs.set('draftId', opts.draftId);
+  if (opts?.pageId) qs.set('pageId', opts.pageId);
+  if (opts?.intent) qs.set('intent', opts.intent);
+  return `${CREATE_LAB_PATHNAME}?${qs.toString()}`;
 }
 
 type StringParams = Record<string, string | string[] | undefined>;
@@ -35,6 +51,32 @@ function firstString(v: string | string[] | undefined): string | undefined {
     return typeof x === 'string' ? x.trim() || undefined : undefined;
   }
   return undefined;
+}
+
+/** Build canonical `/pages/create?…` from legacy `/hostspace/create` params. */
+export function resolveLegacyHostspaceCreateHref(
+  params: StringParams,
+  pathSegment?: string,
+): string {
+  const qs = new URLSearchParams();
+
+  const category = pathSegment?.trim() || firstString(params.category);
+  if (category) qs.set('category', category);
+
+  const entityType =
+    firstString(params.entityType) ?? firstString(params.profileType) ?? firstString(params.pageType);
+  if (entityType) qs.set('entityType', entityType);
+
+  const draftId = firstString(params.draftId) ?? firstString(params.draft);
+  if (draftId) qs.set('draftId', draftId);
+
+  for (const key of ['template', 'pageId', 'intent', 'profileId'] as const) {
+    const v = firstString(params[key]);
+    if (v) qs.set(key, v);
+  }
+
+  const query = qs.toString();
+  return query ? `${CREATE_LAB_PATHNAME}?${query}` : CREATE_LAB_PATHNAME;
 }
 
 /** Params forwarded to `/event/create` when present on legacy URLs. */
@@ -91,9 +133,6 @@ const LEGACY_TYPE_TO_LISTING_ENTITY: Record<string, 'business' | 'venue' | 'arti
 /** Target for `<Redirect href={…} />` from legacy `/create/:type` routes. */
 export type LegacyCreateRedirect = { pathname: string; params?: Record<string, string> };
 
-/**
- * Resolves legacy `/create/:type` (+ optional query) to a concrete Expo Router location.
- */
 function paramsWithoutType(params: StringParams): StringParams {
   const { type: _ignored, ...rest } = params;
   void _ignored;
@@ -119,7 +158,7 @@ export function resolveLegacyCreateRedirect(typeRaw: string | undefined, params:
     normalized === 'organisation' ||
     normalized === 'organization'
   ) {
-    return { pathname: createLabCategoryHref('community') };
+    return { pathname: CREATE_LAB_PATHNAME, params: { category: 'community' } };
   }
 
   if (normalized === 'perk' || normalized === 'coupon' || normalized === 'voucher') {
@@ -154,7 +193,7 @@ export function resolveLegacyCreateRedirect(typeRaw: string | undefined, params:
   }
 
   if (LISTING_TYPES_FALLTHROUGH_LAB.has(normalized)) {
-    return { pathname: CREATE_LAB_PATHNAME };
+    return { pathname: CREATE_LAB_PATHNAME, params: { entityType: normalized === 'organiser' ? 'organiser' : normalized } };
   }
 
   return { pathname: CREATE_LAB_PATHNAME };

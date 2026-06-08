@@ -28,6 +28,7 @@ import {
   SignatureGradient,
 } from '@/design-system/tokens/theme';
 import type { ShopListing } from '@/shared/schema';
+import { navigateToCreateById } from '@/lib/creationRouting';
 
 // ─── Skeleton card ────────────────────────────────────────────────────────────
 
@@ -57,7 +58,7 @@ function SellCtaCard({
 }) {
   return (
     <Pressable
-      onPress={() => router.push('/hostspace/create?category=market-listing' as never)}
+      onPress={() => navigateToCreateById('market-listing', { source: 'discover_shop_rail' })}
       style={({ pressed }) => [styles.sellCard, { width, opacity: pressed ? 0.9 : 1 }]}
       accessibilityRole="button"
       accessibilityLabel="List your business on CultureMarket"

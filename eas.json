@@ -8,10 +8,17 @@
       "node": "22.14.0",
       "env": {
         "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD": "1",
-        "NPM_CONFIG_PRODUCTION": "false"
+        "NPM_CONFIG_PRODUCTION": "false",
+        "EXPO_PUBLIC_API_URL": "https://australia-southeast1-culturepass-4f264.cloudfunctions.net/api/",
+        "EXPO_PUBLIC_EAS_PROJECT_ID": "9dc511ee-ee3e-4798-ae29-30efc8f5343e",
+        "EXPO_PUBLIC_SITE_ORIGIN": "https://culturepass.app",
+        "EXPO_PUBLIC_STRIPE_MERCHANT_IDENTIFIER": "merchant.au.culturepass.app",
+        "EXPO_PUBLIC_POSTHOG_HOST": "https://us.i.posthog.com",
+        "EXPO_PUBLIC_USE_FIREBASE_EMULATORS": "false"
       }
     },
     "development": {
+      "extends": "base",
       "developmentClient": true,
       "distribution": "internal",
       "channel": "development",
@@ -25,7 +32,7 @@
         "buildType": "apk"
       },
       "env": {
-        "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD": "1"
+        "EXPO_PUBLIC_STRIPE_ANDROID_PAY_MODE": "test"
       }
     },
     "development-simulator": {
@@ -35,6 +42,7 @@
       }
     },
     "preview": {
+      "extends": "base",
       "distribution": "internal",
       "channel": "preview",
       "ios": {
@@ -44,13 +52,11 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://australia-southeast1-culturepass-4f264.cloudfunctions.net/api/",
-        "EXPO_PUBLIC_EAS_PROJECT_ID": "9dc511ee-ee3e-4798-ae29-30efc8f5343e",
-        "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD": "1",
-        "EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY": "pk_test_51TaSrKPjFeuRSdIYKNav3rkYyElZrGV51tvmLrNNKW6oqUD5F60x6vf9osoXNno1y7D4sxSpOkF3u98xiLeAVV2000FG7Crcnb"
+        "EXPO_PUBLIC_STRIPE_ANDROID_PAY_MODE": "test"
       }
     },
     "production": {
+      "extends": "base",
       "channel": "production",
       "ios": {
         "simulator": false
@@ -59,10 +65,7 @@
         "buildType": "app-bundle"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://australia-southeast1-culturepass-4f264.cloudfunctions.net/api/",
-        "EXPO_PUBLIC_EAS_PROJECT_ID": "9dc511ee-ee3e-4798-ae29-30efc8f5343e",
-        "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD": "1",
-        "EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY": "pk_test_51TaSrKPjFeuRSdIYKNav3rkYyElZrGV51tvmLrNNKW6oqUD5F60x6vf9osoXNno1y7D4sxSpOkF3u98xiLeAVV2000FG7Crcnb"
+        "EXPO_PUBLIC_STRIPE_ANDROID_PAY_MODE": "production"
       }
     }
   },

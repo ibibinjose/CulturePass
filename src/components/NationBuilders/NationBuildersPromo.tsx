@@ -18,6 +18,7 @@ import { useFeatureFlags } from '@/lib/feature-flags';
 import { M3Card } from '@/design-system/ui';
 import { M3Typography, Radius, CultureTokens } from '@/design-system/tokens/theme';
 import { LinearGradient } from 'expo-linear-gradient';
+import { navigateToPageProEntity } from '@/lib/creationRouting';
 
 interface NationBuildersPromoProps {
   variant?: 'compact' | 'full';
@@ -88,7 +89,7 @@ export function NationBuildersPromo({
     // For business acquisition goal: Prefer routing business owners toward the host/business creation flow.
     // Staff can still discover the program page for the staff-side story.
     // We pass an intent so future flows can show Nation Builder Partner messaging.
-    router.push('/hostspace/create?intent=nation-builder' as any);
+    navigateToPageProEntity('community', 'nation_builders_promo', { intent: 'nation-builder' });
   };
 
   // Gate: only non CulturePass+ users + admin flag controlled

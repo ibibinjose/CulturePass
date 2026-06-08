@@ -24,6 +24,8 @@ import { LikeToggle } from '@/design-system/ui/LikeToggle';
 import { EventPublisherLine } from '@/modules/events/components/list/EventPublisherLine';
 import { EventPublisherLogo } from '@/modules/events/components/list/EventPublisherLogo';
 import { CultureTagRow, mergeCultureTagFields } from '@/design-system/ui/CultureTag';
+import { CultureFlagBadge } from '@/components/culture/CultureFlagBadge';
+import { resolveEventCultureFlag } from '@/lib/cultureIdentity';
 import { CardTokens, CultureTokens, TextStyles, gradients, Luxe, LuxeTextStyles } from '@/design-system/tokens/theme';
 import { useSaved } from '@/contexts/SavedContext';
 import { useLikes } from '@/contexts/LikesContext';
@@ -118,6 +120,7 @@ function EventCardV2Inner({ event, isLive, canEdit, onEdit, onDelete }: EventCar
     event.ageSuitability && event.ageSuitability !== 'all' ? event.ageSuitability : null;
 
   const cultureTags = mergeCultureTagFields(event.cultureTag, event.cultureTags).slice(0, 1);
+  const cultureFlag = resolveEventCultureFlag(event);
 
   return (
     <View
@@ -150,6 +153,11 @@ function EventCardV2Inner({ event, isLive, canEdit, onEdit, onDelete }: EventCar
             colors={['transparent', 'rgba(0,0,0,0.6)']}
             style={StyleSheet.absoluteFill}
           />
+          {cultureFlag ? (
+            <View style={styles.cultureFlagWrap}>
+              <CultureFlagBadge emoji={cultureFlag} size="md" accessibilityLabel="Event culture flag" />
+            </View>
+          ) : null}
           {ageBadge ? (
             <View style={styles.ageBadgeWrap}>
               <Badge variant="error" shape="caps" size="sm">{ageBadge}</Badge>
@@ -353,6 +361,12 @@ const styles = StyleSheet.create({
   image: {
     width: '100%',
     height: '100%',
+  },
+  cultureFlagWrap: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    zIndex: 10,
   },
   ageBadgeWrap: {
     position: 'absolute',

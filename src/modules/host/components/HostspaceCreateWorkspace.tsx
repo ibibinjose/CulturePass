@@ -36,6 +36,8 @@ import {
   type CreateCategory,
 } from '@/modules/host/config/hostspaceCreateCategories.config';
 import { CREATE_LAB_PATHNAME } from '@/constants/navigation/createNav';
+import { navigateOnCategorySelect, navigateToCreate, navigateToEditListing } from '@/lib/creationRouting';
+import { captureCreationCatalogView } from '@/lib/creationAnalytics';
  
 const LazyHostspaceCreateListingsColumn = createLazyComponent(
   () => import('./HostspaceCreateListingsColumn'),
@@ -93,6 +95,10 @@ export function HostspaceCreateWorkspace({ initialCategory }: { initialCategory?
   }, [initialSelected]);
 
   useEffect(() => {
+    captureCreationCatalogView('creation_lab');
+  }, []);
+
+  useEffect(() => {
     if (!canMinimizeNav) setNavMinimized(false);
   }, [canMinimizeNav]);
 
@@ -139,18 +145,7 @@ export function HostspaceCreateWorkspace({ initialCategory }: { initialCategory?
     haptic();
     setSelectedId(category.id);
     setShowSelector(false);
-
-    const RICH_PROFILE_TYPES = ['community', 'organiser', 'venue', 'business', 'artist', 'professional'];
-    if (RICH_PROFILE_TYPES.includes(category.entityType as string)) {
-      router.push(`/hostspace/create?profileType=${category.entityType}` as never);
-      return;
-    }
-
-    if (category.group === 'market') {
-      router.replace({ pathname: CREATE_LAB_PATHNAME, params: { category: category.id } } as never);
-      return;
-    }
-    router.replace(category.route as never);
+    navigateOnCategorySelect(category, 'creation_lab_select');
   };
 
   const openCreateFlow = () => {
@@ -163,13 +158,6 @@ export function HostspaceCreateWorkspace({ initialCategory }: { initialCategory?
       Alert.alert('Select a profile', 'Please select or create a host profile first.');
       return;
     }
-    if (selected.entityType === 'event') {
-      router.push({
-        pathname: '/event/create',
-        params: selectedParentProfile ? { publisherProfileId: selectedParentProfile.id } : {},
-      } as never);
-      return;
-    }
     if (selected.group === 'market' || selected.contentKind === 'market') {
       const subType = selected.subCategory as ShopListingType | undefined;
       openMarketWizard({
@@ -177,19 +165,11 @@ export function HostspaceCreateWorkspace({ initialCategory }: { initialCategory?
       });
       return;
     }
-    const params: Record<string, string> = {
-      listingEntityType: selected.entityType,
-    };
-    if (selected.subCategory) {
-      params.listingSubCategory = selected.subCategory;
-    }
-    if (selectedParentProfile) {
-      params.publisherProfileId = selectedParentProfile.id;
-    }
-    router.push({
-      pathname: '/(domain)/listing/create',
-      params,
-    } as never);
+    navigateToCreate(selected, {
+      source: 'creation_lab_launch',
+      parentProfileId: selectedParentProfile?.id,
+      trackSelect: false,
+    });
   };
 
   const { data: myProfiles = [], isLoading: profilesLoading } = useQuery({
@@ -288,9 +268,8 @@ export function HostspaceCreateWorkspace({ initialCategory }: { initialCategory?
 
   const onEditListing = (profile: Profile) => {
     haptic();
-    router.push({
-      pathname: '/(domain)/listing/create',
-      params: { listingEntityType: profile.entityType, editId: profile.id },
+    navigateToEditListing(profile.id, profile.entityType, 'creation_lab_edit_listing', {
+      subCategory: profile.subCategory ?? profile.category,
     });
   };
 

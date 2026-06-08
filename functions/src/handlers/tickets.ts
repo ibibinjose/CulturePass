@@ -25,6 +25,10 @@ import { nowIso, qparam, generateSecureId, awardRewardsPoints,
   captureRouteError,
 } from './utils';
 import {
+  allowScannerMockCodes,
+  legacyMockTicketScanResponse,
+} from '../dev/demoFixtures';
+import {
   canIssueDirectTicket,
   PromoCodeError,
   resolveTicketOrderPricingWithPromo,
@@ -128,67 +132,19 @@ ticketsRouter.post(
   async (req: Request, res: Response) => {
     const qrCode = String(req.body?.ticketCode ?? '').trim();
     if (!qrCode) return res.status(400).json({ valid: false, error: 'ticketCode is required' });
+    const qrLower = qrCode.toLowerCase();
 
-    // Local development/mock fallback when firestore is not configured OR code is a mock code
-    if (!isFirestoreConfigured || qrCode.startsWith('mock-')) {
-      if (qrCode.startsWith('mock-used')) {
-        return res.json({
-          valid: false,
-          outcome: 'duplicate',
-          message: 'Ticket has already been scanned',
-          ticket: {
-            id: 'mock-used-ticket',
-            eventTitle: 'Symphony Under the Stars',
-            eventDate: 'Friday, 12 Dec 2026',
-            eventTime: '7:30 PM',
-            eventVenue: 'Sydney Opera House',
-            tierName: 'General Admission',
-            ticketCode: qrCode,
-            status: 'used',
-          }
-        });
-      }
-      if (qrCode.startsWith('mock-invalid')) {
-        return res.json({
-          valid: false,
-          outcome: 'rejected',
-          message: 'Invalid ticket code',
-        });
-      }
-      if (qrCode.startsWith('mock-cancelled')) {
-        return res.json({
-          valid: false,
-          outcome: 'rejected',
-          message: 'Ticket has been cancelled',
-          ticket: {
-            id: 'mock-cancelled-ticket',
-            eventTitle: 'Symphony Under the Stars',
-            eventDate: 'Friday, 12 Dec 2026',
-            eventTime: '7:30 PM',
-            eventVenue: 'Sydney Opera House',
-            tierName: 'VIP Lounge',
-            ticketCode: qrCode,
-            status: 'cancelled',
-          }
-        });
-      }
-      if (qrCode.startsWith('mock-')) {
-        return res.json({
-          valid: true,
-          outcome: 'accepted',
-          message: 'Mock ticket scanned successfully',
-          ticket: {
-            id: 'mock-ticket-id',
-            eventTitle: 'Symphony Under the Stars',
-            eventDate: 'Friday, 12 Dec 2026',
-            eventTime: '7:30 PM',
-            eventVenue: 'Sydney Opera House',
-            tierName: 'VIP Lounge',
-            ticketCode: qrCode,
-            status: 'confirmed',
-          }
-        });
-      }
+    if (qrLower.startsWith('mock-') && (!isFirestoreConfigured || allowScannerMockCodes())) {
+      const mockResponse = legacyMockTicketScanResponse(qrCode, qrLower);
+      if (mockResponse) return res.json(mockResponse);
+      return res.json({
+        valid: false,
+        outcome: 'rejected',
+        message: 'Invalid ticket code',
+      });
+    }
+
+    if (!isFirestoreConfigured) {
       return res.json({
         valid: false,
         outcome: 'rejected',

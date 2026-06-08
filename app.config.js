@@ -59,6 +59,13 @@ const withWidgetVersionSync = (config) => {
 export default function(appConfig) {
   const { config } = appConfig || {};
   
+  const mapsPlugin = [
+    "react-native-maps",
+    {
+      iosGoogleMapsApiKey: "$(EXPO_PUBLIC_GOOGLE_MAPS_KEY)"
+    }
+  ];
+
   // Prepare plugins array conditionally
   const basePlugins = [
     [
@@ -116,12 +123,7 @@ export default function(appConfig) {
     "expo-localization",
     // Temporarily disabled due to prebuild --clean failure (see REBUILD.md)
     // "@bacons/apple-targets",
-    [
-      "react-native-maps",
-      {
-        iosGoogleMapsApiKey: "$(EXPO_PUBLIC_GOOGLE_MAPS_KEY)"
-      }
-    ],
+    ...(shouldExcludeMapsPlugin ? [] : [mapsPlugin]),
     "@react-native-community/datetimepicker",
     [
       "expo-build-properties",
@@ -234,7 +236,7 @@ export default function(appConfig) {
       ],
       name: "CulturePass",
       slug: "culturepass",
-      version: "1.3.1",
+      version: "1.3.2",
       description: "Discover cultural events and communities built for diaspora cities. Organizers reach the right audience; attendees find festivals, tickets, and belonging in one place.",
       orientation: "portrait",
       icon: "./assets/images/icon.png",
@@ -248,7 +250,7 @@ export default function(appConfig) {
       ios: {
         supportsTablet: true,
         bundleIdentifier: "au.culturepass.app",
-        buildNumber: "27",
+        buildNumber: "28",
         appleTeamId: "26WGXSNG58",
         entitlements: {
           "com.apple.developer.in-app-payments": [
@@ -349,7 +351,7 @@ export default function(appConfig) {
           "android.permission.USE_FINGERPRINT",
           "android.permission.READ_MEDIA_IMAGES"
         ],
-        versionCode: 6
+        versionCode: 7
       },
       web: {
         favicon: "./assets/images/favicon.png",
@@ -377,7 +379,7 @@ export default function(appConfig) {
         },
       },
       owner: "cultureos",
-      runtimeVersion: "1.3.0",
+      runtimeVersion: "1.3.2",
       updates: {
         url: "https://u.expo.dev/9dc511ee-ee3e-4798-ae29-30efc8f5343e"
       }

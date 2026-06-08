@@ -19,8 +19,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useState } from 'react';
 import { Button } from '@/design-system/ui/Button';
-import { CultureTokens, FontFamily, Radius, SignatureGradient } from '@/design-system/tokens/theme';
-import { SCAN_WELL, SCAN_FRAME_SIZE } from './scannerTheme';
+import { FontFamily, Radius } from '@/design-system/tokens/theme';
+import {
+  SCAN_WELL,
+  SCAN_FRAME_SIZE,
+  scanShellGradient,
+  scanAccentGradient,
+  scanSubmitColor,
+} from './scannerTheme';
 import type { ScanMode } from './types';
 
 const CORNER = 22;
@@ -49,25 +55,38 @@ export function ScannerViewport({
 }: Props) {
   const canSubmit = value.trim().length > 0 && !loading;
   const [focused, setFocused] = useState(false);
+  const accent = scanSubmitColor(mode);
+  const accentGradient = scanAccentGradient(mode);
 
   const pulse = useSharedValue(1);
+  const scanLineY = useSharedValue(0);
+
   useEffect(() => {
     pulse.value = withRepeat(
       withTiming(1.04, { duration: 1400, easing: Easing.inOut(Easing.sin) }),
       -1,
       true,
     );
-  }, [pulse]);
+    scanLineY.value = withRepeat(
+      withTiming(SCAN_FRAME_SIZE - 48, { duration: 1800, easing: Easing.inOut(Easing.sin) }),
+      -1,
+      true,
+    );
+  }, [pulse, scanLineY]);
 
   const framePulse = useAnimatedStyle(() => ({
     transform: [{ scale: pulse.value }],
   }));
 
+  const scanLineStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: scanLineY.value }],
+  }));
+
   return (
     <Animated.View entering={FadeIn.duration(280)} style={styles.shell}>
       <LinearGradient
-        colors={['#1a1528', SCAN_WELL.bg, '#0a0908']}
-        locations={[0, 0.45, 1]}
+        colors={scanShellGradient(mode)}
+        locations={[0, 0.5, 1]}
         style={StyleSheet.absoluteFill}
       />
 
@@ -79,16 +98,16 @@ export function ScannerViewport({
         accessibilityLabel="Open camera scanner"
       >
         <Animated.View style={[styles.frame, framePulse]}>
-          <Corner position="tl" />
-          <Corner position="tr" />
-          <Corner position="bl" />
-          <Corner position="br" />
+          <Corner position="tl" accent={accent} />
+          <Corner position="tr" accent={accent} />
+          <Corner position="bl" accent={accent} />
+          <Corner position="br" accent={accent} />
+          {!cameraDenied ? (
+            <Animated.View style={[styles.scanLine, { backgroundColor: accent }, scanLineStyle]} />
+          ) : null}
           <View style={styles.frameCenter}>
             <View style={styles.iconRing}>
-              <LinearGradient
-                colors={SignatureGradient as unknown as [string, string]}
-                style={StyleSheet.absoluteFill}
-              />
+              <LinearGradient colors={accentGradient} style={StyleSheet.absoluteFill} />
               <Ionicons name="scan" size={36} color="#FFFFFF" />
             </View>
             <Text style={styles.frameTitle}>
@@ -110,10 +129,12 @@ export function ScannerViewport({
           <View style={styles.dockLine} />
         </View>
 
-        <View style={[
-          styles.inputShell,
-          focused && { borderColor: CultureTokens.violet, borderWidth: 1.5 }
-        ]}>
+        <View
+          style={[
+            styles.inputShell,
+            focused && { borderColor: accent, borderWidth: 1.5 },
+          ]}
+        >
           <TextInput
             ref={inputRef}
             style={styles.input}
@@ -133,7 +154,7 @@ export function ScannerViewport({
             disabled={!canSubmit}
             style={({ pressed }) => [
               styles.submitBtn,
-              !canSubmit && styles.submitBtnDisabled,
+              { backgroundColor: canSubmit ? accent : 'rgba(255,255,255,0.08)' },
               pressed && canSubmit && { opacity: 0.9 },
             ]}
             accessibilityRole="button"
@@ -154,18 +175,30 @@ export function ScannerViewport({
             fullWidth
             leftIcon="camera-outline"
             onPress={onOpenCamera}
-            style={styles.cameraBtn}
+            style={[styles.cameraBtn, { borderColor: accent + '44' }]}
             textStyle={{ color: SCAN_WELL.text }}
           >
             Open camera
           </Button>
         )}
+
+        {__DEV__ && mode === 'tickets' ? (
+          <Text style={styles.devHint}>
+            Dev tip: scan CP-T-DEMO01 (valid), CP-T-DEMO02 (used), or mock-valid in emulator only.
+          </Text>
+        ) : null}
       </View>
     </Animated.View>
   );
 }
 
-function Corner({ position }: { position: 'tl' | 'tr' | 'bl' | 'br' }) {
+function Corner({
+  position,
+  accent,
+}: {
+  position: 'tl' | 'tr' | 'bl' | 'br';
+  accent: string;
+}) {
   const isTop = position.startsWith('t');
   const isRight = position.endsWith('r');
 
@@ -176,10 +209,10 @@ function Corner({ position }: { position: 'tl' | 'tr' | 'bl' | 'br' }) {
         isTop ? styles.cornerTop : styles.cornerBottom,
         isRight ? styles.cornerRight : styles.cornerLeft,
         {
-          borderTopColor: isTop ? SCAN_WELL.corner : 'transparent',
-          borderBottomColor: !isTop ? SCAN_WELL.corner : 'transparent',
-          borderLeftColor: !isRight ? SCAN_WELL.corner : 'transparent',
-          borderRightColor: isRight ? SCAN_WELL.corner : 'transparent',
+          borderTopColor: isTop ? accent : 'transparent',
+          borderBottomColor: !isTop ? accent : 'transparent',
+          borderLeftColor: !isRight ? accent : 'transparent',
+          borderRightColor: isRight ? accent : 'transparent',
         },
       ]}
     />
@@ -208,6 +241,14 @@ const styles = StyleSheet.create({
     position: 'relative',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  scanLine: {
+    position: 'absolute',
+    left: 14,
+    right: 14,
+    height: 2,
+    borderRadius: 1,
+    opacity: 0.85,
   },
   frameCenter: {
     alignItems: 'center',
@@ -302,14 +343,17 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(147,51,234,0.9)',
-  },
-  submitBtnDisabled: {
-    backgroundColor: 'rgba(255,255,255,0.08)',
   },
   cameraBtn: {
     backgroundColor: 'rgba(255,255,255,0.06)',
     borderWidth: 1,
-    borderColor: SCAN_WELL.border,
+  },
+  devHint: {
+    color: SCAN_WELL.textMuted,
+    fontSize: 11,
+    fontFamily: FontFamily.regular,
+    textAlign: 'center',
+    lineHeight: 15,
+    paddingHorizontal: 8,
   },
 });

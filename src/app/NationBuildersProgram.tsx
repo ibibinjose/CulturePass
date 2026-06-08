@@ -29,6 +29,7 @@ import { GlassView } from '@/design-system/ui/GlassView';
 import { Luxe, luxeDark, LuxeTextStyles } from '@/design-system/tokens/luxeHeritage';
 import { CultureTokens, FontFamily, Radius, Spacing } from '@/design-system/tokens/theme';
 import { APP_NAME } from '@/lib/app-meta';
+import { navigateToPageProEntity } from '@/lib/creationRouting';
 
 const NATION_BUILDERS_HEAD_TITLE = `Nation Builders Program · ${APP_NAME}`;
 const NATION_BUILDERS_HEAD_DESC =
@@ -41,7 +42,7 @@ export default function NationBuildersProgramScreen() {
   const insets = useSafeAreaInsets();
 
   const handleJoinPress = () => {
-    router.push('/hostspace/create?intent=nation-builder' as any);
+    navigateToPageProEntity('community', 'nation_builders_program', { intent: 'nation-builder' });
   };
 
   const handleStaffClaim = () => {

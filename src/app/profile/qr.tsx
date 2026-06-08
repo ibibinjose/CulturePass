@@ -47,6 +47,7 @@ import { AppHeaderBar } from '@/modules/core/ui/AppHeaderBar';
 import { modulesApi, ApiError } from '@/modules/api';
 import { siteUrl } from '@/lib/publicPaths';
 import { openExternalUrl } from '@/lib/openExternalUrl';
+import { formatWalletError } from '@/lib/walletErrors';
 import { useAuth } from '@/lib/auth';
 import { AuthGuard } from '@/modules/core/auth/AuthGuard';
 import { TIER_CFG } from '@/modules/profile/components/tabs/ProfileUtils';
@@ -632,13 +633,28 @@ export default function QRScreen() {
     setIsApplePending(true);
     try {
       const result = await modulesApi.wallet.businessCardApple();
-      const opened = await openExternalUrl(result.url, { failureTitle: 'Could not open Apple Wallet' });
-      if (!opened) throw new Error('Unable to open Apple Wallet pass.');
+      if (Platform.OS === 'web' && typeof document !== 'undefined') {
+        const anchor = document.createElement('a');
+        anchor.href = result.url;
+        anchor.rel = 'noopener noreferrer';
+        anchor.download = 'CulturePass.pkpass';
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+      } else {
+        const opened = await openExternalUrl(result.url, { failureTitle: 'Could not open Apple Wallet' });
+        if (!opened) throw new Error('Unable to open Apple Wallet pass.');
+      }
       if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      showFlash('success', 'Apple Wallet business card opened');
-    } catch (err: any) {
+      showFlash(
+        'success',
+        Platform.OS === 'web'
+          ? 'Download started — open the .pkpass file to add to Apple Wallet (Safari on Mac/iPhone).'
+          : 'Apple Wallet pass opened',
+      );
+    } catch (err: unknown) {
       if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      showFlash('error', err instanceof Error ? err.message : 'Unable to open Apple Wallet pass.');
+      showFlash('error', formatWalletError(err, 'apple'));
     } finally {
       setIsApplePending(false);
     }
@@ -652,10 +668,10 @@ export default function QRScreen() {
       const opened = await openExternalUrl(result.url, { failureTitle: 'Could not open Google Wallet' });
       if (!opened) throw new Error('Unable to open Google Wallet pass.');
       if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      showFlash('success', 'Google Wallet business card opened');
-    } catch (err: any) {
+      showFlash('success', 'Google Wallet save page opened');
+    } catch (err: unknown) {
       if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      showFlash('error', err instanceof Error ? err.message : 'Unable to open Google Wallet pass.');
+      showFlash('error', formatWalletError(err, 'google'));
     } finally {
       setIsGooglePending(false);
     }

@@ -130,8 +130,33 @@ function getAppleCertificates(): AppleCertificates {
   };
 }
 
-function buildProfileUrl(username: string): string {
-  return `${getPublicAppOrigin()}/u/${encodeURIComponent(username)}`;
+function buildProfileUrl(user: Pick<WalletPassUser, 'username' | 'id' | 'culturePassId'>): string {
+  const cpid = String(user.culturePassId ?? '').trim().toUpperCase();
+  if (/^CP-[A-Z0-9]{6,}$/.test(cpid)) {
+    return `${getPublicAppOrigin()}/cpu/${encodeURIComponent(cpid)}`;
+  }
+  const username = String(user.username ?? user.id);
+  return `${getPublicAppOrigin()}/cpu/${encodeURIComponent(username)}`;
+}
+
+function isMockAppleConfiguration(): boolean {
+  // Local mock script uses the same self-signed cert for WWDR and signer.
+  const signerCert = getEnvVal('APPLE_PASS_SIGNER_CERT_PEM').trim();
+  const wwdrCert = getEnvVal('APPLE_WWDR_CERT_PEM').trim();
+  return Boolean(signerCert && wwdrCert && signerCert === wwdrCert);
+}
+
+function isMockGoogleConfiguration(): boolean {
+  const issuer = getEnvVal('GOOGLE_WALLET_ISSUER_ID').trim();
+  const email = getEnvVal('GOOGLE_WALLET_SERVICE_ACCOUNT_EMAIL').trim();
+  if (issuer === '1234567890123456789') return true;
+  if (email.includes('local-mock@')) return true;
+  return false;
+}
+
+/** True when any platform still uses local mock credentials. */
+export function isMockWalletConfiguration(): boolean {
+  return isMockAppleConfiguration() || isMockGoogleConfiguration();
 }
 
 export function buildApplePassSerialNumber(userId: string): string {
@@ -217,7 +242,8 @@ async function getGoogleAccessToken(config: GoogleServiceAccountConfig): Promise
   const assertion = jwt.sign(
     {
       iss: config.serviceAccountEmail,
-      scope: 'https://www.googleapis.com/auth/wallet_object',
+      sub: config.serviceAccountEmail,
+      scope: 'https://www.googleapis.com/auth/wallet_object.issuer',
       aud: GOOGLE_OAUTH_TOKEN_URL,
       iat: now,
       exp: now + 3600,
@@ -314,7 +340,7 @@ export async function createGoogleBusinessCardSaveUrl(user: WalletPassUser): Pro
   const username = String(user.username ?? user.id);
   const displayName = String(user.displayName ?? username);
   const objectId = `${config.issuerId}.${slugify(`${username}-${randomUUID()}`).slice(0, 48)}`;
-  const profileUrl = buildProfileUrl(username);
+  const profileUrl = buildProfileUrl(user);
   const tier = (user.tier || 'free').toLowerCase();
 
   // Tier-aware colors for Google Wallet (match Apple + brand)
@@ -414,7 +440,7 @@ export async function generateAppleBusinessCardPass(user: WalletPassUser): Promi
 
   const username = String(user.username ?? user.id);
   const displayName = String(user.displayName ?? username);
-  const profileUrl = buildProfileUrl(username);
+  const profileUrl = buildProfileUrl(user);
   const culturePassId = String(user.culturePassId ?? `CP-${user.id}`);
   const tier = (user.tier || 'free').toLowerCase();
   const serialNumber = buildApplePassSerialNumber(user.id);
@@ -833,11 +859,13 @@ const GOOGLE_WALLET_CORE = [
 const GOOGLE_WALLET_BUSINESS_CARD_EXTRA = ['GOOGLE_WALLET_GENERIC_CLASS_ID'] as const;
 
 export function getWalletPassReadiness(): {
-  apple: { ready: boolean; missing: string[] };
+  apple: { ready: boolean; missing: string[]; mockCredentials?: boolean };
   /** Enough to issue event tickets + create ticket Generic class. */
-  google: { ready: boolean; missing: string[] };
+  google: { ready: boolean; missing: string[]; mockCredentials?: boolean };
   /** Includes Generic class id required for the member business card save URL. */
-  googleBusinessCard: { ready: boolean; missing: string[] };
+  googleBusinessCard: { ready: boolean; missing: string[]; mockCredentials?: boolean };
+  mockCredentials: boolean;
+  publicOrigin: string;
 } {
   const appleMissing = APPLE_WALLET_REQUIRED.filter((k) => !getEnvVal(k).trim());
   const googleCoreMissing = GOOGLE_WALLET_CORE.filter((k) => !getEnvVal(k).trim());
@@ -845,9 +873,18 @@ export function getWalletPassReadiness(): {
     ...googleCoreMissing,
     ...GOOGLE_WALLET_BUSINESS_CARD_EXTRA.filter((k) => !getEnvVal(k).trim()),
   ];
+  const appleMockCredentials = isMockAppleConfiguration();
+  const googleMockCredentials = isMockGoogleConfiguration();
+  const mockCredentials = appleMockCredentials || googleMockCredentials;
   return {
-    apple: { ready: appleMissing.length === 0, missing: appleMissing },
-    google: { ready: googleCoreMissing.length === 0, missing: googleCoreMissing },
-    googleBusinessCard: { ready: googleBusinessMissing.length === 0, missing: googleBusinessMissing },
+    apple: { ready: appleMissing.length === 0, missing: appleMissing, mockCredentials: appleMockCredentials },
+    google: { ready: googleCoreMissing.length === 0, missing: googleCoreMissing, mockCredentials: googleMockCredentials },
+    googleBusinessCard: {
+      ready: googleBusinessMissing.length === 0,
+      missing: googleBusinessMissing,
+      mockCredentials: googleMockCredentials,
+    },
+    mockCredentials,
+    publicOrigin: getPublicAppOrigin(),
   };
 }

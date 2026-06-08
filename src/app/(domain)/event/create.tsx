@@ -32,6 +32,15 @@ import { getCurrencyForCountry } from '@/lib/dateUtils';
 import { useAuth } from '@/lib/auth';
 import { eventPaths } from '@/modules/events/services/navigation';
 import { useEventCreateDraftPersistence } from '@/modules/events/hooks/useEventCreateDraftPersistence';
+import {
+  captureCreationPublishAttempt,
+  captureCreationPublishError,
+  captureCreationPublishSuccess,
+  captureCreationWizardOpen,
+  captureCreationWizardStep,
+  captureMonetizationImpression,
+} from '@/lib/creationAnalytics';
+import { findCategory, getCategoryDataflow } from '@/modules/host/config/hostspaceCreateCategories.config';
 
 import { getStyles } from '@/modules/events/components/create/styles';
 import {
@@ -419,15 +428,46 @@ export default function CreateEventScreen() {
       },
       cultureTagIds: event.cultureTag ?? [],
       languageTagIds: event.languageTags ?? [],
+      indigenousTags: event.indigenousTags ?? [],
+      nationalityId: event.nationalityId ?? '',
+      isIndigenousOwned: event.isIndigenousOwned ?? false,
       accessibilityIds: event.accessibility ?? [],
       cultureTodayPromo: (event.tags ?? []).includes(CULTURE_TODAY_EVENT_TAG),
     }));
     setHydratedFromExisting(true);
   }, [isEditing, hydratedFromExisting, existingEventQuery.data]);
 
+  const eventCreationCtx = useMemo(() => {
+    const flow = getCategoryDataflow(findCategory('event'));
+    return {
+      categoryId: 'event',
+      categoryLabel: 'Event',
+      layer: flow.layer,
+      wizard: flow.wizard,
+      storage: flow.storage,
+      manageTab: flow.manageTab,
+      source: isEditing ? 'event_edit' : 'event_wizard',
+      parentProfileId: form.publisherProfileId || undefined,
+      entityType: 'event',
+    };
+  }, [form.publisherProfileId, isEditing]);
+
+  useEffect(() => {
+    captureCreationWizardOpen(eventCreationCtx);
+  }, [eventCreationCtx]);
+
+  useEffect(() => {
+    captureCreationWizardStep({
+      ...eventCreationCtx,
+      stepId: step,
+      stepIndex,
+    });
+  }, [step, stepIndex, eventCreationCtx]);
+
   // ── Mutation ──────────────────────────────────────────────────────────────
   const { mutate: createEvent, isPending } = useMutation({
     mutationFn: async () => {
+      captureCreationPublishAttempt(eventCreationCtx);
       const isTicketed = form.entryType === 'ticketed';
       const startDateIso = toIsoDate(form.date) ?? form.date;
       const endDateIso = toIsoDate(form.endDate);
@@ -476,6 +516,9 @@ export default function CreateEventScreen() {
           : undefined,
         cultureTag:  buildCultureTagPayload(form),
         languageTags: form.languageTagIds,
+        indigenousTags: form.indigenousTags.length ? form.indigenousTags : undefined,
+        nationalityId: form.nationalityId.trim() || undefined,
+        isIndigenousOwned: form.isIndigenousOwned || undefined,
         accessibility: form.accessibilityIds,
         ...(form.cultureTodayPromo ? { tags: [CULTURE_TODAY_EVENT_TAG] } : {}),
         artists: form.artists.length > 0
@@ -515,6 +558,19 @@ export default function CreateEventScreen() {
       return draft;
     },
     onSuccess: (event) => {
+      captureCreationPublishSuccess({
+        ...eventCreationCtx,
+        entityId: event.id,
+        heritage: {
+          nationalityId: form.nationalityId.trim() || undefined,
+          indigenousTags: form.indigenousTags,
+          isIndigenousOwned: form.isIndigenousOwned,
+          cultureTagCount: form.cultureTagIds.length,
+        },
+      });
+      if (form.entryType === 'ticketed') {
+        captureMonetizationImpression('ticket_commission', 'event_publish_success');
+      }
       queryClient.invalidateQueries({ queryKey: ['/api/events'] });
       if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       if (isEditing) {
@@ -530,6 +586,7 @@ export default function CreateEventScreen() {
         return;
       }
       const message = err instanceof Error ? err.message : 'Please try again.';
+      captureCreationPublishError({ ...eventCreationCtx, errorMessage: message });
       setPublishError(message);
       if (Platform.OS !== 'web') Alert.alert('Could not create event', message);
     },
@@ -829,6 +886,9 @@ export default function CreateEventScreen() {
                 toggleAccessibilityTag={toggleAccessibilityTag}
                 haptic={haptic}
                 initialNationalityId={onboardingState.nationalityId}
+                onCultureIdentityChange={(patch) => {
+                  setForm((prev) => ({ ...prev, ...patch }));
+                }}
                 onCultureTodayToggle={() => {
                   haptic();
                   setField('cultureTodayPromo', !form.cultureTodayPromo);
@@ -875,6 +935,7 @@ export default function CreateEventScreen() {
                 onPress={goNext}
                 disabled={isPending || imageUploading}
                 style={[s.navNext, { flex: stepIndex > 0 ? 1 : undefined }]}
+                testID={step === 'review' ? 'event-wizard-publish' : 'event-wizard-continue'}
               >
                 {isPending ? (
                   <ActivityIndicator size="small" color="#fff" />

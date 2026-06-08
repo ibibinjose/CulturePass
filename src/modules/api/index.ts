@@ -37,6 +37,7 @@ export const modulesApi = {
   rewards: legacyApi.rewards,
   perks: legacyApi.perks,
   profiles: legacyApi.profiles,
+  hostPages: legacyApi.hostPages,
   communities: legacyApi.communities,
   privacy: legacyApi.privacy,
   account: legacyApi.account,

@@ -491,6 +491,21 @@ service cloud.firestore {
       allow read, update, delete: if isAdminLike();
     }
 
+    // ── Host Pages (unified Create a Page — API-first, no direct client writes) ─
+    match /hostPages/{pageId} {
+      allow read: if signedIn() && (
+        resource.data.ownerId == uid()
+        || resource.data.status == 'published'
+        || isAdminLike()
+      );
+      allow write: if false; // Cloud Functions only (/api/host-pages/*)
+    }
+
+    match /hostPageDrafts/{draftId} {
+      allow read: if signedIn() && (resource.data.userId == uid() || isAdminLike());
+      allow write: if false; // Cloud Functions only
+    }
+
     // ── Catch-all deny ────────────────────────────────────────────────────────
     match /{document=**} {
       allow read, write: if false;

@@ -1,10 +1,9 @@
-import React, { useMemo, useState } from 'react';
-import { View, Text, Pressable, ScrollView, TextInput } from 'react-native';
+import React from 'react';
+import { View, Text, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { CultureTokens } from '@/design-system/tokens/theme';
 import { useColors } from '@/hooks/useColors';
-import { ALL_NATIONALITIES, getCulturesForNationality, CULTURES, type Nationality } from '@/constants/cultures';
-import { COMMON_LANGUAGES } from '@/constants/languages';
+import { CultureIndigenousFields } from '@/components/culture/CultureIndigenousFields';
 import { FormData, ACCESSIBILITY_OPTIONS } from './types';
 import { SubmitCard, SubmitSectionLabel, SubmitField } from '@/components/submit/FormPrimitives';
 import type { CreateStyles } from './styles';
@@ -22,190 +21,55 @@ interface Props {
   initialNationalityId?: string | null;
   onCultureTodayToggle: () => void;
   onCultureXInviteToggle: () => void;
+  onCultureIdentityChange: (patch: Partial<Pick<FormData, 'nationalityId' | 'cultureTagIds' | 'indigenousTags' | 'languageTagIds' | 'isIndigenousOwned'>>) => void;
 }
 
 export function StepCulture({
   form,
   colors,
   s,
-  toggleCultureTag,
-  toggleLanguageTag,
   toggleAccessibilityTag,
   haptic,
   initialNationalityId,
   onCultureTodayToggle,
   onCultureXInviteToggle,
+  onCultureIdentityChange,
 }: Props) {
-  const [cultureNationalityId, setCultureNationalityId] = useState<string | null>(initialNationalityId ?? null);
-  const [nationalitySearch, setNationalitySearch] = useState('');
-
-  const filteredNationalities = useMemo((): Nationality[] => {
-    const q = nationalitySearch.trim().toLowerCase();
-    if (!q) return ALL_NATIONALITIES.slice(0, 30);
-    return ALL_NATIONALITIES.filter(
-      (n) => n.label.toLowerCase().includes(q) || n.id.includes(q),
-    );
-  }, [nationalitySearch]);
-
-  const filteredCultures = useMemo(() => {
-    if (cultureNationalityId) return getCulturesForNationality(cultureNationalityId);
-    return ALL_NATIONALITIES.slice(0, 8)
-      .flatMap((n) => getCulturesForNationality(n.id))
-      .slice(0, 24);
-  }, [cultureNationalityId]);
-
-  const suggestedLanguageIds = useMemo(() => {
-    const ids = new Set<string>(['eng']);
-    form.cultureTagIds.forEach((cid) => {
-      const culture = CULTURES[cid];
-      if (culture?.primaryLanguageId) ids.add(culture.primaryLanguageId);
-    });
-    return ids;
-  }, [form.cultureTagIds]);
-
   return (
     <SubmitCard colors={colors} hPad={0}>
       <SubmitSectionLabel label="Culture & Discoverability" icon="earth-outline" accent={CultureTokens.indigo} colors={colors} />
-      <Text style={[s.sectionNote, { color: colors.textSecondary }]}>
-        Tag this event so people from specific cultures can discover it. Search for your community (e.g. Indian, Chinese, Greek) to see relevant tags.
-      </Text>
 
-      {/* ── 1. Nationality search ─────────────────────────────────────────── */}
-      <SubmitField label="1. Select Origin / Background">
-        <View style={[s.natSearchWrap, { borderColor: colors.border, backgroundColor: colors.surfaceElevated }]}>
-          <Ionicons name="search" size={16} color={colors.textSecondary} />
-          <TextInput
-            style={[s.natSearchInput, { color: colors.text }]}
-            value={nationalitySearch}
-            onChangeText={setNationalitySearch}
-            placeholder="e.g. Indian, Chinese, Greek…"
-            placeholderTextColor={colors.textTertiary}
-            returnKeyType="done"
-          />
-          {nationalitySearch.length > 0 && (
-            <Pressable onPress={() => setNationalitySearch('')} hitSlop={8}>
-              <Ionicons name="close-circle" size={16} color={colors.textSecondary} />
-            </Pressable>
-          )}
-        </View>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ gap: 8, paddingVertical: 8 }}
-        >
-          {filteredNationalities.map((n) => {
-            const isSelected = cultureNationalityId === n.id;
-            return (
-              <Pressable
-                key={n.id}
-                onPress={() => {
-                  haptic();
-                  setCultureNationalityId(isSelected ? null : n.id);
-                }}
-                style={({ pressed }) => [
-                  s.natChip,
-                  {
-                    borderColor: isSelected ? CultureTokens.indigo : colors.border,
-                    backgroundColor: isSelected ? CultureTokens.indigo + '18' : colors.background,
-                  },
-                  pressed && { opacity: 0.75 },
-                ]}
-                accessibilityRole="radio"
-                accessibilityLabel={n.label}
-                accessibilityState={{ selected: isSelected }}
-              >
-                <Text style={s.natEmoji}>{n.emoji}</Text>
-                <Text style={[s.natLabel, { color: isSelected ? CultureTokens.indigo : colors.text }]}>{n.label}</Text>
-                {isSelected && <Ionicons name="checkmark-circle" size={14} color={CultureTokens.indigo} />}
-              </Pressable>
-            );
-          })}
-        </ScrollView>
-        {cultureNationalityId && (
-          <Text style={[s.natHint, { color: colors.textSecondary }]}>
-            Showing cultures for {ALL_NATIONALITIES.find((n) => n.id === cultureNationalityId)?.label ?? cultureNationalityId}
-          </Text>
-        )}
-      </SubmitField>
+      <CultureIndigenousFields
+        value={{
+          nationalityId: form.nationalityId || undefined,
+          cultureIds: form.cultureTagIds,
+          indigenousTags: form.indigenousTags,
+          languageIds: form.languageTagIds,
+          isIndigenousOwned: form.isIndigenousOwned,
+        }}
+        onChange={(patch) => {
+          const next: Parameters<typeof onCultureIdentityChange>[0] = {};
+          if (patch.nationalityId !== undefined) next.nationalityId = patch.nationalityId ?? '';
+          if (patch.cultureIds !== undefined) next.cultureTagIds = patch.cultureIds;
+          if (patch.indigenousTags !== undefined) next.indigenousTags = patch.indigenousTags;
+          if (patch.languageIds !== undefined) next.languageTagIds = patch.languageIds;
+          if (patch.isIndigenousOwned !== undefined) next.isIndigenousOwned = patch.isIndigenousOwned;
+          onCultureIdentityChange(next);
+        }}
+        colors={{
+          text: colors.text,
+          textSecondary: colors.textSecondary,
+          textTertiary: colors.textTertiary,
+          border: colors.border,
+          background: colors.background,
+          surface: colors.surfaceElevated,
+        }}
+        initialNationalityId={initialNationalityId}
+        onHaptic={haptic}
+        testID="event-culture-indigenous-fields"
+      />
 
-      {/* ── 2. Culture tags ───────────────────────────────────────────────── */}
-      <SubmitField label="2. Culture Tags">
-        {filteredCultures.length === 0 ? (
-          <Text style={[s.natHint, { color: colors.textSecondary }]}>No cultures found. Try a different origin.</Text>
-        ) : (
-          <View style={s.tagGrid}>
-            {filteredCultures.map((c) => {
-              const isSelected = form.cultureTagIds.includes(c.id);
-              return (
-                <Pressable
-                  key={c.id}
-                  style={({ pressed }) => [
-                    s.tagChip,
-                    { borderColor: isSelected ? CultureTokens.gold : colors.border, backgroundColor: isSelected ? CultureTokens.gold + '22' : colors.background },
-                    pressed && { opacity: 0.7 },
-                  ]}
-                  onPress={() => toggleCultureTag(c.id)}
-                  accessibilityRole="checkbox"
-                  accessibilityLabel={c.label}
-                  accessibilityState={{ checked: isSelected }}
-                >
-                  <Text style={s.tagEmoji}>{c.emoji}</Text>
-                  <Text style={[s.tagLabel, { color: isSelected ? CultureTokens.gold : colors.text }]}>{c.label}</Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        )}
-      </SubmitField>
-
-      {/* ── 3. Language tags ──────────────────────────────────────────────── */}
-      <SubmitField label="3. Language Tags">
-        {form.cultureTagIds.length > 0 && suggestedLanguageIds.size > 1 && (
-          <Text style={[s.natHint, { color: CultureTokens.indigo, marginBottom: 8 }]}>
-            Suggested languages are highlighted based on your culture selections.
-          </Text>
-        )}
-        <View style={s.tagGrid}>
-          {COMMON_LANGUAGES.map((l) => {
-            const isSelected = form.languageTagIds.includes(l.id);
-            const isSuggested = suggestedLanguageIds.has(l.id) && !isSelected;
-            return (
-              <Pressable
-                key={l.id}
-                style={({ pressed }) => [
-                  s.tagChip,
-                  {
-                    borderColor: isSelected
-                      ? CultureTokens.teal
-                      : isSuggested
-                        ? CultureTokens.indigo + '80'
-                        : colors.border,
-                    backgroundColor: isSelected
-                      ? CultureTokens.teal + '22'
-                      : isSuggested
-                        ? CultureTokens.indigo + '10'
-                        : colors.background,
-                  },
-                  pressed && { opacity: 0.7 },
-                ]}
-                onPress={() => toggleLanguageTag(l.id)}
-                accessibilityRole="checkbox"
-                accessibilityLabel={l.name}
-                accessibilityState={{ checked: isSelected }}
-              >
-                {isSuggested && <Ionicons name="sparkles" size={12} color={CultureTokens.indigo} />}
-                <Text style={[
-                  s.tagLabel,
-                  { color: isSelected ? CultureTokens.teal : isSuggested ? CultureTokens.indigo : colors.text },
-                ]}>{l.name}</Text>
-              </Pressable>
-            );
-          })}
-        </View>
-      </SubmitField>
-
-      {/* ── 4. Accessibility tags ─────────────────────────────────────────── */}
-      <SubmitField label="4. Accessibility Needs">
+      <SubmitField label="Accessibility needs">
         <Text style={[s.natHint, { color: colors.textSecondary, marginBottom: 8 }]}>
           Help attendees find accessible events.
         </Text>
@@ -229,17 +93,14 @@ export function StepCulture({
                 accessibilityState={{ checked: isSelected }}
               >
                 <Ionicons name={opt.icon as keyof typeof Ionicons.glyphMap} size={14} color={isSelected ? CultureTokens.coral : colors.text} style={{ marginRight: 4 }} />
-                <Text style={[
-                  s.tagLabel,
-                  { color: isSelected ? CultureTokens.coral : colors.text },
-                ]}>{opt.label}</Text>
+                <Text style={[s.tagLabel, { color: isSelected ? CultureTokens.coral : colors.text }]}>{opt.label}</Text>
               </Pressable>
             );
           })}
         </View>
       </SubmitField>
 
-      <SubmitField label="5. Culture Today calendar">
+      <SubmitField label="Culture Today calendar">
         <Text style={[s.natHint, { color: colors.textSecondary, marginBottom: 10 }]}>
           When enabled, this event is tagged “{CULTURE_TODAY_EVENT_TAG}” and can appear on the Culture Today day page when the event date matches that calendar day (month and day).
         </Text>
@@ -255,7 +116,7 @@ export function StepCulture({
         />
       </SubmitField>
 
-      <SubmitField label="6. CultureX — invite Culture Explores">
+      <SubmitField label="CultureX — invite Culture Explores">
         <View
           style={{
             flexDirection: 'row',

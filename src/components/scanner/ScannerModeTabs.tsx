@@ -2,7 +2,8 @@ import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useColors } from '@/hooks/useColors';
-import { CultureTokens, FontFamily, Radius, SignatureGradient } from '@/design-system/tokens/theme';
+import { FontFamily, Radius } from '@/design-system/tokens/theme';
+import { scanAccentGradient, SCAN_MODE_ACCENT } from './scannerTheme';
 import type { ScanMode } from './types';
 
 type Props = {
@@ -15,11 +16,13 @@ export function ScannerModeTabs({ mode, onModeChange, showTickets }: Props) {
   const colors = useColors();
 
   return (
-    <View style={[styles.track, { backgroundColor: colors.backgroundSecondary }]}>
+    <View style={[styles.track, { backgroundColor: colors.backgroundSecondary, borderColor: colors.borderLight }]}>
       <Tab
         active={mode === 'culturepass'}
         label="Identity"
+        sub="Member lookup"
         icon="person-circle-outline"
+        scanMode="culturepass"
         onPress={() => onModeChange('culturepass')}
         colors={colors}
       />
@@ -27,7 +30,9 @@ export function ScannerModeTabs({ mode, onModeChange, showTickets }: Props) {
         <Tab
           active={mode === 'tickets'}
           label="Tickets"
+          sub="Gate check-in"
           icon="ticket-outline"
+          scanMode="tickets"
           onPress={() => onModeChange('tickets')}
           colors={colors}
         />
@@ -39,16 +44,22 @@ export function ScannerModeTabs({ mode, onModeChange, showTickets }: Props) {
 function Tab({
   active,
   label,
+  sub,
   icon,
+  scanMode,
   onPress,
   colors,
 }: {
   active: boolean;
   label: string;
+  sub: string;
   icon: keyof typeof Ionicons.glyphMap;
+  scanMode: ScanMode;
   onPress: () => void;
   colors: ReturnType<typeof useColors>;
 }) {
+  const accent = SCAN_MODE_ACCENT[scanMode];
+
   return (
     <Pressable
       onPress={onPress}
@@ -58,22 +69,38 @@ function Tab({
     >
       {active ? (
         <LinearGradient
-          colors={SignatureGradient as unknown as [string, string]}
+          colors={scanAccentGradient(scanMode)}
           start={{ x: 0, y: 0.5 }}
           end={{ x: 1, y: 0.5 }}
           style={StyleSheet.absoluteFill}
         />
       ) : null}
-      <Ionicons name={icon} size={17} color={active ? '#FFFFFF' : colors.textTertiary} />
-      <Text
-        style={[
-          styles.tabLabel,
-          { color: active ? '#FFFFFF' : colors.textSecondary },
-          active && { fontFamily: FontFamily.bold },
-        ]}
-      >
-        {label}
-      </Text>
+      <Ionicons name={icon} size={18} color={active ? '#FFFFFF' : colors.textTertiary} />
+      <View style={styles.tabCopy}>
+        <Text
+          style={[
+            styles.tabLabel,
+            { color: active ? '#FFFFFF' : colors.text },
+            active && { fontFamily: FontFamily.bold },
+          ]}
+        >
+          {label}
+        </Text>
+        <Text
+          style={[
+            styles.tabSub,
+            { color: active ? 'rgba(255,255,255,0.82)' : colors.textTertiary },
+          ]}
+          numberOfLines={1}
+        >
+          {sub}
+        </Text>
+      </View>
+      {active ? (
+        <View style={[styles.activeDot, { backgroundColor: '#FFFFFF' }]} />
+      ) : (
+        <View style={[styles.inactiveDot, { backgroundColor: accent + '30' }]} />
+      )}
     </Pressable>
   );
 }
@@ -81,17 +108,18 @@ function Tab({
 const styles = StyleSheet.create({
   track: {
     flexDirection: 'row',
-    padding: 4,
+    padding: 5,
     borderRadius: Radius.lg,
-    gap: 4,
+    gap: 6,
+    borderWidth: 1,
   },
   tab: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 11,
+    gap: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
     borderRadius: Radius.md,
     overflow: 'hidden',
     ...Platform.select({
@@ -102,17 +130,32 @@ const styles = StyleSheet.create({
   tabActive: {
     ...Platform.select({
       ios: {
-        shadowColor: CultureTokens.violet,
-        shadowOpacity: 0.28,
+        shadowColor: '#000',
+        shadowOpacity: 0.18,
         shadowRadius: 10,
         shadowOffset: { width: 0, height: 4 },
       },
       android: { elevation: 4 },
-      web: { boxShadow: `0 4px 14px ${CultureTokens.violet}44` } as Record<string, unknown>,
+      web: { boxShadow: '0 4px 16px rgba(0,0,0,0.14)' } as Record<string, unknown>,
     }),
   },
+  tabCopy: { flex: 1, minWidth: 0, gap: 1 },
   tabLabel: {
     fontSize: 14,
     fontFamily: FontFamily.semibold,
+  },
+  tabSub: {
+    fontSize: 11,
+    fontFamily: FontFamily.regular,
+  },
+  activeDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  inactiveDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
 });

@@ -1,5 +1,5 @@
 /**
- * /CultureMarket/list — redirects to /hostspace/create/listing.
+ * /CultureMarket/list — redirects to /pages/create/listing.
  * Kept for backwards-compat with any existing deep links or bookmarks.
  */
 import { useEffect } from 'react';
@@ -9,7 +9,7 @@ export default function ListRedirect() {
   const params = useLocalSearchParams();
   useEffect(() => {
     const edit = params.edit ? `?edit=${params.edit}` : '';
-    router.replace(`/hostspace/create/listing${edit}` as any);
+    router.replace(`/pages/create/listing${edit}` as any);
   }, [params.edit]);
   return null;
 }

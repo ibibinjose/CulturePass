@@ -5,6 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import { router } from 'expo-router';
+import { navigateToCreateById, navigateToPageProEntity } from '@/lib/creationRouting';
 
 import { useColors } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
@@ -327,14 +328,14 @@ export function EntityTypeSelector({ onSelect, existingProfiles = [], intent }: 
             </Text>
             <View style={styles.quickGrid}>
               {[
-                { label: 'Event', icon: 'calendar-outline', route: '/event/create' as const },
-                { label: 'Listing', icon: 'pricetag-outline', route: '/culture-shop/create' as const },
-                { label: 'Offer', icon: 'gift-outline', route: '/offers/create' as const },
-                { label: 'Activity', icon: 'flash-outline', route: '/activities/create' as const },
+                { label: 'Event', icon: 'calendar-outline', categoryId: 'event' },
+                { label: 'Listing', icon: 'pricetag-outline', categoryId: 'other-listing' },
+                { label: 'Offer', icon: 'gift-outline', categoryId: 'offer' },
+                { label: 'Activity', icon: 'flash-outline', categoryId: 'activity' },
               ].map((action, idx) => (
                 <Pressable
                   key={idx}
-                  onPress={() => router.push(action.route)}
+                  onPress={() => navigateToCreateById(action.categoryId, { source: 'entity_type_selector_quick' })}
                   style={({ pressed }) => [
                     styles.quickCard,
                     { backgroundColor: colors.surfaceElevated, borderColor: colors.borderLight },
@@ -367,7 +368,7 @@ export function EntityTypeSelector({ onSelect, existingProfiles = [], intent }: 
                 key={i}
                 onPress={() => {
                   // Future: prefill wizard formData with template values
-                  router.push(`/hostspace/create?profileType=organiser` as any);
+                  navigateToPageProEntity('organiser', 'entity_type_selector_template');
                 }}
                 style={[styles.templateCard, { backgroundColor: colors.surfaceElevated }]}
               >
@@ -414,16 +415,16 @@ export function EntityTypeSelector({ onSelect, existingProfiles = [], intent }: 
             </Text>
 
             {[
-              { label: 'New Event', icon: 'calendar-outline', route: '/event/create' as const, desc: 'Festivals, workshops, gigs' },
-              { label: 'New Marketplace Listing', icon: 'pricetag-outline', route: '/culture-shop/create' as const, desc: 'Products, services, tickets' },
-              { label: 'New Offer / Perk', icon: 'gift-outline', route: '/offers/create' as const, desc: 'Discounts, experiences' },
-              { label: 'New Activity', icon: 'flash-outline', route: '/activities/create' as const, desc: 'Pop-ups, meetups' },
+              { label: 'New Event', icon: 'calendar-outline', categoryId: 'event', desc: 'Festivals, workshops, gigs' },
+              { label: 'New Marketplace Listing', icon: 'pricetag-outline', categoryId: 'market-product', desc: 'Products, services, tickets' },
+              { label: 'New Offer / Perk', icon: 'gift-outline', categoryId: 'offer', desc: 'Discounts, experiences' },
+              { label: 'New Activity', icon: 'flash-outline', categoryId: 'activity', desc: 'Pop-ups, meetups' },
             ].map((item, i) => (
               <Pressable
                 key={i}
                 onPress={() => {
                   setShowMobileQuick(false);
-                  router.push(item.route);
+                  navigateToCreateById(item.categoryId, { source: 'entity_type_selector_mobile_quick' });
                 }}
                 style={({ pressed }) => [
                   styles.sheetOption,

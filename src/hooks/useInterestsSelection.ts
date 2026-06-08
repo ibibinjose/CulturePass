@@ -101,7 +101,7 @@ export function useInterestsSelection() {
 
     try {
       if (Platform.OS !== 'web') await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      router.push(routeWithRedirect('/hostspace/create', redirectTo) as string);
+      router.push(routeWithRedirect('/pages/create', redirectTo) as string);
       return { success: true };
     } catch (error) {
       if (__DEV__) console.warn('[onboarding] failed to complete onboarding:', error);

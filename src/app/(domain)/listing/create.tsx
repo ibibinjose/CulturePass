@@ -54,6 +54,16 @@ import {
 } from '@/modules/listings/create/payload';
 import { communitiesApi } from '@/modules/communities/api';
 import {
+  captureCreationPublishAttempt,
+  captureCreationPublishError,
+  captureCreationPublishSuccess,
+  captureCreationWizardOpen,
+  captureCreationWizardStep,
+  captureMonetizationImpression,
+} from '@/lib/creationAnalytics';
+import { getCategoryDataflow } from '@/modules/host/config/hostspaceCreateCategories.config';
+import { navigateToCreateById, findCategoryForListingEntity } from '@/lib/creationRouting';
+import {
   ListingStepIdentity,
   ListingStepAbout,
   ListingStepMedia,
@@ -262,15 +272,12 @@ export default function ListingCreateScreen() {
     if (listingEntityParam !== 'event') return;
     eventRedirected.current = true;
     const publisherProfileId = asParam(params.publisherProfileId);
-    const venueProfileId = asParam(params.venueProfileId);
-    router.replace({
-      pathname: '/event/create',
-      params: {
-        ...(publisherProfileId ? { publisherProfileId } : {}),
-        ...(venueProfileId ? { venueProfileId } : {}),
-      },
-    } as never);
-  }, [listingEntityParam, params.publisherProfileId, params.venueProfileId]);
+    navigateToCreateById('event', {
+      source: 'listing_wizard_event_redirect',
+      parentProfileId: publisherProfileId,
+      replace: true,
+    });
+  }, [listingEntityParam, params.publisherProfileId]);
 
   const initialEntity: Profile['entityType'] =
     listingEntityParam && listingEntityParam !== 'event' ? listingEntityParam : 'business';
@@ -363,6 +370,45 @@ export default function ListingCreateScreen() {
   const [stepIndex, setStepIndex] = useState(0);
   const step = steps[stepIndex] ?? steps[0];
   const isLast = stepIndex >= steps.length - 1;
+
+  const listingCategory = useMemo(
+    () => findCategoryForListingEntity(initialEntity, listingSubCategory),
+    [initialEntity, listingSubCategory],
+  );
+  const listingCreationCtx = useMemo(() => {
+    const flow = getCategoryDataflow(listingCategory);
+    return {
+      categoryId: listingCategory.id,
+      categoryLabel: listingCategory.label,
+      layer: flow.layer,
+      wizard: flow.wizard,
+      storage: flow.storage,
+      manageTab: flow.manageTab,
+      source: editingCommunityId || form.draftProfileId ? 'listing_edit' : 'listing_wizard',
+      parentProfileId: asParam(params.publisherProfileId),
+      entityType: form.entityType,
+      subCategory: listingSubCategory,
+    };
+  }, [
+    listingCategory,
+    editingCommunityId,
+    form.draftProfileId,
+    form.entityType,
+    listingSubCategory,
+    params.publisherProfileId,
+  ]);
+
+  useEffect(() => {
+    captureCreationWizardOpen(listingCreationCtx);
+  }, [listingCreationCtx]);
+
+  useEffect(() => {
+    captureCreationWizardStep({
+      ...listingCreationCtx,
+      stepId: step,
+      stepIndex,
+    });
+  }, [step, stepIndex, listingCreationCtx]);
 
   const [stepError, setStepError] = useState<string | null>(null);
   const [publishMode, setPublishMode] = useState<'draft' | 'published'>('draft');
@@ -479,6 +525,8 @@ export default function ListingCreateScreen() {
       return;
     }
 
+    captureCreationPublishAttempt(listingCreationCtx);
+
     if (form.entityType === 'community') {
       const input = formToCommunityCreateInput(form);
       if (editingCommunityId) {
@@ -486,23 +534,55 @@ export default function ListingCreateScreen() {
           { id: editingCommunityId, input },
           {
             onSuccess: (community) => {
+              captureCreationPublishSuccess({
+                ...listingCreationCtx,
+                entityId: community.id,
+                heritage: {
+                  nationalityId: form.nationalityId.trim() || undefined,
+                  indigenousTags: form.indigenousTags,
+                  isIndigenousOwned: form.isIndigenousOwned,
+                  cultureTagCount: form.cultureIds.length,
+                },
+              });
+              if (publishMode === 'published') {
+                captureMonetizationImpression('featured_listing', 'listing_community_publish');
+              }
               void clearDraft();
               queryClient.invalidateQueries({ queryKey: ['/api/communities'] });
               queryClient.invalidateQueries({ queryKey: ['/api/communities', editingCommunityId] });
               router.replace(`/c/${getCommunityProfilePathId(community)}` as never);
             },
-            onError: () => Alert.alert('Could not update community', 'Please try again shortly.'),
+            onError: () => {
+              captureCreationPublishError({ ...listingCreationCtx, errorMessage: 'community_update_failed' });
+              Alert.alert('Could not update community', 'Please try again shortly.');
+            },
           },
         );
         return;
       }
       createCommunity.mutate(input, {
         onSuccess: (community) => {
+          captureCreationPublishSuccess({
+            ...listingCreationCtx,
+            entityId: community.id,
+            heritage: {
+              nationalityId: form.nationalityId.trim() || undefined,
+              indigenousTags: form.indigenousTags,
+              isIndigenousOwned: form.isIndigenousOwned,
+              cultureTagCount: form.cultureIds.length,
+            },
+          });
+          if (publishMode === 'published') {
+            captureMonetizationImpression('featured_listing', 'listing_community_publish');
+          }
           void clearDraft();
           queryClient.invalidateQueries({ queryKey: ['/api/communities'] });
           router.replace(`/c/${getCommunityProfilePathId(community)}` as never);
         },
-        onError: () => Alert.alert('Could not create community', 'Please try again shortly.'),
+        onError: () => {
+          captureCreationPublishError({ ...listingCreationCtx, errorMessage: 'community_create_failed' });
+          Alert.alert('Could not create community', 'Please try again shortly.');
+        },
       });
       return;
     }
@@ -511,11 +591,27 @@ export default function ListingCreateScreen() {
       { form, publishMode },
       {
         onSuccess: (profile: Profile) => {
+          captureCreationPublishSuccess({
+            ...listingCreationCtx,
+            entityId: profile.id,
+            heritage: {
+              nationalityId: form.nationalityId.trim() || undefined,
+              indigenousTags: form.indigenousTags,
+              isIndigenousOwned: form.isIndigenousOwned,
+              cultureTagCount: form.cultureIds.length,
+            },
+          });
+          if (publishMode === 'published') {
+            captureMonetizationImpression('featured_listing', 'listing_profile_publish');
+          }
           void clearDraft();
           queryClient.invalidateQueries({ queryKey: ['/api/profiles/my'] });
           router.replace(directoryProfilePath(profile) as never);
         },
-        onError: () => Alert.alert('Could not save listing', 'Please try again shortly.'),
+        onError: () => {
+          captureCreationPublishError({ ...listingCreationCtx, errorMessage: 'listing_profile_save_failed' });
+          Alert.alert('Could not save listing', 'Please try again shortly.');
+        },
       },
     );
   }, [
@@ -531,6 +627,8 @@ export default function ListingCreateScreen() {
     clearDraft,
     queryClient,
     editingCommunityId,
+    listingCreationCtx,
+    publishMode,
   ]);
 
   const stepContent = useMemo(() => {

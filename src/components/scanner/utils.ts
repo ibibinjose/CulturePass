@@ -1,3 +1,4 @@
+import { Luxe } from '@/design-system/tokens/luxeHeritage';
 import { TicketScanResult, SessionStats, CulturePassContact } from './types';
 
 export const INITIAL_STATS: SessionStats = {
@@ -7,11 +8,25 @@ export const INITIAL_STATS: SessionStats = {
   startedAt: new Date(),
 };
 
-// Outcome colours — semantic status colours, intentionally hardcoded
 export const OUTCOME_CONFIG = {
-  accepted: { color: '#34C759', bg: '#34C75910', icon: 'checkmark-circle' as const, title: 'Ticket Valid' },
-  duplicate: { color: '#FF9500', bg: '#FF950010', icon: 'warning' as const,          title: 'Already Scanned' },
-  rejected:  { color: '#FF3B30', bg: '#FF3B3010', icon: 'close-circle' as const,    title: 'Invalid Ticket' },
+  accepted: {
+    color: Luxe.colors.emerald,
+    bg: Luxe.colors.emerald + '18',
+    icon: 'checkmark-circle' as const,
+    title: 'Ticket Valid',
+  },
+  duplicate: {
+    color: Luxe.colors.gold,
+    bg: Luxe.colors.gold + '18',
+    icon: 'warning' as const,
+    title: 'Already Scanned',
+  },
+  rejected: {
+    color: Luxe.colors.terracotta,
+    bg: Luxe.colors.terracotta + '18',
+    icon: 'close-circle' as const,
+    title: 'Invalid Ticket',
+  },
 };
 
 export function getOutcomeConfig(result: TicketScanResult) {

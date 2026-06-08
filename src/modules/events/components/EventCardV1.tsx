@@ -8,6 +8,8 @@ import { CultureImage } from '@/design-system/ui/CultureImage';
 import { EventPublisherLine } from '@/modules/events/components/list/EventPublisherLine';
 import { EventPublisherLogo } from '@/modules/events/components/list/EventPublisherLogo';
 import { CultureTagRow, mergeCultureTagFields } from '@/design-system/ui/CultureTag';
+import { CultureFlagBadge } from '@/components/culture/CultureFlagBadge';
+import { resolveEventCultureFlag } from '@/lib/cultureIdentity';
 import { CultureTokens, TextStyles, Radius, Luxe, LuxeTextStyles } from '@/design-system/tokens/theme';
 import { useSaved } from '@/contexts/SavedContext';
 import { useLikes } from '@/contexts/LikesContext';
@@ -94,6 +96,7 @@ function EventCardInner({ event, isLive, canEdit, onEdit, onDelete }: EventCardP
     event.ageSuitability && event.ageSuitability !== 'all' ? event.ageSuitability : null;
 
   const cultureTags = mergeCultureTagFields(event.cultureTag, event.cultureTags).slice(0, 1);
+  const cultureFlag = resolveEventCultureFlag(event);
 
   return (
     <View
@@ -126,6 +129,11 @@ function EventCardInner({ event, isLive, canEdit, onEdit, onDelete }: EventCardP
             colors={['transparent', 'rgba(0,0,0,0.6)']}
             style={StyleSheet.absoluteFill}
           />
+          {cultureFlag ? (
+            <View style={styles.cultureFlagWrap}>
+              <CultureFlagBadge emoji={cultureFlag} size="md" accessibilityLabel="Event culture flag" />
+            </View>
+          ) : null}
           {ageBadge ? (
             <View style={[styles.ageBadge, { backgroundColor: 'rgba(0,0,0,0.4)', borderColor: 'rgba(255,255,255,0.2)' }]}>
               <Text style={[styles.ageBadgeText, { color: colors.eventDateOnMedia }]}>{ageBadge}</Text>
@@ -447,6 +455,12 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
+  },
+  cultureFlagWrap: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    zIndex: 10,
   },
   crudActionsRow: {
     flexDirection: 'row',

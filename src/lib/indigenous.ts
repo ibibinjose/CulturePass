@@ -34,6 +34,8 @@ export function isIndigenousEvent(event: EventData): boolean {
 }
 
 export function isIndigenousProfile(profile: Profile): boolean {
+  if (profile.isIndigenousOwned) return true;
+  const indigenousTags = Array.isArray(profile.indigenousTags) ? profile.indigenousTags.join(' ') : '';
   const tags = Array.isArray(profile.tags) ? profile.tags.join(' ') : '';
   const haystack = [
     profile.name,
@@ -41,6 +43,7 @@ export function isIndigenousProfile(profile: Profile): boolean {
     profile.category ?? '',
     profile.entityType,
     tags,
+    indigenousTags,
   ].join(' ');
 
   return includesIndigenousKeyword(haystack);

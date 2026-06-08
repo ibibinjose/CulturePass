@@ -105,6 +105,9 @@ export interface EventData {
   lng?: number;
   tags?: string[];
   indigenousTags?: string[];
+  /** ISO nationality taxonomy id (e.g. indian) for flag display */
+  nationalityId?: string;
+  isIndigenousOwned?: boolean;
   languageTags?: string[];
   cultureTag?: string[];
   cultureTags?: string[];

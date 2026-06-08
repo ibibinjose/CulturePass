@@ -6,6 +6,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
+### Added
+- **Apple PassKit Web Service** routes at `/api/wallet/apple/v1/*` (device registration, pass updates, logs).
+- **Wallet tooling**: `npm run wallet:readiness`, `wallet:setup`, `wallet:secrets:push`; `PUBLIC_APP_ORIGIN` / stable `.pkpass` download URLs.
+- Clear wallet error messages on `/profile/qr` (503 config vs auth failures); web triggers `.pkpass` download.
+
+### Fixed
+- Wallet pass QR/deep links use canonical `/cpu/{CPID}` URLs.
+- Pass download loads full user profile including membership tier.
+- API client paths for Google Wallet bootstrap + admin readiness.
+
+## [1.3.2] - 2026-06-08
+
+### Added
+- **Cross-platform release readiness**: aligned app version, iOS build number (28), Android versionCode (7), and EAS `runtimeVersion` to 1.3.2.
+- **EAS environment workflow**: `npm run eas:env:push:preview` / `eas:env:push:production` sync `.env` to Expo; `release:check` runs doctor + QA before store builds.
+- **Web deploy guard**: `deploy-web` validates Firebase env via `assert-firebase-web-export.mjs` before export; `build-web:with-mock-firebase` for CI throwaway exports.
+
+### Fixed
+- **Mock → real data**: CPID lookup, users, profiles, ticket scan, and culture shop handlers use Firestore + seeded demo fixtures; legacy `mock-*` codes gated to emulator/test only.
+- **Host actions**: profile/event/listing delete and share wired to real APIs (`useHostItemActions`).
+- **Web export**: `react-native-maps` plugin excluded on web builds in `app.config.js`.
+- **iOS build**: removed stale Sentry upload build phase from Xcode project (package already removed).
+
 ## [1.3.1] - 2026-06-06
 
 ### Added

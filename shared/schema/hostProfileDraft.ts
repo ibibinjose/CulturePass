@@ -11,6 +11,13 @@ import { HostProfileFormDataSchema } from './hostProfile';
 // Related: requirements.md (Requirement 3), design.md (ProfileDraft)
 // ============================================================================
 
+const profileDraftDeviceInfoSchema = z
+  .object({
+    platform: z.string(),
+    userAgent: z.string(),
+  })
+  .optional();
+
 export const ProfileDraftSchema = z.object({
   id: z.string(),
   userId: z.string(), // Firebase Auth UID
@@ -21,12 +28,7 @@ export const ProfileDraftSchema = z.object({
   createdAt: z.string(), // ISO 8601 timestamp
   updatedAt: z.string(), // ISO 8601 timestamp
   expiresAt: z.string(), // ISO 8601 timestamp (90 days from last update)
-  deviceInfo: z
-    .object({
-      platform: z.string(),
-      userAgent: z.string(),
-    })
-    .optional(),
+  deviceInfo: profileDraftDeviceInfoSchema,
 });
 
 export type ProfileDraft = z.infer<typeof ProfileDraftSchema>;
@@ -41,14 +43,30 @@ export const CreateProfileDraftSchema = ProfileDraftSchema.omit({
 
 export type CreateProfileDraft = z.infer<typeof CreateProfileDraftSchema>;
 
-// Schema for updating an existing draft
-export const UpdateProfileDraftSchema = ProfileDraftSchema.partial()
-  .required({
-    id: true,
-    userId: true,
-  })
-  .omit({
-    createdAt: true,
-  });
+// Schema for updating an existing draft (Zod v4: avoid .partial().required().omit())
+export const UpdateProfileDraftSchema = z.object({
+  id: z.string(),
+  userId: z.string(),
+  entityType: HostEntityTypeSchema.optional(),
+  formData: HostProfileFormDataSchema.optional(),
+  currentStep: z.number().int().min(1).max(10).optional(),
+  completedSteps: z.array(z.number().int().min(1).max(10)).optional(),
+  updatedAt: z.string().optional(),
+  expiresAt: z.string().optional(),
+  deviceInfo: profileDraftDeviceInfoSchema,
+});
 
 export type UpdateProfileDraft = z.infer<typeof UpdateProfileDraftSchema>;
+
+/** PATCH body for POST /api/profiles/:id/draft (id/userId from route + auth). */
+export const UpdateProfileDraftBodySchema = z.object({
+  entityType: HostEntityTypeSchema.optional(),
+  formData: HostProfileFormDataSchema.optional(),
+  currentStep: z.number().int().min(1).max(10).optional(),
+  completedSteps: z.array(z.number().int().min(1).max(10)).optional(),
+  updatedAt: z.string().optional(),
+  expiresAt: z.string().optional(),
+  deviceInfo: profileDraftDeviceInfoSchema,
+});
+
+export type UpdateProfileDraftBody = z.infer<typeof UpdateProfileDraftBodySchema>;

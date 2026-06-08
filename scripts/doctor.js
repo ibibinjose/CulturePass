@@ -138,7 +138,21 @@ function checkEnvironmentVariables() {
   const requiredPublicVars = [
     'EXPO_PUBLIC_API_URL',
     'EXPO_PUBLIC_FIREBASE_API_KEY',
+    'EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN',
     'EXPO_PUBLIC_FIREBASE_PROJECT_ID',
+    'EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET',
+    'EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID',
+    'EXPO_PUBLIC_FIREBASE_APP_ID',
+    'EXPO_PUBLIC_EAS_PROJECT_ID',
+    'EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY',
+  ];
+
+  const recommendedNativeVars = [
+    'EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID',
+    'EXPO_PUBLIC_GOOGLE_REVERSED_CLIENT_ID',
+    'EXPO_PUBLIC_GOOGLE_MAPS_KEY',
+    'EXPO_PUBLIC_FCM_VAPID_KEY',
+    'EXPO_PUBLIC_POSTHOG_API_KEY',
   ];
 
   // Try parsing environment variables from local .env files
@@ -185,9 +199,23 @@ function checkEnvironmentVariables() {
     info('  See app.config.js and src/lib/config.ts for how these are consumed.');
   }
 
+  recommendedNativeVars.forEach((key) => {
+    if (loadedEnv[key]) {
+      pass(`${key} is set (native/web feature ready)`);
+    } else {
+      warn(`${key} is missing — Google Sign-In, Maps, push, or analytics may be limited on that platform.`);
+    }
+  });
+
+  if (loadedEnv.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY?.startsWith('pk_test_')) {
+    info('Stripe publishable key is test mode (pk_test_) — correct for dev/preview; use pk_live_ in EAS production.');
+  }
+
   if (loadedEnv.FIREBASE_PROJECT_ID) {
     pass(`FIREBASE_PROJECT_ID = ${loadedEnv.FIREBASE_PROJECT_ID}`);
   }
+
+  info('EAS native builds: run `npm run eas:env:push:production` to sync .env secrets to Expo (after `eas login`).');
 }
 
 function checkFirebaseConfig() {

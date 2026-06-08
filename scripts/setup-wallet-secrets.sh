@@ -114,6 +114,21 @@ npx firebase-tools secrets:set GOOGLE_WALLET_SERVICE_ACCOUNT_EMAIL="$GOOGLE_WALL
 npx firebase-tools secrets:set GOOGLE_WALLET_PRIVATE_KEY --project "$FIREBASE_PROJECT_ID" < temp-certs/googlePrivateKey.pem
 npx firebase-tools secrets:set GOOGLE_WALLET_GENERIC_CLASS_ID="$GOOGLE_WALLET_GENERIC_CLASS_ID" --project "$FIREBASE_PROJECT_ID"
 
+npx firebase-tools functions:config:set wallet.PUBLIC_APP_ORIGIN="https://culturepass.app" --project "$FIREBASE_PROJECT_ID" 2>/dev/null || true
+
+# Also append to functions/.env for deploy-time env loading
+ENV_FILE="functions/.env"
+touch "$ENV_FILE"
+for kv in \
+  "PUBLIC_APP_ORIGIN=https://culturepass.app" \
+  "WALLET_LINKS_PUBLIC_ORIGIN=https://culturepass.app" \
+  "APPLE_PASS_WEBSERVICE_URL=https://culturepass.app/api/wallet/apple/v1"; do
+  key="${kv%%=*}"
+  if ! grep -q "^${key}=" "$ENV_FILE"; then
+    echo "$kv" >> "$ENV_FILE"
+  fi
+done
+
 # Clean up temp files
 echo ""
 echo "Cleaning up temporary PEM files..."

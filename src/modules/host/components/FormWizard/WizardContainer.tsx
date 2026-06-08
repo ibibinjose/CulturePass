@@ -153,8 +153,8 @@ export function WizardContainer({
       // The wizard hook will handle loading the draft via draftId prop
       // We need to trigger a re-initialization with the draft
       router.replace({
-        pathname: '/hostspace/create' as any,
-        params: { profileType: entityType, draftId: draft.id } as any,
+        pathname: '/pages/create' as any,
+        params: { entityType, draftId: draft.id } as any,
       });
     },
     onStartFresh: () => {
@@ -268,7 +268,7 @@ export function WizardContainer({
     if (!isOrganizer) {
       if (Platform.OS === 'web') {
         if (window.confirm('You are in Sandbox Mode. You must apply to become a host and be approved before you can publish. Would you like to apply now?')) {
-          router.push('/hostspace/create');
+          router.push('/pages/create');
         }
       } else {
         Alert.alert(
@@ -276,7 +276,7 @@ export function WizardContainer({
           'You are in Sandbox Mode. You must apply to become a host and be approved before you can publish.',
           [
             { text: 'Cancel', style: 'cancel' },
-            { text: 'Create Host Profile', onPress: () => router.push('/hostspace/create') }
+            { text: 'Create Host Profile', onPress: () => router.push('/pages/create') }
           ]
         );
       }

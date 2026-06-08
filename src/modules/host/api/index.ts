@@ -155,6 +155,20 @@ export const hostApi = {
   // ---------------------------------------------------------------------------
   // Media — upload and attach
   // ---------------------------------------------------------------------------
+  hostPages: {
+    my: (params?: { entityType?: import('@/shared/schema/hostTypes').HostEntityType }) =>
+      api.hostPages.my(params),
+    get: (id: string) => api.hostPages.get(id),
+    create: api.hostPages.create,
+    update: api.hostPages.update,
+    publish: (id: string) => api.hostPages.publish(id),
+    saveDraft: api.hostPages.saveDraft,
+    getDrafts: (params?: { entityType?: import('@/shared/schema/hostTypes').HostEntityType }) =>
+      api.hostPages.getDrafts(params),
+    getDraft: (draftId: string) => api.hostPages.getDraft(draftId),
+    deleteDraft: (draftId: string) => api.hostPages.deleteDraft(draftId),
+  },
+
   media: {
     /** Attach media to a profile or entity */
     attach: (data: {

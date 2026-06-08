@@ -42,6 +42,7 @@ import type { ShopListing } from '@/shared/schema';
 import { SHOP_CATEGORIES } from '@/shared/schema';
 import { APP_NAME, SITE_ORIGIN } from '@/lib/app-meta';
 import { DefaultHostBrandMark } from '@/modules/marketplace/DefaultHostBrandMark';
+import { navigateToEditShopListing } from '@/lib/creationRouting';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -258,7 +259,7 @@ function ListingDetailInner() {
         {isOwner && (
           <View style={styles.floatRight}>
             <Pressable
-              onPress={() => router.push(`/hostspace/create/listing?edit=${id}` as any)}
+              onPress={() => navigateToEditShopListing(String(id), 'culture_market_detail_edit')}
               style={[styles.floatBtn, { backgroundColor: 'rgba(0,0,0,0.45)' }]}
               accessibilityLabel="Edit listing"
             >

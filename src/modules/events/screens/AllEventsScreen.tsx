@@ -25,6 +25,7 @@ import {
 } from '@/constants/eventCategories';
 import { eventsApi } from '@/modules/events/api';
 import { eventPaths } from '@/modules/events/services/navigation';
+import { navigateToCreateById } from '@/lib/creationRouting';
 import { useSafeBack } from '@/lib/navigation';
 
 const isWeb = Platform.OS === 'web';
@@ -375,7 +376,9 @@ export default function AllEventsScreen() {
 
   const fabRight = isDesktop ? hPad + 32 : 24;
   const fabBottom = isDesktop ? 48 : 24;
-  const handleFabPress = useCallback(() => router.push(eventPaths.create), []);
+  const handleFabPress = useCallback(() => {
+    navigateToCreateById('event', { source: 'all_events_fab' });
+  }, []);
 
   return (
     <ErrorBoundary>

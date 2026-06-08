@@ -49,8 +49,15 @@ export function createWalletNamespace(request: ApiRequestFn) {
     topup: (userId: string, amount: number) => request<WalletSummary>('POST', `api/wallet/${userId}/topup`, { amount }),
     businessCardApple: () => request<WalletPassLinkResponse>('GET', 'api/wallet/business-card/apple'),
     businessCardGoogle: () => request<WalletPassLinkResponse>('GET', 'api/wallet/business-card/google'),
-    bootstrapGoogleWalletClass: () => request<GoogleWalletClassBootstrapResponse>('POST', 'api/wallet/business-card/google/bootstrap'),
-    businessCardReadiness: () => request<WalletBusinessCardReadinessResponse>('GET', 'api/wallet/business-card/readiness'),
+    businessCardReadiness: () =>
+      request<{ apple: boolean; google: boolean; mockCredentials?: boolean; publicOrigin?: string }>(
+        'GET',
+        'api/wallet/business-card/readiness',
+      ),
+    bootstrapGoogleWalletClass: () =>
+      request<GoogleWalletClassBootstrapResponse>('POST', 'api/admin/wallet/business-card/google/bootstrap-class'),
+    adminBusinessCardReadiness: () =>
+      request<WalletBusinessCardReadinessResponse>('GET', 'api/admin/wallet/business-card/readiness'),
   };
 }
 

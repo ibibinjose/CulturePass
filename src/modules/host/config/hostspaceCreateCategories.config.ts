@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { CultureTokens } from '@/design-system/tokens/theme';
 import type { ListingWizardEntityParam } from '@/constants/navigation/experienceNav';
 import { CREATE_LAB_PATHNAME, createLabCategoryHref } from '@/constants/navigation/createNav';
+import { resolveCreationDataflow, type CreationDataflow } from '@shared/creation/dataflow';
 
 export type CategoryGroup = 'all' | 'venues' | 'businesses' | 'communities' | 'events' | 'market';
 export type CreateContentKind = 'event' | 'activity' | 'offer' | 'market' | 'listing';
@@ -611,4 +612,17 @@ export function findCategory(raw: string | undefined): CreateCategory {
     CREATE_CATEGORIES.find((item) => item.id === normalized || item.aliases.includes(normalized)) ??
     CREATE_CATEGORIES[0]
   );
+}
+
+/** Application-layer dataflow for a category (wizard → Firestore → HostSpace tab). */
+export function getCategoryDataflow(category: CreateCategory): CreationDataflow {
+  return resolveCreationDataflow(category);
+}
+
+/** All categories with resolved dataflow — for analytics, docs, and unified routing. */
+export function listCreationCatalog(): (CreateCategory & { dataflow: CreationDataflow })[] {
+  return CREATE_CATEGORIES.map((category) => ({
+    ...category,
+    dataflow: getCategoryDataflow(category),
+  }));
 }

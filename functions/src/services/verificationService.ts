@@ -15,6 +15,7 @@ import type {
   CreateVerificationTask,
 } from '../../../shared/schema/hostVerificationTask';
 import type { HostProfile } from '../../../shared/schema/hostProfile';
+import { getHostPageVerificationChecklist } from '../../../shared/schema/hostPage';
 import type { HostEntityType } from '../../../shared/schema/hostTypes';
 
 // ---------------------------------------------------------------------------
@@ -23,6 +24,7 @@ import type { HostEntityType } from '../../../shared/schema/hostTypes';
 
 const verificationTasksCol = () => db.collection('hostVerificationTasks');
 const profilesCol = () => db.collection('hostProfiles');
+const hostPagesCol = () => db.collection('hostPages');
 
 // ---------------------------------------------------------------------------
 // Verification Service
@@ -123,6 +125,13 @@ export const verificationService = {
     };
 
     return entitySpecificChecklists[entityType] || commonChecklist;
+  },
+
+  /**
+   * Page-specific verification checklist (unified Create a Page flow)
+   */
+  getPageChecklistForEntityType(entityType: HostEntityType): VerificationChecklistItem[] {
+    return getHostPageVerificationChecklist(entityType);
   },
 
   /**
@@ -279,12 +288,19 @@ export const verificationService = {
       completedAt: new Date().toISOString(),
     });
 
-    // Update profile verification status
-    await profilesCol().doc(task.profileId).update({
-      verificationStatus: 'verified',
-      status: 'published',
-      verificationNotes: adminNotes || '',
-    });
+    if (task.pageId) {
+      await hostPagesCol().doc(task.pageId).update({
+        verificationStatus: 'verified',
+        status: 'published',
+        updatedAt: new Date().toISOString(),
+      });
+    } else if (task.profileId) {
+      await profilesCol().doc(task.profileId).update({
+        verificationStatus: 'verified',
+        status: 'published',
+        verificationNotes: adminNotes || '',
+      });
+    }
   },
 
   /**
@@ -308,11 +324,19 @@ export const verificationService = {
       completedAt: new Date().toISOString(),
     });
 
-    // Update profile verification status
-    await profilesCol().doc(task.profileId).update({
-      verificationStatus: 'rejected',
-      verificationNotes: rejectionReason,
-    });
+    if (task.pageId) {
+      await hostPagesCol().doc(task.pageId).update({
+        verificationStatus: 'rejected',
+        status: 'suspended',
+        blockReason: rejectionReason,
+        updatedAt: new Date().toISOString(),
+      });
+    } else if (task.profileId) {
+      await profilesCol().doc(task.profileId).update({
+        verificationStatus: 'rejected',
+        verificationNotes: rejectionReason,
+      });
+    }
   },
 
   /**

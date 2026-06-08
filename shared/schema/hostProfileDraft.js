@@ -1,48 +1,51 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UpdateProfileDraftSchema = exports.CreateProfileDraftSchema = exports.ProfileDraftSchema = void 0;
+exports.UpdateProfileDraftBodySchema = exports.UpdateProfileDraftSchema = exports.CreateProfileDraftSchema = exports.ProfileDraftSchema = void 0;
 const zod_1 = require("zod");
 const hostTypes_1 = require("./hostTypes");
 const hostProfile_1 = require("./hostProfile");
-// ============================================================================
-// HostSpace Enterprise-Grade Form System - Profile Draft Schema
-// ============================================================================
-// This schema defines the data model for draft profiles that are saved
-// automatically every 8 seconds during the form wizard flow.
-//
-// Related: requirements.md (Requirement 3), design.md (ProfileDraft)
-// ============================================================================
+const profileDraftDeviceInfoSchema = zod_1.z
+    .object({
+    platform: zod_1.z.string(),
+    userAgent: zod_1.z.string(),
+})
+    .optional();
 exports.ProfileDraftSchema = zod_1.z.object({
     id: zod_1.z.string(),
-    userId: zod_1.z.string(), // Firebase Auth UID
+    userId: zod_1.z.string(),
     entityType: hostTypes_1.HostEntityTypeSchema,
-    formData: hostProfile_1.HostProfileFormDataSchema, // Incomplete profile data
+    formData: hostProfile_1.HostProfileFormDataSchema,
     currentStep: zod_1.z.number().int().min(1).max(10),
     completedSteps: zod_1.z.array(zod_1.z.number().int().min(1).max(10)).default([]),
-    createdAt: zod_1.z.string(), // ISO 8601 timestamp
-    updatedAt: zod_1.z.string(), // ISO 8601 timestamp
-    expiresAt: zod_1.z.string(), // ISO 8601 timestamp (90 days from last update)
-    deviceInfo: zod_1.z
-        .object({
-        platform: zod_1.z.string(),
-        userAgent: zod_1.z.string(),
-    })
-        .optional(),
+    createdAt: zod_1.z.string(),
+    updatedAt: zod_1.z.string(),
+    expiresAt: zod_1.z.string(),
+    deviceInfo: profileDraftDeviceInfoSchema,
 });
-// Schema for creating a new draft
 exports.CreateProfileDraftSchema = exports.ProfileDraftSchema.omit({
     id: true,
     createdAt: true,
     updatedAt: true,
     expiresAt: true,
 });
-// Schema for updating an existing draft
-exports.UpdateProfileDraftSchema = exports.ProfileDraftSchema.partial()
-    .required({
-    id: true,
-    userId: true,
-})
-    .omit({
-    createdAt: true,
+exports.UpdateProfileDraftSchema = zod_1.z.object({
+    id: zod_1.z.string(),
+    userId: zod_1.z.string(),
+    entityType: hostTypes_1.HostEntityTypeSchema.optional(),
+    formData: hostProfile_1.HostProfileFormDataSchema.optional(),
+    currentStep: zod_1.z.number().int().min(1).max(10).optional(),
+    completedSteps: zod_1.z.array(zod_1.z.number().int().min(1).max(10)).optional(),
+    updatedAt: zod_1.z.string().optional(),
+    expiresAt: zod_1.z.string().optional(),
+    deviceInfo: profileDraftDeviceInfoSchema,
+});
+exports.UpdateProfileDraftBodySchema = zod_1.z.object({
+    entityType: hostTypes_1.HostEntityTypeSchema.optional(),
+    formData: hostProfile_1.HostProfileFormDataSchema.optional(),
+    currentStep: zod_1.z.number().int().min(1).max(10).optional(),
+    completedSteps: zod_1.z.array(zod_1.z.number().int().min(1).max(10)).optional(),
+    updatedAt: zod_1.z.string().optional(),
+    expiresAt: zod_1.z.string().optional(),
+    deviceInfo: profileDraftDeviceInfoSchema,
 });
 //# sourceMappingURL=hostProfileDraft.js.map

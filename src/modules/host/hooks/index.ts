@@ -5,6 +5,7 @@
  */
 
 export { useFormWizard, type UseFormWizardOptions, type UseFormWizardReturn, type EntityType, type FormWizardState } from './useFormWizard';
+export { usePageWizard, type UsePageWizardReturn } from './usePageWizard';
 export { useAutoSave, formatLastSaved, type UseAutoSaveOptions, type UseAutoSaveReturn, type SaveStatus } from './useAutoSave';
 export { useDraftRecovery, formatDraftAge, calculateDraftCompletion, getDraftStepLabel, type UseDraftRecoveryOptions, type UseDraftRecoveryReturn } from './useDraftRecovery';
 export { useFieldValidation, useFormValidation, type UseFieldValidationOptions, type UseFieldValidationReturn } from './useFieldValidation';

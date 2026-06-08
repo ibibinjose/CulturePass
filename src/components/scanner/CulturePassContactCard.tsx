@@ -5,7 +5,8 @@ import Animated, { FadeInUp } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useColors } from '@/hooks/useColors';
-import { CultureTokens, FontFamily, Radius, SignatureGradient } from '@/design-system/tokens/theme';
+import { CultureTokens, FontFamily, Radius } from '@/design-system/tokens/theme';
+import { Luxe } from '@/design-system/tokens/luxeHeritage';
 import { Button } from '@/design-system/ui/Button';
 import { contactDisplayName } from '@/modules/contacts/lib/contactDisplayName';
 import { CulturePassContact } from './types';
@@ -33,9 +34,9 @@ export function CulturePassContactCard({
     <Animated.View entering={FadeInUp.springify().damping(18)} style={styles.wrap}>
       <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.borderLight }]}>
         <LinearGradient
-          colors={SignatureGradient as unknown as [string, string]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
+          colors={Luxe.gradients.emeraldIndigo}
+          start={{ x: 0, y: 0.5 }}
+          end={{ x: 1, y: 0.5 }}
           style={styles.strip}
         />
 

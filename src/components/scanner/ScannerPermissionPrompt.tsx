@@ -2,6 +2,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { M3Button } from '@/design-system/ui';
 import { FontFamily, Radius } from '@/design-system/tokens/theme';
+import { Luxe } from '@/design-system/tokens/luxeHeritage';
 import { SCAN_WELL } from './scannerTheme';
 
 type Props = {
@@ -11,7 +12,9 @@ type Props = {
 export function ScannerPermissionPrompt({ onRequestPermission }: Props) {
   return (
     <View style={styles.card}>
-      <Ionicons name="camera-outline" size={32} color={SCAN_WELL.textMuted} />
+      <View style={[styles.iconWrap, { backgroundColor: Luxe.colors.terracotta + '20' }]}>
+        <Ionicons name="camera-outline" size={28} color={Luxe.colors.terracotta} />
+      </View>
       <Text style={styles.title}>Camera access</Text>
       <Text style={styles.body}>
         Allow the camera to scan QR codes at the gate. You can still enter codes manually below.
@@ -33,6 +36,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: SCAN_WELL.border,
     marginBottom: 16,
+  },
+  iconWrap: {
+    width: 56,
+    height: 56,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
   },
   title: {
     color: SCAN_WELL.text,

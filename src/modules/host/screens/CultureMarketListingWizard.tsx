@@ -1,8 +1,8 @@
 /**
  * CultureMarket listing creation (product, service, or external link).
- * Routed from /hostspace/create/listing (see app/hostspace/create/listing.tsx).
+ * Routed from /pages/create/listing (see app/pages/create/listing.tsx).
  */
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -36,6 +36,14 @@ import {
 import { Radius, Spacing } from '@/design-system/tokens/spacing';
 import type { CreateShopListingInput, ShopListing, ShopListingType } from '@/shared/schema';
 import { MARKET_CATEGORIES, CULTURE_TAGS, CITY_TAGS } from '@/shared/schema/cultureShopListing';
+import { findCategory, getCategoryDataflow } from '@/modules/host/config/hostspaceCreateCategories.config';
+import {
+  captureCreationPublishAttempt,
+  captureCreationPublishError,
+  captureCreationPublishSuccess,
+  captureCreationWizardOpen,
+  captureMonetizationImpression,
+} from '@/lib/creationAnalytics';
 
 export type CultureMarketListingWizardProps = {
   variant?: 'fullscreen' | 'embedded';
@@ -257,6 +265,34 @@ function CreateListingInner({
   const prefilledType = typeFromRoute;
 
   const isEditing = !!editId;
+  const marketCategoryId =
+    prefilledType === 'product'
+      ? 'market-product'
+      : prefilledType === 'service'
+        ? 'market-service'
+        : prefilledType === 'link'
+          ? 'market-link'
+          : 'market-listing';
+  const marketCreationCtx = useMemo(() => {
+    const category = findCategory(marketCategoryId);
+    const flow = getCategoryDataflow(category);
+    return {
+      categoryId: category.id,
+      categoryLabel: category.label,
+      layer: flow.layer,
+      wizard: flow.wizard,
+      storage: flow.storage,
+      manageTab: flow.manageTab,
+      source: isEditing ? 'culture_market_edit' : 'culture_market_wizard',
+      entityType: category.entityType,
+      subCategory: category.subCategory,
+    };
+  }, [marketCategoryId, isEditing]);
+
+  useEffect(() => {
+    captureCreationWizardOpen(marketCreationCtx);
+  }, [marketCreationCtx]);
+
   const insets = useSafeAreaInsets();
   const colors = useColors();
   const { hPad, isDesktop } = useLayout();
@@ -318,6 +354,12 @@ function CreateListingInner({
     mutationFn: (payload: CreateShopListingInput & { sellerName: string }) =>
       api.cultureShop.createListing(payload),
     onSuccess: (listing) => {
+      captureCreationPublishSuccess({
+        ...marketCreationCtx,
+        entityId: listing.id,
+        heritage: { cultureTagCount: form.cultureTags.length },
+      });
+      captureMonetizationImpression('culture_market_fee', 'culture_market_publish');
       void qc.invalidateQueries({ queryKey: ['shop-listings'] });
       void qc.invalidateQueries({ queryKey: ['culture-market-my-listings'] });
       if (embedded) {
@@ -326,13 +368,22 @@ function CreateListingInner({
       }
       router.replace(`/CultureMarket/${listing.id}` as never);
     },
-    onError: () => Alert.alert('Error', 'Failed to create listing. Please try again.'),
+    onError: () => {
+      captureCreationPublishError({ ...marketCreationCtx, errorMessage: 'culture_market_create_failed' });
+      Alert.alert('Error', 'Failed to create listing. Please try again.');
+    },
   });
 
   const updateMutation = useMutation({
     mutationFn: (payload: Partial<CreateShopListingInput>) =>
       api.cultureShop.updateListing(editId!, payload),
     onSuccess: (listing) => {
+      captureCreationPublishSuccess({
+        ...marketCreationCtx,
+        entityId: listing.id,
+        heritage: { cultureTagCount: form.cultureTags.length },
+      });
+      captureMonetizationImpression('culture_market_fee', 'culture_market_update');
       void qc.invalidateQueries({ queryKey: ['shop-listings'] });
       void qc.invalidateQueries({ queryKey: ['culture-market-my-listings'] });
       void qc.invalidateQueries({ queryKey: ['shop-listing', editId] });
@@ -342,7 +393,10 @@ function CreateListingInner({
       }
       router.replace(`/CultureMarket/${listing.id}` as never);
     },
-    onError: () => Alert.alert('Error', 'Failed to update listing. Please try again.'),
+    onError: () => {
+      captureCreationPublishError({ ...marketCreationCtx, errorMessage: 'culture_market_update_failed' });
+      Alert.alert('Error', 'Failed to update listing. Please try again.');
+    },
   });
 
   const isBusy = createMutation.isPending || updateMutation.isPending;
@@ -373,12 +427,13 @@ function CreateListingInner({
       cultureTag: form.cultureTags[0] || undefined,
       sellerName: form.sellerName.trim() || user?.displayName || 'CultureMarket Seller',
     };
+    captureCreationPublishAttempt(marketCreationCtx);
     if (isEditing) {
       updateMutation.mutate(payload);
     } else {
       createMutation.mutate(payload);
     }
-  }, [form, isEditing, createMutation, updateMutation, user]);
+  }, [form, isEditing, createMutation, updateMutation, user, marketCreationCtx]);
 
   const pageCol = {
     maxWidth: isDesktop ? 720 : undefined,
@@ -421,7 +476,7 @@ function CreateListingInner({
               if (router.canGoBack()) {
                 router.back();
               } else {
-                router.replace('/hostspace/create' as never);
+                router.replace('/pages/create' as never);
               }
             }}
             style={ss.backBtn}
@@ -581,7 +636,7 @@ function CreateListingInner({
               if (router.canGoBack()) {
                 router.back();
               } else {
-                router.replace('/hostspace/create' as never);
+                router.replace('/pages/create' as never);
               }
               return;
             }

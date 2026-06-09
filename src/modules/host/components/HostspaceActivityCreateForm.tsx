@@ -724,7 +724,7 @@ export function HostspaceActivityCreateForm({ onReview }: { onReview?: () => voi
                 type="hero"
                 value={draft.coverImage}
                 onChange={(val) => updateDraft({ coverImage: val as string })}
-                storagePath={`activities/${user?.id || 'anonymous'}/cover`}
+                storagePath={`activities/${user?.id || 'anonymous'}`}
                 aspectRatio={16 / 9}
               />
             </Field>
@@ -736,7 +736,7 @@ export function HostspaceActivityCreateForm({ onReview }: { onReview?: () => voi
                   const arr = Array.isArray(val) ? val : [val];
                   updateDraft({ gallery: arr.join(',') });
                 }}
-                storagePath={`activities/${user?.id || 'anonymous'}/gallery`}
+                storagePath={`activities/${user?.id || 'anonymous'}`}
                 maxItems={8}
               />
             </Field>
@@ -745,7 +745,7 @@ export function HostspaceActivityCreateForm({ onReview }: { onReview?: () => voi
                 type="video"
                 value={draft.promoVideo}
                 onChange={(val) => updateDraft({ promoVideo: val as string })}
-                storagePath={`activities/${user?.id || 'anonymous'}/video`}
+                storagePath={`activities/${user?.id || 'anonymous'}`}
               />
             </Field>
           </Section>

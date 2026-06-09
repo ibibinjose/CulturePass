@@ -7,6 +7,7 @@ import { M3SectionHeader } from '@/design-system/ui';
 import { communityFlags } from '@/constants/onboardingCommunities';
 import { COMMUNITY_COLOR } from '../ProfileTabUtils';
 import * as Haptics from 'expo-haptics';
+import { profileSectionLayout } from './profileSectionLayout';
 
 interface ProfileBioRootsSectionProps {
   displayUser: any;
@@ -32,43 +33,41 @@ export const ProfileBioRootsSection = React.memo(({
 
   return (
     <>
-      {/* Bio */}
       {displayUser?.bio ? (
-        <View style={[styles.section, { paddingHorizontal: hPad }]}>
+        <View style={[profileSectionLayout.section, { paddingHorizontal: hPad }]}>
           <M3SectionHeader title="About" />
-          <View style={[styles.shell, { backgroundColor: m3.surfaceContainerLow, borderColor: m3.outlineVariant, padding: 18 }]}>
-            <Text style={[styles.bioText, { color: m3.onSurface }]}>{displayUser.bio}</Text>
+          <View style={[styles.shell, profileSectionLayout.shellPad18, { backgroundColor: m3.surfaceContainerLow, borderColor: m3.outlineVariant }]}>
+            <Text style={[styles.bioText, { color: m3.onSurface }]} numberOfLines={12}>{displayUser.bio}</Text>
           </View>
         </View>
       ) : null}
 
-      {/* Roots & Culture */}
       {(displayUser?.ethnicityText || languages.length > 0 || communities.length > 0 || hasCultures) ? (
-        <View style={[styles.section, { paddingHorizontal: hPad }]}>
+        <View style={[profileSectionLayout.section, { paddingHorizontal: hPad }]}>
           <M3SectionHeader title="Roots & culture" actionLabel="Map" onAction={() => setShowCultureMap(true)} />
           <View style={[styles.shell, { backgroundColor: m3.surfaceContainerLow, borderColor: m3.outlineVariant, overflow: 'hidden' }]}>
             {(displayUser?.ethnicityText || hasCultures) ? (
               <View style={[styles.heritageBanner, { backgroundColor: m3.secondaryContainer }]}>
-                <Text style={styles.heritageEmoji}>
+                <Text style={styles.heritageEmoji} numberOfLines={1}>
                   {displayUser?.ethnicityText
                     ? communityFlags[displayUser.ethnicityText as string] ?? '🌏'
                     : matchedCultures[0]?.emoji ?? '🌏'}
                 </Text>
-                <Text style={[styles.heritageName, { color: m3.onSecondaryContainer }]}>
+                <Text style={[styles.heritageName, { color: m3.onSecondaryContainer }]} numberOfLines={2}>
                   {(displayUser?.ethnicityText as string) || matchedCultures[0]?.name}
                 </Text>
               </View>
             ) : null}
 
             {(languages.length > 0 || communities.length > 0) ? (
-              <View style={{ padding: 18, gap: 18 }}>
+              <View style={profileSectionLayout.chipBlock}>
                 {languages.length > 0 ? (
                   <View style={styles.chipSection}>
-                    <Text style={[styles.chipSectionLabel, { color: m3.onSurfaceVariant }]}>Languages I speak</Text>
+                    <Text style={[styles.chipSectionLabel, { color: m3.onSurfaceVariant }]} numberOfLines={1}>Languages I speak</Text>
                     <View style={styles.chipRow}>
                       {languages.map(lang => (
                         <View key={lang} style={[styles.m3Chip, { backgroundColor: m3.surfaceContainerHighest, borderColor: m3.outlineVariant }]}>
-                          <Text style={[styles.m3ChipText, { color: m3.onSurface }]}>🗣 {lang}</Text>
+                          <Text style={[styles.m3ChipText, { color: m3.onSurface }]} numberOfLines={1}>🗣 {lang}</Text>
                         </View>
                       ))}
                     </View>
@@ -77,15 +76,15 @@ export const ProfileBioRootsSection = React.memo(({
 
                 {communities.length > 0 ? (
                   <View style={styles.chipSection}>
-                    <Text style={[styles.chipSectionLabel, { color: m3.onSurfaceVariant }]}>My communities</Text>
+                    <Text style={[styles.chipSectionLabel, { color: m3.onSurfaceVariant }]} numberOfLines={1}>My communities</Text>
                     <View style={styles.chipRow}>
                       {communities.slice(0, 12).map(c => {
                         const color = COMMUNITY_COLOR[c] ?? m3.primary;
                         const flag = communityFlags[c] ?? '🌐';
                         return (
                           <View key={c} style={[styles.m3Chip, styles.communityChip, { backgroundColor: color + '15', borderColor: color + '30' }]}>
-                            <Text style={styles.communityChipEmoji}>{flag}</Text>
-                            <Text style={[styles.m3ChipText, { color }]}>{c}</Text>
+                            <Text style={styles.communityChipEmoji} numberOfLines={1}>{flag}</Text>
+                            <Text style={[styles.m3ChipText, { color }]} numberOfLines={1}>{c}</Text>
                           </View>
                         );
                       })}
@@ -98,15 +97,14 @@ export const ProfileBioRootsSection = React.memo(({
         </View>
       ) : null}
 
-      {/* Interests */}
       {interests.length > 0 ? (
-        <View style={[styles.section, { paddingHorizontal: hPad }]}>
+        <View style={[profileSectionLayout.section, { paddingHorizontal: hPad }]}>
           <M3SectionHeader title="Interests" />
-          <View style={[styles.shell, { backgroundColor: m3.surfaceContainerLow, borderColor: m3.outlineVariant, padding: 16 }]}>
+          <View style={[styles.shell, profileSectionLayout.shellPad16, { backgroundColor: m3.surfaceContainerLow, borderColor: m3.outlineVariant }]}>
             <View style={styles.chipRow}>
               {visibleInterests.map((tag, i) => (
                 <View key={tag + i} style={[styles.m3Chip, { backgroundColor: m3.secondaryContainer, borderColor: m3.outlineVariant }]}>
-                  <Text style={[styles.m3ChipText, { color: m3.onSecondaryContainer }]}>{tag}</Text>
+                  <Text style={[styles.m3ChipText, { color: m3.onSecondaryContainer }]} numberOfLines={1}>{tag}</Text>
                 </View>
               ))}
             </View>
@@ -116,7 +114,7 @@ export const ProfileBioRootsSection = React.memo(({
                 accessibilityRole="button"
                 style={({ pressed }) => [styles.expandToggle, { opacity: pressed ? 0.7 : 1 }]}
               >
-                <Text style={[styles.expandToggleText, { color: m3.primary }]}>
+                <Text style={[styles.expandToggleText, { color: m3.primary }]} numberOfLines={1}>
                   {interestsExpanded ? 'Show less' : `Show all (${interests.length})`}
                 </Text>
               </Pressable>
@@ -131,7 +129,6 @@ export const ProfileBioRootsSection = React.memo(({
 ProfileBioRootsSection.displayName = 'ProfileBioRootsSection';
 
 const styles = StyleSheet.create({
-  section: { marginTop: 36 },
   shell: {
     borderRadius: MaterialExpressive.shape.cornerExtraLarge,
     borderWidth: StyleSheet.hairlineWidth,

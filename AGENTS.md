@@ -407,7 +407,10 @@ npm run emulator:seed:cap
 - Update `TheApp.md`, `AGENTS.md`, `CLAUDE.md`, and `docs/ARCHITECTURE.md` when boundaries or primitives change.
 - Run full quality gates before PR.
 - Test iOS + Android + Web (especially web desktop sidebar + responsive breakpoints).
-- Visual hygiene: no raw hex outside `design-system/tokens/`.
+- Visual hygiene: no raw hex outside `design-system/tokens/` (watchlist enforced via `npm run hex:check`).
+- Card/list text: prefer `TruncatedText` or `numberOfLines` (`npm run text:truncation:check`).
+- Quality gates: `npm run qa:solid` (typecheck + lint + hex + truncation + unit tests). Before release deploy: `npm run build-web` then `npm run qa:release` (adds bundle size check).
+- Visual regression: `npm run test:visual` after `EXPO_PUBLIC_E2E_FIXTURES=true npm run build-web`.
 - Route folders must be **lowercase** — case-sensitive on Linux/Firebase Hosting.
 
 ---

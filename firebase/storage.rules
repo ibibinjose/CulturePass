@@ -132,6 +132,24 @@ service firebase.storage {
                    && imageWriteConstraints(filename, 10);
     }
 
+    match /posts/{userId}/{filename} {
+      allow read:  if true;
+      allow write: if isOwner(userId)
+                   && imageWriteConstraints(filename, 10);
+    }
+
+    match /activities/{userId}/{filename} {
+      allow read:  if true;
+      allow write: if isOwner(userId)
+                   && imageWriteConstraints(filename, 10);
+    }
+
+    match /host-pages/{userId}/{filename} {
+      allow read:  if true;
+      allow write: if isOwner(userId)
+                   && imageWriteConstraints(filename, 10);
+    }
+
     match /uploads/{userId}/{filename} {
       allow read:  if true;
       allow write: if false;

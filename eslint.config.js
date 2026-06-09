@@ -69,5 +69,29 @@ module.exports = [
       // Explicit reference removed to avoid "plugin not found" in flat config.
     }
   },
+  {
+    files: [
+      "src/app/_layout.tsx",
+      "src/modules/core/layout/tabs/CustomTabBar.tsx",
+      "src/app/(onboarding)/**/*.tsx",
+      "src/components/onboarding/**/*.tsx",
+    ],
+    rules: {
+      "no-restricted-imports": ["warn", {
+        paths: [
+          {
+            name: "react-native",
+            importNames: ["Image"],
+            message: "Use Image from 'expo-image' instead for proper caching and performance."
+          },
+          {
+            name: "react-native",
+            importNames: ["Pressable"],
+            message: "Prefer <Button> or M3Button in navigation/onboarding surfaces (FIXES-001 P3)."
+          },
+        ],
+      }],
+    },
+  },
   prettier,
 ];

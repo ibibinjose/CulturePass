@@ -3,13 +3,6 @@
  *
  * Allows lead/co-organizers, managers, and admins to manage the team for
  * a Community or Business profile.
- *
- * Features:
- * - List current team with roles
- * - Add new member (search by handle/email + role selection)
- * - Change role for existing members
- * - Remove members (with safety for last lead)
- * - Real-time updates via the new team endpoints + audit logging
  */
 
 import React, { useState } from 'react';
@@ -29,7 +22,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { useColors } from '@/hooks/useColors';
 import { api } from '@/lib/api';
-import { CultureTokens, FontFamily, Radius } from '@/design-system/tokens/theme';
+import { CultureTokens, FontFamily, Radius, BorderTokens } from '@/design-system/tokens/theme';
 import { M3Button, M3Card } from '@/design-system/ui';
 import { modulesApi } from '@/modules/api';
 
@@ -75,7 +68,6 @@ export function TeamManagementModal({
 
   const [localTeam, setLocalTeam] = useState<TeamMember[]>(currentOrganizers);
 
-  // Sync when prop changes
   React.useEffect(() => {
     setLocalTeam(currentOrganizers);
   }, [currentOrganizers]);
@@ -103,12 +95,10 @@ export function TeamManagementModal({
     if (!search.trim()) return;
     setSearchLoading(true);
     try {
-      // Use the platform search for users/profiles
       const res = await (((api as any).search?.query?.({ q: search, type: 'user', limit: 6 }) as any) || { results: [] }) ?? { results: [] };
       const users = (res.results || res.hits || []).filter((r: any) => r.type === 'user' || r.entityType === 'user');
       setSearchResults(users.slice(0, 5));
     } catch {
-      // Fallback: try a broad profiles search
       try {
         const profiles = await modulesApi.profiles?.list?.({ search }) ?? [];
         setSearchResults(profiles.slice(0, 5));
@@ -167,25 +157,24 @@ export function TeamManagementModal({
       <View style={styles.backdrop}>
         <M3Card style={styles.modal}>
           <View style={styles.header}>
-            <Text style={[styles.title, { color: colors.text }]}>Manage Team</Text>
+            <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>Manage Team</Text>
             <Pressable onPress={onClose}>
               <Ionicons name="close" size={24} color={colors.textSecondary} />
             </Pressable>
           </View>
 
-          {/* Current Team */}
-          <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>Current Team</Text>
+          <Text style={[styles.sectionLabel, { color: colors.textSecondary }]} numberOfLines={1}>Current Team</Text>
           {localTeam.length === 0 && (
-            <Text style={{ color: colors.textTertiary }}>No additional team members yet.</Text>
+            <Text style={[styles.emptyText, { color: colors.textTertiary }]} numberOfLines={2}>No additional team members yet.</Text>
           )}
 
           {localTeam.map((member) => (
-            <View key={member.userId} style={styles.memberRow}>
-              <View style={{ flex: 1 }}>
-                <Text style={{ color: colors.text, fontFamily: FontFamily.semibold }}>
+            <View key={member.userId} style={[styles.memberRow, { borderBottomColor: colors.borderLight }]}>
+              <View style={styles.memberInfo}>
+                <Text style={[styles.memberTitle, { color: colors.text }]} numberOfLines={1}>
                   {member.title || member.role}
                 </Text>
-                <Text style={{ color: colors.textTertiary, fontSize: 12 }}>{member.userId}</Text>
+                <Text style={[styles.memberId, { color: colors.textTertiary }]} numberOfLines={1}>{member.userId}</Text>
               </View>
 
               <View style={styles.roleActions}>
@@ -202,9 +191,8 @@ export function TeamManagementModal({
             </View>
           ))}
 
-          {/* Add New Member */}
-          <View style={{ marginTop: 20 }}>
-            <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>Add New Member</Text>
+          <View style={styles.addSection}>
+            <Text style={[styles.sectionLabel, { color: colors.textSecondary }]} numberOfLines={1}>Add New Member</Text>
 
             <View style={styles.searchRow}>
               <TextInput
@@ -226,10 +214,16 @@ export function TeamManagementModal({
                   onPress={() => setSelectedRole(role.value)}
                   style={[
                     styles.roleChip,
-                    selectedRole === role.value && { backgroundColor: CultureTokens.indigo },
+                    { backgroundColor: selectedRole === role.value ? CultureTokens.indigo : colors.surfaceElevated },
                   ]}
                 >
-                  <Text style={{ color: selectedRole === role.value ? '#fff' : colors.text, fontSize: 12 }}>
+                  <Text
+                    style={[
+                      styles.roleChipText,
+                      { color: selectedRole === role.value ? BorderTokens.white : colors.text },
+                    ]}
+                    numberOfLines={1}
+                  >
                     {role.label}
                   </Text>
                 </Pressable>
@@ -242,7 +236,9 @@ export function TeamManagementModal({
                 keyExtractor={(item) => item.id}
                 renderItem={({ item }) => (
                   <Pressable style={styles.resultRow} onPress={() => addMember(item)}>
-                    <Text style={{ color: colors.text }}>{item.handle || item.username || item.email}</Text>
+                    <Text style={[styles.resultLabel, { color: colors.text }]} numberOfLines={1}>
+                      {item.handle || item.username || item.email}
+                    </Text>
                     <M3Button size="sm" onPress={() => addMember(item)}>
                       Add
                     </M3Button>
@@ -269,13 +265,20 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
   title: { fontSize: 20, fontFamily: FontFamily.bold },
   sectionLabel: { fontSize: 13, fontFamily: FontFamily.bold, marginBottom: 8, textTransform: 'uppercase' },
-  memberRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#eee' },
+  emptyText: { fontSize: 14, fontFamily: FontFamily.regular },
+  memberRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, borderBottomWidth: 1 },
+  memberInfo: { flex: 1 },
+  memberTitle: { fontFamily: FontFamily.semibold },
+  memberId: { fontSize: 12, fontFamily: FontFamily.regular },
   roleActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   roleInput: { borderWidth: 1, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4, fontSize: 13, minWidth: 110 },
+  addSection: { marginTop: 20 },
   searchRow: { flexDirection: 'row', gap: 8, marginBottom: 8 },
   searchInput: { flex: 1, borderWidth: 1, borderRadius: Radius.md, padding: 10 },
   rolePicker: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 12 },
-  roleChip: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999, backgroundColor: '#f0f0f0' },
+  roleChip: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999 },
+  roleChipText: { fontSize: 12, fontFamily: FontFamily.medium },
   resultRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8 },
+  resultLabel: { flex: 1, fontFamily: FontFamily.regular, marginRight: 8 },
   footer: { marginTop: 24 },
 });

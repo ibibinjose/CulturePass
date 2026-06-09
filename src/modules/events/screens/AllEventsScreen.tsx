@@ -6,7 +6,7 @@ import {
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import { useInfiniteQuery, keepPreviousData } from '@tanstack/react-query';
 import * as Haptics from 'expo-haptics';
 import { useOnboarding } from '@/contexts/OnboardingContext';
@@ -215,8 +215,8 @@ function paramStr(v: string | string[] | undefined): string | undefined {
 }
 
 export default function AllEventsScreen() {
-  const insets = useSafeAreaInsets();
-  const bottomInset = Platform.OS === 'web' ? 0 : insets.bottom;
+  const insets = useSafeAreaInsetsWeb();
+  const bottomInset = insets.bottom;
   const colors  = useColors();
   const { state } = useOnboarding();
   const { isDesktop, hPad, windowSizeClass } = useLayout();

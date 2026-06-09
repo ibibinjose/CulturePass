@@ -15,17 +15,13 @@ import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useAuth } from '@/lib/auth';
 import { useColors } from '@/hooks/useColors';
-import { CultureTokens } from '@/design-system/tokens/theme';
+import { CultureTokens, BorderTokens } from '@/design-system/tokens/theme';
 import { routeWithRedirect } from '@/lib/routes';
 
 export interface ProfileHeaderBarProps {
-  /** Compact mode: avatar only, no name */
   compact?: boolean;
-  /** Size of avatar */
   avatarSize?: number;
-  /** Use light/white text (e.g. on gradient header) */
   lightMode?: boolean;
-  /** Custom onPress when not showing menu */
   onLogoPress?: () => void;
 }
 
@@ -52,8 +48,11 @@ export function ProfileHeaderBar({
 
   const displayName = user?.displayName ?? user?.username ?? user?.id?.slice(0, 8) ?? 'You';
   const initials = displayName.trim().split(' ').map((w: string) => w[0]).slice(0, 2).join('').toUpperCase() || '?';
-  const textColor = lightMode ? '#fff' : colors.text;
+  const textColor = lightMode ? BorderTokens.white : colors.text;
   const mutedColor = lightMode ? 'rgba(255,255,255,0.75)' : colors.textSecondary;
+  const avatarRadius = avatarSize / 2;
+  const ringSize = avatarSize + 4;
+  const ringRadius = ringSize / 2;
 
   const handleMenuSelect = (route: string) => {
     if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -74,7 +73,6 @@ export function ProfileHeaderBar({
     }
   };
 
-  // Logged in: show avatar + optional name
   if (isAuthenticated) {
     return (
       <>
@@ -82,18 +80,18 @@ export function ProfileHeaderBar({
           style={({ pressed }) => [
             styles.wrap,
             compact && styles.wrapCompact,
-            pressed && { opacity: 0.85 },
-            Platform.OS === 'web' && { cursor: 'pointer' as never },
+            pressed && styles.pressed,
+            Platform.OS === 'web' && styles.webPointer,
           ]}
           onPress={handlePress}
           accessibilityRole="button"
           accessibilityLabel="Open profile menu"
         >
-          <View style={[styles.avatarWrap, { width: avatarSize, height: avatarSize, borderRadius: avatarSize / 2 }]}>
+          <View style={[styles.avatarWrap, { width: avatarSize, height: avatarSize, borderRadius: avatarRadius }]}>
             {user?.avatarUrl ? (
               <Image
                 source={{ uri: user.avatarUrl }}
-                style={{ width: avatarSize, height: avatarSize, borderRadius: avatarSize / 2 }}
+                style={{ width: avatarSize, height: avatarSize, borderRadius: avatarRadius }}
                 contentFit="cover"
               />
             ) : (
@@ -101,16 +99,16 @@ export function ProfileHeaderBar({
                 colors={[CultureTokens.indigo, CultureTokens.coral]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
-                style={[StyleSheet.absoluteFill, { borderRadius: avatarSize / 2 }]}
+                style={[StyleSheet.absoluteFill, { borderRadius: avatarRadius }]}
               >
-                <View style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center' }]}>
-                  <Text style={[styles.initials, { fontSize: Math.round(avatarSize * 0.38), color: '#fff' }]}>
+                <View style={styles.initialsWrap}>
+                  <Text style={[styles.initials, { fontSize: Math.round(avatarSize * 0.38), color: BorderTokens.white }]} numberOfLines={1}>
                     {initials}
                   </Text>
                 </View>
               </LinearGradient>
             )}
-            <View style={[styles.avatarRing, { width: avatarSize + 4, height: avatarSize + 4, borderRadius: (avatarSize + 4) / 2, borderColor: lightMode ? 'rgba(255,255,255,0.4)' : colors.border }]} />
+            <View style={[styles.avatarRing, { width: ringSize, height: ringSize, borderRadius: ringRadius, borderColor: lightMode ? 'rgba(255,255,255,0.4)' : colors.border }]} />
           </View>
           {!compact && (
             <View style={styles.nameWrap}>
@@ -135,10 +133,10 @@ export function ProfileHeaderBar({
                       end={{ x: 1, y: 1 }}
                       style={[styles.menuAvatar, styles.menuAvatarFallback]}
                     >
-                      <Text style={styles.menuAvatarText}>{initials}</Text>
+                      <Text style={styles.menuAvatarText} numberOfLines={1}>{initials}</Text>
                     </LinearGradient>
                   )}
-                  <View style={{ flex: 1, minWidth: 0 }}>
+                  <View style={styles.menuHeaderText}>
                     <Text style={[styles.menuHeaderName, { color: colors.text }]} numberOfLines={1}>{displayName}</Text>
                     {user?.email && (
                       <Text style={[styles.menuHeaderEmail, { color: colors.textSecondary }]} numberOfLines={1}>{user.email}</Text>
@@ -157,18 +155,18 @@ export function ProfileHeaderBar({
                     onPress={() => handleMenuSelect(item.route)}
                   >
                     <Ionicons name={item.icon as never} size={20} color={colors.textSecondary} />
-                    <Text style={[styles.menuItemLabel, { color: colors.text }]}>{item.label}</Text>
+                    <Text style={[styles.menuItemLabel, { color: colors.text }]} numberOfLines={1}>{item.label}</Text>
                     <Ionicons name="chevron-forward" size={16} color={colors.textTertiary} />
                   </Pressable>
                 ))}
               </ScrollView>
               <View style={[styles.menuFooter, { borderTopColor: colors.borderLight }]}>
                 <Pressable
-                  style={({ pressed }) => [styles.signOutBtn, pressed && { opacity: 0.8 }]}
+                  style={({ pressed }) => [styles.signOutBtn, pressed && styles.pressedStrong]}
                   onPress={() => handleMenuSelect('signout')}
                 >
                   <Ionicons name="log-out-outline" size={20} color={CultureTokens.error} />
-                  <Text style={[styles.signOutText, { color: CultureTokens.error }]}>Sign Out</Text>
+                  <Text style={[styles.signOutText, { color: CultureTokens.error }]} numberOfLines={1}>Sign Out</Text>
                 </Pressable>
               </View>
             </View>
@@ -178,24 +176,23 @@ export function ProfileHeaderBar({
     );
   }
 
-  // Not logged in: show logo + Sign In
   return (
     <Pressable
       style={({ pressed }) => [
         styles.wrap,
         styles.wrapGuest,
-        pressed && { opacity: 0.9 },
-        Platform.OS === 'web' && { cursor: 'pointer' as never },
+        pressed && styles.pressedGuest,
+        Platform.OS === 'web' && styles.webPointer,
       ]}
       onPress={handlePress}
       accessibilityRole="button"
       accessibilityLabel="Sign in"
     >
       <View style={[styles.logoCircle, { backgroundColor: lightMode ? 'rgba(255,255,255,0.2)' : colors.surfaceElevated }]}>
-        <Ionicons name="person-outline" size={avatarSize * 0.55} color={lightMode ? '#fff' : colors.textSecondary} />
+        <Ionicons name="person-outline" size={avatarSize * 0.55} color={lightMode ? BorderTokens.white : colors.textSecondary} />
       </View>
       {!compact && (
-        <Text style={[styles.signInLabel, { color: textColor }]}>Sign In</Text>
+        <Text style={[styles.signInLabel, { color: textColor }]} numberOfLines={1}>Sign In</Text>
       )}
     </Pressable>
   );
@@ -213,6 +210,10 @@ const styles = StyleSheet.create({
   wrapGuest: {
     gap: 8,
   },
+  pressed: { opacity: 0.85 },
+  pressedGuest: { opacity: 0.9 },
+  pressedStrong: { opacity: 0.8 },
+  webPointer: { cursor: 'pointer' as never },
   avatarWrap: {
     overflow: 'hidden',
     position: 'relative',
@@ -222,6 +223,11 @@ const styles = StyleSheet.create({
     top: -2,
     left: -2,
     borderWidth: 2,
+  },
+  initialsWrap: {
+    ...StyleSheet.absoluteFill,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   initials: {
     fontFamily: 'Poppins_700Bold',
@@ -284,7 +290,11 @@ const styles = StyleSheet.create({
   menuAvatarText: {
     fontSize: 18,
     fontFamily: 'Poppins_700Bold',
-    color: '#fff',
+    color: BorderTokens.white,
+  },
+  menuHeaderText: {
+    flex: 1,
+    minWidth: 0,
   },
   menuHeaderName: {
     fontSize: 16,

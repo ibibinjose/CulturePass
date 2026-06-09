@@ -1,4 +1,5 @@
 import { CULTUREX_EXPLORES_CULTURE_TAG } from '@/shared/schema';
+import { AUSTRALIAN_CULTURE_TAGS } from '@/constants/australianCultureTags';
 
 /**
  * Culture Match — preset culture tags for cross-cultural discovery.
@@ -34,6 +35,20 @@ export const CULTURE_EXPLORE_PRESETS: CultureExplorePreset[] = [
   { id: 'south-asian', label: 'South Asian', cultureTag: 'south asian' },
   { id: 'african', label: 'African diaspora', cultureTag: 'african' },
   { id: 'pacific', label: 'Pacific / Pasifika', cultureTag: 'pasifika' },
+  { id: 'australian', label: 'Australian Culture', cultureTag: 'australian' },
+  { id: 'anzac', label: 'ANZAC & remembrance', cultureTag: 'anzac' },
+  { id: 'afl-nrl', label: 'AFL & NRL', cultureTag: 'afl nrl' },
+  { id: 'beach-culture', label: 'Beach culture', cultureTag: 'beach culture' },
+  { id: 'indigenous-heritage', label: 'Indigenous heritage', cultureTag: 'indigenous heritage' },
+  { id: 'dreamtime', label: 'Dreamtime stories', cultureTag: 'dreamtime' },
+  { id: 'pub-rock', label: 'Pub rock', cultureTag: 'pub rock' },
+  ...AUSTRALIAN_CULTURE_TAGS.filter((tag) =>
+    !['australian', 'anzac_legend', 'afl_nrl', 'beach_culture', 'indigenous_heritage_au', 'dreamtime', 'pub_rock'].includes(tag.id),
+  ).map((tag) => ({
+    id: tag.id,
+    label: tag.label,
+    cultureTag: tag.cultureTag,
+  })),
 ];
 
 export function interestToCultureSearchTag(interest: string): string {

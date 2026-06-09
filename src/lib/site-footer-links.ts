@@ -2,20 +2,34 @@
  * Footer links for the CulturePass application
  */
 
-export const FOOTER_LINKS = [
-  { href: "/about", label: "About" },
-  { href: "/company-info", label: "Company Info" },
-  { href: "/founder", label: "Founder" },
-  { href: "/get2know", label: "Get to Know" },
-  { href: "/help", label: "Help" },
-  { href: "/legal/terms", label: "Terms" },
-  { href: "/legal/privacy", label: "Privacy" },
-  { href: "/legal/cookies", label: "Cookies" },
-  { href: "/legal/community", label: "Community" },
-  { href: "/legal/guidelines", label: "Guidelines" },
-  { href: "/legal/event-terms", label: "Event Terms" },
-  { href: "/contact", label: "Contact" },
-] as const;
+export type FooterLink = {
+  readonly id: string;
+  readonly href: string;
+  readonly label: string;
+};
+
+const GET2KNOW_LINKS = [
+  { id: 'about', href: '/about', label: 'About' },
+  { id: 'company-info', href: '/company-info', label: 'Company Info' },
+  { id: 'founder', href: '/founder', label: 'Founder' },
+  { id: 'get-to-know', href: '/about', label: 'Get to Know' },
+  { id: 'help', href: '/help', label: 'Help' },
+] as const satisfies readonly FooterLink[];
+
+const LEGAL_SUPPORT_LINKS = [
+  { id: 'terms', href: '/legal/terms', label: 'Terms' },
+  { id: 'privacy', href: '/legal/privacy', label: 'Privacy' },
+  { id: 'cookies', href: '/legal/cookies', label: 'Cookies' },
+  { id: 'community', href: '/legal/community', label: 'Community' },
+  { id: 'guidelines', href: '/legal/guidelines', label: 'Guidelines' },
+  { id: 'event-terms', href: '/legal/event-terms', label: 'Event Terms' },
+  { id: 'contact', href: '/contact', label: 'Contact' },
+] as const satisfies readonly FooterLink[];
+
+export const FOOTER_LINKS: readonly FooterLink[] = [
+  ...GET2KNOW_LINKS,
+  ...LEGAL_SUPPORT_LINKS,
+];
 
 export const SOCIAL_LINKS = [
   { key: 'instagram', label: '@culturepassapp', url: 'https://www.instagram.com/culturepass.app', icon: 'logo-instagram' },
@@ -28,21 +42,7 @@ export const SOCIAL_LINKS = [
 
 // Organized footer sections for better structure
 export const FOOTER_SECTIONS = {
-  get2Know: [
-    { href: "/about", label: "About" },
-    { href: "/company-info", label: "Company Info" },
-    { href: "/founder", label: "Founder" },
-    { href: "/get2know", label: "Get to Know" },
-    { href: "/help", label: "Help" },
-  ],
-  legalSupport: [
-    { href: "/legal/terms", label: "Terms" },
-    { href: "/legal/privacy", label: "Privacy" },
-    { href: "/legal/cookies", label: "Cookies" },
-    { href: "/legal/community", label: "Community" },
-    { href: "/legal/guidelines", label: "Guidelines" },
-    { href: "/legal/event-terms", label: "Event Terms" },
-    { href: "/contact", label: "Contact" },
-  ],
-  connect: SOCIAL_LINKS
+  get2Know: GET2KNOW_LINKS,
+  legalSupport: LEGAL_SUPPORT_LINKS,
+  connect: SOCIAL_LINKS,
 } as const;

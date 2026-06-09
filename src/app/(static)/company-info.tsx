@@ -105,7 +105,7 @@ export default function CompanyInfoScreen() {
                 {FOOTER_LINKS.filter(link => 
                   ['Terms', 'Privacy', 'Cookies', 'Community', 'Guidelines', 'Event Terms'].includes(link.label)
                 ).map((link) => (
-                    <View key={link.href} style={{ flex: 1, minWidth: 140 }}>
+                    <View key={link.id} style={{ flex: 1, minWidth: 140 }}>
                         <Link href={link.href} asChild>
                             <Pressable
                                 style={({ pressed }) => [

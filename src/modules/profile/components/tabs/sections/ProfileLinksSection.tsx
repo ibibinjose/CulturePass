@@ -10,6 +10,7 @@ import {
   PROFILE_HOST_ASPIRING_ROWS,
   PROFILE_HOST_ORGANIZER_ROWS,
 } from '@/constants/navigation/experienceNav';
+import { profileSectionLayout } from './profileSectionLayout';
 
 type RowItem = {
   id?: string;
@@ -42,7 +43,7 @@ function M3ListCard({
               <Ionicons name={item.icon} size={20} color={item.accent} />
             </View>
             <View style={styles.rowContent}>
-              <Text style={[styles.rowLabel, { color: m3.onSurface }]}>{item.label}</Text>
+              <Text style={[styles.rowLabel, { color: m3.onSurface }]} numberOfLines={1}>{item.label}</Text>
               {item.sub ? (
                 <Text style={[styles.rowSub, { color: m3.onSurfaceVariant }]} numberOfLines={2}>{item.sub}</Text>
               ) : null}
@@ -77,7 +78,6 @@ export const ProfileLinksSection = React.memo(({
     { id: 'network', icon: 'git-network-outline' as const, label: 'My Circle', path: '/network?tab=followers', accent: m3.primary },
     { id: 'saved', icon: 'heart-outline' as const, label: 'Favorites & Stamps', path: '/saved', accent: CultureTokens.coral },
     { id: 'community', icon: 'people-outline' as const, label: 'My communities', path: '/communities', accent: CultureTokens.teal },
-    { id: 'perksLink', icon: 'gift-outline' as const, label: 'Perks & rewards', path: '/perks', accent: CultureTokens.gold },
     { id: 'payment', icon: 'card-outline' as const, label: 'Payment methods', path: '/payment/methods', accent: m3.primary },
     { id: 'help', icon: 'help-circle-outline' as const, label: 'Help & support', path: '/help', accent: m3.tertiary },
   ];
@@ -87,25 +87,24 @@ export const ProfileLinksSection = React.memo(({
 
   return (
     <>
-      <View style={[styles.section, { paddingHorizontal: hPad }]}>
+      <View style={[profileSectionLayout.section, { paddingHorizontal: hPad }]}>
         <M3SectionHeader title="Quick links" />
         <M3ListCard rows={quickLinks} onPress={nav} />
       </View>
 
-      <View style={[styles.section, { paddingHorizontal: hPad }]}>
+      <View style={[profileSectionLayout.section, { paddingHorizontal: hPad }]}>
         <M3SectionHeader
           title="Attendee tools"
           actionLabel="My calendar"
           onAction={() => nav('/(tabs)/calendar')}
         />
-        <Text style={[styles.sectionIntro, { color: m3.onSurfaceVariant }]}>
-          Tickets, saves, and reminders in one place.
+        <Text style={[styles.sectionIntro, { color: m3.onSurfaceVariant }]} numberOfLines={2}>
+          Tickets, member perks, and calendar sync in one place.
         </Text>
         <M3ListCard rows={attendeeRows} onPress={nav} />
       </View>
 
-      {/* Prominent Host Studio entry for all users (Sandbox Mode for non-organizers) */}
-      <View style={[styles.section, { paddingHorizontal: hPad }]}>
+      <View style={[profileSectionLayout.section, { paddingHorizontal: hPad }]}>
         <Pressable
           onPress={() => nav('/hostspace')}
           style={({ pressed }) => [
@@ -119,12 +118,12 @@ export const ProfileLinksSection = React.memo(({
             <View style={styles.hostStudioIcon}>
               <Ionicons name="briefcase-outline" size={22} color={m3.onPrimaryContainer} />
             </View>
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.hostStudioTitle, { color: m3.onPrimaryContainer }]}>
+            <View style={profileSectionLayout.flex1}>
+              <Text style={[styles.hostStudioTitle, { color: m3.onPrimaryContainer }]} numberOfLines={1}>
                 {isOrganizer ? 'Host Studio' : 'Host Studio (Sandbox)'}
               </Text>
-              <Text style={[styles.hostStudioSub, { color: m3.onPrimaryContainer }]}>
-                {isOrganizer 
+              <Text style={[styles.hostStudioSub, { color: m3.onPrimaryContainer }]} numberOfLines={2}>
+                {isOrganizer
                   ? 'Create, manage events & scan tickets'
                   : 'Draft profiles & events, apply to publish'}
               </Text>
@@ -134,13 +133,13 @@ export const ProfileLinksSection = React.memo(({
         </Pressable>
       </View>
 
-      <View style={[styles.section, { paddingHorizontal: hPad }]}>
+      <View style={[profileSectionLayout.section, { paddingHorizontal: hPad }]}>
         <M3SectionHeader
           title="Host Hub"
           actionLabel={isOrganizer ? 'Host Dashboard' : undefined}
           onAction={isOrganizer ? () => nav('/hostspace/dashboard') : undefined}
         />
-        <Text style={[styles.sectionIntro, { color: m3.onSurfaceVariant }]}>
+        <Text style={[styles.sectionIntro, { color: m3.onSurfaceVariant }]} numberOfLines={3}>
           {isOrganizer
             ? 'Your command center for events, communities, ticket scanning, and growth.'
             : 'Apply to host events, build communities, and reach thousands of cultural seekers.'}
@@ -154,7 +153,6 @@ export const ProfileLinksSection = React.memo(({
 ProfileLinksSection.displayName = 'ProfileLinksSection';
 
 const styles = StyleSheet.create({
-  section: { marginTop: 36 },
   sectionIntro: { fontSize: 13, fontFamily: FontFamily.regular, lineHeight: 20, marginBottom: 10, marginTop: -4 },
   shell: {
     borderRadius: MaterialExpressive.shape.cornerExtraLarge,
@@ -195,8 +193,6 @@ const styles = StyleSheet.create({
     marginLeft: 70,
     marginRight: 16,
   },
-
-  // Prominent Host Studio banner for organizers (best-in-class discoverability)
   hostStudioBanner: {
     borderRadius: MaterialExpressive.shape.cornerExtraLarge,
     padding: 18,

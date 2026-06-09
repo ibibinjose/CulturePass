@@ -23,9 +23,38 @@ import type { CommunityCategory, CommunityJoinMode, CommunityLegalStatus, Profil
 import { COMMUNITY_LEGAL_STATUS_LABELS } from '@/shared/schema/profile';
 import { ALL_NATIONALITIES, CULTURES, getCulturesForNationality, searchNationalities } from '@/constants/cultures';
 import { CultureIndigenousFields } from '@/components/culture/CultureIndigenousFields';
+import { CultureTagPicker } from '@/components/culture/CultureTagPicker';
+import { isAustralianNationality } from '@/constants/australianCultureTags';
 import { COMMON_LANGUAGES, LANGUAGES, searchLanguages } from '@/constants/languages';
 import { SubmitCard, SubmitSectionLabel, SubmitField } from '@/components/submit/FormPrimitives';
 import { modulesApi } from '@/modules/api';
+import { SocialHandleField } from '@/components/social/SocialHandleField';
+import {
+  SOCIAL_HANDLE_PLACEHOLDERS,
+  toPlatformUrl,
+  type ListingSocialKey,
+  type SocialPlatformKey,
+} from '@/shared/utils/socialLinks';
+
+const LISTING_SOCIAL_HUB_FIELDS: {
+  key: ListingSocialKey;
+  label: string;
+  placeholder: string;
+  platformKey: SocialPlatformKey;
+}[] = [
+  { key: 'website', label: 'Website', placeholder: SOCIAL_HANDLE_PLACEHOLDERS.website ?? 'culturepass.app', platformKey: 'website' },
+  { key: 'instagram', label: 'Instagram', placeholder: SOCIAL_HANDLE_PLACEHOLDERS.instagram ?? '@handle', platformKey: 'instagram' },
+  { key: 'facebook', label: 'Facebook', placeholder: SOCIAL_HANDLE_PLACEHOLDERS.facebook ?? 'pagename', platformKey: 'facebook' },
+  { key: 'youtube', label: 'YouTube', placeholder: SOCIAL_HANDLE_PLACEHOLDERS.youtube ?? '@channel', platformKey: 'youtube' },
+  { key: 'tiktok', label: 'TikTok', placeholder: SOCIAL_HANDLE_PLACEHOLDERS.tiktok ?? '@handle', platformKey: 'tiktok' },
+  { key: 'twitter', label: 'X / Twitter', placeholder: SOCIAL_HANDLE_PLACEHOLDERS.twitter ?? 'CulturePassApp', platformKey: 'twitter' },
+  { key: 'spotify', label: 'Spotify', placeholder: 'Artist or playlist URL', platformKey: 'spotify' },
+  { key: 'linkedin', label: 'LinkedIn', placeholder: SOCIAL_HANDLE_PLACEHOLDERS.linkedin ?? 'company/name', platformKey: 'linkedin' },
+  { key: 'pinterest', label: 'Pinterest', placeholder: 'username', platformKey: 'pinterest' },
+  { key: 'linktree', label: 'Linktree', placeholder: 'yourname', platformKey: 'linktree' },
+  { key: 'whatsapp', label: 'WhatsApp', placeholder: '61400000000', platformKey: 'whatsapp' },
+  { key: 'wechat', label: 'WeChat', placeholder: 'ID or link', platformKey: 'wechat' },
+];
 
 const webPointer = Platform.OS === 'web' ? ({ cursor: 'pointer' } as const) : {};
 
@@ -89,6 +118,8 @@ const CULTURAL_FOCUS_OPTIONS = [
 ];
 
 const FEATURED_CULTURE_IDS = [
+  'australian',
+  'aboriginal_australian',
   'malayali',
   'tamil',
   'punjabi',
@@ -98,13 +129,19 @@ const FEATURED_CULTURE_IDS = [
   'vietnamese',
   'korean',
   'japanese',
-  'aboriginal_australian',
   'arab',
   'italian',
   'greek',
 ];
 
 const CULTURE_TAG_SUGGESTIONS: Record<string, string[]> = {
+  australian: ['Mateship', 'Fair Go', 'Barbie', 'Beach Culture', 'Pub Culture', 'ANZAC', 'Aussie Slang'],
+  aboriginal_australian: ['Dreamtime', 'Indigenous Heritage', 'NAIDOC', 'First Nations', 'Survival Day'],
+  beach_culture: ['Surf Life Saving', 'Coastal Living', 'Christmas at the Beach', 'Cricket & Surfing'],
+  afl_nrl: ['Footy Culture', 'AFL', 'NRL', 'Grand Final'],
+  anzac_legend: ['ANZAC Day', 'Remembrance', 'Dawn Service', 'RSL'],
+  pub_culture: ['Pub Rock', 'Beer Garden', 'Local Hotel', 'Live Music'],
+  cafe_culture: ['Brunch', 'Specialty Coffee', 'Cafe Culture', 'Farmers Markets'],
   malayali: ['Onam', 'Vishu', 'Kerala Food', 'Malayalam', 'Mohiniyattam'],
   tamil: ['Pongal', 'Tamil Language', 'Bharatanatyam', 'Kollywood'],
   punjabi: ['Bhangra', 'Giddha', 'Vaisakhi', 'Punjabi Food'],
@@ -616,67 +653,28 @@ export function ListingStepLocation({ form, setField, colors, s }: Base) {
   );
 }
 
-function normalizeUrl(raw: string): string {
-  const v = raw.trim();
-  if (!v) return v;
-  if (/^https?:\/\//i.test(v)) return v;
-  return `https://${v}`;
-}
-
-function SocialRow({
-  label,
-  value,
-  onChangeText,
-  placeholder,
-  colors,
-  s,
-  isUrl = false,
-}: {
-  label: string;
-  value: string;
-  onChangeText: (v: string) => void;
-  placeholder: string;
-  colors: ReturnType<typeof useColors>;
-  s: CreateStyles;
-  isUrl?: boolean;
-}) {
-  const showPreview = value.trim().length > 5 && (value.startsWith('http') || value.includes('.'));
-  return (
-    <SubmitField label={label} hint={showPreview ? value.replace(/^https?:\/\//, '') : undefined}>
-      <TextInput
-        value={value}
-        onChangeText={onChangeText}
-        onBlur={isUrl ? () => { if (value.trim()) onChangeText(normalizeUrl(value)); } : undefined}
-        placeholder={placeholder}
-        placeholderTextColor={colors.textTertiary}
-        autoCapitalize="none"
-        keyboardType={isUrl ? 'url' : 'default'}
-        returnKeyType="next"
-        style={[s.singleLineInput, { borderColor: colors.borderLight, color: colors.text, backgroundColor: colors.surface }]}
-      />
-    </SubmitField>
-  );
-}
-
 export function ListingStepSocialHub({ form, setField, colors, s }: Base) {
+  const inputStyle = [s.singleLineInput, { borderColor: colors.borderLight, color: colors.text, backgroundColor: colors.surface }];
+
   return (
     <SubmitCard colors={colors} hPad={0}>
       <SubmitSectionLabel label="Social Hub" icon="share-social-outline" accent={CultureTokens.indigo} colors={colors} />
       <Text style={[s.sectionNote, { color: colors.textSecondary }]}>
         We store social links on your profile so guests can follow you anywhere.
       </Text>
-      <SocialRow label="Website" value={form.website} onChangeText={(v) => setField('website', v)} placeholder="https://yoursite.com" colors={colors} s={s} isUrl />
-      <SocialRow label="Instagram" value={form.instagram} onChangeText={(v) => setField('instagram', v)} placeholder="@handle" colors={colors} s={s} />
-      <SocialRow label="Facebook" value={form.facebook} onChangeText={(v) => setField('facebook', v)} placeholder="Page URL or name" colors={colors} s={s} isUrl />
-      <SocialRow label="YouTube" value={form.youtube} onChangeText={(v) => setField('youtube', v)} placeholder="Channel URL" colors={colors} s={s} isUrl />
-      <SocialRow label="TikTok" value={form.tiktok} onChangeText={(v) => setField('tiktok', v)} placeholder="@handle" colors={colors} s={s} />
-      <SocialRow label="X / Twitter" value={form.twitter} onChangeText={(v) => setField('twitter', v)} placeholder="@handle" colors={colors} s={s} />
-      <SocialRow label="Spotify" value={form.spotify} onChangeText={(v) => setField('spotify', v)} placeholder="Artist or playlist URL" colors={colors} s={s} isUrl />
-      <SocialRow label="LinkedIn" value={form.linkedin} onChangeText={(v) => setField('linkedin', v)} placeholder="Profile or page URL" colors={colors} s={s} isUrl />
-      <SocialRow label="Pinterest" value={form.pinterest} onChangeText={(v) => setField('pinterest', v)} placeholder="Profile URL" colors={colors} s={s} isUrl />
-      <SocialRow label="Linktree" value={form.linktree} onChangeText={(v) => setField('linktree', v)} placeholder="linktr.ee/yourname" colors={colors} s={s} isUrl />
-      <SocialRow label="WhatsApp" value={form.whatsapp} onChangeText={(v) => setField('whatsapp', v)} placeholder="Link or number" colors={colors} s={s} />
-      <SocialRow label="WeChat" value={form.wechat} onChangeText={(v) => setField('wechat', v)} placeholder="ID or link" colors={colors} s={s} />
+      {LISTING_SOCIAL_HUB_FIELDS.map((field) => (
+        <SocialHandleField
+          key={field.key}
+          variant="submit"
+          label={field.label}
+          value={form[field.key]}
+          onChangeText={(v) => setField(field.key, v)}
+          placeholder={field.placeholder}
+          placeholderTextColor={colors.textTertiary}
+          platformKey={field.platformKey}
+          inputStyle={inputStyle}
+        />
+      ))}
     </SubmitCard>
   );
 }
@@ -791,10 +789,7 @@ export function ListingStepEntityExtras({ form, setField, colors, s }: Base) {
     : form.nationalityId
     ? getCulturesForNationality(form.nationalityId)
     : FEATURED_CULTURE_IDS.map((id) => CULTURES[id]).filter(Boolean);
-  const searchedCultures = Object.values(CULTURES)
-    .filter((culture) => culture.label.toLowerCase().includes(cultureSearch.trim().toLowerCase()))
-    .slice(0, 20);
-  const cultureOptions = cultureSearch.trim() ? searchedCultures : cultures;
+  const culturePool = cultures;
   const languageOptions = languageSearch.trim() ? searchLanguages(languageSearch).slice(0, 20) : COMMON_LANGUAGES.slice(0, 20);
   const selectedCultureSuggestions = form.cultureIds.flatMap((id) => CULTURE_TAG_SUGGESTIONS[id] ?? []);
 
@@ -918,51 +913,47 @@ export function ListingStepEntityExtras({ form, setField, colors, s }: Base) {
           </SubmitField>
 
           <SubmitField label="Primary culture" required>
-          <View style={[s.natSearchWrap, { borderColor: colors.borderLight, backgroundColor: colors.surface, marginTop: 6 }]}>
-            <Ionicons name="search" size={16} color={colors.textSecondary} />
-            <TextInput
-              value={cultureSearch}
-              onChangeText={setCultureSearch}
-              placeholder="Search Malayalee, Filipino, Chinese..."
-              placeholderTextColor={colors.textTertiary}
-              style={[s.natSearchInput, { color: colors.text }]}
-            />
-          </View>
-          <View style={[s.tagGrid, { marginTop: 10 }]}>
-            {cultureOptions.map((culture) => {
-              const active = form.cultureIds.includes(culture.id);
-              return (
-                <Pressable
-                  key={culture.id}
-                  onPress={() => {
-                    const nextCultureIds = toggleListValue(form.cultureIds, culture.id);
-                    const nextCultureTags = active
-                      ? form.cultureTags.filter((tag) => tag !== culture.label)
-                      : ensureListValue(form.cultureTags, culture.label);
-                    setField('cultureIds', nextCultureIds);
-                    setField('cultureTags', nextCultureTags);
-                    if (!form.nationalityId) setField('nationalityId', culture.nationalityId);
-                    if (!form.languageIds.length) {
-                      const language = LANGUAGES[culture.primaryLanguageId];
-                      if (language) {
-                        setField('languageIds', [language.id]);
-                        setField('languages', ensureListValue(form.languages, language.name));
-                      }
-                    }
-                  }}
-                  style={[
-                    s.tagChip,
-                    { borderColor: active ? CultureTokens.teal : colors.borderLight, backgroundColor: active ? CultureTokens.teal + '16' : colors.surface },
-                  ]}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: active }}
-                >
-                  <Text style={s.tagEmoji}>{culture.emoji}</Text>
-                  <Text style={[s.tagLabel, { color: active ? CultureTokens.teal : colors.text }]}>{culture.label}</Text>
-                </Pressable>
-              );
-            })}
-          </View>
+          {isAustralianNationality(form.nationalityId) ? (
+            <Text style={[s.natHint, { color: colors.textSecondary, marginTop: 6, marginBottom: 4 }]}>
+              Australian tags are grouped by values, lifestyle, heritage, and expression.
+            </Text>
+          ) : null}
+          <CultureTagPicker
+            cultures={culturePool}
+            nationalityId={form.nationalityId || null}
+            selectedIds={form.cultureIds}
+            onToggle={(cultureId) => {
+              const culture = CULTURES[cultureId];
+              if (!culture) return;
+              const active = form.cultureIds.includes(cultureId);
+              const nextCultureIds = toggleListValue(form.cultureIds, cultureId);
+              const nextCultureTags = active
+                ? form.cultureTags.filter((tag) => tag !== culture.label)
+                : ensureListValue(form.cultureTags, culture.label);
+              setField('cultureIds', nextCultureIds);
+              setField('cultureTags', nextCultureTags);
+              if (!form.nationalityId) setField('nationalityId', culture.nationalityId);
+              if (!form.languageIds.length) {
+                const language = LANGUAGES[culture.primaryLanguageId];
+                if (language) {
+                  setField('languageIds', [language.id]);
+                  setField('languages', ensureListValue(form.languages, language.name));
+                }
+              }
+            }}
+            colors={{
+              text: colors.text,
+              textSecondary: colors.textSecondary,
+              textTertiary: colors.textTertiary,
+              border: colors.borderLight,
+              surface: colors.surface,
+            }}
+            searchQuery={cultureSearch}
+            onSearchQueryChange={setCultureSearch}
+            showSearch={isAustralianNationality(form.nationalityId) || culturePool.length > 16}
+            activeColor={CultureTokens.teal}
+            testID="listing-community-culture-tags"
+          />
           <Text style={[s.natHint, { color: colors.textTertiary, marginTop: 8 }]}>
             Select more than one culture when the community serves multiple cultures.
           </Text>
@@ -1194,9 +1185,9 @@ export function ListingStepDelivery({ form, setField, colors, s }: Base) {
           <Text style={{ color: colors.text, flex: 1 }}>Delivery or pickup available</Text>
         </View>
       </SubmitField>
-      <SocialRow label="Uber Eats" value={form.deliveryUberEats} onChangeText={(v) => setField('deliveryUberEats', v)} placeholder="Store URL" colors={colors} s={s} />
-      <SocialRow label="DoorDash" value={form.deliveryDoorDash} onChangeText={(v) => setField('deliveryDoorDash', v)} placeholder="Store URL" colors={colors} s={s} />
-      <SocialRow label="Menulog" value={form.deliveryMenulog} onChangeText={(v) => setField('deliveryMenulog', v)} placeholder="Store URL" colors={colors} s={s} />
+      <SocialHandleField variant="submit" label="Uber Eats" value={form.deliveryUberEats} onChangeText={(v) => setField('deliveryUberEats', v)} placeholder="Store URL" placeholderTextColor={colors.textTertiary} inputStyle={[s.singleLineInput, { borderColor: colors.borderLight, color: colors.text, backgroundColor: colors.surface }]} />
+      <SocialHandleField variant="submit" label="DoorDash" value={form.deliveryDoorDash} onChangeText={(v) => setField('deliveryDoorDash', v)} placeholder="Store URL" placeholderTextColor={colors.textTertiary} inputStyle={[s.singleLineInput, { borderColor: colors.borderLight, color: colors.text, backgroundColor: colors.surface }]} />
+      <SocialHandleField variant="submit" label="Menulog" value={form.deliveryMenulog} onChangeText={(v) => setField('deliveryMenulog', v)} placeholder="Store URL" placeholderTextColor={colors.textTertiary} inputStyle={[s.singleLineInput, { borderColor: colors.borderLight, color: colors.text, backgroundColor: colors.surface }]} />
       <SubmitField label="Cultural delivery notes">
       <TextInput
         value={form.culturalDeliveryNotes}
@@ -1307,7 +1298,7 @@ export function ListingStepTeamVerify({ form, setField, colors, s }: Base) {
             <TextInput value={partnerName} onChangeText={setPartnerName} placeholder="Organisation name" placeholderTextColor={colors.textTertiary} returnKeyType="next" style={[s.singleLineInput, { borderColor: colors.borderLight, color: colors.text, backgroundColor: colors.surface }]} />
           </SubmitField>
           <SubmitField label="Partner website">
-            <TextInput value={partnerWeb} onChangeText={setPartnerWeb} onBlur={() => { if (partnerWeb.trim()) setPartnerWeb(normalizeUrl(partnerWeb)); }} placeholder="https://…" placeholderTextColor={colors.textTertiary} autoCapitalize="none" keyboardType="url" returnKeyType="done" style={[s.singleLineInput, { borderColor: colors.borderLight, color: colors.text, backgroundColor: colors.surface }]} />
+            <TextInput value={partnerWeb} onChangeText={setPartnerWeb} onBlur={() => { if (partnerWeb.trim()) setPartnerWeb(toPlatformUrl(partnerWeb, 'website') ?? partnerWeb.trim()); }} placeholder="https://…" placeholderTextColor={colors.textTertiary} autoCapitalize="none" keyboardType="url" returnKeyType="done" style={[s.singleLineInput, { borderColor: colors.borderLight, color: colors.text, backgroundColor: colors.surface }]} />
           </SubmitField>
           <Pressable onPress={addPartner} style={{ marginBottom: 4 }} accessibilityLabel="Add partner">
             <Text style={{ color: CultureTokens.indigo, fontFamily: 'Poppins_600SemiBold' }}>+ Add partner</Text>

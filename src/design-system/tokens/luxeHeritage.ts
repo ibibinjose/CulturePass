@@ -9,7 +9,7 @@
  * All new components and refactored surfaces must use these tokens.
  *
  * Philosophy:
- * - Retain the warm cultural soul (terracotta + saffron signature).
+ * - Retain cultural soul (terracotta + cyan signature; gold/saffron deprecated).
  * - Make dark mode truly premium OLED with true black + layered depth.
  * - Add refined luxe secondary accents for sophistication.
  * - Typography pairing: Poppins (UI excellence) + premium display voice for heroes/branding.
@@ -20,6 +20,12 @@
  */
 
 import { Platform } from 'react-native';
+import {
+  BRAND_CYAN,
+  BRAND_CYAN_DEEP,
+  BRAND_CYAN_LIGHT,
+  JET_BLACK,
+} from './brandCyanPalette';
 
 // ---------------------------------------------------------------------------
 // Core Luxe Color Palette (2026)
@@ -28,8 +34,8 @@ import { Platform } from 'react-native';
 /** Primary cultural action — warm, human, trusted */
 export const TERRACOTTA_GLOW = '#E36A4E';
 
-/** Secondary warmth — festivals, highlights, energy */
-export const DEEP_SAFFRON = '#F5A623';
+/** Secondary accent — festivals, highlights (replaces deprecated saffron) */
+export const DEEP_SAFFRON = BRAND_CYAN_DEEP;
 
 /** Cultural depth — stories, links, map accents */
 export const RICH_INDIGO = '#4A5EBF';
@@ -37,8 +43,8 @@ export const RICH_INDIGO = '#4A5EBF';
 /** Trust & belonging — venues, community, global harmony */
 export const EMERALD_HARMONY = '#0A8C7F';
 
-/** Prestige marker — badges, membership, high moments (never body text) */
-export const HERITAGE_GOLD = '#D4A017';
+/** Prestige marker — badges, membership (replaces deprecated gold) */
+export const HERITAGE_GOLD = BRAND_CYAN;
 
 // --- New Luxe Secondary Accents (Premium Layering) ---
 
@@ -51,15 +57,15 @@ export const WARM_BRONZE = '#8B5E3C';
 /** Soft sage — calm balance, nature, secondary surfaces */
 export const SOFT_SAGE = '#6B7F6B';
 
-/** Electric ochre — high-priority moments only (sparingly) */
-export const ELECTRIC_OCHRE = '#FCD400';
+/** High-priority cyan highlight (replaces electric ochre) */
+export const ELECTRIC_OCHRE = BRAND_CYAN_LIGHT;
 
 // ---------------------------------------------------------------------------
 // Functional / Status Colors (Accessible)
 // ---------------------------------------------------------------------------
 
 export const SUCCESS = '#10B981';
-export const WARNING = HERITAGE_GOLD;
+export const WARNING = BRAND_CYAN_DEEP;
 export const ERROR = '#BA1A1A';
 export const INFO = RICH_INDIGO;
 
@@ -69,7 +75,7 @@ export const INFO = RICH_INDIGO;
 
 export const luxeDark = {
   // Core surfaces — true black for power + contrast
-  background: '#000000',
+  background: JET_BLACK,
   backgroundSecondary: '#0A0A0C',
   surface: '#0F0F11',
   surfaceElevated: '#1A1A1D',
@@ -89,8 +95,8 @@ export const luxeDark = {
   onPrimaryContainer: '#FFEDE8',
 
   secondary: DEEP_SAFFRON,
-  secondaryContainer: '#3D2A0F',
-  onSecondaryContainer: '#FFF4D9',
+  secondaryContainer: '#0A1A22',
+  onSecondaryContainer: '#E0F7FF',
 
   accent: RICH_INDIGO,
   accentContainer: '#1F1A3D',
@@ -149,8 +155,8 @@ export const luxeLight = {
   onPrimaryContainer: '#3D1F1A',
 
   secondary: DEEP_SAFFRON,
-  secondaryContainer: '#FFF4D9',
-  onSecondaryContainer: '#3D2A0F',
+  secondaryContainer: '#E0F7FF',
+  onSecondaryContainer: '#0A1A22',
 
   accent: RICH_INDIGO,
   accentContainer: '#E8E0FF',
@@ -198,8 +204,8 @@ export const luxeGradients = {
   /** Trust & growth */
   emeraldIndigo: [EMERALD_HARMONY, RICH_INDIGO] as [string, string],
 
-  /** Prestige gold */
-  goldSaffron: [HERITAGE_GOLD, DEEP_SAFFRON] as [string, string],
+  /** Prestige cyan */
+  goldSaffron: [BRAND_CYAN, BRAND_CYAN_DEEP] as [string, string],
 
   /** Cinematic hero overlay (transparent → deep) */
   heroOverlay: ['transparent', 'rgba(0,0,0,0.82)'] as [string, string],

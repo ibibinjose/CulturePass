@@ -836,7 +836,7 @@ export function OrganiserFields({
                   <View
                     style={[
                       styles.statusBadge,
-                      { backgroundColor: '#FFC85715' },
+                      { backgroundColor: '#00ADEF15' },
                     ]}
                   >
                     <Ionicons
@@ -857,7 +857,7 @@ export function OrganiserFields({
                 <View
                   style={[
                     styles.reminderBanner,
-                    { backgroundColor: '#FFC85710' },
+                    { backgroundColor: '#00ADEF10' },
                   ]}
                 >
                   <Ionicons

@@ -7,6 +7,7 @@ import { useColors } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
 import { CultureTokens, gradients, LiquidGlassTokens } from '@/design-system/tokens/theme';
 import { GlassView } from '@/design-system/ui/GlassView';
+import { TruncatedText } from '@/design-system/ui';
 import { TabHeaderNativeShell } from '@/modules/core/layout/tabs/TabHeaderNativeShell';
 import { TabPageChromeRow } from '@/modules/core/layout/tabs/TabHeaderChrome';
 import { MAIN_TAB_UI } from '@/modules/core/layout/tabs/mainTabTokens';
@@ -21,7 +22,7 @@ export function GuestProfileView() {
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === 'web' && width >= 1024;
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
+    <View style={[gs.screen, { backgroundColor: colors.background }]}>
       <LinearGradient
         colors={gradients.culturepassBrand}
         start={{ x: 0, y: 0 }}
@@ -34,10 +35,7 @@ export function GuestProfileView() {
         <GlassView
           borderRadius={0}
           bordered={false}
-          style={{
-            borderBottomWidth: StyleSheet.hairlineWidth * 2,
-            borderBottomColor: colors.borderLight,
-          }}
+          style={[gs.webHeader, { borderBottomColor: colors.borderLight }]}
           contentStyle={{
             paddingTop: 14,
             paddingBottom: MAIN_TAB_UI.headerVerticalPadding,
@@ -52,7 +50,7 @@ export function GuestProfileView() {
         </GlassView>
       ) : (
         <TabHeaderNativeShell hPad={hPad}>
-          <View style={{ paddingBottom: MAIN_TAB_UI.headerVerticalPadding }}>
+          <View style={gs.nativeHeaderPad}>
             <TabPageChromeRow
               title="Profile"
               subtitle="Sign in to unlock tickets, wallet, and your CulturePass ID."
@@ -83,10 +81,10 @@ export function GuestProfileView() {
             </View>
           </View>
 
-          <Text style={[gs.title, { color: colors.text }]}>Your Cultural Passport</Text>
-          <Text style={[gs.subtitle, { color: colors.textSecondary }]}>
+          <TruncatedText style={[gs.title, { color: colors.text }]} lines={2}>Your Cultural Passport</TruncatedText>
+          <TruncatedText style={[gs.subtitle, { color: colors.textSecondary }]} lines={4}>
             Access your profile, tickets, saved events, wallet, and communities — tailored to your city.
-          </Text>
+          </TruncatedText>
 
           <View style={gs.featureList}>
             {[
@@ -98,13 +96,13 @@ export function GuestProfileView() {
               <GlassView
                 key={f.text}
                 borderRadius={LiquidGlassTokens.corner.innerRow + 4}
-                style={{ overflow: 'hidden' }}
+                style={gs.featureCard}
                 contentStyle={gs.featureRowInner}
               >
                 <View style={[gs.featureIcon, { backgroundColor: f.accent + '22' }]}>
                   <Ionicons name={f.icon} size={18} color={f.accent} />
                 </View>
-                <Text style={[gs.featureText, { color: colors.text }]}>{f.text}</Text>
+                <TruncatedText style={[gs.featureText, { color: colors.text }]} lines={2}>{f.text}</TruncatedText>
               </GlassView>
             ))}
           </View>
@@ -117,7 +115,7 @@ export function GuestProfileView() {
             accessibilityRole="button"
             accessibilityLabel="Create free account"
           >
-            <Text style={[gs.primaryBtnText, { color: colors.textOnBrandGradient }]}>Create free account</Text>
+            <Text style={[gs.primaryBtnText, { color: colors.textOnBrandGradient }]} numberOfLines={1}>Create free account</Text>
             <Ionicons name="arrow-forward" size={18} color={colors.textOnBrandGradient} />
           </Pressable>
 
@@ -130,17 +128,22 @@ export function GuestProfileView() {
               accessibilityRole="button"
               accessibilityLabel="Sign in"
             >
-              <Text style={[gs.secondaryBtnText, { color: CultureTokens.indigo }]}>I already have an account</Text>
+              <Text style={[gs.secondaryBtnText, { color: CultureTokens.indigo }]} numberOfLines={1}>I already have an account</Text>
             </Pressable>
           </GlassView>
         </GlassView>
-        <View style={{ height: 48 }} />
+        <View style={gs.scrollSpacer} />
       </ScrollView>
     </View>
   );
 }
 
 const gs = StyleSheet.create({
+  screen: { flex: 1 },
+  webHeader: { borderBottomWidth: StyleSheet.hairlineWidth * 2 },
+  nativeHeaderPad: { paddingBottom: MAIN_TAB_UI.headerVerticalPadding },
+  featureCard: { overflow: 'hidden' },
+  scrollSpacer: { height: 48 },
   scrollContent: {
     paddingTop: 20,
     alignItems: 'center',

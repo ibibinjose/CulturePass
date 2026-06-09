@@ -10,9 +10,12 @@ export interface InterestCategory {
 
 export const popularInterestsSydney: string[] = [
   'Cultural Festivals',
+  'Australian Culture',
+  'Beach & Coastal Events',
   'Indian Events',
   'Live Music',
   'Food Festivals',
+  'ANZAC & Remembrance',
   'Business Networking',
   'Family-Friendly Events',
   'Local Council Events',
@@ -29,6 +32,13 @@ export const interestCategories: InterestCategory[] = [
     softColor: CultureTokens.eventSoft,
     interests: [
       'Cultural Festivals',
+      'Australian Culture',
+      'Mateship & Community',
+      'Beach & Coastal Events',
+      'Pub Culture & Live Music',
+      'ANZAC & Remembrance',
+      'Indigenous Heritage',
+      'Dreamtime & First Nations',
       'Indian Events',
       'South Asian Events',
       'Multicultural Events',
@@ -44,6 +54,11 @@ export const interestCategories: InterestCategory[] = [
       'Eid Festivals',
       'Christmas Events',
       'Australia Day Events',
+      'Survival Day Events',
+      'AFL & NRL',
+      'Cricket & Surfing',
+      'Barbie & Backyard Gatherings',
+      'Cafe Culture & Brunch',
     ],
   },
   {

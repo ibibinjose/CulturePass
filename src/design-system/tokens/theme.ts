@@ -54,6 +54,16 @@ export {
 
 export { CultureTokens };
 
+export {
+  BRAND_CYAN,
+  BRAND_CYAN_DEEP,
+  BRAND_CYAN_LIGHT,
+  JET_BLACK,
+  JET_BLACK_SOFT,
+  cyanAlpha,
+  cyanDeepAlpha,
+} from './brandCyanPalette';
+
 export const SignatureGradient = _gradients.culturepassBrand;
 
 export { darkM3, lightM3 } from './material3';
@@ -345,10 +355,10 @@ export const MaterialExpressive = {
 
 export const LiquidGlassAccents = {
   eventIconWell: `rgba(10, 140, 127, 0.18)`, // emerald harmony
-  communityIconWell: `rgba(245, 166, 35, 0.18)`, // deep saffron
-  perksIconWell: `rgba(212, 160, 23, 0.2)`, // heritage gold
-  valueRibbonFill: `rgba(212, 160, 23, 0.14)`, // heritage gold with opacity
-  valueRibbonBorder: `#D4A01755`, // heritage gold with opacity
+  communityIconWell: `rgba(0, 167, 239, 0.18)`,
+  perksIconWell: `rgba(0, 173, 239, 0.2)`,
+  valueRibbonFill: `rgba(0, 173, 239, 0.14)`,
+  valueRibbonBorder: `#00ADEF55`,
   hostAccentBar: CultureTokens.emeraldHarmony, // emerald harmony
   errorBannerFill: 'rgba(255, 94, 91, 0.16)',
   errorBannerBorder: '#FF5E5B55', // coral with opacity
@@ -367,17 +377,17 @@ export const CulturalAccents = {
   
   // Cultural-themed background patterns
   terracottaSurface: `rgba(227, 106, 78, 0.05)`,
-  saffronSurface: `rgba(245, 166, 35, 0.05)`,
+  saffronSurface: `rgba(0, 167, 239, 0.05)`,
   indigoSurface: `rgba(74, 94, 191, 0.05)`,
   emeraldSurface: `rgba(10, 140, 127, 0.05)`,
-  goldSurface: `rgba(212, 160, 23, 0.05)`,
+  goldSurface: `rgba(0, 173, 239, 0.05)`,
   
   // Cultural-themed borders
   terracottaBorder: `rgba(227, 106, 78, 0.3)`,
-  saffronBorder: `rgba(245, 166, 35, 0.3)`,
+  saffronBorder: `rgba(0, 167, 239, 0.3)`,
   indigoBorder: `rgba(74, 94, 191, 0.3)`,
   emeraldBorder: `rgba(10, 140, 127, 0.3)`,
-  goldBorder: `rgba(212, 160, 23, 0.3)`,
+  goldBorder: `rgba(0, 173, 239, 0.3)`,
 } as const;
 
 // ---------------------------------------------------------------------------

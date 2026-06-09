@@ -112,7 +112,7 @@ export default function ModerationScreen() {
   const IndexWarningBanner = showIndexWarning ? (
     <View style={{ 
       backgroundColor: '#FEF3C7', 
-      borderColor: '#F59E0B', 
+      borderColor: '#00A7EF', 
       borderWidth: 1, 
       borderRadius: 8, 
       padding: 12, 

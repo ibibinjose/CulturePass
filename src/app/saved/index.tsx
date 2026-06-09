@@ -20,7 +20,8 @@ import { useAuth } from '@/lib/auth';
 import type { EventData, Ticket } from '@/shared/schema';
 import { AuthGuard } from '@/modules/core/auth/AuthGuard';
 import { CultureTokens } from '@/design-system/tokens/colors';
-import { FontFamily, Radius, shadows } from '@/design-system/tokens/theme';
+import { RETRO_STAMP_PALETTES, SAVED_HEART_BADGE_BG } from '@/design-system/tokens/savedScreenTokens';
+import { BorderTokens, FontFamily, Radius, shadows } from '@/design-system/tokens/theme';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useColors } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
@@ -71,16 +72,7 @@ export function RetroStamp({ hostName, date = '2025', size = 130 }: RetroStampPr
   const shapeIndex = hash % 5;
   const colorIndex = (hash >> 2) % 6;
 
-  const palettes = [
-    { text: '#065F46', border: '#059669', bg: '#ECFDF5', fill: '#D1FAE5' }, // Green/Emerald
-    { text: '#991B1B', border: '#DC2626', bg: '#FEF2F2', fill: '#FEE2E2' }, // Red/Coral
-    { text: '#1E40AF', border: '#3B82F6', bg: '#EFF6FF', fill: '#DBEAFE' }, // Blue/Indigo
-    { text: '#9D174D', border: '#EC4899', bg: '#FDF2F8', fill: '#FCE7F3' }, // Pink/Rose
-    { text: '#115E59', border: '#0D9488', bg: '#F0FDFA', fill: '#CCFBF1' }, // Cyan/Teal
-    { text: '#9A3412', border: '#F97316', bg: '#FFF7ED', fill: '#FFEDD5' }, // Orange/Amber
-  ];
-
-  const color = palettes[colorIndex];
+  const color = RETRO_STAMP_PALETTES[colorIndex];
 
   const nameParts = useMemo(() => {
     const cleaned = hostName.toUpperCase().replace(/AND/g, '&');
@@ -229,7 +221,7 @@ export function RetroStamp({ hostName, date = '2025', size = 130 }: RetroStampPr
   const height = shapeIndex === 1 ? size : Math.round(size * 0.77);
 
   return (
-    <View style={{ width: size, height, alignItems: 'center', justifyContent: 'center', margin: 10 }}>
+    <View style={[styles.stampWrap, { width: size, height }]}>
       <Svg width={size} height={height} viewBox={shapeIndex === 1 ? "0 0 150 150" : "0 0 150 110"}>
         {renderShape()}
       </Svg>
@@ -516,7 +508,12 @@ export default function SavedScreen() {
                         { backgroundColor: isActive ? colors.primary : colors.primarySoft },
                       ]}
                     >
-                      <Text style={[styles.countText, { color: isActive ? '#FFFFFF' : colors.primary }]}>{count}</Text>
+                      <Text
+                        style={[styles.countText, { color: isActive ? BorderTokens.white : colors.primary }]}
+                        numberOfLines={1}
+                      >
+                        {count}
+                      </Text>
                     </View>
                   ) : null}
                 </Pressable>
@@ -529,18 +526,14 @@ export default function SavedScreen() {
             refreshControl={
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
             }
-            contentContainerStyle={{
-              paddingTop: 16,
-              paddingBottom: bottomInset + 100,
-              flexGrow: 1,
-            }}
+            contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomInset + 100 }]}
           >
             {showListSkeleton ? (
-              <View style={{ gap: 16 }}>
+              <View style={styles.skeletonList}>
                 {[0, 1, 2].map((k) => (
                   <View key={k} style={[styles.skeletonCard, { backgroundColor: colors.surface, borderColor: colors.borderLight }]}>
                     <Skeleton width={120} height={140} borderRadius={0} />
-                    <View style={{ flex: 1, padding: 18, gap: 12 }}>
+                    <View style={styles.skeletonBody}>
                       <Skeleton width="40%" height={12} borderRadius={6} />
                       <Skeleton width="90%" height={20} borderRadius={8} />
                       <Skeleton width="60%" height={14} borderRadius={6} />
@@ -568,10 +561,15 @@ export default function SavedScreen() {
                     const groupEvents = groupedFavorites[key] ?? [];
                     if (groupEvents.length === 0) return null;
                     return (
-                      <View key={key} style={{ marginBottom: 20 }}>
+                      <View key={key} style={styles.sectionGroup}>
                         <View style={styles.sectionHead}>
                           <View style={[styles.sectionAccent, { backgroundColor: CultureTokens.indigo }]} />
-                          <Text style={[styles.sectionTitle, { color: colors.textTertiary }]}>{key.toUpperCase()}</Text>
+                          <Text
+                            style={[styles.sectionTitle, { color: colors.textTertiary }]}
+                            numberOfLines={1}
+                          >
+                            {key.toUpperCase()}
+                          </Text>
                         </View>
                         
                         {groupEvents.map((event) => {
@@ -582,17 +580,17 @@ export default function SavedScreen() {
                           const attended = stats?.attended?.size ?? 0;
                           
                           return (
-                            <GlassView key={event.id} style={styles.itemOuter} contentStyle={{ padding: 0 }}>
+                            <GlassView key={event.id} style={styles.itemOuter} contentStyle={styles.itemGlassContent}>
                               <Pressable
                                 style={({ pressed }) => [styles.itemPress, pressed && { opacity: 0.9, transform: [{ scale: 0.99 }] }]}
                                 onPress={() => router.push({ pathname: '/e/[id]', params: { id: event.id } })}
                               >
                                 {/* Left image with heart icon absolute positioned */}
-                                <View style={{ position: 'relative', width: 120, height: 150 }}>
+                                <View style={styles.itemImageCol}>
                                   {img ? (
                                     <Image source={{ uri: img }} style={styles.itemImage} contentFit="cover" transition={200} />
                                   ) : (
-                                    <View style={[styles.itemImage, { backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center' }]}>
+                                    <View style={[styles.itemImage, styles.itemImagePlaceholder, { backgroundColor: colors.primarySoft }]}>
                                       <Ionicons name="calendar" size={32} color={colors.primary} />
                                     </View>
                                   )}
@@ -601,7 +599,7 @@ export default function SavedScreen() {
                                   <Pressable
                                     style={({ pressed }) => [
                                       styles.heartBadge,
-                                      { backgroundColor: 'rgba(255, 255, 255, 0.9)' },
+                                      { backgroundColor: SAVED_HEART_BADGE_BG },
                                       pressed && { opacity: 0.7 }
                                     ]}
                                     onPress={() => {
@@ -619,7 +617,7 @@ export default function SavedScreen() {
                                     {event.title}
                                   </Text>
                                   
-                                  <View style={{ gap: 4, marginTop: 4 }}>
+                                  <View style={styles.itemMetaBlock}>
                                     <View style={styles.metaRow}>
                                       <Ionicons name="location-outline" size={13} color={colors.textTertiary} />
                                       <Text style={[styles.metaText, { color: colors.textSecondary }]} numberOfLines={1}>
@@ -629,7 +627,10 @@ export default function SavedScreen() {
                                     
                                     <View style={styles.metaRow}>
                                       <Ionicons name="calendar-outline" size={13} color={colors.textTertiary} />
-                                      <Text style={[styles.metaText, { color: colors.textSecondary }]}>
+                                      <Text
+                                        style={[styles.metaText, { color: colors.textSecondary }]}
+                                        numberOfLines={1}
+                                      >
                                         {formatDate(event.date)}
                                       </Text>
                                     </View>
@@ -637,7 +638,10 @@ export default function SavedScreen() {
                                     {event.time && (
                                       <View style={styles.metaRow}>
                                         <Ionicons name="time-outline" size={13} color={colors.textTertiary} />
-                                        <Text style={[styles.metaText, { color: colors.textSecondary }]}>
+                                        <Text
+                                          style={[styles.metaText, { color: colors.textSecondary }]}
+                                          numberOfLines={1}
+                                        >
                                           {event.time}
                                         </Text>
                                       </View>
@@ -647,7 +651,10 @@ export default function SavedScreen() {
                                   {/* Progress label: X of Y attended */}
                                   <View style={[styles.progressBadge, { backgroundColor: colors.backgroundSecondary }]}>
                                     <Ionicons name="square" size={8} color={colors.textTertiary} style={{ transform: [{ rotate: '45deg' }] }} />
-                                    <Text style={[styles.progressText, { color: colors.textSecondary }]}>
+                                    <Text
+                                      style={[styles.progressText, { color: colors.textSecondary }]}
+                                      numberOfLines={1}
+                                    >
                                       {attended} of {total} attended
                                     </Text>
                                   </View>
@@ -677,7 +684,10 @@ export default function SavedScreen() {
                   />
                 ) : (
                   <View style={styles.stampsContainer}>
-                    <Text style={[styles.stampsSubtitle, { color: colors.textSecondary }]}>
+                    <Text
+                      style={[styles.stampsSubtitle, { color: colors.textSecondary }]}
+                      numberOfLines={2}
+                    >
                       Collect a stamp for each event you attend along the way.
                     </Text>
                     <View style={styles.stampsGrid}>
@@ -715,15 +725,19 @@ function EmptyBlock({
 }) {
   return (
     <View style={styles.emptyWrap}>
-      <GlassView style={{ width: '100%' }} contentStyle={{ padding: 40, alignItems: 'center', gap: 20 }}>
+      <GlassView style={styles.emptyGlass} contentStyle={styles.emptyGlassContent}>
         <View style={[styles.emptyIconWrap, { backgroundColor: colors.primarySoft }]}>
           <Ionicons name={icon} size={40} color={colors.primary} />
         </View>
-        <View style={{ gap: 8, alignItems: 'center' }}>
-          <Text style={[styles.emptyTitle, { color: colors.text }]}>{title}</Text>
-          <Text style={[styles.emptySub, { color: colors.textSecondary }]}>{description}</Text>
+        <View style={styles.emptyCopy}>
+          <Text style={[styles.emptyTitle, { color: colors.text }]} numberOfLines={2}>
+            {title}
+          </Text>
+          <Text style={[styles.emptySub, { color: colors.textSecondary }]} numberOfLines={4}>
+            {description}
+          </Text>
         </View>
-        <M3Button variant="filled" style={{ marginTop: 8, minWidth: 200 }} onPress={onCta}>
+        <M3Button variant="filled" style={styles.emptyCta} onPress={onCta}>
           {ctaLabel}
         </M3Button>
       </GlassView>
@@ -735,6 +749,20 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   shell: { flex: 1, alignSelf: 'center', width: '100%' },
   desktopShell: { maxWidth: 800 },
+
+  stampWrap: { alignItems: 'center', justifyContent: 'center', margin: 10 },
+  scrollContent: { paddingTop: 16, flexGrow: 1 },
+  skeletonList: { gap: 16 },
+  skeletonBody: { flex: 1, padding: 18, gap: 12 },
+  sectionGroup: { marginBottom: 20 },
+  itemGlassContent: { padding: 0 },
+  itemImageCol: { position: 'relative', width: 120, height: 150 },
+  itemImagePlaceholder: { alignItems: 'center', justifyContent: 'center' },
+  itemMetaBlock: { gap: 4, marginTop: 4 },
+  emptyGlass: { width: '100%' },
+  emptyGlassContent: { padding: 40, alignItems: 'center', gap: 20 },
+  emptyCopy: { gap: 8, alignItems: 'center' },
+  emptyCta: { marginTop: 8, minWidth: 200 },
 
   tabRail: {
     flexDirection: 'row',

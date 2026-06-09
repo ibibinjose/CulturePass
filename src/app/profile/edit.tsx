@@ -33,6 +33,12 @@ import { DatePickerInput, type ISODateString } from '@/design-system/ui/DatePick
 import { Skeleton } from '@/design-system/ui/Skeleton';
 import { CultureTokens, FontFamily, Radius, ScreenTokens, SignatureGradient, Spacing, gradients } from '@/design-system/tokens/theme';
 import type { User, FamilyMember, FamilyRelation } from '@/shared/schema';
+import {
+  profileSocialFormFromUser,
+  SOCIAL_HANDLE_PLACEHOLDERS,
+  toPlatformUrl,
+  type SocialPlatformKey,
+} from '@/shared/utils/socialLinks';
 
 type SocialKey = 'instagram' | 'twitter' | 'youtube' | 'tiktok' | 'linkedin' | 'facebook' | 'website';
 
@@ -72,52 +78,19 @@ const SOCIAL_ROWS: {
   color: string;
   placeholder: string;
 }[] = [
-  { key: 'instagram', label: 'Instagram', icon: 'logo-instagram', color: CultureTokens.coral, placeholder: 'username' },
-  { key: 'twitter', label: 'X', icon: 'logo-twitter', color: CultureTokens.indigo, placeholder: 'username' },
-  { key: 'youtube', label: 'YouTube', icon: 'logo-youtube', color: CultureTokens.coral, placeholder: '@username' },
-  { key: 'tiktok', label: 'TikTok', icon: 'logo-tiktok', color: CultureTokens.teal, placeholder: '@username' },
-  { key: 'linkedin', label: 'LinkedIn', icon: 'logo-linkedin', color: CultureTokens.indigo, placeholder: '/in/username' },
-  { key: 'facebook', label: 'Facebook', icon: 'logo-facebook', color: CultureTokens.violet, placeholder: 'username' },
-  { key: 'website', label: 'Website', icon: 'globe-outline', color: CultureTokens.teal, placeholder: 'www.your-site.com' },
+  { key: 'instagram', label: 'Instagram', icon: 'logo-instagram', color: CultureTokens.coral, placeholder: SOCIAL_HANDLE_PLACEHOLDERS.instagram ?? 'username' },
+  { key: 'twitter', label: 'X', icon: 'logo-twitter', color: CultureTokens.indigo, placeholder: SOCIAL_HANDLE_PLACEHOLDERS.twitter ?? 'CulturePassApp' },
+  { key: 'youtube', label: 'YouTube', icon: 'logo-youtube', color: CultureTokens.coral, placeholder: SOCIAL_HANDLE_PLACEHOLDERS.youtube ?? '@username' },
+  { key: 'tiktok', label: 'TikTok', icon: 'logo-tiktok', color: CultureTokens.teal, placeholder: SOCIAL_HANDLE_PLACEHOLDERS.tiktok ?? '@username' },
+  { key: 'linkedin', label: 'LinkedIn', icon: 'logo-linkedin', color: CultureTokens.indigo, placeholder: SOCIAL_HANDLE_PLACEHOLDERS.linkedin ?? 'company/name' },
+  { key: 'facebook', label: 'Facebook', icon: 'logo-facebook', color: CultureTokens.violet, placeholder: SOCIAL_HANDLE_PLACEHOLDERS.facebook ?? 'username' },
+  { key: 'website', label: 'Website', icon: 'globe-outline', color: CultureTokens.teal, placeholder: SOCIAL_HANDLE_PLACEHOLDERS.website ?? 'culturepass.app' },
 ];
 
 const AVATAR_SIZE = 110;
 
 function softColor(hex: string, alpha = '20') {
   return `${hex}${alpha}`;
-}
-
-function cleanHandle(value: string) {
-  return value.trim().replace(/^@/, '');
-}
-
-function toPlatformUrl(value: string, key: SocialKey): string | undefined {
-  const clean = value.trim();
-  if (!clean) return undefined;
-  if (/^https?:\/\//i.test(clean)) return clean;
-  if (key === 'website') return `https://${clean}`;
-  if (key === 'twitter') return `https://x.com/${cleanHandle(clean)}`;
-  if (key === 'tiktok') return `https://tiktok.com/@${cleanHandle(clean)}`;
-  if (key === 'youtube') return `https://youtube.com/${clean.startsWith('@') ? clean : `@${clean}`}`;
-  if (key === 'linkedin') return `https://linkedin.com/${clean.replace(/^\/+/, '')}`;
-  if (key === 'facebook') return `https://facebook.com/${cleanHandle(clean)}`;
-  return `https://instagram.com/${cleanHandle(clean)}`;
-}
-
-function socialDisplay(value?: string | null, key?: SocialKey) {
-  if (!value) return '';
-  const stripped = value
-    .replace(/^https?:\/\/(www\.)?/i, '')
-    .replace(/^instagram\.com\//i, '')
-    .replace(/^x\.com\//i, '')
-    .replace(/^twitter\.com\//i, '')
-    .replace(/^tiktok\.com\/@?/i, '')
-    .replace(/^youtube\.com\//i, '')
-    .replace(/^linkedin\.com\//i, '')
-    .replace(/^facebook\.com\//i, '');
-  if (key === 'youtube' || key === 'tiktok') return stripped.startsWith('@') ? stripped : `@${stripped}`;
-  if (key === 'linkedin') return stripped.startsWith('in/') ? `/${stripped}` : stripped;
-  return stripped;
 }
 
 function firstDefinedString(...values: unknown[]): string {
@@ -293,13 +266,7 @@ export default function EditProfileScreen() {
     languages: (user?.languages ?? []).join(', '),
     ethnicityText: firstDefinedString(user?.ethnicityText),
     dateOfBirth: firstDefinedString((user as Record<string, unknown> | null | undefined)?.dateOfBirth),
-    instagram: socialDisplay(user?.socialLinks?.instagram, 'instagram'),
-    twitter: socialDisplay(user?.socialLinks?.twitter, 'twitter'),
-    youtube: socialDisplay(user?.socialLinks?.youtube, 'youtube'),
-    tiktok: socialDisplay(user?.socialLinks?.tiktok, 'tiktok'),
-    linkedin: socialDisplay(user?.socialLinks?.linkedin, 'linkedin'),
-    facebook: socialDisplay(user?.socialLinks?.facebook, 'facebook'),
-    website: socialDisplay(user?.website, 'website'),
+    ...profileSocialFormFromUser(user ?? {}),
     isPublicProfile: user?.privacySettings?.profileVisible ?? true,
     showLocation: user?.privacySettings?.locationVisible ?? true,
     showSocialLinks: user?.privacySettings?.showSocialLinks ?? true,
@@ -329,13 +296,7 @@ export default function EditProfileScreen() {
       languages: (user.languages ?? []).join(', '),
       ethnicityText: firstDefinedString(user.ethnicityText),
       dateOfBirth: firstDefinedString((user as unknown as Record<string, unknown>).dateOfBirth),
-      instagram: socialDisplay(user.socialLinks?.instagram, 'instagram'),
-      twitter: socialDisplay(user.socialLinks?.twitter, 'twitter'),
-      youtube: socialDisplay(user.socialLinks?.youtube, 'youtube'),
-      tiktok: socialDisplay(user.socialLinks?.tiktok, 'tiktok'),
-      linkedin: socialDisplay(user.socialLinks?.linkedin, 'linkedin'),
-      facebook: socialDisplay(user.socialLinks?.facebook, 'facebook'),
-      website: socialDisplay(user?.website, 'website'),
+      ...profileSocialFormFromUser(user),
       isPublicProfile: user.privacySettings?.profileVisible ?? true,
       showLocation: user.privacySettings?.locationVisible ?? true,
       showSocialLinks: user.privacySettings?.showSocialLinks ?? true,

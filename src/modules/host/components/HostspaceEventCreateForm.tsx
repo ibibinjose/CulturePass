@@ -23,6 +23,12 @@ import { MediaUploadField } from './fields/MediaUploadField';
 
 import * as ImagePicker from 'expo-image-picker';
 import {
+  HOSTSPACE_EVENT_PREVIEW,
+  HOSTSPACE_MUJI_FORM,
+  HOSTSPACE_SOCIAL_PREVIEW,
+  HOSTSPACE_SPONSOR_TIER_COLORS,
+} from '@/design-system/tokens/hostspaceEventCreateTokens';
+import {
   CultureTokens,
   TextStyles,
 } from '@/design-system/tokens/theme';
@@ -60,11 +66,11 @@ const EVENT_CATEGORY_GROUPS = [
 
 
 const SPONSOR_TIERS = [
-  { id: 'platinum', label: 'Platinum', color: '#E5E4E2' },
-  { id: 'gold', label: 'Gold', color: CultureTokens.gold },
-  { id: 'silver', label: 'Silver', color: '#C0C0C0' },
-  { id: 'bronze', label: 'Bronze', color: '#CD7F32' },
-  { id: 'supporter', label: 'Supporter', color: CultureTokens.teal },
+  { id: 'platinum', label: 'Platinum', color: HOSTSPACE_SPONSOR_TIER_COLORS.platinum },
+  { id: 'gold', label: 'Gold', color: HOSTSPACE_SPONSOR_TIER_COLORS.gold },
+  { id: 'silver', label: 'Silver', color: HOSTSPACE_SPONSOR_TIER_COLORS.silver },
+  { id: 'bronze', label: 'Bronze', color: HOSTSPACE_SPONSOR_TIER_COLORS.bronze },
+  { id: 'supporter', label: 'Supporter', color: HOSTSPACE_SPONSOR_TIER_COLORS.supporter },
 ];
 
 type TicketTier = {
@@ -236,10 +242,14 @@ export function HostspaceEventCreateForm({ onReview }: { onReview?: () => void }
     <View style={styles.container}>
       <View style={styles.pageHeader}>
         <GlassView intensity={10} style={styles.eyebrowBadge}>
-          <Text style={[styles.eyebrow, { color: CultureTokens.indigo }]}>World-Class Events</Text>
+          <Text style={[styles.eyebrow, { color: CultureTokens.indigo }]} numberOfLines={1}>
+            World-Class Events
+          </Text>
         </GlassView>
-        <Text style={[styles.title, { color: colors.text }]}>Create a Global Event</Text>
-        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+        <Text style={[styles.title, { color: colors.text }]} numberOfLines={2}>
+          Create a Global Event
+        </Text>
+        <Text style={[styles.subtitle, { color: colors.textSecondary }]} numberOfLines={3}>
           Gather the essential intelligence for your next major cultural celebration.
         </Text>
       </View>
@@ -275,7 +285,9 @@ export function HostspaceEventCreateForm({ onReview }: { onReview?: () => void }
               <View style={styles.categoryGroups}>
                 {EVENT_CATEGORY_GROUPS.map((group) => (
                   <View key={group.group} style={styles.categoryGroup}>
-                    <Text style={[styles.categoryGroupLabel, { color: colors.textTertiary }]}>{group.group}</Text>
+                    <Text style={[styles.categoryGroupLabel, { color: colors.textTertiary }]} numberOfLines={1}>
+                      {group.group}
+                    </Text>
                     <View style={styles.chipRow}>
                       {group.items.map((c) => (
                         <ChoiceChip
@@ -294,7 +306,7 @@ export function HostspaceEventCreateForm({ onReview }: { onReview?: () => void }
 
           <FormSection title="2. Schedule" icon="time-outline" color={CultureTokens.coral}>
             <View style={styles.row}>
-              <View style={{ flex: 1 }}>
+              <View style={styles.flex1}>
                 <DateField
                   label="Start Date"
                   value={draft.startDate}
@@ -303,14 +315,14 @@ export function HostspaceEventCreateForm({ onReview }: { onReview?: () => void }
                   required
                 />
               </View>
-              <View style={{ flex: 1 }}>
+              <View style={styles.flex1}>
                 <FormField label="Start Time">
                   <FormInput value={draft.startTime} onChangeText={(startTime) => updateDraft({ startTime })} placeholder="18:30" />
                 </FormField>
               </View>
             </View>
             <View style={styles.row}>
-              <View style={{ flex: 1 }}>
+              <View style={styles.flex1}>
                 <DateField
                   label="End Date"
                   value={draft.endDate}
@@ -319,7 +331,7 @@ export function HostspaceEventCreateForm({ onReview }: { onReview?: () => void }
                   required={false}
                 />
               </View>
-              <View style={{ flex: 1 }}>
+              <View style={styles.flex1}>
                 <FormField label="End Time">
                   <FormInput value={draft.endTime} onChangeText={(endTime) => updateDraft({ endTime })} placeholder="21:00" />
                 </FormField>
@@ -381,7 +393,9 @@ export function HostspaceEventCreateForm({ onReview }: { onReview?: () => void }
                 {draft.tiers.map((tier, idx) => (
                   <GlassView key={tier.id} intensity={5} style={styles.tierCard}>
                     <View style={styles.tierHeader}>
-                      <Text style={[styles.tierTitle, { color: colors.text }]}>Tier {idx + 1}</Text>
+                      <Text style={[styles.tierTitle, { color: colors.text }]} numberOfLines={1}>
+                        Tier {idx + 1}
+                      </Text>
                       <Pressable onPress={() => removeTier(tier.id)}>
                         <Ionicons name="trash-outline" size={18} color={CultureTokens.coral} />
                       </Pressable>
@@ -390,10 +404,10 @@ export function HostspaceEventCreateForm({ onReview }: { onReview?: () => void }
                       value={tier.name}
                       onChangeText={(name) => updateTier(tier.id, { name })}
                       placeholder="Early Bird, VIP..."
-                      style={[styles.tierInput, { marginBottom: 8 }]}
+                      style={[styles.tierInput, styles.tierInputSpaced]}
                     />
                     <View style={styles.row}>
-                      <View style={{ flex: 1 }}>
+                      <View style={styles.flex1}>
                         <FormInput
                           value={tier.price}
                           onChangeText={(price) => updateTier(tier.id, { price })}
@@ -402,7 +416,7 @@ export function HostspaceEventCreateForm({ onReview }: { onReview?: () => void }
                           style={styles.tierInput}
                         />
                       </View>
-                      <View style={{ flex: 1 }}>
+                      <View style={styles.flex1}>
                         <FormInput
                           value={tier.capacity}
                           onChangeText={(capacity) => updateTier(tier.id, { capacity })}
@@ -414,7 +428,7 @@ export function HostspaceEventCreateForm({ onReview }: { onReview?: () => void }
                     </View>
                   </GlassView>
                 ))}
-                <Button variant="outline" size="sm" leftIcon="add-outline" onPress={addTier} style={{ marginTop: 8 }}>
+                <Button variant="outline" size="sm" leftIcon="add-outline" onPress={addTier} style={styles.addTierBtn}>
                   Add Ticket Tier
                 </Button>
 
@@ -430,12 +444,12 @@ export function HostspaceEventCreateForm({ onReview }: { onReview?: () => void }
             )}
 
             <View style={styles.row}>
-              <View style={{ flex: 1 }}>
+              <View style={styles.flex1}>
                 <FormField label="Total Capacity">
                   <FormInput value={draft.totalCapacity} onChangeText={(totalCapacity) => updateDraft({ totalCapacity })} placeholder="Unlimited" keyboardType="numeric" />
                 </FormField>
               </View>
-              <View style={{ flex: 1 }}>
+              <View style={styles.flex1}>
                 <FormField label="Currency">
                   <FormInput value={draft.currency} onChangeText={(currency) => updateDraft({ currency: currency.toUpperCase() })} placeholder="AUD" />
                 </FormField>
@@ -449,12 +463,12 @@ export function HostspaceEventCreateForm({ onReview }: { onReview?: () => void }
                <FormInput value={draft.hostName} onChangeText={(hostName) => updateDraft({ hostName })} placeholder="Organizer or Team name" />
              </FormField>
              <View style={styles.row}>
-                <View style={{ flex: 1 }}>
+                <View style={styles.flex1}>
                   <FormField label="Contact Email">
                     <FormInput value={draft.hostEmail} onChangeText={(hostEmail) => updateDraft({ hostEmail })} placeholder="hello@example.com" keyboardType="email-address" autoCapitalize="none" />
                   </FormField>
                 </View>
-                <View style={{ flex: 1 }}>
+                <View style={styles.flex1}>
                   <FormField label="Contact Phone">
                     <FormInput value={draft.hostPhone} onChangeText={(hostPhone) => updateDraft({ hostPhone })} placeholder="+61 4..." keyboardType="phone-pad" />
                   </FormField>
@@ -471,14 +485,20 @@ export function HostspaceEventCreateForm({ onReview }: { onReview?: () => void }
 
              <View style={styles.teamSectionHeader}>
                 <Ionicons name="ribbon-outline" size={20} color={CultureTokens.gold} />
-                <Text style={[styles.sectionTitle, { color: colors.text }]}>Sponsors & Supporters</Text>
+                <Text style={[styles.sectionTitle, { color: colors.text }]} numberOfLines={1}>
+                  Sponsors & Supporters
+                </Text>
              </View>
 
              {draft.sponsors.map((sp) => (
                 <View key={sp.id} style={[styles.sponsorChip, { backgroundColor: colors.surfaceElevated, borderColor: colors.borderLight }]}>
                   <View style={styles.sponsorChipInfo}>
-                    <Text style={[styles.sponsorName, { color: colors.text }]}>{sp.name}</Text>
-                    <Text style={[styles.sponsorTier, { color: CultureTokens.gold }]}>{sp.tier.toUpperCase()}</Text>
+                    <Text style={[styles.sponsorName, { color: colors.text }]} numberOfLines={1}>
+                      {sp.name}
+                    </Text>
+                    <Text style={[styles.sponsorTier, { color: CultureTokens.gold }]} numberOfLines={1}>
+                      {sp.tier.toUpperCase()}
+                    </Text>
                   </View>
                   <Pressable onPress={() => removeSponsor(sp.id)}>
                     <Ionicons name="close-circle" size={20} color={colors.textTertiary} />
@@ -492,7 +512,7 @@ export function HostspaceEventCreateForm({ onReview }: { onReview?: () => void }
                      value={newSponsor.name}
                      onChangeText={(name) => setNewSponsor({ ...newSponsor, name })}
                      placeholder="Sponsor / Supporter Name"
-                     style={{ marginBottom: 12 }}
+                     style={styles.sponsorNameInput}
                    />
                    <View style={styles.chipRow}>
                       {SPONSOR_TIERS.map((t) => (
@@ -504,9 +524,9 @@ export function HostspaceEventCreateForm({ onReview }: { onReview?: () => void }
                         />
                       ))}
                    </View>
-                   <View style={[styles.row, { marginTop: 12 }]}>
-                      <Button variant="outline" size="sm" style={{ flex: 1 }} onPress={() => setShowSponsorForm(false)}>Cancel</Button>
-                      <Button variant="primary" size="sm" style={{ flex: 1 }} onPress={addSponsor}>Add</Button>
+                   <View style={styles.sponsorActionRow}>
+                      <Button variant="outline" size="sm" style={styles.flex1} onPress={() => setShowSponsorForm(false)}>Cancel</Button>
+                      <Button variant="primary" size="sm" style={styles.flex1} onPress={addSponsor}>Add</Button>
                    </View>
                 </GlassView>
              ) : (
@@ -532,9 +552,13 @@ export function HostspaceEventCreateForm({ onReview }: { onReview?: () => void }
              </FormField>
 
              <View style={styles.switchContainer}>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.switchLabel, { color: colors.text }]}>Featured Event</Text>
-                <Text style={[styles.switchSub, { color: colors.textSecondary }]}>Highlight in main Discovery rails</Text>
+              <View style={styles.flex1}>
+                <Text style={[styles.switchLabel, { color: colors.text }]} numberOfLines={1}>
+                  Featured Event
+                </Text>
+                <Text style={[styles.switchSub, { color: colors.textSecondary }]} numberOfLines={2}>
+                  Highlight in main Discovery rails
+                </Text>
               </View>
               <Switch
                 value={draft.isFeatured}
@@ -550,7 +574,7 @@ export function HostspaceEventCreateForm({ onReview }: { onReview?: () => void }
               leftIcon="rocket-outline"
               loading={isSaving}
               onPress={() => saveEvent('published')}
-              style={{ flex: 2 }}
+              style={styles.launchBtn}
             >
               Launch Event
             </Button>
@@ -558,7 +582,7 @@ export function HostspaceEventCreateForm({ onReview }: { onReview?: () => void }
               variant="outline"
               leftIcon="analytics-outline"
               onPress={onReview}
-              style={{ flex: 1 }}
+              style={styles.flex1}
             >
               Review
             </Button>
@@ -566,7 +590,7 @@ export function HostspaceEventCreateForm({ onReview }: { onReview?: () => void }
               variant="outline"
               leftIcon="save-outline"
               onPress={() => saveEvent('draft')}
-              style={{ flex: 1 }}
+              style={styles.flex1}
             >
               Draft
             </Button>
@@ -575,38 +599,53 @@ export function HostspaceEventCreateForm({ onReview }: { onReview?: () => void }
 
         {showPreview && (
           <View style={styles.previewColumn}>
-            <Text style={[styles.previewHeading, { color: colors.text }]}>Real-time Preview</Text>
+            <Text style={[styles.previewHeading, { color: colors.text }]} numberOfLines={1}>
+              Real-time Preview
+            </Text>
             <EventPreviewCard draft={draft} colors={colors} />
 
             <GlassView intensity={10} style={styles.brandingBox}>
-               <Text style={[styles.brandingTitle, { color: colors.text, marginBottom: 12 }]}>Event Visuals</Text>
+               <Text style={[styles.brandingTitle, styles.brandingTitleSpaced, { color: colors.text }]} numberOfLines={1}>
+                 Event Visuals
+               </Text>
                <MediaUploadField
                  type="hero"
                  value={draft.heroImageUrl}
                  onChange={(url) => updateDraft({ heroImageUrl: url as string })}
-                 storagePath={`events/${user?.id || 'anonymous'}/cover`}
+                 storagePath={`events/${user?.id || 'anonymous'}`}
                  aspectRatio={16 / 9}
                />
             </GlassView>
 
             <View style={styles.floatingPreviewInfo}>
                <Ionicons name="information-circle-outline" size={18} color={colors.textTertiary} />
-               <Text style={[styles.previewInfoText, { color: colors.textSecondary }]}>
+               <Text style={[styles.previewInfoText, { color: colors.textSecondary }]} numberOfLines={3}>
                  {`This preview shows how your event will appear in the CulturePass "Night Festival" Discover feed.`}
                </Text>
             </View>
 
             <GlassView intensity={10} style={styles.brandingBox}>
-               <Text style={[styles.brandingTitle, { color: colors.text, marginBottom: 12 }]}>Social Preview</Text>
-               <View style={[styles.socialPreviewCard, { backgroundColor: isDark ? '#1a1a1a' : '#f0f2f5' }]}>
+               <Text style={[styles.brandingTitle, styles.brandingTitleSpaced, { color: colors.text }]} numberOfLines={1}>
+                 Social Preview
+               </Text>
+               <View
+                 style={[
+                   styles.socialPreviewCard,
+                   { backgroundColor: isDark ? HOSTSPACE_SOCIAL_PREVIEW.surfaceDark : HOSTSPACE_SOCIAL_PREVIEW.surfaceLight },
+                 ]}
+               >
                   <View style={styles.socialPreviewHeader}>
                     <View style={styles.socialAvatarPh} />
                     <View>
-                      <Text style={[styles.socialUser, { color: colors.text }]}>CulturePass</Text>
-                      <Text style={[styles.socialMeta, { color: colors.textTertiary }]}>Just now · Sponsored</Text>
+                      <Text style={[styles.socialUser, { color: colors.text }]} numberOfLines={1}>
+                        CulturePass
+                      </Text>
+                      <Text style={[styles.socialMeta, { color: colors.textTertiary }]} numberOfLines={1}>
+                        Just now · Sponsored
+                      </Text>
                     </View>
                   </View>
-                  <Text style={[styles.socialDescText, { color: colors.text }]}>
+                  <Text style={[styles.socialDescText, { color: colors.text }]} numberOfLines={4}>
                     {draft.socialDescription || draft.tagline || "Discover this incredible cultural event on CulturePass!"}
                   </Text>
                   <View style={styles.socialImagePh}>
@@ -617,7 +656,9 @@ export function HostspaceEventCreateForm({ onReview }: { onReview?: () => void }
                     )}
                   </View>
                   <View style={styles.socialFooter}>
-                    <Text style={[styles.socialUrl, { color: colors.textTertiary }]}>CULTUREPASS.APP</Text>
+                    <Text style={[styles.socialUrl, { color: colors.textTertiary }]} numberOfLines={1}>
+                      CULTUREPASS.APP
+                    </Text>
                     <Text style={[styles.socialTitleText, { color: colors.text }]} numberOfLines={1}>
                       {draft.socialTitle || draft.title || "Vibrant Cultural Celebration"}
                     </Text>
@@ -641,26 +682,16 @@ export function HostspaceEventCreateForm({ onReview }: { onReview?: () => void }
   );
 }
 
-const MujiColors = {
-  bg: '#FAF8F5',
-  card: '#F6F1EA',
-  border: '#DED8CE',
-  text: '#3C3A35',
-  textMuted: '#8E877E',
-  accent: '#7D7060',
-  accentLight: '#EFEAE0',
-  white: '#FFFFFF',
-  accentDark: '#4A4135'
-};
-
 function FormSection({ title, icon, color, children }: { title: string; icon: keyof typeof Ionicons.glyphMap; color: string; children: React.ReactNode }) {
   return (
-    <View style={[styles.section, { borderColor: MujiColors.border, backgroundColor: MujiColors.card, borderWidth: 1, borderRadius: 18, padding: 16 }]}>
+    <View style={[styles.section, styles.mujiSection]}>
       <View style={styles.sectionHeader}>
-        <View style={[styles.sectionIconWrap, { backgroundColor: MujiColors.accentLight, borderRadius: 8 }]}>
-          <Ionicons name={icon} size={18} color={MujiColors.accent} />
+        <View style={[styles.sectionIconWrap, styles.mujiSectionIcon]}>
+          <Ionicons name={icon} size={18} color={HOSTSPACE_MUJI_FORM.accent} />
         </View>
-        <Text style={[styles.sectionTitle, { color: MujiColors.text, fontFamily: 'Poppins_700Bold' }]}>{title}</Text>
+        <Text style={[styles.sectionTitle, styles.mujiSectionTitle]} numberOfLines={1}>
+          {title}
+        </Text>
       </View>
       <View style={styles.sectionBody}>{children}</View>
     </View>
@@ -671,11 +702,19 @@ function FormField({ label, required, hint, children }: { label: string; require
   return (
     <View style={styles.field}>
       <View style={styles.labelRow}>
-        <Text style={[styles.fieldLabel, { color: MujiColors.text, fontFamily: 'Poppins_600SemiBold' }]}>
+        <Text style={[styles.fieldLabel, styles.mujiFieldLabel]} numberOfLines={1}>
           {label}
-          {required && <Text style={{ color: '#C08A7C' }}> *</Text>}
+          {required && (
+            <Text style={styles.requiredMark} numberOfLines={1}>
+              {' *'}
+            </Text>
+          )}
         </Text>
-        {hint && <Text style={[styles.fieldHint, { color: MujiColors.textMuted }]}>{hint}</Text>}
+        {hint && (
+          <Text style={[styles.fieldHint, styles.mujiFieldHint]} numberOfLines={2}>
+            {hint}
+          </Text>
+        )}
       </View>
       {children}
     </View>
@@ -685,14 +724,10 @@ function FormField({ label, required, hint, children }: { label: string; require
 function FormInput({ ...props }: TextInput['props']) {
   return (
     <TextInput
-      placeholderTextColor={MujiColors.textMuted}
+      placeholderTextColor={HOSTSPACE_MUJI_FORM.textMuted}
       style={[
         styles.input,
-        {
-          backgroundColor: MujiColors.white,
-          borderColor: MujiColors.border,
-          color: MujiColors.text,
-        },
+        styles.mujiInput,
         props.multiline && styles.textarea,
         props.style,
       ]}
@@ -708,14 +743,12 @@ function ChoiceChip({ label, selected, onPress }: { label: string; selected: boo
       <View
         style={[
           styles.chip,
-          {
-            backgroundColor: selected ? MujiColors.accent : MujiColors.white,
-            borderColor: selected ? MujiColors.accent : MujiColors.border,
-            borderRadius: 8,
-          },
+          selected ? styles.chipSelected : styles.chipIdle,
         ]}
       >
-        <Text style={[styles.chipText, { color: selected ? MujiColors.white : MujiColors.text, fontFamily: 'Poppins_600SemiBold' }]}>{label}</Text>
+        <Text style={[styles.chipText, selected ? styles.chipTextSelected : styles.chipTextIdle]} numberOfLines={2}>
+          {label}
+        </Text>
       </View>
     </Pressable>
   );
@@ -740,14 +773,20 @@ function EventPreviewCard({ draft, colors }: { draft: EventDraft; colors: any })
              style={StyleSheet.absoluteFill}
            />
            <View style={styles.previewBadge}>
-             <Text style={styles.previewBadgeText}>{draft.category.toUpperCase()}</Text>
+             <Text style={styles.previewBadgeText} numberOfLines={1}>
+               {draft.category.toUpperCase()}
+             </Text>
            </View>
            <View style={styles.previewPrice}>
-              <Text style={styles.previewPriceText}>{draft.entryType === 'Ticketed' ? (draft.basePrice ? `${draft.currency} ${draft.basePrice}` : 'PAID') : draft.entryType.toUpperCase()}</Text>
+              <Text style={styles.previewPriceText} numberOfLines={1}>
+                {draft.entryType === 'Ticketed' ? (draft.basePrice ? `${draft.currency} ${draft.basePrice}` : 'PAID') : draft.entryType.toUpperCase()}
+              </Text>
            </View>
         </View>
         <View style={styles.previewBody}>
-          <Text style={styles.previewDate}>{dateStr}</Text>
+          <Text style={styles.previewDate} numberOfLines={1}>
+            {dateStr}
+          </Text>
           <Text style={styles.previewTitle} numberOfLines={2}>{draft.title || 'Your Event Title'}</Text>
           <View style={styles.previewMeta}>
              <Ionicons name="location" size={12} color="rgba(255,255,255,0.7)" />
@@ -756,7 +795,9 @@ function EventPreviewCard({ draft, colors }: { draft: EventDraft; colors: any })
           <View style={styles.previewFooter}>
              <View style={styles.previewHost}>
                 <View style={styles.previewAvatar} />
-                <Text style={styles.previewHostName}>{draft.hostName || 'Organizer'}</Text>
+                <Text style={styles.previewHostName} numberOfLines={1}>
+                  {draft.hostName || 'Organizer'}
+                </Text>
              </View>
              <Ionicons name="share-outline" size={16} color="rgba(255,255,255,0.6)" />
           </View>
@@ -767,6 +808,57 @@ function EventPreviewCard({ draft, colors }: { draft: EventDraft; colors: any })
 }
 
 const styles = StyleSheet.create({
+  flex1: { flex: 1 },
+  tierInputSpaced: { marginBottom: 8 },
+  addTierBtn: { marginTop: 8 },
+  sponsorNameInput: { marginBottom: 12 },
+  sponsorActionRow: { flexDirection: 'row', gap: 12, marginTop: 12 },
+  launchBtn: { flex: 2 },
+  brandingTitleSpaced: { marginBottom: 12 },
+  mujiSection: {
+    borderColor: HOSTSPACE_MUJI_FORM.border,
+    backgroundColor: HOSTSPACE_MUJI_FORM.card,
+    borderWidth: 1,
+    borderRadius: 18,
+    padding: 16,
+  },
+  mujiSectionIcon: {
+    backgroundColor: HOSTSPACE_MUJI_FORM.accentLight,
+    borderRadius: 8,
+  },
+  mujiSectionTitle: {
+    color: HOSTSPACE_MUJI_FORM.text,
+    fontFamily: 'Poppins_700Bold',
+  },
+  mujiFieldLabel: {
+    color: HOSTSPACE_MUJI_FORM.text,
+    fontFamily: 'Poppins_600SemiBold',
+  },
+  requiredMark: { color: HOSTSPACE_MUJI_FORM.requiredAccent },
+  mujiFieldHint: { color: HOSTSPACE_MUJI_FORM.textMuted },
+  mujiInput: {
+    backgroundColor: HOSTSPACE_MUJI_FORM.white,
+    borderColor: HOSTSPACE_MUJI_FORM.border,
+    color: HOSTSPACE_MUJI_FORM.text,
+  },
+  chipSelected: {
+    backgroundColor: HOSTSPACE_MUJI_FORM.accent,
+    borderColor: HOSTSPACE_MUJI_FORM.accent,
+    borderRadius: 8,
+  },
+  chipIdle: {
+    backgroundColor: HOSTSPACE_MUJI_FORM.white,
+    borderColor: HOSTSPACE_MUJI_FORM.border,
+    borderRadius: 8,
+  },
+  chipTextSelected: {
+    color: HOSTSPACE_MUJI_FORM.white,
+    fontFamily: 'Poppins_600SemiBold',
+  },
+  chipTextIdle: {
+    color: HOSTSPACE_MUJI_FORM.text,
+    fontFamily: 'Poppins_600SemiBold',
+  },
   container: {
     gap: 24,
   },
@@ -989,7 +1081,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   previewCardOuter: {
-    shadowColor: '#000',
+    shadowColor: HOSTSPACE_EVENT_PREVIEW.shadow,
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.25,
     shadowRadius: 20,
@@ -999,12 +1091,12 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     borderWidth: 1,
     overflow: 'hidden',
-    backgroundColor: '#111',
+    backgroundColor: HOSTSPACE_EVENT_PREVIEW.cardFill,
   },
   previewImageArea: {
     height: 180,
     position: 'relative',
-    backgroundColor: '#18181B',
+    backgroundColor: HOSTSPACE_EVENT_PREVIEW.imageFill,
   },
   previewBadge: {
     position: 'absolute',
@@ -1018,7 +1110,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.2)',
   },
   previewBadgeText: {
-    color: '#fff',
+    color: HOSTSPACE_EVENT_PREVIEW.inkOnDark,
     fontSize: 10,
     fontFamily: 'Poppins_700Bold',
   },
@@ -1032,7 +1124,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   previewPriceText: {
-    color: '#fff',
+    color: HOSTSPACE_EVENT_PREVIEW.inkOnDark,
     fontSize: 11,
     fontFamily: 'Poppins_700Bold',
   },
@@ -1048,7 +1140,7 @@ const styles = StyleSheet.create({
   previewTitle: {
     fontSize: 20,
     fontFamily: 'Poppins_700Bold',
-    color: '#fff',
+    color: HOSTSPACE_EVENT_PREVIEW.inkOnDark,
     lineHeight: 26,
   },
   previewMeta: {

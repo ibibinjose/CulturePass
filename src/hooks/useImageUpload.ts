@@ -4,16 +4,7 @@ import * as ImageManipulator from 'expo-image-manipulator';
 import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
 import { arrayUnion, doc, updateDoc, deleteField } from 'firebase/firestore';
 import { db, storage } from '../lib/firebase';
-
-/**
- * Convert a local URI to a Blob for Firebase uploadBytesResumable.
- * fetch(file://) works on both iOS and Android via the React Native bridge.
- * The actual root-cause of Android upload failures was missing contentType
- * metadata, not the blob conversion — that is fixed at the upload call site.
- */
-function uriToBlob(uri: string): Promise<Blob> {
-  return fetch(uri).then((r) => r.blob());
-}
+import { formatStorageUploadError, storageRefFromDownloadUrl, uriToBlob } from '../lib/storageUtils';
 
 export interface UploadResult {
   downloadURL: string;
@@ -65,6 +56,9 @@ export const useImageUpload = () => {
 
     try {
       const asset = pickerResult.assets[0];
+      if (asset.fileSize && asset.fileSize > 10 * 1024 * 1024) {
+        throw new Error('Image is too large (max 10 MB). Choose a smaller photo.');
+      }
 
       // 1. Client-Side Image Compression (Save Bandwidth & Storage)
       const manipulated = await ImageManipulator.manipulateAsync(
@@ -117,6 +111,8 @@ export const useImageUpload = () => {
       }
 
       return { downloadURL };
+    } catch (error) {
+      throw new Error(formatStorageUploadError(error));
     } finally {
       setUploading(false);
       setProgress(0);
@@ -138,8 +134,7 @@ export const useImageUpload = () => {
       return;
     }
     try {
-      // Firebase standardly resolves full bucket urls to refs internally
-      const storageRef = ref(storage, oldUrl);
+      const storageRef = storageRefFromDownloadUrl(storage, oldUrl);
       await deleteObject(storageRef);
 
       const docRef = doc(db, collectionName, docId);

@@ -18,21 +18,21 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { useColors, useIsDark } from '@/hooks/useColors';
+import { useColors } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
-import { CultureTokens, FontFamily, FontSize } from '@/design-system/tokens/theme';
-
-// ─── Feature definitions ──────────────────────────────────────────────────────
+import { BorderTokens, CultureTokens, FontFamily, FontSize } from '@/design-system/tokens/theme';
+import {
+  CONNECT_CARD_INK,
+  CONNECT_FEATURE_FILLS,
+  CONNECT_TEASER_SHADOW,
+} from '@/design-system/tokens/connectTeaserTokens';
 
 interface ConnectFeature {
   id: string;
   emoji: string;
   title: string;
   description: string;
-  /** Opaque card fills (no translucent gradients — readable on web). */
-  fillLight: string;
-  fillDark: string;
-  accentColor: string;
+  color: string;
   icon: keyof typeof Ionicons.glyphMap;
   interestMessage: string;
 }
@@ -59,7 +59,7 @@ function relativeLuminance(hex: string): number {
   return 0.2126 * srgb[0]! + 0.7152 * srgb[1]! + 0.0722 * srgb[2]!;
 }
 
-function alpha(hex: string, alphaHex: string): string {
+function withAlpha(hex: string, alphaHex: string): string {
   return `${hex}${alphaHex}`;
 }
 
@@ -69,9 +69,7 @@ const FEATURES: ConnectFeature[] = [
     emoji: '🤝',
     title: 'CulturePass Meetups',
     description: 'Attend casual cultural gatherings and activities near you.',
-    fillLight: '#0078FF',
-    fillDark: '#0078FF',
-    accentColor: '#0078FF',
+    color: CONNECT_FEATURE_FILLS.meetups,
     icon: 'people-circle-outline',
     interestMessage: 'You\'re on the early list for CulturePass Meetups — we\'ll notify you when it launches in your city.',
   },
@@ -80,9 +78,7 @@ const FEATURES: ConnectFeature[] = [
     emoji: '👥',
     title: 'Cultural Groups',
     description: 'Join hobby circles, diaspora chapters and interest clubs.',
-    fillLight: '#BD00FF',
-    fillDark: '#BD00FF',
-    accentColor: '#BD00FF',
+    color: CONNECT_FEATURE_FILLS.groups,
     icon: 'grid-outline',
     interestMessage: 'Noted! We\'ll let you know when Cultural Groups launches so you can find your people.',
   },
@@ -91,9 +87,7 @@ const FEATURES: ConnectFeature[] = [
     emoji: '💫',
     title: 'Culture Match',
     description: 'Meet people who share your roots, language and values.',
-    fillLight: '#FF9A00',
-    fillDark: '#FF9A00',
-    accentColor: '#FF9A00',
+    color: CONNECT_FEATURE_FILLS.cultureMatch,
     icon: 'heart-circle-outline',
     interestMessage: 'You\'re on the waitlist for Culture Match — culturally intelligent connections, coming soon.',
   },
@@ -102,9 +96,7 @@ const FEATURES: ConnectFeature[] = [
     emoji: '💍',
     title: 'Matrimony',
     description: 'Find a life partner within your culture and community.',
-    fillLight: '#01FF1F',
-    fillDark: '#01FF1F',
-    accentColor: '#01FF1F',
+    color: CONNECT_FEATURE_FILLS.matrimony,
     icon: 'diamond-outline',
     interestMessage: 'Added to the early access list for CulturePass Matrimony. We\'ll reach out when it\'s ready.',
   },
@@ -113,33 +105,24 @@ const FEATURES: ConnectFeature[] = [
     emoji: '🗣️',
     title: 'Language Circles',
     description: 'Practice languages with native speakers in your city.',
-    fillLight: '#E3FF00',
-    fillDark: '#E3FF00',
-    accentColor: '#E3FF00',
+    color: CONNECT_FEATURE_FILLS.languageCircles,
     icon: 'chatbubbles-outline',
     interestMessage: 'Great — you\'re on the list for Language Circles. We\'ll notify you when it launches near you.',
   },
 ];
-
-// ─── Card ─────────────────────────────────────────────────────────────────────
 
 interface FeatureCardProps {
   feature: ConnectFeature;
 }
 
 function FeatureCard({ feature }: FeatureCardProps) {
-  const isDark = useIsDark();
-  const cardFill = isDark ? feature.fillDark : feature.fillLight;
+  const cardFill = feature.color;
   const luminance = relativeLuminance(cardFill);
   const useDarkInk = luminance > 0.46;
-  const primaryTextColor = useDarkInk ? '#0F172A' : '#FFFFFF';
-  const secondaryTextColor = useDarkInk ? '#1E293B' : '#E2E8F0';
-  const tertiaryTextColor = useDarkInk ? '#334155' : '#CBD5E1';
-  const badgeBg = useDarkInk ? alpha('#FFFFFF', '33') : alpha('#000000', '33');
-  const badgeBorder = useDarkInk ? alpha('#FFFFFF', '66') : alpha('#000000', '66');
-  const footerBorder = useDarkInk ? alpha('#FFFFFF', '55') : alpha('#000000', '44');
-  const footerChevron = useDarkInk ? '#475569' : '#E2E8F0';
-  const notifyIconColor = useDarkInk ? '#0F172A' : '#FFFFFF';
+  const ink = useDarkInk ? CONNECT_CARD_INK.onLightFill : CONNECT_CARD_INK.onDarkFill;
+  const badgeBg = useDarkInk ? withAlpha(BorderTokens.white, '33') : withAlpha(BorderTokens.black, '33');
+  const badgeBorder = useDarkInk ? withAlpha(BorderTokens.white, '66') : withAlpha(BorderTokens.black, '66');
+  const footerBorder = useDarkInk ? withAlpha(BorderTokens.white, '55') : withAlpha(BorderTokens.black, '44');
 
   const handlePress = useCallback(() => {
     if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -157,33 +140,29 @@ function FeatureCard({ feature }: FeatureCardProps) {
       accessibilityLabel={`${feature.title} — coming soon. Tap to register interest.`}
       style={({ pressed }) => [card.root, { opacity: pressed ? 0.88 : 1 }]}
     >
-      <View style={[StyleSheet.absoluteFill, { backgroundColor: cardFill }]} />
+      <View style={[card.fill, { backgroundColor: cardFill }]} />
 
-      {/* Border */}
-      <View style={[card.border, { borderColor: `${feature.accentColor}30` }]} />
+      <View style={[card.border, { borderColor: `${feature.color}30` }]} />
 
-      {/* Coming Soon badge */}
       <View style={[card.badge, { backgroundColor: badgeBg, borderColor: badgeBorder }]}>
-        <View style={[card.badgeDot, { backgroundColor: useDarkInk ? '#0F172A' : '#FFFFFF' }]} />
-        <Text style={[card.badgeText, { color: tertiaryTextColor }]}>Coming Soon</Text>
+        <View style={[card.badgeDot, { backgroundColor: ink.badgeDot }]} />
+        <Text style={[card.badgeText, { color: ink.tertiary }]} numberOfLines={1}>Coming Soon</Text>
       </View>
 
-      {/* Body */}
       <View style={card.body}>
-        <Text style={card.emoji}>{feature.emoji}</Text>
-        <Text style={[card.title, { color: primaryTextColor }]} numberOfLines={2}>
+        <Text style={card.emoji} numberOfLines={1}>{feature.emoji}</Text>
+        <Text style={[card.title, { color: ink.primary }]} numberOfLines={2}>
           {feature.title}
         </Text>
-        <Text style={[card.desc, { color: secondaryTextColor }]} numberOfLines={3}>
+        <Text style={[card.desc, { color: ink.secondary }]} numberOfLines={3}>
           {feature.description}
         </Text>
       </View>
 
-      {/* Notify me footer */}
       <View style={[card.footer, { borderTopColor: footerBorder }]}>
-        <Ionicons name="notifications-outline" size={12} color={notifyIconColor} />
-        <Text style={[card.notifyText, { color: primaryTextColor }]}>Notify me</Text>
-        <Ionicons name="chevron-forward" size={11} color={footerChevron} style={{ marginLeft: 'auto' }} />
+        <Ionicons name="notifications-outline" size={12} color={ink.primary} />
+        <Text style={[card.notifyText, { color: ink.primary }]} numberOfLines={1}>Notify me</Text>
+        <Ionicons name="chevron-forward" size={11} color={ink.chevron} style={card.footerChevron} />
       </View>
     </Pressable>
   );
@@ -195,11 +174,12 @@ const card = StyleSheet.create({
     borderRadius: 20,
     overflow: 'hidden',
     ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.18, shadowRadius: 12 },
+      ios: { shadowColor: CONNECT_TEASER_SHADOW, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.18, shadowRadius: 12 },
       android: { elevation: 4 },
-      web: { boxShadow: '0 6px 20px rgba(0,0,0,0.18)' } as any,
+      web: { boxShadow: '0 6px 20px rgba(0,0,0,0.18)' } as object,
     }),
   },
+  fill: StyleSheet.absoluteFill,
   border: {
     ...StyleSheet.absoluteFill,
     borderRadius: 20,
@@ -254,13 +234,12 @@ const card = StyleSheet.create({
     borderTopWidth: 1,
     marginTop: 4,
   },
+  footerChevron: { marginLeft: 'auto' },
   notifyText: {
     fontSize: 11,
     fontFamily: FontFamily.semibold,
   },
 });
-
-// ─── ConnectTeaser (exported) ─────────────────────────────────────────────────
 
 export function ConnectTeaser() {
   const colors = useColors();
@@ -277,12 +256,11 @@ export function ConnectTeaser() {
           },
         ]}
       >
-        {/* Section header */}
         <View style={rail.header}>
           <View style={[rail.accent, { backgroundColor: CultureTokens.coral }]} />
-          <View style={{ flex: 1 }}>
-            <Text style={[rail.title, { color: colors.text }]}>Meet · Connect · Belong</Text>
-            <Text style={[rail.subtitle, { color: colors.textSecondary }]}>
+          <View style={rail.headerText}>
+            <Text style={[rail.title, { color: colors.text }]} numberOfLines={1}>Meet · Connect · Belong</Text>
+            <Text style={[rail.subtitle, { color: colors.textSecondary }]} numberOfLines={2}>
               Social features coming to CulturePass
             </Text>
           </View>
@@ -292,11 +270,10 @@ export function ConnectTeaser() {
               { backgroundColor: colors.surfaceSecondary, borderColor: colors.border },
             ]}
           >
-            <Text style={[rail.roadmapText, { color: CultureTokens.indigo }]}>Roadmap</Text>
+            <Text style={[rail.roadmapText, { color: CultureTokens.indigo }]} numberOfLines={1}>Roadmap</Text>
           </View>
         </View>
 
-        {/* Horizontal card scroll */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -325,7 +302,7 @@ const rail = StyleSheet.create({
     paddingTop: 14,
     paddingBottom: 12,
     ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8 },
+      ios: { shadowColor: CONNECT_TEASER_SHADOW, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8 },
       android: { elevation: 2 },
       web: { boxShadow: '0 2px 12px rgba(15, 23, 42, 0.08)' } as object,
     }),
@@ -336,6 +313,7 @@ const rail = StyleSheet.create({
     gap: 10,
     marginBottom: 14,
   },
+  headerText: { flex: 1 },
   accent: {
     width: 3,
     height: 36,

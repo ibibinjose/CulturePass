@@ -665,7 +665,7 @@ export function HostspaceOfferCreateForm({ onReview }: { onReview?: () => void }
                 type="logo"
                 value={draft.offerImage}
                 onChange={(url) => updateDraft({ offerImage: url as string })}
-                storagePath={`offers/${user?.id || 'anonymous'}/cover`}
+                storagePath={`offers/${user?.id || 'anonymous'}`}
                 aspectRatio={1}
               />
             </Field>
@@ -677,7 +677,7 @@ export function HostspaceOfferCreateForm({ onReview }: { onReview?: () => void }
                   const arr = Array.isArray(val) ? val : [val];
                   updateDraft({ gallery: arr.join(',') });
                 }}
-                storagePath={`offers/${user?.id || 'anonymous'}/gallery`}
+                storagePath={`offers/${user?.id || 'anonymous'}`}
                 maxItems={4}
               />
             </Field>

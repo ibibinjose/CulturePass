@@ -1,3 +1,1 @@
-export { default } from '../(shortlinks)/o/[id]';
-
-
+export { default } from '../profile/[id]';

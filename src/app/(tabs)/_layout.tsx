@@ -17,12 +17,11 @@ const RAIL_DESTINATIONS: RailDestination[] = [
   { name: 'community', label: 'Community', icon: 'people-outline', activeIcon: 'people' },
   { name: 'city', label: 'My City', icon: 'location-outline', activeIcon: 'location' },
   { name: 'my-space', label: 'Profile', icon: 'person-circle-outline', activeIcon: 'person-circle' },
-  { name: 'perks', label: 'Perks', icon: 'pricetag-outline', activeIcon: 'pricetag' },
 ];
 
 /**
  * Main Tab Layout — CulturePass
- * Bottom bar: Home · Calendar · Community · My City · Profile.
+ * Bottom bar: Discover · Calendar · Community · My City · Profile.
  * Secondary routes stay addressable but are hidden from the bottom bar.
  */
 const TAB_NAMES: Record<string, string> = {
@@ -31,7 +30,6 @@ const TAB_NAMES: Record<string, string> = {
   community: 'Community',
   city: 'My City',
   'my-space': 'Profile',
-  perks: 'Perks',
 };
 
 export default function TabsLayout() {
@@ -136,15 +134,7 @@ export default function TabsLayout() {
         }}
       />
 
-      <Tabs.Screen
-        name="perks"
-        options={{
-          title: 'Perks',
-          tabBarIcon: ({ color, focused, size }) => (
-            <Ionicons name={focused ? 'pricetag' : 'pricetag-outline'} size={size} color={color} />
-          ),
-        }}
-      />
+      <Tabs.Screen name="perks" options={{ href: null }} />
 
       <Tabs.Screen name="host" options={{ href: null }} />
       <Tabs.Screen name="profile" options={{ href: null }} />

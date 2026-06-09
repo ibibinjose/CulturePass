@@ -7,6 +7,11 @@ import { router, usePathname, useSegments } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { useColors, useIsDark } from "@/hooks/useColors";
 import { CultureTokens, HeaderTokens } from "@/design-system/tokens/theme";
+import {
+  WEB_TOP_BAR,
+  WEB_TOP_BAR_DARK_GRADIENT,
+  WEB_TOP_BAR_SIGN_IN_GRADIENT,
+} from "@/design-system/tokens/webTopBarTokens";
 import { useAuth } from "@/lib/auth";
 import { LocationPicker } from "@/modules/core/components";
 import { useLayout } from "@/hooks/useLayout";
@@ -101,7 +106,7 @@ export function WebTopBar() {
     <View style={styles.container}>
       {/* Background gradient */}
       <LinearGradient
-        colors={isDark ? ['#0A0A1A', '#0D1033'] : [colors.surface, colors.backgroundSecondary]}
+        colors={isDark ? [...WEB_TOP_BAR_DARK_GRADIENT] : [colors.surface, colors.backgroundSecondary]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
         style={StyleSheet.absoluteFill}
@@ -135,7 +140,7 @@ export function WebTopBar() {
           {(!isAuthenticated || (!user?.avatarUrl)) && (
             <View style={[StyleSheet.absoluteFill, styles.avatarInner]}>
               {isAuthenticated
-                ? <Text style={styles.avatarInitials}>{initials}</Text>
+                ? <Text style={styles.avatarInitials} numberOfLines={1}>{initials}</Text>
                 : <Ionicons name="menu" size={20} color={colors.text} />
               }
             </View>
@@ -177,7 +182,7 @@ export function WebTopBar() {
                 color={active ? CultureTokens.teal : colors.textTertiary}
                 style={styles.tabIcon}
               />
-              <Text style={[styles.tabText, active && styles.tabTextActive]}>
+              <Text style={[styles.tabText, active && styles.tabTextActive]} numberOfLines={1}>
                 {label}
               </Text>
               {active && <View style={styles.activeUnderline} />}
@@ -219,13 +224,13 @@ export function WebTopBar() {
             onPress={() => router.push(routeWithRedirect('/(onboarding)/login', pathname) as any)}
           >
             <LinearGradient
-              colors={[CultureTokens.indigo, '#3D4FCC']}
+              colors={[...WEB_TOP_BAR_SIGN_IN_GRADIENT]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={StyleSheet.absoluteFill}
             />
-            <Ionicons name="person-outline" size={14} color="#fff" />
-            <Text style={styles.signInText}>Sign In</Text>
+            <Ionicons name="person-outline" size={14} color={WEB_TOP_BAR.onAccent} />
+            <Text style={styles.signInText} numberOfLines={1}>Sign In</Text>
           </Pressable>
         ) : (
           <Pressable
@@ -253,7 +258,7 @@ export function WebTopBar() {
           <View style={[styles.menuPanel, { backgroundColor: colors.surface }]}>
             {/* Menu header */}
             <LinearGradient
-              colors={isDark ? ['#0A0A1A', '#0D1033'] : [colors.surface, colors.backgroundSecondary]}
+              colors={isDark ? [...WEB_TOP_BAR_DARK_GRADIENT] : [colors.surface, colors.backgroundSecondary]}
               style={styles.menuPanelHeader}
             >
               <View style={styles.menuPanelHeaderInner}>
@@ -275,7 +280,7 @@ export function WebTopBar() {
                       )}
                       {!user?.avatarUrl && (
                         <View style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center' }]}>
-                          <Text style={styles.menuAvatarInitials}>{initials}</Text>
+                          <Text style={styles.menuAvatarInitials} numberOfLines={1}>{initials}</Text>
                         </View>
                       )}
                     </View>
@@ -283,7 +288,7 @@ export function WebTopBar() {
                       <Text style={styles.menuUserName} numberOfLines={1}>{displayName}</Text>
                       <Text style={styles.menuUserEmail} numberOfLines={1}>{user?.email}</Text>
                     </View>
-                    <Ionicons name="chevron-forward" size={16} color="rgba(255,255,255,0.5)" />
+                    <Ionicons name="chevron-forward" size={16} color={WEB_TOP_BAR.chevronMuted} />
                   </Pressable>
                 ) : (
                   <View style={{ gap: 12 }}>
@@ -294,9 +299,9 @@ export function WebTopBar() {
                         start={{ x: 0, y: 0.5 }}
                         end={{ x: 1, y: 0.5 }}
                       >
-                        <Ionicons name="globe-outline" size={16} color="#fff" />
+                        <Ionicons name="globe-outline" size={16} color={WEB_TOP_BAR.onAccent} />
                       </LinearGradient>
-                      <Text style={styles.menuLogoText}>CulturePass</Text>
+                      <Text style={styles.menuLogoText} numberOfLines={1}>CulturePass</Text>
                     </View>
                     <Pressable
                       style={styles.menuSignInBtn}
@@ -306,13 +311,13 @@ export function WebTopBar() {
                       }}
                     >
                       <LinearGradient
-                        colors={[CultureTokens.indigo, '#3D4FCC']}
+                        colors={[...WEB_TOP_BAR_SIGN_IN_GRADIENT]}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 0 }}
                         style={StyleSheet.absoluteFill}
                       />
-                      <Ionicons name="person-outline" size={16} color="#fff" />
-                      <Text style={styles.menuSignInText}>Sign In / Register</Text>
+                      <Ionicons name="person-outline" size={16} color={WEB_TOP_BAR.onAccent} />
+                      <Text style={styles.menuSignInText} numberOfLines={1}>Sign In / Register</Text>
                     </Pressable>
                   </View>
                 )}
@@ -332,7 +337,7 @@ export function WebTopBar() {
             >
               {MENU_SECTIONS.map((section) => (
                 <View key={section.heading} style={styles.menuSection}>
-                  <Text style={[styles.menuSectionLabel, { color: colors.textTertiary }]}>
+                  <Text style={[styles.menuSectionLabel, { color: colors.textTertiary }]} numberOfLines={1}>
                     {section.heading.toUpperCase()}
                   </Text>
                   <View style={[styles.menuSectionCard, { backgroundColor: colors.surfaceElevated, borderColor: colors.borderLight }]}>
@@ -351,7 +356,7 @@ export function WebTopBar() {
                           <View style={[styles.menuItemIcon, { backgroundColor: colors.borderLight }]}>
                             <Ionicons name={item.icon as any} size={16} color={colors.textSecondary} />
                           </View>
-                          <Text style={[styles.menuItemText, { color: colors.text }]}>{item.label}</Text>
+                          <Text style={[styles.menuItemText, { color: colors.text }]} numberOfLines={1}>{item.label}</Text>
                           <Ionicons name="chevron-forward" size={13} color={colors.textTertiary} />
                         </Pressable>
                         {idx < section.items.length - 1 && (
@@ -376,12 +381,12 @@ export function WebTopBar() {
                   }}
                 >
                   <Ionicons name="log-out-outline" size={17} color={colors.error} />
-                  <Text style={[styles.menuLogoutText, { color: colors.error }]}>Sign Out</Text>
+                  <Text style={[styles.menuLogoutText, { color: colors.error }]} numberOfLines={1}>Sign Out</Text>
                 </Pressable>
               )}
 
               <View style={styles.menuFooter}>
-                <Text style={[styles.menuFooterText, { color: colors.textTertiary }]}>
+                <Text style={[styles.menuFooterText, { color: colors.textTertiary }]} numberOfLines={2}>
                   {`CulturePass · v${appVersion} · ${MADE_IN}`}
                 </Text>
               </View>
@@ -420,7 +425,7 @@ const styles = StyleSheet.create({
         backdropFilter: 'blur(20px) saturate(1.5)',
       },
       default: {
-        shadowColor: '#000',
+        shadowColor: WEB_TOP_BAR.shadow,
         shadowOpacity: 0.3,
         shadowRadius: 12,
         shadowOffset: { width: 0, height: 3 },
@@ -449,12 +454,12 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 20,
     overflow: 'hidden',
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: WEB_TOP_BAR.avatarBtnBg,
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarBtnHovered: {
-    backgroundColor: 'rgba(255,255,255,0.15)',
+    backgroundColor: WEB_TOP_BAR.avatarBtnBgHover,
   },
   avatarImg: {
     ...StyleSheet.absoluteFill,
@@ -468,7 +473,7 @@ const styles = StyleSheet.create({
   avatarInitials: {
     fontSize: 13,
     fontFamily: 'Poppins_700Bold',
-    color: '#fff',
+    color: WEB_TOP_BAR.onAccent,
   },
   logoBlock: {
     flexDirection: 'row',
@@ -499,13 +504,13 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   tabHovered: {
-    backgroundColor: 'rgba(255,255,255,0.07)',
+    backgroundColor: WEB_TOP_BAR.tabHoverBg,
   },
   tabIcon: {
     opacity: 0.9,
   },
   tabText: {
-    color: 'rgba(255,255,255,0.55)',
+    color: WEB_TOP_BAR.tabTextMuted,
     fontSize: 14,
     fontFamily: 'Poppins_500Medium',
     letterSpacing: 0.1,
@@ -540,7 +545,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   iconBtnHovered: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: WEB_TOP_BAR.iconBtnHoverBg,
   },
   signInBtn: {
     flexDirection: 'row',
@@ -556,7 +561,7 @@ const styles = StyleSheet.create({
     opacity: 0.9,
   },
   signInText: {
-    color: '#fff',
+    color: WEB_TOP_BAR.onAccent,
     fontSize: 13,
     fontFamily: 'Poppins_600SemiBold',
     letterSpacing: 0.2,
@@ -569,7 +574,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
   },
   menuBackdrop: {
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: WEB_TOP_BAR.menuBackdrop,
   },
   menuPanel: {
     width: 320,
@@ -577,7 +582,7 @@ const styles = StyleSheet.create({
     ...Platform.select({
       web: { boxShadow: '4px 0 32px rgba(0,0,0,0.3)' },
       default: {
-        shadowColor: '#000',
+        shadowColor: WEB_TOP_BAR.shadow,
         shadowOpacity: 0.3,
         shadowRadius: 20,
         shadowOffset: { width: 4, height: 0 },
@@ -602,7 +607,7 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: 24,
     overflow: 'hidden',
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: WEB_TOP_BAR.avatarBtnBg,
     flexShrink: 0,
   },
   menuAvatarImg: {
@@ -612,17 +617,17 @@ const styles = StyleSheet.create({
   menuAvatarInitials: {
     fontSize: 18,
     fontFamily: 'Poppins_700Bold',
-    color: '#fff',
+    color: WEB_TOP_BAR.onAccent,
   },
   menuUserName: {
     fontSize: 16,
     fontFamily: 'Poppins_600SemiBold',
-    color: '#fff',
+    color: WEB_TOP_BAR.onAccent,
   },
   menuUserEmail: {
     fontSize: 12,
     fontFamily: 'Poppins_400Regular',
-    color: 'rgba(255,255,255,0.6)',
+    color: WEB_TOP_BAR.menuUserEmail,
     marginTop: 1,
   },
   menuLogoRow: {
@@ -638,7 +643,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   menuLogoText: {
-    color: '#fff',
+    color: WEB_TOP_BAR.onAccent,
     fontSize: 16,
     fontFamily: 'Poppins_700Bold',
   },
@@ -652,7 +657,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   menuSignInText: {
-    color: '#fff',
+    color: WEB_TOP_BAR.onAccent,
     fontSize: 14,
     fontFamily: 'Poppins_600SemiBold',
   },
@@ -736,6 +741,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: WEB_TOP_BAR.menuCloseBg,
   },
 });

@@ -17,7 +17,7 @@ export function useInterestsSelection() {
   const redirectTo = sanitizeInternalRedirect(searchParams.redirectTo ?? searchParams.redirect);
 
   const { user } = useAuth();
-  const { state, setInterests: setSelectedInterests } = useOnboarding();
+  const { state, setInterests: setSelectedInterests, completeOnboarding } = useOnboarding();
 
   const [selected, setSelected] = useState<string[]>(state.interests || []);
   const [expanded, setExpanded] = useState<Record<string, boolean>>(
@@ -100,6 +100,7 @@ export function useInterestsSelection() {
     }
 
     try {
+      await completeOnboarding();
       if (Platform.OS !== 'web') await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.push(routeWithRedirect('/pages/create', redirectTo) as string);
       return { success: true };

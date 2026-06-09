@@ -38,7 +38,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 
 import { useColors } from '@/hooks/useColors';
-import { CultureTokens, Spacing, Radius } from '@/design-system/tokens/theme';
+import { BorderTokens, CultureTokens, Spacing, Radius } from '@/design-system/tokens/theme';
 import { TextStyles } from '@/design-system/tokens/typography';
 import { LuxeCard } from '@/design-system/ui/LuxeCard';
 import type { ProfileDraft } from '@/platform/api/endpoints/createProfilesNamespace';
@@ -314,7 +314,7 @@ export function DraftRecoveryModal({
             accessibilityRole="button"
             accessibilityLabel="Continue with most recent draft"
           >
-            <Text style={[TextStyles.callout, { color: '#FFFFFF', fontWeight: '600' }]}>
+            <Text style={[TextStyles.callout, styles.primaryButtonText]}>
               Continue Most Recent
             </Text>
           </Pressable>
@@ -505,7 +505,7 @@ const styles = StyleSheet.create({
         boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
       },
       default: {
-        shadowColor: '#000',
+        shadowColor: BorderTokens.black,
         shadowOffset: { width: 0, height: 10 },
         shadowOpacity: 0.3,
         shadowRadius: 20,
@@ -578,6 +578,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  primaryButtonText: {
+    color: BorderTokens.white,
+    fontWeight: '600',
   },
   secondaryButton: {
     borderRadius: Radius.full,

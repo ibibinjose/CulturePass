@@ -101,7 +101,7 @@ const getVariantStyles = (variant: LuxeButtonVariant, isDark: boolean) => {
         text: '#1C1917',
         border: 'transparent',
         isGradient: true,
-        gradient: [HERITAGE_GOLD, '#E6A900'] as [string, string],
+        gradient: [HERITAGE_GOLD, '#00A7EF'] as [string, string],
       };
     case 'plum':
       return {

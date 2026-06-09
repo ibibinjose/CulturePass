@@ -76,6 +76,7 @@ export type ProfileToolRow = {
 
 export const PROFILE_ATTENDEE_TOOL_ROWS: ProfileToolRow[] = [
   { id: 'tickets', label: 'My tickets', sub: 'QR codes, transfers, and gate entry', path: '/tickets', icon: 'ticket-outline', accent: CultureTokens.gold },
+  { id: 'perks', label: 'Member perks', sub: 'Exclusive offers and partner rewards', path: '/perks', icon: 'pricetag-outline', accent: CultureTokens.gold },
   { id: 'cal-sync', label: 'Calendar sync', sub: 'Apple, Google, Outlook and device', path: '/settings/calendar-sync', icon: 'calendar-outline', accent: CultureTokens.indigo },
 ];
 
@@ -100,6 +101,16 @@ export type SidebarNavLink = {
   matchPrefix?: boolean;
   badge?: number;
 };
+
+/** Primary tab destinations — shared by web sidebar and mobile web drawer. */
+export const SIDEBAR_MAIN_NAV: SidebarNavLink[] = [
+  { label: 'Discover', icon: 'compass-outline', iconActive: 'compass', route: '/(tabs)' },
+  { label: 'Calendar', icon: 'calendar-outline', iconActive: 'calendar', route: '/(tabs)/calendar' },
+  { label: 'Community', icon: 'people-circle-outline', iconActive: 'people-circle', route: '/(tabs)/community' },
+  { label: 'My City', icon: 'location-outline', iconActive: 'location', route: '/(tabs)/city' },
+  { label: 'Profile', icon: 'person-circle-outline', iconActive: 'person-circle', route: '/(tabs)/my-space' },
+  { label: 'Perks', icon: 'pricetag-outline', iconActive: 'pricetag', route: '/perks', matchPrefix: true },
+];
 
 /** Going out: tickets, saves, contacts, calendar & comms (Calendar tab lives under Discover). */
 export const SIDEBAR_ATTENDEE_LINKS: SidebarNavLink[] = [

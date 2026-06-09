@@ -24,7 +24,7 @@ export default function PrivacyScreen() {
         <View style={styles.footer}>
           <View style={styles.footerLinks}>
             {FOOTER_LINKS.map((link) => (
-              <Link key={link.href} href={link.href} asChild>
+              <Link key={link.id} href={link.href} asChild>
                 <Pressable>
                   <Text style={[styles.footerLinkText, { color: colors.textSecondary }]}>{link.label}</Text>
                 </Pressable>

@@ -141,7 +141,7 @@ export default function AboutScreen() {
                 <Text style={[styles.groupLabel, { color: colors.textTertiary }]}>LEGAL & HELP</Text>
                 <GlassView contentStyle={{ padding: 4 }}>
                     {FOOTER_LINKS.map((link, i) => (
-                        <View key={link.href}>
+                        <View key={link.id}>
                             <Link href={link.href} asChild>
                                 <Pressable
                                     style={({ pressed }) => [

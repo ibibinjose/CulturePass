@@ -2,6 +2,10 @@ import { useEffect, useRef } from 'react';
 
 import { useOnboarding } from '@/contexts/OnboardingContext';
 import { useAuth, subscriptionTierForOnboarding } from '@/lib/auth';
+import {
+  isLocalOnboardingMidFlow,
+  isServerOnboardingProfileComplete,
+} from '@/lib/onboardingCompletion';
 import { identifyUser, resetUser } from '@/lib/analytics';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 
@@ -41,17 +45,11 @@ export function DataSync() {
         if (nextTier !== state.subscriptionTier) {
           setSubscriptionTier(nextTier);
         }
-        const hasCulture =
-          !!(user.culturalIdentity?.nationalityId || (user.culturalIdentity?.cultureIds?.length ?? 0) > 0);
-        const profileLooksEstablished =
-          !!user.city &&
-          !!user.country &&
-          ((user.interests?.length ?? 0) > 0 ||
-            (user.communities?.length ?? 0) > 0 ||
-            hasCulture ||
-            !!user.lgaCode ||
-            !!user.councilId);
-        if (!state.isComplete && profileLooksEstablished) {
+        if (
+          !state.isComplete &&
+          isServerOnboardingProfileComplete(user) &&
+          !isLocalOnboardingMidFlow(state, user.interests?.length ?? 0)
+        ) {
           await completeOnboarding();
         }
         identifyUser(user.id, {

@@ -162,8 +162,8 @@ export default function TeamMonitoringDashboard() {
           <View style={[styles.pill, { backgroundColor: '#8B5CF622' }]}>
             <Text style={[styles.pillText, { color: '#8B5CF6' }]}>90-day trends</Text>
           </View>
-          <View style={[styles.pill, { backgroundColor: '#F59E0B22' }]}>
-            <Text style={[styles.pillText, { color: '#F59E0B' }]}>Role breakdown</Text>
+          <View style={[styles.pill, { backgroundColor: '#00A7EF22' }]}>
+            <Text style={[styles.pillText, { color: '#00A7EF' }]}>Role breakdown</Text>
           </View>
           <View style={[styles.pill, { backgroundColor: '#EF444422' }]}>
             <Text style={[styles.pillText, { color: '#EF4444' }]}>Manual recompute</Text>

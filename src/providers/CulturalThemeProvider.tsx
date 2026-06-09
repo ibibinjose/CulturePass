@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useMemo, ReactNode } from 'react';
 import { useAppAppearance } from '@/hooks/useAppAppearance';
+import { BRAND_CYAN, BRAND_CYAN_DEEP } from '@/design-system/tokens/brandCyanPalette';
 import { light as LightColors, dark as DarkColors, CultureTokens } from '@/design-system/tokens/colors';
 
 interface CulturalTheme {
@@ -27,11 +28,11 @@ interface CulturalThemeProviderProps {
 // Safe fallback theme — prevents crashes if color tokens are ever undefined
 const SAFE_DEFAULT_THEME: CulturalTheme = {
   primary: '#E36A4E',
-  secondary: '#F5A623',
+  secondary: BRAND_CYAN_DEEP,
   accent1: '#4A5EBF',
   accent2: '#0A8C7F',
-  accent3: '#D4A017',
-  heritageGold: '#D4A017',
+  accent3: BRAND_CYAN,
+  heritageGold: BRAND_CYAN,
   richIndigo: '#4A5EBF',
   emeraldHarmony: '#0A8C7F',
   error: '#BA1A1A',

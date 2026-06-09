@@ -78,10 +78,10 @@ export const useCulturalColors = () => {
     isDark,
     // Convenience mappings for cultural colors
     primary: culturalTokens.terracottaGlow,        // Terracotta Glow (#E36A4E) - Primary action
-    secondary: culturalTokens.deepSaffron,         // Deep Saffron (#F5A623) - Secondary action
+    secondary: culturalTokens.deepSaffron,         // Brand Cyan Deep (#00A7EF) - Secondary action
     accent1: culturalTokens.richIndigo,            // Rich Indigo (#4A5EBF) - Accent 1
     accent2: culturalTokens.emeraldHarmony,        // Emerald Harmony (#0A8C7F) - Accent 2
-    accent3: culturalTokens.heritageGold,          // Heritage Gold (#D4A017) - Accent 3
+    accent3: culturalTokens.heritageGold,          // Brand Cyan (#00ADEF) - Accent 3
     background: isDark ? colors.background : colors.background,
     surface: isDark ? colors.surface : colors.surface,
     text: isDark ? colors.text : colors.text,

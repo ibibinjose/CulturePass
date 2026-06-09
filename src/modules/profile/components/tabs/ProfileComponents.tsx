@@ -9,9 +9,11 @@ import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useColors } from '@/hooks/useColors';
-import { CultureTokens, FontFamily, FontSize, Spacing, Radius } from '@/design-system/tokens/theme';
+import { BorderTokens, CultureTokens, FontFamily, FontSize, Spacing, Radius } from '@/design-system/tokens/theme';
+import { DEEP_SAFFRON } from '@/design-system/tokens/luxeHeritage';
 import { CultureWalletMap } from '@/modules/profile/components/private/CultureWalletMap';
 import { GlassView } from '@/design-system/ui/GlassView';
+import { TruncatedText } from '@/design-system/ui';
 import type { User } from '@shared/schema';
 import { initials } from './ProfileUtils';
 
@@ -25,14 +27,14 @@ export function SectionHeader({ title, subtitle, action, onAction, colors }: {
     <View style={sh.wrap}>
       <View style={sh.row}>
         <View style={sh.textBlock}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 2 }}>
+          <View style={sh.titleRow}>
             <View style={[sh.accentDot, { backgroundColor: colors.primary }]} />
-            <Text style={[sh.title, { color: colors.text }]}>{title}</Text>
+            <TruncatedText style={[sh.title, { color: colors.text }]} lines={1}>{title}</TruncatedText>
           </View>
           {subtitle ? (
-            <Text style={[sh.sub, { color: colors.textSecondary }]}>
+            <TruncatedText style={[sh.sub, { color: colors.textSecondary }]} lines={2}>
               {subtitle}
-            </Text>
+            </TruncatedText>
           ) : null}
         </View>
 
@@ -43,10 +45,10 @@ export function SectionHeader({ title, subtitle, action, onAction, colors }: {
             accessibilityRole="button"
             style={({ pressed }) => [
               sh.seeAllBtn,
-              pressed && { opacity: 0.7 }
+              pressed && sh.pressed,
             ]}
           >
-            <Text style={[sh.seeAllText, { color: colors.primary }]}>{action}</Text>
+            <Text style={[sh.seeAllText, { color: colors.primary }]} numberOfLines={1}>{action}</Text>
             <View style={[sh.seeAllIcon, { backgroundColor: colors.primarySoft }]}>
               <Ionicons name="chevron-forward" size={12} color={colors.primary} />
             </View>
@@ -57,9 +59,7 @@ export function SectionHeader({ title, subtitle, action, onAction, colors }: {
   );
 }
 const sh = StyleSheet.create({
-  wrap: {
-    marginBottom: 16,
-  },
+  wrap: { marginBottom: 16 },
   row: {
     flexDirection: 'row',
     alignItems: 'flex-end',
@@ -67,40 +67,14 @@ const sh = StyleSheet.create({
     gap: 14,
   },
   textBlock: { flex: 1, gap: 1 },
-  accentDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
-  title: {
-    fontSize: 20,
-    fontFamily: FontFamily.bold,
-    letterSpacing: -0.5,
-  },
-  sub: {
-    fontSize: 13,
-    fontFamily: FontFamily.regular,
-    opacity: 0.7,
-    paddingLeft: 16,
-  },
-  seeAllBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingVertical: 8,
-    flexShrink: 0,
-  },
-  seeAllText: {
-    fontSize: 13,
-    fontFamily: FontFamily.semibold,
-  },
-  seeAllIcon: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 2 },
+  accentDot: { width: 6, height: 6, borderRadius: 3 },
+  title: { fontSize: 20, fontFamily: FontFamily.bold, letterSpacing: -0.5 },
+  sub: { fontSize: 13, fontFamily: FontFamily.regular, opacity: 0.7, paddingLeft: 16 },
+  seeAllBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 8, flexShrink: 0 },
+  seeAllText: { fontSize: 13, fontFamily: FontFamily.semibold },
+  seeAllIcon: { width: 20, height: 20, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  pressed: { opacity: 0.7 },
 });
 
 export function RecoRow({
@@ -127,7 +101,7 @@ export function RecoRow({
       style={({ pressed }) => [
         rr.recoRow,
         { borderColor: colors.borderLight },
-        pressed && { opacity: 0.8 },
+        pressed && rr.pressed,
       ]}
       accessibilityRole="button"
       accessibilityLabel={title}
@@ -135,11 +109,11 @@ export function RecoRow({
       <View style={[rr.recoIconWrap, { backgroundColor: colors.primarySoft }]}>
         <Ionicons name={icon} size={20} color={colors.primary} />
       </View>
-      <View style={{ flex: 1, minWidth: 0 }}>
-        <Text style={{ fontSize: FontSize.callout, color: colors.text, fontFamily: FontFamily.semibold }}>{title}</Text>
-        <Text style={{ fontSize: FontSize.caption, color: colors.textSecondary, marginTop: 2 }} numberOfLines={2}>
+      <View style={rr.recoBody}>
+        <TruncatedText style={[rr.recoTitle, { color: colors.text }]} lines={1}>{title}</TruncatedText>
+        <TruncatedText style={[rr.recoSubtitle, { color: colors.textSecondary }]} lines={2}>
           {subtitle}
-        </Text>
+        </TruncatedText>
       </View>
       <Ionicons name="chevron-forward" size={18} color={colors.textTertiary} />
     </Pressable>
@@ -161,6 +135,10 @@ const rr = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  recoBody: { flex: 1, minWidth: 0 },
+  recoTitle: { fontSize: FontSize.callout, fontFamily: FontFamily.semibold },
+  recoSubtitle: { fontSize: FontSize.caption, marginTop: 2 },
+  pressed: { opacity: 0.8 },
 });
 
 // ── Avatar ────────────────────────────────────────────────────────────────────
@@ -171,27 +149,22 @@ export function ProfileAvatar({ user, displayName, size = 100 }: {
   const colors = useColors();
   const hasPhoto = !!user.avatarUrl;
   const isElite = (user.membership?.tier && user.membership.tier !== 'free') || user.isVerified;
+  const ringSize = size + 8;
+  const midSize = size + 4;
 
   return (
-    <View style={{ position: 'relative', marginBottom: 16 }}>
+    <View style={av.relativeWrap}>
       <LinearGradient
-        colors={isElite ? [CultureTokens.gold, '#F4A100'] : [CultureTokens.teal, CultureTokens.indigo]}
+        colors={isElite ? [CultureTokens.gold, DEEP_SAFFRON] : [CultureTokens.teal, CultureTokens.indigo]}
         start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-        style={{
-            width: size + 8,
-            height: size + 8,
-            borderRadius: (size + 8) / 2,
-            padding: 2,
-            alignItems: 'center',
-            justifyContent: 'center'
-        }}
+        style={[av.gradientRing, { width: ringSize, height: ringSize, borderRadius: ringSize / 2 }]}
       >
-        <View style={{ width: size + 4, height: size + 4, borderRadius: (size + 4) / 2, backgroundColor: colors.background, padding: 2, alignItems: 'center', justifyContent: 'center' }}>
-            <View style={{ width: size, height: size, borderRadius: size / 2, overflow: 'hidden', backgroundColor: colors.backgroundSecondary }}>
+        <View style={[av.midRing, { width: midSize, height: midSize, borderRadius: midSize / 2, backgroundColor: colors.background }]}>
+            <View style={[av.photoWrap, { width: size, height: size, borderRadius: size / 2, backgroundColor: colors.backgroundSecondary }]}>
             {hasPhoto
-                ? <Image source={{ uri: user.avatarUrl! }} style={{ width: size, height: size }} contentFit="cover" transition={300} />
-                : <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-                    <Text style={{ fontSize: size * 0.35, fontFamily: FontFamily.bold, color: colors.primary, letterSpacing: 1 }}>
+                ? <Image source={{ uri: user.avatarUrl! }} style={[av.photo, { width: size, height: size }]} contentFit="cover" transition={300} />
+                : <View style={av.initialsWrap}>
+                    <Text style={[av.initialsText, { fontSize: size * 0.35, color: colors.primary }]} numberOfLines={1}>
                     {initials(displayName)}
                     </Text>
                 </View>}
@@ -201,13 +174,20 @@ export function ProfileAvatar({ user, displayName, size = 100 }: {
 
       {user.isVerified && (
         <View style={[av.verifiedBadge, { backgroundColor: colors.primary, borderColor: colors.background }]}>
-          <Ionicons name="shield-checkmark" size={size * 0.12} color="#FFFFFF" />
+          <Ionicons name="shield-checkmark" size={size * 0.12} color={BorderTokens.white} />
         </View>
       )}
     </View>
   );
 }
 const av = StyleSheet.create({
+  relativeWrap: { position: 'relative', marginBottom: 16 },
+  gradientRing: { padding: 2, alignItems: 'center', justifyContent: 'center' },
+  midRing: { padding: 2, alignItems: 'center', justifyContent: 'center' },
+  photoWrap: { overflow: 'hidden' },
+  photo: {},
+  initialsWrap: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  initialsText: { fontFamily: FontFamily.bold, letterSpacing: 1 },
   verifiedBadge: {
     position: 'absolute',
     bottom: 4,
@@ -226,13 +206,13 @@ const av = StyleSheet.create({
 
 export function ProfileSkeleton({ colors, topInset = 0 }: { colors: ReturnType<typeof useColors>; topInset?: number }) {
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
+    <View style={[sk.screen, { backgroundColor: colors.background }]}>
       <View style={[sk.hero, { paddingTop: topInset + 48 }]}>
         <View style={[sk.avatarRing, { backgroundColor: colors.borderLight, opacity: 0.5 }]} />
         <View style={[sk.nameLine, { backgroundColor: colors.borderLight, opacity: 0.3 }]} />
         <View style={[sk.handleLine, { backgroundColor: colors.borderLight, opacity: 0.2 }]} />
       </View>
-      <View style={{ padding: 20, gap: 14 }}>
+      <View style={sk.skeletonPad}>
         {[1, 2, 3].map(i => (
           <View key={i} style={[sk.block, { backgroundColor: colors.surface, borderColor: colors.borderLight }]} />
         ))}
@@ -241,11 +221,13 @@ export function ProfileSkeleton({ colors, topInset = 0 }: { colors: ReturnType<t
   );
 }
 const sk = StyleSheet.create({
-  hero:       { alignItems: 'center', paddingBottom: 32, gap: 12 },
+  screen: { flex: 1 },
+  hero: { alignItems: 'center', paddingBottom: 32, gap: 12 },
   avatarRing: { width: 108, height: 108, borderRadius: 54 },
-  nameLine:   { width: 160, height: 18, borderRadius: 9, marginTop: 4 },
+  nameLine: { width: 160, height: 18, borderRadius: 9, marginTop: 4 },
   handleLine: { width: 100, height: 12, borderRadius: 6 },
-  block:      { height: 120, borderRadius: 20, borderWidth: 1 },
+  skeletonPad: { padding: 20, gap: 14 },
+  block: { height: 120, borderRadius: 20, borderWidth: 1 },
 });
 
 // ── Culture Map Modal ─────────────────────────────────────────────────────────
@@ -260,7 +242,7 @@ export function CultureMapModal({ visible, onClose, cultures, colors }: {
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <View style={[cmap.overlay, { backgroundColor: 'rgba(0,0,0,0.6)' }]}>
+      <View style={[cmap.overlay, cmap.overlayDim]}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
         <GlassView
           intensity={30}
@@ -268,12 +250,12 @@ export function CultureMapModal({ visible, onClose, cultures, colors }: {
         >
           <View style={cmap.header}>
             <View>
-              <Text style={[cmap.title, { color: colors.text }]}>Cultural Heritage</Text>
-              <Text style={[cmap.sub, { color: colors.textSecondary }]}>
+              <Text style={[cmap.title, { color: colors.text }]} numberOfLines={1}>Cultural Heritage</Text>
+              <TruncatedText style={[cmap.sub, { color: colors.textSecondary }]} lines={2}>
                 {cultures.length === 1
                   ? `Rooted in ${cultures[0].name} heritage.`
                   : `Your CulturePass spans ${cultures.length} traditions`}
-              </Text>
+              </TruncatedText>
             </View>
             <Pressable
               style={[cmap.closeBtn, { backgroundColor: colors.primarySoft }]}
@@ -288,8 +270,8 @@ export function CultureMapModal({ visible, onClose, cultures, colors }: {
           <View style={cmap.chipsRow}>
             {cultures.map(c => (
               <GlassView key={c.id} intensity={10} style={[cmap.chip, { backgroundColor: colors.surface + '80', borderColor: colors.borderLight }]}>
-                <Text style={{ fontSize: 22 }}>{c.emoji}</Text>
-                <Text style={[cmap.chipLabel, { color: colors.text }]}>{c.name}</Text>
+                <Text style={cmap.chipEmoji} numberOfLines={1}>{c.emoji}</Text>
+                <TruncatedText style={[cmap.chipLabel, { color: colors.text }]} lines={1}>{c.name}</TruncatedText>
               </GlassView>
             ))}
           </View>
@@ -304,14 +286,16 @@ export function CultureMapModal({ visible, onClose, cultures, colors }: {
 }
 
 const cmap = StyleSheet.create({
-  overlay:   { flex: 1, justifyContent: 'flex-end' },
-  sheet:     { borderTopLeftRadius: 32, borderTopRightRadius: 32, height: '90%', paddingBottom: Spacing.xxl, overflow: 'hidden' },
-  header:    { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.lg, paddingVertical: 20 },
-  title:     { fontSize: FontSize.title, fontFamily: FontFamily.bold, letterSpacing: -0.5 },
-  sub:       { fontSize: FontSize.body2, fontFamily: FontFamily.regular },
-  closeBtn:  { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
-  chipsRow:  { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm, paddingHorizontal: Spacing.lg, marginBottom: Spacing.lg },
-  chip:      { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 16, borderWidth: 1, overflow: 'hidden' },
+  overlay: { flex: 1, justifyContent: 'flex-end' },
+  overlayDim: { backgroundColor: 'rgba(0,0,0,0.6)' },
+  sheet: { borderTopLeftRadius: 32, borderTopRightRadius: 32, height: '90%', paddingBottom: Spacing.xxl, overflow: 'hidden' },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.lg, paddingVertical: 20 },
+  title: { fontSize: FontSize.title, fontFamily: FontFamily.bold, letterSpacing: -0.5 },
+  sub: { fontSize: FontSize.body2, fontFamily: FontFamily.regular },
+  closeBtn: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  chipsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm, paddingHorizontal: Spacing.lg, marginBottom: Spacing.lg },
+  chip: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 16, borderWidth: 1, overflow: 'hidden' },
+  chipEmoji: { fontSize: 22 },
   chipLabel: { fontSize: FontSize.chip, fontFamily: FontFamily.semibold },
-  mapWrap:   { flex: 1, borderRadius: Radius.lg, overflow: 'hidden', marginHorizontal: Spacing.lg, marginBottom: 20, borderWidth: 1, borderColor: 'rgba(0,0,0,0.1)' },
+  mapWrap: { flex: 1, borderRadius: Radius.lg, overflow: 'hidden', marginHorizontal: Spacing.lg, marginBottom: 20, borderWidth: 1, borderColor: 'rgba(0,0,0,0.1)' },
 });

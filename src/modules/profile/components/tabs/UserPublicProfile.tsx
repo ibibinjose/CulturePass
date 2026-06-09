@@ -4,8 +4,8 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 
-import { M3Button, M3Card, M3FilterChip, M3TopAppBar } from '@/design-system/ui';
-import { M3Typography } from '@/design-system/tokens/theme';
+import { M3Button, M3Card, M3FilterChip, M3TopAppBar, TruncatedText } from '@/design-system/ui';
+import { M3Typography, Spacing } from '@/design-system/tokens/theme';
 import { useM3Colors } from '@/hooks/useM3Colors';
 import type { ExtendedProfile } from './ProfileUtils';
 
@@ -31,7 +31,7 @@ export function UserPublicProfile({ profile, isOwner, insets }: UserPublicProfil
         titleLeading={
           <Image
             source={require('@/assets/images/culturepass-logo.png')}
-            style={{ width: 40, height: 40, borderRadius: 20, marginLeft: 8 }}
+            style={styles.heroLogo}
             contentFit="contain"
           />
         }
@@ -44,23 +44,23 @@ export function UserPublicProfile({ profile, isOwner, insets }: UserPublicProfil
               {profile.avatarUrl ? (
                 <Image source={{ uri: profile.avatarUrl }} style={StyleSheet.absoluteFill} contentFit="cover" />
               ) : (
-                <Text style={[M3Typography.headlineMedium, { color: m3Colors.onPrimaryContainer }]}>
+                <Text style={[M3Typography.headlineMedium, { color: m3Colors.onPrimaryContainer }]} numberOfLines={1}>
                   {(profile.name || 'U').charAt(0).toUpperCase()}
                 </Text>
               )}
             </View>
-            <Text style={[M3Typography.headlineMedium, styles.name, { color: m3Colors.onSurface }]}>
+            <TruncatedText style={[M3Typography.headlineMedium, styles.name, { color: m3Colors.onSurface }]} lines={2}>
               {profile.name || 'CulturePass member'}
-            </Text>
+            </TruncatedText>
             {profile.username || profile.handle ? (
-              <Text style={[M3Typography.bodyMedium, { color: m3Colors.onSurfaceVariant }]}>
+              <TruncatedText style={[M3Typography.bodyMedium, { color: m3Colors.onSurfaceVariant }]} lines={1}>
                 @{profile.username ?? profile.handle}
-              </Text>
+              </TruncatedText>
             ) : null}
             {location ? (
               <View style={styles.metaRow}>
                 <Ionicons name="location-outline" size={16} color={m3Colors.primary} />
-                <Text style={[M3Typography.bodySmall, { color: m3Colors.onSurfaceVariant }]}>{location}</Text>
+                <TruncatedText style={[M3Typography.bodySmall, { color: m3Colors.onSurfaceVariant }]} lines={1}>{location}</TruncatedText>
               </View>
             ) : null}
           </View>
@@ -68,10 +68,10 @@ export function UserPublicProfile({ profile, isOwner, insets }: UserPublicProfil
 
         {profile.bio || profile.description ? (
           <M3Card variant="filled" style={styles.section}>
-            <Text style={[M3Typography.titleMedium, { color: m3Colors.onSurface }]}>About</Text>
-            <Text style={[M3Typography.bodyMedium, styles.body, { color: m3Colors.onSurfaceVariant }]}>
+            <Text style={[M3Typography.titleMedium, { color: m3Colors.onSurface }]} numberOfLines={1}>About</Text>
+            <TruncatedText style={[M3Typography.bodyMedium, styles.body, { color: m3Colors.onSurfaceVariant }]} lines={8}>
               {profile.bio ?? profile.description}
-            </Text>
+            </TruncatedText>
           </M3Card>
         ) : null}
 
@@ -83,7 +83,7 @@ export function UserPublicProfile({ profile, isOwner, insets }: UserPublicProfil
 
         {tags.length > 0 ? (
           <M3Card variant="filled" style={styles.section}>
-            <Text style={[M3Typography.titleMedium, { color: m3Colors.onSurface }]}>Culture signals</Text>
+            <Text style={[M3Typography.titleMedium, { color: m3Colors.onSurface }]} numberOfLines={1}>Culture signals</Text>
             <View style={styles.tags}>
               {tags.map((tag) => (
                 <M3FilterChip key={tag} label={tag} selected onPress={() => {}} />
@@ -106,14 +106,15 @@ function Stat({ label, value }: { label: string; value: number }) {
   const m3Colors = useM3Colors();
   return (
     <M3Card variant="filled" style={styles.statCard}>
-      <Text style={[M3Typography.titleMedium, { color: m3Colors.onSurface }]}>{value.toLocaleString()}</Text>
-      <Text style={[M3Typography.labelSmall, styles.statLabel, { color: m3Colors.onSurfaceVariant }]}>{label}</Text>
+      <Text style={[M3Typography.titleMedium, { color: m3Colors.onSurface }]} numberOfLines={1}>{value.toLocaleString()}</Text>
+      <Text style={[M3Typography.labelSmall, styles.statLabel, { color: m3Colors.onSurfaceVariant }]} numberOfLines={1}>{label}</Text>
     </M3Card>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
+  heroLogo: { width: 40, height: 40, borderRadius: 20, marginLeft: Spacing.sm },
   content: {
     padding: 16,
     gap: 16,

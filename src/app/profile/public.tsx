@@ -338,13 +338,13 @@ export default function PublicProfileScreen() {
               <View style={styles.cpidTop}>
                 <View style={styles.cpidLogoRow}>
                   <View style={[styles.cpidLogoIcon, { backgroundColor: 'rgba(212,175,55,0.18)' }]}>
-                    <Text style={{ fontFamily: 'Poppins_700Bold', color: '#D4AF37', fontSize: 13 }}>CP</Text>
+                    <Text style={{ fontFamily: 'Poppins_700Bold', color: '#00ADEF', fontSize: 13 }}>CP</Text>
                   </View>
                   <Text style={styles.cpidLogoText}>CulturePass</Text>
                 </View>
                 {user.isVerified && (
                   <View style={styles.cpidVerifiedIcon}>
-                    <Ionicons name="shield-checkmark" size={16} color="#D4AF37" />
+                    <Ionicons name="shield-checkmark" size={16} color="#00ADEF" />
                   </View>
                 )}
               </View>
@@ -357,7 +357,7 @@ export default function PublicProfileScreen() {
               <View style={styles.cpidMetaSolid}>
                 <View style={styles.cpidMetaItem}>
                   <Text style={styles.cpidMetaLabelSolid}>Tier</Text>
-                  <Text style={[styles.cpidMetaValueSolid, { color: '#D4AF37' }]}>{tierConf.label}</Text>
+                  <Text style={[styles.cpidMetaValueSolid, { color: '#00ADEF' }]}>{tierConf.label}</Text>
                 </View>
                 <View style={styles.cpidMetaItem}>
                   <Text style={styles.cpidMetaLabelSolid}>Member since</Text>

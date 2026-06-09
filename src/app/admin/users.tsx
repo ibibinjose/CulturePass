@@ -27,7 +27,7 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { HeaderTokens, CultureTokens, FontFamily, Spacing, Radius } from '@/design-system/tokens/theme';
 import { GlassView } from '@/design-system/ui/GlassView';
-import { M3Button } from '@/design-system/ui';
+import { M3Button, TruncatedText } from '@/design-system/ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { adminKeys, searchKeys } from '@/hooks/queries/keys';
 import { api } from '@/lib/api';
@@ -410,19 +410,19 @@ export default function UserDirectoryScreen() {
 
     return (
       <ScrollView showsVerticalScrollIndicator={false}>
-        <GlassView contentStyle={styles.detailCard} style={isDesktop ? { marginHorizontal: 8, marginBottom: 20 } : { marginVertical: 8, marginBottom: 20 }}>
+        <GlassView contentStyle={styles.detailCard} style={isDesktop ? styles.detailCardDesktop : styles.detailCardMobile}>
           <View style={styles.detailHeader}>
             <View style={[styles.largeAvatar, { backgroundColor: colors.primarySoft }]}>
               {u.avatarUrl ? (
-                <Image source={{ uri: u.avatarUrl }} style={{ width: 80, height: 80, borderRadius: 40 }} />
+                <Image source={{ uri: u.avatarUrl }} style={styles.avatarDetailImage} />
               ) : (
                 <Text style={[styles.largeAvatarText, { color: colors.primary }]}>
                   {(u.displayName || u.username || '?').charAt(0).toUpperCase()}
                 </Text>
               )}
             </View>
-            <View style={{ flex: 1, gap: Spacing.xs }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
+            <View style={styles.detailMetaCol}>
+              <View style={styles.detailMetaRow}>
                 <Text style={[styles.detailName, { color: colors.text }]} numberOfLines={1}>{u.displayName || '—'}</Text>
                 {u.isVerified && <Ionicons name="checkmark-circle" size={20} color={CultureTokens.emerald} />}
               </View>
@@ -439,7 +439,7 @@ export default function UserDirectoryScreen() {
                 <Text style={[styles.statusLabel, { color: colors.textTertiary }]}>
                   {(acctStatus === 'suspended' ? 'SUSPENDED' : 'ACTIVE').toUpperCase()}
                 </Text>
-                <View style={[styles.verticalDivider, { height: 10, backgroundColor: colors.borderLight }]} />
+                <View style={[styles.verticalDivider, styles.verticalDividerShort, { backgroundColor: colors.borderLight }]} />
                 <Text style={[styles.statusLabel, { color: colors.textTertiary }]}>
                   {u.role?.toUpperCase() || 'USER'}
                 </Text>
@@ -466,7 +466,7 @@ export default function UserDirectoryScreen() {
         </View>
 
         {/* Rich Metadata (E) */}
-        <View style={{ gap: Spacing.md }}>
+        <View style={styles.gapMd}>
           <Text style={[styles.groupTitle, { color: colors.textTertiary }]}>PROFILE METADATA</Text>
           <View style={[styles.infoSection, { backgroundColor: colors.backgroundSecondary }]}>
             <InfoRow label="Handle Status" value={u.handleStatus || 'pending'} color={u.handleStatus === 'approved' ? CultureTokens.emerald : CultureTokens.coral} colors={colors} />
@@ -480,31 +480,31 @@ export default function UserDirectoryScreen() {
         </View>
 
         {/* Membership & Activity Sections (E) */}
-        <View style={{ flexDirection: 'row', gap: 16 }}>
-          <View style={{ flex: 1, gap: 8 }}>
+        <View style={styles.rowGap16}>
+          <View style={styles.flex1Gap8}>
             <Text style={[styles.groupTitle, { color: colors.textTertiary }]}>MEMBERSHIP HISTORY</Text>
             <View style={[styles.timelineBox, { borderColor: colors.borderLight }]}>
               <View style={styles.timelineItem}>
                 <View style={[styles.timelineDot, { backgroundColor: isPlus ? CultureTokens.emerald : colors.border }]} />
                 <View>
-                  <Text style={{ fontSize: 12, fontFamily: FontFamily.bold, color: colors.text }}>
+                  <Text style={[styles.timelineTitle, { color: colors.text }]}>
                     {u.membership?.tier?.toUpperCase() || 'FREE'} Tier
                   </Text>
-                  <Text style={{ fontSize: 10, color: colors.textTertiary }}>
+                  <Text style={[styles.timelineCaption, { color: colors.textTertiary }]}>
                     {u.membership?.validUntil ? `Expires ${new Date(u.membership.validUntil).toLocaleDateString()}` : 'No expiry'}
                   </Text>
                 </View>
               </View>
             </View>
           </View>
-          <View style={{ flex: 1, gap: 8 }}>
+          <View style={styles.flex1Gap8}>
             <Text style={[styles.groupTitle, { color: colors.textTertiary }]}>LATEST ACTIVITY</Text>
             <View style={[styles.timelineBox, { borderColor: colors.borderLight }]}>
               <View style={styles.timelineItem}>
                 <View style={[styles.timelineDot, { backgroundColor: colors.primary }]} />
                 <View>
-                  <Text style={{ fontSize: 12, fontFamily: FontFamily.bold, color: colors.text }}>Joined CulturePass</Text>
-                  <Text style={{ fontSize: 10, color: colors.textTertiary }}>
+                  <Text style={[styles.timelineTitle, { color: colors.text }]}>Joined CulturePass</Text>
+                  <Text style={[styles.timelineCaption, { color: colors.textTertiary }]}>
                     {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '—'}
                   </Text>
                 </View>
@@ -513,17 +513,17 @@ export default function UserDirectoryScreen() {
           </View>
         </View>
 
-        <View style={{ gap: 16 }}>
+        <View style={styles.gap16}>
           <Text style={[styles.groupTitle, { color: colors.textTertiary }]}>ADMIN CONTROLS</Text>
 
           {/* Audit Note for Super Admins (E) */}
           {isSuperAdmin && (
-            <View style={{ gap: 6 }}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Text style={{ fontSize: 11, color: colors.textTertiary, fontFamily: FontFamily.medium }}>Audit Note (Optional):</Text>
+            <View style={styles.auditSection}>
+              <View style={styles.auditLabelRow}>
+                <Text style={[styles.auditLabel, { color: colors.textTertiary }]}>Audit Note (Optional):</Text>
                 {auditNote.length > 0 && (
                   <Pressable onPress={() => setAuditNote('')}>
-                    <Text style={{ fontSize: 10, color: colors.error }}>Clear</Text>
+                    <Text style={[styles.auditClear, { color: colors.error }]}>Clear</Text>
                   </Pressable>
                 )}
               </View>
@@ -545,7 +545,7 @@ export default function UserDirectoryScreen() {
                 <M3Button
                   key={r}
                   variant={u.role === r ? "filled" : "tonal"}
-                  style={{ flex: 1 }}
+                  style={styles.flex1}
                   disabled={patchUser.isPending}
                   onPress={() => confirmPatch(`Set role to ${r}`, u.id, { role: r })}
                 >
@@ -558,7 +558,7 @@ export default function UserDirectoryScreen() {
                 <M3Button
                   key={r}
                   variant={u.role === r ? "filled" : "tonal"}
-                  style={{ flex: 1 }}
+                  style={styles.flex1}
                   disabled={patchUser.isPending}
                   onPress={() => confirmPatch(`Set role to ${r}`, u.id, { role: r })}
                 >
@@ -569,7 +569,7 @@ export default function UserDirectoryScreen() {
             <View style={styles.permissionsGrid}>
               <M3Button
                 variant={u.role === 'platformAdmin' ? "filled" : "tonal"}
-                style={{ flex: 1 }}
+                style={styles.flex1}
                 disabled={patchUser.isPending || !canAssignPlatformAdmin}
                 onPress={() => confirmPatch('Grant platform admin', u.id, { role: 'platformAdmin' })}
               >
@@ -577,7 +577,7 @@ export default function UserDirectoryScreen() {
               </M3Button>
               <M3Button
                 variant={u.isVerified ? "filled" : "outlined"}
-                style={{ flex: 1 }}
+                style={styles.flex1}
                 disabled={patchUser.isPending}
                 onPress={() => confirmPatch(u.isVerified ? 'Remove verification' : 'Verify user', u.id, { isVerified: !u.isVerified })}
               >
@@ -592,7 +592,7 @@ export default function UserDirectoryScreen() {
             <View style={styles.permissionsGrid}>
               <M3Button
                 variant={u.handleStatus === 'approved' ? "filled" : "tonal"}
-                style={{ flex: 1 }}
+                style={styles.flex1}
                 disabled={patchUser.isPending || u.handleStatus === 'approved'}
                 onPress={() => confirmPatch('Approve handle', u.id, { handleStatus: 'approved' })}
               >
@@ -600,7 +600,7 @@ export default function UserDirectoryScreen() {
               </M3Button>
               <M3Button
                 variant="outlined"
-                style={{ flex: 1 }}
+                style={styles.flex1}
                 disabled={patchUser.isPending || u.handleStatus === 'rejected'}
                 onPress={() => confirmPatch('Reject handle', u.id, { handleStatus: 'rejected' })}
               >
@@ -619,10 +619,10 @@ export default function UserDirectoryScreen() {
           {/* 3. Membership Management */}
           <View style={styles.controlSection}>
             <Text style={styles.controlSectionTitle}>MEMBERSHIP</Text>
-            <View style={{ flexDirection: 'row', gap: 12 }}>
+            <View style={styles.rowGap12}>
               <M3Button
                 variant="filled"
-                style={{ flex: 1 }}
+                style={styles.flex1}
                 disabled={grantPlus.isPending}
                 onPress={() =>
                   Alert.alert('Grant Plus', 'Select duration:', [
@@ -637,7 +637,7 @@ export default function UserDirectoryScreen() {
               </M3Button>
               <M3Button
                 variant="outlined"
-                style={{ flex: 1 }}
+                style={styles.flex1}
                 disabled={patchUser.isPending || !u.membership}
                 onPress={() => confirmPatch('Remove membership', u.id, { membership: null as any })}
               >
@@ -649,10 +649,10 @@ export default function UserDirectoryScreen() {
           {/* 4. Account Lifecycle */}
           <View style={styles.controlSection}>
             <Text style={styles.controlSectionTitle}>ACCOUNT LIFECYCLE</Text>
-            <View style={{ flexDirection: 'row', gap: 12 }}>
+            <View style={styles.rowGap12}>
               <M3Button
                 variant="outlined"
-                style={{ flex: 1 }}
+                style={styles.flex1}
                 labelStyle={{ color: acctStatus === 'suspended' ? CultureTokens.emerald : colors.error }}
                 disabled={patchUser.isPending}
                 onPress={() =>
@@ -665,7 +665,7 @@ export default function UserDirectoryScreen() {
               </M3Button>
               <M3Button
                 variant="outlined"
-                style={{ flex: 1 }}
+                style={styles.flex1}
                 labelStyle={{ color: colors.error }}
                 disabled={deleteUserMutation.isPending}
                 onPress={() => handleDeleteUser(u)}
@@ -678,7 +678,7 @@ export default function UserDirectoryScreen() {
           <View style={styles.dangerZone}>
             <M3Button
               variant="tonal"
-              style={{ flex: 1 }}
+              style={styles.flex1}
               onPress={() => {
                 const userJson = JSON.stringify(u, null, 2);
                 Alert.alert('User JSON Data', userJson.substring(0, 500) + '...');
@@ -689,7 +689,7 @@ export default function UserDirectoryScreen() {
             </M3Button>
             <M3Button
               variant="tonal"
-              style={{ flex: 1 }}
+              style={styles.flex1}
               onPress={() => handleCopyLink(u)}
             >
               Copy Link
@@ -697,9 +697,9 @@ export default function UserDirectoryScreen() {
           </View>
         </View>
 
-        <Text style={{ fontSize: 11, color: colors.textTertiary, fontFamily: FontFamily.medium }}>
-          Console ID: {u.id} • Managed by {myRole}
-        </Text>
+        <TruncatedText style={[styles.consoleIdText, { color: colors.textTertiary }]} lines={2}>
+          {`Console ID: ${u.id} • Managed by ${myRole}`}
+        </TruncatedText>
       </GlassView>
     </ScrollView>
   );
@@ -709,10 +709,10 @@ export default function UserDirectoryScreen() {
     <View style={styles.container}>
       {/* Premium Header - matching new Mission Control style */}
       <View style={[styles.header, { paddingHorizontal: hPad, borderBottomColor: colors.borderLight }]}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+        <View style={styles.headerTitleRow}>
           <View>
             <Text style={[styles.title, { color: colors.text }]}>User Directory</Text>
-            <Text style={{ color: colors.textTertiary, fontSize: 12, marginTop: 2 }}>
+            <Text style={[styles.headerSubtitle, { color: colors.textTertiary }]}>
               Manage roles, membership & status
             </Text>
           </View>
@@ -729,13 +729,13 @@ export default function UserDirectoryScreen() {
             accessibilityLabel="User directory search"
           />
           {search.length > 0 && (
-            <Pressable onPress={() => setSearch('')} style={{ padding: 4 }}>
+            <Pressable onPress={() => setSearch('')} style={styles.clearSearchBtn}>
               <Ionicons name="close-circle" size={18} color={colors.textTertiary} />
             </Pressable>
           )}
         </View>
 
-        <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
+        <View style={styles.headerActionsRow}>
           <Pressable
             onPress={() => refetchDir()}
             style={[styles.refreshButton, { borderColor: colors.borderLight }]}
@@ -750,7 +750,7 @@ export default function UserDirectoryScreen() {
 
       {/* Stats Ribbon (E) */}
       {isDesktop && stats && (
-        <View style={{ flexDirection: 'row', gap: 16, paddingHorizontal: contentPad, paddingTop: 16, alignItems: 'center' }}>
+        <View style={[styles.statsRibbon, { paddingHorizontal: contentPad }]}>
           <StatCard
             label="Total Users"
             value={stats.users}
@@ -788,9 +788,9 @@ export default function UserDirectoryScreen() {
             style={[styles.analyticsLink, { backgroundColor: colors.primarySoft, borderColor: colors.borderLight }]}
           >
             <Ionicons name="analytics" size={16} color={colors.primary} />
-            <Text style={{ color: colors.primary, fontSize: 12, fontFamily: FontFamily.medium }}>
+            <TruncatedText style={[styles.analyticsLinkText, { color: colors.primary }]} lines={1}>
               Host Applications & Funnels
-            </Text>
+            </TruncatedText>
           </Pressable>
         </View>
       )}
@@ -799,17 +799,14 @@ export default function UserDirectoryScreen() {
       {selectedIds.size > 0 && (
         <View style={[
           styles.bulkActionBar,
+          styles.bulkActionBarLayout,
           {
             backgroundColor: colors.primarySoft,
             borderBottomColor: colors.borderLight,
             paddingHorizontal: contentPad,
-            flexDirection: 'row',
-            flexWrap: 'wrap',
-            gap: 8,
-            alignItems: 'center'
           }
         ]}>
-          <Text style={{ fontFamily: FontFamily.medium, color: colors.text }}>
+          <Text style={[styles.bulkSelectedText, { color: colors.text }]}>
             {selectedIds.size} selected:
           </Text>
           <M3Button variant="tonal" size="sm" disabled={bulkActionLoading} onPress={() => confirmBulkAction('role', 'organizer')}>
@@ -827,8 +824,8 @@ export default function UserDirectoryScreen() {
           <M3Button variant="filled" size="sm" disabled={bulkActionLoading} onPress={() => confirmBulkAction('grant', 30)}>
             Bulk +30d Plus
           </M3Button>
-          <Pressable onPress={clearSelection} style={{ marginLeft: 12 }}>
-            <Text style={{ color: colors.error, fontFamily: FontFamily.medium }}>Cancel</Text>
+          <Pressable onPress={clearSelection} style={styles.bulkCancelBtn}>
+            <Text style={[styles.bulkCancelText, { color: colors.error }]}>Cancel</Text>
           </Pressable>
         </View>
       )}
@@ -836,9 +833,9 @@ export default function UserDirectoryScreen() {
       {/* Bulk Confirmation Modal */}
       <Modal visible={showBulkConfirm} transparent animationType="fade">
         <View style={styles.modalOverlay}>
-          <GlassView style={{ width: '100%', maxWidth: 400 }} contentStyle={styles.confirmModal}>
+          <GlassView style={styles.confirmModalShell} contentStyle={styles.confirmModal}>
             <Text style={[styles.modalTitle, { color: colors.text }]}>Confirm Bulk Action</Text>
-            <Text style={{ color: colors.textSecondary, marginBottom: 16 }}>
+            <Text style={[styles.confirmModalBody, { color: colors.textSecondary }]}>
               Apply &quot;{pendingBulkAction?.type}&quot; to {selectedIds.size} users? This cannot be undone easily.
             </Text>
 
@@ -851,9 +848,9 @@ export default function UserDirectoryScreen() {
               />
             )}
 
-            <View style={{ flexDirection: 'row', gap: 12 }}>
-              <M3Button variant="outlined" style={{ flex: 1 }} onPress={() => setShowBulkConfirm(false)}>Cancel</M3Button>
-              <M3Button variant="filled" style={{ flex: 1 }} onPress={executeBulkAction} disabled={bulkActionLoading}>
+            <View style={styles.rowGap12}>
+              <M3Button variant="outlined" style={styles.flex1} onPress={() => setShowBulkConfirm(false)}>Cancel</M3Button>
+              <M3Button variant="filled" style={styles.flex1} onPress={executeBulkAction} disabled={bulkActionLoading}>
                 {bulkActionLoading ? 'Processing...' : 'Confirm'}
               </M3Button>
             </View>
@@ -863,8 +860,8 @@ export default function UserDirectoryScreen() {
 
       {/* Filter chips - fully wired (A) */}
       <View style={[styles.filterSortHeader, { paddingHorizontal: contentPad }]}>
-        <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap', alignItems: 'center', flex: 1 }}>
-          <Text style={{ color: colors.textTertiary, fontSize: 12, marginRight: 4 }}>Filter:</Text>
+        <View style={styles.filterRow}>
+          <Text style={[styles.filterLabel, { color: colors.textTertiary }]}>Filter:</Text>
 
           {/* Role filters */}
           {['user', 'organizer', 'business', 'moderator', 'admin'].map((role) => {
@@ -885,7 +882,7 @@ export default function UserDirectoryScreen() {
             );
           })}
 
-          <View style={[styles.verticalDivider, { height: 20, backgroundColor: colors.borderLight }]} />
+          <View style={[styles.verticalDivider, styles.verticalDividerTall, { backgroundColor: colors.borderLight }]} />
 
           {/* Status & Membership quick filters */}
           {['active', 'suspended'].map((s) => {
@@ -922,14 +919,14 @@ export default function UserDirectoryScreen() {
 
           {(activeFilters.roles.length > 0 || activeFilters.statuses.length > 0 || activeFilters.memberships.length > 0) && (
             <Pressable onPress={() => setActiveFilters({ roles: [], statuses: [], memberships: [] })}>
-              <Text style={{ color: colors.error, fontSize: 12, marginLeft: 8 }}>Clear all</Text>
+              <Text style={[styles.clearAllText, { color: colors.error }]}>Clear all</Text>
             </Pressable>
           )}
         </View>
 
         {/* Sort Controls - Task 2 */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginLeft: 12 }}>
-          <Text style={{ color: colors.textTertiary, fontSize: 12 }}>Sort by:</Text>
+        <View style={styles.sortControlsRow}>
+          <Text style={[styles.sortLabel, { color: colors.textTertiary }]}>Sort by:</Text>
           {[
             { label: 'Joined', value: 'joined' },
             { label: 'Activity', value: 'activity' },
@@ -952,11 +949,10 @@ export default function UserDirectoryScreen() {
                   isActive && { backgroundColor: colors.primary, borderColor: colors.primary }
                 ]}
               >
-                <Text style={{
-                  fontSize: 12,
-                  color: isActive ? colors.textInverse : colors.text,
-                  fontFamily: FontFamily.medium
-                }}>
+                <Text style={[
+                  styles.sortChipText,
+                  { color: isActive ? colors.textInverse : colors.text },
+                ]}>
                   {option.label}
                   {isActive && (sortDir === 'desc' ? ' ↓' : ' ↑')}
                 </Text>
@@ -970,40 +966,40 @@ export default function UserDirectoryScreen() {
       {users.length > 0 && (
         <View style={[styles.selectAllRow, { paddingHorizontal: contentPad }]}>
           <Pressable onPress={selectedIds.size > 0 ? clearSelection : selectAllVisible}>
-            <Text style={{ color: colors.primary, fontSize: 13, fontFamily: FontFamily.medium }}>
+            <Text style={[styles.selectAllLink, { color: colors.primary }]}>
               {selectedIds.size > 0 ? `Deselect All (${selectedIds.size})` : 'Select All Visible'}
             </Text>
           </Pressable>
-          <Text style={{ color: colors.textTertiary, fontSize: 12 }}>
+          <Text style={[styles.paginationMeta, { color: colors.textTertiary }]}>
             Showing {users.length} of {totalCount} (page {page + 1} of {totalPages || 1})
           </Text>
           {/* Basic pagination controls (admin roadmap) */}
-          <View style={{ flexDirection: 'row', gap: 8, marginLeft: 12 }}>
+          <View style={styles.paginationRow}>
             <Pressable onPress={() => setPage(p => Math.max(0, p-1))} disabled={page===0}>
-              <Text style={{ color: page===0 ? colors.textTertiary : colors.primary }}>Prev</Text>
+              <Text style={[styles.paginationLink, { color: page === 0 ? colors.textTertiary : colors.primary }]}>Prev</Text>
             </Pressable>
             <Pressable onPress={() => setPage(p => p+1)} disabled={page + 1 >= totalPages}>
-              <Text style={{ color: page + 1 >= totalPages ? colors.textTertiary : colors.primary }}>Next</Text>
+              <Text style={[styles.paginationLink, { color: page + 1 >= totalPages ? colors.textTertiary : colors.primary }]}>Next</Text>
             </Pressable>
           </View>
         </View>
       )}
 
       <View style={[styles.body, { paddingHorizontal: contentPad }]}>
-        <View style={[styles.listCol, isDesktop && { maxWidth: 650 }]}>
+        <View style={[styles.listCol, isDesktop && styles.listColDesktop]}>
           {isDesktop && (
             <View style={[styles.tableHeader, { borderBottomColor: colors.borderLight }]}>
-              <View style={{ width: 32 }} />
-              <View style={{ flex: 3 }}><Text style={styles.tableHeaderText}>USER</Text></View>
-              <View style={{ flex: 1.5 }}><Text style={styles.tableHeaderText}>ROLE</Text></View>
-              <View style={{ flex: 1.5 }}><Text style={styles.tableHeaderText}>STATUS</Text></View>
-              <View style={{ flex: 1 }}><Text style={styles.tableHeaderText}>JOINED</Text></View>
+              <View style={styles.colCheckbox} />
+              <View style={styles.colUser}><Text style={styles.tableHeaderText}>USER</Text></View>
+              <View style={styles.colRole}><Text style={styles.tableHeaderText}>ROLE</Text></View>
+              <View style={styles.colStatus}><Text style={styles.tableHeaderText}>STATUS</Text></View>
+              <View style={styles.colJoined}><Text style={styles.tableHeaderText}>JOINED</Text></View>
             </View>
           )}
           <FlatList
             data={users}
             keyExtractor={(item) => item.id}
-            contentContainerStyle={{ gap: isDesktop ? 4 : 12, paddingVertical: isDesktop ? 8 : 20 }}
+            contentContainerStyle={isDesktop ? styles.listContentDesktop : styles.listContentMobile}
             ListEmptyComponent={
               <View style={[styles.empty, isDesktop && styles.emptyDesktop]}>
                 {isLoading ? (
@@ -1011,7 +1007,7 @@ export default function UserDirectoryScreen() {
                 ) : (
                   <>
                     <Ionicons name="people-outline" size={48} color={colors.textTertiary} />
-                    <Text style={{ color: colors.textTertiary, marginTop: 12, fontFamily: FontFamily.medium }}>
+                    <Text style={[styles.emptyListText, { color: colors.textTertiary }]}>
                       No users match your filters
                     </Text>
                   </>
@@ -1033,44 +1029,44 @@ export default function UserDirectoryScreen() {
                       { borderBottomColor: colors.borderLight }
                     ]}
                   >
-                    <Pressable onPress={() => toggleSelect(item.id)} style={{ width: 32, alignItems: 'center' }}>
+                    <Pressable onPress={() => toggleSelect(item.id)} style={styles.colCheckboxPressable}>
                       <Ionicons
                         name={isSelected ? "checkbox" : "square-outline"}
                         size={18}
                         color={isSelected ? colors.primary : colors.textTertiary}
                       />
                     </Pressable>
-                    <View style={{ flex: 3, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                    <View style={styles.colUserCell}>
                       <View style={[styles.avatarSmall, { backgroundColor: colors.backgroundSecondary }]}>
                         {item.avatarUrl ? (
-                          <Image source={{ uri: item.avatarUrl }} style={{ width: 32, height: 32, borderRadius: 16 }} />
+                          <Image source={{ uri: item.avatarUrl }} style={styles.avatarListImage} />
                         ) : (
                           <Text style={[styles.avatarTextSmall, { color: colors.textSecondary }]}>
                             {(item.displayName || item.username || 'U').charAt(0).toUpperCase()}
                           </Text>
                         )}
                       </View>
-                      <View style={{ flex: 1 }}>
+                      <View style={styles.colUserMeta}>
                         <Text style={[styles.userName, { color: colors.text }]} numberOfLines={1} ellipsizeMode="tail">{item.displayName || item.username}</Text>
                         <Text style={[styles.userHandle, { color: colors.textTertiary }]} numberOfLines={1} ellipsizeMode="tail">
                           @{item.username}
                         </Text>
                       </View>
                     </View>
-                    <View style={{ flex: 1.5 }}>
+                    <View style={styles.colRole}>
                       <View style={styles.roleBadge}>
                         <Text style={styles.roleText}>{(item.role ?? 'user').toUpperCase()}</Text>
                       </View>
                     </View>
-                    <View style={{ flex: 1.5 }}>
+                    <View style={styles.colStatus}>
                       <View style={[styles.miniBadge, { backgroundColor: status === 'suspended' ? colors.error + '20' : colors.success + '20' }]}>
-                        <Text style={{ fontSize: 9, fontFamily: FontFamily.bold, color: status === 'suspended' ? colors.error : colors.success }}>
+                        <Text style={[styles.statusBadgeText, { color: status === 'suspended' ? colors.error : colors.success }]}>
                           {status.toUpperCase()}
                         </Text>
                       </View>
                     </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ fontSize: 12, color: colors.textTertiary }}>
+                    <View style={styles.colJoined}>
+                      <Text style={[styles.joinedDateText, { color: colors.textTertiary }]}>
                         {item.createdAt ? new Date(item.createdAt).toLocaleDateString(undefined, { month: 'short', year: '2-digit' }) : '—'}
                       </Text>
                     </View>
@@ -1089,7 +1085,7 @@ export default function UserDirectoryScreen() {
                     ]}
                     contentStyle={styles.userItem}
                   >
-                    <Pressable onPress={() => toggleSelect(item.id)} style={{ paddingRight: 8 }}>
+                    <Pressable onPress={() => toggleSelect(item.id)} style={styles.mobileSelectBtn}>
                       <Ionicons
                         name={isSelected ? "checkbox" : "square-outline"}
                         size={22}
@@ -1098,14 +1094,14 @@ export default function UserDirectoryScreen() {
                     </Pressable>
                     <View style={[styles.avatar, { backgroundColor: colors.backgroundSecondary }]}>
                       {item.avatarUrl ? (
-                        <Image source={{ uri: item.avatarUrl }} style={{ width: 40, height: 40, borderRadius: 20 }} />
+                        <Image source={{ uri: item.avatarUrl }} style={styles.mobileAvatarImage} />
                       ) : (
                         <Text style={[styles.avatarText, { color: colors.textSecondary }]}>
                           {(item.displayName || item.username || 'U').charAt(0).toUpperCase()}
                         </Text>
                       )}
                     </View>
-                    <View style={{ flex: 1, gap: 3 }}>
+                    <View style={styles.mobileUserMeta}>
                       <Text style={[styles.userName, { color: colors.text }]}>
                         {item.displayName || item.username || 'User'}
                       </Text>
@@ -1135,9 +1131,9 @@ export default function UserDirectoryScreen() {
               <Ionicons name="close" size={28} color={colors.text} />
             </Pressable>
             <Text style={[styles.modalTitle, { color: colors.text }]}>User detail</Text>
-            <View style={{ width: 28 }} />
+            <View style={styles.modalSpacer} />
           </View>
-          <View style={{ flex: 1, padding: 16, backgroundColor: colors.background }}>
+          <View style={[styles.modalBody, { backgroundColor: colors.background }]}>
             {selectedUser ? renderDetail(selectedUser) : null}
           </View>
         </Modal>
@@ -1148,11 +1144,11 @@ export default function UserDirectoryScreen() {
 
 function StatCard({ label, value, icon, color, colors }: { label: string; value: string | number; icon: any; color: string; colors: any }) {
   return (
-    <GlassView style={{ flex: 1, minWidth: 160 }} contentStyle={styles.statCard}>
+    <GlassView style={styles.statCardShell} contentStyle={styles.statCard}>
       <View style={[styles.statIcon, { backgroundColor: color + '20' }]}>
         <Ionicons name={icon as any} size={20} color={color} />
       </View>
-      <View style={{ flex: 1 }}>
+      <View style={styles.statCardMeta}>
         <Text style={[styles.statCardLabel, { color: colors.textTertiary }]} numberOfLines={1}>{label}</Text>
         <Text style={[styles.statCardValue, { color: colors.text }]} numberOfLines={1}>{value}</Text>
       </View>
@@ -1175,7 +1171,7 @@ function EmptyDetail({ colors }: { colors: ReturnType<typeof useColors> }) {
   return (
     <View style={[styles.emptyDetail, styles.emptyDetailDesktop]}>
       <Ionicons name={"person-circle-outline" as any} size={64} color={colors.textTertiary} />
-      <Text style={{ color: colors.textTertiary, marginTop: 16, fontFamily: FontFamily.medium }}>
+      <Text style={[styles.emptyDetailText, { color: colors.textTertiary }]}>
         Select a user to view controls
       </Text>
     </View>
@@ -1447,4 +1443,119 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignSelf: 'center',
   },
+  analyticsLinkText: {
+    fontSize: 12,
+    fontFamily: FontFamily.medium,
+  },
+  headerTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+  },
+  headerSubtitle: {
+    fontSize: 12,
+    marginTop: 2,
+    fontFamily: FontFamily.regular,
+  },
+  headerActionsRow: {
+    flexDirection: 'row',
+    gap: 12,
+    alignItems: 'center',
+  },
+  clearSearchBtn: {
+    padding: Spacing.xs,
+  },
+  statsRibbon: {
+    flexDirection: 'row',
+    gap: Spacing.md,
+    paddingTop: Spacing.md,
+    alignItems: 'center',
+  },
+  sortControlsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginLeft: 12,
+  },
+  sortLabel: {
+    fontSize: 12,
+    fontFamily: FontFamily.regular,
+  },
+  detailMetaCol: {
+    flex: 1,
+    gap: Spacing.xs,
+  },
+  detailMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  avatarDetailImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+  },
+  avatarListImage: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+  },
+  consoleIdText: {
+    fontSize: 11,
+    fontFamily: FontFamily.medium,
+  },
+
+  // --- FIXES-001 P3: Remaining inline style extraction (detail, bulk, filter, table, pagination) ---
+  flex1: { flex: 1 },
+  gapMd: { gap: Spacing.md },
+  gap16: { gap: Spacing.lg },
+  rowGap16: { flexDirection: 'row', gap: Spacing.lg },
+  flex1Gap8: { flex: 1, gap: Spacing.sm },
+  timelineTitle: { fontSize: 12, fontFamily: FontFamily.bold },
+  timelineCaption: { fontSize: 10 },
+  auditSection: { gap: 6 },
+  auditLabelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  auditLabel: { fontSize: 11, fontFamily: FontFamily.medium },
+  auditClear: { fontSize: 10 },
+  rowGap12: { flexDirection: 'row', gap: Spacing.md },
+  bulkActionBarLayout: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm, alignItems: 'center' },
+  bulkSelectedText: { fontFamily: FontFamily.medium },
+  bulkCancelBtn: { marginLeft: 12 },
+  bulkCancelText: { fontFamily: FontFamily.medium },
+  confirmModalShell: { width: '100%', maxWidth: 400 },
+  confirmModalBody: { marginBottom: 16 },
+  filterRow: { flexDirection: 'row', gap: Spacing.sm, flexWrap: 'wrap', alignItems: 'center', flex: 1 },
+  filterLabel: { fontSize: 12, marginRight: 4 },
+  clearAllText: { fontSize: 12, marginLeft: 8 },
+  sortChipText: { fontSize: 12, fontFamily: FontFamily.medium },
+  selectAllLink: { fontSize: 13, fontFamily: FontFamily.medium },
+  paginationMeta: { fontSize: 12 },
+  paginationRow: { flexDirection: 'row', gap: Spacing.sm, marginLeft: 12 },
+  paginationLink: { fontSize: 12, fontFamily: FontFamily.medium },
+  colCheckbox: { width: 32 },
+  colUser: { flex: 3 },
+  colRole: { flex: 1.5 },
+  colStatus: { flex: 1.5 },
+  colJoined: { flex: 1 },
+  colUserCell: { flex: 3, flexDirection: 'row', alignItems: 'center', gap: 10 },
+  colUserMeta: { flex: 1 },
+  colCheckboxPressable: { width: 32, alignItems: 'center' },
+  statusBadgeText: { fontSize: 9, fontFamily: FontFamily.bold },
+  joinedDateText: { fontSize: 12 },
+  emptyListText: { marginTop: 12, fontFamily: FontFamily.medium },
+  mobileSelectBtn: { paddingRight: 8 },
+  mobileAvatarImage: { width: 40, height: 40, borderRadius: 20 },
+  mobileUserMeta: { flex: 1, gap: 3 },
+  modalSpacer: { width: 28 },
+  modalBody: { flex: 1, padding: 16 },
+  statCardShell: { flex: 1, minWidth: 160 },
+  statCardMeta: { flex: 1 },
+  emptyDetailText: { marginTop: 16, fontFamily: FontFamily.medium },
+  detailCardDesktop: { marginHorizontal: 8, marginBottom: 20 },
+  detailCardMobile: { marginVertical: 8, marginBottom: 20 },
+  listColDesktop: { maxWidth: 650 },
+  listContentDesktop: { gap: 4, paddingVertical: 8 },
+  listContentMobile: { gap: 12, paddingVertical: 20 },
+  verticalDividerShort: { height: 10 },
+  verticalDividerTall: { height: 20 },
 });

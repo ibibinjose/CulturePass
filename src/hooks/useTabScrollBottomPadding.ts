@@ -4,21 +4,21 @@
  */
 
 import { Platform } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import { useLayout } from '@/hooks/useLayout';
 
 /**
  * @param extra — additional spacing below the tab bar clearance (section tail, FAB, etc.)
  */
 export function useTabScrollBottomPadding(extra = 16): number {
-  const insets = useSafeAreaInsets();
+  const insets = useSafeAreaInsetsWeb();
   const { isDesktop, tabBarHeight } = useLayout();
 
   // Desktop web: no tab bar; site footer is in the sidebar, not under the main column
   if (Platform.OS === 'web' && isDesktop) {
-    return extra + 12;
+    return extra + Math.max(insets.bottom, 12);
   }
 
-  const bottomSafe = Platform.OS === 'web' ? 12 : insets.bottom;
+  const bottomSafe = insets.bottom;
   return tabBarHeight + bottomSafe + extra;
 }

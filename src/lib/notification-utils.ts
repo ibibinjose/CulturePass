@@ -41,7 +41,7 @@ const ENTITY_ROUTES: Record<NotificationEntityType, (id: string) => string> = {
   community: (id) => `/(domain)/community/${encodeURIComponent(id)}`,
   profile: (id) => `/user/${encodeURIComponent(id)}`,
   tickets: (id) => `/tickets/${encodeURIComponent(id)}`,
-  perks: (id) => `/(tabs)/perks`,
+  perks: (id) => (id ? `/perks/${id}` : '/perks'),
 };
 
 /** Tab root to navigate to when the referenced entity no longer exists. */
@@ -50,7 +50,7 @@ const FALLBACK_TAB: Record<NotificationEntityType, string> = {
   community: '/(tabs)/community',
   profile: '/(tabs)/my-space',
   tickets: '/(tabs)/my-space',
-  perks: '/(tabs)/my-space',
+  perks: '/perks',
 };
 
 const DELETED_MESSAGE = 'This content is no longer available.';

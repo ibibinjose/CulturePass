@@ -20,6 +20,7 @@ import {
   generateAppleEventTicketPass,
   getApplePassTypeIdentifier,
   getWalletPassReadiness,
+  mergeWalletPassUserFromToken,
   resolveUserIdFromApplePassSerial,
   verifyAppleDownloadToken,
   verifyApplePassAuthorizationHeader,
@@ -29,6 +30,26 @@ import {
 import { captureRouteError, qparam } from './utils';
 
 export const walletRouter = Router();
+
+function parseFirestoreDate(value: unknown): string | undefined {
+  if (!value) return undefined;
+  if (typeof value === 'string') return value;
+  if (value instanceof Date) return value.toISOString();
+  if (typeof value === 'object' && value !== null) {
+    const maybeTimestamp = value as { toDate?: () => Date; _seconds?: number };
+    if (typeof maybeTimestamp.toDate === 'function') {
+      try {
+        return maybeTimestamp.toDate().toISOString();
+      } catch {
+        return undefined;
+      }
+    }
+    if (typeof maybeTimestamp._seconds === 'number') {
+      return new Date(maybeTimestamp._seconds * 1000).toISOString();
+    }
+  }
+  return undefined;
+}
 
 async function loadWalletPassUserFromDoc(
   userId: string,
@@ -48,10 +69,23 @@ async function loadWalletPassUserFromDoc(
   }
   const snap = await db.collection('users').doc(userId).get();
   const data = snap.data() ?? {};
-  const tier = (data.membership as { tier?: string } | undefined)?.tier
+  let tier = (data.membership as { tier?: string } | undefined)?.tier
     ?? (data.tier as string | undefined)
     ?? fallback?.tier
     ?? 'free';
+  try {
+    const membershipSnap = await db.collection('users').doc(userId).collection('membership').doc('current').get();
+    if (membershipSnap.exists) {
+      const membershipData = membershipSnap.data() as { tier?: string } | undefined;
+      if (membershipData?.tier) tier = membershipData.tier;
+    }
+  } catch {
+    // optional membership subcollection
+  }
+  const affiliation = data.affiliation as { name?: string } | undefined;
+  const createdAt = parseFirestoreDate(data.createdAt)
+    ?? parseFirestoreDate(data.created_at)
+    ?? fallback?.createdAt;
   return {
     id: userId,
     username: (data.username as string | undefined) ?? fallback?.username ?? userId,
@@ -66,6 +100,9 @@ async function loadWalletPassUserFromDoc(
     country: (data.country as string | undefined) ?? fallback?.country,
     culturePassId: (data.culturePassId as string | undefined) ?? fallback?.culturePassId,
     tier,
+    avatarUrl: (data.avatarUrl as string | undefined) ?? fallback?.avatarUrl,
+    createdAt,
+    affiliationName: affiliation?.name ?? fallback?.affiliationName,
   };
 }
 
@@ -76,6 +113,7 @@ async function loadWalletPassUser(req: Request): Promise<WalletPassUser> {
     email: u.email,
     city: u.city,
     country: u.country,
+    tier: u.tier,
   });
 }
 
@@ -113,11 +151,16 @@ walletRouter.get('/wallet/business-card/apple/pass', async (req: Request, res: R
     if (!token) return res.status(400).send('Missing token');
 
     const payload = verifyAppleDownloadToken(token);
-    const user = await loadWalletPassUserFromDoc(payload.sub, { username: payload.username });
+    const userDoc = await loadWalletPassUserFromDoc(payload.sub, { username: payload.username });
+    const user = mergeWalletPassUserFromToken(userDoc, payload);
 
     const buffer = await generateAppleBusinessCardPass(user);
+    const cpid = String(user.culturePassId ?? user.id).replace(/[^a-zA-Z0-9_-]/g, '');
+    const filename = `CulturePass-ID-${cpid || 'member'}.pkpass`;
     res.setHeader('Content-Type', 'application/vnd.apple.pkpass');
-    res.setHeader('Content-Disposition', 'attachment; filename="CulturePass.pkpass"');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
     return res.send(buffer);
   } catch (err) {
     captureRouteError(err, 'GET /wallet/business-card/apple/pass');

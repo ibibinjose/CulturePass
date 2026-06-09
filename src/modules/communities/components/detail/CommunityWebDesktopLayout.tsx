@@ -24,6 +24,7 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { CultureTokens, FontFamily, Radius } from '@/design-system/tokens/theme';
+import { COMMUNITY_WEB_DESKTOP as CWD } from '@/design-system/tokens/communityWebDesktopOverlay';
 import EventCard from '@/components/Discover/EventCard';
 import { getCommunityProfilePathId } from '@/lib/community';
 import type { Community, EventData } from '@/shared/schema';
@@ -115,11 +116,6 @@ function eventHostLine(e: EventData) {
 
 /** Compact right column — suggested hubs + stats */
 const RIGHT_W = 248;
-/** Deep ink for text on light “card” surfaces — aligned with brand navy, not one-off teal */
-const INK_ON_LIGHT = '#0B1530';
-/** Primary CTA rail — CulturePass coral (replaces ad-hoc terracotta) */
-const HUB_CTA = CultureTokens.coral;
-
 export type CommunityDesktopJumpKey =
   | 'feed'
   | 'composer'
@@ -384,9 +380,9 @@ export function CommunityWebDesktopLayout({
   );
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={styles.pageRoot}>
       <LinearGradient
-        colors={isDark ? ['#030711', '#0c1a32', CultureTokens.indigo + '33'] : ['#FFFBF7', '#F5F5F4']}
+        colors={isDark ? [CWD.pageGradientDarkStart, CWD.pageGradientDarkMid, CultureTokens.indigo + '33'] : [CWD.pageGradientLightStart, CWD.pageGradientLightEnd]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFill}
@@ -407,7 +403,7 @@ export function CommunityWebDesktopLayout({
       >
         <View style={styles.chromeRow}>
           <View style={styles.chromeTitleCol} accessibilityRole="header">
-            <Text style={[styles.chromePageTitle, { color: isDark ? 'rgba(255,255,255,0.96)' : colors.text }]}>
+            <Text style={[styles.chromePageTitle, { color: isDark ? 'rgba(255,255,255,0.96)' : colors.text }]} numberOfLines={1}>
               Community
             </Text>
             <Text style={[styles.chromePageHint, { color: isDark ? 'rgba(255,255,255,0.5)' : colors.textTertiary }]} numberOfLines={1}>
@@ -461,7 +457,7 @@ export function CommunityWebDesktopLayout({
                         <Ionicons
                           name={item.icon}
                           size={14}
-                          color={active ? '#fff' : isDark ? 'rgba(255,255,255,0.82)' : colors.textSecondary}
+                          color={active ? CWD.onHero : isDark ? 'rgba(255,255,255,0.82)' : colors.textSecondary}
                         />
                         <Text
                           style={[
@@ -505,8 +501,8 @@ export function CommunityWebDesktopLayout({
                             pressed && styles.subnavPressed,
                           ]}
                         >
-                          <Ionicons name={item.icon} size={14} color="#fff" />
-                          <Text style={styles.subnavCtaLabel}>{item.label}</Text>
+                          <Ionicons name={item.icon} size={14} color={CWD.onHero} />
+                          <Text style={styles.subnavCtaLabel} numberOfLines={1}>{item.label}</Text>
                         </View>
                       )}
                     </Pressable>
@@ -595,13 +591,13 @@ export function CommunityWebDesktopLayout({
           ref={scrollRef}
           style={styles.centerCol}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 48 }}
+          contentContainerStyle={styles.centerScrollContent}
           refreshControl={
             onRefresh ? (
               <RefreshControl
                 refreshing={!!refreshing}
                 onRefresh={onRefresh}
-                tintColor={isDark ? '#fff' : colors.primary}
+                tintColor={isDark ? CWD.onHero : colors.primary}
               />
             ) : undefined
           }
@@ -609,7 +605,7 @@ export function CommunityWebDesktopLayout({
           <View style={styles.heroCard} onLayout={onLay('feed')}>
             <View style={styles.patternOverlay} pointerEvents="none" />
             <LinearGradient
-              colors={['rgba(0,51,102,0.88)', 'rgba(46,196,182,0.28)', 'rgba(124,58,237,0.2)']}
+              colors={[...CWD.heroScrim]}
               style={StyleSheet.absoluteFill}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
@@ -618,7 +614,7 @@ export function CommunityWebDesktopLayout({
               <View style={styles.heroMetaRow}>
                 <GlassView intensity={12} style={styles.heroMetaPill}>
                   <Ionicons name="sparkles-outline" size={14} color="rgba(255,255,255,0.92)" />
-                  <Text style={styles.heroMetaText}>Community hub</Text>
+                  <Text style={styles.heroMetaText} numberOfLines={1}>Community hub</Text>
                 </GlassView>
                 <GlassView intensity={12} style={styles.heroMetaPill}>
                   <Ionicons name="location-outline" size={14} color="rgba(255,255,255,0.92)" />
@@ -627,15 +623,15 @@ export function CommunityWebDesktopLayout({
                   </Text>
                 </GlassView>
               </View>
-              <Text style={styles.heroTitle}>Community</Text>
-              <Text style={styles.heroSub}>
+              <Text style={styles.heroTitle} numberOfLines={1}>Community</Text>
+              <Text style={styles.heroSub} numberOfLines={3}>
                 Connect with culture lovers • Share your stories • Discover new traditions together
               </Text>
               <View style={styles.heroStatsRow}>
                 {heroStats.map((stat) => (
                   <GlassView key={stat.label} intensity={10} style={styles.heroStatPill}>
-                    <Text style={styles.heroStatValue}>{stat.value.toLocaleString()}</Text>
-                    <Text style={styles.heroStatLabel}>{stat.label}</Text>
+                    <Text style={styles.heroStatValue} numberOfLines={1}>{stat.value.toLocaleString()}</Text>
+                    <Text style={styles.heroStatLabel} numberOfLines={1}>{stat.label}</Text>
                   </GlassView>
                 ))}
               </View>
@@ -648,12 +644,12 @@ export function CommunityWebDesktopLayout({
                       pressed && styles.heroCtaPressed,
                     ]}
                   >
-                    <Text style={styles.heroCtaText}>Join the conversation</Text>
-                    <Ionicons name="arrow-forward" size={18} color="#fff" />
+                    <Text style={styles.heroCtaText} numberOfLines={1}>Join the conversation</Text>
+                    <Ionicons name="arrow-forward" size={18} color={CWD.onHero} />
                   </View>
                 )}
               </Pressable>
-              <Text style={styles.heroCityLine}>
+              <Text style={styles.heroCityLine} numberOfLines={2}>
                 Celebrating heritage in {cityName}, {cityCountry}
               </Text>
             </View>
@@ -670,13 +666,13 @@ export function CommunityWebDesktopLayout({
           >
             <View style={styles.composerHeader}>
               <View style={[styles.composerAvatar, !isDark && { backgroundColor: colors.primarySoft }]}>
-                <Ionicons name="sparkles" size={16} color={isDark ? '#fff' : CultureTokens.indigo} />
+                <Ionicons name="sparkles" size={16} color={isDark ? CWD.onHero : CultureTokens.indigo} />
               </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.composerLabel, !isDark && { color: INK_ON_LIGHT }]}>
+              <View style={styles.composerTextCol}>
+                <Text style={[styles.composerLabel, !isDark && { color: CWD.inkOnLight }]} numberOfLines={1}>
                   Share your cultural moment…
                 </Text>
-                <Text style={[styles.composerSub, !isDark && { color: colors.textSecondary }]}>
+                <Text style={[styles.composerSub, !isDark && { color: colors.textSecondary }]} numberOfLines={2}>
                   Post a story, event, or memory to inspire your community.
                 </Text>
               </View>
@@ -699,8 +695,8 @@ export function CommunityWebDesktopLayout({
                         pressed && styles.subnavPressed,
                       ]}
                     >
-                      <Ionicons name={item.icon as keyof typeof Ionicons.glyphMap} size={16} color={isDark ? '#fff' : INK_ON_LIGHT} />
-                      <Text style={[styles.composerChipText, isDark && { color: '#fff' }]}>{item.label}</Text>
+                      <Ionicons name={item.icon as keyof typeof Ionicons.glyphMap} size={16} color={isDark ? CWD.onHero : CWD.inkOnLight} />
+                      <Text style={[styles.composerChipText, isDark && { color: CWD.onHero }]} numberOfLines={1}>{item.label}</Text>
                     </View>
                   )}
                 </Pressable>
@@ -709,14 +705,14 @@ export function CommunityWebDesktopLayout({
           </GlassView>
 
           <View style={styles.sectionBlock} onLayout={onLay('trending')}>
-            <Text style={sectionTitleOnPage}>Trending events</Text>
+            <Text style={sectionTitleOnPage} numberOfLines={1}>Trending events</Text>
             {trendingLoading && trendingEvents.length === 0 ? (
               <View style={styles.trendLoading}>
-                <ActivityIndicator color={isDark ? '#fff' : colors.primary} />
-                <Text style={[bodyMutedOnPage, { marginTop: 10 }]}>Loading trending…</Text>
+                <ActivityIndicator color={isDark ? CWD.onHero : colors.primary} />
+                <Text style={[bodyMutedOnPage, styles.trendLoadingText]} numberOfLines={1}>Loading trending…</Text>
               </View>
             ) : trendingEvents.length === 0 ? (
-              <Text style={bodyMutedOnPage}>
+              <Text style={bodyMutedOnPage} numberOfLines={4}>
                 No trending events from the API yet — open search or the calendar to discover what&apos;s on in {cityName}.
               </Text>
             ) : (
@@ -745,7 +741,7 @@ export function CommunityWebDesktopLayout({
                         <View style={styles.trendMeta}>
                           <View style={styles.trendAuthor}>
                             <View style={styles.trendAvatar}>
-                              <Text style={styles.trendAvatarText}>{host.charAt(0).toUpperCase()}</Text>
+                              <Text style={styles.trendAvatarText} numberOfLines={1}>{host.charAt(0).toUpperCase()}</Text>
                             </View>
                             <Text style={styles.trendAuthorName} numberOfLines={1}>
                               {host}
@@ -767,7 +763,7 @@ export function CommunityWebDesktopLayout({
           </View>
 
           <View style={styles.sectionBlock} onLayout={onLay('categories')}>
-            <Text style={sectionTitleOnPage}>Explore communities</Text>
+            <Text style={sectionTitleOnPage} numberOfLines={1}>Explore communities</Text>
             <View style={styles.catGrid}>
               {categoryChips.map((c) => (
                 <Pressable
@@ -789,7 +785,7 @@ export function CommunityWebDesktopLayout({
                       <LinearGradient colors={[CultureTokens.indigo, CultureTokens.teal]} style={styles.catIcon}>
                         <Ionicons name={c.icon} size={22} color={CultureTokens.gold} />
                       </LinearGradient>
-                      <Text style={[styles.catLabel, isDark && { color: colors.text }]}>{c.label}</Text>
+                      <Text style={[styles.catLabel, isDark && { color: colors.text }]} numberOfLines={2}>{c.label}</Text>
                     </GlassView>
                   )}
                 </Pressable>
@@ -798,10 +794,10 @@ export function CommunityWebDesktopLayout({
           </View>
 
           <View style={styles.sectionBlock} onLayout={onLay('members')}>
-            <Text style={sectionTitleOnPage}>Active community members</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 14 }}>
+            <Text style={sectionTitleOnPage} numberOfLines={1}>Active community members</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.hScrollGap14}>
               {memberShowcase.length === 0 ? (
-                <Text style={bodyMutedOnPage}>Join communities to see hosts and members here.</Text>
+                <Text style={bodyMutedOnPage} numberOfLines={2}>Join communities to see hosts and members here.</Text>
               ) : (
                 memberShowcase.map((c) => (
                   <GlassView
@@ -817,7 +813,7 @@ export function CommunityWebDesktopLayout({
                       <Image source={{ uri: c.imageUrl }} style={styles.memberAvatarImg} contentFit="cover" />
                     ) : (
                       <View style={[styles.memberAvatarImg, styles.memberAvatarPh]}>
-                        <Text style={styles.memberAvatarLetter}>{c.name.charAt(0)}</Text>
+                        <Text style={styles.memberAvatarLetter} numberOfLines={1}>{c.name.charAt(0)}</Text>
                       </View>
                     )}
                     <Text style={[styles.memberName, isDark && { color: colors.text }]} numberOfLines={1}>
@@ -832,7 +828,7 @@ export function CommunityWebDesktopLayout({
                       }
                       style={styles.memberFollow}
                     >
-                      <Text style={styles.memberFollowText}>View hub</Text>
+                      <Text style={styles.memberFollowText} numberOfLines={1}>View hub</Text>
                     </Pressable>
                   </GlassView>
                 ))
@@ -841,13 +837,13 @@ export function CommunityWebDesktopLayout({
           </View>
 
           <View style={styles.sectionBlock} onLayout={onLay('upcoming')}>
-            <Text style={sectionTitleOnPage}>Upcoming community events</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 14 }}>
+            <Text style={sectionTitleOnPage} numberOfLines={1}>Upcoming community events</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.hScrollGap14}>
               {displayEvents.length === 0 ? (
-                <Text style={bodyMutedOnPage}>No events listed for {cityName} yet — check the calendar.</Text>
+                <Text style={bodyMutedOnPage} numberOfLines={2}>No events listed for {cityName} yet — check the calendar.</Text>
               ) : (
                 displayEvents.map((event, i) => (
-                  <View key={event.id} style={{ width: 260 }}>
+                  <View key={event.id} style={styles.eventCardWrap}>
                     <EventCard
                       event={event}
                       index={i}
@@ -862,7 +858,7 @@ export function CommunityWebDesktopLayout({
           </View>
 
           {anchoredSections?.map(({ anchor, children: block }) => (
-            <View key={anchor} onLayout={onLay(anchor)} style={{ marginBottom: 24 }}>
+            <View key={anchor} onLayout={onLay(anchor)} style={styles.anchoredSection}>
               {block}
             </View>
           ))}
@@ -880,9 +876,9 @@ export function CommunityWebDesktopLayout({
             }
             style={styles.glassPanel}
           >
-            <Text style={railSideHeading}>Suggested hubs</Text>
+            <Text style={railSideHeading} numberOfLines={1}>Suggested hubs</Text>
             {suggestedHubs.length === 0 ? (
-              <Text style={captionMutedOnPage}>Explore search to find hubs near you.</Text>
+              <Text style={captionMutedOnPage} numberOfLines={2}>Explore search to find hubs near you.</Text>
             ) : (
               suggestedHubs.map((c) => (
                 <Pressable
@@ -896,10 +892,10 @@ export function CommunityWebDesktopLayout({
                     <Image source={{ uri: c.imageUrl }} style={styles.suggestThumb} contentFit="cover" />
                   ) : (
                     <View style={[styles.suggestThumb, styles.suggestThumbPh]}>
-                      <Text style={railThumbLetter}>{c.name.charAt(0)}</Text>
+                      <Text style={railThumbLetter} numberOfLines={1}>{c.name.charAt(0)}</Text>
                     </View>
                   )}
-                  <View style={{ flex: 1 }}>
+                  <View style={styles.suggestTextCol}>
                     <Text style={railSuggestName} numberOfLines={1}>
                       {c.name}
                     </Text>
@@ -912,18 +908,18 @@ export function CommunityWebDesktopLayout({
             )}
 
             <View style={railStatsBox}>
-              <Text style={styles.statsTitle}>Community pulse</Text>
-              <Text style={railStatsBody}>{statsLine}</Text>
+              <Text style={styles.statsTitle} numberOfLines={1}>Community pulse</Text>
+              <Text style={railStatsBody} numberOfLines={3}>{statsLine}</Text>
             </View>
 
-            <Text style={[railSideHeading, { marginTop: 16 }]}>Topics near {cityName}</Text>
+            <Text style={[railSideHeading, styles.sideHeadingSpaced]} numberOfLines={1}>Topics near {cityName}</Text>
             {cultureTopicTags.length === 0 ? (
-              <Text style={captionMutedOnPage}>Topics appear from hub cultures and local event tags.</Text>
+              <Text style={captionMutedOnPage} numberOfLines={2}>Topics appear from hub cultures and local event tags.</Text>
             ) : (
               <View style={styles.tagWrap}>
                 {cultureTopicTags.map((tag) => (
                   <Pressable key={tag} onPress={() => openSearch(`${tag} ${cityName}`)} style={railTagPill}>
-                    <Text style={railTagText}>{tag}</Text>
+                    <Text style={railTagText} numberOfLines={1}>{tag}</Text>
                   </Pressable>
                 ))}
               </View>
@@ -937,6 +933,15 @@ export function CommunityWebDesktopLayout({
 }
 
 const styles = StyleSheet.create({
+  pageRoot: { flex: 1 },
+  centerScrollContent: { paddingBottom: 48 },
+  composerTextCol: { flex: 1 },
+  hScrollGap14: { gap: 14 },
+  eventCardWrap: { width: 260 },
+  anchoredSection: { marginBottom: 24 },
+  suggestTextCol: { flex: 1 },
+  sideHeadingSpaced: { marginTop: 16 },
+  trendLoadingText: { marginTop: 10 },
   pageGradient: {
     flex: 1,
     minHeight: '100%' as unknown as number,
@@ -1048,7 +1053,7 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.9)',
   },
   subnavTabLabelActive: {
-    color: '#fff',
+    color: CWD.onHero,
   },
   subnavPressed: { opacity: 0.88 },
   subnavCta: {
@@ -1058,13 +1063,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 7,
     borderRadius: Radius.sm,
-    backgroundColor: HUB_CTA,
+    backgroundColor: CultureTokens.coral,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.22)',
   },
-  subnavCtaLabel: { fontFamily: FontFamily.bold, fontSize: 11, color: '#fff', letterSpacing: 0.2 },
+  subnavCtaLabel: { fontFamily: FontFamily.bold, fontSize: 11, color: CWD.onHero, letterSpacing: 0.2 },
   subnavCtaHover: {
-    backgroundColor: '#ff7a77',
+    backgroundColor: CWD.ctaHover,
     borderColor: 'rgba(255,255,255,0.35)',
   },
   subnavCity: {
@@ -1192,7 +1197,7 @@ const styles = StyleSheet.create({
   heroTitle: {
     fontSize: 40,
     fontFamily: FontFamily.bold,
-    color: '#fff',
+    color: CWD.onHero,
     letterSpacing: -0.5,
   },
   heroSub: {
@@ -1223,7 +1228,7 @@ const styles = StyleSheet.create({
   heroStatValue: {
     fontFamily: FontFamily.bold,
     fontSize: 15,
-    color: '#fff',
+    color: CWD.onHero,
   },
   heroStatLabel: {
     marginTop: 2,
@@ -1239,25 +1244,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: HUB_CTA,
+    backgroundColor: CultureTokens.coral,
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 999,
   },
   heroCtaHover: {
-    backgroundColor: '#ff7a77',
+    backgroundColor: CWD.ctaHover,
   },
   heroCtaPressed: {
     opacity: 0.9,
   },
-  heroCtaText: { fontFamily: FontFamily.bold, fontSize: 15, color: '#fff' },
+  heroCtaText: { fontFamily: FontFamily.bold, fontSize: 15, color: CWD.onHero },
   heroCityLine: { marginTop: 14, fontSize: 13, color: 'rgba(255,255,255,0.75)', fontFamily: FontFamily.medium },
   creamCard: {
     borderRadius: 20,
     padding: 18,
     marginBottom: 20,
     borderWidth: 1,
-    shadowColor: '#000',
+    shadowColor: CWD.shadow,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.12,
     shadowRadius: 24,
@@ -1293,21 +1298,21 @@ const styles = StyleSheet.create({
   composerChipHover: {
     backgroundColor: 'rgba(255,255,255,0.18)',
   },
-  composerChipText: { fontFamily: FontFamily.semibold, fontSize: 13, color: INK_ON_LIGHT },
+  composerChipText: { fontFamily: FontFamily.semibold, fontSize: 13, color: CWD.inkOnLight },
   sectionBlock: { marginBottom: 24 },
   sectionTitleLight:
     Platform.OS === 'web'
       ? ({
           fontFamily: FontFamily.bold,
           fontSize: 20,
-          color: '#fff',
+          color: CWD.onHero,
           marginBottom: 14,
           textShadow: '0 1px 4px rgba(0,0,0,0.25)',
         } as TextStyle)
       : ({
           fontFamily: FontFamily.bold,
           fontSize: 20,
-          color: '#fff',
+          color: CWD.onHero,
           marginBottom: 14,
           textShadowColor: 'rgba(0,0,0,0.25)',
           textShadowOffset: { width: 0, height: 1 },
@@ -1328,18 +1333,18 @@ const styles = StyleSheet.create({
   trendThumb: { ...StyleSheet.absoluteFill },
   trendGrad: { ...StyleSheet.absoluteFill },
   trendBody: { position: 'absolute', left: 0, right: 0, bottom: 0, padding: 14 },
-  trendTitle: { color: '#fff', fontFamily: FontFamily.bold, fontSize: 15, lineHeight: 20 },
+  trendTitle: { color: CWD.onHero, fontFamily: FontFamily.bold, fontSize: 15, lineHeight: 20 },
   trendMeta: { marginTop: 8 },
   trendAuthor: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   trendAvatar: {
     width: 26,
     height: 26,
     borderRadius: 13,
-    backgroundColor: HUB_CTA,
+    backgroundColor: CultureTokens.coral,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  trendAvatarText: { color: '#fff', fontSize: 11, fontFamily: FontFamily.bold },
+  trendAvatarText: { color: CWD.onHero, fontSize: 11, fontFamily: FontFamily.bold },
   trendAuthorName: { color: 'rgba(255,255,255,0.9)', fontSize: 12, fontFamily: FontFamily.semibold },
   trendCounts: { color: 'rgba(255,255,255,0.75)', fontSize: 11, marginTop: 4, fontFamily: FontFamily.regular },
   catGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
@@ -1364,18 +1369,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 8,
   },
-  catLabel: { fontFamily: FontFamily.semibold, fontSize: 12, color: INK_ON_LIGHT, textAlign: 'center' },
+  catLabel: { fontFamily: FontFamily.semibold, fontSize: 12, color: CWD.inkOnLight, textAlign: 'center' },
   memberCard: {
     width: 168,
     borderRadius: 16,
     padding: 12,
     borderWidth: 1,
   },
-  memberAvatarImg: { width: '100%', height: 100, borderRadius: 12, backgroundColor: '#e8e8e8' },
+  memberAvatarImg: { width: '100%', height: 100, borderRadius: 12, backgroundColor: CWD.memberAvatarPlaceholder },
   memberAvatarPh: { alignItems: 'center', justifyContent: 'center', backgroundColor: CultureTokens.indigo },
-  memberAvatarLetter: { color: '#fff', fontSize: 32, fontFamily: FontFamily.bold },
-  memberName: { marginTop: 10, fontFamily: FontFamily.bold, fontSize: 14, color: INK_ON_LIGHT },
-  memberBio: { marginTop: 4, fontSize: 12, color: INK_ON_LIGHT, opacity: 0.72, fontFamily: FontFamily.regular, minHeight: 32 },
+  memberAvatarLetter: { color: CWD.onHero, fontSize: 32, fontFamily: FontFamily.bold },
+  memberName: { marginTop: 10, fontFamily: FontFamily.bold, fontSize: 14, color: CWD.inkOnLight },
+  memberBio: { marginTop: 4, fontSize: 12, color: CWD.inkOnLight, opacity: 0.72, fontFamily: FontFamily.regular, minHeight: 32 },
   memberFollow: {
     marginTop: 10,
     paddingVertical: 8,
@@ -1383,14 +1388,14 @@ const styles = StyleSheet.create({
     backgroundColor: CultureTokens.indigo,
     alignItems: 'center',
   },
-  memberFollowText: { color: '#fff', fontFamily: FontFamily.bold, fontSize: 12 },
+  memberFollowText: { color: CWD.onHero, fontFamily: FontFamily.bold, fontSize: 12 },
   mutedLight: { color: 'rgba(255,255,255,0.75)', fontFamily: FontFamily.regular, fontSize: 14 },
   mutedLightSmall: { color: 'rgba(255,255,255,0.65)', fontSize: 12, fontFamily: FontFamily.regular },
   suggestRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
   suggestThumb: { width: 36, height: 36, borderRadius: 8 },
   suggestThumbPh: { backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' },
-  suggestThumbTxt: { color: '#fff', fontFamily: FontFamily.bold, fontSize: 13 },
-  suggestName: { color: '#fff', fontFamily: FontFamily.semibold, fontSize: 13 },
+  suggestThumbTxt: { color: CWD.onHero, fontFamily: FontFamily.bold, fontSize: 13 },
+  suggestName: { color: CWD.onHero, fontFamily: FontFamily.semibold, fontSize: 13 },
   suggestMeta: { color: 'rgba(255,255,255,0.6)', fontSize: 11, marginTop: 1 },
   statsBox: {
     marginTop: 12,
@@ -1411,5 +1416,5 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.18)',
   },
-  tagText: { color: '#fff', fontSize: 10, fontFamily: FontFamily.semibold },
+  tagText: { color: CWD.onHero, fontSize: 10, fontFamily: FontFamily.semibold },
 });

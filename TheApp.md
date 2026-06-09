@@ -207,6 +207,7 @@ Use `TextStyles.eventCardTitle` / `TextStyles.eventCardDate` with `useColors().e
 - Use `console.log` in production code — guard with `if (__DEV__)`
 
 ### Always
+- Truncate long copy in cards, tables, and list rows — use `TruncatedText` or `numberOfLines` (see `docs/FIXES-001-layout-deformities.md`)
 - Call the backend through `api.*` from `src/lib/api.ts` — the only HTTP entry point
 - Import images via `expo-image` for caching and glass-aware skeletons
 - Wrap async-data screens with `<ErrorBoundary>`

@@ -7,6 +7,7 @@ import { FontFamily, MaterialExpressive } from '@/design-system/tokens/theme';
 import { GlassView } from '@/design-system/ui/GlassView';
 import { ProfileAvatar } from '@/modules/profile/components/tabs/ProfileComponents';
 import { fmt } from '@/modules/profile/components/tabs/ProfileUtils';
+import { profileSectionLayout } from './profileSectionLayout';
 
 interface ProfileHeroSectionProps {
   displayUser: any;
@@ -33,7 +34,10 @@ export const ProfileHeroSection = React.memo(({
   const { hPad } = useLayout();
 
   return (
-    <GlassView style={{ marginHorizontal: hPad, marginTop: 12 }} contentStyle={styles.heroContent}>
+    <GlassView
+      style={[profileSectionLayout.heroGlassOuter, { marginHorizontal: hPad }]}
+      contentStyle={styles.heroContent}
+    >
       <ProfileAvatar user={displayUser} displayName={displayName} size={88} />
 
       <Text style={[styles.heroName, { color: m3.onSurface }]} numberOfLines={2}>
@@ -43,10 +47,10 @@ export const ProfileHeroSection = React.memo(({
       {(handle || locationText) ? (
         <View style={styles.heroMeta}>
           {handle ? (
-            <Text style={[styles.heroHandle, { color: m3.onSurfaceVariant }]}>@{handle}</Text>
+            <Text style={[styles.heroHandle, { color: m3.onSurfaceVariant }]} numberOfLines={1}>@{handle}</Text>
           ) : null}
           {handle && locationText ? (
-            <Text style={[styles.heroDot, { color: m3.onSurfaceVariant }]}>·</Text>
+            <Text style={[styles.heroDot, { color: m3.onSurfaceVariant }]} numberOfLines={1}>·</Text>
           ) : null}
           {locationText ? (
             <View style={styles.heroLocRow}>
@@ -68,13 +72,13 @@ export const ProfileHeroSection = React.memo(({
         >
           {matchedCultures.slice(0, 4).map((c: any) => (
             <View key={c.id} style={[styles.culturePill, { backgroundColor: m3.secondaryContainer, borderColor: m3.outlineVariant }]}>
-              <Text style={styles.culturePillEmoji}>{c.emoji}</Text>
-              <Text style={[styles.culturePillText, { color: m3.onSecondaryContainer }]}>{c.name}</Text>
+              <Text style={styles.culturePillEmoji} numberOfLines={1}>{c.emoji}</Text>
+              <Text style={[styles.culturePillText, { color: m3.onSecondaryContainer }]} numberOfLines={1}>{c.name}</Text>
             </View>
           ))}
           {matchedCultures.length > 4 ? (
             <View style={[styles.culturePill, { backgroundColor: m3.surfaceContainerHigh, borderColor: m3.outlineVariant }]}>
-              <Text style={[styles.culturePillText, { color: m3.onSurfaceVariant }]}>+{matchedCultures.length - 4}</Text>
+              <Text style={[styles.culturePillText, { color: m3.onSurfaceVariant }]} numberOfLines={1}>+{matchedCultures.length - 4}</Text>
             </View>
           ) : null}
         </Pressable>
@@ -93,8 +97,8 @@ export const ProfileHeroSection = React.memo(({
               accessibilityRole="button"
               accessibilityLabel={`${fmt(stat.value)} ${stat.label}`}
             >
-              <Text style={[styles.statNum, { color: m3.onSurface }]}>{fmt(stat.value)}</Text>
-              <Text style={[styles.statLabel, { color: m3.onSurfaceVariant }]}>{stat.label}</Text>
+              <Text style={[styles.statNum, { color: m3.onSurface }]} numberOfLines={1}>{fmt(stat.value)}</Text>
+              <Text style={[styles.statLabel, { color: m3.onSurfaceVariant }]} numberOfLines={1}>{stat.label}</Text>
             </Pressable>
             {i < arr.length - 1 ? (
               <View style={[styles.statDivider, { backgroundColor: m3.outlineVariant }]} />

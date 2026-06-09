@@ -208,7 +208,7 @@ jest.mock('@/design-system/tokens/theme', () => ({
     indigo: '#4F46E5',
     violet: '#9333EA',
     coral: '#FF5E5B',
-    gold: '#FFC857',
+    gold: '#00ADEF',
     teal: '#0D9488',
   },
   Elevation: { 2: {} },
@@ -222,7 +222,7 @@ jest.mock('@/design-system/tokens/colors', () => ({
     indigo: '#4F46E5',
     violet: '#9333EA',
     coral: '#FF5E5B',
-    gold: '#FFC857',
+    gold: '#00ADEF',
     teal: '#0D9488',
   },
 }));

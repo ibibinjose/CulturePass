@@ -31,6 +31,7 @@ export { AppearanceModeToggle } from './AppearanceModeToggle';
 export { NameTaglineLockup } from './NameTaglineLockup';
 export { CulturePassWordmark } from './CulturePassWordmark';
 export { PageContainer } from './PageContainer';
+export { TruncatedText } from './TruncatedText';
 export { GlassView } from './GlassView';
 export { GlassView as GlassViewNative } from './GlassView.native';
 export { M3FAB } from './M3FAB';

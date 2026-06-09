@@ -7,7 +7,7 @@
  * Rules encoded:
  *  - No 1px solid borders for sectioning (use tonal surfaces).
  *  - Ghost outlines only when needed: outline_variant @ 15% opacity.
- *  - CTAs: plum gradient; gold (Electric Ochre) reserved for high-priority moments.
+ *  - CTAs: plum gradient; brand cyan reserved for high-priority moments.
  */
 
 export const Vitrine = {
@@ -16,9 +16,9 @@ export const Vitrine = {
   primaryContainer: '#4B0082',
   onPrimary: '#FEF7FD',
 
-  /** Electric Ochre — use sparingly */
-  secondaryContainer: '#FCD400',
-  onSecondaryContainer: '#6E5C00',
+  /** Brand cyan — use sparingly */
+  secondaryContainer: '#00ADEF',
+  onSecondaryContainer: '#003D52',
 
   /** Patina Teal — cool counterpoint */
   tertiary: '#002121',

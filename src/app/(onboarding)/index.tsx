@@ -30,9 +30,11 @@ import {
   luxeDark,
 } from '@/design-system/tokens/theme';
 import { LuxeButton, LuxeText } from '@/design-system/ui';
-import { SocialButton } from '@/design-system/ui/SocialButton';
+import { AuthSocialSection } from '@/components/onboarding/AuthSocialSection';
 import { useOnboarding } from '@/contexts/OnboardingContext';
 import { useM3Colors } from '@/hooks/useM3Colors';
+import { useLogin } from '@/hooks/useLogin';
+import { sanitizeInternalRedirect } from '@/lib/routes';
 import { THEME_COLOR_WEB } from '@/lib/app-meta';
 import { withAlpha } from '@/lib/withAlpha';
 
@@ -79,7 +81,7 @@ const SLIDES: Slide[] = [
 const DOT_SIZE = 8;
 const DOT_ACTIVE_WIDTH = 24;
 // Fixed sheet inner height — keeps FlatList height stable across all slides
-const ACTION_AREA_HEIGHT = 224;
+const ACTION_AREA_HEIGHT = 340;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -101,6 +103,14 @@ export default function WelcomeScreen() {
   const topInset = safeInsets.top;
   const { completeOnboarding } = useOnboarding();
   const pathname = usePathname();
+  const redirectTo = sanitizeInternalRedirect(pathname);
+
+  const {
+    handleGoogleSignIn,
+    handleAppleSignIn,
+    loading: socialLoading,
+    globalError: socialError,
+  } = useLogin(redirectTo);
 
   const [showSplash, setShowSplash] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -243,11 +253,18 @@ export default function WelcomeScreen() {
                   fullWidth
                   rightIcon="arrow-forward"
                   onPress={handleGetStarted}
+                  disabled={socialLoading}
                 >
                   Get Started
                 </LuxeButton>
 
-                <LuxeButton variant="glass" size="md" fullWidth onPress={handleSignIn}>
+                <LuxeButton
+                  variant="glass"
+                  size="md"
+                  fullWidth
+                  onPress={handleSignIn}
+                  disabled={socialLoading}
+                >
                   Sign In
                 </LuxeButton>
 
@@ -257,15 +274,29 @@ export default function WelcomeScreen() {
                     variant="caption"
                     style={{ marginHorizontal: 12, color: luxeDark.textSecondary }}
                   >
-                    or
+                    or continue with
                   </LuxeText>
                   <View style={[s.divLine, { backgroundColor: luxeDark.border }]} />
                 </View>
 
-                <View style={s.socialRow}>
-                  <SocialButton provider="google" onPress={() => {}} />
-                  <SocialButton provider="apple" onPress={() => {}} />
-                </View>
+                {socialError ? (
+                  <LuxeText variant="caption" style={{ color: m3Colors.error, textAlign: 'center' }}>
+                    {socialError}
+                  </LuxeText>
+                ) : null}
+
+                <AuthSocialSection
+                  onGooglePress={() => {
+                    tap(Haptics.ImpactFeedbackStyle.Medium);
+                    handleGoogleSignIn();
+                  }}
+                  onApplePress={() => {
+                    tap(Haptics.ImpactFeedbackStyle.Medium);
+                    handleAppleSignIn();
+                  }}
+                  loading={socialLoading}
+                  mode="login"
+                />
               </Animated.View>
             ) : (
               <View style={s.nextWrap}>
@@ -385,9 +416,6 @@ const s = StyleSheet.create({
   },
   divLine: { flex: 1, height: 1 },
   divLabel: { marginHorizontal: 12 },
-
-  // Social
-  socialRow: { flexDirection: 'row', gap: 12, justifyContent: 'center' },
 
   // Skip
   skipRow: {

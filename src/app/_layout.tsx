@@ -38,12 +38,14 @@ import { LinearGradient } from "expo-linear-gradient";
 import { CultureTokens } from "@/design-system/tokens/theme";
 import { useColors, useIsDark } from "@/hooks/useColors";
 import { useLayout } from "@/hooks/useLayout";
-import { AuthGuard, AuthSyncBanner, DataSync } from "@/providers";
+import { shouldHideMobileWebGlobalHeader } from "@/lib/mobileWebRoutes";
+import { AuthGuard, AuthSyncBanner, DataSync, GoogleSignInBootstrap } from "@/providers";
 import { withAlpha } from "@/lib/withAlpha";
 import { initializeWidgets } from "@/lib/widgets/register";
 import { WidgetSync } from "@/components/WidgetSync";
 import { CulturalThemeProvider } from "@/providers/CulturalThemeProvider";
 import { CulturePassWordmark } from "@/design-system/ui";
+import { SIDEBAR_MAIN_NAV } from '@/constants/navigation/experienceNav';
 
 import {
   useFonts,
@@ -125,8 +127,8 @@ function RootLayoutNav() {
     setIsDrawerOpen(false);
   }, [pathname]);
 
-  // Force mobile layout on small screens to prevent black screen issue
-  const shouldShowDesktopLayout = isWeb && isDesktop && screenWidth >= 768;
+  const shouldShowDesktopLayout = isWeb && isDesktop;
+  const showMobileWebHeader = isWeb && !shouldShowDesktopLayout && !shouldHideMobileWebGlobalHeader(pathname);
 
   const stackContent = (
     <Stack
@@ -150,6 +152,7 @@ function RootLayoutNav() {
       <Stack.Screen name="user/[id]" />
 
       <Stack.Screen name="profile/[id]" />
+      <Stack.Screen name="organiser/[id]" />
       <Stack.Screen name="profile/edit" />
       <Stack.Screen name="profile/public" />
       <Stack.Screen name="profile/qr" />
@@ -198,7 +201,12 @@ function RootLayoutNav() {
       <Stack.Screen name="(static)/legal/cookies" />
       <Stack.Screen name="(static)/legal/guidelines" />
 
+      <Stack.Screen name="updates/index" />
       <Stack.Screen name="updates/[id]" />
+      <Stack.Screen name="enquiries/[id]" />
+      <Stack.Screen name="dashboard/venue/index" />
+      <Stack.Screen name="dashboard/sponsor/index" />
+      <Stack.Screen name="dashboard/event-analytics/[eventId]" />
 
       <Stack.Screen name="[handle]" />
 
@@ -206,6 +214,9 @@ function RootLayoutNav() {
       <Stack.Screen name="(shortlinks)/c/[id]/members" options={{ animation: 'none' }} />
       <Stack.Screen name="(shortlinks)/e/[id]" options={{ animation: 'none' }} />
       <Stack.Screen name="(shortlinks)/b/[id]" options={{ animation: 'none' }} />
+      <Stack.Screen name="(shortlinks)/o/[id]" options={{ animation: 'none' }} />
+      <Stack.Screen name="(shortlinks)/p/[id]" options={{ animation: 'none' }} />
+      <Stack.Screen name="(shortlinks)/m/[id]" options={{ animation: 'none' }} />
       <Stack.Screen name="(shortlinks)/u/[id]" options={{ animation: 'none' }} />
     </Stack>
   );
@@ -258,29 +269,31 @@ function RootLayoutNav() {
         <React.Suspense fallback={null}>
           <NavigationMetadata />
         </React.Suspense>
-        <View
-          style={[
-            webStyles.mobileHeader,
-            {
-              backgroundColor: colors.surface,
-              borderBottomColor: colors.borderLight,
-            },
-          ]}
-        >
-          <Pressable
-            onPress={() => setIsDrawerOpen(true)}
-            style={({ pressed }) => [
-              webStyles.burgerBtn,
-              pressed && { opacity: 0.7 },
+        {showMobileWebHeader ? (
+          <View
+            style={[
+              webStyles.mobileHeader,
+              {
+                backgroundColor: colors.surface,
+                borderBottomColor: colors.borderLight,
+              },
             ]}
-            accessibilityRole="button"
-            accessibilityLabel="Open navigation menu"
           >
-            <Ionicons name="menu-outline" size={24} color={colors.text} />
-          </Pressable>
-          <CulturePassWordmark size="sm" showSuffix={true} />
-          <View style={{ width: 40 }} />
-        </View>
+            <Pressable
+              onPress={() => setIsDrawerOpen(true)}
+              style={({ pressed }) => [
+                webStyles.burgerBtn,
+                pressed && { opacity: 0.7 },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel="Open navigation menu"
+            >
+              <Ionicons name="menu-outline" size={24} color={colors.text} />
+            </Pressable>
+            <CulturePassWordmark size="sm" showSuffix={true} />
+            <View style={{ width: 40 }} />
+          </View>
+        ) : null}
 
         <View style={{ flex: 1 }}>
           {stackContent}
@@ -318,14 +331,7 @@ function RootLayoutNav() {
               </View>
 
               <ScrollView style={{ flex: 1 }}>
-                {[
-                  { label: 'Discover', route: '/(tabs)', icon: 'compass-outline' },
-                  { label: 'Calendar', route: '/(tabs)/calendar', icon: 'calendar-outline' },
-                  { label: 'Community', route: '/(tabs)/community', icon: 'people-outline' },
-                  { label: 'My City', route: '/(tabs)/city', icon: 'location-outline' },
-                  { label: 'Profile', route: '/(tabs)/my-space', icon: 'person-circle-outline' },
-                  { label: 'Perks', route: '/(tabs)/perks', icon: 'pricetag-outline' },
-                ].map((item) => (
+                {SIDEBAR_MAIN_NAV.map((item) => (
                   <Pressable
                     key={item.route}
                     style={({ pressed }) => [
@@ -346,7 +352,7 @@ function RootLayoutNav() {
                     accessibilityRole="button"
                     accessibilityLabel={item.label}
                   >
-                    <Ionicons name={item.icon as any} size={20} color={colors.text} style={{ marginRight: 12 }} />
+                    <Ionicons name={item.icon} size={20} color={colors.text} style={{ marginRight: 12 }} />
                     <RNText style={{ color: colors.text, fontSize: 15, fontFamily: 'Poppins_500Medium' }}>{item.label}</RNText>
                   </Pressable>
                 ))}
@@ -389,6 +395,7 @@ function AppShellWrapper({ onLayoutRootView }: { onLayoutRootView: () => void })
     >
       <StatusBar style={isDark ? "light" : "dark"} />
       <DataSync />
+      <GoogleSignInBootstrap />
       <WidgetSync />
       <AuthGuard />
       <AuthSyncBanner />

@@ -207,6 +207,21 @@ export const MARKET_CATEGORIES: MarketCategory[] = [
 // ─── Culture tags ─────────────────────────────────────────────────────────────
 
 export const CULTURE_TAGS: string[] = [
+  'Australian',
+  'Mateship',
+  'Fair Go',
+  'Beach Culture',
+  'Cafe Culture',
+  'Pub Culture',
+  'Barbie Culture',
+  'ANZAC',
+  'Dreamtime',
+  'Indigenous Heritage',
+  'AFL & NRL',
+  'Cricket & Surfing',
+  'Pub Rock',
+  'Larrikinism',
+  'Outback & Bush',
   'Aboriginal & Torres Strait Islander',
   'African',
   'Arab / Middle Eastern',

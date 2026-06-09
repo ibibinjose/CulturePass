@@ -77,8 +77,9 @@ export const EVENT_CATEGORIES   = ['Cultural', 'Music', 'Dance', 'Festival', 'Wo
 
 /** Multi-select on event listings — maps to API `cultureTag` */
 export const EVENT_CULTURE_TAGS = [
-  'Indian', 'Chinese', 'Vietnamese', 'Greek', 'Italian', 'Middle Eastern', 'African', 'Pacific',
-  'Indigenous', 'Multicultural', 'Faith', 'Youth', 'LGBTQIA+', 'Seniors', 'Family',
+  'Australian', 'Indian', 'Chinese', 'Vietnamese', 'Greek', 'Italian', 'Middle Eastern', 'African', 'Pacific',
+  'Indigenous', 'Multicultural', 'ANZAC', 'Beach Culture', 'Pub Culture', 'AFL & NRL', 'Cricket & Surfing',
+  'Faith', 'Youth', 'LGBTQIA+', 'Seniors', 'Family',
 ] as const;
 export const ORG_CATEGORIES     = ['Cultural', 'Religious', 'Community', 'Youth', 'Professional', 'Charity'];
 export const PROFESSIONAL_CATEGORIES = [
@@ -97,8 +98,9 @@ export const PROFESSIONAL_CATEGORIES = [
 /** Chip-selectable discovery tags for organisation/professional/business profiles */
 export const ORG_DISCOVERY_TAGS = [
   // Culture & heritage
-  'Indian', 'Chinese', 'Vietnamese', 'Filipino', 'Greek', 'Italian',
+  'Australian', 'Indian', 'Chinese', 'Vietnamese', 'Filipino', 'Greek', 'Italian',
   'Middle Eastern', 'African', 'Pacific Islander', 'Indigenous', 'Multicultural',
+  'Mateship', 'Fair Go', 'Cafe Culture', 'Beach Culture', 'Pub Culture', 'ANZAC', 'Dreamtime',
   'Korean', 'Arabic', 'Tamil', 'Persian', 'Nepali', 'Sri Lankan',
   // Activity type
   'Language Class', 'Dance', 'Music', 'Cultural Events', 'Festivals',

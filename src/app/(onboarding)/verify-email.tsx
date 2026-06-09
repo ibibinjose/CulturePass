@@ -6,6 +6,7 @@ import { useM3Colors } from '@/hooks/useM3Colors';
 import { useLayout } from '@/hooks/useLayout';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { useOnboarding } from '@/contexts/OnboardingContext';
 import { LuxeButton, LuxeCard, LuxeText , CulturePassWordmark } from '@/design-system/ui';
 import { AuthAmbientBackground } from '@/components/onboarding/AuthScreenPrimitives';
 import { Spacing, FontFamily, CardTokens } from '@/design-system/tokens/theme';
@@ -17,16 +18,23 @@ export default function VerifyEmailScreen() {
   const m3Colors = useM3Colors();
   const { isDesktop, isWeb } = useLayout();
   const { user, logout, sendVerificationEmail, checkEmailVerified, emailVerified } = useAuth();
-  
+  const { getSnapshot, waitForHydration } = useOnboarding();
+
   const [checking, setChecking] = useState(false);
   const [resending, setResending] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // If email is verified, redirect the user immediately
+  const routeAfterVerification = async () => {
+    await waitForHydration();
+    const snap = getSnapshot();
+    router.replace(snap.isComplete ? '/(tabs)' : '/(onboarding)/location');
+  };
+
+  // If email is verified, continue onboarding or enter the app
   useEffect(() => {
     if (emailVerified) {
-      router.replace('/(tabs)');
+      void routeAfterVerification();
     }
   }, [emailVerified]);
 
@@ -51,7 +59,7 @@ export default function VerifyEmailScreen() {
     try {
       const verified = await checkEmailVerified();
       if (verified) {
-        router.replace('/(tabs)');
+        await routeAfterVerification();
       } else {
         setErrorMessage("We couldn't verify your email yet. Please click the link in the email sent to you, then try checking again.");
       }

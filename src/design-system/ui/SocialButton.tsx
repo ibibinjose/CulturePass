@@ -107,7 +107,7 @@ const styles = StyleSheet.create({
   googleG: {
     fontFamily: 'Poppins_700Bold',
     fontSize: 16,
-    color: CultureTokens.indigo,
+    color: CultureTokens.gold,
     lineHeight: 20,
   },
   label: {

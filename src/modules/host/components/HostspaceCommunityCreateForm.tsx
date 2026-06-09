@@ -20,6 +20,13 @@ import { useImageUpload } from '@/hooks/useImageUpload';
 import * as ImagePicker from 'expo-image-picker';
 import { MediaUploadField } from './fields/MediaUploadField';
 import {
+  HOSTSPACE_EVENT_PREVIEW,
+  HOSTSPACE_FORM_SECONDARY_HINT,
+  HOSTSPACE_LEGACY_WIZARD_BANNER,
+  HOSTSPACE_MUJI_FORM,
+  HOSTSPACE_SOCIAL_PREVIEW,
+} from '@/design-system/tokens/hostspaceEventCreateTokens';
+import {
   CultureTokens,
   TextStyles,
 } from '@/design-system/tokens/theme';
@@ -209,22 +216,30 @@ export function HostspaceCommunityCreateForm({ onReview }: { onReview?: () => vo
     <View style={styles.container}>
       <View style={styles.pageHeader}>
         <GlassView intensity={10} style={styles.eyebrowBadge}>
-          <Text style={[styles.eyebrow, { color: CultureTokens.teal }]}>Community Creation</Text>
+          <Text style={[styles.eyebrow, { color: CultureTokens.teal }]} numberOfLines={1}>
+            Community Creation
+          </Text>
         </GlassView>
-        <Text style={[styles.title, { color: colors.text }]}>Start a new Hub</Text>
-        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+        <Text style={[styles.title, { color: colors.text }]} numberOfLines={2}>
+          Start a new Hub
+        </Text>
+        <Text style={[styles.subtitle, { color: colors.textSecondary }]} numberOfLines={3}>
           Build a space for your diaspora community to connect, share, and grow.
         </Text>
       </View>
 
-      {/* Unification deprecation banner (ADR-001 execution) */}
-      <View style={{ backgroundColor: '#FEF3C7', padding: 12, borderRadius: 8, marginBottom: 16, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <Ionicons name="information-circle" size={20} color="#92400E" />
-        <Text style={{ color: '#92400E', flex: 1, fontSize: 13 }}>
+      <View style={styles.legacyBanner}>
+        <Ionicons name="information-circle" size={20} color={HOSTSPACE_LEGACY_WIZARD_BANNER.ink} />
+        <Text style={styles.legacyBannerText} numberOfLines={4}>
           Note: Rich communities now use the full guided FormWizard (with analytics, auto-save, legal gates). This legacy form is for compat only.
         </Text>
-        <Pressable onPress={() => navigateToCreateById('community', { source: 'hostspace_community_form_link' })} style={{ backgroundColor: '#92400E', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 4 }}>
-          <Text style={{ color: 'white', fontSize: 12 }}>Use Wizard</Text>
+        <Pressable
+          onPress={() => navigateToCreateById('community', { source: 'hostspace_community_form_link' })}
+          style={styles.legacyBannerCta}
+        >
+          <Text style={styles.legacyBannerCtaText} numberOfLines={1}>
+            Use Wizard
+          </Text>
         </Pressable>
       </View>
 
@@ -272,12 +287,12 @@ export function HostspaceCommunityCreateForm({ onReview }: { onReview?: () => vo
           {/* Section 2: Location & Reach */}
           <FormSection title="2. Location & Reach" icon="location-outline" color={CultureTokens.teal}>
             <View style={styles.row}>
-              <View style={{ flex: 1 }}>
+              <View style={styles.flex1}>
                 <FormField label="City" required>
                   <FormInput value={draft.city} onChangeText={(city) => updateDraft({ city })} placeholder="Sydney" />
                 </FormField>
               </View>
-              <View style={{ flex: 1 }}>
+              <View style={styles.flex1}>
                 <FormField label="Country">
                   <FormInput value={draft.country} onChangeText={(country) => updateDraft({ country })} placeholder="Australia" />
                 </FormField>
@@ -306,12 +321,12 @@ export function HostspaceCommunityCreateForm({ onReview }: { onReview?: () => vo
                <FormInput value={draft.hostName} onChangeText={(hostName) => updateDraft({ hostName })} placeholder="Your name or organization" />
              </FormField>
              <View style={styles.row}>
-                <View style={{ flex: 1 }}>
+                <View style={styles.flex1}>
                   <FormField label="Contact Email" required>
                     <FormInput value={draft.hostEmail} onChangeText={(hostEmail) => updateDraft({ hostEmail })} placeholder="hello@example.com" keyboardType="email-address" autoCapitalize="none" />
                   </FormField>
                 </View>
-                <View style={{ flex: 1 }}>
+                <View style={styles.flex1}>
                   <FormField label="Contact Phone">
                     <FormInput value={draft.hostPhone} onChangeText={(hostPhone) => updateDraft({ hostPhone })} placeholder="+61 4..." keyboardType="phone-pad" />
                   </FormField>
@@ -319,7 +334,7 @@ export function HostspaceCommunityCreateForm({ onReview }: { onReview?: () => vo
              </View>
              <FormField label="Host Bio">
                <FormInput value={draft.hostBio} onChangeText={(hostBio) => updateDraft({ hostBio })} placeholder="Briefly describe the organizers..." multiline />
-               <Text style={{ fontSize: 12, color: '#666', marginTop: 4 }}>
+               <Text style={styles.hostBioHint} numberOfLines={3}>
                  You (as Lead Organizer) + additional co-organizers with different roles can be managed after creation.
                </Text>
              </FormField>
@@ -331,14 +346,20 @@ export function HostspaceCommunityCreateForm({ onReview }: { onReview?: () => vo
 
              <View style={styles.teamSectionHeader}>
                 <Ionicons name="ribbon-outline" size={20} color={CultureTokens.gold} />
-                <Text style={[styles.sectionTitle, { color: colors.text }]}>Sponsors & Supporters</Text>
+                <Text style={[styles.sectionTitle, { color: colors.text }]} numberOfLines={1}>
+                  Sponsors & Supporters
+                </Text>
              </View>
 
              {(draft.sponsors || []).map((sp) => (
                 <View key={sp.id} style={[styles.sponsorChip, { backgroundColor: colors.surfaceElevated, borderColor: colors.borderLight }]}>
                   <View style={styles.sponsorChipInfo}>
-                    <Text style={[styles.sponsorName, { color: colors.text }]}>{sp.name}</Text>
-                    <Text style={[styles.sponsorTier, { color: CultureTokens.gold }]}>{sp.tier.toUpperCase()}</Text>
+                    <Text style={[styles.sponsorName, { color: colors.text }]} numberOfLines={1}>
+                      {sp.name}
+                    </Text>
+                    <Text style={[styles.sponsorTier, { color: CultureTokens.gold }]} numberOfLines={1}>
+                      {sp.tier.toUpperCase()}
+                    </Text>
                   </View>
                   <Pressable onPress={() => removeSponsor(sp.id)}>
                     <Ionicons name="close-circle" size={20} color={colors.textTertiary} />
@@ -352,7 +373,7 @@ export function HostspaceCommunityCreateForm({ onReview }: { onReview?: () => vo
                      value={newSponsor.name}
                      onChangeText={(name) => setNewSponsor({ ...newSponsor, name })}
                      placeholder="Sponsor Name"
-                     style={{ marginBottom: 12 }}
+                     style={styles.sponsorNameInput}
                    />
                    <View style={styles.chipRow}>
                       {['Platinum', 'Gold', 'Silver', 'Supporter'].map((t) => (
@@ -364,9 +385,9 @@ export function HostspaceCommunityCreateForm({ onReview }: { onReview?: () => vo
                         />
                       ))}
                    </View>
-                   <View style={[styles.row, { marginTop: 12 }]}>
-                      <Button variant="outline" size="sm" style={{ flex: 1 }} onPress={() => setShowSponsorForm(false)}>Cancel</Button>
-                      <Button variant="primary" size="sm" style={{ flex: 1 }} onPress={addSponsor}>Add</Button>
+                   <View style={styles.sponsorActionRow}>
+                      <Button variant="outline" size="sm" style={styles.flex1} onPress={() => setShowSponsorForm(false)}>Cancel</Button>
+                      <Button variant="primary" size="sm" style={styles.flex1} onPress={addSponsor}>Add</Button>
                    </View>
                 </GlassView>
              ) : (
@@ -388,7 +409,7 @@ export function HostspaceCommunityCreateForm({ onReview }: { onReview?: () => vo
                   }
                 }}
               />
-              <View style={[styles.chipRow, { marginTop: 8 }]}>
+              <View style={[styles.chipRow, styles.tagChipRow]}>
                 {draft.culturalIdentityTags.map((t) => (
                   <ChoiceChip key={t} label={t} selected onPress={() => toggleArrayValue('culturalIdentityTags', t)} />
                 ))}
@@ -459,9 +480,13 @@ export function HostspaceCommunityCreateForm({ onReview }: { onReview?: () => vo
             </FormField>
 
             <View style={styles.switchContainer}>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.switchLabel, { color: colors.text }]}>Featured on CulturePass</Text>
-                <Text style={[styles.switchSub, { color: colors.textSecondary }]}>Show in trending and spotlight rails</Text>
+              <View style={styles.flex1}>
+                <Text style={[styles.switchLabel, { color: colors.text }]} numberOfLines={1}>
+                  Featured on CulturePass
+                </Text>
+                <Text style={[styles.switchSub, { color: colors.textSecondary }]} numberOfLines={2}>
+                  Show in trending and spotlight rails
+                </Text>
               </View>
               <Switch
                 value={draft.featured}
@@ -477,7 +502,7 @@ export function HostspaceCommunityCreateForm({ onReview }: { onReview?: () => vo
               leftIcon="rocket-outline"
               loading={isSaving}
               onPress={() => saveCommunity('published')}
-              style={{ flex: 2 }}
+              style={styles.publishBtn}
             >
               Publish Community
             </Button>
@@ -485,7 +510,7 @@ export function HostspaceCommunityCreateForm({ onReview }: { onReview?: () => vo
               variant="outline"
               leftIcon="analytics-outline"
               onPress={onReview}
-              style={{ flex: 1.2 }}
+              style={styles.reviewBtn}
             >
               Review
             </Button>
@@ -493,7 +518,7 @@ export function HostspaceCommunityCreateForm({ onReview }: { onReview?: () => vo
               variant="outline"
               leftIcon="save-outline"
               onPress={() => saveCommunity('draft')}
-              style={{ flex: 1 }}
+              style={styles.flex1}
             >
               Draft
             </Button>
@@ -502,29 +527,37 @@ export function HostspaceCommunityCreateForm({ onReview }: { onReview?: () => vo
 
         {showPreview && (
           <View style={styles.previewColumn}>
-            <Text style={[styles.previewHeading, { color: colors.text }]}>Live Preview</Text>
+            <Text style={[styles.previewHeading, { color: colors.text }]} numberOfLines={1}>
+              Live Preview
+            </Text>
             <CommunityPreviewCard draft={draft} colors={colors} />
 
             <GlassView intensity={10} style={styles.brandingBox}>
-               <Text style={[styles.brandingTitle, { color: colors.text, marginBottom: 12 }]}>Community Visuals</Text>
-               <View style={{ gap: 16 }}>
+               <Text style={[styles.brandingTitle, styles.brandingTitleSpaced, { color: colors.text }]} numberOfLines={1}>
+                 Community Visuals
+               </Text>
+               <View style={styles.visualsStack}>
                  <View>
-                   <Text style={[styles.brandingLabel, { color: colors.text, marginBottom: 8 }]}>Logo / Avatar (1:1)</Text>
+                   <Text style={[styles.brandingLabel, styles.brandingLabelSpaced, { color: colors.text }]} numberOfLines={1}>
+                     Logo / Avatar (1:1)
+                   </Text>
                    <MediaUploadField
                      type="logo"
                      value={draft.logoUrl}
                      onChange={(url) => updateDraft({ logoUrl: url as string })}
-                     storagePath={`communities/${user?.id || 'anonymous'}/logo`}
+                     storagePath={`communities/${user?.id || 'anonymous'}`}
                      aspectRatio={1}
                    />
                  </View>
                  <View>
-                   <Text style={[styles.brandingLabel, { color: colors.text, marginBottom: 8 }]}>Cover Banner (16:9)</Text>
+                   <Text style={[styles.brandingLabel, styles.brandingLabelSpaced, { color: colors.text }]} numberOfLines={1}>
+                     Cover Banner (16:9)
+                   </Text>
                    <MediaUploadField
                      type="hero"
                      value={draft.bannerUrl}
                      onChange={(url) => updateDraft({ bannerUrl: url as string })}
-                     storagePath={`communities/${user?.id || 'anonymous'}/banner`}
+                     storagePath={`communities/${user?.id || 'anonymous'}`}
                      aspectRatio={16 / 9}
                    />
                  </View>
@@ -532,23 +565,36 @@ export function HostspaceCommunityCreateForm({ onReview }: { onReview?: () => vo
             </GlassView>
 
             <GlassView intensity={5} style={styles.linksBox}>
-              <Text style={[styles.brandingTitle, { color: colors.text, marginBottom: 12 }]}>External Links</Text>
+              <Text style={[styles.brandingTitle, styles.brandingTitleSpaced, { color: colors.text }]} numberOfLines={1}>
+                External Links
+              </Text>
               <LinkInput icon="globe-outline" placeholder="Website" value={draft.website} onChangeText={(website) => updateDraft({ website })} />
               <LinkInput icon="logo-instagram" placeholder="Instagram" value={draft.instagram} onChangeText={(instagram) => updateDraft({ instagram })} />
               <LinkInput icon="logo-whatsapp" placeholder="WhatsApp" value={draft.whatsapp} onChangeText={(whatsapp) => updateDraft({ whatsapp })} />
             </GlassView>
 
             <GlassView intensity={10} style={styles.brandingBox}>
-               <Text style={[styles.brandingTitle, { color: colors.text, marginBottom: 12 }]}>Social Preview</Text>
-               <View style={[styles.socialPreviewCard, { backgroundColor: isDark ? '#1a1a1a' : '#f0f2f5' }]}>
+               <Text style={[styles.brandingTitle, styles.brandingTitleSpaced, { color: colors.text }]} numberOfLines={1}>
+                 Social Preview
+               </Text>
+               <View
+                 style={[
+                   styles.socialPreviewCard,
+                   { backgroundColor: isDark ? HOSTSPACE_SOCIAL_PREVIEW.surfaceDark : HOSTSPACE_SOCIAL_PREVIEW.surfaceLight },
+                 ]}
+               >
                   <View style={styles.socialPreviewHeader}>
                     <View style={styles.socialAvatarPh} />
                     <View>
-                      <Text style={[styles.socialUser, { color: colors.text }]}>CulturePass</Text>
-                      <Text style={[styles.socialMeta, { color: colors.textTertiary }]}>Just now · Discover</Text>
+                      <Text style={[styles.socialUser, { color: colors.text }]} numberOfLines={1}>
+                        CulturePass
+                      </Text>
+                      <Text style={[styles.socialMeta, { color: colors.textTertiary }]} numberOfLines={1}>
+                        Just now · Discover
+                      </Text>
                     </View>
                   </View>
-                  <Text style={[styles.socialDescText, { color: colors.text }]}>
+                  <Text style={[styles.socialDescText, { color: colors.text }]} numberOfLines={4}>
                     {draft.socialDescription || draft.tagline || "Discover this new community on CulturePass!"}
                   </Text>
                   <View style={styles.socialImagePh}>
@@ -559,7 +605,9 @@ export function HostspaceCommunityCreateForm({ onReview }: { onReview?: () => vo
                     )}
                   </View>
                   <View style={styles.socialFooter}>
-                    <Text style={[styles.socialUrl, { color: colors.textTertiary }]}>CULTUREPASS.APP</Text>
+                    <Text style={[styles.socialUrl, { color: colors.textTertiary }]} numberOfLines={1}>
+                      CULTUREPASS.APP
+                    </Text>
                     <Text style={[styles.socialTitleText, { color: colors.text }]} numberOfLines={1}>
                       {draft.socialTitle || draft.name || "Cultural Hub"}
                     </Text>
@@ -573,26 +621,16 @@ export function HostspaceCommunityCreateForm({ onReview }: { onReview?: () => vo
   );
 }
 
-const MujiColors = {
-  bg: '#FAF8F5',
-  card: '#F6F1EA',
-  border: '#DED8CE',
-  text: '#3C3A35',
-  textMuted: '#8E877E',
-  accent: '#7D7060',
-  accentLight: '#EFEAE0',
-  white: '#FFFFFF',
-  accentDark: '#4A4135'
-};
-
 function FormSection({ title, icon, color, children }: { title: string; icon: keyof typeof Ionicons.glyphMap; color: string; children: React.ReactNode }) {
   return (
-    <View style={[styles.section, { borderColor: MujiColors.border, backgroundColor: MujiColors.card, borderWidth: 1, borderRadius: 18, padding: 16 }]}>
+    <View style={[styles.section, styles.mujiSection]}>
       <View style={styles.sectionHeader}>
-        <View style={[styles.sectionIconWrap, { backgroundColor: MujiColors.accentLight, borderRadius: 8 }]}>
-          <Ionicons name={icon} size={18} color={MujiColors.accent} />
+        <View style={[styles.sectionIconWrap, styles.mujiSectionIcon]}>
+          <Ionicons name={icon} size={18} color={HOSTSPACE_MUJI_FORM.accent} />
         </View>
-        <Text style={[styles.sectionTitle, { color: MujiColors.text, fontFamily: 'Poppins_700Bold' }]}>{title}</Text>
+        <Text style={[styles.sectionTitle, styles.mujiSectionTitle]} numberOfLines={1}>
+          {title}
+        </Text>
       </View>
       <View style={styles.sectionBody}>{children}</View>
     </View>
@@ -603,11 +641,19 @@ function FormField({ label, required, hint, children }: { label: string; require
   return (
     <View style={styles.field}>
       <View style={styles.labelRow}>
-        <Text style={[styles.fieldLabel, { color: MujiColors.text, fontFamily: 'Poppins_600SemiBold' }]}>
+        <Text style={[styles.fieldLabel, styles.mujiFieldLabel]} numberOfLines={1}>
           {label}
-          {required && <Text style={{ color: '#C08A7C' }}> *</Text>}
+          {required && (
+            <Text style={styles.requiredMark} numberOfLines={1}>
+              {' *'}
+            </Text>
+          )}
         </Text>
-        {hint && <Text style={[styles.fieldHint, { color: MujiColors.textMuted }]}>{hint}</Text>}
+        {hint && (
+          <Text style={[styles.fieldHint, styles.mujiFieldHint]} numberOfLines={2}>
+            {hint}
+          </Text>
+        )}
       </View>
       {children}
     </View>
@@ -617,14 +663,10 @@ function FormField({ label, required, hint, children }: { label: string; require
 function FormInput({ ...props }: TextInput['props']) {
   return (
     <TextInput
-      placeholderTextColor={MujiColors.textMuted}
+      placeholderTextColor={HOSTSPACE_MUJI_FORM.textMuted}
       style={[
         styles.input,
-        {
-          backgroundColor: MujiColors.white,
-          borderColor: MujiColors.border,
-          color: MujiColors.text,
-        },
+        styles.mujiInput,
         props.multiline && styles.textarea,
       ]}
       textAlignVertical={props.multiline ? 'top' : 'center'}
@@ -639,14 +681,12 @@ function ChoiceChip({ label, selected, onPress }: { label: string; selected: boo
       <View
         style={[
           styles.chip,
-          {
-            backgroundColor: selected ? MujiColors.accent : MujiColors.white,
-            borderColor: selected ? MujiColors.accent : MujiColors.border,
-            borderRadius: 8,
-          },
+          selected ? styles.chipSelected : styles.chipIdle,
         ]}
       >
-        <Text style={[styles.chipText, { color: selected ? MujiColors.white : MujiColors.text, fontFamily: 'Poppins_600SemiBold' }]}>{label}</Text>
+        <Text style={[styles.chipText, selected ? styles.chipTextSelected : styles.chipTextIdle]} numberOfLines={2}>
+          {label}
+        </Text>
       </View>
     </Pressable>
   );
@@ -677,7 +717,9 @@ function CommunityPreviewCard({ draft, colors }: { draft: CommunityDraft; colors
         />
         <Ionicons name="people" size={48} color={accent} />
         <View style={[styles.previewTypeBadge, { backgroundColor: accent }]}>
-          <Text style={styles.previewTypeBadgeText}>{draft.category.toUpperCase()}</Text>
+          <Text style={styles.previewTypeBadgeText} numberOfLines={1}>
+            {draft.category.toUpperCase()}
+          </Text>
         </View>
       </View>
       <View style={styles.previewBody}>
@@ -691,26 +733,42 @@ function CommunityPreviewCard({ draft, colors }: { draft: CommunityDraft; colors
         <View style={styles.previewMetaRow}>
           <View style={styles.previewMetaItem}>
             <Ionicons name="location" size={12} color={colors.textTertiary} />
-            <Text style={[styles.previewMetaText, { color: colors.textSecondary }]}>{draft.city}</Text>
+            <Text style={[styles.previewMetaText, { color: colors.textSecondary }]} numberOfLines={1}>
+              {draft.city}
+            </Text>
           </View>
           <View style={styles.previewDot} />
           <View style={styles.previewMetaItem}>
             <Ionicons name="flash" size={12} color={CultureTokens.gold} />
-            <Text style={[styles.previewMetaText, { color: colors.textSecondary }]}>{draft.vibe}</Text>
+            <Text style={[styles.previewMetaText, { color: colors.textSecondary }]} numberOfLines={1}>
+              {draft.vibe}
+            </Text>
           </View>
         </View>
         <View style={styles.previewStats}>
           <View style={styles.previewStat}>
-            <Text style={[styles.previewStatVal, { color: colors.text }]}>0</Text>
-            <Text style={[styles.previewStatLab, { color: colors.textTertiary }]}>MEMBERS</Text>
+            <Text style={[styles.previewStatVal, { color: colors.text }]} numberOfLines={1}>
+              0
+            </Text>
+            <Text style={[styles.previewStatLab, { color: colors.textTertiary }]} numberOfLines={1}>
+              MEMBERS
+            </Text>
           </View>
           <View style={styles.previewStat}>
-            <Text style={[styles.previewStatVal, { color: colors.text }]}>0</Text>
-            <Text style={[styles.previewStatLab, { color: colors.textTertiary }]}>EVENTS</Text>
+            <Text style={[styles.previewStatVal, { color: colors.text }]} numberOfLines={1}>
+              0
+            </Text>
+            <Text style={[styles.previewStatLab, { color: colors.textTertiary }]} numberOfLines={1}>
+              EVENTS
+            </Text>
           </View>
           <View style={styles.previewStat}>
-            <Text style={[styles.previewStatVal, { color: colors.text }]}>New</Text>
-            <Text style={[styles.previewStatLab, { color: colors.textTertiary }]}>RANK</Text>
+            <Text style={[styles.previewStatVal, { color: colors.text }]} numberOfLines={1}>
+              New
+            </Text>
+            <Text style={[styles.previewStatLab, { color: colors.textTertiary }]} numberOfLines={1}>
+              RANK
+            </Text>
           </View>
         </View>
         <Button variant="primary" size="md" style={{ marginTop: 20, borderRadius: 14 }}>Join Community</Button>
@@ -720,6 +778,88 @@ function CommunityPreviewCard({ draft, colors }: { draft: CommunityDraft; colors
 }
 
 const styles = StyleSheet.create({
+  flex1: { flex: 1 },
+  publishBtn: { flex: 2 },
+  reviewBtn: { flex: 1.2 },
+  sponsorNameInput: { marginBottom: 12 },
+  sponsorActionRow: { flexDirection: 'row', gap: 12, marginTop: 12 },
+  tagChipRow: { marginTop: 8 },
+  brandingTitleSpaced: { marginBottom: 12 },
+  brandingLabelSpaced: { marginBottom: 8 },
+  visualsStack: { gap: 16 },
+  legacyBanner: {
+    backgroundColor: HOSTSPACE_LEGACY_WIZARD_BANNER.bg,
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  legacyBannerText: {
+    color: HOSTSPACE_LEGACY_WIZARD_BANNER.ink,
+    flex: 1,
+    fontSize: 13,
+  },
+  legacyBannerCta: {
+    backgroundColor: HOSTSPACE_LEGACY_WIZARD_BANNER.ink,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 4,
+  },
+  legacyBannerCtaText: {
+    color: HOSTSPACE_LEGACY_WIZARD_BANNER.ctaInk,
+    fontSize: 12,
+  },
+  hostBioHint: {
+    fontSize: 12,
+    color: HOSTSPACE_FORM_SECONDARY_HINT,
+    marginTop: 4,
+  },
+  mujiSection: {
+    borderColor: HOSTSPACE_MUJI_FORM.border,
+    backgroundColor: HOSTSPACE_MUJI_FORM.card,
+    borderWidth: 1,
+    borderRadius: 18,
+    padding: 16,
+  },
+  mujiSectionIcon: {
+    backgroundColor: HOSTSPACE_MUJI_FORM.accentLight,
+    borderRadius: 8,
+  },
+  mujiSectionTitle: {
+    color: HOSTSPACE_MUJI_FORM.text,
+    fontFamily: 'Poppins_700Bold',
+  },
+  mujiFieldLabel: {
+    color: HOSTSPACE_MUJI_FORM.text,
+    fontFamily: 'Poppins_600SemiBold',
+  },
+  requiredMark: { color: HOSTSPACE_MUJI_FORM.requiredAccent },
+  mujiFieldHint: { color: HOSTSPACE_MUJI_FORM.textMuted },
+  mujiInput: {
+    backgroundColor: HOSTSPACE_MUJI_FORM.white,
+    borderColor: HOSTSPACE_MUJI_FORM.border,
+    color: HOSTSPACE_MUJI_FORM.text,
+  },
+  chipSelected: {
+    backgroundColor: HOSTSPACE_MUJI_FORM.accent,
+    borderColor: HOSTSPACE_MUJI_FORM.accent,
+    borderRadius: 8,
+  },
+  chipIdle: {
+    backgroundColor: HOSTSPACE_MUJI_FORM.white,
+    borderColor: HOSTSPACE_MUJI_FORM.border,
+    borderRadius: 8,
+  },
+  chipTextSelected: {
+    color: HOSTSPACE_MUJI_FORM.white,
+    fontFamily: 'Poppins_600SemiBold',
+  },
+  chipTextIdle: {
+    color: HOSTSPACE_MUJI_FORM.text,
+    fontFamily: 'Poppins_600SemiBold',
+  },
   container: {
     gap: 24,
   },
@@ -884,7 +1024,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   previewTypeBadgeText: {
-    color: '#fff',
+    color: HOSTSPACE_EVENT_PREVIEW.inkOnDark,
     fontSize: 10,
     fontFamily: 'Poppins_700Bold',
   },

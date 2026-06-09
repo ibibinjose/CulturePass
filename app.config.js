@@ -91,6 +91,7 @@ export default function(appConfig) {
         iosUrlScheme: "com.googleusercontent.apps.$(EXPO_PUBLIC_GOOGLE_REVERSED_CLIENT_ID)"
       }
     ],
+    "./plugins/withGoogleServicesGradle.js",
     "expo-secure-store",
     "expo-local-authentication",
     [
@@ -226,10 +227,19 @@ export default function(appConfig) {
     ]
   ];
 
+  const fcmVapidKey = process.env.EXPO_PUBLIC_FCM_VAPID_KEY;
+
   return {
     ...config,
     expo: {
       ...config.expo,
+      ...(fcmVapidKey
+        ? {
+            notification: {
+              vapidPublicKey: fcmVapidKey,
+            },
+          }
+        : {}),
       plugins: [
         withWidgetVersionSync,
         ...basePlugins,
@@ -248,6 +258,7 @@ export default function(appConfig) {
         backgroundColor: "#0B0B14"
       },
       ios: {
+        googleServicesFile: "./GoogleService-Info.plist",
         supportsTablet: true,
         bundleIdentifier: "au.culturepass.app",
         buildNumber: "28",
@@ -294,6 +305,7 @@ export default function(appConfig) {
         }
       },
       android: {
+        googleServicesFile: "./google-services.json",
         package: "au.culturepass.app",
         splash: {
           image: "./assets/images/splash-icon.png",

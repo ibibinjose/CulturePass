@@ -22,6 +22,7 @@ import {
   type CommunityMemberItem,
 } from '@/modules/communities/components/detail/communityDetailUtils';
 import type { Community, EventData } from '@/shared/schema';
+import { resolveSocialUrl, type SocialPlatformKey } from '@/shared/utils/socialLinks';
 
 const haptic = communityDetailHaptic;
 const priceLabel = communityEventPriceLabel;
@@ -297,15 +298,16 @@ export function ChipRow({ items }: { items: string[] }) {
 export function SocialLinksRow({ community }: { community: Community }) {
   const m3Colors = useM3Colors();
   const links: { icon: keyof typeof Ionicons.glyphMap; url: string }[] = [];
-  if (community.website) links.push({ icon: 'globe-outline', url: community.website });
-  if (community.instagram)
-    links.push({ icon: 'logo-instagram', url: `https://instagram.com/${community.instagram.replace('@', '')}` });
-  if (community.facebook) links.push({ icon: 'logo-facebook', url: community.facebook });
-  if (community.socialLinks?.twitter)
-    links.push({ icon: 'logo-twitter', url: `https://twitter.com/${community.socialLinks.twitter.replace('@', '')}` });
-  if (community.socialLinks?.youtube) links.push({ icon: 'logo-youtube', url: community.socialLinks.youtube });
-  if (community.socialLinks?.tiktok)
-    links.push({ icon: 'logo-tiktok', url: `https://tiktok.com/@${community.socialLinks.tiktok.replace('@', '')}` });
+  const push = (icon: keyof typeof Ionicons.glyphMap, raw: string | undefined | null, key: SocialPlatformKey) => {
+    const url = resolveSocialUrl(raw, key);
+    if (url) links.push({ icon, url });
+  };
+  push('globe-outline', community.website, 'website');
+  push('logo-instagram', community.instagram, 'instagram');
+  push('logo-facebook', community.facebook, 'facebook');
+  push('logo-twitter', community.socialLinks?.twitter, 'twitter');
+  push('logo-youtube', community.socialLinks?.youtube ?? community.youtube, 'youtube');
+  push('logo-tiktok', community.socialLinks?.tiktok ?? community.tiktok, 'tiktok');
   if (!links.length) return null;
   return (
     <View style={{ flexDirection: 'row', gap: 12, flexWrap: 'wrap', marginTop: 16 }}>

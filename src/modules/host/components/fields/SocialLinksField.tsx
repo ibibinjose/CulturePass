@@ -16,6 +16,12 @@ import { LuxeButton } from '@/design-system/ui/LuxeButton';
 import { FontFamily, Radius } from '@/design-system/tokens/theme';
 import { FIELD_LIMITS } from '@/modules/host/schemas/validationRules';
 import { api } from '@/lib/api';
+import {
+  normalizeHostSocialUrl,
+  socialDisplay,
+  socialUrlPreview,
+  SOCIAL_HANDLE_PLACEHOLDERS,
+} from '@/shared/utils/socialLinks';
 
 export type SocialPlatform =
   | 'website'
@@ -85,42 +91,42 @@ const PLATFORM_CONFIGS: Record<SocialPlatform, PlatformConfig> = {
     name: 'Instagram',
     icon: 'logo-instagram',
     color: '#E1306C',
-    placeholder: 'https://instagram.com/yourusername',
+    placeholder: SOCIAL_HANDLE_PLACEHOLDERS.instagram ?? 'culturepassapp',
     urlPattern: /^https?:\/\/(www\.)?instagram\.com\/.+/i,
   },
   facebook: {
     name: 'Facebook',
     icon: 'logo-facebook',
     color: '#1877F2',
-    placeholder: 'https://facebook.com/yourpage',
+    placeholder: SOCIAL_HANDLE_PLACEHOLDERS.facebook ?? 'culturepassapp',
     urlPattern: /^https?:\/\/(www\.)?(facebook|fb)\.com\/.+/i,
   },
   twitter: {
     name: 'Twitter / X',
     icon: 'logo-twitter',
     color: '#1DA1F2',
-    placeholder: 'https://x.com/yourusername',
+    placeholder: SOCIAL_HANDLE_PLACEHOLDERS.twitter ?? 'CulturePassApp',
     urlPattern: /^https?:\/\/(www\.)?(twitter|x)\.com\/.+/i,
   },
   tiktok: {
     name: 'TikTok',
     icon: 'logo-tiktok',
     color: '#000000',
-    placeholder: 'https://tiktok.com/@yourusername',
+    placeholder: SOCIAL_HANDLE_PLACEHOLDERS.tiktok ?? '@culturepassapp',
     urlPattern: /^https?:\/\/(www\.)?tiktok\.com\/@.+/i,
   },
   youtube: {
     name: 'YouTube',
     icon: 'logo-youtube',
     color: '#FF0000',
-    placeholder: 'https://youtube.com/@yourchannel',
+    placeholder: SOCIAL_HANDLE_PLACEHOLDERS.youtube ?? '@CulturePassApp',
     urlPattern: /^https?:\/\/(www\.)?youtube\.com\/(c|channel|@).+/i,
   },
   linkedin: {
     name: 'LinkedIn',
     icon: 'logo-linkedin',
     color: '#0A66C2',
-    placeholder: 'https://linkedin.com/in/yourprofile',
+    placeholder: SOCIAL_HANDLE_PLACEHOLDERS.linkedin ?? 'company/culturepass',
     urlPattern: /^https?:\/\/(www\.)?linkedin\.com\/(in|company)\/.+/i,
   },
   other: {
@@ -206,28 +212,32 @@ export function SocialLinksField({
 
   const handleStartEdit = useCallback(
     (index: number) => {
+      const link = value[index];
       setEditingIndex(index);
-      setEditingUrl(value[index].url);
-      setEditingPlatform(value[index].platform);
+      setEditingUrl(
+        link.platform === 'other' || link.platform === 'website'
+          ? link.url
+          : socialDisplay(link.url, link.platform),
+      );
+      setEditingPlatform(link.platform);
       setUrlError(undefined);
     },
     [value]
   );
 
   const validateUrl = useCallback(
-    async (url: string, platform: SocialPlatform): Promise<boolean> => {
-      if (!url) {
-        setUrlError('URL is required');
+    async (rawUrl: string, platform: SocialPlatform): Promise<boolean> => {
+      if (!rawUrl.trim()) {
+        setUrlError('URL or handle is required');
         return false;
       }
 
-      // Check https:// requirement
+      const url = normalizeHostSocialUrl(rawUrl, platform);
       if (!url.startsWith('https://')) {
-        setUrlError('URL must start with https://');
+        setUrlError('Enter a handle (e.g. CulturePassApp) or full https:// URL');
         return false;
       }
 
-      // Validate URL format
       try {
         new URL(url);
       } catch {
@@ -235,14 +245,12 @@ export function SocialLinksField({
         return false;
       }
 
-      // Validate against platform-specific pattern
       const config = PLATFORM_CONFIGS[platform];
       if (platform !== 'other' && platform !== 'website' && !config.urlPattern.test(url)) {
-        setUrlError(`Invalid ${config.name} URL format`);
+        setUrlError(`Invalid ${config.name} URL — try just the handle`);
         return false;
       }
 
-      // Generic URL validation for website/other
       if ((platform === 'website' || platform === 'other') && !config.urlPattern.test(url)) {
         setUrlError('Please enter a valid https:// URL');
         return false;
@@ -311,16 +319,17 @@ export function SocialLinksField({
   const handleSaveLink = useCallback(async () => {
     if (editingIndex === null) return;
 
+    const normalizedUrl = normalizeHostSocialUrl(editingUrl, editingPlatform);
     const isValid = await validateUrl(editingUrl, editingPlatform);
     if (!isValid) return;
 
     // Fetch Open Graph metadata
-    const metadata = await fetchOpenGraphMetadata(editingUrl);
+    const metadata = await fetchOpenGraphMetadata(normalizedUrl);
 
     const updatedLinks = [...value];
     updatedLinks[editingIndex] = {
       platform: editingPlatform,
-      url: editingUrl,
+      url: normalizedUrl,
       verified: true,
       metadata,
     };
@@ -378,20 +387,25 @@ export function SocialLinksField({
             </ScrollView>
           </View>
 
-          {/* URL input */}
+          {/* Handle or URL input */}
           <Input
-            label="URL"
+            label={editingPlatform === 'website' || editingPlatform === 'other' ? 'URL' : 'Handle or URL'}
             value={editingUrl}
             onChangeText={setEditingUrl}
             placeholder={config.placeholder}
-            keyboardType="url"
+            keyboardType={editingPlatform === 'website' || editingPlatform === 'other' ? 'url' : 'default'}
             autoCapitalize="none"
             autoCorrect={false}
             error={urlError}
             leftIcon={config.icon}
-            accessibilityLabel={`${config.name} URL`}
-            accessibilityHint={`Enter your ${config.name} URL starting with https://`}
+            accessibilityLabel={`${config.name} handle or URL`}
+            accessibilityHint={`Enter your ${config.name} handle (e.g. CulturePassApp) or full URL`}
           />
+          {editingPlatform !== 'other' && socialUrlPreview(editingUrl, editingPlatform) ? (
+            <Text style={[styles.previewHint, { color: colors.textTertiary }]}>
+              → {socialUrlPreview(editingUrl, editingPlatform)}
+            </Text>
+          ) : null}
 
           {/* Loading indicator */}
           {(isValidating || isFetchingMetadata) && (
@@ -622,6 +636,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: FontFamily.regular,
     marginLeft: 4,
+  },
+  previewHint: {
+    fontSize: 12,
+    fontFamily: FontFamily.regular,
+    marginLeft: 4,
+    marginTop: -8,
   },
   linksContainer: {
     gap: 12,

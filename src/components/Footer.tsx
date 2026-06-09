@@ -26,9 +26,9 @@ export function Footer() {
           <Text style={styles.brandName}>CulturePass</Text>
           
           {/* Get2Know Links */}
-          {FOOTER_SECTIONS.get2Know.map((item, index) => (
+          {FOOTER_SECTIONS.get2Know.map((item) => (
             <Link 
-              key={item.href} 
+              key={item.id} 
               href={item.href} 
               style={styles.footerLink} 
               accessibilityLabel={item.label}
@@ -49,9 +49,9 @@ export function Footer() {
         {/* Legal & Support Section */}
         <View style={styles.linksCol}>
           <Text style={styles.colTitle}>Legal & Support</Text>
-          {FOOTER_SECTIONS.legalSupport.map((item, index) => (
+          {FOOTER_SECTIONS.legalSupport.map((item) => (
             <Link 
-              key={item.href} 
+              key={item.id} 
               href={item.href} 
               style={styles.footerLink} 
               accessibilityLabel={item.label}

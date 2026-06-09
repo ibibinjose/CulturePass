@@ -1,6 +1,6 @@
 # FIXES-001: Layout, Formatting & Design Token Deformities — Remediation Plan
 
-**Status**: Proposed  
+**Status**: In progress (P0–P22 remediation active — Jun 2026)
 **Owner**: Engineering (with design-system + QA review)  
 **Created**: 2026-05-26  
 **Related**: QA Report (2026-05-26), TheApp.md §Engineering rules, src/design-system/tokens/
@@ -167,7 +167,83 @@ After the initial stack lands:
 - Update the "Implemented" section or add a table at the bottom with PR numbers and dates as they land.
 - Treat it as a living checklist — if new deformity patterns are discovered during the work, add them here before the next PR.
 
-**Current status**: Plan written. Execution of PR 1–4 in progress (see linked PRs or commits).
+**Current status (Jun 2026)**:
+| PR slice | Status | Notes |
+|----------|--------|-------|
+| PR 1 Quick wins | Done | `onboardingInterests` tokens import; bundle-size script uses async `main()` |
+| PR 2 Admin users | Done | Full `StyleSheet` migration (P3); `TruncatedText` on metadata |
+| PR 3 EntityTypeSelector | Done | Hero text uses `textOnBrandGradient`; inline styles extracted (P4) |
+| PR 4 Visual regression | Extended | `e2e/visual-regression.spec.ts` + perks mobile snapshot |
+| PR 5 Guardrails | Done | `scripts/check-hex-outside-tokens.mjs`, `npm run hex:check` in `qa:solid` |
+| QR card themes | Done | `src/design-system/tokens/qrCardThemes.ts` extracted from `profile/qr.tsx` |
+| P3 Admin users (cont.) | Done | Remaining inline styles → `StyleSheet` (detail, bulk, filter, table, pagination) |
+| P3 QR export tokens | Done | `qrCardExportHtml.ts`; print popup CSS uses `QR_CARD_EXPORT_HTML` |
+| P3 Web map | Done | `NativeMapView.web.tsx` city chips + embed split on desktop `/map` |
+| P3 ESLint guardrail | Done | Scoped `Pressable` warn in nav/onboarding (`eslint.config.js`) |
+| P3 Visual regression | Extended | `map-desktop-split.png` snapshot at 1280px |
+| P4 Host legal step | Done | `Step3Legal` hex → `CultureTokens`; `numberOfLines` on subtitle/note |
+| P4 Draft recovery | Done | `DraftRecoveryModal` button text + shadow tokens |
+| P4 EntityTypeSelector | Done | Remaining inline styles → `StyleSheet` |
+| P4 Marketplace tiles | Done | `marketplaceTileOverlay.ts`; square + daily-deal tiles tokenized |
+| P4 Hex guardrails | Done | Watchlist per-file budgets; global total informational only |
+| P4 Visual regression | Extended | `cultureshop-deals-mobile.png`; `npm run test:visual` alias |
+| P5 Profile tabs | Done | `EntityPublicProfile` inline styles → `StyleSheet`; `profileHeroOverlay.ts` |
+| P5 Text truncation gate | Done | `scripts/check-card-text-truncation.mjs` in `qa:solid` |
+| P5 Release QA | Done | `npm run qa:release` = `qa:solid` + `size:web` (after `build-web`) |
+| P5 Docs / hygiene | Done | `AGENTS.md` + `TheApp.md` truncation rule; `Step3Legal` console guarded |
+| P6 ProfileComponents | Done | Shared section header, reco row, avatar, skeleton, culture map → `StyleSheet` + tokens |
+| P6 UserPublicProfile | Done | `TruncatedText` on name/bio/location; hero logo style extracted |
+| P6 GuestProfileView | Done | Remaining inline layout → `gs` StyleSheet |
+| P6 Truncation ratchet | Done | `EntityPublicProfile` budget → 0; watchlist expanded to profile module |
+| P7 Profile tab sections | Done | 8 section files → `profileSectionLayout` + local `StyleSheet`; inline styles removed |
+| P7 QR / identity hex | Done | `ProfileIdentityContactSection` QR surface uses `BorderTokens.white` / `.black` |
+| P7 Team + header bar | Done | `TeamManagementModal` + `ProfileHeaderBar` inline/hex cleanup |
+| P7 Section guardrails | Done | Hex + truncation watchlists expanded to all profile tab sections |
+| P8 Public user profile | Done | `src/app/user/[id].tsx` hex → `userPublicProfileOverlay`; styles extracted |
+| P8 Styles split | Done | `userPublicScreenStyles.ts`; reuses `ProfileUtils` `TIER_CFG` / `SOCIAL_DEFS` |
+| P8 Truncation ratchet | Done | All public profile `<Text>` get `numberOfLines`; watchlist budget → 0 |
+| P9 ConnectTeaser | Done | Feature fills + contrast ink → `connectTeaserTokens.ts`; inline styles extracted |
+| P9 Connect guardrails | Done | Hex + truncation watchlists expanded to `ConnectTeaser.tsx` at 0/0 |
+| P10 Community desktop | Done | `CommunityWebDesktopLayout` hex → `communityWebDesktopOverlay` |
+| P10 Desktop inline styles | Done | Scroll gaps, composer column, rail layout → `StyleSheet` |
+| P10 Community guardrails | Done | Hex + truncation watchlists expanded to desktop layout at 0/0 |
+| P11 Saved screen | Done | `RetroStamp` palettes + heart badge → `savedScreenTokens.ts` |
+| P11 Saved inline styles | Done | Scroll, skeleton, favorites row, empty block → `StyleSheet` |
+| P11 Saved guardrails | Done | Hex + truncation watchlists expanded to `saved/index.tsx` at 0/0 |
+| P12 CultureWheel | Done | Slice fills + wheel chrome → `cultureWheelModalTokens.ts` |
+| P12 Wheel inline styles | Done | Header, spin button, result rows → `StyleSheet` |
+| P12 CultureWheel guardrails | Done | Hex + truncation watchlists expanded to `CultureWheelModal.tsx` at 0/0 |
+| P13 Default images | Done | Twelve placeholder gradients → `defaultImageGradients.ts` |
+| P13 Default images guardrails | Done | Hex watchlist expanded to `defaultImages.ts` at 0/0 |
+| P14 Discover home | Done | Category accent + CultureWheel promo → `discoverHomeTokens.ts` |
+| P14 Discover inline styles | Done | Promo banner, intent pills, clear-filter → `StyleSheet` |
+| P14 Discover guardrails | Done | Hex + truncation watchlists expanded to `(tabs)/index.tsx` at 0/0 |
+| P15 Host event create | Done | Muji form + sponsor tiers + preview → `hostspaceEventCreateTokens.ts` |
+| P15 Host form inline styles | Done | Section shell, chips, row flex, sponsor actions → `StyleSheet` |
+| P15 Host event guardrails | Done | Hex + truncation watchlists expanded to `HostspaceEventCreateForm.tsx` at 0/0 |
+| P16 CultureMarket home | Done | Hero, sell banner, FAQ/footer → `cultureMarketHomeTokens.ts` |
+| P16 Market inline styles | Done | Search section, hero CTAs, listings shell → `StyleSheet` |
+| P16 CultureMarket guardrails | Done | Hex + truncation watchlists expanded to `CultureMarket/index.tsx` at 0/0 |
+| P17 Host community create | Done | Reuses `HOSTSPACE_MUJI_FORM` + legacy wizard banner tokens |
+| P17 Community inline styles | Done | Deprecation banner, sponsor rows, preview shell → `StyleSheet` |
+| P17 Community guardrails | Done | Hex + truncation watchlists expanded to `HostspaceCommunityCreateForm.tsx` at 0/0 |
+| P18 Membership upgrade | Done | Plus card gradient/ink + promo errors → `membershipUpgradeTokens.ts` |
+| P18 Upgrade truncation | Done | Card labels, pricing tabs → `numberOfLines` on raw `<Text>` |
+| P18 Upgrade guardrails | Done | Hex + truncation watchlists expanded to `membership/upgrade.tsx` at 0/0 |
+| P18 Footer duplicate keys | Done | Stable `id` on `site-footer-links.ts`; `Footer.tsx` keys by `id` not `href` |
+| P19 Ticket print | Done | Fixed light/paper palette → `ticketPrintTokens.ts` |
+| P19 Print truncation | Done | Badge + full ticket rows, toolbar labels → `numberOfLines` |
+| P19 Print guardrails | Done | Hex + truncation watchlists expanded to `tickets/print/[id].tsx` at 0/0 |
+| P20 Web top bar | Done | Dark gradient, sign-in CTA, menu chrome → `webTopBarTokens.ts` |
+| P20 Top bar truncation | Done | Tabs, menu rows, footer meta → `numberOfLines` on raw `<Text>` |
+| P20 WebTopBar guardrails | Done | Hex + truncation watchlists expanded to `WebTopBar.tsx` at 0/0 |
+| P21 Profile styles | Done | Hero ink, iOS shadows, QR surface → `profileStylesTokens.ts` |
+| P21 ProfileStyles guardrails | Done | Hex watchlist expanded to `ProfileStyles.ts` at 0/0 |
+| Brand palette migration | Done | Yellow/saffron/gold → `brandCyanPalette.ts` (`#00ADEF`, `#00A7EF`, jet black) |
+| Banned color guardrail | Done | `scripts/check-banned-colors.mjs` + `docs/COLOR_PALETTE.md` in `qa:solid` |
+| P22 Account settings | Done | Auth provider chips + flash banners → `settingsAccountTokens.ts` |
+| P22 Account truncation | Done | Badges, provider pills, CPID row → `numberOfLines` on raw `<Text>` |
+| P22 Account guardrails | Done | Hex + truncation watchlists expanded to `settings/account.tsx` at 0/0 |
 
 ---
 
@@ -175,11 +251,13 @@ After the initial stack lands:
 
 ```bash
 # After any layout change
+npm run qa:solid          # typecheck + lint + hex + truncation + unit tests
 npm run lint && npm run typecheck && npm test
 
 # Visual regression (after build)
 npm run build-web
 npx playwright test e2e/visual-regression.spec.ts --update-snapshots   # to accept new baselines (carefully)
+npm run test:visual                                                    # alias for visual regression
 npx playwright test e2e/visual-regression.spec.ts                      # normal run
 
 # Bundle health (now fixed)

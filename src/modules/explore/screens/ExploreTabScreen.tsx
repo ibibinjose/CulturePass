@@ -57,12 +57,12 @@ const CX_DESKTOP_MAX_W = 1180;
 
 /** Primary quick filters — max 7 visible; “More” reveals full preset list. */
 const QUICK_VIBE_IDS: readonly string[] = [
+  'australian',
   'multicultural',
+  'indigenous-heritage',
   'diwali',
-  'holi',
   'lunar-new-year',
   'eid',
-  'carnival',
   'south-asian',
 ];
 

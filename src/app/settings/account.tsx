@@ -33,6 +33,13 @@ import { useRole } from '@/hooks/useRole';
 import { auth as firebaseAuth } from '@/lib/firebase';
 import { Luxe, luxeDark } from '@/design-system/tokens/luxeHeritage';
 import {
+  ACCOUNT_FLASH,
+  AUTH_PROVIDER_APPLE,
+  AUTH_PROVIDER_DEFAULT,
+  AUTH_PROVIDER_GOOGLE,
+  SETTINGS_ACCOUNT,
+} from '@/design-system/tokens/settingsAccountTokens';
+import {
   LuxeText,
   LuxeCard,
   LuxeButton,
@@ -81,25 +88,25 @@ function getProviderStyle(providerId: string, isDark: boolean) {
   
   if (isGoogle) {
     return {
-      backgroundColor: isDark ? 'rgba(234, 67, 53, 0.08)' : 'rgba(234, 67, 53, 0.05)',
-      borderColor: 'rgba(234, 67, 53, 0.25)',
-      textColor: isDark ? '#FF8F87' : '#C5221F',
-      iconColor: '#EA4335'
+      backgroundColor: isDark ? AUTH_PROVIDER_GOOGLE.bgDark : AUTH_PROVIDER_GOOGLE.bgLight,
+      borderColor: AUTH_PROVIDER_GOOGLE.border,
+      textColor: isDark ? AUTH_PROVIDER_GOOGLE.textDark : AUTH_PROVIDER_GOOGLE.textLight,
+      iconColor: AUTH_PROVIDER_GOOGLE.icon,
     };
   }
   if (isApple) {
     return {
-      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)',
-      borderColor: isDark ? 'rgba(255, 255, 255, 0.25)' : 'rgba(0, 0, 0, 0.2)',
-      textColor: isDark ? '#FFFFFF' : '#000000',
-      iconColor: isDark ? '#FFFFFF' : '#000000'
+      backgroundColor: isDark ? AUTH_PROVIDER_APPLE.bgDark : AUTH_PROVIDER_APPLE.bgLight,
+      borderColor: isDark ? AUTH_PROVIDER_APPLE.borderDark : AUTH_PROVIDER_APPLE.borderLight,
+      textColor: isDark ? AUTH_PROVIDER_APPLE.textDark : AUTH_PROVIDER_APPLE.textLight,
+      iconColor: isDark ? AUTH_PROVIDER_APPLE.iconDark : AUTH_PROVIDER_APPLE.iconLight,
     };
   }
   return {
-    backgroundColor: isDark ? 'rgba(74, 94, 191, 0.08)' : 'rgba(74, 94, 191, 0.05)',
-    borderColor: 'rgba(74, 94, 191, 0.25)',
-    textColor: isDark ? '#AEC0FF' : '#3F51B5',
-    iconColor: '#4A5EBF'
+    backgroundColor: isDark ? AUTH_PROVIDER_DEFAULT.bgDark : AUTH_PROVIDER_DEFAULT.bgLight,
+    borderColor: AUTH_PROVIDER_DEFAULT.border,
+    textColor: isDark ? AUTH_PROVIDER_DEFAULT.textDark : AUTH_PROVIDER_DEFAULT.textLight,
+    iconColor: AUTH_PROVIDER_DEFAULT.icon,
   };
 }
 
@@ -177,7 +184,7 @@ function ChangePasswordModal({
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={handleClose}>
-      <View style={[styles.modalBackdrop, { backgroundColor: 'rgba(0,0,0,0.7)' }]}>
+      <View style={[styles.modalBackdrop, { backgroundColor: SETTINGS_ACCOUNT.modalBackdrop }]}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.modalCardWrap}>
           <LuxeCard variant="glass" style={styles.modalCard}><View style={styles.modalHeader}><LuxeText variant="title2">Change Password</LuxeText><Pressable onPress={handleClose} hitSlop={12}><Ionicons name="close" size={24} color={colors.textTertiary} /></Pressable></View><View style={styles.modalBody}><CulturalInput
                 label="Current password"
@@ -287,9 +294,9 @@ function ChangeEmailModal({
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={handleClose}>
-      <View style={[styles.modalBackdrop, { backgroundColor: 'rgba(0,0,0,0.7)' }]}>
+      <View style={[styles.modalBackdrop, { backgroundColor: SETTINGS_ACCOUNT.modalBackdrop }]}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.modalCardWrap}>
-          <LuxeCard variant="glass" style={styles.modalCard}><View style={styles.modalHeader}><LuxeText variant="title2">Change Email</LuxeText><Pressable onPress={handleClose} hitSlop={12}><Ionicons name="close" size={24} color={colors.textTertiary} /></Pressable></View><View style={styles.modalBody}><LuxeText variant="caption" style={{ color: colors.textSecondary, marginBottom: 12 }}>Current: <Text style={{ color: colors.text, fontWeight: '600' }}>{currentEmail || '—'}</Text></LuxeText><CulturalInput
+          <LuxeCard variant="glass" style={styles.modalCard}><View style={styles.modalHeader}><LuxeText variant="title2">Change Email</LuxeText><Pressable onPress={handleClose} hitSlop={12}><Ionicons name="close" size={24} color={colors.textTertiary} /></Pressable></View><View style={styles.modalBody}><LuxeText variant="caption" style={{ color: colors.textSecondary, marginBottom: 12 }}>Current: <Text style={{ color: colors.text, fontWeight: '600' }} numberOfLines={1}>{currentEmail || '—'}</Text></LuxeText><CulturalInput
                 label="New email address"
                 value={newEmail}
                 onChangeText={setNewEmail}
@@ -536,7 +543,7 @@ export default function AccountSettingsScreen() {
   const tierLabel = (user.subscriptionTier || 'free').toUpperCase();
 
   const isDark = useIsDark();
-  const glassBg = isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.03)';
+  const glassBg = isDark ? SETTINGS_ACCOUNT.glassBgDark : SETTINGS_ACCOUNT.glassBgLight;
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
@@ -545,10 +552,10 @@ export default function AccountSettingsScreen() {
         <style dangerouslySetInnerHTML={{ __html: `
           @keyframes pulse {
             0% { transform: scale(0.9); opacity: 0.6; }
-            50% { transform: scale(1.15); opacity: 1; box-shadow: 0 0 8px #F5A623; }
+            50% { transform: scale(1.15); opacity: 1; box-shadow: 0 0 8px ${SETTINGS_ACCOUNT.pulseGlow}; }
             100% { transform: scale(0.9); opacity: 0.6; }
           }
-          .saffron-pulse {
+          .cyan-pulse {
             animation: pulse 2s infinite ease-in-out;
           }
         `}} />
@@ -662,7 +669,7 @@ export default function AccountSettingsScreen() {
                     ]}
                   >
                     <LuxeText variant="caption" style={{ color: colors.textTertiary, fontSize: 11 }}>
-                      CPID: <Text style={{ fontFamily: Luxe.typography.fonts.semibold, color: colors.textSecondary }}>{user.culturePassId}</Text>
+                      CPID: <Text style={{ fontFamily: Luxe.typography.fonts.semibold, color: colors.textSecondary }} numberOfLines={1}>{user.culturePassId}</Text>
                     </LuxeText>
                     <Ionicons
                       name={copied ? "checkmark" : "copy-outline"}
@@ -679,11 +686,11 @@ export default function AccountSettingsScreen() {
 
           {/* Flash banner */}
           {flash && (
-            <GlassView style={[styles.flashBanner, { borderColor: flash.type === 'success' ? '#10B98155' : '#FF5E5B55' }]}>
+            <GlassView style={[styles.flashBanner, { borderColor: flash.type === 'success' ? ACCOUNT_FLASH.successBorder : ACCOUNT_FLASH.errorBorder }]}>
               <Ionicons
                 name={flash.type === 'success' ? 'checkmark-circle' : 'alert-circle'}
                 size={18}
-                color={flash.type === 'success' ? '#10B981' : '#FF5E5B'}
+                color={flash.type === 'success' ? ACCOUNT_FLASH.successIcon : ACCOUNT_FLASH.errorIcon}
               />
               <LuxeText variant="bodyMedium" style={{ fontSize: 14, flex: 1 }}>{flash.text}</LuxeText>
             </GlassView>
@@ -770,7 +777,7 @@ export default function AccountSettingsScreen() {
                       ]}
                     >
                       <Ionicons name="shield-checkmark" size={12} color={colors.success} />
-                      <Text style={[styles.badgeText, { color: colors.success, fontSize: 10, letterSpacing: 0.5, fontFamily: Luxe.typography.fonts.semibold }]}>VERIFIED</Text>
+                      <Text style={[styles.badgeText, { color: colors.success, fontSize: 10, letterSpacing: 0.5, fontFamily: Luxe.typography.fonts.semibold }]} numberOfLines={1}>VERIFIED</Text>
                     </View>
                   ) : (
                     <View
@@ -790,7 +797,7 @@ export default function AccountSettingsScreen() {
                       ]}
                     >
                       <Ionicons name="warning" size={12} color={colors.warning} />
-                      <Text style={[styles.badgeText, { color: colors.warning, fontSize: 10, letterSpacing: 0.5, fontFamily: Luxe.typography.fonts.semibold }]}>UNVERIFIED</Text>
+                      <Text style={[styles.badgeText, { color: colors.warning, fontSize: 10, letterSpacing: 0.5, fontFamily: Luxe.typography.fonts.semibold }]} numberOfLines={1}>UNVERIFIED</Text>
                     </View>
                   )}
                   <LuxeButton variant="glass" size="sm" onPress={() => setShowEmailModal(true)}>Change</LuxeButton>
@@ -802,7 +809,7 @@ export default function AccountSettingsScreen() {
                   style={({ pressed }) => [
                     styles.resendRow,
                     {
-                      backgroundColor: isDark ? 'rgba(245, 166, 35, 0.06)' : 'rgba(245, 166, 35, 0.04)',
+                      backgroundColor: isDark ? 'rgba(0, 167, 239, 0.06)' : 'rgba(0, 167, 239, 0.04)',
                       borderColor: withAlpha(Luxe.colors.saffron, 0.2),
                       borderWidth: 1,
                       borderRadius: 12,
@@ -900,7 +907,7 @@ export default function AccountSettingsScreen() {
                       ]}
                     >
                       <Ionicons name={p.icon} size={14} color={pStyle.iconColor} />
-                      <Text style={[styles.providerText, { color: pStyle.textColor, fontFamily: Luxe.typography.fonts.medium }]}>
+                      <Text style={[styles.providerText, { color: pStyle.textColor, fontFamily: Luxe.typography.fonts.medium }]} numberOfLines={1}>
                         {p.label}
                       </Text>
                     </View>
@@ -941,7 +948,7 @@ export default function AccountSettingsScreen() {
                     }
                   ]}
                 >
-                  <Text style={[styles.badgeText, { color: colors.primary, fontSize: 9, letterSpacing: 0.5, fontFamily: Luxe.typography.fonts.semibold }]}>
+                  <Text style={[styles.badgeText, { color: colors.primary, fontSize: 9, letterSpacing: 0.5, fontFamily: Luxe.typography.fonts.semibold }]} numberOfLines={1}>
                     BETA
                   </Text>
                 </View>
@@ -995,7 +1002,7 @@ export default function AccountSettingsScreen() {
                     }
                   ]}
                 >
-                  <Text style={[styles.badgeText, { color: tierLabel === 'FREE' ? colors.textSecondary : Luxe.colors.gold, fontSize: 10, letterSpacing: 0.5, fontFamily: Luxe.typography.fonts.semibold }]}>
+                  <Text style={[styles.badgeText, { color: tierLabel === 'FREE' ? colors.textSecondary : Luxe.colors.gold, fontSize: 10, letterSpacing: 0.5, fontFamily: Luxe.typography.fonts.semibold }]} numberOfLines={1}>
                     {tierLabel}
                   </Text>
                 </View>
@@ -1131,7 +1138,7 @@ export default function AccountSettingsScreen() {
 
       {/* Delete Confirmation */}
       <Modal visible={showDeleteConfirm} transparent animationType="fade" onRequestClose={() => setShowDeleteConfirm(false)}>
-        <View style={[styles.modalBackdrop, { backgroundColor: 'rgba(0,0,0,0.8)' }]}>
+        <View style={[styles.modalBackdrop, { backgroundColor: SETTINGS_ACCOUNT.modalBackdropDelete }]}>
           <LuxeCard variant="glass" style={styles.deleteCard}>
             <LuxeText variant="title2" style={{ color: colors.error }}>Delete Account?</LuxeText>
             <LuxeText variant="body" style={{ color: colors.textSecondary, marginTop: 12 }}>This is permanent. All events, tickets, and profile data will be lost.</LuxeText>
@@ -1179,10 +1186,10 @@ const styles = StyleSheet.create({
   flashBanner: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: 12, borderWidth: 1 },
   section: { gap: 12 },
   card: { padding: 16 },
-  saveBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 16, paddingTop: 16, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: 'rgba(0,0,0,0.06)' },
+  saveBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 16, paddingTop: 16, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: SETTINGS_ACCOUNT.dividerHairline },
   infoRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   resendRow: { flexDirection: 'row', alignItems: 'center', marginTop: 12, paddingVertical: 8 },
-  dividerRow: { marginTop: 16, paddingTop: 16, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: 'rgba(0,0,0,0.06)' },
+  dividerRow: { marginTop: 16, paddingTop: 16, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: SETTINGS_ACCOUNT.dividerHairline },
   badge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 99 },
   badgeText: { fontSize: 11, fontWeight: '700', textTransform: 'uppercase' },
   actionRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, marginHorizontal: -16, paddingHorizontal: 16 },

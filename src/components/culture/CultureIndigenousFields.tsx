@@ -21,6 +21,8 @@ import {
   INDIGENOUS_TAG_PRESETS,
   searchIndigenousTags,
 } from '@/constants/indigenousTags';
+import { isAustralianNationality } from '@/constants/australianCultureTags';
+import { CultureTagPicker } from '@/components/culture/CultureTagPicker';
 
 export interface CultureIndigenousValue {
   nationalityId?: string;
@@ -66,6 +68,7 @@ export function CultureIndigenousFields({
     value.nationalityId ?? initialNationalityId ?? null,
   );
   const [nationalitySearch, setNationalitySearch] = useState('');
+  const [cultureSearch, setCultureSearch] = useState('');
   const [indigenousSearch, setIndigenousSearch] = useState('');
   const [languageSearch, setLanguageSearch] = useState('');
 
@@ -110,6 +113,7 @@ export function CultureIndigenousFields({
     haptic();
     const next = cultureNationalityId === id ? null : id;
     setCultureNationalityId(next);
+    setCultureSearch('');
     onChange({ nationalityId: next ?? undefined });
   };
 
@@ -201,27 +205,28 @@ export function CultureIndigenousFields({
 
       {/* Culture tags */}
       <Text style={[styles.label, { color: colors.text, marginTop: Spacing.md }]}>Culture tags</Text>
-      <View style={styles.tagGrid}>
-        {filteredCultures.map((c) => {
-          const active = value.cultureIds.includes(c.id);
-          return (
-            <Pressable
-              key={c.id}
-              onPress={() => toggleCulture(c.id)}
-              style={[
-                styles.tagChip,
-                {
-                  borderColor: active ? CultureTokens.gold : colors.border,
-                  backgroundColor: active ? CultureTokens.gold + '22' : surface,
-                },
-              ]}
-            >
-              <Text style={styles.chipEmoji}>{c.emoji}</Text>
-              <Text style={[styles.chipText, { color: active ? CultureTokens.gold : colors.text }]}>{c.label}</Text>
-            </Pressable>
-          );
-        })}
-      </View>
+      {isAustralianNationality(cultureNationalityId) ? (
+        <Text style={[styles.hint, { color: colors.textSecondary }]}>
+          Australian culture tags are grouped by values, lifestyle, heritage, and expression.
+        </Text>
+      ) : null}
+      <CultureTagPicker
+        cultures={filteredCultures}
+        nationalityId={cultureNationalityId}
+        selectedIds={value.cultureIds}
+        onToggle={toggleCulture}
+        colors={{
+          text: colors.text,
+          textSecondary: colors.textSecondary,
+          textTertiary: colors.textTertiary,
+          border: colors.border,
+          surface,
+        }}
+        searchQuery={cultureSearch}
+        onSearchQueryChange={setCultureSearch}
+        showSearch={isAustralianNationality(cultureNationalityId) || filteredCultures.length > 16}
+        testID={`${testID}-culture-tags`}
+      />
 
       {/* Indigenous tags */}
       {showIndigenous ? (

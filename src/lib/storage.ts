@@ -1,5 +1,6 @@
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from './firebase';
+import { formatStorageUploadError } from './storageUtils';
 
 /**
  * Uploads a file (blob or uri) to Firebase Storage.
@@ -7,15 +8,26 @@ import { storage } from './firebase';
  * @param path The destination path in Storage (e.g., 'posts/image.jpg').
  * @returns The download URL of the uploaded file.
  */
-export async function uploadFile(uri: string, path: string): Promise<string> {
+export async function uploadFile(
+  uri: string,
+  path: string,
+  contentType = 'image/jpeg',
+): Promise<string> {
   if (!storage) {
     throw new Error('Firebase Storage is not configured for this build.');
   }
-  const response = await fetch(uri);
-  const blob = await response.blob();
-  const storageRef = ref(storage, path);
-  await uploadBytes(storageRef, blob);
-  return getDownloadURL(storageRef);
+  try {
+    const response = await fetch(uri);
+    if (!response.ok) {
+      throw new Error(`Could not read image (${response.status}). Try picking the photo again.`);
+    }
+    const blob = await response.blob();
+    const storageRef = ref(storage, path);
+    await uploadBytes(storageRef, blob, { contentType: blob.type || contentType });
+    return getDownloadURL(storageRef);
+  } catch (error) {
+    throw new Error(formatStorageUploadError(error));
+  }
 }
 
 export async function uploadPostImage(uri: string, userId: string): Promise<string> {

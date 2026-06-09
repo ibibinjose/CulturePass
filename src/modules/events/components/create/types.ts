@@ -236,7 +236,7 @@ export const AUDIENCE_OPTIONS: { id: FormData['audience']; label: string; emoji:
 ];
 
 export const SPONSOR_TIERS: { id: SponsorTier; label: string; color: string }[] = [
-  { id: 'title',  label: 'Title Sponsor', color: '#FFC857' },
+  { id: 'title',  label: 'Title Sponsor', color: '#00ADEF' },
   { id: 'gold',   label: 'Gold',          color: '#FF8C42' },
   { id: 'silver', label: 'Silver',        color: '#9CA3AF' },
   { id: 'bronze', label: 'Bronze',        color: '#B45309' },

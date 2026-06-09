@@ -3,18 +3,18 @@ import { Platform } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { auth as firebaseAuth, FIREBASE_CLIENT_DISABLED_MESSAGE } from '@/lib/firebase';
-import { FirebaseError } from 'firebase/app';
 import {
   signInWithEmailAndPassword,
-  GoogleAuthProvider,
-  signInWithPopup,
-  signInWithCredential,
-  OAuthProvider,
   setPersistence,
   browserLocalPersistence,
   browserSessionPersistence,
 } from 'firebase/auth';
-import * as AppleAuthentication from 'expo-apple-authentication';
+import {
+  isAuthCancellation,
+  resolveAuthErrorMessage,
+  signInWithAppleProvider,
+  signInWithGoogleProvider,
+} from '@/lib/social-auth';
 import { useOnboarding } from '@/contexts/OnboardingContext';
 import { routeWithRedirect } from '@/lib/routes';
 import { deepLinkResolver } from '@/lib/deep-link-resolver';
@@ -22,24 +22,7 @@ import { captureEvent, identifyUser } from '@/lib/analytics';
 import { useBiometricAuth } from '@/hooks/useBiometricAuth';
 
 export function handleFirebaseError(e: unknown, defaultMessage: string): string {
-  if (e instanceof FirebaseError) {
-    switch (e.code) {
-      case 'auth/user-not-found':
-      case 'auth/wrong-password':
-      case 'auth/invalid-credential':
-        return 'Invalid email or password. Please try again.';
-      case 'auth/too-many-requests':
-        return 'Too many attempts. Please try again later.';
-      case 'auth/network-request-failed':
-        return 'Unable to connect. Please check your internet connection and try again.';
-      case 'auth/popup-closed-by-user':
-      case 'auth/cancelled-popup-request':
-        return '';
-      default:
-        return e.message;
-    }
-  }
-  return defaultMessage;
+  return resolveAuthErrorMessage(e, defaultMessage);
 }
 
 export function useLogin(redirectTo: string | null) {
@@ -129,24 +112,12 @@ export function useLogin(redirectTo: string | null) {
       return;
     }
     try {
-      if (Platform.OS === 'web') {
-        const provider = new GoogleAuthProvider();
-        await signInWithPopup(firebaseAuth, provider);
-      } else {
-        const { GoogleSignin } = await import('@react-native-google-signin/google-signin');
-        GoogleSignin.configure({
-          webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-        });
-        await GoogleSignin.hasPlayServices();
-        await GoogleSignin.signIn();
-        const tokens = await GoogleSignin.getTokens();
-        const credential = GoogleAuthProvider.credential(tokens.idToken);
-        await signInWithCredential(firebaseAuth, credential);
-      }
+      await signInWithGoogleProvider(firebaseAuth);
       trackLogin('google');
       if (Platform.OS !== 'web') await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       await postAuthRouteAfterHydration();
     } catch (e: unknown) {
+      if (isAuthCancellation(e)) return;
       const errorMsg = handleFirebaseError(e, 'Google sign-in failed. Please try again.');
       if (errorMsg) setGlobalError(errorMsg);
       if (Platform.OS !== 'web' && errorMsg) await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -165,33 +136,15 @@ export function useLogin(redirectTo: string | null) {
       return;
     }
     try {
-      if (Platform.OS === 'web') {
-        const provider = new OAuthProvider('apple.com');
-        await signInWithPopup(firebaseAuth, provider);
-      } else {
-        const credential = await AppleAuthentication.signInAsync({
-          requestedScopes: [
-            AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
-            AppleAuthentication.AppleAuthenticationScope.EMAIL,
-          ],
-        });
-        const provider = new OAuthProvider('apple.com');
-        const firebaseCredential = provider.credential({
-          idToken: credential.identityToken ?? '',
-          rawNonce: credential.authorizationCode ?? '',
-        });
-        await signInWithCredential(firebaseAuth, firebaseCredential);
-      }
+      await signInWithAppleProvider(firebaseAuth);
       trackLogin('apple');
       if (Platform.OS !== 'web') await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       await postAuthRouteAfterHydration();
     } catch (e: unknown) {
-      const err = e as Record<string, unknown>;
-      if (err?.code !== 'ERR_REQUEST_CANCELED') {
-        const errorMsg = handleFirebaseError(e, 'Apple sign-in failed. Please try again.');
-        if (errorMsg) setGlobalError(errorMsg);
-        if (Platform.OS !== 'web') await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      }
+      if (isAuthCancellation(e)) return;
+      const errorMsg = handleFirebaseError(e, 'Apple sign-in failed. Please try again.');
+      if (errorMsg) setGlobalError(errorMsg);
+      if (Platform.OS !== 'web') await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {
       setLoading(false);
     }

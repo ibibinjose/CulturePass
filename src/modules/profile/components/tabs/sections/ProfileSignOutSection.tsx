@@ -1,10 +1,11 @@
 import React from 'react';
-import { View, Text, Pressable, StyleSheet, Platform, Alert } from 'react-native';
+import { View, Text, Pressable, Platform, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useM3Colors } from '@/hooks/useM3Colors';
 import { useLayout } from '@/hooks/useLayout';
 import { sout as soutStyles } from '@/modules/profile/components/tabs/ProfileStyles';
+import { profileSectionLayout } from './profileSectionLayout';
 
 interface ProfileSignOutSectionProps {
   logout: () => Promise<void>;
@@ -15,7 +16,7 @@ export const ProfileSignOutSection = React.memo(({ logout }: ProfileSignOutSecti
   const { hPad } = useLayout();
 
   return (
-    <View style={[styles.section, { paddingHorizontal: hPad, marginBottom: 8 }]}>
+    <View style={[profileSectionLayout.section, profileSectionLayout.sectionBottom8, { paddingHorizontal: hPad }]}>
       <Pressable
         style={({ pressed }) => [
           soutStyles.btn,
@@ -33,14 +34,10 @@ export const ProfileSignOutSection = React.memo(({ logout }: ProfileSignOutSecti
         accessibilityLabel="Sign out of CulturePass"
       >
         <Ionicons name="log-out-outline" size={18} color={m3.error} />
-        <Text style={[soutStyles.label, { color: m3.error }]}>Sign out</Text>
+        <Text style={[soutStyles.label, { color: m3.error }]} numberOfLines={1}>Sign out</Text>
       </Pressable>
     </View>
   );
 });
 
 ProfileSignOutSection.displayName = 'ProfileSignOutSection';
-
-const styles = StyleSheet.create({
-  section: { marginTop: 36 },
-});

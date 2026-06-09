@@ -194,13 +194,21 @@ it('Property 28d: community deletions fall back to Community tab', () => {
   }
 });
 
-it('Property 28e: profile/tickets/perks deletions fall back to My Space', () => {
-  for (const type of ['profile', 'tickets', 'perks'] as NotificationEntityType[]) {
+it('Property 28e: profile/tickets deletions fall back to My Space', () => {
+  for (const type of ['profile', 'tickets'] as NotificationEntityType[]) {
     const result = resolveNotificationRoute({ type, entityId: 'x1' }, false);
     expect(isResolvedRoute(result)).toBe(false);
     if (!isResolvedRoute(result)) {
       expect(result.fallbackTab).toBe('/(tabs)/my-space');
     }
+  }
+});
+
+it('Property 28e2: perks deletions fall back to perks listing', () => {
+  const result = resolveNotificationRoute({ type: 'perks', entityId: 'x1' }, false);
+  expect(isResolvedRoute(result)).toBe(false);
+  if (!isResolvedRoute(result)) {
+    expect(result.fallbackTab).toBe('/perks');
   }
 });
 

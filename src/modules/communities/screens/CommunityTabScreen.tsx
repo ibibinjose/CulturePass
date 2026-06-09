@@ -13,7 +13,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
@@ -25,6 +25,9 @@ import { useLayout } from '@/hooks/useLayout';
 import { useOnboarding } from '@/contexts/OnboardingContext';
 import { useSaved } from '@/contexts/SavedContext';
 import { useAuth } from '@/lib/auth';
+import { modulesApi } from '@/modules/api';
+import { CommunityWebDesktopLayout } from '@/modules/communities/components/detail/CommunityWebDesktopLayout';
+import type { Community, EventData } from '@/shared/schema';
 
 import {
   M3TopAppBar,
@@ -60,8 +63,11 @@ export default function CommunityTabScreen() {
 
   const { state: onboarding } = useOnboarding();
   const { user } = useAuth();
+  const { savedCommunityBookmarks } = useSaved();
 
   const userCity = onboarding?.city?.trim() || 'Sydney';
+  const userCountry = onboarding?.country?.trim() || 'Australia';
+  const useDesktopCommunityLayout = Platform.OS === 'web' && isDesktop;
   const hPad = isDesktop ? Luxe.spacing.xl : Luxe.spacing.lg;
 
   const [refreshing, setRefreshing] = useState(false);
@@ -76,6 +82,7 @@ export default function CommunityTabScreen() {
 
   const numColumns = windowSizeClass === 'expanded' ? 3 : 2;
 
+  const queryClient = useQueryClient();
   const { data: allCommunities = [] } = useCommunities();
 
   // === Clean & Beautiful Filter Bar ===
@@ -200,6 +207,59 @@ export default function CommunityTabScreen() {
       .filter(c => !joinedSet.has(c.id) && !followingSet.has(c.id))
       .slice(0, 12);
   }, [allCommunities, joinedSet, followingSet]);
+
+  const joinedCommunities = useMemo(
+    () => allCommunities.filter((c) => joinedSet.has(c.id)),
+    [allCommunities, joinedSet],
+  );
+
+  const followingNotMember = useMemo(
+    () => allCommunities.filter((c) => followingSet.has(c.id) && !joinedSet.has(c.id)),
+    [allCommunities, joinedSet, followingSet],
+  );
+
+  const savedCommunities = useMemo(
+    () => allCommunities.filter((c) => savedCommunityBookmarks.includes(c.id)),
+    [allCommunities, savedCommunityBookmarks],
+  );
+
+  const { data: trendingEvents = [], isLoading: trendingLoading } = useQuery<EventData[]>({
+    queryKey: ['discover', 'trending', userCity],
+    queryFn: () => modulesApi.discover.trending(),
+    enabled: useDesktopCommunityLayout,
+    staleTime: 60_000,
+  });
+
+  const { data: cityEventsRes } = useQuery({
+    queryKey: ['events', 'community-desktop', userCity],
+    queryFn: () => modulesApi.events.list({ city: userCity, pageSize: 24 }),
+    enabled: useDesktopCommunityLayout,
+    staleTime: 60_000,
+  });
+
+  const cityEvents = useMemo(() => {
+    const events = cityEventsRes?.events ?? [];
+    const cityLower = userCity.toLowerCase();
+    return events.filter((e) => e.city?.toLowerCase() === cityLower);
+  }, [cityEventsRes?.events, userCity]);
+
+  const orbitEvents = useMemo(() => {
+    const events = cityEventsRes?.events ?? [];
+    const cityLower = userCity.toLowerCase();
+    return events.filter((e) => e.city?.toLowerCase() !== cityLower).slice(0, 12);
+  }, [cityEventsRes?.events, userCity]);
+
+  const handleRefreshDesktop = async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['discover', 'trending'] }),
+        queryClient.invalidateQueries({ queryKey: ['events', 'community-desktop'] }),
+      ]);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const handleLocationChange = (newCity: string) => {
     setCity?.(newCity);
@@ -371,6 +431,35 @@ export default function CommunityTabScreen() {
   );
 
   // discoverContent removed - now using unified gallery
+
+  if (useDesktopCommunityLayout) {
+    return (
+      <View style={[styles.screen, { backgroundColor: m3Colors.background }]}>
+        <Stack.Screen options={{ headerShown: false }} />
+        <CommunityWebDesktopLayout
+          cityName={cityName}
+          cityCountry={userCountry}
+          contentWidth={layout.contentWidth}
+          shellPad={layout.hPad}
+          joinedCommunities={joinedCommunities as Community[]}
+          followingNotMember={followingNotMember as Community[]}
+          savedCommunities={savedCommunities as Community[]}
+          exploreNearby={exploreCommunities as Community[]}
+          allCommunities={allCommunities as Community[]}
+          cityEvents={cityEvents}
+          orbitEvents={orbitEvents}
+          trendingEvents={trendingEvents}
+          trendingLoading={trendingLoading}
+          joinedCount={joinedCommunities.length}
+          followingOnlyCount={followingNotMember.length}
+          savedCount={savedCommunities.length}
+          exploreCount={exploreCommunities.length}
+          refreshing={refreshing}
+          onRefresh={handleRefreshDesktop}
+        />
+      </View>
+    );
+  }
 
   // Main Render - Unified Community Gallery
   return (

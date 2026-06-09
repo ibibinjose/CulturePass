@@ -31,7 +31,7 @@ try {
 }
 
 const isCalendarLinked =
-  ExpoCalendar != null && typeof ExpoCalendar.requestCalendarPermissionsAsync === 'function';
+  ExpoCalendar != null && typeof ExpoCalendar.requestCalendarPermissions === 'function';
 
 export interface PersonalEvent {
   id: string;
@@ -88,7 +88,7 @@ export function useCalendarSync() {
   // Check permissions on mount
   useEffect(() => {
     if (Platform.OS !== 'web' && isCalendarLinked && ExpoCalendar) {
-      ExpoCalendar.getCalendarPermissionsAsync()
+      ExpoCalendar.getCalendarPermissions()
         .then(({ granted }) => setPermissionGranted(granted))
         .catch(() => {/* ignore */});
     }
@@ -101,7 +101,7 @@ export function useCalendarSync() {
       showAlertNoNative();
       return false;
     }
-    const { granted } = await ExpoCalendar!.requestCalendarPermissionsAsync();
+    const { granted } = await ExpoCalendar!.requestCalendarPermissions();
     setPermissionGranted(granted);
     if (!granted) {
       Alert.alert(
@@ -133,11 +133,11 @@ export function useCalendarSync() {
   const fetchPersonalEvents = useCallback(async (startDate: Date, endDate: Date) => {
     if (Platform.OS === 'web' || !isCalendarLinked || !permissionGranted || !prefs.deviceConnected) return;
     try {
-      const calendars = await ExpoCalendar!.getCalendarsAsync(ExpoCalendar!.EntityTypes.EVENT);
+      const calendars = await ExpoCalendar!.getCalendars(ExpoCalendar!.EntityTypes.EVENT);
       const calendarIds = calendars.map((c) => c.id);
       if (!calendarIds.length) return;
 
-      const raw = await ExpoCalendar!.getEventsAsync(calendarIds, startDate, endDate);
+      const raw = await ExpoCalendar!.listEvents(calendarIds, startDate, endDate);
       const mapped: PersonalEvent[] = raw.map((ev) => ({
         id: ev.id,
         title: ev.title ?? 'Busy',
@@ -175,7 +175,7 @@ export function useCalendarSync() {
     if (!granted) return false;
 
     try {
-      const calendars = await ExpoCalendar!.getCalendarsAsync(ExpoCalendar!.EntityTypes.EVENT);
+      const calendars = await ExpoCalendar!.getCalendars(ExpoCalendar!.EntityTypes.EVENT);
       // Prefer the default calendar
       const writable = calendars.find(
         (c) =>
@@ -191,7 +191,7 @@ export function useCalendarSync() {
       const startDate = parseEventDate(event);
       const endDate = parseEventEndDate(event, startDate);
 
-      await ExpoCalendar!.createEventAsync(writable.id, {
+      await writable.createEvent({
         title: event.title ?? 'CulturePass Event',
         notes: event.description ?? '',
         location: [event.venue, event.address, event.city].filter(Boolean).join(', '),

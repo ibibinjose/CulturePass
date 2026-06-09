@@ -5,6 +5,8 @@
  * Powers cultural identity onboarding, discovery filters, and community grouping.
  */
 
+import { AUSTRALIAN_CULTURE_IDS, buildAustralianCultureEntries } from './australianCultureTags';
+
 export interface Culture {
   id: string;
   label: string;
@@ -177,6 +179,8 @@ export const CULTURES: Record<string, Culture> = {
   samoan:         { id: 'samoan',         label: 'Samoan',          emoji: '🌊', nationalityId: 'samoan',     primaryLanguageId: 'smo' },
   tongan:         { id: 'tongan',         label: 'Tongan',          emoji: '🌺', nationalityId: 'tongan',     primaryLanguageId: 'ton' },
   fijian:         { id: 'fijian',         label: 'Fijian',          emoji: '🌴', nationalityId: 'fijian',     primaryLanguageId: 'fij' },
+  // Australian culture tags — see australianCultureTags.ts
+  ...Object.fromEntries(buildAustralianCultureEntries().map((entry) => [entry.id, entry])),
 };
 
 // ---------------------------------------------------------------------------
@@ -254,7 +258,7 @@ export const NATIONALITIES: Record<string, Nationality> = {
   chilean:      { id: 'chilean',      label: 'Chilean',      countryCode: 'CHL', emoji: '🇨🇱', regionId: 'latin_america',  cultureIds: ['chilean'] },
   paraguayan:   { id: 'paraguayan',   label: 'Paraguayan',   countryCode: 'PRY', emoji: '🇵🇾', regionId: 'latin_america',  cultureIds: ['guarani'] },
   // Pacific
-  australian:   { id: 'australian',   label: 'Australian',   countryCode: 'AUS', emoji: '🇦🇺', regionId: 'pacific',        cultureIds: ['aboriginal_australian','torres_strait'] },
+  australian:   { id: 'australian',   label: 'Australian',   countryCode: 'AUS', emoji: '🇦🇺', regionId: 'pacific',        cultureIds: ['aboriginal_australian','torres_strait', ...AUSTRALIAN_CULTURE_IDS] },
   newzealander: { id: 'newzealander', label: 'New Zealander',countryCode: 'NZL', emoji: '🇳🇿', regionId: 'pacific',        cultureIds: ['maori'] },
   samoan:       { id: 'samoan',       label: 'Samoan',       countryCode: 'WSM', emoji: '🇼🇸', regionId: 'pacific',        cultureIds: ['samoan'] },
   tongan:       { id: 'tongan',       label: 'Tongan',       countryCode: 'TON', emoji: '🇹🇴', regionId: 'pacific',        cultureIds: ['tongan'] },

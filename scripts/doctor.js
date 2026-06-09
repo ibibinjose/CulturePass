@@ -148,11 +148,30 @@ function checkEnvironmentVariables() {
   ];
 
   const recommendedNativeVars = [
-    'EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID',
-    'EXPO_PUBLIC_GOOGLE_REVERSED_CLIENT_ID',
-    'EXPO_PUBLIC_GOOGLE_MAPS_KEY',
-    'EXPO_PUBLIC_FCM_VAPID_KEY',
-    'EXPO_PUBLIC_POSTHOG_API_KEY',
+    {
+      key: 'EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID',
+      hint: 'Required for Google Sign-In (native + web). Run: npm run google:sync',
+    },
+    {
+      key: 'EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID',
+      hint: 'Recommended for iOS Google Sign-In. Run: npm run google:sync',
+    },
+    {
+      key: 'EXPO_PUBLIC_GOOGLE_REVERSED_CLIENT_ID',
+      hint: 'Required for iOS URL scheme. Run: npm run google:sync',
+    },
+    {
+      key: 'EXPO_PUBLIC_GOOGLE_MAPS_KEY',
+      hint: 'Maps SDK — run: npm run maps:sync',
+    },
+    {
+      key: 'EXPO_PUBLIC_FCM_VAPID_KEY',
+      hint: 'Web push — run: npm run fcm:vapid:setup -- --prompt',
+    },
+    {
+      key: 'EXPO_PUBLIC_POSTHOG_API_KEY',
+      hint: 'Analytics',
+    },
   ];
 
   // Try parsing environment variables from local .env files
@@ -199,13 +218,59 @@ function checkEnvironmentVariables() {
     info('  See app.config.js and src/lib/config.ts for how these are consumed.');
   }
 
-  recommendedNativeVars.forEach((key) => {
+  recommendedNativeVars.forEach((entry) => {
+    const key = typeof entry === 'string' ? entry : entry.key;
+    const hint = typeof entry === 'string' ? '' : entry.hint;
     if (loadedEnv[key]) {
       pass(`${key} is set (native/web feature ready)`);
     } else {
-      warn(`${key} is missing — Google Sign-In, Maps, push, or analytics may be limited on that platform.`);
+      warn(`${key} is missing${hint ? ` — ${hint}` : ''}.`);
     }
   });
+
+  const iosPlist = path.join(process.cwd(), 'ios/CulturePass/GoogleService-Info.plist');
+  const rootPlist = path.join(process.cwd(), 'GoogleService-Info.plist');
+  const androidJson = path.join(process.cwd(), 'android/app/google-services.json');
+  if (fs.existsSync(iosPlist) && fs.existsSync(androidJson)) {
+    pass('Native Firebase config files present (GoogleService-Info.plist + google-services.json)');
+  } else {
+    warn('Native Firebase config files missing — run: npm run google:sync');
+  }
+
+  const pbxproj = path.join(process.cwd(), 'ios/CulturePass.xcodeproj/project.pbxproj');
+  if (fs.existsSync(pbxproj)) {
+    const pbx = fs.readFileSync(pbxproj, 'utf8');
+    if (pbx.includes('GoogleService-Info.plist')) {
+      pass('GoogleService-Info.plist linked in Xcode project');
+    } else if (fs.existsSync(iosPlist) || fs.existsSync(rootPlist)) {
+      warn('GoogleService-Info.plist not in Xcode project — run: npm run google:link-ios');
+    }
+  }
+
+  const androidGradle = path.join(process.cwd(), 'android/app/build.gradle');
+  if (fs.existsSync(androidGradle)) {
+    const gradle = fs.readFileSync(androidGradle, 'utf8');
+    if (gradle.includes('com.google.gms.google-services')) {
+      pass('Android Google Services Gradle plugin configured');
+    } else {
+      warn('Android missing google-services Gradle plugin — run prebuild or check plugins/withGoogleServicesGradle.js');
+    }
+  }
+
+  if (fs.existsSync(androidJson)) {
+    try {
+      const services = JSON.parse(fs.readFileSync(androidJson, 'utf8'));
+      const oauth = services.client?.[0]?.oauth_client ?? [];
+      const hasAndroidClient = oauth.some((entry) => entry.client_type === 1);
+      if (hasAndroidClient) {
+        pass('Android OAuth client present in google-services.json (Google Sign-In ready)');
+      } else {
+        warn('Android OAuth client missing — run: npm run google:android-sha');
+      }
+    } catch {
+      warn('Could not parse android/app/google-services.json');
+    }
+  }
 
   if (loadedEnv.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY?.startsWith('pk_test_')) {
     info('Stripe publishable key is test mode (pk_test_) — correct for dev/preview; use pk_live_ in EAS production.');

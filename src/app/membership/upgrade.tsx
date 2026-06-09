@@ -44,6 +44,18 @@ import {
   WHITE_20,
   membershipHaptic,
 } from '@/modules/membership/membershipShared';
+import {
+  PLUS_CARD_BORDER,
+  PLUS_CARD_CHIP_BG,
+  PLUS_CARD_CHIP_BORDER,
+  PLUS_CARD_GRADIENT,
+  PLUS_CARD_INK,
+  PLUS_CARD_INK_DARK,
+  PLUS_CARD_SHADOW,
+  PLUS_CARD_SHIMMER,
+  UPGRADE_PROMO_ERROR,
+  UPGRADE_PROMO_ERROR_SOFT,
+} from '@/design-system/tokens/membershipUpgradeTokens';
 
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
 
@@ -105,14 +117,14 @@ function PlanStatusCard({
   return (
     <View style={cardStyles.container}>
       <LinearGradient
-        colors={['#E5A93B', '#FFF2B2', '#C59024', '#FBEAA1', '#9E6D0F']}
+        colors={[...PLUS_CARD_GRADIENT]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={cardStyles.card}
       >
         {/* Shimmer/Reflection Overlay */}
         <LinearGradient
-          colors={['rgba(255,255,255,0.35)', 'rgba(255,255,255,0.08)', 'transparent']}
+          colors={[...PLUS_CARD_SHIMMER]}
           start={{ x: 0, y: 0 }}
           end={{ x: 0.5, y: 1 }}
           style={StyleSheet.absoluteFill}
@@ -122,27 +134,27 @@ function PlanStatusCard({
         <View style={cardStyles.header}>
           <View style={cardStyles.chip} />
           <View style={cardStyles.brand}>
-            <Ionicons name="diamond" size={20} color="#5C4008" />
-            <Text style={cardStyles.brandText}>CulturePass+</Text>
+            <Ionicons name="diamond" size={20} color={PLUS_CARD_INK} />
+            <Text style={cardStyles.brandText} numberOfLines={1}>CulturePass+</Text>
           </View>
         </View>
 
         {/* Card Number / ID */}
-        <Text style={cardStyles.cardNo}>
+        <Text style={cardStyles.cardNo} numberOfLines={1}>
           MEMBER  {userId ? userId.substring(userId.length - 8).toUpperCase() : 'CP-PLUS'}
         </Text>
 
         {/* Footer: Name & Expiry */}
         <View style={cardStyles.footer}>
           <View style={cardStyles.holder}>
-            <Text style={cardStyles.label}>CARDHOLDER</Text>
+            <Text style={cardStyles.label} numberOfLines={1}>CARDHOLDER</Text>
             <Text style={cardStyles.name} numberOfLines={1}>
               {(user?.displayName || user?.username || 'Valued Member').toUpperCase()}
             </Text>
           </View>
           <View style={cardStyles.valid}>
-            <Text style={cardStyles.label}>RENEWS</Text>
-            <Text style={cardStyles.date}>{expiresAt ? new Date(expiresAt).toLocaleDateString('en-AU', { month: '2-digit', year: '2-digit' }) : 'N/A'}</Text>
+            <Text style={cardStyles.label} numberOfLines={1}>RENEWS</Text>
+            <Text style={cardStyles.date} numberOfLines={1}>{expiresAt ? new Date(expiresAt).toLocaleDateString('en-AU', { month: '2-digit', year: '2-digit' }) : 'N/A'}</Text>
           </View>
         </View>
       </LinearGradient>
@@ -187,7 +199,7 @@ const cardStyles = StyleSheet.create({
     padding: 24,
     height: 200,
     justifyContent: 'space-between',
-    shadowColor: '#000',
+    shadowColor: PLUS_CARD_SHADOW,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.3,
     shadowRadius: 15,
@@ -195,7 +207,7 @@ const cardStyles = StyleSheet.create({
     position: 'relative',
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.3)',
+    borderColor: PLUS_CARD_BORDER,
   },
   header: {
     flexDirection: 'row',
@@ -206,9 +218,9 @@ const cardStyles = StyleSheet.create({
     width: 45,
     height: 35,
     borderRadius: 8,
-    backgroundColor: 'rgba(92, 64, 8, 0.15)',
+    backgroundColor: PLUS_CARD_CHIP_BG,
     borderWidth: 1,
-    borderColor: 'rgba(92, 64, 8, 0.3)',
+    borderColor: PLUS_CARD_CHIP_BORDER,
   },
   brand: {
     flexDirection: 'row',
@@ -218,13 +230,13 @@ const cardStyles = StyleSheet.create({
   brandText: {
     fontSize: 16,
     fontFamily: FontFamily.bold,
-    color: '#3d2a05',
+    color: PLUS_CARD_INK_DARK,
     letterSpacing: -0.5,
   },
   cardNo: {
     fontSize: 20,
     fontFamily: FontFamily.bold,
-    color: '#3d2a05',
+    color: PLUS_CARD_INK_DARK,
     letterSpacing: 2,
     marginVertical: 12,
   },
@@ -243,7 +255,7 @@ const cardStyles = StyleSheet.create({
   label: {
     fontSize: 9,
     fontFamily: FontFamily.bold,
-    color: '#5C4008',
+    color: PLUS_CARD_INK,
     opacity: 0.8,
     letterSpacing: 1,
     marginBottom: 4,
@@ -251,13 +263,13 @@ const cardStyles = StyleSheet.create({
   name: {
     fontSize: 15,
     fontFamily: FontFamily.bold,
-    color: '#3d2a05',
+    color: PLUS_CARD_INK_DARK,
     letterSpacing: 0.5,
   },
   date: {
     fontSize: 14,
     fontFamily: FontFamily.bold,
-    color: '#3d2a05',
+    color: PLUS_CARD_INK_DARK,
   },
   alertBanner: {
     flexDirection: 'row',
@@ -406,7 +418,7 @@ function PromoCodeWidget({
               returnKeyType="done"
               onSubmitEditing={handleRedeem}
               editable={!mutation.isPending}
-              style={[pc.input, { color: colors.text, backgroundColor: colors.surfaceVariant, borderColor: error ? '#EF4444' : (appliedPromoCode ? CultureTokens.teal : colors.borderLight) }]}
+              style={[pc.input, { color: colors.text, backgroundColor: colors.surfaceVariant, borderColor: error ? UPGRADE_PROMO_ERROR : (appliedPromoCode ? CultureTokens.teal : colors.borderLight) }]}
               accessibilityLabel="Promo or gift code"
             />
             <LuxeButton
@@ -423,7 +435,7 @@ function PromoCodeWidget({
 
           {error ? (
             <View style={pc.msgRow}>
-              <Ionicons name="alert-circle" size={14} color="#EF4444" />
+              <Ionicons name="alert-circle" size={14} color={UPGRADE_PROMO_ERROR} />
               <LuxeText variant="caption" style={[pc.msgText, pc.msgError]}>{error}</LuxeText>
             </View>
           ) : null}
@@ -468,7 +480,7 @@ const pc = StyleSheet.create({
   },
   msgRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 6 },
   msgText: { fontSize: 12, fontFamily: FontFamily.medium, flex: 1, lineHeight: 17 },
-  msgError: { color: '#EF4444' },
+  msgError: { color: UPGRADE_PROMO_ERROR },
   msgSuccess: { color: CultureTokens.teal },
   hint: { fontSize: 11, fontFamily: FontFamily.regular, lineHeight: 16, marginTop: 4 },
 });
@@ -765,11 +777,11 @@ export default function UpgradeScreen() {
                   style={({ pressed }) => [actions.row, { backgroundColor: pressed ? colors.primarySoft : 'transparent' }]}
                   accessibilityRole="button"
                 >
-                  <View style={[actions.icon, { backgroundColor: '#EF444420' }]}>
-                    <Ionicons name="close-circle-outline" size={18} color="#EF4444" />
+                  <View style={[actions.icon, { backgroundColor: UPGRADE_PROMO_ERROR_SOFT }]}>
+                    <Ionicons name="close-circle-outline" size={18} color={UPGRADE_PROMO_ERROR} />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <LuxeText variant="bodyMedium" style={[actions.label, { color: '#EF4444' }]}>Cancel subscription</LuxeText>
+                    <LuxeText variant="bodyMedium" style={[actions.label, { color: UPGRADE_PROMO_ERROR }]}>Cancel subscription</LuxeText>
                     <LuxeText variant="caption" style={{ color: colors.textSecondary }}>You keep access until your paid period ends</LuxeText>
                   </View>
                   <Ionicons name="chevron-forward" size={16} color={colors.textTertiary} />
@@ -847,10 +859,10 @@ export default function UpgradeScreen() {
                 >
                   {period === 'yearly' && (
                     <View style={pricing.savePill}>
-                      <Text style={pricing.savePillText}>SAVE 28%</Text>
+                      <Text style={pricing.savePillText} numberOfLines={1}>SAVE 28%</Text>
                     </View>
                   )}
-                  <Text style={[pricing.tabText, { color: colors.textSecondary }, billingPeriod === period && { color: colors.background }]}>
+                  <Text style={[pricing.tabText, { color: colors.textSecondary }, billingPeriod === period && { color: colors.background }]} numberOfLines={1}>
                     {period === 'monthly' ? 'Monthly' : 'Yearly'}
                   </Text>
                 </Pressable>

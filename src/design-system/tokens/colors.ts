@@ -8,7 +8,7 @@
  *   - Indigo-Violet (#4F46E5) — primary brand identity
  *   - Rich Violet (#9333EA) — active states, gradient start
  *   - Movement Coral (#FF5E5B) — action and emotion
- *   - Temple Gold (#FFC857) — premium/cultural marker (accent only, not body/datetime text)
+ *   - Brand Cyan (#00ADEF) — premium/cultural marker (accent only, not body/datetime text)
  *   - Warm Teal (#0D9488) — global belonging, venues
  *
  * Design Principles:
@@ -28,10 +28,10 @@
  *
  * Core Cultural Colors:
  *   - Terracotta Glow (#E36A4E) — Primary action, cultural identity
- *   - Deep Saffron (#F5A623) — Secondary action, warm highlights
+ *   - Brand Cyan Deep (#00A7EF) — Secondary action, highlights
  *   - Rich Indigo (#4A5EBF) — Accent 1, cultural stories, links
  *   - Emerald Harmony (#0A8C7F) — Accent 2, trust, community sections
- *   - Heritage Gold (#D4A017) — Accent 3, premium elements
+ *   - Brand Cyan (#00ADEF) — Accent 3, premium elements (replaces deprecated gold/saffron)
  *
  * Design Principles:
  *   ✓ Cultural authenticity over generic palettes
@@ -39,6 +39,13 @@
  *   ✓ Accessible contrast ratios (WCAG AA minimum)
  *   ✓ Platform-agnostic design with native performance
  */
+
+import {
+  BRAND_CYAN,
+  BRAND_CYAN_DEEP,
+  BRAND_CYAN_LIGHT,
+  JET_BLACK,
+} from './brandCyanPalette';
 
 export interface ShadowStyle {
   shadowColor?: string;
@@ -70,7 +77,9 @@ const createShadow = (
 const BRAND_INDIGO = "#4F46E5";
 const BRAND_VIOLET = "#4F46E5"; // Unified with BRAND_INDIGO — no standalone purple
 const BRAND_CORAL = "#FF5E5B";
-const BRAND_GOLD = "#FFC857";
+
+/** @deprecated Name retained for API compat — value is BRAND_CYAN, not gold. */
+const BRAND_GOLD = BRAND_CYAN;
 const BRAND_TEAL = "#0D9488";
 const BRAND_PURPLE = "#4F46E5"; // Remapped to indigo — purple removed from brand palette
 
@@ -79,10 +88,12 @@ const BRAND_PURPLE = "#4F46E5"; // Remapped to indigo — purple removed from br
  * Primary cultural identity and action palette.
  */
 const TERRACOTTA_GLOW = "#E36A4E";    // Primary - Main buttons, accents, hero highlights
-const DEEP_SAFFRON = "#F5A623";       // Secondary - CTAs, festival tags, warm highlights
+/** @deprecated Name retained — value is BRAND_CYAN_DEEP (replaces saffron). */
+const DEEP_SAFFRON = BRAND_CYAN_DEEP;
 const RICH_INDIGO = "#4A5EBF";        // Accent 1 - Cultural stories, map pins, links
 const EMERALD_HARMONY = "#0A8C7F";    // Accent 2 - Trust, events, community sections
-const HERITAGE_GOLD = "#D4A017";      // Accent 3 - Badges, stamps, premium/passport elements
+/** @deprecated Name retained — value is BRAND_CYAN (replaces heritage gold). */
+const HERITAGE_GOLD = BRAND_CYAN;
 
 /** Vivid CTA fill for high-emphasis actions. */
 export const CTA_VIVID_BLUE = BRAND_INDIGO;
@@ -135,8 +146,8 @@ export const CultureTokens = {
 /** Olympics 5-ring colors for filter chips, buttons, and accents (mostly black/white base per request). */
 export const OlympicsColors = {
   blue: BRAND_INDIGO,
-  yellow: BRAND_GOLD,
-  black: '#1C1C1C',
+  yellow: BRAND_CYAN,
+  black: JET_BLACK,
   green: BRAND_TEAL,
   red: BRAND_CORAL,
 } as const;
@@ -292,8 +303,8 @@ export const light: ColorTheme = {
   primarySoft: "rgba(79, 70, 229, 0.08)",
 
   secondary: CultureTokens.deepSaffron,
-  secondaryLight: "#FFF0D9",
-  secondaryDark: "#524500",
+  secondaryLight: "#E0F7FF",
+  secondaryDark: "#006B8F",
 
   accent: CultureTokens.terracottaGlow,
   accentLight: "#FFDBCB",
@@ -360,8 +371,8 @@ export const dark: ColorTheme = {
   primarySoft: "rgba(79, 70, 229, 0.15)",
 
   secondary: CultureTokens.deepSaffron,
-  secondaryLight: "#765D00",
-  secondaryDark: "#FFF0D9",
+  secondaryLight: "#005A78",
+  secondaryDark: "#E0F7FF",
 
   accent: CultureTokens.terracottaGlow,
   accentLight: "#7D2900",
@@ -451,7 +462,7 @@ export const glass = {
 export const gradients = {
   /**
    * CulturePass Signature Gradient (2026)
-   * Terracotta Glow #E36A4E → Deep Saffron #F5A623 — warm heritage vibe.
+   * Terracotta Glow #E36A4E → Brand Cyan Deep #00A7EF — cultural + cyan signature.
    * Max ONE per screen. Hero / onboarding / CulturePass+ only.
    */
   culturepassBrand: [
@@ -483,17 +494,17 @@ export const gradients = {
     "#CC237F",
   ] as [string, string],
 
-  /** Warm Welcome Gradient — Deep Saffron → Heritage Gold */
+  /** Cyan welcome gradient — Brand Cyan Deep → Brand Cyan */
   warmWelcome: [
-    CultureTokens.deepSaffron,
-    CultureTokens.heritageGold,
+    BRAND_CYAN_DEEP,
+    BRAND_CYAN,
   ] as [string, string],
-  /** Premium gold gradient for membership/pro badges */
-  gold: [BRAND_GOLD, "#E6A900"] as [string, string],
-  /** Terracotta Sunset Gradient — Terracotta Glow → Deep Saffron */
+  /** Premium cyan gradient for membership/pro badges */
+  gold: [BRAND_CYAN, BRAND_CYAN_DEEP] as [string, string],
+  /** Terracotta + cyan sunset */
   terracottaSunset: [
     CultureTokens.terracottaGlow,
-    "#F59E0B",
+    BRAND_CYAN_DEEP,
   ] as [string, string],
   /** Hero banner overlay (transparent → dark) */
   heroOverlay: ["transparent", "rgba(0,0,0,0.8)"] as [string, string],
@@ -509,21 +520,21 @@ export const gradients = {
     CultureTokens.emeraldHarmony,
     "#10B981",
   ] as [string, string],
-  /** Gold Accent Gradient — Heritage Gold → Warm Gold */
+  /** Cyan accent gradient */
   goldAccent: [
-    CultureTokens.heritageGold,
-    "#FBBF24",
+    BRAND_CYAN,
+    BRAND_CYAN_LIGHT,
   ] as [string, string],
-  /** Cultural Blend Gradient — Terracotta Glow → Deep Saffron → Heritage Gold */
+  /** Cultural blend — Terracotta → Cyan Deep → Cyan */
   culturalBlend: [
     CultureTokens.terracottaGlow,
-    CultureTokens.deepSaffron,
-    CultureTokens.heritageGold,
+    BRAND_CYAN_DEEP,
+    BRAND_CYAN,
   ] as [string, string, string],
-  /** Passport Prestige Gradient — Heritage Gold → Deep Saffron → Rich Indigo */
+  /** Passport prestige — Cyan → Cyan Deep → Rich Indigo */
   passportPrestige: [
-    CultureTokens.heritageGold,
-    "#F59E0B",
+    BRAND_CYAN,
+    BRAND_CYAN_DEEP,
     CultureTokens.richIndigo,
   ] as [string, string, string],
 };
@@ -534,10 +545,10 @@ export const gradients = {
  */
 export const neon = {
   culturalHighlight: { color: CultureTokens.terracottaGlow, glow: "rgba(227, 106, 78, 0.3)" },      // Terracotta glow
-  festivalGlow: { color: CultureTokens.deepSaffron, glow: "rgba(245, 166, 35, 0.3)" },           // Saffron glow
+  festivalGlow: { color: BRAND_CYAN_DEEP, glow: "rgba(0, 167, 239, 0.3)" },
   storySpotlight: { color: CultureTokens.richIndigo, glow: "rgba(74, 94, 191, 0.3)" },          // Indigo glow
   communityPulse: { color: CultureTokens.emeraldHarmony, glow: "rgba(10, 140, 127, 0.3)" },         // Emerald glow
-  achievementRadiance: { color: CultureTokens.heritageGold, glow: "rgba(212, 160, 23, 0.3)" },    // Gold glow
+  achievementRadiance: { color: BRAND_CYAN, glow: "rgba(0, 173, 239, 0.3)" },
 } as const;
 
 export default {

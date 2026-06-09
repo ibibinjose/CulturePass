@@ -31,6 +31,7 @@ import { useDiscoverData } from '@/modules/discover/hooks/useDiscoverData';
 import { useColors, useIsDark } from '@/hooks/useColors';
 import { useM3Colors } from '@/hooks/useM3Colors';
 import { discoverFeature } from '@/features';
+import { DISCOVER_HOME } from '@/design-system/tokens/discoverHomeTokens';
 import {
   Vitrine,
   FontFamily,
@@ -86,7 +87,7 @@ const categoryAccent: Record<string, string> = {
   travel: CultureTokens.richIndigo,
   offers: CultureTokens.gold,
   directory: CultureTokens.emeraldHarmony,
-  indigenous: '#2E7D32', // earthy green, respectful
+  indigenous: DISCOVER_HOME.categoryIndigenousAccent,
   search: CultureTokens.indigo,
   all: CultureTokens.indigo,
 };
@@ -230,7 +231,7 @@ export default function DiscoverScreen() {
           <link rel="canonical" href={_DISCOVER_HEAD_URL} />
         </Head>
       )}
-      <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <View style={[ds.screen, { backgroundColor: colors.background }]}>
         <View
           style={[
             StyleSheet.absoluteFill,
@@ -323,7 +324,7 @@ export default function DiscoverScreen() {
               activeFilter === 'all' ? (
                 <Image
                   source={require('@/assets/images/culturepass-logo.png')}
-                  style={{ width: 40, height: 40, borderRadius: 20, marginLeft: 8 }}
+                  style={ds.logoThumb}
                   contentFit="contain"
                 />
               ) : undefined
@@ -391,8 +392,8 @@ export default function DiscoverScreen() {
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingHorizontal: pageSidePad, gap: 8, paddingBottom: 4 }}
-            style={{ marginBottom: Spacing.md }}
+            contentContainerStyle={[ds.intentScrollContent, { paddingHorizontal: pageSidePad }]}
+            style={ds.intentScroll}
           >
             <IntentPill
               label="Today"
@@ -457,18 +458,15 @@ export default function DiscoverScreen() {
               setWheelVisible(true);
             }}
             style={({ pressed, hovered }: any) => [
+              ds.wheelPromoPressable,
               {
                 marginHorizontal: pageSidePad,
-                marginBottom: Spacing.md,
-                borderRadius: Radius.lg,
-                borderWidth: 1,
-                borderColor: isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.05)',
-                overflow: 'hidden',
+                borderColor: isDark ? DISCOVER_HOME.wheelPromoBorderDark : DISCOVER_HOME.wheelPromoBorderLight,
                 transform: [{ scale: pressed ? 0.985 : (hovered ? 1.015 : 1) }],
                 ...Platform.select({
                   web: {
-                    boxShadow: hovered 
-                      ? '0 16px 36px rgba(126, 87, 194, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.15)' 
+                    boxShadow: hovered
+                      ? '0 16px 36px rgba(126, 87, 194, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.15)'
                       : '0 4px 16px rgba(0, 0, 0, 0.06)',
                     backdropFilter: 'blur(20px)',
                     transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
@@ -481,31 +479,28 @@ export default function DiscoverScreen() {
             <LinearGradient
               colors={
                 isDark
-                  ? ['#E64A19', '#880E4F', '#4A148C'] // Deep Terracotta -> Deep Plum -> Indigo/Violet
-                  : ['#FF7043', '#EC407A', '#7E57C2'] // Warm Terracotta -> Rose Pink -> Vibrant Purple
+                  ? [...DISCOVER_HOME.wheelPromoGradientDark]
+                  : [...DISCOVER_HOME.wheelPromoGradientLight]
               }
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              style={{ padding: 18, flexDirection: 'row', alignItems: 'center', gap: 14, position: 'relative', overflow: 'hidden' }}
+              style={ds.wheelPromoGradient}
             >
               {/* Spinning/glowing wheel blueprint vector in background */}
               <RNAnimated.View
-                style={{
-                  position: 'absolute',
-                  right: -35,
-                  top: -30,
-                  width: 170,
-                  height: 170,
-                  opacity: isDark ? 0.16 : 0.26,
-                  transform: [{ rotate: bgRotateInterpolate }],
-                  pointerEvents: 'none',
-                }}
+                style={[
+                  ds.wheelBlueprint,
+                  {
+                    opacity: isDark ? 0.16 : 0.26,
+                    transform: [{ rotate: bgRotateInterpolate }],
+                  },
+                ]}
               >
                 <Svg width="170" height="170" viewBox="0 0 100 100">
-                  <Circle cx="50" cy="50" r="45" stroke="#FFFFFF" strokeWidth="0.8" strokeDasharray="3,3" fill="none" />
-                  <Circle cx="50" cy="50" r="35" stroke="#FFFFFF" strokeWidth="0.5" fill="none" />
-                  <Circle cx="50" cy="50" r="26" stroke="#FFFFFF" strokeWidth="0.8" strokeDasharray="1,2" fill="none" />
-                  <Circle cx="50" cy="50" r="14" stroke="#FFFFFF" strokeWidth="0.6" fill="none" />
+                  <Circle cx="50" cy="50" r="45" stroke={DISCOVER_HOME.wheelBlueprintStroke} strokeWidth="0.8" strokeDasharray="3,3" fill="none" />
+                  <Circle cx="50" cy="50" r="35" stroke={DISCOVER_HOME.wheelBlueprintStroke} strokeWidth="0.5" fill="none" />
+                  <Circle cx="50" cy="50" r="26" stroke={DISCOVER_HOME.wheelBlueprintStroke} strokeWidth="0.8" strokeDasharray="1,2" fill="none" />
+                  <Circle cx="50" cy="50" r="14" stroke={DISCOVER_HOME.wheelBlueprintStroke} strokeWidth="0.6" fill="none" />
                   {Array.from({ length: 12 }).map((_, idx) => {
                     const angle = (idx * 30 * Math.PI) / 180;
                     const x2 = 50 + 45 * Math.cos(angle);
@@ -517,7 +512,7 @@ export default function DiscoverScreen() {
                         y1="50"
                         x2={x2}
                         y2={y2}
-                        stroke="#FFFFFF"
+                        stroke={DISCOVER_HOME.wheelBlueprintStroke}
                         strokeWidth="0.4"
                         strokeDasharray="1,4"
                       />
@@ -527,86 +522,36 @@ export default function DiscoverScreen() {
               </RNAnimated.View>
 
               {/* Glowing emoji circle with double border */}
-              <View 
-                style={{ 
-                  width: 52, 
-                  height: 52, 
-                  borderRadius: 26, 
-                  backgroundColor: 'rgba(255, 255, 255, 0.22)',
-                  alignItems: 'center', 
-                  justifyContent: 'center',
-                  borderWidth: 1.5,
-                  borderColor: 'rgba(255, 255, 255, 0.45)',
-                  ...Platform.select({
-                    ios: {
-                      shadowColor: '#000000',
-                      shadowOpacity: 0.2,
-                      shadowRadius: 5,
-                      shadowOffset: { width: 0, height: 3 },
-                    },
-                    android: {
-                      elevation: 3,
-                    },
-                  }),
-                }}
-              >
-                <Text style={{ fontSize: 28 }}>🎡</Text>
+              <View style={ds.wheelEmojiCircle}>
+                <Text style={ds.wheelEmoji} numberOfLines={1}>
+                  🎡
+                </Text>
               </View>
 
-              <View style={{ flex: 1, gap: 4, zIndex: 2 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                  <Text style={{ fontSize: 16, fontFamily: FontFamily.bold, color: '#FFFFFF', letterSpacing: -0.2 }}>
+              <View style={ds.wheelPromoCopy}>
+                <View style={ds.wheelPromoTitleRow}>
+                  <Text style={ds.wheelPromoTitle} numberOfLines={1}>
                     Spin the CultureWheel
                   </Text>
-                  
-                  {/* Premium golden NEW badge */}
+
                   <LinearGradient
-                    colors={['#FFD54F', '#FFB300']}
+                    colors={[...DISCOVER_HOME.newBadgeGradient]}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}
-                    style={{
-                      paddingHorizontal: 7,
-                      paddingVertical: 2.5,
-                      borderRadius: 8,
-                      borderWidth: 1,
-                      borderColor: 'rgba(255, 255, 255, 0.45)',
-                      ...Platform.select({
-                        web: {
-                          boxShadow: '0 2px 8px rgba(255, 179, 0, 0.4)',
-                        },
-                      }),
-                    }}
+                    style={ds.newBadge}
                   >
-                    <Text style={{ fontSize: 9, fontFamily: FontFamily.bold, color: '#1C1917', letterSpacing: 0.8 }}>
+                    <Text style={ds.newBadgeText} numberOfLines={1}>
                       NEW
                     </Text>
                   </LinearGradient>
                 </View>
-                <Text style={{ fontSize: 12, fontFamily: FontFamily.medium, color: 'rgba(255, 255, 255, 0.92)', lineHeight: 16 }}>
+                <Text style={ds.wheelPromoDesc} numberOfLines={2}>
                   Stuck on what to do next? Let the wheel decide! Explore events, hubs, dining & cultural activities.
                 </Text>
               </View>
 
-              {/* Glossy glass orb with arrow */}
-              <View 
-                style={{ 
-                  width: 36, 
-                  height: 36, 
-                  borderRadius: 18, 
-                  backgroundColor: 'rgba(255, 255, 255, 0.25)',
-                  alignItems: 'center', 
-                  justifyContent: 'center',
-                  borderWidth: 1.2,
-                  borderColor: 'rgba(255, 255, 255, 0.35)',
-                  zIndex: 2,
-                  ...Platform.select({
-                    web: {
-                      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-                    },
-                  }),
-                }}
-              >
-                <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
+              <View style={ds.wheelArrowOrb}>
+                <Ionicons name="arrow-forward" size={16} color={DISCOVER_HOME.promoInk} />
               </View>
             </LinearGradient>
           </Pressable>
@@ -722,17 +667,11 @@ export default function DiscoverScreen() {
                 if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 setActiveFilter('all');
               }}
-              style={{ alignSelf: 'flex-start', marginLeft: pageSidePad, marginBottom: Spacing.sm, marginTop: 4 }}
+              style={[ds.clearFilterBtn, { marginLeft: pageSidePad }]}
               hitSlop={8}
               accessibilityLabel="Clear filter"
             >
-              <Text 
-                style={{ 
-                  fontSize: 12, 
-                  color: colors.primary, 
-                  fontFamily: FontFamily.medium 
-                }}
-              >
+              <Text style={[ds.clearFilterText, { color: colors.primary }]} numberOfLines={1}>
                 Clear filter · Show everything
               </Text>
             </Pressable>
@@ -756,7 +695,7 @@ export default function DiscoverScreen() {
                   ref={searchInputRef as any}
                   style={[ds.searchInput, { color: colors.text, fontSize: 16, marginLeft: 12 }]}
                   placeholder="Search events, places, movies..."
-                  placeholderTextColor={colors.textSecondary || '#888'}
+                  placeholderTextColor={colors.textSecondary || DISCOVER_HOME.mutedTextFallback}
                   value={searchQuery}
                   onChangeText={setSearchQuery}
                   autoFocus
@@ -765,7 +704,7 @@ export default function DiscoverScreen() {
                 />
                 {searchQuery.length > 0 && (
                   <Pressable onPress={() => setSearchQuery('')} hitSlop={10}>
-                    <Ionicons name="close" size={24} color={colors.textSecondary || '#888'} />
+                    <Ionicons name="close" size={24} color={colors.textSecondary || DISCOVER_HOME.mutedTextFallback} />
                   </Pressable>
                 )}
               </View>
@@ -789,12 +728,20 @@ export default function DiscoverScreen() {
           <View style={[ds.footer, { marginHorizontal: pageSidePad, borderTopColor: colors.borderLight }]}>
             <View style={ds.footerLinks}>
               {FOOTER_LINKS.map((link) => (
-                <Pressable key={link.href} onPress={() => router.push(link.href)}>
-                  <Text style={[ds.footerLinkText, { color: colors.textSecondary || '#888' }]}>{link.label}</Text>
+                <Pressable key={link.id} onPress={() => router.push(link.href)}>
+                  <Text
+                    style={[ds.footerLinkText, { color: colors.textSecondary || DISCOVER_HOME.mutedTextFallback }]}
+                    numberOfLines={1}
+                  >
+                    {link.label}
+                  </Text>
                 </Pressable>
               ))}
             </View>
-            <Text style={[ds.footerMeta, { color: colors.textSecondary || '#888' }]}>
+            <Text
+              style={[ds.footerMeta, { color: colors.textSecondary || DISCOVER_HOME.mutedTextFallback }]}
+              numberOfLines={1}
+            >
               {`${APP_NAME} · ${MADE_IN}`}
             </Text>
           </View>
@@ -884,23 +831,10 @@ function IntentPill({
         colors={gradColors}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 6,
-          paddingHorizontal: 16,
-          paddingVertical: 9,
-        }}
+        style={ds.intentPillGradient}
       >
         <Ionicons name={icon} size={15} color={iconColor} />
-        <Text
-          style={{
-            fontSize: 13,
-            fontFamily: FontFamily.semibold,
-            color: colors.onSurface,
-            letterSpacing: 0.2,
-          }}
-        >
+        <Text style={[ds.intentPillLabel, { color: colors.onSurface }]} numberOfLines={1}>
           {label}
         </Text>
       </LinearGradient>
@@ -911,6 +845,123 @@ function IntentPill({
 // ─── Discover filter styles ────────────────────────────────────────────────────
 
 const ds = StyleSheet.create({
+  screen: { flex: 1 },
+  logoThumb: { width: 40, height: 40, borderRadius: 20, marginLeft: 8 },
+  intentScroll: { marginBottom: Spacing.md },
+  intentScrollContent: { gap: 8, paddingBottom: 4 },
+  wheelPromoPressable: {
+    marginBottom: Spacing.md,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  wheelPromoGradient: {
+    padding: 18,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  wheelBlueprint: {
+    position: 'absolute',
+    right: -35,
+    top: -30,
+    width: 170,
+    height: 170,
+    pointerEvents: 'none',
+  },
+  wheelEmojiCircle: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: DISCOVER_HOME.wheelEmojiCircleBg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: DISCOVER_HOME.wheelEmojiCircleBorder,
+    ...Platform.select({
+      ios: {
+        shadowColor: DISCOVER_HOME.shadow,
+        shadowOpacity: 0.2,
+        shadowRadius: 5,
+        shadowOffset: { width: 0, height: 3 },
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
+  },
+  wheelEmoji: { fontSize: 28 },
+  wheelPromoCopy: { flex: 1, gap: 4, zIndex: 2 },
+  wheelPromoTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  wheelPromoTitle: {
+    fontSize: 16,
+    fontFamily: FontFamily.bold,
+    color: DISCOVER_HOME.promoInk,
+    letterSpacing: -0.2,
+  },
+  newBadge: {
+    paddingHorizontal: 7,
+    paddingVertical: 2.5,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: DISCOVER_HOME.newBadgeBorder,
+    ...Platform.select({
+      web: {
+        boxShadow: '0 2px 8px rgba(255, 179, 0, 0.4)',
+      },
+    }),
+  },
+  newBadgeText: {
+    fontSize: 9,
+    fontFamily: FontFamily.bold,
+    color: DISCOVER_HOME.newBadgeInk,
+    letterSpacing: 0.8,
+  },
+  wheelPromoDesc: {
+    fontSize: 12,
+    fontFamily: FontFamily.medium,
+    color: DISCOVER_HOME.promoDescInk,
+    lineHeight: 16,
+  },
+  wheelArrowOrb: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: DISCOVER_HOME.wheelArrowOrbBg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.2,
+    borderColor: DISCOVER_HOME.wheelArrowOrbBorder,
+    zIndex: 2,
+    ...Platform.select({
+      web: {
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+      },
+    }),
+  },
+  clearFilterBtn: {
+    alignSelf: 'flex-start',
+    marginBottom: Spacing.sm,
+    marginTop: 4,
+  },
+  clearFilterText: {
+    fontSize: 12,
+    fontFamily: FontFamily.medium,
+  },
+  intentPillGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+  },
+  intentPillLabel: {
+    fontSize: 13,
+    fontFamily: FontFamily.semibold,
+    letterSpacing: 0.2,
+  },
   topAppBarLayer: {
     zIndex: 10,
     ...Platform.select({

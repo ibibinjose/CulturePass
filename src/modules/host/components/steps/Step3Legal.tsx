@@ -50,7 +50,7 @@ import { TaxStatusField } from '../fields/TaxStatusField';
 import { LicenceUploadField } from '../fields/LicenceUploadField';
 import type { Licence } from '../fields/LicenceUploadField';
 import { Luxe } from '@/design-system/tokens/luxeHeritage';
-import { FontFamily, Radius, Spacing } from '@/design-system/tokens/theme';
+import { BorderTokens, FontFamily, Radius, Spacing } from '@/design-system/tokens/theme';
 import type { EntityType } from '../../hooks/useFormWizard';
 import type { PartialFormData } from '../../services/formStateSerializer';
 
@@ -252,8 +252,8 @@ export function Step3Legal({
             name="shield-checkmark-outline"
             size={28}
             color={Luxe.colors.dark.accent}
-          /></View><Text style={[styles.title, { color: colors.text }]}>Legal & Compliance</Text><Text style={[styles.subtitle, { color: colors.textSecondary }]}>{getStepDescription(entityType)}</Text>{entityType === 'business' && (
-          <View style={[styles.verificationNote, { backgroundColor: colors.surfaceElevated, borderLeftColor: Luxe.colors.dark.accent }]}><Ionicons name="information-circle-outline" size={16} color={Luxe.colors.dark.accent} /><Text style={[styles.verificationNoteText, { color: colors.textSecondary }]}>Business profiles require verification (ABN + identity docs) to build trust with customers and enable paid features. Your main profile info has been pre-filled to speed things up.</Text></View>
+          /></View><Text style={[styles.title, { color: colors.text }]}>Legal & Compliance</Text><Text style={[styles.subtitle, { color: colors.textSecondary }]} numberOfLines={4}>{getStepDescription(entityType)}</Text>{entityType === 'business' && (
+          <View style={[styles.verificationNote, { backgroundColor: colors.surfaceElevated, borderLeftColor: Luxe.colors.dark.accent }]}><Ionicons name="information-circle-outline" size={16} color={Luxe.colors.dark.accent} /><Text style={[styles.verificationNoteText, { color: colors.textSecondary }]} numberOfLines={5}>Business profiles require verification (ABN + identity docs) to build trust with customers and enable paid features. Your main profile info has been pre-filled to speed things up.</Text></View>
         )}</View>
 
       <View style={styles.form}>{showABN && (
@@ -334,7 +334,7 @@ export function Step3Legal({
             onAction={() => {
               // Placeholder — in full unification this would open the verification flow / document upload
               // For now it demonstrates the actionable pattern
-              console.log('[Trust] Verification action tapped for', entityType);
+              if (__DEV__) console.log('[Trust] Verification action tapped for', entityType);
             }}
             location="wizard"
           />
@@ -499,7 +499,7 @@ const styles = StyleSheet.create({
   verificationText: {
     fontSize: 13,
     fontFamily: FontFamily.semibold,
-    color: '#FFFFFF',
+    color: BorderTokens.white,
   },
   verificationNotes: {
     fontSize: 13,

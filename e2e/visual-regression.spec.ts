@@ -19,6 +19,8 @@ import {
 import {
   mockAdminDirectoryApi,
   mockDiscoverFeedApi,
+  mockMapEventsApi,
+  mockCultureShopDealsApi,
 } from './fixtures/visual-regression-api';
 
 test.describe('Visual regression — critical layout surfaces (FIXES-001)', () => {
@@ -70,6 +72,17 @@ test.describe('Visual regression — critical layout surfaces (FIXES-001)', () =
     });
   });
 
+  test('perks listing — mobile', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/perks');
+    await expect(page.getByText('Perks', { exact: true }).first()).toBeVisible({ timeout: 15000 });
+    await page.waitForTimeout(600);
+    await expect(page).toHaveScreenshot('perks-list-mobile.png', {
+      fullPage: true,
+      threshold: 0.3,
+    });
+  });
+
   test('discover / city rail surface — mobile', async ({ page }) => {
     await mockDiscoverFeedApi(page);
 
@@ -80,6 +93,35 @@ test.describe('Visual regression — critical layout surfaces (FIXES-001)', () =
     await expect(page).toHaveScreenshot('discover-feed-mobile.png', {
       fullPage: true,
       threshold: 0.3,
+    });
+  });
+
+  test('CultureShop daily deals — mobile tile grid', async ({ page }) => {
+    await mockCultureShopDealsApi(page);
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/CultureShop');
+    await expect(page.getByText('CultureShop').first()).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText('Rewards & points').first()).toBeVisible({ timeout: 15000 });
+    await page.waitForTimeout(800);
+    await expect(page).toHaveScreenshot('cultureshop-deals-mobile.png', {
+      fullPage: true,
+      threshold: 0.3,
+    });
+  });
+
+  test('map — desktop split layout with city chips', async ({ page }) => {
+    await mockMapEventsApi(page);
+
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto('/map');
+    await expect(page.getByText('Map', { exact: true }).first()).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText('Melbourne').first()).toBeVisible({ timeout: 15000 });
+    await page.waitForTimeout(800);
+    await expect(page).toHaveScreenshot('map-desktop-split.png', {
+      fullPage: true,
+      threshold: 0.3,
+      mask: [page.locator('iframe')],
     });
   });
 });

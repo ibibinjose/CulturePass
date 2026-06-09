@@ -42,13 +42,13 @@ export function AuthAmbientBackground() {
         style={StyleSheet.absoluteFill}
       />
       <LinearGradient
-        colors={[`${CultureTokens.indigo}22`, `${CultureTokens.indigo}08`, 'transparent']}
+        colors={[`${CultureTokens.gold}22`, `${CultureTokens.gold}08`, 'transparent']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.ambientOrbTop}
       />
       <LinearGradient
-        colors={[`${CultureTokens.indigo}12`, 'transparent', 'transparent']}
+        colors={[`${CultureTokens.gold}12`, 'transparent', 'transparent']}
         start={{ x: 1, y: 0 }}
         end={{ x: 0, y: 1 }}
         style={styles.ambientOrbBottom}

@@ -234,7 +234,7 @@ function SEOHealthBadge({ score }: { score: number }) {
   const colors = useColors();
   const badgeColor =
     score >= 80 ? CultureTokens.teal :
-    score >= 50 ? '#F59E0B' :
+    score >= 50 ? '#00A7EF' :
     CultureTokens.coral;
 
   const label =
@@ -448,7 +448,7 @@ function getStatusColor(status: 'good' | 'warning' | 'error'): string {
     case 'good':
       return CultureTokens.teal;
     case 'warning':
-      return '#F59E0B';
+      return '#00A7EF';
     case 'error':
       return CultureTokens.coral;
   }

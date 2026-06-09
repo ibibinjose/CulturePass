@@ -38,6 +38,7 @@ import { LuxeText } from '@/design-system/ui/LuxeText';
 import { LuxeCard } from '@/design-system/ui/LuxeCard';
 import { LuxeButton } from '@/design-system/ui/LuxeButton';
 import { LuxeFilterChip } from '@/design-system/ui/LuxeFilterChip';
+import { CULTURE_MARKET_HOME } from '@/design-system/tokens/cultureMarketHomeTokens';
 import {
   CultureTokens,
   FontFamily,
@@ -58,7 +59,6 @@ const MARKET_INDEX_URL = `${SITE_ORIGIN}/CultureMarket`;
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const HERO_BG = '#0F0B1A';
 const HERO_WORDS = ['Products', 'Services', 'Fashion', 'Food', 'Art', 'Skills'];
 
 const TILE_W = 116;
@@ -299,7 +299,7 @@ type MarketSearchBarProps = {
 const MarketSearchBar = React.forwardRef<ComponentRef<typeof TextInput>, MarketSearchBarProps>(
   function MarketSearchBar({ value, onChange, colors, hPad, pageCol }, ref) {
     return (
-      <View style={{ paddingHorizontal: hPad, paddingTop: Spacing.md, paddingBottom: 4 }}>
+      <View style={[styles.searchSection, { paddingHorizontal: hPad }]}>
         <View style={pageCol}>
           <View
             style={[
@@ -422,10 +422,16 @@ function FaqItem({ question, answer }: { question: string; answer: string }) {
       accessibilityState={{ expanded: open }}
     >
       <View style={styles.faqRow}>
-        <Text style={styles.faqQ}>{question}</Text>
+        <Text style={styles.faqQ} numberOfLines={3}>
+          {question}
+        </Text>
         <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={18} color={CultureTokens.teal} />
       </View>
-      {open && <Text style={styles.faqA}>{answer}</Text>}
+      {open && (
+        <Text style={styles.faqA} numberOfLines={8}>
+          {answer}
+        </Text>
+      )}
     </Pressable>
   );
 }
@@ -486,7 +492,7 @@ function SectionHeader({
             <Ionicons name={icon} size={16} color={c} />
           </View>
         )}
-        <View style={{ flex: 1 }}>
+        <View style={styles.sectionHeadCopy}>
           <LuxeText variant="title3" style={{ color: colors.text }}>{title}</LuxeText>
           {sub && <LuxeText variant="caption" style={{ color: colors.textSecondary, marginTop: 2 }}>{sub}</LuxeText>}
         </View>
@@ -497,7 +503,7 @@ function SectionHeader({
           style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
           accessibilityRole="button"
         >
-          <Text style={[styles.viewMore, { color: CultureTokens.teal }]}>
+          <Text style={[styles.viewMore, { color: CultureTokens.teal }]} numberOfLines={1}>
             View all{count ? ` (${count})` : ''} →
           </Text>
         </Pressable>
@@ -678,7 +684,7 @@ function CultureMarketScreenInner() {
         {/* ── Hero ────────────────────────────────────────────────────── */}
         <View style={[styles.hero, { paddingHorizontal: hPad }]}>
           <LinearGradient
-            colors={[HERO_BG, '#1C162E', '#0A0812']}
+            colors={[...CULTURE_MARKET_HOME.heroGradient]}
             style={styles.heroGradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
@@ -694,7 +700,9 @@ function CultureMarketScreenInner() {
           {/* Nav row */}
           <View style={[styles.headerRow, { paddingTop: topInset + Spacing.sm }, pageCol]}>
             <BackButton fallback="/(tabs)" color="rgba(255,255,255,0.85)" />
-            <Text style={styles.headerTitle}>CultureMarket</Text>
+            <Text style={styles.headerTitle} numberOfLines={1}>
+              CultureMarket
+            </Text>
             {canManage ? (
               <Pressable
                 onPress={openHostListingWizard}
@@ -702,11 +710,11 @@ function CultureMarketScreenInner() {
                 accessibilityLabel="Create CultureMarket listing"
               >
                 <GlassView style={styles.iconGlass}>
-                  <Ionicons name="add-circle-outline" size={20} color="#fff" />
+                  <Ionicons name="add-circle-outline" size={20} color={CULTURE_MARKET_HOME.inkOnDark} />
                 </GlassView>
               </Pressable>
             ) : (
-              <View style={{ width: 44 }} />
+              <View style={styles.headerSpacer} />
             )}
           </View>
 
@@ -729,14 +737,14 @@ function CultureMarketScreenInner() {
                 variant="filled"
                 leftIcon="add-circle-outline"
                 onPress={openHostListingWizard}
-                style={{ minWidth: 180 }}
+                style={styles.heroCtaWide}
               >
                 List your business
               </LuxeButton>
               <LuxeButton
                 variant="tonal"
                 onPress={() => handleCatSelect(null)}
-                style={{ minWidth: 120 }}
+                style={styles.heroCta}
               >
                 Browse all
               </LuxeButton>
@@ -744,7 +752,7 @@ function CultureMarketScreenInner() {
                 variant="glass"
                 leftIcon="search-outline"
                 onPress={scrollToSearchAndFocus}
-                style={{ minWidth: 120 }}
+                style={styles.heroCta}
               >
                 Search
               </LuxeButton>
@@ -793,7 +801,7 @@ function CultureMarketScreenInner() {
         </View>
 
         {/* ── Listings content ─────────────────────────────────────────── */}
-        <View style={{ paddingHorizontal: hPad, paddingTop: Spacing.sm }}>
+        <View style={[styles.listingsSection, { paddingHorizontal: hPad }]}>
           <View style={pageCol}>
             {searchHasNoMatches ? (
               <View
@@ -803,10 +811,10 @@ function CultureMarketScreenInner() {
                 ]}
               >
                 <Ionicons name="search-outline" size={28} color={CultureTokens.violet} />
-                <Text style={[styles.searchEmptyTitle, { color: colors.text }]}>
+                <Text style={[styles.searchEmptyTitle, { color: colors.text }]} numberOfLines={2}>
                   No listings match your search
                 </Text>
-                <Text style={[styles.searchEmptySub, { color: colors.textSecondary }]}>
+                <Text style={[styles.searchEmptySub, { color: colors.textSecondary }]} numberOfLines={3}>
                   Try another keyword, or clear filters to see everything in this view.
                 </Text>
                 <Pressable
@@ -817,7 +825,7 @@ function CultureMarketScreenInner() {
                   ]}
                   accessibilityRole="button"
                 >
-                  <Text style={[styles.searchEmptyClearText, { color: CultureTokens.violet }]}>
+                  <Text style={[styles.searchEmptyClearText, { color: CultureTokens.violet }]} numberOfLines={1}>
                     Clear search
                   </Text>
                 </Pressable>
@@ -851,10 +859,10 @@ function CultureMarketScreenInner() {
                         <View style={[styles.emptyIconBox, { backgroundColor: activeAccent + '18' }]}>
                           <Ionicons name="storefront-outline" size={32} color={activeAccent} />
                         </View>
-                        <Text style={[styles.emptyTitle, { color: colors.text }]}>
+                        <Text style={[styles.emptyTitle, { color: colors.text }]} numberOfLines={2}>
                           {trimmedSearch ? 'No matches in this category' : 'No listings yet'}
                         </Text>
-                        <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+                        <Text style={[styles.emptyText, { color: colors.textSecondary }]} numberOfLines={3}>
                           {trimmedSearch
                             ? 'Try a different search or pick another category.'
                             : `Be the first to list in ${activeCatMeta?.label ?? activeCat}`}
@@ -871,7 +879,7 @@ function CultureMarketScreenInner() {
                           accessibilityRole="button"
                         >
                           <Ionicons name="add-circle-outline" size={16} color={activeAccent} />
-                          <Text style={[styles.emptyBtnText, { color: activeAccent }]}>
+                          <Text style={[styles.emptyBtnText, { color: activeAccent }]} numberOfLines={1}>
                             Create a listing
                           </Text>
                         </Pressable>
@@ -946,10 +954,10 @@ function CultureMarketScreenInner() {
                         <View style={[styles.emptyIconBox, { backgroundColor: CultureTokens.violet + '18' }]}>
                           <Ionicons name="storefront-outline" size={36} color={CultureTokens.violet} />
                         </View>
-                        <Text style={[styles.emptyTitle, { color: colors.text }]}>
+                        <Text style={[styles.emptyTitle, { color: colors.text }]} numberOfLines={2}>
                           CultureMarket is warming up
                         </Text>
-                        <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+                        <Text style={[styles.emptyText, { color: colors.textSecondary }]} numberOfLines={3}>
                           Be the first cultural business to list here.
                         </Text>
                         <Pressable
@@ -961,7 +969,7 @@ function CultureMarketScreenInner() {
                           accessibilityRole="button"
                         >
                           <Ionicons name="add-circle-outline" size={16} color={CultureTokens.violet} />
-                          <Text style={[styles.emptyBtnText, { color: CultureTokens.violet }]}>
+                          <Text style={[styles.emptyBtnText, { color: CultureTokens.violet }]} numberOfLines={1}>
                             Create the first listing
                           </Text>
                         </Pressable>
@@ -977,7 +985,7 @@ function CultureMarketScreenInner() {
         {/* ── Sell on CultureMarket banner ──────────────────────────────── */}
         <View style={[styles.sellBanner, { marginTop: Spacing.xl * 2 }]}>
           <LinearGradient
-            colors={[CultureTokens.violet, '#130C2A']}
+            colors={[CultureTokens.violet, CULTURE_MARKET_HOME.sellBannerGradientEnd]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={StyleSheet.absoluteFill}
@@ -998,10 +1006,10 @@ function CultureMarketScreenInner() {
                   </View>
                 ))}
               </View>
-              <Text style={styles.sellTitle}>
+              <Text style={styles.sellTitle} numberOfLines={3}>
                 Sell, offer services,{'\n'}or link your site
               </Text>
-              <Text style={styles.sellSub}>
+              <Text style={styles.sellSub} numberOfLines={4}>
                 List a product for sale, offer a bookable service, or simply add your business with a
                 link to your own website. Free for all CulturePass members.
               </Text>
@@ -1013,7 +1021,9 @@ function CultureMarketScreenInner() {
                 ].map((opt) => (
                   <View key={opt.label} style={styles.sellOption}>
                     <Ionicons name={opt.icon} size={16} color="rgba(255,255,255,0.6)" />
-                    <Text style={styles.sellOptionText}>{opt.label}</Text>
+                    <Text style={styles.sellOptionText} numberOfLines={1}>
+                      {opt.label}
+                    </Text>
                   </View>
                 ))}
               </View>
@@ -1023,13 +1033,15 @@ function CultureMarketScreenInner() {
                 accessibilityRole="button"
               >
                 <LinearGradient
-                  colors={[CultureTokens.coral, '#CC237F']}
+                  colors={[CultureTokens.coral, CULTURE_MARKET_HOME.sellCtaGradientEnd]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={StyleSheet.absoluteFill}
                 />
-                <Ionicons name="rocket-outline" size={18} color="#fff" />
-                <Text style={styles.sellCtaText}>List on CultureMarket — free</Text>
+                <Ionicons name="rocket-outline" size={18} color={CULTURE_MARKET_HOME.inkOnDark} />
+                <Text style={styles.sellCtaText} numberOfLines={1}>
+                  List on CultureMarket — free
+                </Text>
               </Pressable>
             </View>
           </View>
@@ -1038,7 +1050,9 @@ function CultureMarketScreenInner() {
         {/* ── FAQ ─────────────────────────────────────────────────────── */}
         <View style={[styles.faqSection, { paddingHorizontal: hPad }]}>
           <View style={pageCol}>
-            <Text style={styles.faqTitle}>Frequently Asked Questions</Text>
+            <Text style={styles.faqTitle} numberOfLines={1}>
+              Frequently Asked Questions
+            </Text>
             {FAQ_ITEMS.map((item) => (
               <FaqItem key={item.id} question={item.question} answer={item.answer} />
             ))}
@@ -1048,7 +1062,7 @@ function CultureMarketScreenInner() {
         {/* ── Footer ──────────────────────────────────────────────────── */}
         <View style={[styles.footer, { paddingHorizontal: hPad }]}>
           <View style={pageCol}>
-            <Text style={[styles.footerText, { color: colors.textTertiary }]}>
+            <Text style={[styles.footerText, { color: colors.textTertiary }]} numberOfLines={3}>
               CultureMarket is part of CulturePass — the cultural lifestyle platform for diaspora
               communities.
             </Text>
@@ -1065,9 +1079,15 @@ function CultureMarketScreenInner() {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
+  searchSection: { paddingTop: Spacing.md, paddingBottom: 4 },
+  sectionHeadCopy: { flex: 1 },
+  headerSpacer: { width: 44 },
+  heroCtaWide: { minWidth: 180 },
+  heroCta: { minWidth: 120 },
+  listingsSection: { paddingTop: Spacing.sm },
 
   // Hero
-  hero: { backgroundColor: HERO_BG, paddingBottom: 64 },
+  hero: { backgroundColor: CULTURE_MARKET_HOME.heroBg, paddingBottom: 64 },
   heroGradient: { ...StyleSheet.absoluteFill },
   heroNoise: { ...StyleSheet.absoluteFill, opacity: 0.03 },
   headerRow: {
@@ -1079,7 +1099,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontFamily: FontFamily.bold,
     fontSize: 17,
-    color: '#fff',
+    color: CULTURE_MARKET_HOME.inkOnDark,
     flex: 1,
     textAlign: 'center',
   },
@@ -1103,7 +1123,7 @@ const styles = StyleSheet.create({
   },
   heroTitleRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8 },
   heroStatic: {
-    color: '#fff',
+    color: CULTURE_MARKET_HOME.inkOnDark,
     letterSpacing: -1,
   },
   rotatingWrap: {
@@ -1136,7 +1156,12 @@ const styles = StyleSheet.create({
     minWidth: 140,
   },
   heroBtnFill: {},
-  heroBtnFillText: { fontFamily: FontFamily.semibold, fontSize: 15, color: '#fff', letterSpacing: 0.1 },
+  heroBtnFillText: {
+    fontFamily: FontFamily.semibold,
+    fontSize: 15,
+    color: CULTURE_MARKET_HOME.inkOnDark,
+    letterSpacing: 0.1,
+  },
   heroBtnOutline: { borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.3)' },
   heroBtnOutlineText: { fontFamily: FontFamily.semibold, fontSize: 15, color: 'rgba(255,255,255,0.82)' },
 
@@ -1151,7 +1176,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
     borderTopLeftRadius: 0,
     overflow: 'hidden',
-    backgroundColor: '#fff',
+    backgroundColor: CULTURE_MARKET_HOME.brandTileFallbackBg,
     justifyContent: 'flex-end',
   },
   brandTileName:
@@ -1159,7 +1184,7 @@ const styles = StyleSheet.create({
       ? ({
           fontFamily: FontFamily.semibold,
           fontSize: 11,
-          color: '#fff',
+          color: CULTURE_MARKET_HOME.inkOnDark,
           lineHeight: 14,
           padding: 8,
           paddingTop: 4,
@@ -1168,7 +1193,7 @@ const styles = StyleSheet.create({
       : ({
           fontFamily: FontFamily.semibold,
           fontSize: 11,
-          color: '#fff',
+          color: CULTURE_MARKET_HOME.inkOnDark,
           lineHeight: 14,
           padding: 8,
           paddingTop: 4,
@@ -1321,7 +1346,7 @@ const styles = StyleSheet.create({
   sellTitle: {
     fontFamily: FontFamily.bold,
     fontSize: Platform.OS === 'web' ? 32 : 26,
-    color: '#fff',
+    color: CULTURE_MARKET_HOME.inkOnDark,
     lineHeight: Platform.OS === 'web' ? 40 : 32,
     letterSpacing: -0.5,
     maxWidth: 440,
@@ -1350,14 +1375,23 @@ const styles = StyleSheet.create({
     gap: 8,
     minWidth: 220,
   },
-  sellCtaText: { fontFamily: FontFamily.semibold, fontSize: 15, color: '#fff' },
+  sellCtaText: {
+    fontFamily: FontFamily.semibold,
+    fontSize: 15,
+    color: CULTURE_MARKET_HOME.inkOnDark,
+  },
 
   // FAQ
-  faqSection: { backgroundColor: '#1A1624', paddingTop: 40, paddingBottom: 48, marginTop: 0 },
+  faqSection: {
+    backgroundColor: CULTURE_MARKET_HOME.faqFooterBg,
+    paddingTop: 40,
+    paddingBottom: 48,
+    marginTop: 0,
+  },
   faqTitle: {
     fontFamily: FontFamily.bold,
     fontSize: Platform.OS === 'web' ? 22 : 20,
-    color: '#fff',
+    color: CULTURE_MARKET_HOME.inkOnDark,
     marginBottom: 22,
     letterSpacing: -0.3,
   },
@@ -1388,7 +1422,11 @@ const styles = StyleSheet.create({
   },
 
   // Footer
-  footer: { backgroundColor: '#1A1624', paddingTop: 4, paddingBottom: 28 },
+  footer: {
+    backgroundColor: CULTURE_MARKET_HOME.faqFooterBg,
+    paddingTop: 4,
+    paddingBottom: 28,
+  },
   footerText: { fontFamily: FontFamily.regular, fontSize: 12, lineHeight: 18, maxWidth: 520 },
 });
 

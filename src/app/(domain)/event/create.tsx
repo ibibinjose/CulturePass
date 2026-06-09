@@ -17,6 +17,7 @@ import { useColors } from '@/hooks/useColors';
 import { useOnboarding } from '@/contexts/OnboardingContext';
 import { ApiError, eventsApi } from '@/modules/events/api';
 import { ALL_NATIONALITIES, getCulturesForNationality } from '@/constants/cultures';
+import { cultureIdToStoredTags } from '@/constants/australianCultureTags';
 import {
   EventData,
   EventType,
@@ -172,7 +173,8 @@ const toApiEventType = (value: FormData['eventType']): EventType | undefined => 
 const buildCultureTagPayload = (form: FormData): string[] => {
   const cx = CULTUREX_EXPLORES_CULTURE_TAG.toLowerCase();
   const ids = form.cultureTagIds.filter((id) => String(id).toLowerCase() !== cx);
-  return form.cultureXInvite ? [...ids, CULTUREX_EXPLORES_CULTURE_TAG] : ids;
+  const tags = [...new Set(ids.flatMap((id) => cultureIdToStoredTags(id)))];
+  return form.cultureXInvite ? [...tags, CULTUREX_EXPLORES_CULTURE_TAG] : tags;
 };
 
 const sanitizeUrl = (value: string): string | undefined => {

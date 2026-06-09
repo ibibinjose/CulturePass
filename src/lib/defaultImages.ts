@@ -1,3 +1,5 @@
+import { DEFAULT_IMAGE_GRADIENTS } from '@/design-system/tokens/defaultImageGradients';
+
 export type DefaultImageKey =
   | 'indigo-violet'
   | 'coral-rose'
@@ -48,18 +50,18 @@ export const DEFAULT_IMAGE_CONFIGS: DefaultImageConfig[] = [
   { key: 'stock-community', label: 'Community',     imageAsset: require('../../assets/images/stock/heritage_gather.png'), icon: 'people' },
 
   // Gradient placeholders
-  { key: 'indigo-violet', label: 'Royal',   gradientColors: ['#4F46E5', '#7C3AED'], icon: 'sparkles' },
-  { key: 'coral-rose',    label: 'Sunset',  gradientColors: ['#FF5E5B', '#E11D48'], icon: 'heart' },
-  { key: 'teal-cyan',     label: 'Ocean',   gradientColors: ['#0F766E', '#0891B2'], icon: 'water' },
-  { key: 'emerald-teal',  label: 'Forest',  gradientColors: ['#059669', '#0D9488'], icon: 'leaf' },
-  { key: 'amber-orange',  label: 'Saffron', gradientColors: ['#D97706', '#EA580C'], icon: 'flame' },
-  { key: 'festival',      label: 'Festival',gradientColors: ['#7C3AED', '#EC4899'], icon: 'musical-notes' },
-  { key: 'azure',         label: 'Azure',   gradientColors: ['#2563EB', '#4F46E5'], icon: 'planet' },
-  { key: 'blossom',       label: 'Blossom', gradientColors: ['#F43F5E', '#EC4899'], icon: 'flower' },
-  { key: 'harvest',       label: 'Harvest', gradientColors: ['#EAB308', '#D97706'], icon: 'star' },
-  { key: 'jade',          label: 'Jade',    gradientColors: ['#16A34A', '#059669'], icon: 'globe' },
-  { key: 'stone',         label: 'Stone',   gradientColors: ['#475569', '#334155'], icon: 'grid' },
-  { key: 'midnight',      label: 'Midnight',gradientColors: ['#9333EA', '#4F46E5'], icon: 'moon' },
+  { key: 'indigo-violet', label: 'Royal', gradientColors: DEFAULT_IMAGE_GRADIENTS['indigo-violet'], icon: 'sparkles' },
+  { key: 'coral-rose', label: 'Sunset', gradientColors: DEFAULT_IMAGE_GRADIENTS['coral-rose'], icon: 'heart' },
+  { key: 'teal-cyan', label: 'Ocean', gradientColors: DEFAULT_IMAGE_GRADIENTS['teal-cyan'], icon: 'water' },
+  { key: 'emerald-teal', label: 'Forest', gradientColors: DEFAULT_IMAGE_GRADIENTS['emerald-teal'], icon: 'leaf' },
+  { key: 'amber-orange', label: 'Saffron', gradientColors: DEFAULT_IMAGE_GRADIENTS['amber-orange'], icon: 'flame' },
+  { key: 'festival', label: 'Festival', gradientColors: DEFAULT_IMAGE_GRADIENTS.festival, icon: 'musical-notes' },
+  { key: 'azure', label: 'Azure', gradientColors: DEFAULT_IMAGE_GRADIENTS.azure, icon: 'planet' },
+  { key: 'blossom', label: 'Blossom', gradientColors: DEFAULT_IMAGE_GRADIENTS.blossom, icon: 'flower' },
+  { key: 'harvest', label: 'Harvest', gradientColors: DEFAULT_IMAGE_GRADIENTS.harvest, icon: 'star' },
+  { key: 'jade', label: 'Jade', gradientColors: DEFAULT_IMAGE_GRADIENTS.jade, icon: 'globe' },
+  { key: 'stone', label: 'Stone', gradientColors: DEFAULT_IMAGE_GRADIENTS.stone, icon: 'grid' },
+  { key: 'midnight', label: 'Midnight', gradientColors: DEFAULT_IMAGE_GRADIENTS.midnight, icon: 'moon' },
 ];
 
 export function getDefaultConfig(key: DefaultImageKey): DefaultImageConfig | undefined {

@@ -49,7 +49,7 @@ export default function AdminDashboard() {
   const verificationPending = verificationStats?.pending ?? 0;
 
   const systemStatus = healthData?.checks?.every(c => c.healthy) ? 'Operational' : 'Degraded';
-  const statusColor = systemStatus === 'Operational' ? '#10B981' : '#F59E0B';
+  const statusColor = systemStatus === 'Operational' ? '#10B981' : '#00A7EF';
 
   const KPI_DATA = [
     { 

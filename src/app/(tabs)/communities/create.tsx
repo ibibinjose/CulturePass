@@ -20,7 +20,7 @@ const ACCENT: Record<CommunityCategory, string> = {
   local_community: CultureTokens.teal,
   arts_sports_club: CultureTokens.coral,
   business:       CultureTokens.indigo,
-  brand:          '#F59E0B',
+  brand:          '#00A7EF',
   professional:   CultureTokens.indigo,
   club:           CultureTokens.violet,
   charity:        '#EF4444',

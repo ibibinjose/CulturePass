@@ -1,6 +1,11 @@
 import type { CommunityCreateInput } from '@/platform/api/endpoints/communities';
 import type { ListingFormState } from './types';
-import type { Community, Profile, SocialLinks } from '@/shared/schema';
+import type { Community, Profile } from '@/shared/schema';
+import {
+  compactSocialLinks,
+  listingSocialFormFromCommunity,
+  listingSocialRawFromForm,
+} from '@/shared/utils/socialLinks';
 
 function numToFormStr(n: number | undefined): string {
   return n != null && Number.isFinite(n) ? String(n) : '';
@@ -9,7 +14,6 @@ function numToFormStr(n: number | undefined): string {
 /** Maps GET /api/communities/:id into listing wizard fields for edit mode. */
 export function communityToListingFormPartial(c: Community): Partial<ListingFormState> {
   const lp = c.listingProfile;
-  const social = c.socialLinks ?? {};
   return {
     entityType: 'community',
     name: c.name ?? '',
@@ -32,22 +36,7 @@ export function communityToListingFormPartial(c: Community): Partial<ListingForm
     longitude: c.longitude ?? c.location?.lng ?? null,
     councilId: c.councilId ?? '',
     lgaCode: c.lgaCode ?? '',
-    website: c.website ?? social.website ?? '',
-    instagram: c.instagram ?? social.instagram ?? '',
-    facebook: c.facebook ?? social.facebook ?? '',
-    youtube: c.youtube ?? social.youtube ?? '',
-    tiktok: c.tiktok ?? social.tiktok ?? '',
-    twitter: social.twitter ?? '',
-    spotify: c.spotify ?? social.spotify ?? '',
-    linkedin: social.linkedin ?? '',
-    pinterest: social.pinterest ?? '',
-    linktree: social.linktree ?? '',
-    whatsapp: social.whatsapp ?? '',
-    wechat: social.wechat ?? '',
-    line: social.line ?? '',
-    kakao: social.kakao ?? '',
-    beacons: social.beacons ?? '',
-    aboutme: social.aboutme ?? '',
+    ...listingSocialFormFromCommunity(c),
     abn: lp?.abn ?? '',
     acn: lp?.acn ?? '',
     gstRegistered: lp?.gstRegistered ?? false,
@@ -83,15 +72,6 @@ export function communityToListingFormPartial(c: Community): Partial<ListingForm
     nationalityId: c.nationalityId ?? '',
     draftProfileId: null,
   };
-}
-
-function compactSocialLinks(entries: Record<string, string | undefined>): SocialLinks | undefined {
-  const out: Record<string, string> = {};
-  for (const [k, v] of Object.entries(entries)) {
-    const t = (v ?? '').trim();
-    if (t) out[k] = t;
-  }
-  return Object.keys(out).length ? (out as SocialLinks) : undefined;
 }
 
 function numOrUndef(s: string): number | undefined {
@@ -134,26 +114,7 @@ export function formToProfilePayload(form: ListingFormState, status: 'draft' | '
     publicContactRole: form.publicContactRole.trim() || undefined,
   };
 
-  const socialRaw = {
-    website: form.website.trim() || undefined,
-    instagram: form.instagram.trim() || undefined,
-    facebook: form.facebook.trim() || undefined,
-    youtube: form.youtube.trim() || undefined,
-    tiktok: form.tiktok.trim() || undefined,
-    twitter: form.twitter.trim() || undefined,
-    spotify: form.spotify.trim() || undefined,
-    linkedin: form.linkedin.trim() || undefined,
-    pinterest: form.pinterest.trim() || undefined,
-    linktree: form.linktree.trim() || undefined,
-    whatsapp: form.whatsapp.trim() || undefined,
-    wechat: form.wechat.trim() || undefined,
-    line: form.line.trim() || undefined,
-    kakao: form.kakao.trim() || undefined,
-    beacons: form.beacons.trim() || undefined,
-    aboutme: form.aboutme.trim() || undefined,
-  };
-
-  const socialLinks = compactSocialLinks(socialRaw);
+  const socialLinks = compactSocialLinks(listingSocialRawFromForm(form));
 
   return {
     name: form.name.trim(),
@@ -176,14 +137,14 @@ export function formToProfilePayload(form: ListingFormState, status: 'draft' | '
     indigenousTags: form.indigenousTags.length ? form.indigenousTags : undefined,
     isIndigenousOwned: form.isIndigenousOwned || undefined,
     languageIds: form.languageIds.length ? form.languageIds : undefined,
-    website: form.website.trim() || undefined,
-    instagram: form.instagram.trim() || undefined,
-    facebook: form.facebook.trim() || undefined,
-    youtube: form.youtube.trim() || undefined,
-    tiktok: form.tiktok.trim() || undefined,
-    spotify: form.spotify.trim() || undefined,
+    website: socialLinks?.website,
+    instagram: socialLinks?.instagram,
+    facebook: socialLinks?.facebook,
+    youtube: socialLinks?.youtube,
+    tiktok: socialLinks?.tiktok,
+    spotify: socialLinks?.spotify,
     deliveryAvailable: form.deliveryAvailable,
-    socialLinks: socialLinks ?? undefined,
+    socialLinks,
     nationalityId: form.nationalityId.trim() || undefined,
     listingProfile:
       Object.values(listingProfile).some((v) => v !== undefined && v !== false && v !== null && !(Array.isArray(v) && !v.length)) ||
@@ -194,6 +155,8 @@ export function formToProfilePayload(form: ListingFormState, status: 'draft' | '
 }
 
 export function formToCommunityCreateInput(form: ListingFormState): CommunityCreateInput {
+  const socialLinks = compactSocialLinks(listingSocialRawFromForm(form));
+
   return {
     name: form.name.trim(),
     handle: form.handle.trim().replace(/^@/, '') || undefined,
@@ -206,9 +169,9 @@ export function formToCommunityCreateInput(form: ListingFormState): CommunityCre
     imageUrl: form.imageUrl.trim() || undefined,
     coverImageUrl: form.coverImageUrl.trim() || undefined,
     gallery: form.gallery.length ? form.gallery : undefined,
-    website: form.website.trim() || undefined,
-    instagram: form.instagram.trim() || undefined,
-    facebook: form.facebook.trim() || undefined,
+    website: socialLinks?.website,
+    instagram: socialLinks?.instagram,
+    facebook: socialLinks?.facebook,
     cultureTags: form.cultureTags.length ? form.cultureTags : undefined,
     cultureIds: form.cultureIds.length ? form.cultureIds : undefined,
     indigenousTags: form.indigenousTags.length ? form.indigenousTags : undefined,

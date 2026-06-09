@@ -85,7 +85,9 @@ export function AuthGuard() {
       !onboardingLoading &&
       inOnboardingGroup &&
       !preAuthScreens.has(currentOnboardingScreen) &&
-      onboardingState.isComplete
+      onboardingState.isComplete &&
+      // Interests finishes into Creation Lab — avoid racing router.push('/pages/create')
+      currentOnboardingScreen !== 'interests'
     ) {
       router.replace('/(tabs)');
     }

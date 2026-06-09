@@ -20,6 +20,7 @@ interface AppLink {
 const APP_LINKS: AppLink[] = [
   { id: 'culturemarket', label: 'Market', icon: 'storefront', color: CultureTokens.coral, route: '/CultureMarket' },
   { id: 'cultureshop', label: 'Deals', icon: 'pricetag', color: CultureTokens.gold, route: '/CultureShop' },
+  { id: 'perks', label: 'Perks', icon: 'gift', color: CultureTokens.gold, route: '/perks' },
   /** Indigo / violet — gold (#FFEA5E)wash + icon had insufficient contrast on web */
   { id: 'events', label: 'Events', icon: 'calendar', color: CultureTokens.indigo, route: '/events' },
   { id: 'directory', label: 'Directory', icon: 'storefront', color: CultureTokens.indigo, route: '/(tabs)/directory' },

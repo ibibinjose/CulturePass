@@ -22,6 +22,7 @@ import { useIsDark } from '@/hooks/useColors';
 import { GlassView } from '@/design-system/ui/GlassView';
 import { LuxeButton } from '@/design-system/ui/LuxeButton';
 import { M3Button } from '@/design-system/ui';
+import { CULTURE_WHEEL_MODAL, CULTURE_WHEEL_SLICE_COLORS } from '@/design-system/tokens/cultureWheelModalTokens';
 import { CultureTokens, FontFamily, Radius, Spacing } from '@/design-system/tokens/theme';
 import { normalizeRemoteImageUri } from '@/lib/mediaUrls';
 import { getCommunityProfilePathId } from '@/lib/community';
@@ -41,7 +42,7 @@ const WHEEL_SLICES: Slice[] = [
     id: 'hubs',
     label: 'Hubs',
     emoji: '🏛️',
-    color: '#3F51B5', // Indigo
+    color: CULTURE_WHEEL_SLICE_COLORS.hubs,
     category: 'hubs',
     description: 'Connect with community hubs and cultural associations near you.'
   },
@@ -49,7 +50,7 @@ const WHEEL_SLICES: Slice[] = [
     id: 'events',
     label: 'Events',
     emoji: '🎪',
-    color: '#FF9800', // Deep Orange
+    color: CULTURE_WHEEL_SLICE_COLORS.events,
     category: 'events',
     description: 'Celebrate culture, music, and heritage with upcoming local events.'
   },
@@ -57,7 +58,7 @@ const WHEEL_SLICES: Slice[] = [
     id: 'art',
     label: 'Art',
     emoji: '🎭',
-    color: '#E0A96D', // Heritage Gold/Tan
+    color: CULTURE_WHEEL_SLICE_COLORS.art,
     category: 'art',
     description: 'Explore gallery openings, heritage exhibitions, and visual art.'
   },
@@ -65,7 +66,7 @@ const WHEEL_SLICES: Slice[] = [
     id: 'movies',
     label: 'Movies',
     emoji: '🎬',
-    color: '#9575CD', // Violet
+    color: CULTURE_WHEEL_SLICE_COLORS.movies,
     category: 'movies',
     description: 'Enjoy cinema screenings and heritage films.'
   },
@@ -73,7 +74,7 @@ const WHEEL_SLICES: Slice[] = [
     id: 'dining',
     label: 'Dining',
     emoji: '🥘',
-    color: '#E25B45', // Earthy Red / Coral
+    color: CULTURE_WHEEL_SLICE_COLORS.dining,
     category: 'dining',
     description: 'Savour authentic cultural cuisines and dining spaces.'
   },
@@ -81,7 +82,7 @@ const WHEEL_SLICES: Slice[] = [
     id: 'activities',
     label: 'Activities',
     emoji: '🌳',
-    color: '#4CAF50', // Leaf Green / Teal
+    color: CULTURE_WHEEL_SLICE_COLORS.activities,
     category: 'activities',
     description: 'Participate in group outdoor activities, walks, and local tours.'
   },
@@ -89,7 +90,7 @@ const WHEEL_SLICES: Slice[] = [
     id: 'classes',
     label: 'Classes & Gym',
     emoji: '🧘',
-    color: '#FF7043', // Terracotta
+    color: CULTURE_WHEEL_SLICE_COLORS.classes,
     category: 'classes',
     description: 'Learn new skills, tango, yoga, and wellness sessions.'
   },
@@ -97,7 +98,7 @@ const WHEEL_SLICES: Slice[] = [
     id: 'travel',
     label: 'Travel',
     emoji: '✈️',
-    color: '#00BCD4', // Cyan
+    color: CULTURE_WHEEL_SLICE_COLORS.travel,
     category: 'travel',
     description: 'Explore featured cultural travel destinations and weekend trips.'
   },
@@ -105,7 +106,7 @@ const WHEEL_SLICES: Slice[] = [
     id: 'shopping',
     label: 'Shopping',
     emoji: '🛍️',
-    color: '#2EC4B6', // Emerald / Teal
+    color: CULTURE_WHEEL_SLICE_COLORS.shopping,
     category: 'shopping',
     description: 'Support local businesses selling cultural goods and fashion.'
   },
@@ -113,7 +114,7 @@ const WHEEL_SLICES: Slice[] = [
     id: 'offers',
     label: 'Offers',
     emoji: '🎟️',
-    color: '#FFD54F', // Amber / Gold
+    color: CULTURE_WHEEL_SLICE_COLORS.offers,
     category: 'offers',
     description: 'Claim exclusive local deals, discounts, and member perks.'
   },
@@ -121,7 +122,7 @@ const WHEEL_SLICES: Slice[] = [
     id: 'directory',
     label: 'Directory',
     emoji: '📇',
-    color: '#8BC34A', // Light Green
+    color: CULTURE_WHEEL_SLICE_COLORS.directory,
     category: 'directory',
     description: 'Browse the full local directory of cultural business, associations, and services.'
   },
@@ -129,7 +130,7 @@ const WHEEL_SLICES: Slice[] = [
     id: 'indigenous',
     label: 'Indigenous',
     emoji: '🍂',
-    color: '#795548', // Earthy Brown
+    color: CULTURE_WHEEL_SLICE_COLORS.indigenous,
     category: 'indigenous',
     description: 'Acknowledge traditional lands and support First Nations organisations.'
   }
@@ -539,7 +540,7 @@ export function CultureWheelModal({
           style={[
             styles.sheet,
             {
-              backgroundColor: isDark ? 'rgba(20, 20, 25, 0.88)' : 'rgba(255, 255, 255, 0.94)',
+              backgroundColor: isDark ? CULTURE_WHEEL_MODAL.sheetFillDark : CULTURE_WHEEL_MODAL.sheetFillLight,
               borderColor: colors.outlineVariant,
               maxWidth: isDesktop ? 560 : 500,
             },
@@ -547,14 +548,18 @@ export function CultureWheelModal({
         >
           {/* Header */}
           <View style={styles.sheetHeader}>
-            <View style={{ gap: 4, flex: 1 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <Text style={[styles.sheetTitle, { color: colors.onSurface }]}>CultureWheel</Text>
+            <View style={styles.headerCopy}>
+              <View style={styles.headerTitleRow}>
+                <Text style={[styles.sheetTitle, { color: colors.onSurface }]} numberOfLines={1}>
+                  CultureWheel
+                </Text>
                 <View style={[styles.tagBadge, { backgroundColor: colors.tertiaryContainer }]}>
-                  <Text style={[styles.tagText, { color: colors.onTertiaryContainer }]}>GAMIFIED Discovery</Text>
+                  <Text style={[styles.tagText, { color: colors.onTertiaryContainer }]} numberOfLines={1}>
+                    GAMIFIED Discovery
+                  </Text>
                 </View>
               </View>
-              <Text style={[styles.sheetDesc, { color: colors.onSurfaceVariant }]}>
+              <Text style={[styles.sheetDesc, { color: colors.onSurfaceVariant }]} numberOfLines={2}>
                 New in town? Settle in, find welcoming local circles, or share your heritage.
               </Text>
             </View>
@@ -578,7 +583,12 @@ export function CultureWheelModal({
               {/* Top pointer indicator */}
               <View style={styles.pointerContainer}>
                 <Svg width="26" height="26" viewBox="0 0 30 30">
-                  <Path d="M15 26 L4 6 L26 6 Z" fill={CultureTokens.deepSaffron} stroke="#FFFFFF" strokeWidth="2" />
+                  <Path
+                    d="M15 26 L4 6 L26 6 Z"
+                    fill={CultureTokens.deepSaffron}
+                    stroke={CULTURE_WHEEL_MODAL.pointerStroke}
+                    strokeWidth="2"
+                  />
                 </Svg>
               </View>
 
@@ -595,7 +605,14 @@ export function CultureWheelModal({
               >
                 <Svg width={wheelSize} height={wheelSize} viewBox="0 0 300 300">
                   {/* Wheel outer rim */}
-                  <Circle cx="150" cy="150" r="147" fill={isDark ? '#2D2D35' : '#FFFFFF'} stroke={isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'} strokeWidth="6" />
+                  <Circle
+                    cx="150"
+                    cy="150"
+                    r="147"
+                    fill={isDark ? CULTURE_WHEEL_MODAL.rimFillDark : CULTURE_WHEEL_MODAL.rimFillLight}
+                    stroke={isDark ? CULTURE_WHEEL_MODAL.rimStrokeDark : CULTURE_WHEEL_MODAL.rimStrokeLight}
+                    strokeWidth="6"
+                  />
                   
                   {WHEEL_SLICES.map((slice, i) => (
                     <Path
@@ -618,7 +635,7 @@ export function CultureWheelModal({
                         <SvgText
                           x="0"
                           y="-8"
-                          fill="#FFFFFF"
+                          fill={CULTURE_WHEEL_MODAL.inkOnSlice}
                           fontSize="13"
                           textAnchor="middle"
                           alignmentBaseline="middle"
@@ -628,7 +645,7 @@ export function CultureWheelModal({
                         <SvgText
                           x="0"
                           y="6"
-                          fill="#FFFFFF"
+                          fill={CULTURE_WHEEL_MODAL.inkOnSlice}
                           fontSize="7.5"
                           fontFamily={FontFamily.semibold}
                           textAnchor="middle"
@@ -642,7 +659,14 @@ export function CultureWheelModal({
                   })}
 
                   {/* Center pin decoration */}
-                  <Circle cx="150" cy="150" r="26" fill="#1E1E24" stroke="#FFFFFF" strokeWidth="2.5" />
+                  <Circle
+                    cx="150"
+                    cy="150"
+                    r="26"
+                    fill={CULTURE_WHEEL_MODAL.centerPinFill}
+                    stroke={CULTURE_WHEEL_MODAL.centerPinStroke}
+                    strokeWidth="2.5"
+                  />
                   <Circle cx="150" cy="150" r="10" fill={CultureTokens.deepSaffron} />
                 </Svg>
               </Animated.View>
@@ -653,18 +677,8 @@ export function CultureWheelModal({
                   onPress={handleSpin}
                   variant="filled"
                   loading={isSpinning}
-                  style={{
-                    width: 240,
-                    alignSelf: 'center',
-                    height: 52,
-                    borderRadius: 26,
-                    ...Platform.select({
-                      web: {
-                        boxShadow: '0 8px 24px rgba(226, 91, 69, 0.35)',
-                      },
-                    }),
-                  }}
-                  gradientColors={['#E0A96D', '#FF7043', '#7E57C2']}
+                  style={styles.spinButton}
+                  gradientColors={[...CULTURE_WHEEL_MODAL.spinGradient]}
                 >
                   {isSpinning ? 'SPINNING...' : 'SPIN THE WHEEL 🎡'}
                 </LuxeButton>
@@ -679,7 +693,7 @@ export function CultureWheelModal({
                   style={[
                     styles.resultCard,
                     {
-                      backgroundColor: isDark ? 'rgba(30, 30, 40, 0.45)' : 'rgba(245, 245, 250, 0.7)',
+                      backgroundColor: isDark ? CULTURE_WHEEL_MODAL.resultCardDark : CULTURE_WHEEL_MODAL.resultCardLight,
                       borderColor: selectedSlice.color + '4A',
                     },
                   ]}
@@ -687,24 +701,29 @@ export function CultureWheelModal({
                   {/* Category Header with Icon & Emoji */}
                   <View style={styles.resultHeader}>
                     <View style={[styles.resultCircle, { backgroundColor: selectedSlice.color }]}>
-                      <Text style={styles.resultEmoji}>{selectedSlice.emoji}</Text>
+                      <Text style={styles.resultEmoji} numberOfLines={1}>
+                        {selectedSlice.emoji}
+                      </Text>
                     </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.categoryHeading, { color: selectedSlice.color }]}>
+                    <View style={styles.resultHeaderCopy}>
+                      <Text style={[styles.categoryHeading, { color: selectedSlice.color }]} numberOfLines={1}>
                         {selectedSlice.label.toUpperCase()}
                       </Text>
-                      <Text style={[styles.resultSub, { color: colors.onSurface }]}>
+                      <Text style={[styles.resultSub, { color: colors.onSurface }]} numberOfLines={1}>
                         {"Today's Suggested Vibe"}
                       </Text>
                     </View>
                   </View>
 
-                  <Text style={[styles.resultText, { color: colors.onSurfaceVariant }]}>
+                  <Text style={[styles.resultText, { color: colors.onSurfaceVariant }]} numberOfLines={3}>
                     {selectedSlice.description}
                   </Text>
 
                   {/* Recommendations Header */}
-                  <Text style={[styles.recommendTitle, { color: colors.onSurface, borderBottomColor: colors.outlineVariant }]}>
+                  <Text
+                    style={[styles.recommendTitle, { color: colors.onSurface, borderBottomColor: colors.outlineVariant }]}
+                    numberOfLines={1}
+                  >
                     RECOMMENDED NEAR YOU:
                   </Text>
 
@@ -777,7 +796,7 @@ export function CultureWheelModal({
                           style={({ pressed }) => [
                             styles.recCard,
                             {
-                              backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : '#FFFFFF',
+                              backgroundColor: isDark ? CULTURE_WHEEL_MODAL.recCardDark : CULTURE_WHEEL_MODAL.recCardLight,
                               borderColor: colors.outlineVariant,
                               opacity: pressed ? 0.9 : 1,
                             },
@@ -803,7 +822,9 @@ export function CultureWheelModal({
                               </Text>
                             )}
                             <View style={styles.viewBadge}>
-                              <Text style={[styles.viewBadgeText, { color: colors.primary }]}>Explore Now</Text>
+                              <Text style={[styles.viewBadgeText, { color: colors.primary }]} numberOfLines={1}>
+                                Explore Now
+                              </Text>
                               <Ionicons name="arrow-forward" size={12} color={colors.primary} />
                             </View>
                           </View>
@@ -812,7 +833,7 @@ export function CultureWheelModal({
                     })}
                   </View>
 
-                  <View style={{ marginTop: Spacing.md, gap: 10 }}>
+                  <View style={styles.spinAgainRow}>
                     <M3Button
                       variant="tonal"
                       onPress={handleSpin}
@@ -834,7 +855,7 @@ export function CultureWheelModal({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(10, 10, 12, 0.65)',
+    backgroundColor: CULTURE_WHEEL_MODAL.backdrop,
     justifyContent: 'center',
     alignItems: 'center',
     padding: Spacing.md,
@@ -845,19 +866,34 @@ const styles = StyleSheet.create({
     borderRadius: Radius.xl,
     borderWidth: 1,
     overflow: 'hidden',
-    shadowColor: '#000000',
+    shadowColor: CULTURE_WHEEL_MODAL.shadow,
     shadowOpacity: 0.35,
     shadowRadius: 28,
     shadowOffset: { width: 0, height: 12 },
     elevation: 20,
     maxHeight: '90%',
   },
+  headerCopy: { gap: 4, flex: 1 },
+  headerTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  spinButton: {
+    width: 240,
+    alignSelf: 'center',
+    height: 52,
+    borderRadius: 26,
+    ...Platform.select({
+      web: {
+        boxShadow: `0 8px 24px ${CULTURE_WHEEL_MODAL.spinButtonShadow}`,
+      },
+    }),
+  },
+  resultHeaderCopy: { flex: 1 },
+  spinAgainRow: { marginTop: Spacing.md, gap: 10 },
   sheetHeader: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     padding: Spacing.lg,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(255,255,255,0.08)',
+    borderBottomColor: CULTURE_WHEEL_MODAL.sheetHeaderDivider,
   },
   sheetTitle: {
     fontSize: 22,
@@ -933,7 +969,7 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
+    shadowColor: CULTURE_WHEEL_MODAL.shadow,
     shadowOpacity: 0.1,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },

@@ -6,10 +6,10 @@ import {
   Platform,
   ViewStyle,
   TextStyle,
-  SafeAreaView,
   StatusBar,
   Pressable,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useCulturalTheme } from '@/providers/CulturalThemeProvider';
 import { HeaderTokens, IconSize, AccessibilityTokens } from '@/design-system/tokens/theme';
@@ -97,7 +97,7 @@ export const CulturalTopAppBar: React.FC<CulturalTopAppBarProps> = ({
   };
 
   return (
-    <SafeAreaView style={{ backgroundColor: theme.surface }}>
+    <SafeAreaView style={{ backgroundColor: theme.surface }} edges={['top']}>
       <View style={appBarStyle}>
         {/* Back button */}
         {onBack && (

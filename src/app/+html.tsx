@@ -147,7 +147,7 @@ export default function RootHtml({ children }: PropsWithChildren) {
 
         {/* ── App install / deep link meta ─────────────────────────────────── */}
         <meta name="apple-itunes-app" content="app-id=6738947948" />
-        <meta name="google-play-app" content="app-id=app.culturepass" />
+        <meta name="google-play-app" content="app-id=au.culturepass.app" />
         {/* Smart App Banner for Safari iOS */}
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />

@@ -22,10 +22,10 @@ interface MetallicPalette {
 
 const ORANGE: MetallicPalette = {
   gradFrom: '#FF6B35',
-  gradTo:   '#FF9A00',
+  gradTo:   '#00ADEF',
   surface:  'rgba(255, 107, 53, 0.12)',
   border:   'rgba(255, 154,  0, 0.32)',
-  stripe:   ['#FF6B35', '#FF9A00'],
+  stripe:   ['#FF6B35', '#00ADEF'],
 };
 
 const BLUE: MetallicPalette = {

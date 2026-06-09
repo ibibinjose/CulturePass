@@ -112,3 +112,98 @@ export async function mockDiscoverFeedApi(page: Page) {
     });
   });
 }
+
+const E2E_MAP_EVENTS = [
+  {
+    id: 'event-e2e-melbourne',
+    title: 'Laneway Festival Preview',
+    date: '2026-07-12',
+    time: '18:00',
+    city: 'Melbourne',
+    venue: 'ACMI',
+    lat: -37.8136,
+    lng: 144.9631,
+    imageUrl: null,
+  },
+  {
+    id: 'event-e2e-sydney',
+    title: 'Harbour Lights Concert',
+    date: '2026-07-18',
+    time: '19:30',
+    city: 'Sydney',
+    venue: 'Opera House Forecourt',
+    lat: -33.8568,
+    lng: 151.2153,
+    imageUrl: null,
+  },
+  {
+    id: 'event-e2e-brisbane',
+    title: 'South Bank Night Market',
+    date: '2026-07-20',
+    time: '17:00',
+    city: 'Brisbane',
+    venue: 'South Bank Parklands',
+    lat: -27.4748,
+    lng: 153.0211,
+    imageUrl: null,
+  },
+];
+
+const E2E_DAILY_DEALS = [
+  {
+    id: 'deal-e2e-reward',
+    title: 'Rewards & points',
+    subtitle: 'Earn on tickets and redeem partner perks',
+    kind: 'reward',
+    href: '/payment/wallet',
+    linkPolicy: 'public',
+    startsAt: '2026-06-01T00:00:00.000Z',
+    endsAt: '2026-12-31T23:59:59.000Z',
+    status: 'active',
+    priority: 30,
+    createdAt: '2026-06-01T00:00:00.000Z',
+    createdBy: 'e2e',
+    accentKey: 'teal',
+    coverUrl: null,
+  },
+  {
+    id: 'deal-e2e-plus',
+    title: 'CulturePass+ exclusives',
+    subtitle: 'Extra savings for subscribers',
+    kind: 'offer',
+    href: '/offers',
+    linkPolicy: 'premium_required',
+    startsAt: '2026-06-01T00:00:00.000Z',
+    endsAt: '2026-12-31T23:59:59.000Z',
+    status: 'active',
+    priority: 10,
+    createdAt: '2026-06-01T00:00:00.000Z',
+    createdBy: 'e2e',
+    accentKey: 'violet',
+    coverUrl: null,
+  },
+];
+
+/** Stable CultureShop daily deals for tile layout regression (FIXES-001 P4). */
+export async function mockCultureShopDealsApi(page: Page) {
+  await page.route('**/api/culture-shop/daily-deals**', async (route) => {
+    if (route.request().method() !== 'GET') return route.continue();
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ deals: E2E_DAILY_DEALS }),
+    });
+  });
+}
+
+/** Stable map events for desktop web map split layout (FIXES-001 P3). */
+export async function mockMapEventsApi(page: Page) {
+  await page.route('**/api/events**', async (route) => {
+    if (route.request().method() !== 'GET') return route.continue();
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ events: E2E_MAP_EVENTS, total: E2E_MAP_EVENTS.length }),
+    });
+  });
+}

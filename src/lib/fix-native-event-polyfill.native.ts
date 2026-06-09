@@ -22,22 +22,29 @@
  */
 
 if (process.env.EXPO_OS !== 'web') {
+  // Metro requires string-literal require() paths (no dynamic modulePath).
+  // SDK 56 / RN 0.85+ uses the private webapis Event; older RN used Libraries/Events/Event.
+  let installed = false;
+
   try {
-    // Primary path in current RN
-    // intentional global override
-    global.Event = require('react-native/Libraries/Events/Event');
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const mod = require('react-native/src/private/webapis/dom/events/Event');
+    global.Event = mod?.default ?? mod;
+    installed = true;
   } catch {
     try {
-      // Fallback for newer private webapis path
-      global.Event = require('react-native/src/private/webapis/dom/events/Event').default;
-    } catch (err) {
-      if (__DEV__) {
-        console.warn(
-          '[EventPolyfill] Could not force RN Event implementation. ' +
-            'You may still hit the expo-notifications "read-only property NONE" crash on native.',
-          err
-        );
-      }
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      global.Event = require('react-native/Libraries/Events/Event');
+      installed = true;
+    } catch {
+      // fall through
     }
+  }
+
+  if (!installed && __DEV__) {
+    console.warn(
+      '[EventPolyfill] Could not force RN Event implementation. ' +
+        'You may still hit the expo-notifications "read-only property NONE" crash on native.'
+    );
   }
 }

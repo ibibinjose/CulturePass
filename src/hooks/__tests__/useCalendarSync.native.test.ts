@@ -4,24 +4,26 @@ import type { EventData } from '@/shared/schema';
 import { useCalendarSync, parseEventDate, buildICS } from '../useCalendarSync.native';
 
 /** Minimal calendar row shape used by useCalendarSync.native (writable calendar lookup). */
-type MockWritableCalendar = { id: string; allowsModifications: boolean };
+type MockWritableCalendar = {
+  id: string;
+  allowsModifications: boolean;
+  createEvent?: jest.Mock;
+};
 
 /** Inline factory so the mock exists before `useCalendarSync.native` runs its top-level `require('expo-calendar')`. */
 jest.mock('expo-calendar', () => ({
-  requestCalendarPermissionsAsync: jest.fn(async () => ({ granted: true })),
-  getCalendarPermissionsAsync: jest.fn(async () => ({ granted: true })),
-  getCalendarsAsync: jest.fn(async (): Promise<MockWritableCalendar[]> => []),
-  getEventsAsync: jest.fn(async () => []),
-  createEventAsync: jest.fn(async () => 'ev-1'),
+  requestCalendarPermissions: jest.fn(async () => ({ granted: true })),
+  getCalendarPermissions: jest.fn(async () => ({ granted: true })),
+  getCalendars: jest.fn(async (): Promise<MockWritableCalendar[]> => []),
+  listEvents: jest.fn(async () => []),
   EntityTypes: { EVENT: 'event' },
 }));
 
 const mockExpoCalendar = jest.requireMock('expo-calendar') as {
-  requestCalendarPermissionsAsync: jest.Mock;
-  getCalendarPermissionsAsync: jest.Mock;
-  getCalendarsAsync: jest.Mock;
-  getEventsAsync: jest.Mock;
-  createEventAsync: jest.Mock;
+  requestCalendarPermissions: jest.Mock;
+  getCalendarPermissions: jest.Mock;
+  getCalendars: jest.Mock;
+  listEvents: jest.Mock;
   EntityTypes: { EVENT: string };
 };
 
@@ -173,15 +175,15 @@ describe('useCalendarSync.native', () => {
     const origPlatformOS = Platform.OS;
     beforeEach(() => {
       Platform.OS = 'ios';
-      mockExpoCalendar.requestCalendarPermissionsAsync.mockImplementation(() => Promise.resolve({ status: 'granted', granted: true }));
-      mockExpoCalendar.getCalendarPermissionsAsync.mockImplementation(() => Promise.resolve({ status: 'granted', granted: true }));
+      mockExpoCalendar.requestCalendarPermissions.mockImplementation(() => Promise.resolve({ status: 'granted', granted: true }));
+      mockExpoCalendar.getCalendarPermissions.mockImplementation(() => Promise.resolve({ status: 'granted', granted: true }));
     });
     afterEach(() => {
       Platform.OS = origPlatformOS;
     });
 
     it('returns false and alerts if permission denied', async () => {
-      mockExpoCalendar.requestCalendarPermissionsAsync.mockImplementationOnce(() => Promise.resolve({ status: 'denied', granted: false }));
+      mockExpoCalendar.requestCalendarPermissions.mockImplementationOnce(() => Promise.resolve({ status: 'denied', granted: false }));
       const { result } = renderHook(() => useCalendarSync());
 
       const event = { id: '123', title: 'Test Event', date: new Date() } as unknown as EventData;
@@ -199,7 +201,7 @@ describe('useCalendarSync.native', () => {
     });
 
     it('returns false and alerts if no writable calendar found', async () => {
-      mockExpoCalendar.getCalendarsAsync.mockImplementationOnce(() => Promise.resolve([
+      mockExpoCalendar.getCalendars.mockImplementationOnce(() => Promise.resolve([
         { id: '1', allowsModifications: false },
       ]));
       const { result } = renderHook(() => useCalendarSync());
@@ -214,11 +216,14 @@ describe('useCalendarSync.native', () => {
       expect(Alert.alert).toHaveBeenCalledWith('No writable calendar found', 'Unable to add event to your calendar.');
     });
 
-    it('returns false and alerts if createEventAsync throws', async () => {
-      mockExpoCalendar.getCalendarsAsync.mockImplementationOnce(() => Promise.resolve([
-        { id: '1', allowsModifications: true },
+    it('returns false and alerts if createEvent throws', async () => {
+      mockExpoCalendar.getCalendars.mockImplementationOnce(() => Promise.resolve([
+        {
+          id: '1',
+          allowsModifications: true,
+          createEvent: jest.fn(() => Promise.reject(new Error('Failed'))),
+        },
       ]));
-      mockExpoCalendar.createEventAsync.mockImplementationOnce(() => Promise.reject(new Error('Failed')));
 
       const { result } = renderHook(() => useCalendarSync());
 
@@ -232,11 +237,14 @@ describe('useCalendarSync.native', () => {
       expect(Alert.alert).toHaveBeenCalledWith('Error', 'Could not add event to calendar. Please try again.');
     });
 
-    it('returns true if createEventAsync succeeds', async () => {
-      mockExpoCalendar.getCalendarsAsync.mockImplementationOnce(() => Promise.resolve([
-        { id: '1', allowsModifications: true },
+    it('returns true if createEvent succeeds', async () => {
+      mockExpoCalendar.getCalendars.mockImplementationOnce(() => Promise.resolve([
+        {
+          id: '1',
+          allowsModifications: true,
+          createEvent: jest.fn(() => Promise.resolve({ id: 'event-123' })),
+        },
       ]));
-      mockExpoCalendar.createEventAsync.mockImplementationOnce(() => Promise.resolve('event-123'));
 
       const { result } = renderHook(() => useCalendarSync());
 
@@ -255,15 +263,15 @@ describe('useCalendarSync.native', () => {
     const origPlatformOS = Platform.OS;
     beforeEach(() => {
       Platform.OS = 'ios';
-      mockExpoCalendar.requestCalendarPermissionsAsync.mockImplementation(() => Promise.resolve({ status: 'granted', granted: true }));
-      mockExpoCalendar.getCalendarPermissionsAsync.mockImplementation(() => Promise.resolve({ status: 'granted', granted: true }));
+      mockExpoCalendar.requestCalendarPermissions.mockImplementation(() => Promise.resolve({ status: 'granted', granted: true }));
+      mockExpoCalendar.getCalendarPermissions.mockImplementation(() => Promise.resolve({ status: 'granted', granted: true }));
     });
     afterEach(() => {
       Platform.OS = origPlatformOS;
     });
 
-    it('silently ignores errors from getCalendarsAsync', async () => {
-      mockExpoCalendar.getCalendarsAsync.mockImplementationOnce(() => Promise.reject(new Error('Failed')));
+    it('silently ignores errors from getCalendars', async () => {
+      mockExpoCalendar.getCalendars.mockImplementationOnce(() => Promise.reject(new Error('Failed')));
       const { result } = renderHook(() => useCalendarSync());
 
       await act(async () => {
@@ -277,11 +285,11 @@ describe('useCalendarSync.native', () => {
       expect(result.current.personalEvents).toEqual([]);
     });
 
-    it('silently ignores errors from getEventsAsync', async () => {
-      mockExpoCalendar.getCalendarsAsync.mockImplementationOnce(() => Promise.resolve([
+    it('silently ignores errors from listEvents', async () => {
+      mockExpoCalendar.getCalendars.mockImplementationOnce(() => Promise.resolve([
         { id: '1', allowsModifications: true },
       ]));
-      mockExpoCalendar.getEventsAsync.mockImplementationOnce(() => Promise.reject(new Error('Failed')));
+      mockExpoCalendar.listEvents.mockImplementationOnce(() => Promise.reject(new Error('Failed')));
 
       const { result } = renderHook(() => useCalendarSync());
 
@@ -301,18 +309,21 @@ describe('useCalendarSync.native', () => {
     const origPlatformOS = Platform.OS;
     beforeEach(() => {
       Platform.OS = 'ios';
-      mockExpoCalendar.requestCalendarPermissionsAsync.mockImplementation(() => Promise.resolve({ status: 'granted', granted: true }));
-      mockExpoCalendar.getCalendarPermissionsAsync.mockImplementation(() => Promise.resolve({ status: 'granted', granted: true }));
+      mockExpoCalendar.requestCalendarPermissions.mockImplementation(() => Promise.resolve({ status: 'granted', granted: true }));
+      mockExpoCalendar.getCalendarPermissions.mockImplementation(() => Promise.resolve({ status: 'granted', granted: true }));
     });
     afterEach(() => {
       Platform.OS = origPlatformOS;
     });
 
     it('does not alert if all exports fail', async () => {
-      mockExpoCalendar.getCalendarsAsync.mockImplementation(() => Promise.resolve([
-        { id: '1', allowsModifications: true },
+      mockExpoCalendar.getCalendars.mockImplementation(() => Promise.resolve([
+        {
+          id: '1',
+          allowsModifications: true,
+          createEvent: jest.fn(() => Promise.reject(new Error('Failed'))),
+        },
       ]));
-      mockExpoCalendar.createEventAsync.mockImplementation(() => Promise.reject(new Error('Failed')));
 
       const { result } = renderHook(() => useCalendarSync());
       const events = [
@@ -330,12 +341,13 @@ describe('useCalendarSync.native', () => {
     });
 
     it('alerts with correct count if partial success', async () => {
-      mockExpoCalendar.getCalendarsAsync.mockImplementation(() => Promise.resolve([
-        { id: '1', allowsModifications: true },
-      ]));
-      mockExpoCalendar.createEventAsync
-        .mockImplementationOnce(() => Promise.resolve('event-1'))
+      const createEvent = jest
+        .fn()
+        .mockImplementationOnce(() => Promise.resolve({ id: 'event-1' }))
         .mockImplementationOnce(() => Promise.reject(new Error('Failed')));
+      mockExpoCalendar.getCalendars.mockImplementation(() => Promise.resolve([
+        { id: '1', allowsModifications: true, createEvent },
+      ]));
 
       const { result } = renderHook(() => useCalendarSync());
       const events = [

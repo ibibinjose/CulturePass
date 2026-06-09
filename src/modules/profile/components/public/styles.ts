@@ -219,7 +219,7 @@ export const getStyles = (colors: ReturnType<typeof useColors>) => StyleSheet.cr
     left: 0,
     right: 0,
     height: 3,
-    backgroundColor: '#D4AF37',
+    backgroundColor: '#00ADEF',
   },
   cpidDotsWm: {
     position: 'absolute', bottom: 22, right: 20,
@@ -278,7 +278,7 @@ export const getStyles = (colors: ReturnType<typeof useColors>) => StyleSheet.cr
   cpidValueSolid: {
     fontFamily: 'Poppins_700Bold',
     fontSize: 22,
-    color: '#D4AF37',
+    color: '#00ADEF',
     letterSpacing: 2,
   },
   cpidMetaSolid: {

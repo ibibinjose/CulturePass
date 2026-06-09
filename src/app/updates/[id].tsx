@@ -41,7 +41,7 @@ function UpdateDetailContent() {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={[styles.header, { paddingTop: topInset + 16, paddingHorizontal: hPad, borderBottomColor: colors.borderLight }]}>
-          <Pressable style={styles.backBtn} onPress={() => goBackOrReplace('/updates/index')} accessibilityRole="button" accessibilityLabel="Go back">
+          <Pressable style={styles.backBtn} onPress={() => goBackOrReplace('/updates')} accessibilityRole="button" accessibilityLabel="Go back">
             <Ionicons name="chevron-back" size={22} color={colors.text} />
           </Pressable>
         </View>
@@ -67,7 +67,7 @@ function UpdateDetailContent() {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={[styles.header, { paddingTop: topInset + 16, paddingHorizontal: hPad, borderBottomColor: colors.borderLight }]}>
-          <Pressable style={styles.backBtn} onPress={() => goBackOrReplace('/updates/index')} accessibilityRole="button" accessibilityLabel="Go back">
+          <Pressable style={styles.backBtn} onPress={() => goBackOrReplace('/updates')} accessibilityRole="button" accessibilityLabel="Go back">
             <Ionicons name="chevron-back" size={22} color={colors.text} />
           </Pressable>
           <Text style={[styles.headerTitle, { color: colors.text }]}>Not Found</Text>
@@ -89,7 +89,7 @@ function UpdateDetailContent() {
           style={styles.backBtn}
           onPress={() => {
             if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            goBackOrReplace('/updates/index');
+            goBackOrReplace('/updates');
           }}
           accessibilityRole="button"
           accessibilityLabel="Go back"

@@ -11,6 +11,7 @@ import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { prk as prkStyles } from '@/modules/profile/components/tabs/ProfileStyles';
 import { openExternalUrl } from '@/lib/openExternalUrl';
+import { profileSectionLayout } from './profileSectionLayout';
 
 interface ProfileStatsActivitySectionProps {
   displayUser: any;
@@ -51,9 +52,8 @@ export const ProfileStatsActivitySection = React.memo(({
 
   return (
     <>
-      {/* Social */}
       {activeSocials.length > 0 ? (
-        <View style={[styles.section, { paddingHorizontal: hPad }]}>
+        <View style={[profileSectionLayout.section, { paddingHorizontal: hPad }]}>
           <M3SectionHeader title="Social" />
           <View style={[styles.shell, { backgroundColor: m3.surfaceContainerLow, borderColor: m3.outlineVariant }]}>
             {activeSocials.map((s, i) => (
@@ -67,7 +67,7 @@ export const ProfileStatsActivitySection = React.memo(({
                   <View style={[styles.iconWell, { backgroundColor: s.color + '15' }]}>
                     <Ionicons name={s.icon} size={20} color={s.color} />
                   </View>
-                  <Text style={[styles.rowLabel, { flex: 1, color: m3.onSurface }]}>{s.label}</Text>
+                  <Text style={[styles.rowLabel, { color: m3.onSurface }]} numberOfLines={1}>{s.label}</Text>
                   <Ionicons name="open-outline" size={16} color={m3.onSurfaceVariant} />
                 </Pressable>
                 {i < activeSocials.length - 1 ? <View style={[styles.divider, { backgroundColor: m3.outlineVariant }]} /> : null}
@@ -77,16 +77,15 @@ export const ProfileStatsActivitySection = React.memo(({
         </View>
       ) : null}
 
-      {/* Perks Rail */}
       {(perksLoading || perks.length > 0) ? (
-        <View style={[styles.section]}>
-          <View style={{ paddingHorizontal: hPad }}>
+        <View style={profileSectionLayout.section}>
+          <View style={[styles.sectionHeader, { paddingHorizontal: hPad }]}>
             <M3SectionHeader title="Your perks" actionLabel="View all" onAction={() => nav('/perks')} />
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[prkStyles.scroll, { paddingHorizontal: hPad }]}>
             {perksLoading
               ? [0, 1, 2].map(i => (
-                  <GlassView key={`sk-${i}`} style={styles.perkCard} contentStyle={{ alignItems: 'center', justifyContent: 'center' }}>
+                  <GlassView key={`sk-${i}`} style={styles.perkCard} contentStyle={styles.perkSkeletonContent}>
                     <ActivityIndicator color={m3.primary} />
                   </GlassView>
                 ))
@@ -104,7 +103,7 @@ export const ProfileStatsActivitySection = React.memo(({
                       <Text style={[styles.perkTitle, { color: m3.onSurface }]} numberOfLines={2}>{perk.title}</Text>
                       {'discount' in perk && (perk as any).discount ? (
                         <View style={[styles.perkBadge, { backgroundColor: m3.tertiaryContainer }]}>
-                          <Text style={[styles.perkBadgeText, { color: m3.onTertiaryContainer }]}>{(perk as any).discount}</Text>
+                          <Text style={[styles.perkBadgeText, { color: m3.onTertiaryContainer }]} numberOfLines={1}>{(perk as any).discount}</Text>
                         </View>
                       ) : null}
                     </View>
@@ -114,8 +113,7 @@ export const ProfileStatsActivitySection = React.memo(({
         </View>
       ) : null}
 
-      {/* Stats Grid */}
-      <View style={[styles.section, { paddingHorizontal: hPad }]}>
+      <View style={[profileSectionLayout.section, { paddingHorizontal: hPad }]}>
         <M3SectionHeader title="Stats" />
         <View style={styles.statsGrid}>
           {statsCards.map(item => (
@@ -123,26 +121,25 @@ export const ProfileStatsActivitySection = React.memo(({
               <View style={[styles.statsIcon, { backgroundColor: item.color + '18' }]}>
                 <Ionicons name={item.icon} size={18} color={item.color} />
               </View>
-              <Text style={[styles.statsNum, { color: m3.onSurface }]}>{fmt(item.value)}</Text>
-              <Text style={[styles.statsLabel, { color: m3.onSurfaceVariant }]}>{item.label}</Text>
+              <Text style={[styles.statsNum, { color: m3.onSurface }]} numberOfLines={1}>{fmt(item.value)}</Text>
+              <Text style={[styles.statsLabel, { color: m3.onSurfaceVariant }]} numberOfLines={1}>{item.label}</Text>
             </View>
           ))}
         </View>
       </View>
 
-      {/* Activity */}
-      <View style={[styles.section, { paddingHorizontal: hPad }]}>
+      <View style={[profileSectionLayout.section, { paddingHorizontal: hPad }]}>
         <M3SectionHeader title="Activity" />
-        <View style={[styles.shell, { backgroundColor: m3.surfaceContainerLow, borderColor: m3.outlineVariant, padding: 18, gap: 14 }]}>
+        <View style={[styles.shell, profileSectionLayout.activityShell, { backgroundColor: m3.surfaceContainerLow, borderColor: m3.outlineVariant }]}>
           {activityFeed.length > 0 ? (
             activityFeed.map(entry => (
               <View key={entry} style={styles.activityRow}>
                 <View style={[styles.activityDot, { backgroundColor: m3.primary }]} />
-                <Text style={[styles.activityText, { color: m3.onSurface }]}>{entry}</Text>
+                <Text style={[styles.activityText, { color: m3.onSurface }]} numberOfLines={2}>{entry}</Text>
               </View>
             ))
           ) : (
-            <Text style={[styles.activityEmpty, { color: m3.onSurfaceVariant }]}>
+            <Text style={[styles.activityEmpty, { color: m3.onSurfaceVariant }]} numberOfLines={4}>
               Your cultural activity appears here as you join communities and attend events.
             </Text>
           )}
@@ -155,7 +152,7 @@ export const ProfileStatsActivitySection = React.memo(({
 ProfileStatsActivitySection.displayName = 'ProfileStatsActivitySection';
 
 const styles = StyleSheet.create({
-  section: { marginTop: 36 },
+  sectionHeader: {},
   shell: {
     borderRadius: MaterialExpressive.shape.cornerExtraLarge,
     borderWidth: StyleSheet.hairlineWidth,
@@ -177,6 +174,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   rowLabel: {
+    flex: 1,
     fontSize: 15,
     fontFamily: FontFamily.medium,
     letterSpacing: 0.1,
@@ -187,6 +185,7 @@ const styles = StyleSheet.create({
     marginRight: 16,
   },
   perkCard: { width: 156 },
+  perkSkeletonContent: { alignItems: 'center', justifyContent: 'center' },
   perkInner: {
     borderRadius: MaterialExpressive.shape.cornerExtraLarge,
     borderWidth: 1, padding: 16, minHeight: 132,

@@ -21,7 +21,7 @@ export const ProfileActionButtons = React.memo(({
   const { hPad } = useLayout();
 
   return (
-    <View style={[styles.shell, { backgroundColor: m3.surfaceContainerLow, borderColor: m3.outlineVariant, marginHorizontal: hPad, marginTop: 12, flexDirection: 'row', gap: 10, padding: 12 }]}>
+    <View style={[styles.shell, styles.shellRow, { backgroundColor: m3.surfaceContainerLow, borderColor: m3.outlineVariant, marginHorizontal: hPad }]}>
       {[
         { icon: 'scan' as const, label: 'Scan', onPress: () => { if (Platform.OS !== 'web') Haptics.selectionAsync(); setShowScanner(true); } },
         { icon: 'people' as const, label: 'Contacts', onPress: () => nav('/contacts') },
@@ -42,6 +42,12 @@ const styles = StyleSheet.create({
     borderRadius: MaterialExpressive.shape.cornerExtraLarge,
     borderWidth: StyleSheet.hairlineWidth,
     overflow: 'hidden',
+  },
+  shellRow: {
+    marginTop: 12,
+    flexDirection: 'row',
+    gap: 10,
+    padding: 12,
   },
   actionCell: { flex: 1 },
 });

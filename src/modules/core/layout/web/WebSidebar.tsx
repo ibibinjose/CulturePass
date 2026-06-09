@@ -30,6 +30,7 @@ import { M3Card } from '@/design-system/ui/M3Card';
 import { AppearanceModeToggle, CulturePassWordmark } from '@/design-system/ui';
 import { APP_WEB_TAGLINE } from '@/lib/app-meta';
 import {
+  SIDEBAR_MAIN_NAV,
   SIDEBAR_ATTENDEE_LINKS,
   SIDEBAR_BROWSE_LINKS,
   SIDEBAR_HOST_ASPIRING_LINKS,
@@ -60,12 +61,7 @@ const PROFILE_ACTIONS = [
 interface NavItem extends SidebarNavLink {}
 
 // ─── Nav Arrays ───────────────────────────────────────────────────────────────
-const MAIN_NAV: NavItem[] = [
-  { label: 'Discover', icon: 'compass-outline', iconActive: 'compass', route: '/(tabs)' },
-  { label: 'My City', icon: 'location-outline', iconActive: 'location', route: '/(tabs)/city' },
-  { label: 'Calendar', icon: 'calendar-outline', iconActive: 'calendar', route: '/(tabs)/calendar' },
-  { label: 'Community', icon: 'people-circle-outline', iconActive: 'people-circle', route: '/(tabs)/community' },
-];
+const MAIN_NAV: NavItem[] = SIDEBAR_MAIN_NAV;
 
 const ATTENDEE_NAV: NavItem[] = SIDEBAR_ATTENDEE_LINKS;
 const BROWSE_NAV: NavItem[] = SIDEBAR_BROWSE_LINKS;

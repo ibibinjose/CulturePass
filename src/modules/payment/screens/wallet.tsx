@@ -39,9 +39,9 @@ const LOYALTY_CYCLE_COLORS = [
 const tierConfigMap: Record<string, { label: string; glow: string }> = {
   free:    { label: 'Standard', glow: 'rgba(227, 106, 78, 0.18)' },
   plus:    { label: 'Plus',     glow: 'rgba(79, 70, 229, 0.28)' },
-  premium: { label: 'Premium',  glow: 'rgba(255, 200, 87, 0.22)' },
+  premium: { label: 'Premium',  glow: 'rgba(0, 173, 239, 0.22)' },
   elite:   { label: 'Elite',    glow: 'rgba(20, 184, 166, 0.22)' },
-  vip:     { label: 'VIP',      glow: 'rgba(255, 200, 87, 0.28)' },
+  vip:     { label: 'VIP',      glow: 'rgba(0, 173, 239, 0.28)' },
   pro:     { label: 'Pro',      glow: 'rgba(0, 240, 255, 0.20)' },
 };
 

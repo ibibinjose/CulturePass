@@ -22,20 +22,19 @@ import { useColors } from '@/hooks/useColors';
 import { useM3Colors } from '@/hooks/useM3Colors';
 import { useLayout } from '@/hooks/useLayout';
 import {
-  M3Button,
-  M3Card,
   M3TopAppBar,
   LuxeButton,
   LuxeCard,
   LuxeText,
   Input,
   Checkbox,
-  SocialButton,
- CulturePassWordmark } from '@/design-system/ui';
+  CulturePassWordmark,
+} from '@/design-system/ui';
+import { AuthSocialSection } from '@/components/onboarding/AuthSocialSection';
+import { AuthWebMarketingPanel } from '@/components/onboarding/AuthWebMarketingPanel';
 
 import {
   CardTokens,
-  CultureTokens,
   FontFamily,
   FontSize,
   IconSize,
@@ -43,9 +42,6 @@ import {
   M3Typography,
   Spacing,
   TextStyles,
-  Luxe,
-  LuxeTextStyles,
-  luxeDark,
 } from '@/design-system/tokens/theme';
 
 import { routeWithRedirect, sanitizeInternalRedirect } from '@/lib/routes';
@@ -117,8 +113,8 @@ export default function LoginScreen() {
 
       {/* Copy */}
       <Animated.View entering={enter(70)} style={s.copyBlock}>
-        <LuxeText variant="display" style={[s.title, { color: luxeDark.text }]}>Welcome back</LuxeText>
-        <LuxeText variant="body" style={[s.subtitle, { color: luxeDark.textSecondary }]}>
+        <LuxeText variant="display" style={[s.title, { color: m3Colors.onSurface }]}>Welcome back</LuxeText>
+        <LuxeText variant="body" style={[s.subtitle, { color: m3Colors.onSurfaceVariant }]}>
           Sign in to your cultural home.
         </LuxeText>
       </Animated.View>
@@ -141,33 +137,13 @@ export default function LoginScreen() {
         </Animated.View>
       ) : null}
 
-      {/* Social — full-width, top of form */}
-      <Animated.View entering={enter(110)} style={s.socialStack}>
-        <SocialButton
-          provider="google"
-          onPress={handleGoogleSignIn}
-          disabled={loading}
-          compact
-          accessibilityLabel="Continue with Google"
-        />
-        {Platform.OS === 'ios' || Platform.OS === 'web' ? (
-          <SocialButton
-            provider="apple"
-            onPress={handleAppleSignIn}
-            disabled={loading}
-            compact
-            accessibilityLabel="Continue with Apple"
-          />
-        ) : (
-          <SocialButton
-            provider="apple"
-            comingSoon
-            disabled={loading}
-            compact
-            accessibilityLabel="Continue with Apple"
-          />
-        )}
-      </Animated.View>
+      <AuthSocialSection
+        entering={enter(110)}
+        onGooglePress={handleGoogleSignIn}
+        onApplePress={handleAppleSignIn}
+        loading={loading}
+        mode="login"
+      />
 
       {/* Divider */}
       <Animated.View entering={enter(150)} style={s.divider}>
@@ -225,7 +201,7 @@ export default function LoginScreen() {
             accessibilityRole="link"
             accessibilityLabel="Forgot password"
           >
-            <Text style={s.forgotText}>Forgot?</Text>
+            <Text style={[s.forgotText, { color: m3Colors.primary }]}>Forgot?</Text>
           </Pressable>
         </View>
 
@@ -319,46 +295,7 @@ export default function LoginScreen() {
       >
         {isWeb && isDesktop ? (
           <View style={s.webRow}>
-            {/* Marketing column */}
-            <View style={[s.webLeft, { backgroundColor: luxeDark.accentContainer }]}>
-              <Animated.View entering={enter(40)} style={s.webKickerRow}>
-                <View style={[s.webDot, { backgroundColor: luxeDark.primary }]} />
-                <LuxeText variant="badgeCaps" style={s.webKickerText}>CULTUREPASS</LuxeText>
-              </Animated.View>
-
-              <Animated.View entering={enter(70)}>
-                <LuxeText variant="displayHero" style={s.webHeadlineText}>Connecting cultures, building belonging.</LuxeText>
-              </Animated.View>
-
-              <Animated.View entering={enter(100)}>
-                <LuxeText variant="hero" style={s.webLeadText}>
-                  A premium cultural lifestyle marketplace built for diaspora cities.
-                </LuxeText>
-              </Animated.View>
-
-              <Animated.View entering={enter(130)} style={s.webValueGrid}>
-                {[
-                  { icon: 'calendar-outline' as const, title: 'Events', desc: 'Discover what’s on this week.' },
-                  { icon: 'people-outline' as const, title: 'Communities', desc: 'Join and share with your people.' },
-                  { icon: 'gift-outline' as const, title: 'Perks', desc: 'Member-only rewards & offers.' },
-                ].map((item) => (
-                  <LuxeCard
-                    key={item.title}
-                    variant="glass"
-                    style={s.webValueCard}
-                  >
-                    <View style={s.webValueStripe} />
-                    <View style={[s.webValueIcon, { backgroundColor: luxeDark.surfaceElevated }]}>
-                      <Ionicons name={item.icon} size={18} color={luxeDark.primary} />
-                    </View>
-                    <View style={{ flex: 1, minWidth: 0 }}>
-                      <LuxeText variant="title3" style={s.webValueTitle}>{item.title}</LuxeText>
-                      <LuxeText variant="caption" style={s.webValueDesc}>{item.desc}</LuxeText>
-                    </View>
-                  </LuxeCard>
-                ))}
-              </Animated.View>
-            </View>
+            <AuthWebMarketingPanel enterAnimation={enter} variant="login" />
 
             {/* Form card */}
             <Animated.View entering={enterUp} style={s.cardWrap}>
@@ -435,13 +372,6 @@ const s = StyleSheet.create({
   },
   errorText: { flex: 1, fontFamily: FontFamily.medium, fontSize: FontSize.body2 },
 
-  /* Social */
-  socialStack: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: Spacing.lg,
-  },
-
   /* Divider */
   divider: {
     flexDirection: 'row',
@@ -474,7 +404,6 @@ const s = StyleSheet.create({
     flexShrink: 0,
   },
   forgotText: {
-    color: CultureTokens.indigo,
     fontFamily: FontFamily.bold,
     fontSize: FontSize.body2,
     textDecorationLine: 'underline',
@@ -497,75 +426,14 @@ const s = StyleSheet.create({
   /* Switch */
   switchRow: { alignItems: 'center', paddingVertical: Spacing.md, marginTop: Spacing.sm },
   switchText: { fontFamily: FontFamily.regular, fontSize: FontSize.callout, textAlign: 'center' },
-  switchLink: { color: CultureTokens.indigo, fontFamily: FontFamily.bold },
-
   /* Desktop two-column */
   webRow: {
     width: '100%',
-    maxWidth: 1100,
+    maxWidth: 1120,
     alignSelf: 'center',
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 64,
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 48,
   },
-  webLeft: {
-    flex: 1,
-    minWidth: 0,
-    backgroundColor: '#4A4AEB',
-    borderRadius: 24,
-    paddingHorizontal: 20,
-    paddingVertical: 20,
-  },
-  webKickerRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 14 },
-  webKickerText: { color: '#F8F8F8', letterSpacing: 1.5 },
-  webDot: { width: 8, height: 8, borderRadius: 4 },
-  webKicker: {
-    fontFamily: FontFamily.semibold,
-    fontSize: 12,
-    letterSpacing: 1.1,
-    textTransform: 'uppercase',
-  },
-  webHeadline: {
-    fontFamily: FontFamily.bold,
-    fontSize: 42,
-    letterSpacing: -0.8,
-    lineHeight: 50,
-    marginBottom: 14,
-  },
-  webHeadlineText: { color: '#F8F8F8' },
-  webLead: {
-    fontFamily: FontFamily.regular,
-    fontSize: 15,
-    lineHeight: 24,
-    maxWidth: 440,
-    marginBottom: 24,
-  },
-  webLeadText: { color: '#F8F8F8', marginTop: 12 },
-  webValueGrid: { gap: 12, marginTop: 8, maxWidth: 440 },
-  webValueCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-    backgroundColor: '#3CC76E',
-    borderColor: '#1C1C1C',
-    borderWidth: 2,
-    borderRadius: CardTokens.radius,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-  },
-  webValueStripe: {
-    width: 6,
-    alignSelf: 'stretch',
-    borderRadius: 999,
-    backgroundColor: '#FF2B9E',
-  },
-  webValueIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  webValueTitle: { color: '#1C1C1C', fontFamily: FontFamily.semibold, fontSize: 14 },
-  webValueDesc: { color: '#1C1C1C', fontFamily: FontFamily.regular, fontSize: 12, lineHeight: 17, marginTop: 2 },
 });

@@ -5,16 +5,17 @@ import { auth as firebaseAuth, FIREBASE_CLIENT_DISABLED_MESSAGE } from '@/lib/fi
 import {
   createUserWithEmailAndPassword,
   updateProfile,
-  GoogleAuthProvider,
-  signInWithPopup,
-  signInWithCredential,
-  OAuthProvider,
   setPersistence,
   browserLocalPersistence,
   sendEmailVerification,
 } from 'firebase/auth';
 import { api } from '@/lib/api';
-import * as AppleAuthentication from 'expo-apple-authentication';
+import {
+  isAuthCancellation,
+  resolveAuthErrorMessage,
+  signInWithAppleProvider,
+  signInWithGoogleProvider,
+} from '@/lib/social-auth';
 import { routeWithRedirect, sanitizeInternalRedirect } from '@/lib/routes';
 import { captureEvent, identifyUser } from '@/lib/analytics';
 import { HapticManager } from '@/lib/haptics';
@@ -97,17 +98,8 @@ export function useSignup() {
     try {
       if (Platform.OS === 'web') {
         await setPersistence(firebaseAuth, browserLocalPersistence);
-        const provider = new GoogleAuthProvider();
-        await signInWithPopup(firebaseAuth, provider);
-      } else {
-        const { GoogleSignin } = await import('@react-native-google-signin/google-signin');
-        GoogleSignin.configure({ webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID });
-        await GoogleSignin.hasPlayServices();
-        await GoogleSignin.signIn();
-        const tokens = await GoogleSignin.getTokens();
-        const credential = GoogleAuthProvider.credential(tokens.idToken);
-        await signInWithCredential(firebaseAuth, credential);
       }
+      await signInWithGoogleProvider(firebaseAuth);
       {
         const cur = firebaseAuth?.currentUser;
         if (cur) {
@@ -126,12 +118,10 @@ export function useSignup() {
       await HapticManager.success();
       router.replace(routeWithRedirect('/(onboarding)/location', redirectTo) as string);
     } catch (e: unknown) {
-      const err = e as Record<string, unknown>;
-      const code = err?.code as string | undefined;
-      if (!code || !['auth/popup-closed-by-user', 'auth/cancelled-popup-request', '-5'].includes(code)) {
-        setGlobalError('Google sign-up failed. Please try again.');
-        await HapticManager.error();
-      }
+      if (isAuthCancellation(e)) return;
+      const errorMsg = resolveAuthErrorMessage(e, 'Google sign-up failed. Please try again.');
+      if (errorMsg) setGlobalError(errorMsg);
+      await HapticManager.error();
     } finally {
       setLoading(false);
     }
@@ -147,23 +137,7 @@ export function useSignup() {
       return;
     }
     try {
-      if (Platform.OS === 'web') {
-        const provider = new OAuthProvider('apple.com');
-        await signInWithPopup(firebaseAuth, provider);
-      } else {
-        const credential = await AppleAuthentication.signInAsync({
-          requestedScopes: [
-            AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
-            AppleAuthentication.AppleAuthenticationScope.EMAIL,
-          ],
-        });
-        const provider = new OAuthProvider('apple.com');
-        const firebaseCredential = provider.credential({
-          idToken: credential.identityToken ?? '',
-          rawNonce: credential.authorizationCode ?? '',
-        });
-        await signInWithCredential(firebaseAuth, firebaseCredential);
-      }
+      await signInWithAppleProvider(firebaseAuth);
       {
         const cur = firebaseAuth?.currentUser;
         if (cur) {
@@ -182,11 +156,10 @@ export function useSignup() {
       if (Platform.OS !== 'web') await HapticManager.success();
       router.replace(routeWithRedirect('/(onboarding)/location', redirectTo) as string);
     } catch (e: unknown) {
-      const err = e as Record<string, unknown>;
-      if (err?.code !== 'ERR_REQUEST_CANCELED') {
-        setGlobalError('Apple sign-up failed. Please try again.');
-        if (Platform.OS !== 'web') await HapticManager.error();
-      }
+      if (isAuthCancellation(e)) return;
+      const errorMsg = resolveAuthErrorMessage(e, 'Apple sign-up failed. Please try again.');
+      if (errorMsg) setGlobalError(errorMsg);
+      if (Platform.OS !== 'web') await HapticManager.error();
     } finally {
       setLoading(false);
     }

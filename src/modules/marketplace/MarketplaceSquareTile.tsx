@@ -8,9 +8,9 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useColors } from '@/hooks/useColors';
-import { Spacing, Radius, CultureTokens, TextStyles , FontFamily } from '@/design-system/tokens/theme';
+import { Spacing, Radius, CultureTokens, TextStyles, FontFamily } from '@/design-system/tokens/theme';
+import { MARKETPLACE_TILE_OVERLAY as O } from '@/design-system/tokens/marketplaceTileOverlay';
 import type { MarketplaceTile } from '@/shared/schema';
-import { Luxe } from '@/design-system/tokens/luxeHeritage';
 
 type Props = {
   tile: MarketplaceTile;
@@ -41,7 +41,7 @@ export function MarketplaceSquareTile({ tile, size, showPremiumLock, onPress }: 
           {
             width: size,
             height: size,
-            borderColor: 'rgba(255,255,255,0.06)',
+            borderColor: O.border,
             backgroundColor: colors.surfaceElevated,
           },
         ]}
@@ -64,7 +64,7 @@ export function MarketplaceSquareTile({ tile, size, showPremiumLock, onPress }: 
         )}
 
         <LinearGradient
-          colors={['transparent', 'rgba(0,0,0,0.82)']}
+          colors={[...O.gradientBottom]}
           style={styles.gradient}
           pointerEvents="none"
         />
@@ -78,8 +78,8 @@ export function MarketplaceSquareTile({ tile, size, showPremiumLock, onPress }: 
         ) : null}
 
         {lockedVisual ? (
-          <View style={[styles.lockChip, { borderColor: colors.borderLight, backgroundColor: 'rgba(0,0,0,0.45)' }]}>
-            <Ionicons name="lock-closed" size={14} color="#fff" />
+          <View style={[styles.lockChip, { borderColor: colors.borderLight, backgroundColor: O.lockChipOverlayBg }]}>
+            <Ionicons name="lock-closed" size={14} color={O.lockIcon} />
           </View>
         ) : null}
 
@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
   badgeText: {
     fontFamily: FontFamily.semibold,
     fontSize: 11,
-    color: '#fff',
+    color: O.titleText,
   },
   lockChip: {
     position: 'absolute',
@@ -155,11 +155,11 @@ const styles = StyleSheet.create({
     fontFamily: FontFamily.semibold,
     fontSize: Platform.OS === 'web' ? 13 : 12,
     lineHeight: 16,
-    color: '#fff',
+    color: O.titleText,
   },
   subtitle: {
     fontSize: 11,
     marginTop: 2,
-    color: 'rgba(255,255,255,0.82)',
+    color: O.subtitleText,
   },
 });

@@ -740,7 +740,7 @@ export function CommunityFields({
           type="logo"
           value={communityLogoUrl}
           onChange={handleCommunityLogoChange}
-          storagePath={`profiles/${formData.handle || 'draft'}/community`}
+          storagePath={`profiles/${formData.id || `temp-${formData.handle || 'draft'}`}`}
           aspectRatio={1}
           minDimensions={{ width: 400, height: 400 }}
           label="Community Logo"
@@ -773,7 +773,7 @@ export function CommunityFields({
           type="hero"
           value={communityBannerUrl}
           onChange={handleCommunityBannerChange}
-          storagePath={`profiles/${formData.handle || 'draft'}/community`}
+          storagePath={`profiles/${formData.id || `temp-${formData.handle || 'draft'}`}`}
           aspectRatio={16 / 9}
           label="Community Banner"
           hint="Wide image (16:9 aspect ratio). JPEG or PNG."

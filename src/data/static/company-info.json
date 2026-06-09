@@ -5,7 +5,7 @@
   "facts": [
     { "label": "Founded", "value": "2023", "icon": "calendar", "color": "#6366F1" },
     { "label": "Headquarters", "value": "Sydney, Australia", "icon": "location", "color": "#14B8A6" },
-    { "label": "Team", "value": "12", "icon": "people", "color": "#D4A017" },
+    { "label": "Team", "value": "12", "icon": "people", "color": "#00ADEF" },
     { "label": "Reach", "value": "195+", "icon": "earth", "color": "#F43F5E" }
   ],
   "mission": "CulturePass is built to empower cultural diaspora communities by connecting people with the events, businesses, and organisations that celebrate their heritage. We believe culture is best experienced together.",

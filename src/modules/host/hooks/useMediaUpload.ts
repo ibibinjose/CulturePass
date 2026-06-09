@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
+import { formatStorageUploadError, storageRefFromDownloadUrl, uriToBlob } from '@/lib/storageUtils';
 import { storage } from '@/lib/firebase';
 
 // ---------------------------------------------------------------------------
@@ -65,14 +66,6 @@ export interface WebFileValidationResult {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-/**
- * Convert a local URI to a Blob for Firebase uploadBytesResumable.
- * fetch(file://) works on both iOS and Android via the React Native bridge.
- */
-function uriToBlob(uri: string): Promise<Blob> {
-  return fetch(uri).then((r) => r.blob());
-}
 
 /**
  * Get the MIME type from a file extension or URI.
@@ -473,11 +466,11 @@ export function useMediaUpload(analytics?: MediaUploadAnalytics) {
           duration: isVideo && asset.duration ? asset.duration / 1000 : undefined,
         };
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Upload failed';
+        const errorMessage = formatStorageUploadError(error);
         const duration = Date.now() - uploadStart;
         trackUpload?.('failure', options?.type || 'unknown', fileSizeForTrack, duration, errorMessage);
         setState({ uploading: false, progress: 0, error: errorMessage });
-        throw error;
+        throw new Error(errorMessage);
       }
     },
     [validateImage, validateVideo, compressImage, trackUpload],
@@ -549,11 +542,11 @@ export function useMediaUpload(analytics?: MediaUploadAnalytics) {
 
         return { downloadURL };
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Upload failed';
+        const errorMessage = formatStorageUploadError(error);
         const duration = Date.now() - uploadStart;
         trackUpload?.('failure', options?.type || 'unknown', fileSizeForTrack, duration, errorMessage);
         setState({ uploading: false, progress: 0, error: errorMessage });
-        throw error;
+        throw new Error(errorMessage);
       }
     },
     [validateWebFile, trackUpload],
@@ -592,7 +585,7 @@ export function useMediaUpload(analytics?: MediaUploadAnalytics) {
     if (!url || !storage) return;
 
     try {
-      const storageRef = ref(storage, url);
+      const storageRef = storageRefFromDownloadUrl(storage, url);
       await deleteObject(storageRef);
     } catch (error) {
       console.warn('Failed to delete image:', error);

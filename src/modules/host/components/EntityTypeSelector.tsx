@@ -185,7 +185,7 @@ export function EntityTypeSelector({ onSelect, existingProfiles = [], intent }: 
                   <Badge
                     variant="success"
                     size="sm"
-                    style={{ marginLeft: 6 }}
+                    style={styles.proWizardBadge}
                   >
                     Pro Wizard
                   </Badge>
@@ -247,7 +247,7 @@ export function EntityTypeSelector({ onSelect, existingProfiles = [], intent }: 
                 router.push('/hostspace' as never);
               }
             }}
-            style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.7 }]}
+            style={({ pressed }) => [styles.backBtn, pressed && styles.backBtnPressed]}
             accessibilityRole="button"
             accessibilityLabel="Back to host workspace"
           >
@@ -256,7 +256,7 @@ export function EntityTypeSelector({ onSelect, existingProfiles = [], intent }: 
           <Text style={[styles.topBarTitle, { color: colors.text }]}>
             {isNationBuilder ? 'Nation Builder Partner' : 'Create a Page'}
           </Text>
-          <View style={{ width: 40 }} />
+          <View style={styles.topBarSpacer} />
         </View>
       </View>
 
@@ -281,11 +281,11 @@ export function EntityTypeSelector({ onSelect, existingProfiles = [], intent }: 
             >
               <View style={styles.nbHeroContent}>
                 <View style={styles.nbBadge}>
-                  <Ionicons name="shield-checkmark" size={14} color="#1C1917" />
+                  <Ionicons name="shield-checkmark" size={14} color={colors.textInverse} />
                   <Text style={styles.nbBadgeText}>NATION BUILDER PARTNER</Text>
                 </View>
-                <Text style={styles.nbHeroTitle}>Become a Nation Builder Partner</Text>
-                <Text style={styles.nbHeroSubtitle}>
+                <Text style={[styles.nbHeroTitle, { color: colors.textOnBrandGradient }]}>Become a Nation Builder Partner</Text>
+                <Text style={[styles.nbHeroSubtitle, { color: colors.textOnBrandGradient }]}>
                   Register your business or venue. Your employees get 50% off CulturePass+ and special Nation Builder badges. Powerful staff retention + visibility tool.
                 </Text>
               </View>
@@ -297,11 +297,11 @@ export function EntityTypeSelector({ onSelect, existingProfiles = [], intent }: 
               end={{ x: 1, y: 1 }}
               style={styles.heroGradient}
             >
-              <Text style={styles.heroTitle}>Create a Page</Text>
-              <Text style={styles.heroSubtitle}>
+              <Text style={[styles.heroTitle, { color: colors.textOnBrandGradient }]}>Create a Page</Text>
+              <Text style={[styles.heroSubtitle, { color: colors.textOnBrandGradient }]}>
                 Your Page is your home on CulturePass — where people discover your culture, events, stories and community.
               </Text>
-              <Text style={[styles.heroSubtitle, { fontSize: 13, marginTop: 8, opacity: 0.9 }]}>
+              <Text style={[styles.heroSubtitle, styles.heroSubtitleHint, { color: colors.textOnBrandGradient }]}>
                 Which option is best for you?
               </Text>
             </LinearGradient>
@@ -396,7 +396,7 @@ export function EntityTypeSelector({ onSelect, existingProfiles = [], intent }: 
         )}
 
         {/* Bottom spacing */}
-        <View style={{ height: Spacing.xxl }} />
+        <View style={styles.bottomSpacer} />
       </ScrollView>
 
       {/* Mobile Quick Actions Bottom Sheet */}
@@ -434,7 +434,7 @@ export function EntityTypeSelector({ onSelect, existingProfiles = [], intent }: 
                 <View style={styles.sheetIconWrap}>
                   <Ionicons name={item.icon as any} size={24} color={Luxe.colors.dark.accent} />
                 </View>
-                <View style={{ flex: 1 }}>
+                <View style={styles.sheetOptionBody}>
                   <Text style={[styles.sheetOptionLabel, { color: colors.text }]}>{item.label}</Text>
                   <Text style={[styles.sheetOptionDesc, { color: colors.textTertiary }]}>{item.desc}</Text>
                 </View>
@@ -443,7 +443,7 @@ export function EntityTypeSelector({ onSelect, existingProfiles = [], intent }: 
             ))}
 
             <Pressable onPress={() => setShowMobileQuick(false)} style={styles.sheetCancel}>
-              <Text style={{ color: colors.textSecondary, fontWeight: '600' }}>Cancel</Text>
+              <Text style={[styles.sheetCancelText, { color: colors.textSecondary }]}>Cancel</Text>
             </Pressable>
           </View>
         </Pressable>
@@ -499,16 +499,31 @@ const styles = StyleSheet.create({
   },
   heroTitle: {
     ...TextStyles.title2,
-    color: '#FFFFFF',
     textAlign: 'center',
     marginBottom: Spacing.sm,
   },
   heroSubtitle: {
     ...TextStyles.body,
-    color: '#FFFFFF',
     textAlign: 'center',
     opacity: 0.95,
     maxWidth: 600,
+  },
+  heroSubtitleHint: {
+    fontSize: 13,
+    marginTop: 8,
+    opacity: 0.9,
+  },
+  topBarSpacer: {
+    width: 40,
+  },
+  proWizardBadge: {
+    marginLeft: 6,
+  },
+  bottomSpacer: {
+    height: Spacing.xxl,
+  },
+  backBtnPressed: {
+    opacity: 0.7,
   },
   categorySection: {
     marginBottom: Spacing.xl,
@@ -745,6 +760,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  sheetOptionBody: {
+    flex: 1,
+  },
   sheetOptionLabel: {
     ...TextStyles.callout,
     fontWeight: '600',
@@ -757,6 +775,9 @@ const styles = StyleSheet.create({
     marginTop: Spacing.md,
     padding: Spacing.md,
     alignItems: 'center',
+  },
+  sheetCancelText: {
+    fontWeight: '600',
   },
 
   // Templates / Import inspiration

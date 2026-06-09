@@ -9,8 +9,8 @@ import { TIER_CFG, memberDate } from '@/modules/profile/components/tabs/ProfileU
 import { tier as tierStyles } from '@/modules/profile/components/tabs/ProfileStyles';
 import { calculateTierProgress } from '@/lib/my-space-utils';
 import { FontFamily } from '@/design-system/tokens/theme';
+import { profileSectionLayout } from './profileSectionLayout';
 
-// Tier point thresholds (approximate; replace with server values when available)
 const TIER_THRESHOLDS: Record<string, { min: number; next: number }> = {
   free:    { min: 0,    next: 500  },
   plus:    { min: 500,  next: 2000 },
@@ -23,7 +23,6 @@ const TIER_THRESHOLDS: Record<string, { min: number; next: number }> = {
 interface ProfileMembershipSectionProps {
   tierKey: string;
   createdAt?: string;
-  /** User's current reward points balance (from wallet/profile data). */
   rewardPoints?: number;
   nav: (path: string) => void;
 }
@@ -50,24 +49,23 @@ export const ProfileMembershipSection = React.memo(({
   );
 
   return (
-    <View style={[styles.section, { paddingHorizontal: hPad }]}>
-      <GlassView contentStyle={{ padding: 0, overflow: 'hidden' }}>
+    <View style={[profileSectionLayout.section, { paddingHorizontal: hPad }]}>
+      <GlassView contentStyle={styles.glassContent}>
         <LinearGradient
           colors={[tierConf.color + '22', tierConf.color + '08', 'transparent']}
           start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-          style={[tierStyles.card, { borderWidth: 0, padding: 20 }]}
+          style={[tierStyles.card, styles.tierCard]}
         >
           <View style={tierStyles.left}>
             <View style={[tierStyles.iconWrap, { backgroundColor: tierConf.color + '20' }]}>
               <Ionicons name={tierConf.icon} size={22} color={tierConf.color} />
             </View>
-            <View style={{ flex: 1 }}>
-              <Text style={[tierStyles.label, { color: m3.onSurface }]}>{tierConf.label} Member</Text>
-              {since ? <Text style={[tierStyles.since, { color: m3.onSurfaceVariant }]}>Member since {since}</Text> : null}
+            <View style={profileSectionLayout.flex1}>
+              <Text style={[tierStyles.label, { color: m3.onSurface }]} numberOfLines={1}>{tierConf.label} Member</Text>
+              {since ? <Text style={[tierStyles.since, { color: m3.onSurfaceVariant }]} numberOfLines={1}>Member since {since}</Text> : null}
             </View>
           </View>
 
-          {/* Tier progress bar (Req 8.4) */}
           {!isVip && (
             <View style={styles.progressBlock}>
               <View style={[styles.progressTrack, { backgroundColor: tierConf.color + '20' }]}>
@@ -78,7 +76,7 @@ export const ProfileMembershipSection = React.memo(({
                   ]}
                 />
               </View>
-              <Text style={[styles.progressLabel, { color: m3.onSurfaceVariant }]}>
+              <Text style={[styles.progressLabel, { color: m3.onSurfaceVariant }]} numberOfLines={2}>
                 {isVip ? 'Top tier' : `${pointsRemaining.toLocaleString()} pts to next tier`}
               </Text>
             </View>
@@ -89,7 +87,7 @@ export const ProfileMembershipSection = React.memo(({
               variant="filled"
               onPress={() => nav('/membership/upgrade')}
               rightIcon="arrow-forward"
-              style={{ height: 44, marginTop: 12 }}
+              style={styles.upgradeBtn}
             >
               Upgrade
             </M3Button>
@@ -103,9 +101,11 @@ export const ProfileMembershipSection = React.memo(({
 ProfileMembershipSection.displayName = 'ProfileMembershipSection';
 
 const styles = StyleSheet.create({
-  section: { marginTop: 36 },
+  glassContent: { padding: 0, overflow: 'hidden' },
+  tierCard: { borderWidth: 0, padding: 20 },
   progressBlock: { marginTop: 14, gap: 6 },
   progressTrack: { height: 6, borderRadius: 3, overflow: 'hidden' },
   progressFill: { height: '100%', borderRadius: 3 },
   progressLabel: { fontSize: 11, fontFamily: FontFamily.regular },
+  upgradeBtn: { height: 44, marginTop: 12 },
 });

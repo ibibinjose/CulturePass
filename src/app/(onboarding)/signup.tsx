@@ -4,7 +4,6 @@ import {
   Text,
   Pressable,
   StyleSheet,
-  Platform,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Image } from 'expo-image';
@@ -14,24 +13,26 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated,
   { FadeInUp, FadeInDown, useReducedMotion } from 'react-native-reanimated';
 
+import { useColors } from '@/hooks/useColors';
 import { useM3Colors } from '@/hooks/useM3Colors';
 import { useLayout } from '@/hooks/useLayout';
 import { useSignup } from '@/hooks/useSignup';
 import {
-  M3Card,
-  CulturalTopAppBar,
+  M3TopAppBar,
   Input,
   Checkbox,
-  SocialButton,
   PasswordStrengthIndicator,
   LuxeButton,
   LuxeCard,
   LuxeText,
- CulturePassWordmark } from '@/design-system/ui';
+  CulturePassWordmark,
+} from '@/design-system/ui';
+import { AuthAmbientBackground } from '@/components/onboarding/AuthScreenPrimitives';
+import { AuthSocialSection } from '@/components/onboarding/AuthSocialSection';
+import { AuthWebMarketingPanel } from '@/components/onboarding/AuthWebMarketingPanel';
 
 
 import {
-  CultureTokens,
   CardTokens,
   FontFamily,
   FontSize,
@@ -41,6 +42,7 @@ import {
   LiquidGlassTokens,
   luxeDark,
   Radius,
+  M3Typography,
 } from '@/design-system/tokens/theme';
 
 import { routeWithRedirect } from '@/lib/routes';
@@ -52,52 +54,11 @@ const SIGNUP_SEO_DESC =
   'Join CulturePass to discover cultural events, join communities, unlock member perks, and belong anywhere.';
 const SIGNUP_CANONICAL = `${SITE_ORIGIN}/signup`;
 
-// Luxe Heritage values
-const _LUXE_TITLE = 'Create your account';
-const _LUXE_SUB = 'Your cultural passport starts here.';
-
-const VALUE_PROPS = [
-  { icon: 'calendar-outline' as const, title: 'Cultural Events', desc: "Discover what's on this week in your city." },
-  { icon: 'people-outline' as const, title: 'Your Community', desc: 'Connect with people who share your culture.' },
-  { icon: 'gift-outline' as const, title: 'Member Perks', desc: 'Exclusive rewards from local businesses.' },
-] as const;
-
 const HOST_VALUE_PROPS = [
   { icon: 'calendar-outline' as const, title: 'Create Events', desc: 'Publish ticketed or free events and manage bookings easily.' },
   { icon: 'storefront-outline' as const, title: 'List on CultureMarket', desc: 'Sell products, services, or list your cultural business.' },
   { icon: 'people-outline' as const, title: 'Build Communities', desc: 'Create groups, cultural associations, and member circles.' },
 ] as const;
-
-// --- Sub-components for better modularity ---
-
-interface SocialLoginSectionProps {
-  enterAnimation: (delay: number) => any;
-  handleGoogleSignUp: () => void;
-  handleAppleSignUp: () => void;
-  loading: boolean;
-}
-
-const SocialLoginSection: React.FC<SocialLoginSectionProps> = ({ enterAnimation, handleGoogleSignUp, handleAppleSignUp, loading }) => {
-  return (
-    <Animated.View entering={enterAnimation(110)} style={s.socialStack}>
-      <SocialButton
-        provider="google"
-        onPress={handleGoogleSignUp}
-        disabled={loading}
-        compact
-        accessibilityLabel="Sign up with Google"
-      />
-      <SocialButton
-        provider="apple"
-        onPress={handleAppleSignUp}
-        disabled={loading}
-        compact
-        comingSoon={Platform.OS !== 'ios' && Platform.OS !== 'web'}
-        accessibilityLabel="Sign up with Apple"
-      />
-    </Animated.View>
-  );
-};
 
 interface AccountTypeSelectorProps {
   enterAnimation: (delay: number) => any;
@@ -257,67 +218,8 @@ const TermsCheckbox: React.FC<TermsCheckboxProps> = ({ enterAnimation, agreed, s
   );
 };
 
-interface WebMarketingPanelProps {
-  enterAnimation: (delay: number) => any;
-  isHost?: boolean;
-}
-
-const WebMarketingPanel: React.FC<WebMarketingPanelProps> = ({ enterAnimation, isHost }) => {
-  const marketingProps = isHost ? HOST_VALUE_PROPS : VALUE_PROPS;
-  return (
-    <View style={[s.webLeft, { backgroundColor: luxeDark.accentContainer }]}>
-      <Animated.View entering={enterAnimation(40)} style={s.webKickerRow}>
-        <View style={[s.webDot, { backgroundColor: luxeDark.primary }]} />
-        <LuxeText variant="badgeCaps" style={s.webKickerText}>
-          {isHost ? 'CREATOR HUB' : 'CULTUREPASS'}
-        </LuxeText>
-      </Animated.View>
-
-      <Animated.View entering={enterAnimation(70)}>
-        <LuxeText variant="displayHero" style={s.webHeadlineText}>
-          {isHost ? 'Empower your diaspora.' : 'Your cultural home,\nanywhere.'}
-        </LuxeText>
-      </Animated.View>
-
-      <Animated.View entering={enterAnimation(100)}>
-        <LuxeText variant="hero" style={s.webLeadText}>
-          {isHost
-            ? 'Publish ticketed or free events, sell products/services, build communities, and reach diaspora members.'
-            : 'The premium marketplace for diaspora communities — events, businesses, and member perks.'}
-        </LuxeText>
-      </Animated.View>
-
-      <Animated.View entering={enterAnimation(130)} style={s.webValueGrid}>
-        {marketingProps.map((item, index) => (
-          <Animated.View
-            key={item.title}
-            entering={enterAnimation(160 + index * 30)}
-            style={s.webValueItem}
-          >
-            <LuxeCard variant="glass" style={s.webValueCard}>
-              <View style={s.webValueStripe} />
-              <View style={[s.webValueIcon, { backgroundColor: luxeDark.surfaceElevated }]}>
-                <Ionicons name={item.icon} size={18} color={luxeDark.primary} />
-              </View>
-              <View style={s.webValueTextContent}>
-                <LuxeText variant="title3" style={s.webValueTitle}>
-                  {item.title}
-                </LuxeText>
-                <LuxeText variant="caption" style={s.webValueDesc}>
-                  {item.desc}
-                </LuxeText>
-              </View>
-            </LuxeCard>
-          </Animated.View>
-        ))}
-      </Animated.View>
-    </View>
-  );
-};
-
-// --- Main SignUpScreen Component ---
-
 export default function SignUpScreen() {
+  const colors = useColors();
   const m3Colors = useM3Colors();
   const { isDesktop, isWeb, windowSizeClass } = useLayout();
   const insets = useSafeAreaInsets();
@@ -370,18 +272,16 @@ export default function SignUpScreen() {
   const bottomPadding = isWeb ? (insets.bottom > 0 ? insets.bottom : 40) : (64 + insets.bottom);
 
   const formContent = (
-    <LuxeCard variant="default" style={{ padding: isExpanded ? 32 : 24 }}>
-      {/* Brand — single appearance, inside the card */}
+    <View style={s.cardInner}>
       <Animated.View entering={enter(30)} style={s.brandBlock}>
         <CulturePassWordmark size="md" showSuffix={false} />
       </Animated.View>
 
-      {/* Copy */}
       <Animated.View entering={enter(70)} style={s.copyBlock}>
-        <LuxeText variant="display" style={[s.title, { color: luxeDark.text }]}>
+        <LuxeText variant="display" style={[s.title, { color: m3Colors.onSurface }]}>
           {isHostIntent ? 'Join as a Host' : 'Create your account'}
         </LuxeText>
-        <LuxeText variant="body" style={[s.subtitle, { color: luxeDark.textSecondary }]}>
+        <LuxeText variant="body" style={[s.subtitle, { color: m3Colors.onSurfaceVariant }]}>
           {isHostIntent
             ? 'Setup your Host Hub workspace to start creating.'
             : 'Join CulturePass — your home for events and community.'}
@@ -418,29 +318,29 @@ export default function SignUpScreen() {
           style={[
             s.errorBanner,
             {
-              backgroundColor: luxeDark.error + '20',
-              borderColor: luxeDark.error,
+              backgroundColor: m3Colors.errorContainer,
+              borderColor: m3Colors.error,
             },
           ]}
           accessibilityRole="alert"
         >
-          <Ionicons name="alert-circle" size={IconSize.md} color={luxeDark.error} />
-          <LuxeText variant="caption" style={{ color: luxeDark.error, flex: 1 }}>{globalError}</LuxeText>
+          <Ionicons name="alert-circle" size={IconSize.md} color={m3Colors.onErrorContainer} />
+          <Text style={[s.errorText, M3Typography.bodySmall, { color: m3Colors.onErrorContainer }]}>{globalError}</Text>
         </Animated.View>
       )}
 
-      <SocialLoginSection
-        enterAnimation={enter}
-        handleGoogleSignUp={handleGoogleSignUp}
-        handleAppleSignUp={handleAppleSignUp}
+      <AuthSocialSection
+        entering={enter(110)}
+        onGooglePress={handleGoogleSignUp}
+        onApplePress={handleAppleSignUp}
         loading={loading}
+        mode="signup"
       />
 
-      {/* Divider */}
       <Animated.View entering={enter(150)} style={s.divider}>
-        <View style={[s.divLine, { backgroundColor: luxeDark.border }]} />
-        <LuxeText variant="badgeCaps" style={{ color: luxeDark.textSecondary }}>OR SIGN UP WITH EMAIL</LuxeText>
-        <View style={[s.divLine, { backgroundColor: luxeDark.border }]} />
+        <View style={[s.divLine, { backgroundColor: m3Colors.outlineVariant }]} />
+        <Text style={[s.divText, M3Typography.labelSmall, { color: m3Colors.onSurfaceVariant }]}>OR SIGN UP WITH EMAIL</Text>
+        <View style={[s.divLine, { backgroundColor: m3Colors.outlineVariant }]} />
       </Animated.View>
 
       <AccountTypeSelector
@@ -491,13 +391,13 @@ export default function SignUpScreen() {
           accessibilityRole="link"
           accessibilityLabel="Sign in to existing account"
         >
-          <LuxeText variant="body" style={{ color: luxeDark.textSecondary, textAlign: 'center' }}>
+          <Text style={[s.switchText, M3Typography.bodyMedium, { color: m3Colors.onSurfaceVariant, textAlign: 'center' }]}>
             Already have an account?{' '}
-            <LuxeText variant="bodyMedium" style={{ color: luxeDark.primary }}>Sign In</LuxeText>
-          </LuxeText>
+            <Text style={{ color: m3Colors.primary, fontWeight: '700' }}>Sign In</Text>
+          </Text>
         </Pressable>
       </Animated.View>
-    </LuxeCard>
+    </View>
   );
 
   return (
@@ -513,8 +413,10 @@ export default function SignUpScreen() {
         <meta name="twitter:description" content={SIGNUP_SEO_DESC} />
         <link rel="canonical" href={SIGNUP_CANONICAL} />
       </Head>
-    <View style={[s.container, { backgroundColor: m3Colors.background }]}>
-      <CulturalTopAppBar
+    <View style={[s.container, { backgroundColor: colors.background }]}>
+      <AuthAmbientBackground />
+
+      <M3TopAppBar
         title="Sign Up"
         onBack={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))}
         variant="medium"
@@ -539,14 +441,21 @@ export default function SignUpScreen() {
       >
         {isWeb && isDesktop ? (
           <View style={s.webRow}>
-            <WebMarketingPanel enterAnimation={enter} isHost={isHostIntent} />
+            <AuthWebMarketingPanel
+              enterAnimation={enter}
+              variant={isHostIntent ? 'host' : 'signup'}
+            />
             <Animated.View entering={fadeInUp} style={[s.cardWrap, s.cardWrapDesktop]}>
-              {formContent}
+              <LuxeCard variant="default" style={{ padding: 32 }}>
+                {formContent}
+              </LuxeCard>
             </Animated.View>
           </View>
         ) : (
           <Animated.View entering={fadeInUp} style={s.cardWrap}>
-            {formContent}
+            <LuxeCard variant="default" style={{ padding: isExpanded ? 32 : 24 }}>
+              {formContent}
+            </LuxeCard>
           </Animated.View>
         )}
       </KeyboardAwareScrollViewCompat>
@@ -570,6 +479,7 @@ const s = StyleSheet.create({
   },
   cardWrap: { width: '100%', maxWidth: 420, alignSelf: 'center' },
   cardWrapDesktop: { maxWidth: 460, minWidth: 400, alignSelf: 'stretch' },
+  cardInner: { width: '100%' },
 
   /* Brand */
   brandBlock: {
@@ -606,13 +516,6 @@ const s = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth * 2,
   },
   errorText: { flex: 1, fontFamily: FontFamily.medium, fontSize: FontSize.body2 },
-
-  /* Social */
-  socialStack: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: Spacing.lg,
-  },
 
   /* Divider */
   divider: {
@@ -668,15 +571,12 @@ const s = StyleSheet.create({
     fontSize: FontSize.body2,
     lineHeight: 20,
   },
-  linkText: { color: CultureTokens.richIndigo, fontFamily: FontFamily.semibold },
   ctaButtonContainer: { marginTop: 12 },
   submitButton: { height: 52, borderRadius: CardTokens.radius }, // Removed hardcoded colors
 
   /* Switch */
   switchRow: { alignItems: 'center', paddingVertical: Spacing.md, marginTop: Spacing.sm },
   switchText: { fontFamily: FontFamily.regular, fontSize: FontSize.callout, textAlign: 'center' },
-  switchLink: { color: CultureTokens.richIndigo, fontFamily: FontFamily.bold },
-
   /* Desktop two-column */
   webRow: {
     width: '100%',
@@ -686,78 +586,6 @@ const s = StyleSheet.create({
     alignItems: 'flex-start',
     justifyContent: 'space-between',
     gap: 48,
-  },
-  webLeft: {
-    flex: 1,
-    minWidth: 360,
-    maxWidth: 560,
-    backgroundColor: CultureTokens.richIndigo,
-    borderRadius: 24,
-    borderWidth: 2,
-    borderColor: '#1C1C1C',
-    paddingHorizontal: 20,
-    paddingVertical: 20,
-  },
-  webKickerRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 14 },
-  webDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: CultureTokens.heritageGold },
-  webKickerText: { color: '#F8F8F8', letterSpacing: 1.5 },
-  webKicker: {
-    fontFamily: FontFamily.semibold,
-    fontSize: 12,
-    letterSpacing: 1.1,
-    textTransform: 'uppercase',
-  },
-  webHeadline: {
-    fontFamily: FontFamily.bold,
-    fontSize: 42,
-    letterSpacing: -0.8,
-    lineHeight: 50,
-    marginBottom: 14,
-  },
-  webHeadlineText: { color: '#F8F8F8' },
-  webLead: {
-    fontFamily: FontFamily.regular,
-    fontSize: 15,
-    lineHeight: 24,
-    maxWidth: 520,
-    marginBottom: 28,
-  },
-  webLeadText: { color: '#F8F8F8', marginTop: 12 },
-  webValueGrid: { gap: 12, marginTop: 8, maxWidth: 520 },
-  webValueItem: { width: '100%' },
-  webValueCard: {
-    width: '100%',
-    padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-    backgroundColor: CultureTokens.emeraldHarmony,
-    borderColor: '#1C1C1C',
-    borderWidth: 2,
-    borderRadius: CardTokens.radius,
-  },
-  webValueStripe: {
-    width: 6,
-    alignSelf: 'stretch',
-    borderRadius: 999,
-    backgroundColor: CultureTokens.heritageGold,
-  },
-  webValueIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    backgroundColor: '#F8F8F8',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  webValueTextContent: { flex: 1, minWidth: 0 },
-  webValueTitle: { color: '#1C1C1C', fontFamily: FontFamily.semibold, fontSize: 14 },
-  webValueDesc: {
-    color: '#1C1C1C',
-    fontFamily: FontFamily.regular,
-    fontSize: 12,
-    lineHeight: 17,
-    marginTop: 2,
   },
   topAppBarImage: { width: 40, height: 40, borderRadius: 20, marginLeft: 8 },
   hostHubInfoCard: {

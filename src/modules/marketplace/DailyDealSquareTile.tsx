@@ -11,10 +11,7 @@ import { LuxeText } from '@/design-system/ui/LuxeText';
 import type { DailyDeal } from '@/shared/schema';
 import { Luxe } from '@/design-system/tokens/luxeHeritage';
 import { FontFamily } from '@/design-system/tokens/theme';
-
-// Luxe premium treatment for Daily Deals tiles
-const LUXE_TILE_BORDER = 'rgba(255,255,255,0.06)';
-const LUXE_OVERLAY = 'rgba(0,0,0,0.88)';
+import { MARKETPLACE_TILE_OVERLAY as O } from '@/design-system/tokens/marketplaceTileOverlay';
 
 function accentFromDeal(deal: DailyDeal): string {
   // Map to Luxe Heritage accents
@@ -71,7 +68,7 @@ export function DailyDealSquareTile({ deal, size, isPlus, onPress }: Props) {
 
         {/* Stronger bottom gradient for better text legibility (Luxe style) */}
         <LinearGradient
-          colors={['transparent', 'rgba(0,0,0,0.88)']}
+          colors={[...O.gradientBottomStrong]}
           style={styles.gradient}
           pointerEvents="none"
         />
@@ -80,12 +77,12 @@ export function DailyDealSquareTile({ deal, size, isPlus, onPress }: Props) {
         {deal.linkPolicy === 'premium_required' ? (
           !isPlus ? (
             <View style={styles.lockChip}>
-              <Ionicons name="lock-closed" size={14} color="#fff" />
+              <Ionicons name="lock-closed" size={14} color={O.lockIcon} />
             </View>
           ) : (
             <View style={styles.plusPill}>
               <Ionicons name="star" size={12} color={Luxe.colors.gold} />
-              <Text style={styles.plusText}>Plus</Text>
+              <Text style={styles.plusText} numberOfLines={1}>Plus</Text>
             </View>
           )
         ) : null}
@@ -118,7 +115,7 @@ const styles = StyleSheet.create({
     borderRadius: Luxe.radius.xl,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
+    borderColor: O.border,
   },
   gradient: {
     position: 'absolute',
@@ -138,8 +135,8 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     borderRadius: Luxe.radius.full,
     borderWidth: 1,
-    borderColor: 'rgba(212, 160, 23, 0.55)',
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderColor: O.plusPillBorder,
+    backgroundColor: O.plusPillBg,
   },
   plusText: {
     fontFamily: FontFamily.semibold,
@@ -154,8 +151,8 @@ const styles = StyleSheet.create({
     height: 30,
     borderRadius: 15,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.18)',
-    backgroundColor: 'rgba(0,0,0,0.55)',
+    borderColor: O.lockChipBorder,
+    backgroundColor: O.lockChipBg,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -172,12 +169,12 @@ const styles = StyleSheet.create({
     fontFamily: FontFamily.semibold,
     fontSize: Platform.OS === 'web' ? 14 : 13,
     lineHeight: 17,
-    color: '#fff',
+    color: O.titleText,
   },
   subtitle: {
     fontSize: 12,
     marginTop: 4,
     lineHeight: 15,
-    color: 'rgba(255,255,255,0.82)',
+    color: O.subtitleText,
   },
 });

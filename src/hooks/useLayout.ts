@@ -111,8 +111,8 @@ export function useLayout(): LayoutState {
   const isIOS     = Platform.OS === 'ios';
   const isAndroid = Platform.OS === 'android';
 
-  const isDesktop = isWeb && width >= Breakpoints.desktop;
-  // Treat iPad landscape (and similar tablets) as "tablet" for navigation (bottom tabs preferred over full desktop sidebar)
+  // Desktop web sidebar at ≥1100px (avoids 1024–1099px tablet/sidebar overlap)
+  const isDesktop = isWeb && width >= 1100;
   const isTablet  = width >= Breakpoints.tablet && width < 1100;
   const isMobile  = !isDesktop && !isTablet;
 

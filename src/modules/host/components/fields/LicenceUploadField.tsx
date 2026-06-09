@@ -441,7 +441,7 @@ export function LicenceUploadField({
                 )}
 
                 {isExpiringSoon(licence.expiryDate) && !isExpired(licence.expiryDate) && (
-                  <View style={[styles.statusBadge, { backgroundColor: '#FFC85715' }]}>
+                  <View style={[styles.statusBadge, { backgroundColor: '#00ADEF15' }]}>
                     <Ionicons
                       name="warning-outline"
                       size={14}

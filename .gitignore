@@ -11,6 +11,7 @@ node_modules/
 .gstack/
 .kiro/
 .junie/
+.cursor/
 skills-lock.json
 
 # Firebase emulator debug logs (regenerated locally)

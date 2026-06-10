@@ -493,14 +493,14 @@ export default function TicketDetailScreen() {
               </View>
             </GlassView>
 
-            {/* Add to wallet */}
+            {/* Enhanced Add to wallet section with CulturePass branding */}
             {isActive && (
               <View style={s.walletSection}>
                 <Text style={[s.walletTitle, { color: colors.textTertiary }]}>Store in your wallet</Text>
                 <View style={s.walletButtons}>
                   {(Platform.OS === 'ios' || isWeb) && (
                     <Pressable 
-                      style={({pressed}) => [s.walletBtn, { backgroundColor: '#111111', borderWidth: 1, borderColor: '#333' }, pressed && { opacity: 0.8 }]} 
+                      style={({pressed}) => [s.walletBtn, s.walletBtnApple, pressed && { opacity: 0.8 }]} 
                       onPress={() => handleAddToWallet('apple')}
                     >
                       <Ionicons name="wallet" size={20} color="#FFF" />
@@ -508,12 +508,31 @@ export default function TicketDetailScreen() {
                     </Pressable>
                   )}
                   <Pressable 
-                    style={({pressed}) => [s.walletBtn, { backgroundColor: '#4285F4' }, pressed && { opacity: 0.8 }]} 
+                    style={({pressed}) => [s.walletBtn, s.walletBtnGoogle, pressed && { opacity: 0.8 }]} 
                     onPress={() => handleAddToWallet('google')}
                   >
                     <Ionicons name="logo-google" size={18} color="#FFF" />
                     <Text style={s.walletBtnTextGoogle}>Google Wallet</Text>
                   </Pressable>
+                </View>
+                
+                {/* Enhanced wallet benefits section */}
+                <View style={s.walletBenefits}>
+                  <Text style={[s.walletBenefitsTitle, { color: colors.text }]}>Benefits of storing in your wallet:</Text>
+                  <View style={s.walletBenefitsList}>
+                    <View style={s.benefitItem}>
+                      <Ionicons name="checkmark-circle" size={16} color={CultureTokens.emerald} />
+                      <Text style={[s.benefitText, { color: colors.text }]}>Always accessible offline</Text>
+                    </View>
+                    <View style={s.benefitItem}>
+                      <Ionicons name="checkmark-circle" size={16} color={CultureTokens.emerald} />
+                      <Text style={[s.benefitText, { color: colors.text }]}>Quick access at venues</Text>
+                    </View>
+                    <View style={s.benefitItem}>
+                      <Ionicons name="checkmark-circle" size={16} color={CultureTokens.emerald} />
+                      <Text style={[s.benefitText, { color: colors.text }]}>Automatic updates</Text>
+                    </View>
+                  </View>
                 </View>
               </View>
             )}
@@ -800,8 +819,16 @@ const getStyles = (colors: ReturnType<typeof useColors>) => StyleSheet.create({
   walletTitle:   { fontSize: 11, fontFamily: FontFamily.bold, marginBottom: 14, letterSpacing: 1.2, textTransform: 'uppercase', paddingLeft: 4 },
   walletButtons: { flexDirection: 'row', gap: 12 },
   walletBtn:     { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, borderRadius: 14, paddingVertical: 15 },
-  walletBtnTextApple: { fontSize: 14, fontFamily: FontFamily.bold },
-  walletBtnTextGoogle: { fontSize: 14, fontFamily: FontFamily.bold },
+  walletBtnApple: { backgroundColor: '#111111', borderWidth: 1, borderColor: '#333' },
+  walletBtnGoogle: { backgroundColor: '#4285F4' },
+  walletBtnTextApple: { fontSize: 14, fontFamily: FontFamily.bold, color: '#FFF' },
+  walletBtnTextGoogle: { fontSize: 14, fontFamily: FontFamily.bold, color: '#FFF' },
+  
+  walletBenefits: { marginTop: 20, padding: 16, backgroundColor: colors.surface + '15', borderRadius: 14 },
+  walletBenefitsTitle: { fontSize: 12, fontFamily: FontFamily.bold, marginBottom: 12, textAlign: 'center' },
+  walletBenefitsList: { gap: 8 },
+  benefitItem: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  benefitText: { fontSize: 12, fontFamily: FontFamily.regular },
 
   actionsSection: { marginTop: 32 },
   actionBtn:      { flexDirection: 'row', alignItems: 'center', gap: 16, padding: 18, borderBottomWidth: 1 },

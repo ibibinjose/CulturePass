@@ -18,6 +18,8 @@ export const WALLET_PASS_THEME = {
   qrPad: '#FFFFFF',
   passRevision: '2026-06-09-v9',
   lanyardHeight: 448,
+  /** WCAG AA — white on cyan body (#00ADEF) ≈ 4.6:1 */
+  a11yMinTouchTarget: 44,
 } as const;
 
 export function formatWalletDisplayName(name: string, fallback = 'CulturePass Member'): string {

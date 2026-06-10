@@ -5,18 +5,18 @@ import { WALLET_PASS_THEME } from '@/modules/profile/components/digitalId/wallet
 
 type PassIdRowProps = {
   cpid: string;
-  variant?: 'onCyan' | 'onWhite';
+  variant?: 'onCyan' | 'onWhite' | 'onBlack';
   size?: 'sm' | 'md';
 };
 
 export function PassIdRow({ cpid, variant = 'onCyan', size = 'md' }: PassIdRowProps) {
-  const onCyan = variant === 'onCyan';
+  const onLight = variant === 'onWhite';
   return (
     <View style={styles.row}>
       <Text style={[
         styles.label,
         size === 'sm' && styles.labelSm,
-        onCyan ? styles.labelOnCyan : styles.labelOnWhite,
+        onLight ? styles.labelOnWhite : styles.labelOnCyan,
       ]}>
         ID
       </Text>
@@ -24,7 +24,7 @@ export function PassIdRow({ cpid, variant = 'onCyan', size = 'md' }: PassIdRowPr
         style={[
           styles.value,
           size === 'sm' && styles.valueSm,
-          onCyan ? styles.valueOnCyan : styles.valueOnWhite,
+          onLight ? styles.valueOnWhite : styles.valueOnCyan,
         ]}
         numberOfLines={1}
       >

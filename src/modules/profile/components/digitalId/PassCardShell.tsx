@@ -1,37 +1,37 @@
 import React, { type ReactNode } from 'react';
 import { StyleSheet, View, Platform } from 'react-native';
-import { WALLET_PASS_THEME } from '@/modules/profile/components/digitalId/walletPassTheme';
+import { getPassColorTheme, type PassColorVariant } from '@/modules/profile/components/digitalId/passCardUtils';
 
 type PassCardShellProps = {
   width: number;
   height: number;
-  variant?: 'cyan' | 'white';
+  colorVariant?: PassColorVariant;
+  nativeID?: string;
   children: ReactNode;
 };
 
-export function PassCardShell({ width, height, variant = 'cyan', children }: PassCardShellProps) {
-  const isCyan = variant === 'cyan';
+export function PassCardShell({ width, height, colorVariant = 'cyan', nativeID, children }: PassCardShellProps) {
+  const theme = getPassColorTheme(colorVariant);
+  const shadow = theme.shellShadowNative;
   return (
     <View
+      nativeID={nativeID}
+      {...(Platform.OS === 'web' && nativeID ? ({ id: nativeID } as object) : {})}
       style={[
         styles.card,
         {
           width,
           height,
-          backgroundColor: isCyan ? WALLET_PASS_THEME.cyanHex : WALLET_PASS_THEME.whiteHex,
-          borderColor: isCyan ? WALLET_PASS_THEME.cyanDarkHex : WALLET_PASS_THEME.borderOnWhite,
+          backgroundColor: theme.bodyBg,
+          borderColor: theme.bodyBorder,
           ...Platform.select({
-            web: {
-              boxShadow: isCyan
-                ? '0 10px 28px rgba(0, 173, 239, 0.38)'
-                : '0 4px 16px rgba(15, 23, 42, 0.08)',
-            } as object,
+            web: { boxShadow: theme.shellShadowWeb } as object,
             default: {
-              shadowColor: isCyan ? WALLET_PASS_THEME.cyanHex : '#0F172A',
-              shadowOffset: { width: 0, height: isCyan ? 6 : 4 },
-              shadowOpacity: isCyan ? 0.35 : 0.08,
-              shadowRadius: isCyan ? 12 : 10,
-              elevation: isCyan ? 6 : 4,
+              shadowColor: shadow.color,
+              shadowOffset: { width: 0, height: shadow.offsetY },
+              shadowOpacity: shadow.opacity,
+              shadowRadius: shadow.radius,
+              elevation: colorVariant === 'white' ? 4 : 6,
             },
           }),
         },

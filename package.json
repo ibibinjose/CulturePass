@@ -146,6 +146,7 @@
     "expo-widgets": "~56.0.17",
     "fbjs": "3.0.5",
     "firebase": "12.13.0",
+    "html-to-image": "^1.11.13",
     "i18next": "26.2.0",
     "posthog-react-native": "4.45.14",
     "react": "19.2.3",

@@ -58,6 +58,12 @@ const WALLET_CARD = {
   googleHex: '#00ADEF',
   passRevision: '2026-06-09-v9',
   avatarIndigo: '#4F46E5',
+  // New branding colors for enhanced visual identity
+  terracotta: '#E36A4E',      // Primary terracotta glow
+  saffron: '#F5A623',         // Secondary saffron gold
+  indigo: '#4A5EBF',          // Accent indigo
+  emerald: '#0A8C7F',         // Accent emerald
+  gold: '#D4A017',            // Heritage gold highlight
 } as const;
 
 function formatWalletDisplayName(name: string, fallback: string): string {
@@ -522,7 +528,7 @@ async function renderWalletLogo(width: number, height: number, onDark = false): 
       '<tspan fill="#FFFFFF">CULTURE</tspan><tspan fill="#FFFFFF">PASS</tspan><tspan fill="#FFFFFF"> ID</tspan></text></svg>'
     : '<svg width="' + width + '" height="' + height + '" xmlns="http://www.w3.org/2000/svg">' +
       '<text x="0" y="' + y + '" font-family="Arial, Helvetica, sans-serif" font-size="' + fontSize + '" font-weight="800" letter-spacing="0.8">' +
-      '<tspan fill="#FF3B30">CULTURE</tspan><tspan fill="#34C759">PASS</tspan><tspan fill="#00ADEF"> ID</tspan></text></svg>';
+      '<tspan fill="#E36A4E">CULTURE</tspan><tspan fill="#0A8C7F">PASS</tspan><tspan fill="#D4A017"> ID</tspan></text></svg>';
 
   try {
     return await sharp(Buffer.from(svg)).png().toBuffer();
@@ -606,7 +612,7 @@ async function renderCpLogoSquare(size: number): Promise<Buffer> {
   const fontSize = Math.max(8, Math.round(size * 0.42));
   const svg =
     '<svg width="' + size + '" height="' + size + '" xmlns="http://www.w3.org/2000/svg">' +
-    '<rect width="' + size + '" height="' + size + '" rx="' + Math.round(size * 0.18) + '" fill="#00ADEF"/>' +
+    '<rect width="' + size + '" height="' + size + '" rx="' + Math.round(size * 0.18) + '" fill="' + WALLET_CARD.terracotta + '"/>' +
     '<text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="' + fontSize + '" font-weight="800" fill="#FFFFFF">CP</text>' +
     '</svg>';
   return sharp(Buffer.from(svg)).png().toBuffer();
@@ -755,12 +761,55 @@ async function renderWalletStrip(width: number, height: number, tierLabel: strin
   const badgeX = width - 18 - badgeW;
   const badgeY = Math.round((height - badgeH) / 2);
   const badgeRx = Math.max(4, Math.round(height * 0.1));
+  
+  // Enhanced gradient using CulturePass color palette
   const svg =
     '<svg width="' + width + '" height="' + height + '" xmlns="http://www.w3.org/2000/svg">' +
     '<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="0">' +
-    '<stop offset="0%" stop-color="#0096D6"/><stop offset="100%" stop-color="#007BB5"/>' +
+    '<stop offset="0%" stop-color="' + WALLET_CARD.terracotta + '"/><stop offset="100%" stop-color="' + WALLET_CARD.saffron + '"/>' +
     '</linearGradient></defs>' +
     '<rect width="' + width + '" height="' + height + '" fill="url(#bg)"/>' +
+    '<line x1="0" y1="' + (height - 1) + '" x2="' + width + '" y2="' + (height - 1) + '" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>' +
+    '<text x="18" y="' + textY + '" font-family="Arial,Helvetica,sans-serif" font-size="' + fontSize + '" font-weight="800" fill="#FFFFFF" letter-spacing="1.5">CULTUREPASS ID</text>' +
+    '<rect x="' + badgeX + '" y="' + badgeY + '" width="' + badgeW + '" height="' + badgeH + '" rx="' + badgeRx + '" fill="rgba(255,255,255,0.14)" stroke="rgba(255,255,255,0.22)" stroke-width="1"/>' +
+    '<text x="' + (badgeX + badgeW / 2) + '" y="' + (badgeY + badgeH * 0.68) + '" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="' + tierSize + '" font-weight="800" fill="#FFFFFF" letter-spacing="1.1">' + tier + '</text>' +
+    '</svg>';
+
+  try {
+    return await sharp(Buffer.from(svg)).png().toBuffer();
+  } catch {
+    return TRANSPARENT_PNG_BUFFER;
+  }
+}
+
+// Enhanced version with better visual design
+async function renderEnhancedWalletStrip(width: number, height: number, tierLabel: string): Promise<Buffer> {
+  const tier = tierLabel.toUpperCase().replace(/[<>&"']/g, '');
+  const fontSize = Math.max(12, Math.round(height * 0.28));
+  const tierSize = Math.max(10, Math.round(height * 0.24));
+  const textY = Math.round(height * 0.68);
+  const tierPadX = Math.max(8, Math.round(height * 0.2));
+  const tierPadY = Math.max(3, Math.round(height * 0.08));
+  const tierTextWidth = Math.max(28, Math.round(tier.length * tierSize * 0.62));
+  const badgeW = tierTextWidth + tierPadX * 2;
+  const badgeH = tierSize + tierPadY * 2;
+  const badgeX = width - 18 - badgeW;
+  const badgeY = Math.round((height - badgeH) / 2);
+  const badgeRx = Math.max(4, Math.round(height * 0.1));
+  
+  // Enhanced gradient using CulturePass color palette with subtle pattern
+  const svg =
+    '<svg width="' + width + '" height="' + height + '" xmlns="http://www.w3.org/2000/svg">' +
+    '<defs>' +
+      '<linearGradient id="bg" x1="0" y1="0" x2="1" y2="0">' +
+      '<stop offset="0%" stop-color="' + WALLET_CARD.terracotta + '"/><stop offset="100%" stop-color="' + WALLET_CARD.saffron + '"/>' +
+      '</linearGradient>' +
+      '<pattern id="pattern" x="0" y="0" width="10" height="10" patternUnits="userSpaceOnUse">' +
+      '<circle cx="2" cy="2" r="0.5" fill="rgba(255,255,255,0.05)" />' +
+      '</pattern>' +
+    '</defs>' +
+    '<rect width="' + width + '" height="' + height + '" fill="url(#bg)"/>' +
+    '<rect width="' + width + '" height="' + height + '" fill="url(#pattern)"/>' +
     '<line x1="0" y1="' + (height - 1) + '" x2="' + width + '" y2="' + (height - 1) + '" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>' +
     '<text x="18" y="' + textY + '" font-family="Arial,Helvetica,sans-serif" font-size="' + fontSize + '" font-weight="800" fill="#FFFFFF" letter-spacing="1.5">CULTUREPASS ID</text>' +
     '<rect x="' + badgeX + '" y="' + badgeY + '" width="' + badgeW + '" height="' + badgeH + '" rx="' + badgeRx + '" fill="rgba(255,255,255,0.14)" stroke="rgba(255,255,255,0.22)" stroke-width="1"/>' +
@@ -796,8 +845,9 @@ export async function generateAppleBusinessCardPass(user: WalletPassUser): Promi
   const icon2x = await renderBrandAsset(116, 116, true);
   const logo = await renderBrandAsset(50, 50, true);
   const logo2x = await renderBrandAsset(100, 100, true);
-  const strip = await renderWalletStrip(375, 44, tierLabel);
-  const strip2x = await renderWalletStrip(750, 88, tierLabel);
+  // Using enhanced strip with new branding
+  const strip = await renderEnhancedWalletStrip(375, 44, tierLabel);
+  const strip2x = await renderEnhancedWalletStrip(750, 88, tierLabel);
   const thumb = await renderWalletAvatarThumbnail(96, avatarBuffer, initials);
   const thumb2x = await renderWalletAvatarThumbnail(192, avatarBuffer, initials);
 
@@ -988,7 +1038,7 @@ async function ensureGoogleEventTicketClass(): Promise<string> {
       id: classId,
       issuerName: 'CulturePass',
       reviewStatus: 'UNDER_REVIEW',
-      hexBackgroundColor: '#0B0B14',
+      hexBackgroundColor: WALLET_CARD.terracotta, // Using CulturePass terracotta color
       homepageUri: {
         uri: getPublicAppOrigin(),
         description: 'CulturePass',
@@ -1033,7 +1083,7 @@ export async function createGoogleEventTicketSaveUrl(
         id: objectId,
         classId,
         state: 'ACTIVE',
-        hexBackgroundColor: '#0B0B14',
+        hexBackgroundColor: WALLET_CARD.terracotta, // Using CulturePass terracotta color
         cardTitle: {
           defaultValue: { language: 'en-AU', value: 'CulturePass Ticket' },
         },
@@ -1083,6 +1133,7 @@ export async function createGoogleEventTicketSaveUrl(
   return `https://pay.google.com/gp/v/save/${token}`;
 }
 
+// Enhanced ticket pass with improved branding
 export async function generateAppleEventTicketPass(
   ticket: WalletTicketInput,
   event: WalletEventSnapshot | null,
@@ -1102,8 +1153,9 @@ export async function generateAppleEventTicketPass(
 
   const icon = await renderBrandAsset(58, 58);
   const icon2x = await renderBrandAsset(116, 116);
-  const logo = await renderBrandAsset(160, 50);
-  const logo2x = await renderBrandAsset(320, 100);
+  // Using CulturePass branding with enhanced colors
+  const logo = await renderWalletLogo(160, 50);
+  const logo2x = await renderWalletLogo(320, 100);
 
   const passJson = {
     formatVersion: 1,
@@ -1130,9 +1182,9 @@ export async function generateAppleEventTicketPass(
       serialNumber,
       description: eventTitle,
       organizationName: 'CulturePass',
-      backgroundColor: 'rgb(11,11,20)',
+      backgroundColor: 'rgb(227, 106, 78)', // CulturePass terracotta
       foregroundColor: 'rgb(255,255,255)',
-      labelColor: 'rgb(230,200,92)',
+      labelColor: 'rgb(212, 160, 23)', // Heritage gold
     }
   );
 

@@ -575,13 +575,35 @@ export default function QRScreen() {
                       />
                       {Platform.OS === 'web' ? (
                         <View style={s.cardActionsRow}>
-                          <Pressable style={({ pressed }) => [s.cardActionSplitBtn, { borderColor: cardTheme.accent + '50', opacity: (pressed || resolvingAvatar) ? 0.7 : 1 }]} onPress={() => handleSaveImage('business')} disabled={resolvingAvatar} accessibilityRole="button" accessibilityLabel="Save business pass as PNG">
-                            {resolvingAvatar ? <ActivityIndicator size="small" color={cardTheme.accent} /> : <Ionicons name="image-outline" size={14} color={cardTheme.accent} />}
-                            <Text style={[s.cardActionSplitBtnText, { color: cardTheme.accent }]}>Save Image</Text>
+                          <Pressable
+                            style={({ pressed }) => [s.premiumActionBtn, { opacity: (pressed || resolvingAvatar) ? 0.75 : 1 }]}
+                            onPress={() => handleSaveImage('business')}
+                            disabled={resolvingAvatar}
+                            accessibilityRole="button"
+                            accessibilityLabel="Save business pass as PNG"
+                          >
+                            <View style={[s.premiumActionIcon, { backgroundColor: cardTheme.accent + '20' }]}>
+                              {resolvingAvatar ? <ActivityIndicator size="small" color={cardTheme.accent} /> : <Ionicons name="image-outline" size={16} color={cardTheme.accent} />}
+                            </View>
+                            <View style={s.premiumActionText}>
+                              <Text style={[s.premiumActionTitle, { color: colors.text }]}>Save Image</Text>
+                              <Text style={[s.premiumActionSub, { color: colors.textSecondary }]}>PNG · High-res</Text>
+                            </View>
                           </Pressable>
-                          <Pressable style={({ pressed }) => [s.cardActionSplitBtn, { borderColor: cardTheme.accent + '50', opacity: (pressed || resolvingAvatar) ? 0.7 : 1 }]} onPress={() => handleDownloadPDF('business')} disabled={resolvingAvatar} accessibilityRole="button" accessibilityLabel="Save business pass as PDF">
-                            {resolvingAvatar ? <ActivityIndicator size="small" color={cardTheme.accent} /> : <Ionicons name="document-text-outline" size={14} color={cardTheme.accent} />}
-                            <Text style={[s.cardActionSplitBtnText, { color: cardTheme.accent }]}>Save PDF</Text>
+                          <Pressable
+                            style={({ pressed }) => [s.premiumActionBtn, { opacity: (pressed || resolvingAvatar) ? 0.75 : 1 }]}
+                            onPress={() => handleDownloadPDF('business')}
+                            disabled={resolvingAvatar}
+                            accessibilityRole="button"
+                            accessibilityLabel="Save business pass as PDF"
+                          >
+                            <View style={[s.premiumActionIcon, { backgroundColor: cardTheme.accent + '20' }]}>
+                              {resolvingAvatar ? <ActivityIndicator size="small" color={cardTheme.accent} /> : <Ionicons name="document-text-outline" size={16} color={cardTheme.accent} />}
+                            </View>
+                            <View style={s.premiumActionText}>
+                              <Text style={[s.premiumActionTitle, { color: colors.text }]}>Save PDF</Text>
+                              <Text style={[s.premiumActionSub, { color: colors.textSecondary }]}>Print · Archive</Text>
+                            </View>
                           </Pressable>
                         </View>
                       ) : (
@@ -624,13 +646,35 @@ export default function QRScreen() {
                       />
                       {Platform.OS === 'web' ? (
                         <View style={s.cardActionsRow}>
-                          <Pressable style={({ pressed }) => [s.cardActionSplitBtn, { borderColor: passColorTheme.bodyBorder + '80', opacity: (pressed || resolvingAvatar) ? 0.7 : 1 }]} onPress={() => handleSaveImage('lanyard')} disabled={resolvingAvatar} accessibilityRole="button" accessibilityLabel="Save lanyard pass as PNG">
-                            {resolvingAvatar ? <ActivityIndicator size="small" color={WALLET_PASS_THEME.cyanHex} /> : <Ionicons name="image-outline" size={14} color={WALLET_PASS_THEME.cyanHex} />}
-                            <Text style={[s.cardActionSplitBtnText, { color: WALLET_PASS_THEME.cyanHex }]}>Save Image</Text>
+                          <Pressable
+                            style={({ pressed }) => [s.premiumActionBtn, { opacity: (pressed || resolvingAvatar) ? 0.75 : 1 }]}
+                            onPress={() => handleSaveImage('lanyard')}
+                            disabled={resolvingAvatar}
+                            accessibilityRole="button"
+                            accessibilityLabel="Save lanyard pass as PNG"
+                          >
+                            <View style={[s.premiumActionIcon, { backgroundColor: WALLET_PASS_THEME.cyanHex + '20' }]}>
+                              {resolvingAvatar ? <ActivityIndicator size="small" color={WALLET_PASS_THEME.cyanHex} /> : <Ionicons name="image-outline" size={16} color={WALLET_PASS_THEME.cyanHex} />}
+                            </View>
+                            <View style={s.premiumActionText}>
+                              <Text style={[s.premiumActionTitle, { color: colors.text }]}>Save Image</Text>
+                              <Text style={[s.premiumActionSub, { color: colors.textSecondary }]}>PNG · High-res</Text>
+                            </View>
                           </Pressable>
-                          <Pressable style={({ pressed }) => [s.cardActionSplitBtn, { borderColor: passColorTheme.bodyBorder + '80', opacity: (pressed || resolvingAvatar) ? 0.7 : 1 }]} onPress={() => handleDownloadPDF('lanyard')} disabled={resolvingAvatar} accessibilityRole="button" accessibilityLabel="Save lanyard pass as PDF">
-                            {resolvingAvatar ? <ActivityIndicator size="small" color={WALLET_PASS_THEME.cyanHex} /> : <Ionicons name="document-text-outline" size={14} color={WALLET_PASS_THEME.cyanHex} />}
-                            <Text style={[s.cardActionSplitBtnText, { color: WALLET_PASS_THEME.cyanHex }]}>Save PDF</Text>
+                          <Pressable
+                            style={({ pressed }) => [s.premiumActionBtn, { opacity: (pressed || resolvingAvatar) ? 0.75 : 1 }]}
+                            onPress={() => handleDownloadPDF('lanyard')}
+                            disabled={resolvingAvatar}
+                            accessibilityRole="button"
+                            accessibilityLabel="Save lanyard pass as PDF"
+                          >
+                            <View style={[s.premiumActionIcon, { backgroundColor: WALLET_PASS_THEME.cyanHex + '20' }]}>
+                              {resolvingAvatar ? <ActivityIndicator size="small" color={WALLET_PASS_THEME.cyanHex} /> : <Ionicons name="document-text-outline" size={16} color={WALLET_PASS_THEME.cyanHex} />}
+                            </View>
+                            <View style={s.premiumActionText}>
+                              <Text style={[s.premiumActionTitle, { color: colors.text }]}>Save PDF</Text>
+                              <Text style={[s.premiumActionSub, { color: colors.textSecondary }]}>Print · Archive</Text>
+                            </View>
                           </Pressable>
                         </View>
                       ) : (
@@ -671,11 +715,14 @@ export default function QRScreen() {
                   ) : null}
                 </Animated.View>
 
-                <Text style={[s.passHint, { color: colors.textTertiary, width: containerWidth, marginBottom: 8 }]}>
-                  {Platform.OS === 'web'
-                    ? 'Lanyard pass matches Apple & Google Wallet · Save PNG/PDF or add to Wallet'
-                    : 'Lanyard pass is the same layout in Apple & Google Wallet'}
-                </Text>
+                <View style={[s.passHintRow, { width: containerWidth }]}>
+                  <Ionicons name="information-circle-outline" size={13} color={colors.textTertiary} />
+                  <Text style={[s.passHint, { color: colors.textTertiary, flex: 1 }]}>
+                    {Platform.OS === 'web'
+                      ? 'Lanyard pass matches Apple & Google Wallet · Save PNG/PDF or add to Wallet'
+                      : 'Lanyard pass is the same layout in Apple & Google Wallet'}
+                  </Text>
+                </View>
 
                 {/* ── Affiliation Settings Selector ── */}
                 {myProfiles.length > 0 && (
@@ -799,58 +846,7 @@ export default function QRScreen() {
                   </View>
                 )}
 
-                {/* Export options */}
-                <View style={{ width: containerWidth, marginTop: 20 }}>
-                  <GlassView
-                    intensity={isDark ? 28 : 12}
-                    style={[s.heroPanel, { width: '100%', borderColor: panelBorder, backgroundColor: panelBg }]}
-                    contentStyle={{ padding: 20 }}
-                  >
-                    <Text style={[s.sectionTitle, { color: colors.text, marginBottom: 16 }]}>Export Options</Text>
-                    
-                    <View style={s.exportOptions}>
-                      <Pressable
-                        style={({ pressed }) => [s.exportOption, pressed && { opacity: 0.8 }]}
-                        onPress={() => handleDownloadPDF('business')}
-                      >
-                        <View style={[s.exportIcon, { backgroundColor: colors.surface }]}>
-                          <Ionicons name="document-text" size={24} color={colors.primary} />
-                        </View>
-                        <Text style={[s.exportLabel, { color: colors.text }]}>PDF Business Card</Text>
-                      </Pressable>
-                      
-                      <Pressable
-                        style={({ pressed }) => [s.exportOption, pressed && { opacity: 0.8 }]}
-                        onPress={() => handleDownloadPDF('lanyard')}
-                      >
-                        <View style={[s.exportIcon, { backgroundColor: colors.surface }]}>
-                          <Ionicons name="document-text" size={24} color={colors.primary} />
-                        </View>
-                        <Text style={[s.exportLabel, { color: colors.text }]}>PDF Lanyard Pass</Text>
-                      </Pressable>
-                      
-                      <Pressable
-                        style={({ pressed }) => [s.exportOption, pressed && { opacity: 0.8 }]}
-                        onPress={() => handleSaveImage('business')}
-                      >
-                        <View style={[s.exportIcon, { backgroundColor: colors.surface }]}>
-                          <Ionicons name="image" size={24} color={colors.primary} />
-                        </View>
-                        <Text style={[s.exportLabel, { color: colors.text }]}>PNG Business Card</Text>
-                      </Pressable>
-                      
-                      <Pressable
-                        style={({ pressed }) => [s.exportOption, pressed && { opacity: 0.8 }]}
-                        onPress={() => handleSaveImage('lanyard')}
-                      >
-                        <View style={[s.exportIcon, { backgroundColor: colors.surface }]}>
-                          <Ionicons name="image" size={24} color={colors.primary} />
-                        </View>
-                        <Text style={[s.exportLabel, { color: colors.text }]}>PNG Lanyard Pass</Text>
-                      </Pressable>
-                    </View>
-                  </GlassView>
-                </View>
+                {/* Export options panel removed — export actions are inline with each card above */}
               </>
             )}
           </PageContainer>
@@ -925,18 +921,31 @@ const s = StyleSheet.create({
     lineHeight: 15,
   },
   cardActionsRow: { flexDirection: 'row', gap: 8, width: '100%' },
-  cardActionSplitBtn: {
+  // Premium card action buttons
+  premiumActionBtn: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 10,
-    borderRadius: 12,
+    gap: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: 14,
     borderWidth: 1,
-    minHeight: 44,
+    borderColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    minHeight: 52,
+    ...Platform.select({ web: { cursor: 'pointer' } } as object),
   },
-  cardActionSplitBtnText: { fontSize: 12, fontFamily: FontFamily.semibold },
+  premiumActionIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  premiumActionText: { gap: 1 },
+  premiumActionTitle: { fontSize: 12, fontFamily: FontFamily.semibold },
+  premiumActionSub: { fontSize: 10, fontFamily: FontFamily.regular },
 
   affiliationSelectorContainer: { borderRadius: 16, borderWidth: 1, marginTop: 12 },
   affiliationHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
@@ -966,35 +975,5 @@ const s = StyleSheet.create({
   tag: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10, borderWidth: 1 },
   tagText: { fontSize: 11, fontFamily: FontFamily.semibold },
 
-  // Export options
-  exportOptions: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  exportOption: {
-    flex: 1,
-    minWidth: 140,
-    alignItems: 'center',
-    padding: 16,
-    borderRadius: 14,
-    borderWidth: 1,
-  },
-  exportIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-  },
-  exportLabel: {
-    fontSize: 12,
-    fontFamily: FontFamily.medium,
-    textAlign: 'center',
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontFamily: FontFamily.bold,
-  },
+  passHintRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 5, marginBottom: 8 },
 });

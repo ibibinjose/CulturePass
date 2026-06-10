@@ -1,11 +1,13 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Image } from 'expo-image';
 import { FontFamily } from '@/design-system/tokens/theme';
 import { GlassView } from '@/design-system/ui';
 import { withAlpha } from '@/lib/withAlpha';
-import { WALLET_PASS_THEME } from '@/modules/profile/components/digitalId/walletPassTheme';
+
+import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, withSequence } from 'react-native-reanimated';
 
 export type PassQuickAction = {
   icon: keyof typeof Ionicons.glyphMap;
@@ -34,6 +36,21 @@ export type PassMemberHeroProps = {
   onCopyCpid: () => void;
 };
 
+function PulsingActiveDot({ color }: { color: string }) {
+  const scale = useSharedValue(1);
+  React.useEffect(() => {
+    scale.value = withRepeat(
+      withSequence(withTiming(1.35, { duration: 900 }), withTiming(1, { duration: 700 })),
+      -1,
+      false,
+    );
+  }, [scale]);
+  const animStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  return (
+    <Animated.View style={[styles.activeDot, animStyle, { backgroundColor: color }]} />
+  );
+}
+
 export function PassMemberHero({
   name,
   username,
@@ -61,22 +78,36 @@ export function PassMemberHero({
     >
       <View style={styles.row}>
         <View style={styles.avatarCol}>
-          {avatarUrl ? (
-            <Image
-              source={{ uri: avatarUrl }}
-              style={styles.avatar}
-              contentFit="cover"
-              transition={200}
-              cachePolicy="memory-disk"
-              accessibilityLabel={`${name} profile photo`}
-            />
-          ) : (
-            <View style={styles.avatarFallback} accessibilityLabel={`Initials ${initials}`}>
-              <Text style={styles.avatarInitials}>{initials}</Text>
+          {/* Gradient ring */}
+          <LinearGradient
+            colors={['#06b6d4', '#8b5cf6', '#ec4899']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.avatarGradientRing}
+          >
+            <View style={[styles.avatarRingGap, { backgroundColor: panelBg }]}>
+              {avatarUrl ? (
+                <Image
+                  source={{ uri: avatarUrl }}
+                  style={styles.avatar}
+                  contentFit="cover"
+                  transition={200}
+                  cachePolicy="memory-disk"
+                  accessibilityLabel={`${name} profile photo`}
+                />
+              ) : (
+                <View style={[styles.avatarFallback, { backgroundColor: withAlpha(accentColor, 0.15) }]} accessibilityLabel={`Initials ${initials}`}>
+                  <Text style={[styles.avatarInitials, { color: accentColor }]}>{initials}</Text>
+                </View>
+              )}
             </View>
-          )}
-          <View style={[styles.tierPill, { backgroundColor: withAlpha(tierColor, 0.14), borderColor: withAlpha(tierColor, 0.35) }]}>
-            <Text style={[styles.tierText, { color: tierColor }]}>{tierLabel}</Text>
+          </LinearGradient>
+          {/* Tier pill with status dot */}
+          <View style={[styles.tierPillRow]}>
+            <PulsingActiveDot color="#10b981" />
+            <View style={[styles.tierPill, { backgroundColor: withAlpha(tierColor, 0.14), borderColor: withAlpha(tierColor, 0.35) }]}>
+              <Text style={[styles.tierText, { color: tierColor }]}>{tierLabel}</Text>
+            </View>
           </View>
         </View>
 
@@ -91,7 +122,7 @@ export function PassMemberHero({
           >
             <Ionicons name="finger-print" size={16} color={accentColor} />
             <Text style={[styles.cpid, { color: accentColor }]}>{cpid}</Text>
-            <Ionicons name={copied ? 'checkmark' : 'copy-outline'} size={14} color={accentColor} />
+            <Ionicons name={copied ? 'checkmark-circle' : 'copy-outline'} size={14} color={accentColor} />
           </Pressable>
           <Text style={[styles.since, { color: mutedColor }]}>Member since {memberSince}</Text>
         </View>
@@ -104,13 +135,13 @@ export function PassMemberHero({
             onPress={action.onPress}
             style={({ pressed }) => [
               styles.actionBtn,
-              { borderColor: panelBorder, backgroundColor: withAlpha(action.color, 0.06), opacity: pressed ? 0.82 : 1 },
+              { borderColor: withAlpha(action.color, 0.2), backgroundColor: withAlpha(action.color, 0.07), opacity: pressed ? 0.78 : 1 },
             ]}
             accessibilityRole="button"
             accessibilityLabel={action.label}
           >
-            <View style={[styles.actionIcon, { backgroundColor: withAlpha(action.color, 0.14) }]}>
-              <Ionicons name={action.icon} size={18} color={action.color} />
+            <View style={[styles.actionIcon, { backgroundColor: withAlpha(action.color, 0.16) }]}>
+              <Ionicons name={action.icon} size={20} color={action.color} />
             </View>
             <Text style={[styles.actionLabel, { color: mutedColor }]}>{action.label}</Text>
           </Pressable>
@@ -121,22 +152,39 @@ export function PassMemberHero({
 }
 
 const styles = StyleSheet.create({
-  panel: { borderWidth: 1, borderRadius: 18, overflow: 'hidden' },
+  panel: { borderWidth: 1, borderRadius: 20, overflow: 'hidden' },
   content: { padding: 16, gap: 14 },
   row: { flexDirection: 'row', gap: 14, alignItems: 'flex-start' },
   avatarCol: { alignItems: 'center', gap: 8 },
-  avatar: { width: 72, height: 72, borderRadius: 18, borderWidth: 2, borderColor: WALLET_PASS_THEME.whiteHex },
+  avatarGradientRing: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarRingGap: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatar: { width: 72, height: 72, borderRadius: 36 },
   avatarFallback: {
     width: 72,
     height: 72,
-    borderRadius: 18,
-    backgroundColor: WALLET_PASS_THEME.whiteHex,
+    borderRadius: 36,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: WALLET_PASS_THEME.borderOnWhite,
   },
-  avatarInitials: { fontSize: 24, fontFamily: FontFamily.bold, color: '#4F46E5' },
+  avatarInitials: { fontSize: 24, fontFamily: FontFamily.bold },
+  tierPillRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  activeDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
   tierPill: {
     paddingHorizontal: 10,
     paddingVertical: 4,
@@ -156,6 +204,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 12,
     borderWidth: 1,
+    ...Platform.select({ web: { cursor: 'pointer' } } as object),
   },
   cpid: {
     flex: 1,
@@ -171,15 +220,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     paddingVertical: 10,
-    borderRadius: 12,
+    borderRadius: 14,
     borderWidth: 1,
-    minHeight: 44,
+    minHeight: 46,
     justifyContent: 'center',
   },
   actionIcon: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
+    width: 40,
+    height: 40,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },

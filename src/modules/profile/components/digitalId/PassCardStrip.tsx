@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { FontFamily } from '@/design-system/tokens/theme';
 import { getPassColorTheme, type PassColorVariant } from '@/modules/profile/components/digitalId/passCardUtils';
 
@@ -11,23 +12,42 @@ type PassCardStripProps = {
   colorVariant?: PassColorVariant;
 };
 
-export function PassCardStrip({ tierLabel, compact = false, lanyard = false, colorVariant = 'cyan' }: PassCardStripProps) {
+/**
+ * Full-bleed header strip — always edge-to-edge within PassCardShell.
+ * Apple Wallet layout: logo mark left · tier badge right.
+ * No overlap zone — avatar sits cleanly BELOW this strip.
+ */
+export function PassCardStrip({
+  tierLabel,
+  compact = false,
+  lanyard = false,
+  colorVariant = 'cyan',
+}: PassCardStripProps) {
   const theme = getPassColorTheme(colorVariant);
   const tier = tierLabel.toUpperCase();
+  const height = lanyard ? 60 : compact ? 44 : 52;
+
   return (
     <LinearGradient
       colors={[theme.stripStart, theme.stripEnd]}
       start={{ x: 0, y: 0.5 }}
       end={{ x: 1, y: 0.5 }}
-      style={[styles.strip, compact && styles.stripCompact, lanyard && styles.stripLanyard]}
+      style={[styles.strip, { height }]}
     >
-      <View style={[styles.stripRow, compact && styles.stripRowCompact, lanyard && styles.stripRowLanyard]}>
-        <Text style={[styles.brand, compact && styles.brandCompact, { color: theme.stripText }]}>CULTUREPASS ID</Text>
-        <View style={[styles.tierBadge, compact && styles.tierBadgeCompact, { backgroundColor: theme.stripTierBadgeBg, borderColor: theme.stripTierBadgeBorder }]}>
-          <Text style={[styles.tier, compact && styles.tierCompact, { color: theme.stripText }]}>{tier}</Text>
-        </View>
+      {/* Logo mark — minimal, one icon + brand name */}
+      <View style={styles.logoGroup}>
+        <Ionicons name="planet-outline" size={compact ? 12 : 14} color={theme.stripText} />
+        <Text style={[styles.brand, { color: theme.stripText, fontSize: compact ? 10 : 11 }]}>
+          CulturePass
+        </Text>
       </View>
-      {lanyard ? <View style={styles.lanyardOverlapZone} /> : null}
+
+      {/* Tier — compact pill on right */}
+      <View style={[styles.tierBadge, { backgroundColor: theme.stripTierBadgeBg, borderColor: theme.stripTierBadgeBorder }]}>
+        <Text style={[styles.tier, { color: theme.stripText, fontSize: compact ? 9 : 10 }]}>{tier}</Text>
+      </View>
+
+      {/* Bottom separator line */}
       <View style={[styles.separator, { backgroundColor: theme.stripSeparator }]} pointerEvents="none" />
     </LinearGradient>
   );
@@ -35,39 +55,21 @@ export function PassCardStrip({ tierLabel, compact = false, lanyard = false, col
 
 const styles = StyleSheet.create({
   strip: {
-    position: 'relative',
-  },
-  stripCompact: {},
-  stripLanyard: {
-    paddingTop: 2,
-  },
-  stripRow: {
+    width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 14,
+    position: 'relative',
   },
-  stripRowCompact: {
-    paddingHorizontal: 14,
-    paddingVertical: 11,
-  },
-  stripRowLanyard: {
-    paddingTop: 10,
-    paddingBottom: 8,
-  },
-  /** Reserved zone under the ID row — avatar overlaps here only. */
-  lanyardOverlapZone: {
-    height: 18,
+  logoGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   brand: {
-    fontSize: 11,
     fontFamily: FontFamily.bold,
-    letterSpacing: 1.5,
-  },
-  brandCompact: {
-    fontSize: 10,
-    letterSpacing: 1.3,
+    letterSpacing: 0.3,
   },
   tierBadge: {
     paddingHorizontal: 10,
@@ -75,19 +77,9 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     borderWidth: 1,
   },
-  tierBadgeCompact: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 5,
-  },
   tier: {
-    fontSize: 10,
     fontFamily: FontFamily.bold,
-    letterSpacing: 1.1,
-  },
-  tierCompact: {
-    fontSize: 9,
-    letterSpacing: 0.9,
+    letterSpacing: 0.8,
   },
   separator: {
     position: 'absolute',

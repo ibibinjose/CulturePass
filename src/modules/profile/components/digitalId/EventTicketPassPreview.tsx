@@ -1,10 +1,30 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { FontFamily, CultureTokens } from '@/design-system/tokens/theme';
-import { TICKET_PRINT } from '@/design-system/tokens/ticketPrintTokens';
+import { LinearGradient } from 'expo-linear-gradient';
+import { FontFamily } from '@/design-system/tokens/theme';
 import { PassQrCode } from '@/modules/profile/components/digitalId/PassQrCode';
 import { WALLET_PASS_THEME } from '@/modules/profile/components/digitalId/walletPassTheme';
+
+/**
+ * Apple Wallet–style Event Ticket Pass.
+ * 
+ * Anatomy (Apple eventTicket style):
+ *   ┌─────────────────────────────────────────────────────┐
+ *   │  [accent header: logo · EVENT badge]                │
+ *   │  [background strip / image area]                    │
+ *   ├ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─  ┤
+ *   │  Event Title                                        │
+ *   │  Attendee · Date · Venue                            │
+ *   ├ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─  ┤
+ *   │                  [QR code]                          │
+ *   │       Ticket code · "Scan at entry"                 │
+ *   └─────────────────────────────────────────────────────┘
+ *
+ * Removed: confetti dots, barcode lines, "ADMIT ONE" inside badge
+ *          (it's on the strip now), perforated dots (replaced with
+ *          clean hairline separator), stubHint text.
+ */
 
 export type EventTicketPassPreviewProps = {
   width: number;
@@ -19,7 +39,6 @@ export type EventTicketPassPreviewProps = {
   onPress?: () => void;
 };
 
-/** Event ticket pass template — respectful, high-contrast layout aligned with CulturePass wallet passes. */
 export function EventTicketPassPreview({
   width,
   attendeeName,
@@ -29,39 +48,81 @@ export function EventTicketPassPreview({
   ticketCode = 'TICKET',
   qrValue,
   qrSize,
-  accentColor = CultureTokens.indigo,
+  accentColor = '#00ADEF',
   onPress,
 }: EventTicketPassPreviewProps) {
-  const height = Math.round(width * 0.64);
-  const resolvedQrSize = qrSize ?? Math.min(72, Math.round(width * 0.22));
+  const height = Math.round(width * 0.72);
+  const resolvedQrSize = qrSize ?? Math.min(Math.round(width * 0.38), 128);
 
   const card = (
-    <View style={[styles.card, { width, height, borderColor: TICKET_PRINT.cardBorder }]}>
-      <View style={[styles.strip, { backgroundColor: accentColor }]}>
-        <Text style={styles.stripBrand}>CULTUREPASS</Text>
-        <Text style={styles.stripTier}>EVENT</Text>
-      </View>
-      <View style={styles.body}>
-        <View style={styles.meta}>
-          <Text style={styles.eventTitle} numberOfLines={2} accessibilityRole="header">
-            {eventTitle}
-          </Text>
-          <Text style={styles.attendee} numberOfLines={1}>{attendeeName}</Text>
-          <Text style={styles.date} numberOfLines={1}>{eventDate}</Text>
-          {venue ? <Text style={styles.venue} numberOfLines={1}>{venue}</Text> : null}
-          <View style={styles.codeRow}>
-            <Ionicons name="ticket-outline" size={12} color={accentColor} />
-            <Text style={[styles.code, { color: accentColor }]} numberOfLines={1}>{ticketCode}</Text>
-          </View>
+    <View
+      style={[
+        styles.card,
+        {
+          width,
+          height,
+          ...Platform.select({
+            web: { boxShadow: '0 4px 20px rgba(15,23,42,0.10), 0 1px 4px rgba(15,23,42,0.06)' } as object,
+            default: {
+              shadowColor: '#0F172A',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.1,
+              shadowRadius: 12,
+              elevation: 4,
+            },
+          }),
+        },
+      ]}
+    >
+      {/* Header strip */}
+      <LinearGradient
+        colors={[accentColor, accentColor + 'CC']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={styles.headerStrip}
+      >
+        <View style={styles.headerLeft}>
+          <Ionicons name="planet-outline" size={12} color="rgba(255,255,255,0.9)" />
+          <Text style={styles.headerBrand}>CulturePass</Text>
         </View>
-        <PassQrCode
-          value={qrValue}
-          size={resolvedQrSize}
-          logoRatio={0.2}
-          accessibilityLabel={`Event ticket QR code ${ticketCode}`}
-        />
+        <View style={styles.headerRight}>
+          <Text style={styles.headerBadge}>EVENT</Text>
+        </View>
+      </LinearGradient>
+
+      {/* Event info */}
+      <View style={styles.eventSection}>
+        <Text style={styles.eventTitle} numberOfLines={2} accessibilityRole="header">
+          {eventTitle}
+        </Text>
+        <Text style={styles.attendee} numberOfLines={1}>{attendeeName}</Text>
+
+        <View style={styles.metaRow}>
+          <Text style={styles.metaItem} numberOfLines={1}>{eventDate}</Text>
+          {venue ? (
+            <>
+              <View style={styles.metaDot} />
+              <Text style={[styles.metaItem, styles.metaVenue]} numberOfLines={1}>{venue}</Text>
+            </>
+          ) : null}
+        </View>
       </View>
-      <Text style={styles.footerNote}>Present at venue · Keep ticket private</Text>
+
+      {/* Hairline separator */}
+      <View style={styles.separator} />
+
+      {/* QR section */}
+      <View style={styles.qrSection}>
+        <View style={styles.qrWhiteBox}>
+          <PassQrCode
+            value={qrValue}
+            size={resolvedQrSize}
+            borderColor="transparent"
+            accessibilityLabel={`Event ticket QR code ${ticketCode}`}
+          />
+        </View>
+        <Text style={[styles.ticketCode, { color: accentColor }]}>{ticketCode}</Text>
+      </View>
     </View>
   );
 
@@ -69,9 +130,9 @@ export function EventTicketPassPreview({
     return (
       <Pressable
         onPress={onPress}
-        style={({ pressed }) => [pressed && { opacity: 0.92 }]}
+        style={({ pressed }) => [{ opacity: pressed ? 0.93 : 1 }]}
         accessibilityRole="button"
-        accessibilityLabel="View your event tickets"
+        accessibilityLabel="View event ticket"
       >
         {card}
       </Pressable>
@@ -84,92 +145,109 @@ export function EventTicketPassPreview({
 const styles = StyleSheet.create({
   card: {
     borderRadius: 18,
+    backgroundColor: WALLET_PASS_THEME.whiteHex,
     borderWidth: 1,
-    backgroundColor: TICKET_PRINT.surface,
+    borderColor: WALLET_PASS_THEME.borderOnWhite,
     overflow: 'hidden',
-    ...Platform.select({
-      web: { boxShadow: '0 8px 24px rgba(15, 23, 42, 0.1)' } as object,
-      default: {
-        shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 10,
-        elevation: 4,
-      },
-    }),
   },
-  strip: {
+  headerStrip: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingVertical: 11,
+    width: '100%',
   },
-  stripBrand: {
-    fontSize: 10,
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  headerBrand: {
+    fontSize: 11,
     fontFamily: FontFamily.bold,
-    color: TICKET_PRINT.textInverse,
-    letterSpacing: 1.4,
+    color: 'rgba(255,255,255,0.95)',
+    letterSpacing: 0.3,
   },
-  stripTier: {
+  headerRight: {},
+  headerBadge: {
     fontSize: 9,
     fontFamily: FontFamily.bold,
-    color: TICKET_PRINT.badgeBrandMuted,
-    letterSpacing: 1,
+    color: 'rgba(255,255,255,0.9)',
+    letterSpacing: 1.2,
     paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: 5,
-    backgroundColor: 'rgba(255,255,255,0.14)',
+    borderRadius: 4,
+    backgroundColor: 'rgba(255,255,255,0.18)',
     overflow: 'hidden',
   },
-  body: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    gap: 10,
+  eventSection: {
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 12,
+    gap: 3,
   },
-  meta: { flex: 1, gap: 3, minWidth: 0 },
   eventTitle: {
-    fontSize: 14,
+    fontSize: 17,
     fontFamily: FontFamily.bold,
-    color: TICKET_PRINT.text,
-    lineHeight: 18,
+    color: WALLET_PASS_THEME.darkText,
+    lineHeight: 22,
   },
   attendee: {
-    fontSize: 12,
+    fontSize: 13,
     fontFamily: FontFamily.semibold,
-    color: TICKET_PRINT.textSecondary,
+    color: WALLET_PASS_THEME.mutedText,
+    marginTop: 2,
   },
-  date: {
-    fontSize: 11,
-    fontFamily: FontFamily.medium,
-    color: TICKET_PRINT.textSecondary,
-  },
-  venue: {
-    fontSize: 10,
-    fontFamily: FontFamily.regular,
-    color: TICKET_PRINT.textSecondary,
-  },
-  codeRow: {
+  metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 6,
     marginTop: 4,
+    flexWrap: 'nowrap',
   },
-  code: {
+  metaItem: {
     fontSize: 11,
-    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
-    fontWeight: '700',
-  },
-  footerNote: {
-    fontSize: 9,
     fontFamily: FontFamily.medium,
-    color: WALLET_PASS_THEME.mutedText,
-    textAlign: 'center',
-    paddingBottom: 8,
-    paddingHorizontal: 12,
+    color: WALLET_PASS_THEME.subtleText,
+    flexShrink: 1,
+  },
+  metaDot: {
+    width: 3,
+    height: 3,
+    borderRadius: 1.5,
+    backgroundColor: WALLET_PASS_THEME.subtleText,
+    opacity: 0.5,
+    flexShrink: 0,
+  },
+  metaVenue: {
+    flexShrink: 2,
+  },
+  separator: {
+    marginHorizontal: 16,
+    height: 0.5,
+    backgroundColor: 'rgba(15,23,42,0.08)',
+  },
+  qrSection: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    gap: 8,
+  },
+  qrWhiteBox: {
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: '#FFFFFF',
+    ...Platform.select({
+      web: { boxShadow: '0 1px 8px rgba(15,23,42,0.08)' } as object,
+    }),
+  },
+  ticketCode: {
+    fontSize: 11,
+    fontFamily: FontFamily.bold,
+    letterSpacing: 1.4,
+    textTransform: 'uppercase',
+    opacity: 0.9,
   },
 });

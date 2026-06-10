@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, Pressable, StyleSheet, Platform, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useQuery } from '@tanstack/react-query';
 import { GlassView } from '@/design-system/ui';
 import { FontFamily, CultureTokens } from '@/design-system/tokens/theme';
@@ -94,6 +95,9 @@ function WalletBackCard({
   );
 }
 
+const STEPS_APPLE = ['Tap Add to Apple Wallet', 'Confirm in Wallet app', 'Show QR at venue entry'];
+const STEPS_GOOGLE = ['Tap Save to Google Wallet', 'Confirm in Google Wallet', 'Present pass at check-in'];
+
 export function WalletAddSection({
   width,
   name,
@@ -139,14 +143,11 @@ export function WalletAddSection({
   const googleReady = readiness?.google ?? true;
   const platformReady = activePlatform === 'apple' ? appleReady : googleReady;
 
-  const previewWidth = Math.min(width, 360);
+  const previewWidth = Math.min(width - 32, 360);
   const previewHeight = Math.round(Math.min(previewWidth, 360) * (WALLET_PASS_THEME.lanyardHeight / 330));
   const qrSize = Math.min(previewWidth - 96, 108);
 
-  const steps =
-    activePlatform === 'apple'
-      ? ['Tap Add to Apple Wallet', 'Confirm in Wallet app', 'Show QR at venue entry']
-      : ['Tap Save to Google Wallet', 'Confirm in Google Wallet', 'Present pass at check-in'];
+  const steps = activePlatform === 'apple' ? STEPS_APPLE : STEPS_GOOGLE;
 
   return (
     <GlassView
@@ -154,11 +155,41 @@ export function WalletAddSection({
       style={[ws.container, { width, borderColor: panelBorder, backgroundColor: panelBg }]}
       contentStyle={ws.content}
     >
-      <Text style={[ws.title, { color: textColor }]} accessibilityRole="header">Add to Wallet</Text>
-      <Text style={[ws.desc, { color: mutedColor }]}>
-        Same lanyard pass as above — avatar, name, ID, and branded QR for Apple or Google Wallet.
-      </Text>
+      {/* Header */}
+      <View style={ws.headerRow}>
+        <LinearGradient
+          colors={['#06b6d4', '#8b5cf6']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={ws.headerIconWrap}
+        >
+          <Ionicons name="wallet-outline" size={20} color="#fff" />
+        </LinearGradient>
+        <View style={ws.headerText}>
+          <Text style={[ws.title, { color: textColor }]} accessibilityRole="header">Add to Wallet</Text>
+          <Text style={[ws.desc, { color: mutedColor }]}>
+            Same lanyard pass as above — avatar, name, ID, and branded QR.
+          </Text>
+        </View>
+      </View>
 
+      {/* Platform badges */}
+      <View style={ws.platformRow}>
+        {showApple && (
+          <View style={[ws.platformBadge, { borderColor: withAlpha('#000', isDark ? 0.4 : 0.12), backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }]}>
+            <Ionicons name="logo-apple" size={14} color={textColor} />
+            <Text style={[ws.platformBadgeText, { color: textColor }]}>Apple Wallet</Text>
+          </View>
+        )}
+        {showGoogle && (
+          <View style={[ws.platformBadge, { borderColor: withAlpha('#1A73E8', 0.25), backgroundColor: withAlpha('#1A73E8', 0.06) }]}>
+            <Ionicons name="logo-google" size={14} color="#1A73E8" />
+            <Text style={[ws.platformBadgeText, { color: '#1A73E8' }]}>Google Wallet</Text>
+          </View>
+        )}
+      </View>
+
+      {/* Front / Back switcher */}
       <View style={[ws.sideSwitcher, { borderColor: panelBorder }]}>
         {(['front', 'back'] as const).map((opt) => {
           const active = side === opt;
@@ -166,10 +197,11 @@ export function WalletAddSection({
             <Pressable
               key={opt}
               onPress={() => setSide(opt)}
-              style={[ws.sideBtn, active && { backgroundColor: withAlpha(WALLET_PASS_THEME.cyanHex, 0.12) }]}
+              style={[ws.sideBtn, active && { backgroundColor: withAlpha(WALLET_PASS_THEME.cyanHex, 0.12), borderBottomWidth: 2, borderBottomColor: WALLET_PASS_THEME.cyanHex }]}
               accessibilityRole="tab"
               accessibilityState={{ selected: active }}
             >
+              <Ionicons name={opt === 'front' ? 'id-card-outline' : 'list-outline'} size={14} color={active ? WALLET_PASS_THEME.cyanHex : mutedColor} />
               <Text style={[ws.sideBtnLabel, { color: active ? WALLET_PASS_THEME.cyanHex : mutedColor }]}>
                 {opt === 'front' ? 'Front' : 'Back'}
               </Text>
@@ -209,17 +241,29 @@ export function WalletAddSection({
         )}
       </View>
 
-      <View style={ws.stepsRow}>
+      {/* Steps with connecting line */}
+      <View style={ws.stepsContainer}>
         {steps.map((step, index) => (
           <View key={step} style={ws.stepItem}>
-            <View style={[ws.stepBadge, { backgroundColor: withAlpha(WALLET_PASS_THEME.cyanHex, 0.14) }]}>
-              <Text style={[ws.stepBadgeText, { color: WALLET_PASS_THEME.cyanHex }]}>{index + 1}</Text>
+            <View style={ws.stepLeft}>
+              <LinearGradient
+                colors={['#06b6d4', '#8b5cf6']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={ws.stepBadge}
+              >
+                <Text style={ws.stepBadgeText}>{index + 1}</Text>
+              </LinearGradient>
+              {index < steps.length - 1 && (
+                <View style={[ws.stepConnector, { backgroundColor: withAlpha(WALLET_PASS_THEME.cyanHex, 0.2) }]} />
+              )}
             </View>
             <Text style={[ws.stepText, { color: mutedColor }]}>{step}</Text>
           </View>
         ))}
       </View>
 
+      {/* Wallet buttons */}
       {showApple ? (
         <Pressable
           onPress={onAddApple}
@@ -236,14 +280,16 @@ export function WalletAddSection({
             <ActivityIndicator color="#FFFFFF" />
           ) : (
             <>
-              <Ionicons name="wallet-outline" size={20} color="#FFFFFF" />
+              <View style={ws.walletBtnIconWrap}>
+                <Ionicons name="logo-apple" size={22} color="#FFFFFF" />
+              </View>
               <View style={ws.btnTextCol}>
                 <Text style={ws.appleBtnTitle}>Add to Apple Wallet</Text>
                 <Text style={ws.appleBtnSub}>
                   {appleReady ? 'Lanyard layout · QR check-in' : 'Apple Wallet not available on server'}
                 </Text>
               </View>
-              <Ionicons name="logo-apple" size={22} color="#FFFFFF" />
+              <Ionicons name="chevron-forward" size={16} color="rgba(255,255,255,0.5)" />
             </>
           )}
         </Pressable>
@@ -265,14 +311,16 @@ export function WalletAddSection({
             <ActivityIndicator color="#FFFFFF" />
           ) : (
             <>
-              <Ionicons name="wallet-outline" size={20} color="#FFFFFF" />
+              <View style={[ws.walletBtnIconWrap, { backgroundColor: 'rgba(255,255,255,0.15)' }]}>
+                <Ionicons name="logo-google" size={20} color="#FFFFFF" />
+              </View>
               <View style={ws.btnTextCol}>
                 <Text style={ws.googleBtnTitle}>Save to Google Wallet</Text>
                 <Text style={ws.googleBtnSub}>
                   {googleReady ? 'Lanyard layout · tap for details' : 'Google Wallet not available on server'}
                 </Text>
               </View>
-              <Ionicons name="logo-google" size={20} color="#FFFFFF" />
+              <Ionicons name="chevron-forward" size={16} color="rgba(255,255,255,0.55)" />
             </>
           )}
         </Pressable>
@@ -288,16 +336,19 @@ export function WalletAddSection({
         </Text>
       )}
 
-      <View style={ws.benefits}>
+      {/* Benefits */}
+      <View style={[ws.benefits, { borderTopColor: withAlpha(WALLET_PASS_THEME.cyanHex, 0.15), borderTopWidth: 1, paddingTop: 12 }]}>
         <Text style={[ws.benefitsTitle, { color: textColor }]}>Benefits</Text>
         {[
-          'Always accessible offline',
-          'Quick check-in at events',
-          'Syncs with your CulturePass profile',
-        ].map((line) => (
-          <View key={line} style={ws.benefitRow}>
-            <Ionicons name="checkmark-circle" size={16} color={CultureTokens.emerald} />
-            <Text style={[ws.benefitText, { color: textColor }]}>{line}</Text>
+          { text: 'Always accessible offline', icon: 'cloud-offline-outline' as const },
+          { text: 'Quick check-in at events', icon: 'flash-outline' as const },
+          { text: 'Syncs with your CulturePass profile', icon: 'sync-outline' as const },
+        ].map((item) => (
+          <View key={item.text} style={ws.benefitRow}>
+            <View style={[ws.benefitIconWrap, { backgroundColor: withAlpha(CultureTokens.emerald, 0.12) }]}>
+              <Ionicons name={item.icon} size={14} color={CultureTokens.emerald} />
+            </View>
+            <Text style={[ws.benefitText, { color: textColor }]}>{item.text}</Text>
           </View>
         ))}
       </View>
@@ -308,10 +359,31 @@ export function WalletAddSection({
 const ws = StyleSheet.create({
   container: { borderRadius: 20, borderWidth: 1, overflow: 'hidden' },
   content: { gap: 14, padding: 16 },
-  title: { fontSize: 18, fontFamily: FontFamily.bold, textAlign: 'center' },
-  desc: { fontSize: 12, fontFamily: FontFamily.medium, textAlign: 'center', lineHeight: 17 },
-  sideSwitcher: { flexDirection: 'row', borderRadius: 10, borderWidth: 1, overflow: 'hidden' },
-  sideBtn: { flex: 1, alignItems: 'center', paddingVertical: 8, minHeight: 44, justifyContent: 'center' },
+  headerRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
+  headerIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  headerText: { flex: 1, gap: 2 },
+  title: { fontSize: 18, fontFamily: FontFamily.bold },
+  desc: { fontSize: 12, fontFamily: FontFamily.medium, lineHeight: 17 },
+  platformRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
+  platformBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  platformBadgeText: { fontSize: 12, fontFamily: FontFamily.semibold },
+  sideSwitcher: { flexDirection: 'row', borderRadius: 12, borderWidth: 1, overflow: 'hidden' },
+  sideBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, minHeight: 44, borderBottomWidth: 2, borderBottomColor: 'transparent' },
   sideBtnLabel: { fontSize: 12, fontFamily: FontFamily.semibold },
   previewWrap: { alignItems: 'center' },
   previewCard: {
@@ -339,22 +411,24 @@ const ws = StyleSheet.create({
     color: WALLET_PASS_THEME.darkText,
     lineHeight: 17,
   },
-  stepsRow: { gap: 8 },
-  stepItem: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  stepBadge: { width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
-  stepBadgeText: { fontSize: 11, fontFamily: FontFamily.bold },
-  stepText: { flex: 1, fontSize: 12, fontFamily: FontFamily.medium, lineHeight: 16 },
+  stepsContainer: { gap: 0 },
+  stepItem: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, minHeight: 36 },
+  stepLeft: { alignItems: 'center', width: 24 },
+  stepBadge: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  stepBadgeText: { fontSize: 11, fontFamily: FontFamily.bold, color: '#fff' },
+  stepConnector: { width: 2, flex: 1, marginVertical: 2 },
+  stepText: { flex: 1, fontSize: 12, fontFamily: FontFamily.medium, lineHeight: 24 },
   appleBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
     paddingVertical: 14,
     paddingHorizontal: 16,
-    borderRadius: 14,
+    borderRadius: 16,
     backgroundColor: '#000000',
     borderWidth: 1,
-    borderColor: '#1F2937',
-    minHeight: 52,
+    borderColor: '#374151',
+    minHeight: 56,
   },
   googleBtn: {
     flexDirection: 'row',
@@ -362,22 +436,31 @@ const ws = StyleSheet.create({
     gap: 12,
     paddingVertical: 14,
     paddingHorizontal: 16,
-    borderRadius: 14,
+    borderRadius: 16,
     backgroundColor: '#1A73E8',
     borderWidth: 1,
     borderColor: '#1557B0',
-    minHeight: 52,
+    minHeight: 56,
   },
-  btnDisabled: { opacity: 0.55 },
+  walletBtnIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.12)',
+  },
+  btnDisabled: { opacity: 0.5 },
   btnTextCol: { flex: 1, gap: 2 },
   appleBtnTitle: { fontSize: 15, fontFamily: FontFamily.bold, color: '#FFFFFF' },
-  appleBtnSub: { fontSize: 10, fontFamily: FontFamily.medium, color: 'rgba(255,255,255,0.7)' },
+  appleBtnSub: { fontSize: 10, fontFamily: FontFamily.medium, color: 'rgba(255,255,255,0.65)' },
   googleBtnTitle: { fontSize: 15, fontFamily: FontFamily.bold, color: '#FFFFFF' },
-  googleBtnSub: { fontSize: 10, fontFamily: FontFamily.medium, color: 'rgba(255,255,255,0.82)' },
+  googleBtnSub: { fontSize: 10, fontFamily: FontFamily.medium, color: 'rgba(255,255,255,0.75)' },
   unavailable: { fontSize: 11, fontFamily: FontFamily.medium, textAlign: 'center', lineHeight: 15 },
   legal: { fontSize: 9, fontFamily: FontFamily.medium, textAlign: 'center', lineHeight: 13 },
-  benefits: { gap: 8, paddingTop: 4 },
-  benefitsTitle: { fontSize: 12, fontFamily: FontFamily.bold, textAlign: 'center' },
-  benefitRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  benefits: { gap: 10 },
+  benefitsTitle: { fontSize: 12, fontFamily: FontFamily.bold, marginBottom: 2 },
+  benefitRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  benefitIconWrap: { width: 28, height: 28, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
   benefitText: { fontSize: 12, fontFamily: FontFamily.regular, flex: 1 },
 });

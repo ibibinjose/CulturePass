@@ -1,4 +1,5 @@
 import type {
+  DigitalIdSummary,
   GoogleWalletClassBootstrapResponse,
   MembershipSummary,
   RewardsSummary,
@@ -47,6 +48,7 @@ export function createWalletNamespace(request: ApiRequestFn) {
     get: (userId: string) => request<WalletSummary>('GET', `api/wallet/${userId}`),
     transactions: (userId: string) => request<WalletTransaction[]>('GET', `api/transactions/${userId}`),
     topup: (userId: string, amount: number) => request<WalletSummary>('POST', `api/wallet/${userId}/topup`, { amount }),
+    digitalId: () => request<DigitalIdSummary>('GET', 'api/wallet/digital-id'),
     businessCardApple: () => request<WalletPassLinkResponse>('GET', 'api/wallet/business-card/apple'),
     businessCardGoogle: () => request<WalletPassLinkResponse>('GET', 'api/wallet/business-card/google'),
     businessCardReadiness: () =>

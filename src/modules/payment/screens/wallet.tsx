@@ -343,7 +343,7 @@ export default function WalletScreen() {
             {/* ── Quick Navigation 2×2 Grid ─────────────────────────────── */}
             <View style={styles.quickNavGrid}>
               {([
-                { icon: 'ticket-outline',  label: 'My Tickets',    route: '/tickets/index' },
+                { icon: 'ticket-outline',  label: 'My Tickets',    route: '/tickets' },
                 { icon: 'id-card-outline', label: 'Digital ID',    route: '/profile/qr' },
                 { icon: 'card-outline',    label: 'Transactions',  route: '/payment/transactions' },
                 { icon: 'star-outline',    label: 'Membership',    route: '/membership/upgrade' },

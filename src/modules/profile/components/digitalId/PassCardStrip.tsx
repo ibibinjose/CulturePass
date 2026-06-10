@@ -2,7 +2,8 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { FontFamily } from '@/design-system/tokens/theme';
+import { CultureTokens, FontFamily } from '@/design-system/tokens/theme';
+import { DIGITAL_ID_BRAND } from '@/modules/profile/components/digitalId/digitalIdBrand';
 import { getPassColorTheme, type PassColorVariant } from '@/modules/profile/components/digitalId/passCardUtils';
 
 type PassCardStripProps = {
@@ -26,19 +27,21 @@ export function PassCardStrip({
   const theme = getPassColorTheme(colorVariant);
   const tier = tierLabel.toUpperCase();
   const height = lanyard ? 60 : compact ? 44 : 52;
+  const stripColors: [string, string] = colorVariant === 'cyan'
+    ? [CultureTokens.terracottaGlow, CultureTokens.deepSaffron]
+    : [theme.stripStart, theme.stripEnd];
 
   return (
     <LinearGradient
-      colors={[theme.stripStart, theme.stripEnd]}
+      colors={stripColors}
       start={{ x: 0, y: 0.5 }}
       end={{ x: 1, y: 0.5 }}
       style={[styles.strip, { height }]}
     >
-      {/* Logo mark — minimal, one icon + brand name */}
       <View style={styles.logoGroup}>
-        <Ionicons name="planet-outline" size={compact ? 12 : 14} color={theme.stripText} />
+        <Ionicons name="finger-print" size={compact ? 12 : 14} color={theme.stripText} />
         <Text style={[styles.brand, { color: theme.stripText, fontSize: compact ? 10 : 11 }]}>
-          CulturePass
+          {DIGITAL_ID_BRAND.name}
         </Text>
       </View>
 

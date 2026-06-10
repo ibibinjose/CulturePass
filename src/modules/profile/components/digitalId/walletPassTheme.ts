@@ -16,7 +16,7 @@ export const WALLET_PASS_THEME = {
   borderOnWhite: '#E5E7EB',
   borderOnCyan: 'rgba(255, 255, 255, 0.22)',
   qrPad: '#FFFFFF',
-  passRevision: '2026-06-09-v9',
+  passRevision: '2026-06-10-v10',
   lanyardHeight: 448,
   /** WCAG AA — white on cyan body (#00ADEF) ≈ 4.6:1 */
   a11yMinTouchTarget: 44,

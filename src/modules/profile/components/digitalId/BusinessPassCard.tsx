@@ -1,9 +1,10 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { FontFamily } from '@/design-system/tokens/theme';
+import { CultureTokens, FontFamily } from '@/design-system/tokens/theme';
 import { PassCardShell } from '@/modules/profile/components/digitalId/PassCardShell';
 import { PassCardStrip } from '@/modules/profile/components/digitalId/PassCardStrip';
+import { PassCardFooter } from '@/modules/profile/components/digitalId/PassCardFooter';
 import { PassAvatar } from '@/modules/profile/components/digitalId/PassAvatar';
 import { PassQrCode } from '@/modules/profile/components/digitalId/PassQrCode';
 import { getPassColorTheme, type PassColorVariant } from '@/modules/profile/components/digitalId/passCardUtils';
@@ -18,7 +19,7 @@ import { getPassColorTheme, type PassColorVariant } from '@/modules/profile/comp
  *   │            @handle                 │  [QR code]  │  │
  *   │            [CPID]                  └─────────────┘  │
  *   └─────────────────────────────────────────────────────┘
- *   culturepass.io                              [NFC]
+ *   CulturePass.App                             [NFC]
  * 
  * Removed: watermark lines, affiliation row (only shown if present),
  *          "Business Pass" label, redundant borders.
@@ -69,10 +70,9 @@ export function BusinessPassCard({
   return (
     <PassCardShell width={width} height={height} colorVariant={colorVariant} nativeID="pass-card-business">
 
-      {/* Full-bleed header strip */}
       <PassCardStrip tierLabel={tierLabel} compact colorVariant={colorVariant} />
+      <View style={[styles.heritageLine, { backgroundColor: CultureTokens.heritageGold }]} />
 
-      {/* Body — avatar + identity on left · QR on right */}
       <View style={styles.body}>
         {/* Left: avatar + text */}
         <View style={styles.left}>
@@ -127,16 +127,16 @@ export function BusinessPassCard({
         </View>
       </View>
 
-      {/* Footer */}
-      <View style={[styles.footer, { borderTopColor: dividerColor }]}>
-        <Text style={[styles.footerDomain, { color: theme.tertiary }]}>culturepass.io</Text>
-        <Ionicons name="radio-outline" size={13} color={theme.tertiary} accessibilityLabel="NFC" />
-      </View>
+      <PassCardFooter textColor={theme.tertiary} borderColor={dividerColor} />
     </PassCardShell>
   );
 }
 
 const styles = StyleSheet.create({
+  heritageLine: {
+    height: 2,
+    width: '100%',
+  },
   body: {
     flex: 1,
     flexDirection: 'row',
@@ -193,19 +193,5 @@ const styles = StyleSheet.create({
     padding: 6,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  footer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 7,
-    borderTopWidth: 0.5,
-  },
-  footerDomain: {
-    fontSize: 9,
-    fontFamily: FontFamily.medium,
-    letterSpacing: 0.5,
-    opacity: 0.7,
   },
 });

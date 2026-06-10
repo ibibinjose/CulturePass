@@ -1,3 +1,4 @@
+import { brandDomainLabel } from '@/modules/profile/components/digitalId/digitalIdBrand';
 import { getPassColorTheme, type PassColorVariant } from '@/modules/profile/components/digitalId/passCardUtils';
 import { WALLET_PASS_THEME } from '@/modules/profile/components/digitalId/walletPassTheme';
 
@@ -32,6 +33,17 @@ function esc(value: string): string {
     .replace(/"/g, '&quot;');
 }
 
+function footerHtml(theme: ReturnType<typeof getPassColorTheme>, showDot = false): string {
+  const dot = showDot
+    ? `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#10b981;margin-right:6px;"></span>`
+    : '';
+  return `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 16px;border-top:1px solid ${theme.stripSeparator};">
+      <span style="font-size:9px;font-weight:600;letter-spacing:0.6px;color:${theme.tertiary};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">${dot}${esc(brandDomainLabel())}</span>
+      <span style="font-size:11px;color:${theme.tertiary};opacity:0.7;">NFC</span>
+    </div>`;
+}
+
 function stripHtml(tier: string, theme: ReturnType<typeof getPassColorTheme>, compact = false, lanyard = false): string {
   const tierText = esc((tier || 'Standard').toUpperCase());
   const padY = compact ? 11 : 14;
@@ -43,7 +55,7 @@ function stripHtml(tier: string, theme: ReturnType<typeof getPassColorTheme>, co
   return `
     <div style="position:relative;background:linear-gradient(90deg,${theme.stripStart},${theme.stripEnd});z-index:4;">
       <div style="display:flex;justify-content:space-between;align-items:center;padding:${rowPad};">
-        <span style="font-size:${brandSize}px;font-weight:800;letter-spacing:1.5px;color:${theme.stripText};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">CULTUREPASS ID</span>
+        <span style="font-size:${brandSize}px;font-weight:800;letter-spacing:0.8px;color:${theme.stripText};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">CulturePass.App</span>
         <span style="font-size:${tierSize}px;font-weight:800;letter-spacing:1.1px;color:${theme.stripText};padding:4px 10px;border-radius:6px;background:${theme.stripTierBadgeBg};border:1px solid ${theme.stripTierBadgeBorder};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">${tierText}</span>
       </div>
       ${overlapZone}
@@ -104,6 +116,7 @@ function buildBusinessExportHtml(opts: PassExportInput): string {
     </div>
     ${qrBlockHtml(opts.qrDataUrl, opts.logoDataUrl, qrSize, theme.qrBorder)}
   </div>
+  ${footerHtml(theme)}
 </div>`;
 }
 
@@ -133,6 +146,7 @@ function buildLanyardExportHtml(opts: PassExportInput): string {
       ${qrBlockHtml(opts.qrDataUrl, opts.logoDataUrl, qrSize, theme.qrBorder)}
     </div>
   </div>
+  ${footerHtml(theme, true)}
 </div>`;
 }
 

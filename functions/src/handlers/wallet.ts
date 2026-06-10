@@ -27,6 +27,7 @@ import {
   type WalletPassUser,
   type WalletTicketInput,
 } from '../services/walletPasses';
+import { buildDigitalIdSummary } from '../services/digitalIdService';
 import { captureRouteError, qparam } from './utils';
 
 export const walletRouter = Router();
@@ -185,6 +186,18 @@ walletRouter.get('/wallet/business-card/google', requireAuth, async (req: Reques
   } catch (err) {
     captureRouteError(err, 'GET /wallet/business-card/google');
     return res.status(500).json({ error: 'Failed to create Google Wallet link' });
+  }
+});
+
+/** Consolidated Digital ID bundle for /profile/qr (user, passes, wallet readiness, brand). */
+walletRouter.get('/wallet/digital-id', requireAuth, async (req: Request, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const summary = await buildDigitalIdSummary(userId);
+    return res.json(summary);
+  } catch (err) {
+    captureRouteError(err, 'GET /wallet/digital-id');
+    return res.status(500).json({ error: 'Failed to load digital ID' });
   }
 });
 

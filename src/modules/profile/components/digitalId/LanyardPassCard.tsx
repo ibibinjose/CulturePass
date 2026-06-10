@@ -5,6 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { FontFamily } from '@/design-system/tokens/theme';
 import { PassCardShell } from '@/modules/profile/components/digitalId/PassCardShell';
 import { PassCardStrip } from '@/modules/profile/components/digitalId/PassCardStrip';
+import { PassCardFooter } from '@/modules/profile/components/digitalId/PassCardFooter';
 import { PassAvatar } from '@/modules/profile/components/digitalId/PassAvatar';
 import { PassQrCode } from '@/modules/profile/components/digitalId/PassQrCode';
 import { getPassColorTheme, type PassColorVariant } from '@/modules/profile/components/digitalId/passCardUtils';
@@ -153,14 +154,12 @@ export function LanyardPassCard({
         </View>
       </View>
 
-      {/* ── Active indicator + footer domain ── */}
-      <View style={[styles.footer, { borderTopColor: dividerColor }]}>
-        <View style={styles.footerLeft}>
-          <View style={[styles.activeDot, { backgroundColor: isActive ? '#10b981' : 'rgba(255,255,255,0.25)' }]} />
-          <Text style={[styles.footerText, { color: theme.tertiary }]}>culturepass.io</Text>
-        </View>
-        <Ionicons name="radio-outline" size={14} color={theme.tertiary} accessibilityLabel="NFC" />
-      </View>
+      <PassCardFooter
+        textColor={theme.tertiary}
+        borderColor={dividerColor}
+        showActiveDot
+        isActive={isActive}
+      />
 
       {/* ── 7. Holographic accent strip ── */}
       <LinearGradient
@@ -260,29 +259,6 @@ const styles = StyleSheet.create({
     ...Platform.select({
       web: { boxShadow: '0 2px 12px rgba(0,0,0,0.06)' } as object,
     }),
-  },
-  footer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderTopWidth: 0.5,
-  },
-  footerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  activeDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
-  footerText: {
-    fontSize: 10,
-    fontFamily: FontFamily.medium,
-    letterSpacing: 0.4,
   },
   holoStrip: {
     height: 3,

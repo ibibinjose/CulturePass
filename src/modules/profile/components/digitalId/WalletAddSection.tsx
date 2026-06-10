@@ -10,6 +10,7 @@ import { modulesApi } from '@/modules/api';
 import { LanyardPassCard } from '@/modules/profile/components/digitalId/LanyardPassCard';
 import { PassCardStrip } from '@/modules/profile/components/digitalId/PassCardStrip';
 import { PassIdRow } from '@/modules/profile/components/digitalId/PassIdRow';
+import { DIGITAL_ID_BRAND } from '@/modules/profile/components/digitalId/digitalIdBrand';
 import { WALLET_PASS_THEME, formatWalletDisplayName } from '@/modules/profile/components/digitalId/walletPassTheme';
 
 type WalletSide = 'front' | 'back';
@@ -168,7 +169,7 @@ export function WalletAddSection({
         <View style={ws.headerText}>
           <Text style={[ws.title, { color: textColor }]} accessibilityRole="header">Add to Wallet</Text>
           <Text style={[ws.desc, { color: mutedColor }]}>
-            Same lanyard pass as above — avatar, name, ID, and branded QR.
+            Same lanyard pass as above — synced with {DIGITAL_ID_BRAND.domainDisplay}.
           </Text>
         </View>
       </View>

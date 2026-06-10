@@ -56,7 +56,7 @@ const WALLET_CARD = {
   appleForeground: 'rgb(255, 255, 255)',
   appleLabel: 'rgb(255, 255, 255)',
   googleHex: '#00ADEF',
-  passRevision: '2026-06-09-v9',
+  passRevision: '2026-06-10-v10',
   avatarIndigo: '#4F46E5',
   // New branding colors for enhanced visual identity
   terracotta: '#E36A4E',      // Primary terracotta glow
@@ -369,12 +369,12 @@ export async function bootstrapGoogleBusinessCardClass(): Promise<{ classId: str
     },
     body: JSON.stringify({
       id: config.classId,
-      issuerName: 'CulturePass',
+      issuerName: 'CulturePass.App',
       reviewStatus: 'UNDER_REVIEW',
       hexBackgroundColor: WALLET_CARD.googleHex,
       homepageUri: {
         uri: getPublicAppOrigin(),
-        description: 'CulturePass',
+        description: 'CulturePass.App',
       },
       logo: {
         sourceUri: {
@@ -770,7 +770,7 @@ async function renderWalletStrip(width: number, height: number, tierLabel: strin
     '</linearGradient></defs>' +
     '<rect width="' + width + '" height="' + height + '" fill="url(#bg)"/>' +
     '<line x1="0" y1="' + (height - 1) + '" x2="' + width + '" y2="' + (height - 1) + '" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>' +
-    '<text x="18" y="' + textY + '" font-family="Arial,Helvetica,sans-serif" font-size="' + fontSize + '" font-weight="800" fill="#FFFFFF" letter-spacing="1.5">CULTUREPASS ID</text>' +
+    '<text x="18" y="' + textY + '" font-family="Arial,Helvetica,sans-serif" font-size="' + fontSize + '" font-weight="800" fill="#FFFFFF" letter-spacing="1.1">CulturePass.App</text>' +
     '<rect x="' + badgeX + '" y="' + badgeY + '" width="' + badgeW + '" height="' + badgeH + '" rx="' + badgeRx + '" fill="rgba(255,255,255,0.14)" stroke="rgba(255,255,255,0.22)" stroke-width="1"/>' +
     '<text x="' + (badgeX + badgeW / 2) + '" y="' + (badgeY + badgeH * 0.68) + '" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="' + tierSize + '" font-weight="800" fill="#FFFFFF" letter-spacing="1.1">' + tier + '</text>' +
     '</svg>';
@@ -811,7 +811,7 @@ async function renderEnhancedWalletStrip(width: number, height: number, tierLabe
     '<rect width="' + width + '" height="' + height + '" fill="url(#bg)"/>' +
     '<rect width="' + width + '" height="' + height + '" fill="url(#pattern)"/>' +
     '<line x1="0" y1="' + (height - 1) + '" x2="' + width + '" y2="' + (height - 1) + '" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>' +
-    '<text x="18" y="' + textY + '" font-family="Arial,Helvetica,sans-serif" font-size="' + fontSize + '" font-weight="800" fill="#FFFFFF" letter-spacing="1.5">CULTUREPASS ID</text>' +
+    '<text x="18" y="' + textY + '" font-family="Arial,Helvetica,sans-serif" font-size="' + fontSize + '" font-weight="800" fill="#FFFFFF" letter-spacing="1.1">CulturePass.App</text>' +
     '<rect x="' + badgeX + '" y="' + badgeY + '" width="' + badgeW + '" height="' + badgeH + '" rx="' + badgeRx + '" fill="rgba(255,255,255,0.14)" stroke="rgba(255,255,255,0.22)" stroke-width="1"/>' +
     '<text x="' + (badgeX + badgeW / 2) + '" y="' + (badgeY + badgeH * 0.68) + '" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="' + tierSize + '" font-weight="800" fill="#FFFFFF" letter-spacing="1.1">' + tier + '</text>' +
     '</svg>';
@@ -855,8 +855,8 @@ export async function generateAppleBusinessCardPass(user: WalletPassUser): Promi
     formatVersion: 1,
     passTypeIdentifier,
     teamIdentifier,
-    organizationName: 'CulturePass',
-    description: `CulturePass ID · ${WALLET_CARD.passRevision}`,
+    organizationName: 'CulturePass.App',
+    description: `CulturePass.App ID · ${WALLET_CARD.passRevision}`,
     logoText: ' ',
     authenticationToken,
     webServiceURL: webServiceBaseUrl,
@@ -881,7 +881,7 @@ export async function generateAppleBusinessCardPass(user: WalletPassUser): Promi
     {
       serialNumber,
       description: `CulturePass ID · ${culturePassId}`,
-      organizationName: 'CulturePass',
+      organizationName: 'CulturePass.App',
       backgroundColor: WALLET_CARD.appleBackground,
       foregroundColor: WALLET_CARD.appleForeground,
       labelColor: WALLET_CARD.appleLabel,
@@ -1036,12 +1036,12 @@ async function ensureGoogleEventTicketClass(): Promise<string> {
     },
     body: JSON.stringify({
       id: classId,
-      issuerName: 'CulturePass',
+      issuerName: 'CulturePass.App',
       reviewStatus: 'UNDER_REVIEW',
-      hexBackgroundColor: WALLET_CARD.terracotta, // Using CulturePass terracotta color
+      hexBackgroundColor: WALLET_CARD.terracotta,
       homepageUri: {
         uri: getPublicAppOrigin(),
-        description: 'CulturePass',
+        description: 'CulturePass.App',
       },
       logo: {
         sourceUri: {
@@ -1161,9 +1161,9 @@ export async function generateAppleEventTicketPass(
     formatVersion: 1,
     passTypeIdentifier,
     teamIdentifier,
-    organizationName: 'CulturePass',
+    organizationName: 'CulturePass.App',
     description: eventTitle,
-    logoText: 'CulturePass',
+    logoText: 'CulturePass.App',
     authenticationToken,
     webServiceURL: webServiceBaseUrl,
     eventTicket: {},
@@ -1181,8 +1181,8 @@ export async function generateAppleEventTicketPass(
     {
       serialNumber,
       description: eventTitle,
-      organizationName: 'CulturePass',
-      backgroundColor: 'rgb(227, 106, 78)', // CulturePass terracotta
+      organizationName: 'CulturePass.App',
+      backgroundColor: 'rgb(227, 106, 78)',
       foregroundColor: 'rgb(255,255,255)',
       labelColor: 'rgb(212, 160, 23)', // Heritage gold
     }

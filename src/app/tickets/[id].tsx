@@ -21,6 +21,7 @@ import { openExternalUrl } from '@/lib/openExternalUrl';
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth';
 import { routeWithRedirect } from '@/lib/routes';
+import { TICKETS_LIST_PATH, isReservedTicketRouteId } from '@/lib/ticketRoutes';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ticket } from '@shared/schema';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -98,12 +99,20 @@ export default function TicketDetailScreen() {
   const { isDesktop, hPad, isWeb } = useLayout();
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
+  const ticketId = typeof id === 'string' ? id : Array.isArray(id) ? id[0] : undefined;
+  const isReservedRoute = isReservedTicketRouteId(ticketId);
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      router.replace(routeWithRedirect('/(onboarding)/login', `/tickets/${id}`));
+    if (isReservedRoute) {
+      router.replace(TICKETS_LIST_PATH);
     }
-  }, [isAuthenticated, id]);
+  }, [isReservedRoute]);
+
+  useEffect(() => {
+    if (!isAuthenticated && ticketId && !isReservedRoute) {
+      router.replace(routeWithRedirect('/(onboarding)/login', `/tickets/${ticketId}`));
+    }
+  }, [isAuthenticated, ticketId, isReservedRoute]);
   
   const topInset = isDesktop ? 0 : (isWeb ? 0 : insets.top);
   const bottomInset = isWeb ? 34 : insets.bottom;
@@ -119,9 +128,9 @@ export default function TicketDetailScreen() {
   const [transferLoading, setTransferLoading] = useState(false);
 
   const { data: ticket, isLoading } = useQuery<Ticket>({
-    queryKey: ['/api/ticket', id],
+    queryKey: ['/api/ticket', ticketId],
     queryFn: getQueryFn({ on401: 'returnNull' }),
-    enabled: !!id,
+    enabled: Boolean(ticketId) && !isReservedRoute,
   });
 
   useEffect(() => {
@@ -263,7 +272,7 @@ export default function TicketDetailScreen() {
       setTransferVisible(false);
       if (!isWeb) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Alert.alert('Success', `Ticket has been successfully transferred to ${email}.`);
-      router.replace('/tickets/index');
+      router.replace(TICKETS_LIST_PATH);
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Failed to transfer ticket';
       Alert.alert('Error', msg);
@@ -296,7 +305,7 @@ export default function TicketDetailScreen() {
     return (
       <View style={s.container}>
         <TicketDetailAmbientMesh />
-        <AppHeaderBar title="Ticket Details" backFallback="/tickets/index" topInset={topInset} />
+        <AppHeaderBar title="Ticket Details" backFallback={TICKETS_LIST_PATH} topInset={topInset} />
         <View style={isDesktop && s.desktopShellWrapper}>
           <View style={isDesktop && s.desktopShell}>
             <View style={{ paddingTop: 12, paddingHorizontal: hPad }}>
@@ -321,7 +330,7 @@ export default function TicketDetailScreen() {
     return (
       <View style={s.container}>
         <TicketDetailAmbientMesh />
-        <AppHeaderBar title="Ticket Details" backFallback="/tickets/index" topInset={topInset} />
+        <AppHeaderBar title="Ticket Details" backFallback={TICKETS_LIST_PATH} topInset={topInset} />
         <View style={isDesktop && s.desktopShellWrapper}>
           <View style={isDesktop && s.desktopShell}>
             <View style={s.loadingState}>
@@ -331,7 +340,7 @@ export default function TicketDetailScreen() {
                 <Text style={s.emptySubtitle}>This ticket may have been removed or cancelled.</Text>
                 <Pressable 
                   style={({ pressed }) => [s.primaryButton, pressed && s.primaryButtonPressed, { width: '100%', marginTop: 10 }]}
-                  onPress={() => router.push('/tickets/index')}
+                  onPress={() => router.push(TICKETS_LIST_PATH)}
                 >
                   <Text style={s.primaryButtonText}>View My Wallet</Text>
                 </Pressable>
@@ -360,7 +369,7 @@ export default function TicketDetailScreen() {
       <TicketDetailAmbientMesh />
       <AppHeaderBar
         title="Ticket Details"
-        backFallback="/tickets/index"
+        backFallback={TICKETS_LIST_PATH}
         topInset={topInset}
         rightAction={{ icon: 'share-outline', onPress: handleShare, label: 'Share' }}
       />

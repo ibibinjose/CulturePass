@@ -1,3 +1,6 @@
+export { DIGITAL_ID_BRAND, brandDomainLabel, brandProfileUrl } from './digitalIdBrand';
+export { DigitalIdHero } from './DigitalIdHero';
+export { PassCardFooter } from './PassCardFooter';
 export { WALLET_PASS_THEME, formatWalletDisplayName, formatWalletMemberSince, walletPassInitials } from './walletPassTheme';
 export {
   getPassSurfaceColors,

@@ -6,6 +6,7 @@ import { log, getCorrelationId } from '@/lib/logger';
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
+import { isReservedTicketRouteId } from '@/lib/ticketRoutes';
 import * as Haptics from 'expo-haptics';
 import {
   getExplicitApiUrl,
@@ -463,7 +464,19 @@ export const queryClient = new QueryClient({
         return;
       }
 
+      // /tickets/index was wrongly captured by tickets/[id] — skip noisy 404s for reserved segments.
+      const ticketRouteId = Array.isArray(query.queryKey) && query.queryKey[0] === '/api/ticket'
+        ? String(query.queryKey[1] ?? '')
+        : '';
+      if (ticketRouteId && isReservedTicketRouteId(ticketRouteId)) {
+        return;
+      }
+
       if (error instanceof ApiError) {
+        if (error.status === 404 && ticketRouteId) {
+          log.warn('Ticket not found', undefined, { queryKey: queryKeyStr, ticketId: ticketRouteId });
+          return;
+        }
         if (error.isServerError) {
           log.error('Query server error', error, {
             queryKey: queryKeyStr,
@@ -476,6 +489,10 @@ export const queryClient = new QueryClient({
           });
         }
       } else if (error instanceof Error) {
+        if (/^404:/.test(errMsg) && /Ticket not found/i.test(errMsg) && ticketRouteId) {
+          log.warn('Ticket not found', undefined, { queryKey: queryKeyStr, ticketId: ticketRouteId });
+          return;
+        }
         log.error('Unexpected query error', error, {
           queryKey: queryKeyStr,
         });

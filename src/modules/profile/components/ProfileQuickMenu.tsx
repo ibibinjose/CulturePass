@@ -17,7 +17,7 @@ import { CREATE_HUB_ROUTE } from '@/constants/navigation/experienceNav';
 export const QUICK_MENU_ITEMS = [
   { key: 'edit', label: 'Edit Profile', icon: 'create-outline', route: '/profile/edit' },
   { key: 'create', label: 'Create', icon: 'add-circle-outline', route: CREATE_HUB_ROUTE },
-  { key: 'tickets', label: 'My Tickets', icon: 'ticket-outline', route: '/tickets/index' },
+  { key: 'tickets', label: 'My Tickets', icon: 'ticket-outline', route: '/tickets' },
   { key: 'wallet', label: 'Wallet', icon: 'wallet-outline', route: '/payment/wallet' },
   { key: 'saved', label: 'Saved', icon: 'bookmark-outline', route: '/saved' },
   { key: 'qr', label: 'Digital ID', icon: 'qr-code-outline', route: '/profile/qr' },

@@ -10,6 +10,18 @@ node_modules/
 # Local agent/tool outputs (not app source)
 .gstack/
 .kiro/
+.junie/
+skills-lock.json
+
+# Firebase emulator debug logs (regenerated locally)
+firestore-debug.log
+firebase-debug.log
+database-debug.log
+ui-debug.log
+
+# Editor / tool backup files
+*.bak
+*.backup
 
 # Regenerated test / CI artifacts
 junit.xml
@@ -73,7 +85,5 @@ sentry-wizard-installation-error-*.log
 ._*
 .AppleDouble
 .LSOverride
-
-.env.local
 
 .env.local

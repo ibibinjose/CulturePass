@@ -4,7 +4,7 @@ import {
   formatDateKey,
   formatPrice,
   toSafeDateKey,
-} from '../../../src/components/calendar/utils';
+} from '../utils';
 
 describe('Calendar Utils', () => {
   describe('getDaysInMonth', () => {

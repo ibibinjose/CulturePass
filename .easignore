@@ -22,7 +22,7 @@ functions/node_modules
 functions/lib
 
 # ── Supplementary server (Docker image service) ──────────────────────────────
-server i$M@c2G02#
+server/
 server/node_modules
 host-app
 host-app/node_modules

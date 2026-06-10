@@ -47,6 +47,7 @@
     "deploy:guarded": "npm run qa:solid && npm run deploy",
     "db:nuke-all": "echo '⚠️  This deletes ALL Firestore data. Press Ctrl+C to cancel.' && sleep 5 && npx firebase-tools firestore:delete --all-collections --non-interactive --project $FIREBASE_PROJECT_ID",
     "emulator:start": "npx firebase-tools emulators:start --only functions,firestore,auth,storage",
+    "emulator:seed:pricing": "tsx scripts/seed-pricing-plans.ts",
     "emulator:seed:cap": "tsx scripts/emulator/seeds/cap-seed.ts",
     "emulator:seed:all": "tsx scripts/emulator/seeds/all-seeds.ts",
     "seed:demo-fixtures": "cd functions && npx ts-node scripts/seed-demo-fixtures.ts",

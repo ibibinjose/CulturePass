@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { FontFamily } from '@/design-system/tokens/theme';
+import { CultureTokens, FontFamily } from '@/design-system/tokens/theme';
 import { PassCardShell } from '@/modules/profile/components/digitalId/PassCardShell';
 import { PassCardStrip } from '@/modules/profile/components/digitalId/PassCardStrip';
 import { PassCardFooter } from '@/modules/profile/components/digitalId/PassCardFooter';
@@ -73,8 +73,8 @@ export function LanyardPassCard({
 
   // Subtle holographic bottom strip
   const holoColors: [string, string, string, string] = isWhite
-    ? ['#06b6d4', '#8b5cf6', '#ec4899', '#f59e0b']
-    : ['rgba(6,182,212,0.55)', 'rgba(139,92,246,0.55)', 'rgba(236,72,153,0.55)', 'rgba(245,158,11,0.55)'];
+    ? [CultureTokens.teal, CultureTokens.violet, CultureTokens.coral, CultureTokens.gold]
+    : [`${CultureTokens.teal}8C`, `${CultureTokens.violet}8C`, `${CultureTokens.coral}8C`, `${CultureTokens.gold}8C`];
 
   const qrBg = isBlack ? 'rgba(255,255,255,0.92)' : isWhite ? '#FFFFFF' : 'rgba(255,255,255,0.15)';
   const dividerColor = isWhite ? 'rgba(0,0,0,0.07)' : 'rgba(255,255,255,0.1)';

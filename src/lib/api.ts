@@ -70,6 +70,7 @@ import { createUploadsNamespace } from '../platform/api/endpoints/uploads';
 import { createCommunityHomeBannerNamespace } from '../platform/api/endpoints/communityHomeBanner';
 import { createWaitlistNamespace } from '../platform/api/endpoints/waitlist';
 import { createReviewsNamespace } from '../platform/api/endpoints/reviews';
+import { createPricingNamespace } from '../platform/api/endpoints/pricing';
 
 export type { CultureSuggestParams, IndigenousOrganisation, IndigenousFestival, IndigenousBusiness, IndigenousTraditionalLand } from '../platform/api/endpoints/culture';
 export type { FeedItem, FeedComment } from '../platform/api/endpoints/feed';
@@ -153,6 +154,7 @@ const communityHomeBanner = createCommunityHomeBannerNamespace(request);
 const ai = createAiNamespace(request);
 const waitlist = createWaitlistNamespace(request);
 const reviews = createReviewsNamespace(request);
+const pricing = createPricingNamespace(request);
 
 export const api = {
   auth,
@@ -212,6 +214,7 @@ export const api = {
   ai,
   waitlist,
   reviews,
+  pricing,
 
   /** Raw request — use when a specific endpoint isn't covered above */
   raw: request,

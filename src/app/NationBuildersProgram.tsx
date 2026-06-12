@@ -84,7 +84,7 @@ export default function NationBuildersProgramScreen() {
             end={{ x: 1, y: 1 }}
           />
           <LinearGradient
-            colors={[Luxe.colors.terracotta + '33', 'transparent']}
+            colors={[Luxe.colors.appBlue + '33', 'transparent']}
             style={StyleSheet.absoluteFill}
           />
 
@@ -98,7 +98,7 @@ export default function NationBuildersProgramScreen() {
 
           <View style={[styles.heroContent, pageCol]}>
             <GlassView intensity={20} style={styles.badge}>
-              <LuxeText variant="badgeCaps" style={{ color: Luxe.colors.terracotta }}>NATION BUILDERS</LuxeText>
+              <LuxeText variant="badgeCaps" style={{ color: Luxe.colors.appBlue }}>NATION BUILDERS</LuxeText>
             </GlassView>
 
             <LuxeText variant="displayHero" style={styles.heroTitle}>
@@ -136,8 +136,8 @@ export default function NationBuildersProgramScreen() {
             {/* What Staff Receive */}
             <GlassView style={styles.infoCard} contentStyle={{ padding: 24 }}>
               <View style={styles.cardHeader}>
-                <View style={[styles.cardIcon, { backgroundColor: Luxe.colors.terracotta + '22' }]}>
-                  <Ionicons name="star" size={20} color={Luxe.colors.terracotta} />
+                <View style={[styles.cardIcon, { backgroundColor: Luxe.colors.appBlue + '22' }]}>
+                  <Ionicons name="star" size={20} color={Luxe.colors.appBlue} />
                 </View>
                 <LuxeText variant="title3" style={{ color: colors.text }}>For Staff & Essential Workers</LuxeText>
               </View>

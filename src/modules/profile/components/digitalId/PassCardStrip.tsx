@@ -3,7 +3,6 @@ import { View, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { CultureTokens, FontFamily } from '@/design-system/tokens/theme';
-import { DIGITAL_ID_BRAND } from '@/modules/profile/components/digitalId/digitalIdBrand';
 import { getPassColorTheme, type PassColorVariant } from '@/modules/profile/components/digitalId/passCardUtils';
 
 type PassCardStripProps = {
@@ -24,12 +23,11 @@ export function PassCardStrip({
   lanyard = false,
   colorVariant = 'cyan',
 }: PassCardStripProps) {
-  const theme = getPassColorTheme(colorVariant);
+  const theme = getPassColorTheme(colorVariant, tierLabel);
   const tier = tierLabel.toUpperCase();
   const height = lanyard ? 60 : compact ? 44 : 52;
-  const stripColors: [string, string] = colorVariant === 'cyan'
-    ? [CultureTokens.terracottaGlow, CultureTokens.deepSaffron]
-    : [theme.stripStart, theme.stripEnd];
+  const stripColors: [string, string] = [theme.stripStart, theme.stripEnd];
+  const cultureColor = colorVariant === 'white' ? CultureTokens.indigo : '#FFFFFF';
 
   return (
     <LinearGradient
@@ -40,8 +38,10 @@ export function PassCardStrip({
     >
       <View style={styles.logoGroup}>
         <Ionicons name="finger-print" size={compact ? 12 : 14} color={theme.stripText} />
-        <Text style={[styles.brand, { color: theme.stripText, fontSize: compact ? 10 : 11 }]}>
-          {DIGITAL_ID_BRAND.name}
+        <Text style={[styles.brand, { fontSize: compact ? 10 : 11 }]}>
+          <Text style={{ color: cultureColor }}>CULTURE</Text>
+          <Text style={{ color: CultureTokens.teal }}>PASS</Text>
+          <Text style={{ color: CultureTokens.heritageGold }}> ID</Text>
         </Text>
       </View>
 

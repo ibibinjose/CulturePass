@@ -99,7 +99,7 @@ export function LuxeEventCard({ event, variant = 'default' }: LuxeEventCardProps
           {event.title}
         </LuxeText>
         <View style={styles.metaRow}>
-          <Ionicons name="calendar-outline" size={12} color={Luxe.colors.terracotta} />
+          <Ionicons name="calendar-outline" size={12} color={Luxe.colors.appBlue} />
           <LuxeText variant="caption" style={{ color: luxeDark.textSecondary }}>
             {formatEventDateTime(event.date, event.time)}
           </LuxeText>

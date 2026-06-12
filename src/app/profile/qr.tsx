@@ -19,7 +19,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import Head from 'expo-router/head';
 import * as Haptics from 'expo-haptics';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import { useColors, useIsDark } from '@/hooks/useColors';
@@ -137,9 +137,11 @@ export default function QRScreen() {
                   </View>
                 ) : null}
 
-                <DigitalIdHero width={containerWidth} tierLabel={d.tierLabel} isDark={isDark} />
+                <Animated.View entering={FadeInDown.duration(400).springify().damping(20)}>
+                  <DigitalIdHero width={containerWidth} tierLabel={d.tierLabel} isDark={isDark} />
+                </Animated.View>
 
-                <View style={{ width: containerWidth }}>
+                <Animated.View entering={FadeInDown.duration(500).springify().damping(20).delay(100)} style={{ width: containerWidth }}>
                   <PassMemberHero
                     name={d.name}
                     username={d.username}
@@ -164,7 +166,7 @@ export default function QRScreen() {
                       { icon: 'person-outline', label: 'Profile', color: CultureTokens.indigo, onPress: d.goPublicProfile },
                     ]}
                   />
-                </View>
+                </Animated.View>
 
                 <View style={{ width: containerWidth, gap: 10 }}>
                   <M3SectionHeader title="Your passes" subtitle={DIGITAL_ID_BRAND.domainDisplay} />
@@ -201,7 +203,7 @@ export default function QRScreen() {
 
                 <Animated.View
                   key={sideBySide ? 'both' : d.passView}
-                  entering={sideBySide ? undefined : FadeIn.duration(280).springify().damping(20)}
+                  entering={sideBySide ? undefined : FadeInDown.duration(350).springify().damping(18)}
                   id="print-badge-area"
                   nativeID="print-badge-area"
                   style={[s.printBadgeArea, { width: containerWidth, flexDirection: sideBySide ? 'row' : 'column', gap: sideBySide ? 20 : 12 }]}

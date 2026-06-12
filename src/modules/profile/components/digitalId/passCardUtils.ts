@@ -126,7 +126,58 @@ const THEMES: Record<PassColorVariant, PassColorTheme> = {
   black: BLACK_THEME,
 };
 
-export function getPassColorTheme(variant: PassColorVariant = 'cyan'): PassColorTheme {
+export function getPassColorTheme(variant: PassColorVariant = 'cyan', tier?: string): PassColorTheme {
+  if (variant === 'cyan' && tier) {
+    const key = tier.toLowerCase();
+    if (key === 'elite' || key === 'vip') {
+      return {
+        ...CYAN_THEME,
+        variant: 'cyan',
+        bodyBg: '#0F0A02',
+        bodyBorder: '#D4A017',
+        stripStart: '#1F1608',
+        stripEnd: '#0F0A02',
+        primary: '#E0F7FF',
+        secondary: 'rgba(255,255,255,0.88)',
+        tertiary: 'rgba(255,255,255,0.72)',
+        tierLabel: '#D4A017',
+        qrBorder: '#D4A017',
+        shellShadowWeb: '0 10px 28px rgba(212, 160, 23, 0.35)',
+      };
+    }
+    if (key === 'pro') {
+      return {
+        ...CYAN_THEME,
+        variant: 'cyan',
+        bodyBg: '#061F2E',
+        bodyBorder: '#00F0FF',
+        stripStart: '#0B3C5D',
+        stripEnd: '#061F2E',
+        primary: '#E0FAFF',
+        secondary: 'rgba(255,255,255,0.88)',
+        tertiary: 'rgba(255,255,255,0.72)',
+        tierLabel: '#00F0FF',
+        qrBorder: '#00F0FF',
+        shellShadowWeb: '0 10px 28px rgba(0, 240, 255, 0.35)',
+      };
+    }
+    if (key === 'premium' || key === 'plus') {
+      return {
+        ...CYAN_THEME,
+        variant: 'cyan',
+        bodyBg: '#1B1545',
+        bodyBorder: '#FF5E5B',
+        stripStart: '#312E81',
+        stripEnd: '#1B1545',
+        primary: '#F5F3FF',
+        secondary: 'rgba(255,255,255,0.88)',
+        tertiary: 'rgba(255,255,255,0.72)',
+        tierLabel: '#FF5E5B',
+        qrBorder: '#FF5E5B',
+        shellShadowWeb: '0 10px 28px rgba(79, 70, 229, 0.35)',
+      };
+    }
+  }
   return THEMES[variant] ?? CYAN_THEME;
 }
 

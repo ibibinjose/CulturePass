@@ -220,8 +220,8 @@ export function WaitlistLanding() {
         <View style={styles.culturalAccentsSection}>
           <View style={styles.culturalAccentsContainer}>
             <Animated.View entering={FadeInUp.delay(100).duration(600)} style={styles.accentCard}>
-              <View style={[styles.accentIcon, { backgroundColor: CulturalAccents.terracottaSurface }]}>
-                <Ionicons name="earth-outline" size={28} color={CulturalAccents.terracottaGlow} />
+              <View style={[styles.accentIcon, { backgroundColor: CulturalAccents.appBlueSurface }]}>
+                <Ionicons name="earth-outline" size={28} color={CulturalAccents.appBlue} />
               </View>
               <Text style={[styles.accentTitle, { color: colors.text }]}>Global Connection</Text>
               <Text style={[styles.accentSubtitle, { color: colors.textSecondary }]}>Connect with diaspora communities worldwide</Text>

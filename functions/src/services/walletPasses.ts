@@ -56,14 +56,14 @@ const WALLET_CARD = {
   appleForeground: 'rgb(255, 255, 255)',
   appleLabel: 'rgb(255, 255, 255)',
   googleHex: '#00ADEF',
-  passRevision: '2026-06-10-v10',
+  passRevision: '2026-06-12-v11',
   avatarIndigo: '#4F46E5',
-  // New branding colors for enhanced visual identity
-  terracotta: '#E36A4E',      // Primary terracotta glow
-  saffron: '#F5A623',         // Secondary saffron gold
-  indigo: '#4A5EBF',          // Accent indigo
-  emerald: '#0A8C7F',         // Accent emerald
-  gold: '#D4A017',            // Heritage gold highlight
+  cyan: '#00ADEF',
+  cyanDark: '#0096D6',
+  cyanDeep: '#007BB5',
+  indigo: '#4F46E5',
+  emerald: '#0A8C7F',
+  gold: '#D4A017',
 } as const;
 
 function formatWalletDisplayName(name: string, fallback: string): string {
@@ -417,13 +417,23 @@ export async function createGoogleBusinessCardSaveUrl(user: WalletPassUser): Pro
   const qrPayload = buildWalletQrPayload(user);
   const location = [user.city, user.country].filter(Boolean).join(', ');
 
+  const tierKey = (user.tier || 'free').toLowerCase();
+  let googleBg: string = WALLET_CARD.googleHex; // Default Cyan '#00ADEF'
+  if (tierKey === 'elite' || tierKey === 'vip') {
+    googleBg = '#0F0A02';
+  } else if (tierKey === 'pro') {
+    googleBg = '#061F2E';
+  } else if (tierKey === 'premium' || tierKey === 'plus') {
+    googleBg = '#1A0F0A';
+  }
+
   const payload = {
     genericObjects: [
       {
         id: objectId,
         classId: config.classId,
         state: 'ACTIVE',
-        hexBackgroundColor: WALLET_CARD.googleHex,
+        hexBackgroundColor: googleBg,
         cardTitle: {
           defaultValue: { language: 'en-AU', value: `CULTUREPASS ID · ${tierLabel.toUpperCase()}` },
         },
@@ -501,15 +511,20 @@ export async function createGoogleBusinessCardSaveUrl(user: WalletPassUser): Pro
   return `https://pay.google.com/gp/v/save/${token}`;
 }
 
+function walletBrandLabelSvg(x: number, y: number, fontSize: number, onWarmBackground = false): string {
+  const cultureColor = '#FFFFFF';
+  return '<text x="' + x + '" y="' + y + '" font-family="Arial, Helvetica, sans-serif" font-size="' + fontSize + '" font-weight="800" letter-spacing="0.8">' +
+    '<tspan fill="' + cultureColor + '">CULTURE</tspan>' +
+    '<tspan fill="' + WALLET_CARD.emerald + '">PASS</tspan>' +
+    '<tspan fill="' + WALLET_CARD.gold + '"> ID</tspan></text>';
+}
+
 async function renderBrandAsset(width: number, height: number, onCyan = true): Promise<Buffer> {
-  const fontSize = Math.max(14, Math.round(Math.min(width, height) * 0.34));
-  const radius = Math.floor(Math.min(width, height) * 0.22);
-  const bg = onCyan ? 'rgba(255,255,255,0.18)' : '#FFFFFF';
-  const fg = onCyan ? '#FFFFFF' : '#00ADEF';
+  const fontSize = Math.max(8, Math.round(Math.min(width, height) * 0.18));
+  const y = Math.round(height * 0.62);
   const svg =
     '<svg width="' + width + '" height="' + height + '" xmlns="http://www.w3.org/2000/svg">' +
-    '<rect x="0" y="0" width="' + width + '" height="' + height + '" rx="' + radius + '" fill="' + bg + '" />' +
-    '<text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" font-size="' + fontSize + '" font-family="Arial, Helvetica, sans-serif" font-weight="800" fill="' + fg + '">CP</text>' +
+    walletBrandLabelSvg(Math.round(width * 0.06), y, fontSize, !onCyan) +
     '</svg>';
 
   try {
@@ -519,22 +534,34 @@ async function renderBrandAsset(width: number, height: number, onCyan = true): P
   }
 }
 
-async function renderWalletLogo(width: number, height: number, onDark = false): Promise<Buffer> {
+async function renderWalletLogo(width: number, height: number, onWarmBackground = false): Promise<Buffer> {
   const fontSize = Math.max(11, Math.round(height * 0.44));
   const y = Math.round(height * 0.72);
-  const svg = onDark
-    ? '<svg width="' + width + '" height="' + height + '" xmlns="http://www.w3.org/2000/svg">' +
-      '<text x="0" y="' + y + '" font-family="Arial, Helvetica, sans-serif" font-size="' + fontSize + '" font-weight="800" letter-spacing="0.8">' +
-      '<tspan fill="#FFFFFF">CULTURE</tspan><tspan fill="#FFFFFF">PASS</tspan><tspan fill="#FFFFFF"> ID</tspan></text></svg>'
-    : '<svg width="' + width + '" height="' + height + '" xmlns="http://www.w3.org/2000/svg">' +
-      '<text x="0" y="' + y + '" font-family="Arial, Helvetica, sans-serif" font-size="' + fontSize + '" font-weight="800" letter-spacing="0.8">' +
-      '<tspan fill="#E36A4E">CULTURE</tspan><tspan fill="#0A8C7F">PASS</tspan><tspan fill="#D4A017"> ID</tspan></text></svg>';
+  const svg =
+    '<svg width="' + width + '" height="' + height + '" xmlns="http://www.w3.org/2000/svg">' +
+    walletBrandLabelSvg(0, y, fontSize, onWarmBackground) +
+    '</svg>';
 
   try {
     return await sharp(Buffer.from(svg)).png().toBuffer();
   } catch {
     return renderBrandAsset(width, height);
   }
+}
+
+async function renderWalletIcon(size: number): Promise<Buffer> {
+  const logoBuffer = await fetchRemoteBuffer(publicAppIconUrl());
+  if (logoBuffer) {
+    try {
+      return await sharp(logoBuffer)
+        .resize(size, size, { fit: 'contain', background: { r: 0, g: 173, b: 239, alpha: 1 } })
+        .png()
+        .toBuffer();
+    } catch {
+      // fall through to vector brand mark
+    }
+  }
+  return renderWalletLogo(size, Math.max(20, Math.round(size * 0.38)), false);
 }
 
 function escapeXml(value: string): string {
@@ -609,11 +636,12 @@ async function fetchAvatarBuffer(avatarUrl?: string): Promise<Buffer | null> {
 }
 
 async function renderCpLogoSquare(size: number): Promise<Buffer> {
-  const fontSize = Math.max(8, Math.round(size * 0.42));
+  const fontSize = Math.max(6, Math.round(size * 0.22));
+  const y = Math.round(size * 0.62);
   const svg =
     '<svg width="' + size + '" height="' + size + '" xmlns="http://www.w3.org/2000/svg">' +
-    '<rect width="' + size + '" height="' + size + '" rx="' + Math.round(size * 0.18) + '" fill="' + WALLET_CARD.terracotta + '"/>' +
-    '<text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="' + fontSize + '" font-weight="800" fill="#FFFFFF">CP</text>' +
+    '<rect width="' + size + '" height="' + size + '" rx="' + Math.round(size * 0.18) + '" fill="' + WALLET_CARD.cyan + '"/>' +
+    walletBrandLabelSvg(Math.round(size * 0.08), y, fontSize, true) +
     '</svg>';
   return sharp(Buffer.from(svg)).png().toBuffer();
 }
@@ -766,11 +794,11 @@ async function renderWalletStrip(width: number, height: number, tierLabel: strin
   const svg =
     '<svg width="' + width + '" height="' + height + '" xmlns="http://www.w3.org/2000/svg">' +
     '<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="0">' +
-    '<stop offset="0%" stop-color="' + WALLET_CARD.terracotta + '"/><stop offset="100%" stop-color="' + WALLET_CARD.saffron + '"/>' +
+    '<stop offset="0%" stop-color="' + WALLET_CARD.cyanDark + '"/><stop offset="100%" stop-color="' + WALLET_CARD.cyanDeep + '"/>' +
     '</linearGradient></defs>' +
     '<rect width="' + width + '" height="' + height + '" fill="url(#bg)"/>' +
     '<line x1="0" y1="' + (height - 1) + '" x2="' + width + '" y2="' + (height - 1) + '" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>' +
-    '<text x="18" y="' + textY + '" font-family="Arial,Helvetica,sans-serif" font-size="' + fontSize + '" font-weight="800" fill="#FFFFFF" letter-spacing="1.1">CulturePass.App</text>' +
+    walletBrandLabelSvg(18, textY, fontSize, true) +
     '<rect x="' + badgeX + '" y="' + badgeY + '" width="' + badgeW + '" height="' + badgeH + '" rx="' + badgeRx + '" fill="rgba(255,255,255,0.14)" stroke="rgba(255,255,255,0.22)" stroke-width="1"/>' +
     '<text x="' + (badgeX + badgeW / 2) + '" y="' + (badgeY + badgeH * 0.68) + '" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="' + tierSize + '" font-weight="800" fill="#FFFFFF" letter-spacing="1.1">' + tier + '</text>' +
     '</svg>';
@@ -780,6 +808,20 @@ async function renderWalletStrip(width: number, height: number, tierLabel: strin
   } catch {
     return TRANSPARENT_PNG_BUFFER;
   }
+}
+
+function getTierStripColors(tierLabel: string): { start: string; end: string } {
+  const key = (tierLabel || 'free').toLowerCase();
+  if (key === 'elite' || key === 'vip') {
+    return { start: '#1F1608', end: '#0F0A02' }; // Gold/Black
+  }
+  if (key === 'pro') {
+    return { start: '#0B3C5D', end: '#061F2E' }; // Blue/Cyan
+  }
+  if (key === 'premium' || key === 'plus') {
+    return { start: '#312E81', end: '#1B1545' };
+  }
+  return { start: WALLET_CARD.cyanDark, end: WALLET_CARD.cyanDeep };
 }
 
 // Enhanced version with better visual design
@@ -797,12 +839,14 @@ async function renderEnhancedWalletStrip(width: number, height: number, tierLabe
   const badgeY = Math.round((height - badgeH) / 2);
   const badgeRx = Math.max(4, Math.round(height * 0.1));
   
+  const stripColors = getTierStripColors(tierLabel);
+
   // Enhanced gradient using CulturePass color palette with subtle pattern
   const svg =
     '<svg width="' + width + '" height="' + height + '" xmlns="http://www.w3.org/2000/svg">' +
     '<defs>' +
       '<linearGradient id="bg" x1="0" y1="0" x2="1" y2="0">' +
-      '<stop offset="0%" stop-color="' + WALLET_CARD.terracotta + '"/><stop offset="100%" stop-color="' + WALLET_CARD.saffron + '"/>' +
+      '<stop offset="0%" stop-color="' + stripColors.start + '"/><stop offset="100%" stop-color="' + stripColors.end + '"/>' +
       '</linearGradient>' +
       '<pattern id="pattern" x="0" y="0" width="10" height="10" patternUnits="userSpaceOnUse">' +
       '<circle cx="2" cy="2" r="0.5" fill="rgba(255,255,255,0.05)" />' +
@@ -811,7 +855,7 @@ async function renderEnhancedWalletStrip(width: number, height: number, tierLabe
     '<rect width="' + width + '" height="' + height + '" fill="url(#bg)"/>' +
     '<rect width="' + width + '" height="' + height + '" fill="url(#pattern)"/>' +
     '<line x1="0" y1="' + (height - 1) + '" x2="' + width + '" y2="' + (height - 1) + '" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>' +
-    '<text x="18" y="' + textY + '" font-family="Arial,Helvetica,sans-serif" font-size="' + fontSize + '" font-weight="800" fill="#FFFFFF" letter-spacing="1.1">CulturePass.App</text>' +
+    walletBrandLabelSvg(18, textY, fontSize, true) +
     '<rect x="' + badgeX + '" y="' + badgeY + '" width="' + badgeW + '" height="' + badgeH + '" rx="' + badgeRx + '" fill="rgba(255,255,255,0.14)" stroke="rgba(255,255,255,0.22)" stroke-width="1"/>' +
     '<text x="' + (badgeX + badgeW / 2) + '" y="' + (badgeY + badgeH * 0.68) + '" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="' + tierSize + '" font-weight="800" fill="#FFFFFF" letter-spacing="1.1">' + tier + '</text>' +
     '</svg>';
@@ -841,10 +885,10 @@ export async function generateAppleBusinessCardPass(user: WalletPassUser): Promi
   const qrPayload = buildWalletQrPayload(user);
   const initials = walletPassInitials(displayName);
   const avatarBuffer = await fetchAvatarBuffer(user.avatarUrl);
-  const icon = await renderBrandAsset(58, 58, true);
-  const icon2x = await renderBrandAsset(116, 116, true);
-  const logo = await renderBrandAsset(50, 50, true);
-  const logo2x = await renderBrandAsset(100, 100, true);
+  const icon = await renderWalletIcon(58);
+  const icon2x = await renderWalletIcon(116);
+  const logo = await renderWalletLogo(160, 50, false);
+  const logo2x = await renderWalletLogo(320, 100, false);
   // Using enhanced strip with new branding
   const strip = await renderEnhancedWalletStrip(375, 44, tierLabel);
   const strip2x = await renderEnhancedWalletStrip(750, 88, tierLabel);
@@ -865,6 +909,25 @@ export async function generateAppleBusinessCardPass(user: WalletPassUser): Promi
     },
   };
 
+  const tierKey = (user.tier || 'free').toLowerCase();
+  let walletBg = 'rgb(0, 173, 239)'; // Default Cyan
+  let walletFg = 'rgb(255, 255, 255)';
+  let walletLabel = 'rgb(255, 255, 255)';
+
+  if (tierKey === 'elite' || tierKey === 'vip') {
+    walletBg = 'rgb(15, 10, 2)';
+    walletFg = 'rgb(224, 247, 255)';
+    walletLabel = 'rgb(212, 160, 23)';
+  } else if (tierKey === 'pro') {
+    walletBg = 'rgb(6, 31, 46)';
+    walletFg = 'rgb(224, 250, 255)';
+    walletLabel = 'rgb(0, 240, 255)';
+  } else if (tierKey === 'premium' || tierKey === 'plus') {
+    walletBg = 'rgb(27, 21, 69)';
+    walletFg = 'rgb(245, 243, 255)';
+    walletLabel = 'rgb(255, 94, 91)';
+  }
+
   const pass = new PKPass(
     {
       'pass.json': Buffer.from(JSON.stringify(passJson), 'utf8'),
@@ -882,9 +945,9 @@ export async function generateAppleBusinessCardPass(user: WalletPassUser): Promi
       serialNumber,
       description: `CulturePass ID · ${culturePassId}`,
       organizationName: 'CulturePass.App',
-      backgroundColor: WALLET_CARD.appleBackground,
-      foregroundColor: WALLET_CARD.appleForeground,
-      labelColor: WALLET_CARD.appleLabel,
+      backgroundColor: walletBg,
+      foregroundColor: walletFg,
+      labelColor: walletLabel,
     }
   );
 
@@ -1038,7 +1101,7 @@ async function ensureGoogleEventTicketClass(): Promise<string> {
       id: classId,
       issuerName: 'CulturePass.App',
       reviewStatus: 'UNDER_REVIEW',
-      hexBackgroundColor: WALLET_CARD.terracotta,
+      hexBackgroundColor: WALLET_CARD.googleHex,
       homepageUri: {
         uri: getPublicAppOrigin(),
         description: 'CulturePass.App',
@@ -1083,7 +1146,7 @@ export async function createGoogleEventTicketSaveUrl(
         id: objectId,
         classId,
         state: 'ACTIVE',
-        hexBackgroundColor: WALLET_CARD.terracotta, // Using CulturePass terracotta color
+        hexBackgroundColor: WALLET_CARD.googleHex,
         cardTitle: {
           defaultValue: { language: 'en-AU', value: 'CulturePass Ticket' },
         },
@@ -1151,11 +1214,10 @@ export async function generateAppleEventTicketPass(
     envOptional('APPLE_PASS_WEBSERVICE_URL') ?? `${getPublicAppOrigin()}/api/wallet/apple/v1`;
   const ticketPageUrl = `${getPublicAppOrigin()}/tickets/${encodeURIComponent(ticket.id)}`;
 
-  const icon = await renderBrandAsset(58, 58);
-  const icon2x = await renderBrandAsset(116, 116);
-  // Using CulturePass branding with enhanced colors
-  const logo = await renderWalletLogo(160, 50);
-  const logo2x = await renderWalletLogo(320, 100);
+  const icon = await renderWalletIcon(58);
+  const icon2x = await renderWalletIcon(116);
+  const logo = await renderWalletLogo(160, 50, true);
+  const logo2x = await renderWalletLogo(320, 100, true);
 
   const passJson = {
     formatVersion: 1,

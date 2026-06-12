@@ -103,7 +103,7 @@ function Row({ row, isLast }: { row: SettingsRow; isLast: boolean }) {
         <Text style={[styles.rowLabel, { color: row.destructive ? colors.error : colors.text }]} numberOfLines={1}>
           {row.label}
         </Text>
-        {row.sub ? <Text style={[styles.rowSub, { color: colors.textTertiary }]} numberOfLines={2}>{row.sub}</Text> : null}
+        {row.sub ? <Text style={[styles.rowSub, { color: colors.textSecondary }]} numberOfLines={2}>{row.sub}</Text> : null}
       </View>
       {row.rightText ? <Text style={[styles.rowRight, { color: colors.textTertiary }]}>{row.rightText}</Text> : null}
       {isActionable ? <Ionicons name={row.external ? 'arrow-up-outline' : 'chevron-forward'} size={18} color={colors.textTertiary} /> : null}
@@ -117,7 +117,7 @@ function Section({ title, rows }: { title: string; rows: SettingsRow[] }) {
   if (!rows.length) return null;
   return (
     <View style={styles.section}>
-      <Text style={[styles.sectionTitle, { color: colors.textTertiary }]}>{title}</Text>
+      <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>{title}</Text>
       <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
         {rows.map((row, index) => (
           <Row key={`${title}-${row.label}`} row={row} isLast={index === rows.length - 1} />
@@ -150,7 +150,7 @@ function fromNavItem(item: {
 export default function SettingsScreen() {
   const colors = useColors();
   const layout = useLayout();
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, logout, updateUserProfile } = useAuth();
   const { resetOnboarding } = useOnboarding();
   const { isOrganizer, isAdmin, hasMinRole } = useRole();
   const goBack = useSafeBack('/(tabs)/my-space');
@@ -204,9 +204,37 @@ export default function SettingsScreen() {
             ]);
           });
     if (!confirmed) return;
+
+    if (user?.id) {
+      try {
+        await updateUserProfile({
+          city: '',
+          country: '',
+          interests: [],
+          communities: [],
+          interestCategoryIds: [],
+          languages: [],
+          ethnicityText: '',
+          lgaCode: '',
+          councilId: '',
+          culturalIdentity: {},
+        });
+      } catch {
+        const failMessage = 'Could not reset your profile preferences. Please try again.';
+        if (Platform.OS === 'web') {
+          if (typeof window !== 'undefined' && typeof window.alert === 'function') {
+            window.alert(failMessage);
+          }
+        } else {
+          Alert.alert('Reset failed', failMessage);
+        }
+        return;
+      }
+    }
+
     await resetOnboarding();
     router.replace('/(onboarding)/location' as never);
-  }, [resetOnboarding]);
+  }, [resetOnboarding, updateUserProfile, user?.id]);
 
   const signOut = useCallback(() => {
     Alert.alert('Sign out', 'Sign out of CulturePass?', [

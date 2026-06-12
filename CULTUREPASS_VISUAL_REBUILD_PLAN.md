@@ -13,7 +13,7 @@
 
 ### Strengths (Foundation We Build On)
 - **Mature production app** (v1.2.2, live since 15 Apr 2026 on iOS/Android/Web).
-- **Strong existing design system**: Warm cultural palette (Terracotta Glow #E36A4E, Deep Saffron #F5A623, Rich Indigo, Emerald Harmony, Heritage Gold), Poppins typography (400–800), detailed spacing/radius/elevation, M3 expressive color schemes (darkM3/lightM3), GlassView + LiquidGlass, CulturalAccents, gradients, vitrine experimental theme.
+- **Strong existing design system**: CulturePass.App wordmark palette (culture red, pass green, app blue), cyan digital-ID accents, Rich Indigo, Emerald Harmony, Poppins typography (400–800), detailed spacing/radius/elevation, M3 expressive color schemes (darkM3/lightM3), GlassView + LiquidGlass, CulturalAccents, gradients, vitrine experimental theme.
 - **Architecture**: Expo 56 + RN 0.85 + React 19, Expo Router (src/ layout), TanStack Query, sophisticated providers, ErrorBoundary, widgets, deep linking, Stripe Connect, Firebase Functions.
 - **Platform reach**: EAS production credentials configured, two iOS targets (main + WidgetsTarget), Firebase Hosting, full store submission checklists exist.
 - **Hundreds of files** already correctly consuming design tokens.
@@ -44,7 +44,7 @@ CulturePass must feel like a **premium cultural passport** — warm, human, soph
 ### 2.1 Color Evolution (Luxe Heritage Palette)
 
 **Core Signature (Retain + Refine)**
-- `terracottaGlow`: #E36A4E (primary action, CTAs, cultural identity)
+- `cultureRed` / `passGreen` / `appBlue`: #f80020 / #00A651 / #009EDB (CulturePass.App wordmark)
 - `deepSaffron`: #F5A623 (secondary warmth, festivals, highlights)
 - `richIndigo`: #4A5EBF (stories, links, map pins)
 - `emeraldHarmony`: #0A8C7F (trust, venues, community)
@@ -67,8 +67,8 @@ CulturePass must feel like a **premium cultural passport** — warm, human, soph
 - Softer surfaces, elegant tonal cards.
 
 **Gradients (Signature Language)**
-- `culturepassBrand` (terracotta → saffron) — max 1 per screen for hero/onboarding/flagship CTAs.
-- New luxe variants: `plumOchre`, `terracottaBronze`, `emeraldIndigo`, `goldSaffron`.
+- `culturepassBrand` (culture red → app blue) — max 1 per screen for hero/onboarding/flagship CTAs.
+- New luxe variants: `plumOchre`, `heritageBronze`, `emeraldIndigo`, `goldSaffron`.
 - Hero overlays: cinematic multi-stop (transparent → deep black with subtle brand tint).
 
 **Accessibility**
@@ -98,7 +98,7 @@ CulturePass must feel like a **premium cultural passport** — warm, human, soph
 - **4/8-point precision grid** (already partially present) — enforce everywhere.
 - **New Container System**: `Container` primitive with `maxContentWidth`, `tabletMax`, `desktopMax`, fluid padding, safe-area aware.
 - **Web**: 240px left sidebar (fixed, collapsible) on ≥1024px; bottom tabs on tablet/mobile. Fix remaining responsive edge cases.
-- **Cinematic Heroes**: Layered glass + subtle cultural pattern overlays (very light terracotta/saffron motifs) + premium photography with duotone or gradient treatments.
+- **Cinematic Heroes**: Layered glass + subtle wordmark-tint overlays (culture red / app blue motifs) + premium photography with duotone or gradient treatments.
 - **Cards & Surfaces**: Refined 20–24px radius, generous internal padding, subtle float shadows or glass, consistent hover/press states (scale + shadow lift).
 - **Navigation**: M3TopAppBar + refined CustomTabBar (glass + blur on iOS/web, elevated on Android). NavigationRail on large tablets.
 - **Empty States & Loading**: Treated as **art** — beautiful illustrations or cultural motifs, never generic spinners. Delightful skeleton patterns.

@@ -342,15 +342,15 @@ export default function MyCityScreen() {
                   onPress={() => router.push('/cities')}
                   style={({ pressed }) => [{ opacity: pressed ? 0.9 : 1 }]}
                 >
-                  <M3Card variant="elevated" style={[s.locPill, { gap: 8, paddingRight: 12, borderColor: Luxe.colors.terracotta + '28' }]}>
+                  <M3Card variant="elevated" style={[s.locPill, { gap: 8, paddingRight: 12, borderColor: Luxe.colors.appBlue + '28' }]}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                      <Ionicons name="location" size={14} color={Luxe.colors.terracotta} />
+                      <Ionicons name="location" size={14} color={Luxe.colors.appBlue} />
                       <Text style={[M3Typography.labelLarge, { color: m3Colors.onSurface }]} numberOfLines={1}>
                         {effectiveCity}
                       </Text>
                     </View>
                     <View style={{ width: 1, height: 14, backgroundColor: m3Colors.outlineVariant }} />
-                    <Text style={[M3Typography.labelMedium, { color: Luxe.colors.terracotta, fontFamily: FontFamily.bold }]}>
+                    <Text style={[M3Typography.labelMedium, { color: Luxe.colors.appBlue, fontFamily: FontFamily.bold }]}>
                       Explore
                     </Text>
                   </M3Card>
@@ -430,7 +430,7 @@ export default function MyCityScreen() {
                     accessibilityLabel="Get city updates"
                   >
                     <LinearGradient
-                      colors={Luxe.gradients.terracottaBronze}
+                      colors={Luxe.gradients.heritageBronze}
                       start={{ x: 0, y: 0.5 }}
                       end={{ x: 1, y: 0.5 }}
                       style={s.subscribeBtn}

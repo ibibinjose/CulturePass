@@ -210,16 +210,31 @@ export type SettingsNavRow = {
  */
 export function settingsMyContentItems(): SettingsNavRow[] {
   const tickets = PROFILE_ATTENDEE_TOOL_ROWS.find((r) => r.id === 'tickets');
-  if (!tickets) {
-    throw new Error('[experienceNav] PROFILE_ATTENDEE_TOOL_ROWS must include tickets');
+  const perks = PROFILE_ATTENDEE_TOOL_ROWS.find((r) => r.id === 'perks');
+  if (!tickets || !perks) {
+    throw new Error('[experienceNav] PROFILE_ATTENDEE_TOOL_ROWS must include tickets and perks');
   }
   return [
     {
       icon: tickets.icon,
       label: 'My Tickets',
       sub: 'Upcoming and past events',
-      color: tickets.accent,
+      color: CultureTokens.indigo,
       route: tickets.path,
+    },
+    {
+      icon: 'heart-outline',
+      label: 'Favorites & Stamps',
+      sub: 'Saved events and check-in stamps',
+      color: CultureTokens.coral,
+      route: '/saved',
+    },
+    {
+      icon: perks.icon,
+      label: 'Member Perks',
+      sub: perks.sub,
+      color: CultureTokens.violet,
+      route: perks.path,
     },
     {
       icon: 'people-outline',

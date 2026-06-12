@@ -66,7 +66,7 @@ export function LanyardPassCard({
   onCopyCpid,
   copied = false,
 }: LanyardPassCardProps) {
-  const theme = getPassColorTheme(colorVariant);
+  const theme = getPassColorTheme(colorVariant, tierLabel);
   const resolvedQrSize = qrSize ?? Math.min(width - 64, 136);
   const isWhite = colorVariant === 'white';
   const isBlack = colorVariant === 'black';
@@ -80,7 +80,7 @@ export function LanyardPassCard({
   const dividerColor = isWhite ? 'rgba(0,0,0,0.07)' : 'rgba(255,255,255,0.1)';
 
   return (
-    <PassCardShell width={width} height={height} colorVariant={colorVariant} nativeID="pass-card-lanyard">
+    <PassCardShell width={width} height={height} colorVariant={colorVariant} tierLabel={tierLabel} nativeID="pass-card-lanyard">
 
       {/* ── 1. Full-bleed header strip ── */}
       <PassCardStrip tierLabel={tierLabel} lanyard colorVariant={colorVariant} />
@@ -88,7 +88,7 @@ export function LanyardPassCard({
       {/* ── 2. Avatar — sits directly below strip, no overlap ── */}
       <View style={styles.avatarSection}>
         <LinearGradient
-          colors={['#06b6d4', '#8b5cf6', '#ec4899']}
+          colors={[CultureTokens.indigo, CultureTokens.violet, CultureTokens.coral]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.avatarRing}
@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
     height: 22,
     borderRadius: 11,
     borderWidth: 2,
-    backgroundColor: '#3b82f6',
+    backgroundColor: CultureTokens.indigo,
     alignItems: 'center',
     justifyContent: 'center',
   },

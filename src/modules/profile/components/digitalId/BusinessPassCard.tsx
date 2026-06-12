@@ -61,14 +61,14 @@ export function BusinessPassCard({
   affiliation,
   onCopyCpid,
 }: BusinessPassCardProps) {
-  const theme = getPassColorTheme(colorVariant);
+  const theme = getPassColorTheme(colorVariant, tierLabel);
   const resolvedQrSize = qrSize ?? Math.min(Math.round(height * 0.5), 88);
   const isWhite = colorVariant === 'white';
   const dividerColor = isWhite ? 'rgba(0,0,0,0.07)' : 'rgba(255,255,255,0.1)';
   const qrBg = colorVariant === 'black' ? 'rgba(255,255,255,0.9)' : isWhite ? '#FFFFFF' : 'rgba(255,255,255,0.14)';
 
   return (
-    <PassCardShell width={width} height={height} colorVariant={colorVariant} nativeID="pass-card-business">
+    <PassCardShell width={width} height={height} colorVariant={colorVariant} tierLabel={tierLabel} nativeID="pass-card-business">
 
       <PassCardStrip tierLabel={tierLabel} compact colorVariant={colorVariant} />
       <View style={[styles.heritageLine, { backgroundColor: CultureTokens.heritageGold }]} />

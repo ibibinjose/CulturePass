@@ -635,7 +635,7 @@ function EmptyFeed({ onDiscover }: { onDiscover: () => void }) {
     <View style={styles.emptyFeedLuxe}>
       <LinearGradient colors={['#1F1A3D', '#14122A']} style={styles.emptyFeedGradient}>
         <View style={styles.emptyFeedIcon}>
-          <Ionicons name="radio-outline" size={32} color={Luxe.colors.terracotta} />
+          <Ionicons name="radio-outline" size={32} color={Luxe.colors.appBlue} />
         </View>
         <LuxeText variant="title2" style={{ color: luxeDark.text, textAlign: 'center' }}>
           Your feed is quiet

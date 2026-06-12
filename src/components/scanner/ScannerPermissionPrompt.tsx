@@ -12,8 +12,8 @@ type Props = {
 export function ScannerPermissionPrompt({ onRequestPermission }: Props) {
   return (
     <View style={styles.card}>
-      <View style={[styles.iconWrap, { backgroundColor: Luxe.colors.terracotta + '20' }]}>
-        <Ionicons name="camera-outline" size={28} color={Luxe.colors.terracotta} />
+      <View style={[styles.iconWrap, { backgroundColor: Luxe.colors.appBlue + '20' }]}>
+        <Ionicons name="camera-outline" size={28} color={Luxe.colors.appBlue} />
       </View>
       <Text style={styles.title}>Camera access</Text>
       <Text style={styles.body}>

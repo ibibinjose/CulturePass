@@ -106,7 +106,7 @@ const STATUS_CONFIG: Record<ProfileStatus, { label: string; color: string }> = {
   draft: { label: 'DRAFT', color: Luxe.colors.gold },
   published: { label: 'LIVE', color: Luxe.colors.emerald },
   pending_verification: { label: 'PENDING', color: Luxe.colors.indigo },
-  suspended: { label: 'SUSPENDED', color: Luxe.colors.terracotta },
+  suspended: { label: 'SUSPENDED', color: Luxe.colors.appBlue },
 };
 
 // ---------------------------------------------------------------------------
@@ -318,7 +318,7 @@ function EventManageCard({
             <Image source={{ uri: event.imageUrl }} style={StyleSheet.absoluteFill} contentFit="cover" />
           ) : (
             <View style={[StyleSheet.absoluteFill, styles.mediaFallback]}>
-              <Ionicons name="calendar-outline" size={32} color={Luxe.colors.terracotta} />
+              <Ionicons name="calendar-outline" size={32} color={Luxe.colors.appBlue} />
             </View>
           )}
           <GlassView intensity={30} style={[styles.statusPill, { backgroundColor: (status === 'published' ? Luxe.colors.emerald : Luxe.colors.gold) + 'CC' }]}>
@@ -376,7 +376,7 @@ type HostPageStatus = 'draft' | 'published' | 'blocked' | 'archived';
 const HOST_PAGE_STATUS_CONFIG: Record<HostPageStatus, { label: string; color: string }> = {
   draft: { label: 'DRAFT', color: Luxe.colors.gold },
   published: { label: 'LIVE', color: Luxe.colors.emerald },
-  blocked: { label: 'BLOCKED', color: Luxe.colors.terracotta },
+  blocked: { label: 'BLOCKED', color: Luxe.colors.appBlue },
   archived: { label: 'ARCHIVED', color: Luxe.colors.indigo },
 };
 
@@ -764,7 +764,7 @@ function HostspaceWorkspace() {
           { maxWidth: 1120, alignSelf: 'center', width: '100%' },
         ]}
         refreshControl={
-          <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={Luxe.colors.terracotta} />
+          <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={Luxe.colors.appBlue} />
         }
         showsVerticalScrollIndicator={false}
       >
@@ -773,7 +773,7 @@ function HostspaceWorkspace() {
         {/* Hero */}
         <Animated.View entering={FadeInUp.duration(500)} style={styles.hero}>
           <GlassView intensity={10} style={styles.badge}>
-            <LuxeText variant="badgeCaps" style={{ color: Luxe.colors.terracotta }}>HOST WORKSPACE</LuxeText>
+            <LuxeText variant="badgeCaps" style={{ color: Luxe.colors.appBlue }}>HOST WORKSPACE</LuxeText>
           </GlassView>
           <View style={styles.heroRow}>
             <View style={styles.heroCopy}>
@@ -836,7 +836,7 @@ function HostspaceWorkspace() {
             style={[
               styles.statusBanner,
               {
-                borderColor: (myApplication.status === 'approved' ? Luxe.colors.emerald : myApplication.status === 'rejected' ? Luxe.colors.terracotta : Luxe.colors.gold) + '33',
+                borderColor: (myApplication.status === 'approved' ? Luxe.colors.emerald : myApplication.status === 'rejected' ? Luxe.colors.appBlue : Luxe.colors.gold) + '33',
                 borderWidth: 1,
                 marginTop: 16
               },
@@ -847,7 +847,7 @@ function HostspaceWorkspace() {
                 <Ionicons
                   name={myApplication.status === 'approved' ? 'trophy' : myApplication.status === 'rejected' ? 'close-circle' : 'time'}
                   size={24}
-                  color={myApplication.status === 'approved' ? Luxe.colors.emerald : myApplication.status === 'rejected' ? Luxe.colors.terracotta : Luxe.colors.gold}
+                  color={myApplication.status === 'approved' ? Luxe.colors.emerald : myApplication.status === 'rejected' ? Luxe.colors.appBlue : Luxe.colors.gold}
                 />
             </View>
             <View style={{ flex: 1, gap: 4 }}>
@@ -881,7 +881,7 @@ function HostspaceWorkspace() {
             <QuickAction
               label="New Event"
               icon="calendar"
-              color={Luxe.colors.terracotta}
+              color={Luxe.colors.appBlue}
               onPress={() => navigateToCreateById('event', { source: 'hostspace_quick_event' })}
             />
             <QuickAction
@@ -911,7 +911,7 @@ function HostspaceWorkspace() {
             label="Published"
             value={events.filter(e => e.status === 'published').length}
             icon="radio-outline"
-            color={Luxe.colors.terracotta}
+            color={Luxe.colors.appBlue}
           />
           <StatCard
             label="Upcoming"
@@ -1174,7 +1174,7 @@ function CreateFAB({ onPress }: { onPress: () => void }) {
         width: 56,
         height: 56,
         borderRadius: 28,
-        backgroundColor: Luxe.colors.terracotta,
+        backgroundColor: Luxe.colors.appBlue,
         alignItems: 'center',
         justifyContent: 'center',
         shadowColor: '#000',

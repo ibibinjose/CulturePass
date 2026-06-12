@@ -267,7 +267,7 @@ export default function DiscoverScreen() {
               width: 400,
               height: 400,
               borderRadius: 200,
-              backgroundColor: CultureTokens.terracottaGlow + (isDark ? '14' : '0f'),
+              backgroundColor: CultureTokens.appBlue + (isDark ? '14' : '0f'),
               ...Platform.select({
                 web: { filter: 'blur(100px)' },
               }),
@@ -398,7 +398,7 @@ export default function DiscoverScreen() {
             <IntentPill
               label="Today"
               icon="today"
-              accentColor={CultureTokens.terracottaGlow}
+              accentColor={CultureTokens.appBlue}
               onPress={() => {
                 if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 setActiveFilter('events');

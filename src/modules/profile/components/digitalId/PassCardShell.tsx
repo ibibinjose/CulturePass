@@ -6,12 +6,13 @@ type PassCardShellProps = {
   width: number;
   height: number;
   colorVariant?: PassColorVariant;
+  tierLabel?: string;
   nativeID?: string;
   children: ReactNode;
 };
 
-export function PassCardShell({ width, height, colorVariant = 'cyan', nativeID, children }: PassCardShellProps) {
-  const theme = getPassColorTheme(colorVariant);
+export function PassCardShell({ width, height, colorVariant = 'cyan', tierLabel, nativeID, children }: PassCardShellProps) {
+  const theme = getPassColorTheme(colorVariant, tierLabel);
   const shadow = theme.shellShadowNative;
   const isWhite = colorVariant === 'white';
   const isBlack = colorVariant === 'black';

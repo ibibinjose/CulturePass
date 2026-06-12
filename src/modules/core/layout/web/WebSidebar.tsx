@@ -44,8 +44,8 @@ import { withAlpha } from '@/lib/withAlpha';
 // ─── Constants ────────────────────────────────────────────────────────────────
 const SIDEBAR_WIDTH = Layout.sidebarWidth;
 const RAIL_WIDTH = Layout.sidebarRailWidth;
-const ACTIVE_COLOR = CultureTokens.terracottaGlow;
-const ACTIVE_GRAD: [string, string] = [CultureTokens.terracottaGlow, CultureTokens.deepSaffron];
+const ACTIVE_COLOR = CultureTokens.appBlue;
+const ACTIVE_GRAD: [string, string] = [CultureTokens.cultureRed, CultureTokens.appBlue];
 const SIDEBAR_COLLAPSED_STORAGE_KEY = 'culturepass:web-sidebar-collapsed';
 const DEFAULT_WEATHER_CITY = 'Sydney';
 const DEFAULT_WEATHER_COORDS = { lat: -33.8688, lon: 151.2093 };
@@ -526,8 +526,8 @@ function WebSidebarContent() {
             styles.searchBar,
             {
               backgroundColor: searchFocused ? (isDark ? 'rgba(0,0,0,0.4)' : '#fff') : colors.backgroundSecondary,
-              borderColor: searchFocused ? CultureTokens.terracottaGlow : border,
-              boxShadow: searchFocused ? `0 0 0 2px ${withAlpha(CultureTokens.terracottaGlow, 0.15)}` : undefined,
+              borderColor: searchFocused ? CultureTokens.appBlue : border,
+              boxShadow: searchFocused ? `0 0 0 2px ${withAlpha(CultureTokens.appBlue, 0.15)}` : undefined,
             } as any
           ]}
         >

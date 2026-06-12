@@ -55,7 +55,7 @@ function stripHtml(tier: string, theme: ReturnType<typeof getPassColorTheme>, co
   return `
     <div style="position:relative;background:linear-gradient(90deg,${theme.stripStart},${theme.stripEnd});z-index:4;">
       <div style="display:flex;justify-content:space-between;align-items:center;padding:${rowPad};">
-        <span style="font-size:${brandSize}px;font-weight:800;letter-spacing:0.8px;color:${theme.stripText};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">CulturePass.App</span>
+        <span style="font-size:${brandSize}px;font-weight:800;letter-spacing:0.8px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;"><span style="color:#FFFFFF;">CULTURE</span><span style="color:#0A8C7F;">PASS</span><span style="color:#D4A017;"> ID</span></span>
         <span style="font-size:${tierSize}px;font-weight:800;letter-spacing:1.1px;color:${theme.stripText};padding:4px 10px;border-radius:6px;background:${theme.stripTierBadgeBg};border:1px solid ${theme.stripTierBadgeBorder};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">${tierText}</span>
       </div>
       ${overlapZone}
@@ -95,7 +95,7 @@ function affiliationRowHtml(name: string, fs: number, color: string, centered = 
 }
 
 function buildBusinessExportHtml(opts: PassExportInput): string {
-  const theme = getPassColorTheme(opts.colorVariant ?? 'cyan');
+  const theme = getPassColorTheme(opts.colorVariant ?? 'cyan', opts.tier);
   const qrSize = 88;
   const avatarSize = 48;
   const ring = 3;
@@ -121,7 +121,7 @@ function buildBusinessExportHtml(opts: PassExportInput): string {
 }
 
 function buildLanyardExportHtml(opts: PassExportInput): string {
-  const theme = getPassColorTheme(opts.colorVariant ?? 'cyan');
+  const theme = getPassColorTheme(opts.colorVariant ?? 'cyan', opts.tier);
   const qrSize = 132;
   const avatarSize = 88;
   const ring = 5;
@@ -415,7 +415,7 @@ export async function printPassCardPdf(opts: PassExportInput): Promise<void> {
   <title>${filename}</title>
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
-    html, body { width:${width}px; height:${height}px; background:${getPassColorTheme(opts.colorVariant ?? 'cyan').bodyBg}; overflow:hidden; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    html, body { width:${width}px; height:${height}px; background:${getPassColorTheme(opts.colorVariant ?? 'cyan', opts.tier).bodyBg}; overflow:hidden; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
     @page { size:${width}px ${height}px; margin:0; }
     #card-root { position:absolute !important; top:0 !important; left:0 !important; width:${width}px !important; height:${height}px !important; border-radius:0 !important; box-shadow:none !important; }
     .no-print { position:fixed; bottom:0; left:0; right:0; padding:12px 16px; background:rgba(255,255,255,0.97); display:flex; gap:10px; justify-content:center; border-top:1px solid ${WALLET_PASS_THEME.borderOnWhite}; z-index:99; }

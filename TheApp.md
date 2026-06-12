@@ -160,15 +160,27 @@ import {
 
 ### Brand colors (2026)
 
+**Wordmark palette** (canonical — `CulturePassWordmark` / WebSidebar header). See `docs/DESIGN_TOKENS.md`.
+
+| Token | Hex | Wordmark | Role |
+|-------|-----|----------|------|
+| `CultureTokens.cultureRed` | `#f80020` | Culture | Heritage emphasis |
+| `CultureTokens.passGreen` | `#00A651` | Pass | Belonging, community |
+| `CultureTokens.appBlue` | `#009EDB` | .App | Primary chrome, active nav, links |
+
+**Platform UI**
+
 | Token | Hex | Role |
 |-------|-----|------|
-| `CultureTokens.indigo` | `#4F46E5` | Primary brand — trust, platform identity |
-| `CultureTokens.violet` | `#9333EA` | Active nav, gradient start, community |
-| `CultureTokens.coral` | `#FF5E5B` | Action, movement, CTA |
-| `CultureTokens.gold` | `#FFC857` | Brand warmth — gradient/membership chrome only, **not readable text** |
-| `CultureTokens.teal` | `#0D9488` | Venues, free/live accents, global belonging |
+| `CultureTokens.indigo` | `#4F46E5` | M3 primary, trust |
+| `CultureTokens.violet` | `#9333EA` | Community rails |
+| `CultureTokens.coral` | `#FF5E5B` | Movement CTA |
+| `CultureTokens.teal` | `#0D9488` | Venues, belonging |
+| `BRAND_CYAN` | `#00ADEF` | Digital ID, wallet passes |
 
-**`SignatureGradient`** (alias `gradients.culturepassBrand`): violet `#9333EA` → coral `#FF5E5B`. Reserve for hero/onboarding/flagship CTAs — **max one per screen**.
+**`SignatureGradient`** (`gradients.culturepassBrand`): culture red `#f80020` → app blue `#009EDB`. Max one per screen (hero/onboarding/flagship CTA).
+
+**Deprecated:** terracotta `#E36A4E`, saffron gold — do not use.
 
 ### Radius scale
 

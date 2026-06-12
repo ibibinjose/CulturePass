@@ -9,6 +9,10 @@ import * as Haptics from 'expo-haptics';
 
 import { useAuth } from '@/lib/auth';
 import { useOnboarding } from '@/contexts/OnboardingContext';
+import {
+  confirmOnboardingRestart,
+  ONBOARDING_PROFILE_CLEAR_PATCH,
+} from '@/lib/onboardingReset';
 import { useRole } from '@/hooks/useRole';
 import { useColors } from '@/hooks/useColors';
 import { useSafeBack } from '@/lib/navigation';
@@ -191,34 +195,12 @@ export default function SettingsScreen() {
   const canTargetCampaigns = hasMinRole('cityAdmin');
 
   const redoOnboarding = useCallback(async () => {
-    const message = 'Restart onboarding? You will pick your location, cultures, interests, and communities again.';
-    const confirmed =
-      Platform.OS === 'web'
-        ? typeof window !== 'undefined' && typeof window.confirm === 'function'
-          ? window.confirm(message)
-          : true
-        : await new Promise<boolean>((resolve) => {
-            Alert.alert('Redo onboarding', message, [
-              { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
-              { text: 'Restart', style: 'destructive', onPress: () => resolve(true) },
-            ]);
-          });
+    const confirmed = await confirmOnboardingRestart();
     if (!confirmed) return;
 
     if (user?.id) {
       try {
-        await updateUserProfile({
-          city: '',
-          country: '',
-          interests: [],
-          communities: [],
-          interestCategoryIds: [],
-          languages: [],
-          ethnicityText: '',
-          lgaCode: '',
-          councilId: '',
-          culturalIdentity: {},
-        });
+        await updateUserProfile(ONBOARDING_PROFILE_CLEAR_PATCH);
       } catch {
         const failMessage = 'Could not reset your profile preferences. Please try again.';
         if (Platform.OS === 'web') {

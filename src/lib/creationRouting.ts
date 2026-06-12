@@ -26,7 +26,7 @@ import { hostspaceCreateRoute } from '@/constants/navigation/createNav';
 function analyticsContext(
   category: CreateCategory,
   source: string,
-  parentProfileId?: string,
+  parentHostPageId?: string,
 ): CreationAnalyticsContext {
   const flow = getCategoryDataflow(category);
   return {
@@ -37,7 +37,7 @@ function analyticsContext(
     storage: flow.storage,
     manageTab: flow.manageTab,
     source,
-    parentProfileId,
+    parentProfileId: parentHostPageId,
     entityType: category.entityType,
     subCategory: category.subCategory,
   };
@@ -69,10 +69,14 @@ export function navigateToCreate(
   opts: CreateNavigationOpts & { source: string; trackSelect?: boolean; replace?: boolean },
 ) {
   const { source, trackSelect = true, replace = false, ...navOpts } = opts;
+  const mergedNavOpts: CreateNavigationOpts = {
+    ...navOpts,
+    templateId: navOpts.templateId ?? category.templateId,
+  };
   pushCreateIntent(
     category,
-    navOpts,
-    analyticsContext(category, source, navOpts.parentProfileId),
+    mergedNavOpts,
+    analyticsContext(category, source, navOpts.parentHostPageId ?? navOpts.parentProfileId),
     trackSelect,
     replace,
   );
@@ -85,6 +89,7 @@ export function navigateToCreateById(
     source: string;
     trackSelect?: boolean;
     parentProfileId?: string;
+    parentHostPageId?: string;
     replace?: boolean;
   },
 ) {
@@ -122,7 +127,7 @@ export function findCategoryForListingEntity(
   );
   if (byEntity) return byEntity;
 
-  if (entityType === 'community') return findCategory('community');
+  if (entityType === 'community') return findCategory('organisation-community');
   if (entityType === 'restaurant') return findCategory('dining');
   if (entityType === 'event') return findCategory('event');
   return findCategory('other-listing');
@@ -216,7 +221,11 @@ export function navigateOnCategorySelect(
   category: CreateCategory,
   source = 'creation_lab_sidebar',
 ) {
-  if (isPageProCategory(category as RoutableCategory) || category.group === 'market') {
+  if (
+    isPageProCategory(category as RoutableCategory) ||
+    category.group === 'market' ||
+    category.group === 'templates'
+  ) {
     navigateToCreate(category, { source, trackSelect: true });
     return;
   }

@@ -18,8 +18,9 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { useLogin } from '@/hooks/useLogin';
-import { useColors } from '@/hooks/useColors';
+import { useColors, useIsDark } from '@/hooks/useColors';
 import { useM3Colors } from '@/hooks/useM3Colors';
+import { getAuthScreenPalette } from '@/components/onboarding/authScreenTheme';
 import { useLayout } from '@/hooks/useLayout';
 import {
   M3TopAppBar,
@@ -58,6 +59,8 @@ const LOGIN_CANONICAL = `${SITE_ORIGIN}/login`;
 export default function LoginScreen() {
   const colors = useColors();
   const m3Colors = useM3Colors();
+  const isDark = useIsDark();
+  const authPalette = getAuthScreenPalette('login', isDark, colors);
   const { isDesktop, isWeb } = useLayout();
   const insets = useSafeAreaInsets();
   const reducedMotion = useReducedMotion();
@@ -206,7 +209,7 @@ export default function LoginScreen() {
             accessibilityRole="link"
             accessibilityLabel="Forgot password"
           >
-            <Text style={[s.forgotText, { color: m3Colors.primary }]}>Forgot?</Text>
+            <Text style={[s.forgotText, { color: authPalette.accent }]}>Forgot?</Text>
           </Pressable>
         </View>
 
@@ -252,7 +255,7 @@ export default function LoginScreen() {
         >
           <Text style={[s.switchText, M3Typography.bodyMedium, { color: m3Colors.onSurfaceVariant, textAlign: 'center' }]}>
             Don&apos;t have an account?{' '}
-            <Text style={{ color: m3Colors.primary, fontWeight: '700' }}>Sign Up</Text>
+            <Text style={{ color: authPalette.accent, fontWeight: '700' }}>Sign Up</Text>
           </Text>
         </Pressable>
       </Animated.View>
@@ -273,7 +276,7 @@ export default function LoginScreen() {
         <link rel="canonical" href={LOGIN_CANONICAL} />
       </Head>
     <View style={[s.container, { backgroundColor: colors.background }]}>
-      <AuthAmbientBackground />
+      <AuthAmbientBackground variant="login" />
 
       <M3TopAppBar
         title="Login"
@@ -304,14 +307,14 @@ export default function LoginScreen() {
 
             {/* Form card */}
             <Animated.View entering={enterUp} style={s.cardWrap}>
-              <LuxeCard variant="default" style={{ padding: 32 }}>
+              <LuxeCard variant="default" style={{ padding: 32, borderColor: authPalette.panelBorder, borderWidth: 1 }}>
                 {formContent}
               </LuxeCard>
             </Animated.View>
           </View>
         ) : (
           <Animated.View entering={enterUp} style={s.cardWrap}>
-            <LuxeCard variant="default" style={{ padding: 24 }}>
+            <LuxeCard variant="default" style={{ padding: 24, borderColor: authPalette.panelBorder, borderWidth: 1 }}>
               {formContent}
             </LuxeCard>
           </Animated.View>

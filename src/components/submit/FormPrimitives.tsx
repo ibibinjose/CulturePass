@@ -71,3 +71,15 @@ export const SubmitCard = Card;
 export const SubmitSectionLabel = SectionLabel;
 export const SubmitField = Field;
 
+/** HostSpace / Creation Lab embedded forms — shared Muji-themed primitives. */
+export {
+  CreateFormSection,
+  CreateFormField,
+  CreateFormInput,
+  CreateFormDraftInput,
+  CreateChoiceChip,
+  CreateFormChipGrid,
+  CreateFormTwoCol,
+  useCreateFormTheme,
+} from '@/components/forms';
+

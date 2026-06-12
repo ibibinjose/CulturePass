@@ -36,6 +36,12 @@ import { Button } from '@/design-system/ui/Button';
 import { GlassView } from '@/design-system/ui/GlassView';
 import { useAuth } from '@/lib/auth';
 import { formatEventDateTimeBadge } from '@/lib/dateUtils';
+import {
+  FormSection,
+  FormField,
+  FormInput,
+  ChoiceChip,
+} from '@/components/forms';
 
 const EVENT_CATEGORY_GROUPS = [
   {
@@ -679,78 +685,6 @@ export function HostspaceEventCreateForm({ onReview }: { onReview?: () => void }
         />
       )}
     </View>
-  );
-}
-
-function FormSection({ title, icon, color, children }: { title: string; icon: keyof typeof Ionicons.glyphMap; color: string; children: React.ReactNode }) {
-  return (
-    <View style={[styles.section, styles.mujiSection]}>
-      <View style={styles.sectionHeader}>
-        <View style={[styles.sectionIconWrap, styles.mujiSectionIcon]}>
-          <Ionicons name={icon} size={18} color={HOSTSPACE_MUJI_FORM.accent} />
-        </View>
-        <Text style={[styles.sectionTitle, styles.mujiSectionTitle]} numberOfLines={1}>
-          {title}
-        </Text>
-      </View>
-      <View style={styles.sectionBody}>{children}</View>
-    </View>
-  );
-}
-
-function FormField({ label, required, hint, children }: { label: string; required?: boolean; hint?: string; children: React.ReactNode }) {
-  return (
-    <View style={styles.field}>
-      <View style={styles.labelRow}>
-        <Text style={[styles.fieldLabel, styles.mujiFieldLabel]} numberOfLines={1}>
-          {label}
-          {required && (
-            <Text style={styles.requiredMark} numberOfLines={1}>
-              {' *'}
-            </Text>
-          )}
-        </Text>
-        {hint && (
-          <Text style={[styles.fieldHint, styles.mujiFieldHint]} numberOfLines={2}>
-            {hint}
-          </Text>
-        )}
-      </View>
-      {children}
-    </View>
-  );
-}
-
-function FormInput({ ...props }: TextInput['props']) {
-  return (
-    <TextInput
-      placeholderTextColor={HOSTSPACE_MUJI_FORM.textMuted}
-      style={[
-        styles.input,
-        styles.mujiInput,
-        props.multiline && styles.textarea,
-        props.style,
-      ]}
-      textAlignVertical={props.multiline ? 'top' : 'center'}
-      {...props}
-    />
-  );
-}
-
-function ChoiceChip({ label, selected, onPress }: { label: string; selected: boolean; onPress: () => void }) {
-  return (
-    <Pressable onPress={onPress}>
-      <View
-        style={[
-          styles.chip,
-          selected ? styles.chipSelected : styles.chipIdle,
-        ]}
-      >
-        <Text style={[styles.chipText, selected ? styles.chipTextSelected : styles.chipTextIdle]} numberOfLines={2}>
-          {label}
-        </Text>
-      </View>
-    </Pressable>
   );
 }
 

@@ -1,44 +1,50 @@
 /**
- * HostSpace create catalog — rendered on /hostspace/create (and legacy query params on /hostspace).
+ * HostSpace create catalog — /hostspace/create
+ * Org/community types always route to the unified /hostspace/create/page form.
  */
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { useLocalSearchParams, router } from 'expo-router';
 import Head from 'expo-router/head';
-import { useQuery } from '@tanstack/react-query';
 import { View, StyleSheet } from 'react-native';
 
 import { HostspaceCreatePanel } from '@/modules/host/components/HostspaceCreatePanel';
-import { CreatePageSelector, type PageEntityType } from '@/modules/host/screens/CreatePageSelector';
+import type { PageEntityType } from '@/modules/host/screens/CreatePageSelector';
 import { PageProWizard } from '@/modules/host/screens/PageProWizard';
 import type { HostPageTemplateId } from '@/shared/schema';
 import type { HostEntityType } from '@/shared/schema/hostTypes';
 import { APP_NAME, SITE_ORIGIN } from '@/lib/app-meta';
-import { useAuth } from '@/lib/auth';
-import { modulesApi } from '@/modules/api';
+import { isOrganisationCommunityCategory } from '@/modules/host/config/organisationCommunityTypes.config';
+import { findCategory } from '@/modules/host/config/hostspaceCreateCategories.config';
 import {
-  buildHostspaceCreateHref,
   HOSTSPACE_CREATE_CATALOG_PATHNAME,
+  HOSTSPACE_CREATE_PAGE_PATHNAME,
   HOSTSPACE_PATHNAME,
 } from '@/constants/navigation/createNav';
-import { navigateToPageProEntity } from '@/lib/creationRouting';
+
 import { sanitizeInternalRedirect } from '@/lib/routes';
 import { labelForOnboardingDestination } from '@/lib/onboardingDestination';
 import { OnboardingDestinationBanner } from '@/components/onboarding/OnboardingDestinationBanner';
 import { HostspaceCreateShell } from '@/components/hostspace/HostspaceCreateShell';
 import { LuxeButton } from '@/design-system/ui';
 
-const PAGE_ENTITY_TYPES: HostEntityType[] = [
-  'community',
-  'organiser',
-  'organizer',
-  'venue',
-  'business',
-  'artist',
-  'professional',
-];
+const NON_ORG_PAGE_ENTITY_TYPES: HostEntityType[] = ['venue', 'business', 'artist', 'professional'];
 
 function firstParam(v: string | string[] | undefined): string | undefined {
   return Array.isArray(v) ? v[0] : v;
+}
+
+function resolveOrgPageTypeId(
+  category: string | undefined,
+  entityType: string | undefined,
+): string | null {
+  if (entityType === 'community') return 'community';
+  if (entityType === 'organiser' || entityType === 'organizer') return 'organizer';
+  if (category && isOrganisationCommunityCategory(category)) return category;
+  if (category) {
+    const resolved = findCategory(category);
+    if (isOrganisationCommunityCategory(resolved.id)) return resolved.id;
+  }
+  return null;
 }
 
 export function HostspaceCreateHub() {
@@ -58,39 +64,28 @@ export function HostspaceCreateHub() {
   const draftId = firstParam(params.draftId);
   const pageId = firstParam(params.pageId);
   const entityTypeRaw = firstParam(params.entityType);
-  const entityType = PAGE_ENTITY_TYPES.includes(entityTypeRaw as HostEntityType)
+  const entityType = NON_ORG_PAGE_ENTITY_TYPES.includes(entityTypeRaw as HostEntityType)
     ? (entityTypeRaw as PageEntityType)
     : undefined;
   const templateId = firstParam(params.template) as HostPageTemplateId | undefined;
   const redirectTo = sanitizeInternalRedirect(params.redirectTo ?? params.redirect);
   const destinationLabel = labelForOnboardingDestination(redirectTo);
 
-  const { user } = useAuth();
+  const orgPageTypeId = resolveOrgPageTypeId(category, entityTypeRaw);
 
-  const { data: myPages = [] } = useQuery({
-    queryKey: ['host-pages-my'],
-    queryFn: () => modulesApi.hostPages.my(),
-    enabled: !!user,
-    staleTime: 30_000,
-  });
-
-  const { data: myProfiles = [] } = useQuery({
-    queryKey: ['hostspace-my-profiles'],
-    queryFn: () => modulesApi.profiles.my(),
-    enabled: !!user,
-    staleTime: 30_000,
-  });
-
-  const handlePageSelect = useCallback(
-    (type: PageEntityType, template?: string) => {
-      navigateToPageProEntity(type, 'create_page_selector', {
-        templateId: template,
-        intent,
-        replace: true,
-      });
-    },
-    [intent],
-  );
+  useEffect(() => {
+    if (!orgPageTypeId) return;
+    router.replace({
+      pathname: HOSTSPACE_CREATE_PAGE_PATHNAME,
+      params: {
+        type: orgPageTypeId,
+        ...(draftId ? { draftId } : {}),
+        ...(pageId ? { pageId } : {}),
+        ...(templateId ? { template: templateId } : {}),
+        ...(intent ? { intent } : {}),
+      },
+    } as never);
+  }, [orgPageTypeId, draftId, intent, pageId, templateId]);
 
   const handleCancel = useCallback(() => {
     router.replace(HOSTSPACE_CREATE_CATALOG_PATHNAME as never);
@@ -117,7 +112,7 @@ export function HostspaceCreateHub() {
           </LuxeButton>
         </View>
       ) : null}
-      {entityType ? (
+      {orgPageTypeId ? null : entityType ? (
         <PageProWizard
           entityType={entityType}
           templateId={templateId}
@@ -131,13 +126,7 @@ export function HostspaceCreateHub() {
         </HostspaceCreateShell>
       ) : (
         <HostspaceCreateShell flow="catalog">
-          <CreatePageSelector
-            onSelect={handlePageSelect}
-            existingPages={myPages}
-            existingProfiles={myProfiles}
-            intent={intent}
-            embedded
-          />
+          <HostspaceCreatePanel embedded />
         </HostspaceCreateShell>
       )}
     </>

@@ -10,6 +10,7 @@ import { GlassView } from '@/design-system/ui/GlassView';
 import {
   GROUP_COLORS,
   GROUP_TABS,
+  groupCatalogCategories,
   type CategoryGroup,
   type CreateCategory,
 } from '@/modules/host/config/hostspaceCreateCategories.config';
@@ -31,6 +32,9 @@ export function HostspaceCreateCategoryGrid({
 }) {
   const colors = useColors();
   const { isMobile } = useLayout();
+  const showSections = query === '' && activeGroups.includes('all');
+  const sectionBlocks = showSections ? groupCatalogCategories(categories) : null;
+
   return (
     <Animated.View entering={FadeInDown.duration(400)} style={styles.gridSelector}>
       <Text style={[styles.gridTitle, { color: colors.text }]}>What are you creating?</Text>
@@ -83,7 +87,7 @@ export function HostspaceCreateCategoryGrid({
         <View style={styles.suggestedSection}>
           <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>Suggested for you</Text>
           <View style={styles.suggestedRow}>
-            {categories.filter(c => ['community', 'event', 'market-listing'].includes(c.id)).map((c) => (
+            {categories.filter(c => ['organisation-community', 'event', 'market-listing'].includes(c.id)).map((c) => (
               <Pressable
                 key={`suggested-${c.id}`}
                 onPress={() => onSelect(c)}
@@ -101,28 +105,74 @@ export function HostspaceCreateCategoryGrid({
         </View>
       )}
 
-      <View style={styles.gridRow}>
-        {categories.map((c) => (
-          <Pressable
-            key={c.id}
-            onPress={() => onSelect(c)}
-            style={[styles.gridCardPressable, isMobile && styles.gridCardPressableMobile]}
-            accessibilityRole="button"
-            accessibilityLabel={`Create ${c.label}`}
-            accessibilityHint={c.description}
-          >
-            <GlassView intensity={10} style={[styles.gridCard, { borderColor: colors.borderLight }]}>
-              <View style={[styles.gridIcon, { backgroundColor: c.color + '15' }]}>
-                <Ionicons name={c.icon} size={24} color={c.color} />
+      {sectionBlocks
+        ? sectionBlocks.map(({ section, items, subsections }) => (
+            <View key={section.group} style={styles.catalogSection}>
+              <View style={styles.sectionHeader}>
+                <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                  {section.title} ({section.count})
+                </Text>
+                <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
+                  {section.subtitle}
+                </Text>
               </View>
-              <Text style={[styles.gridLabel, { color: colors.text }]}>{c.label}</Text>
-              <Text style={[styles.gridSub, { color: colors.textTertiary }]} numberOfLines={2}>
-                {c.purpose}
-              </Text>
-            </GlassView>
-          </Pressable>
-        ))}
-      </View>
+              {(subsections ?? [{ title: '', items }]).map((block) => (
+                <View key={block.title || section.group} style={styles.subsection}>
+                  {block.title ? (
+                    <Text style={[styles.subsectionTitle, { color: colors.textSecondary }]}>
+                      {block.title}
+                    </Text>
+                  ) : null}
+                  <View style={styles.gridRow}>
+                    {block.items.map((c) => (
+                      <Pressable
+                        key={c.id}
+                        onPress={() => onSelect(c)}
+                        style={[styles.gridCardPressable, isMobile && styles.gridCardPressableMobile]}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Create ${c.label}`}
+                        accessibilityHint={c.description}
+                      >
+                        <GlassView intensity={10} style={[styles.gridCard, { borderColor: colors.borderLight }]}>
+                          <View style={[styles.gridIcon, { backgroundColor: c.color + '15' }]}>
+                            <Ionicons name={c.icon} size={24} color={c.color} />
+                          </View>
+                          <Text style={[styles.gridLabel, { color: colors.text }]}>{c.label}</Text>
+                          <Text style={[styles.gridSub, { color: colors.textTertiary }]} numberOfLines={2}>
+                            {c.purpose}
+                          </Text>
+                        </GlassView>
+                      </Pressable>
+                    ))}
+                  </View>
+                </View>
+              ))}
+            </View>
+          ))
+        : (
+          <View style={styles.gridRow}>
+            {categories.map((c) => (
+              <Pressable
+                key={c.id}
+                onPress={() => onSelect(c)}
+                style={[styles.gridCardPressable, isMobile && styles.gridCardPressableMobile]}
+                accessibilityRole="button"
+                accessibilityLabel={`Create ${c.label}`}
+                accessibilityHint={c.description}
+              >
+                <GlassView intensity={10} style={[styles.gridCard, { borderColor: colors.borderLight }]}>
+                  <View style={[styles.gridIcon, { backgroundColor: c.color + '15' }]}>
+                    <Ionicons name={c.icon} size={24} color={c.color} />
+                  </View>
+                  <Text style={[styles.gridLabel, { color: colors.text }]}>{c.label}</Text>
+                  <Text style={[styles.gridSub, { color: colors.textTertiary }]} numberOfLines={2}>
+                    {c.purpose}
+                  </Text>
+                </GlassView>
+              </Pressable>
+            ))}
+          </View>
+        )}
     </Animated.View>
   );
 }
@@ -166,6 +216,31 @@ const styles = StyleSheet.create({
   groupTabText: {
     fontSize: 12,
     fontFamily: 'Poppins_600SemiBold',
+  },
+  catalogSection: {
+    gap: 12,
+  },
+  sectionHeader: {
+    gap: 4,
+    paddingTop: 4,
+  },
+  sectionTitle: {
+    ...TextStyles.title3,
+    fontSize: 17,
+  },
+  sectionSubtitle: {
+    fontSize: 13,
+    fontFamily: 'Poppins_500Medium',
+    lineHeight: 18,
+  },
+  subsection: {
+    gap: 8,
+  },
+  subsectionTitle: {
+    fontSize: 12,
+    fontFamily: 'Poppins_600SemiBold',
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
   },
   gridRow: {
     flexDirection: 'row',

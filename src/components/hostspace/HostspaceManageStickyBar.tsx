@@ -14,7 +14,11 @@ interface HostspaceManageStickyBarProps {
   onTabChange: (tab: HostspaceManageTab) => void;
 }
 
-export function HostspaceManageStickyBar({ hPad, activeTab, onTabChange }: HostspaceManageStickyBarProps) {
+export function HostspaceManageStickyBar({
+  hPad,
+  activeTab,
+  onTabChange,
+}: HostspaceManageStickyBarProps) {
   const colors = useColors();
 
   return (

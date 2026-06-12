@@ -8,6 +8,9 @@ import { CultureTokens, FontFamily, Radius } from '@/design-system/tokens/theme'
 import { VALIDATION_TIMING } from '@/modules/host/schemas/validationRules';
 import { api } from '@/lib/api';
 
+/** Host pages store contact on the page draft; legacy profiles use the profiles API. */
+export type EmailFieldStorage = 'host-page' | 'profile';
+
 export interface EmailFieldProps {
   /** Current email value */
   value: string;
@@ -31,6 +34,12 @@ export interface EmailFieldProps {
   disabled?: boolean;
   /** Initial verified state (e.g., when editing existing profile) */
   initialVerified?: boolean;
+  /** Where contact data is persisted — defaults to host page wizard flow. */
+  storage?: EmailFieldStorage;
+  /** Required when `storage` is `profile` — never use the legacy `current` alias. */
+  profileId?: string;
+  /** Optional hook to persist or trigger verification (e.g. host page autosave). */
+  onSendVerification?: (email: string) => Promise<void>;
 }
 
 /**
@@ -67,6 +76,9 @@ export function EmailField({
   supportDomainVerification = false,
   disabled = false,
   initialVerified = false,
+  storage = 'host-page',
+  profileId,
+  onSendVerification,
 }: EmailFieldProps) {
   const colors = useColors();
   const [isValidating, setIsValidating] = useState(false);
@@ -139,18 +151,24 @@ export function EmailField({
 
     try {
       setIsSending(true);
-      // Call API to send verification email
-      await api.profiles.update('current', {
-        publicEmail: value,
-      } as any);
+      if (onSendVerification) {
+        await onSendVerification(value);
+      } else if (storage === 'profile') {
+        if (!profileId) {
+          throw new Error('Profile id is required to verify email');
+        }
+        await api.profiles.update(profileId, { publicEmail: value } as Parameters<typeof api.profiles.update>[1]);
+      }
+      // Host-page flow: email is already in wizard form state; confirmation happens on publish/review.
       setVerificationSent(true);
+      setValidationError(null);
     } catch (err) {
       if (__DEV__) console.error('Failed to send verification email:', err);
       setValidationError('Failed to send verification email. Please try again.');
     } finally {
       setIsSending(false);
     }
-  }, [isValid, isVerified, isSending, value]);
+  }, [isValid, isVerified, isSending, onSendVerification, profileId, storage, value]);
 
   const handleRequestDomainVerification = useCallback(async () => {
     if (!supportDomainVerification || !isValid) return;
@@ -263,7 +281,9 @@ export function EmailField({
             >
               <Ionicons name="mail-outline" size={16} color={colors.textSecondary} />
               <Text style={[styles.badgeText, { color: colors.textSecondary }]}>
-                Verification email sent — check your inbox
+                {storage === 'host-page'
+                  ? 'Email saved — confirmed when your page is published'
+                  : 'Verification email sent — check your inbox'}
               </Text>
             </View>
           ) : (
@@ -277,7 +297,7 @@ export function EmailField({
               accessibilityLabel="Send verification email"
               accessibilityHint="Sends a verification link to the email address you entered"
             >
-              Send Verification Email
+              {storage === 'host-page' ? 'Confirm email' : 'Send Verification Email'}
             </Button>
           )}
 

@@ -126,7 +126,8 @@ export function remapLegacyPath(path: string): string {
   if (cleanPath.startsWith('/hostspace/create/')) {
     const segment = cleanPath.slice('/hostspace/create/'.length).split('/')[0];
     if (segment === 'listing') return `/hostspace/listing${querySuffix}`;
-    if (segment === 'page' || !segment) return `/hostspace/create${querySuffix}`;
+    if (segment === 'page') return `/hostspace/create/page${querySuffix}`;
+    if (!segment) return `/hostspace/create${querySuffix}`;
     return `/hostspace/${segment}/create${querySuffix}`;
   }
 
@@ -139,9 +140,18 @@ export function remapLegacyPath(path: string): string {
 
   if (cleanPath === '/hostspace') {
     const qs = new URLSearchParams(querySuffix.replace(/^\?/, ''));
-    if (qs.get('panel') === 'create') {
-      const category = qs.get('category');
-      const entityType = qs.get('entityType');
+    const panel = qs.get('panel');
+    const category = qs.get('category');
+    const entityType = qs.get('entityType');
+    const hasCreateIntent =
+      panel === 'create' ||
+      Boolean(category) ||
+      Boolean(entityType) ||
+      Boolean(qs.get('draftId')) ||
+      Boolean(qs.get('pageId')) ||
+      Boolean(qs.get('template'));
+
+    if (hasCreateIntent) {
       qs.delete('panel');
       qs.delete('category');
       qs.delete('entityType');

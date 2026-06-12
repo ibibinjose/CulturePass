@@ -6,7 +6,7 @@ describe('resolveCreationDataflow', () => {
     const flow = resolveCreationDataflow({
       id: 'event',
       entityType: 'event',
-      group: 'events',
+      group: 'communities',
       kind: 'content',
       contentKind: 'event',
       requiresParent: true,
@@ -34,7 +34,7 @@ describe('resolveCreationDataflow', () => {
     const flow = resolveCreationDataflow({
       id: 'offer',
       entityType: 'business',
-      group: 'events',
+      group: 'communities',
       kind: 'content',
       contentKind: 'offer',
       requiresParent: true,

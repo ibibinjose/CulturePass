@@ -269,11 +269,13 @@ export default function CreateEventScreen() {
   const searchParams = useLocalSearchParams<{
     editId?: string | string[];
     publisherProfileId?: string | string[];
+    pageId?: string | string[];
     venueProfileId?: string | string[];
   }>();
   const editId = asStringParam(searchParams.editId);
   const isEditing = !!editId;
-  const publisherProfileIdPrefill = asStringParam(searchParams.publisherProfileId);
+  const publisherProfileIdPrefill =
+    asStringParam(searchParams.pageId) ?? asStringParam(searchParams.publisherProfileId);
   const venueProfileIdPrefill = asStringParam(searchParams.venueProfileId);
   const colors = useColors();
   const s = getStyles(colors);

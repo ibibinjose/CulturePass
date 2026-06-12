@@ -138,8 +138,16 @@ describe('Route Utilities', () => {
       expect(remapLegacyPath('/pages/create?category=community')).toBe('/hostspace/community/create');
       expect(remapLegacyPath('/pages/create/listing')).toBe('/hostspace/listing');
       expect(remapLegacyPath('/hostspace/create')).toBe('/hostspace/create');
+      expect(remapLegacyPath('/hostspace/create/page')).toBe('/hostspace/create/page');
+      expect(remapLegacyPath('/hostspace/create/page?entityType=community')).toBe(
+        '/hostspace/create/page?entityType=community',
+      );
       expect(remapLegacyPath('/event/create')).toBe('/hostspace/event/create');
       expect(remapLegacyPath('/hostspace?panel=create&category=venue')).toBe('/hostspace/venue/create');
+      expect(remapLegacyPath('/hostspace?category=community&intent=onboarding')).toBe(
+        '/hostspace/community/create?intent=onboarding',
+      );
+      expect(remapLegacyPath('/hostspace?entityType=venue')).toBe('/hostspace/venue/create');
     });
 
     test('should normalize legacy paths (restaurant, movie, shop, perk, activity)', () => {

@@ -22,13 +22,26 @@ import {
   getPageWizardStepSchemaByIndex,
   getPageWizardTotalSteps,
 } from '../schemas/pageWizardSchema';
+import { mapSubmitMutationError } from '@/features/submit/mapSubmitMutationError';
 import { useAutoSave, type SaveStatus } from './useAutoSave';
+
+export type PageWizardPublishResult =
+  | { ok: true }
+  | {
+      ok: false;
+      reason: 'step' | 'validation' | 'api';
+      issues?: { path: string; message: string }[];
+      error?: unknown;
+      message?: string;
+    };
 
 export interface UsePageWizardOptions {
   entityType: HostEntityType;
   templateId?: HostPageTemplateId;
   pageId?: string;
   draftId?: string;
+  /** Single-page org/community form — skip per-step gate on publish. */
+  singlePageForm?: boolean;
   onPublishSuccess?: (pageId: string, verificationRequired: boolean) => void;
 }
 
@@ -83,6 +96,7 @@ export function usePageWizard({
   templateId,
   pageId: initialPageId,
   draftId: initialDraftId,
+  singlePageForm = false,
   onPublishSuccess,
 }: UsePageWizardOptions) {
   const { user } = useAuth();
@@ -235,9 +249,13 @@ export function usePageWizard({
     [validationErrors],
   );
 
-  const publish = useCallback(async () => {
-    const stepValid = await validateCurrentStep();
-    if (!stepValid) return;
+  const publish = useCallback(async (): Promise<PageWizardPublishResult> => {
+    if (!singlePageForm) {
+      const stepValid = await validateCurrentStep();
+      if (!stepValid) {
+        return { ok: false, reason: 'step' };
+      }
+    }
 
     const publishResult = validateHostPagePublishFormData(formData, entityType);
     if (!publishResult.success) {
@@ -247,11 +265,22 @@ export function usePageWizard({
         errors[issue.path].push(issue.message);
       }
       setValidationErrors(errors);
-      return;
+      return { ok: false, reason: 'validation', issues: publishResult.issues };
     }
 
-    await publishMutation.mutateAsync();
-  }, [validateCurrentStep, formData, entityType, publishMutation]);
+    try {
+      await publishMutation.mutateAsync();
+      return { ok: true };
+    } catch (error) {
+      const { networkBanner } = mapSubmitMutationError(error);
+      return {
+        ok: false,
+        reason: 'api',
+        error,
+        message: networkBanner ?? 'Please try again in a moment.',
+      };
+    }
+  }, [validateCurrentStep, formData, entityType, publishMutation, singlePageForm]);
 
   return {
     entityType,

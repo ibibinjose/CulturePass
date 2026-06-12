@@ -129,6 +129,52 @@ export function CountrySelectList({
         <Text style={[styles.empty, { color: colors.textSecondary }]}>
           No country matches &quot;{query.trim()}&quot;. Try another spelling.
         </Text>
+      ) : variant === 'onboarding' ? (
+        <View style={styles.onboardingGrid} accessibilityRole="list">
+          {filtered.map((c) => {
+            const active = selectedName === c.name;
+            const borderActive = active ? CultureTokens.indigo : colors.borderLight;
+            const bg = active ? colors.primarySoft : colors.surfaceElevated;
+
+            return (
+              <Pressable
+                key={c.name}
+                onPress={() => onPick(c.name)}
+                style={({ pressed }) => [
+                  styles.onboardingTile,
+                  {
+                    backgroundColor: bg,
+                    borderColor: borderActive,
+                    ...(Platform.OS === 'ios' ? { opacity: pressed ? 0.92 : 1 } : {}),
+                  },
+                  isWeb ? ({ cursor: 'pointer' } as object) : null,
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel={`${c.name}. ${c.hint}`}
+                accessibilityState={{ selected: active }}
+              >
+                {active ? (
+                  <Ionicons
+                    name="checkmark-circle"
+                    size={14}
+                    color={CultureTokens.indigo}
+                    style={styles.onboardingTileBadge}
+                  />
+                ) : null}
+                <Text style={styles.onboardingFlag}>{c.flag}</Text>
+                <Text
+                  style={[
+                    styles.onboardingTitle,
+                    { color: active ? CultureTokens.indigo : colors.text },
+                  ]}
+                  numberOfLines={2}
+                >
+                  {c.name}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
       ) : (
         <View style={styles.list} accessibilityRole="list">
           {filtered.map((c) => {
@@ -211,7 +257,7 @@ export function CountrySelectList({
 }
 
 const styles = StyleSheet.create({
-  wrap: { gap: Spacing.md },
+  wrap: { gap: Spacing.sm },
   introBlock: { gap: 6, marginBottom: 4 },
   introTitle: {
     fontSize: 17,
@@ -234,7 +280,7 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    fontSize: 16,
+    fontSize: 17,
     fontFamily: FontFamily.medium,
     padding: 0,
     minWidth: 0,
@@ -291,5 +337,35 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 4,
     lineHeight: 16,
+  },
+  onboardingGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  onboardingTile: {
+    width: '31.5%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    minHeight: 72,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    gap: 4,
+  },
+  onboardingTileBadge: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+  },
+  onboardingFlag: {
+    fontSize: 20,
+  },
+  onboardingTitle: {
+    fontSize: 15,
+    fontFamily: FontFamily.semibold,
+    lineHeight: 19,
+    textAlign: 'center',
   },
 });

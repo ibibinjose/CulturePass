@@ -250,6 +250,7 @@ export default function ListingCreateScreen({ seedCategoryId }: { seedCategoryId
     listingSubCategory?: string | string[];
     communityCategory?: string | string[];
     publisherProfileId?: string | string[];
+    pageId?: string | string[];
     venueProfileId?: string | string[];
     editId?: string | string[];
   }>();
@@ -277,13 +278,13 @@ export default function ListingCreateScreen({ seedCategoryId }: { seedCategoryId
     if (eventRedirected.current) return;
     if (listingEntityParam !== 'event') return;
     eventRedirected.current = true;
-    const publisherProfileId = asParam(params.publisherProfileId);
+    const parentHostPageId = asParam(params.pageId) ?? asParam(params.publisherProfileId);
     navigateToCreateById('event', {
       source: 'listing_wizard_event_redirect',
-      parentProfileId: publisherProfileId,
+      parentHostPageId,
       replace: true,
     });
-  }, [listingEntityParam, params.publisherProfileId]);
+  }, [listingEntityParam, params.pageId, params.publisherProfileId]);
 
   const initialEntity: Profile['entityType'] =
     listingEntityParam && listingEntityParam !== 'event' ? listingEntityParam : 'business';
@@ -357,6 +358,7 @@ export default function ListingCreateScreen({ seedCategoryId }: { seedCategoryId
       'listingSubCategory',
       'communityCategory',
       'publisherProfileId',
+      'pageId',
       'venueProfileId',
       'editId',
     ] as const;
@@ -391,7 +393,7 @@ export default function ListingCreateScreen({ seedCategoryId }: { seedCategoryId
       storage: flow.storage,
       manageTab: flow.manageTab,
       source: editingCommunityId || form.draftProfileId ? 'listing_edit' : 'listing_wizard',
-      parentProfileId: asParam(params.publisherProfileId),
+      parentProfileId: asParam(params.pageId) ?? asParam(params.publisherProfileId),
       entityType: form.entityType,
       subCategory: listingSubCategory,
     };
@@ -401,6 +403,7 @@ export default function ListingCreateScreen({ seedCategoryId }: { seedCategoryId
     form.draftProfileId,
     form.entityType,
     listingSubCategory,
+    params.pageId,
     params.publisherProfileId,
   ]);
 

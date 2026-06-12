@@ -12,7 +12,8 @@ import {
   ActivityIndicator,
   Pressable,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { Redirect, useRouter } from 'expo-router';
+import { showUserAlert } from '@/lib/showUserAlert';
 import { buildHostspaceCreateHref } from '@/constants/navigation/createNav';
 import { useM3Colors } from '@/hooks/useM3Colors';
 import { useLayout } from '@/hooks/useLayout';
@@ -132,6 +133,30 @@ function PageProWizardInner({
     if (onCancel) onCancel();
     else router.replace(buildHostspaceCreateHref() as never);
   };
+
+  const handlePublish = async () => {
+    const result = await wizard.publish();
+    if (result.ok) return;
+    if (result.reason === 'validation' && result.issues?.length) {
+      showUserAlert(
+        'Complete required fields',
+        result.issues.map((issue) => issue.message).join('\n'),
+      );
+      return;
+    }
+    if (result.reason === 'api') {
+      showUserAlert('Publish failed', result.message ?? 'Please try again in a moment.');
+      return;
+    }
+    if (result.reason === 'step') {
+      showUserAlert('Check this step', 'Fix the highlighted fields before continuing.');
+    }
+  };
+
+  if (entityType === 'community' || entityType === 'organiser' || entityType === 'organizer') {
+    const type = entityType === 'community' ? 'community' : 'organizer';
+    return <Redirect href={`/hostspace/create/page?type=${type}` as never} />;
+  }
 
   if (published) {
     return (
@@ -456,7 +481,7 @@ function PageProWizardInner({
           </M3Button>
         ) : (
           <M3Button
-            onPress={() => void wizard.publish()}
+            onPress={() => void handlePublish()}
             loading={wizard.isPublishing}
             accessibilityLabel="Publish page"
             testID="page-wizard-publish"

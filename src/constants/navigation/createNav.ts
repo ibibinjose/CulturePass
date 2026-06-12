@@ -11,6 +11,9 @@ export const HOSTSPACE_PATHNAME = '/hostspace' as const;
 /** Create catalog — category grid and page selector. */
 export const HOSTSPACE_CREATE_CATALOG_PATHNAME = '/hostspace/create' as const;
 
+/** Unified create-a-page form (organisation & community types). */
+export const HOSTSPACE_CREATE_PAGE_PATHNAME = '/hostspace/create/page' as const;
+
 /** @deprecated Query panel on /hostspace — redirects to /hostspace/create */
 export const HOSTSPACE_CREATE_PANEL = 'create' as const;
 
@@ -31,6 +34,12 @@ export const DOMAIN_LISTING_WIZARD_PATHNAME = '/(domain)/listing/create' as cons
 
 /** Canonical event wizard. */
 export const EVENT_WIZARD_PATHNAME = '/hostspace/event/create' as const;
+
+/** Unified organisation & community page form (all 9 org types). */
+export {
+  ORGANISATION_COMMUNITY_CREATE_PATH as ORGANISATION_COMMUNITY_CREATE_PATHNAME,
+  isOrganisationCommunityCategoryId,
+} from '@shared/creation/orgCommunity';
 
 /** @deprecated Legacy top-level event create — redirects to EVENT_WIZARD_PATHNAME */
 export const LEGACY_EVENT_WIZARD_PATHNAME = '/event/create' as const;
@@ -53,6 +62,10 @@ export function hostspaceCategoryCreatePath(categoryId: string): string {
   const id = categoryId.trim().replace(/^\/+|\/+$/g, '').toLowerCase();
   if (!id) return HOSTSPACE_CREATE_CATALOG_PATHNAME;
   if (id === 'event' || id === 'events') return EVENT_WIZARD_PATHNAME;
+  if (id === 'organisation-community' || isOrganisationCommunityCategoryId(id)) {
+    const type = id === 'organisation-community' ? 'community' : id;
+    return `${HOSTSPACE_CREATE_PAGE_PATHNAME}?type=${encodeURIComponent(type)}`;
+  }
   return `/hostspace/${id}/create`;
 }
 
@@ -122,6 +135,19 @@ export function resolveCreateLabHref(
   pathSegment?: string,
 ): string {
   const extra: Record<string, string | undefined> = {};
+
+  const segment = pathSegment?.trim().toLowerCase();
+  if (segment === 'page') {
+    return appendQuery(HOSTSPACE_CREATE_PAGE_PATHNAME, {
+      type: firstString(params.type) ?? firstString(params.category),
+      entityType:
+        firstString(params.entityType) ?? firstString(params.profileType) ?? firstString(params.pageType),
+      template: firstString(params.template),
+      draftId: firstString(params.draftId) ?? firstString(params.draft),
+      pageId: firstString(params.pageId),
+      intent: firstString(params.intent),
+    });
+  }
 
   const category = pathSegment?.trim() || firstString(params.category);
   if (category) extra.category = category;

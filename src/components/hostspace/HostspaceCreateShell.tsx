@@ -5,6 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useQuery } from '@tanstack/react-query';
 
 import { HostspaceHeroShell } from '@/components/hostspace/HostspaceHeroShell';
+import { HostspaceHubNav } from '@/components/hostspace/HostspaceHubNav';
 import { HostspaceStickyBar } from '@/components/hostspace/HostspaceStickyBar';
 import {
   hostspaceCreateHeroHeight,
@@ -16,13 +17,14 @@ import { useLayout } from '@/hooks/useLayout';
 import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import { useAuth } from '@/lib/auth';
 import { api } from '@/lib/api';
+import { hostApi } from '@/modules/host/api';
 import { Luxe } from '@/design-system/tokens/luxeHeritage';
 import { navigateToCreateById } from '@/lib/creationRouting';
 import { findCategory } from '@/modules/host/config/hostspaceCreateCategories.config';
 
 interface HostspaceCreateShellProps {
   children: ReactNode;
-  /** Page Pro wizard, category form, or catalog selector */
+  /** Creation Lab catalog, category form, or Page Pro wizard */
   flow: 'catalog' | 'category' | 'wizard';
   categoryId?: string;
 }
@@ -35,36 +37,38 @@ export function HostspaceCreateShell({ children, flow, categoryId }: HostspaceCr
   const { user } = useAuth();
 
   const mode: HostspaceShellMode =
-    flow === 'wizard' ? 'wizard' : flow === 'category' ? 'create' : 'create-page';
+    flow === 'wizard' ? 'wizard' : flow === 'category' ? 'create' : 'create';
 
   const categoryLabel = categoryId ? findCategory(categoryId).label : undefined;
   const showHero = flow !== 'wizard';
   const heroHeight = hostspaceCreateHeroHeight(isDesktop);
 
   const { data: listingData, isLoading: listingCountLoading } = useQuery({
-    queryKey: ['hostspace-create-live-count'],
+    queryKey: ['hostspace-create-live-count', user?.id],
     queryFn: async () => {
-      const [profiles, shop] = await Promise.all([
-        api.profiles.my(),
+      const [pages, shop, events] = await Promise.all([
+        hostApi.hostPages.my(),
         api.cultureShop.getListings({ mine: true, limit: 48 }),
+        user?.id ? hostApi.events.list(user.id) : Promise.resolve({ events: [] }),
       ]);
       return {
-        profiles: profiles?.length ?? 0,
+        pages: pages?.length ?? 0,
         shop: shop?.listings?.length ?? 0,
+        events: events?.events?.length ?? 0,
       };
     },
     enabled: !!user && flow !== 'wizard',
     staleTime: 30_000,
   });
 
-  const liveListingCount = (listingData?.profiles ?? 0) + (listingData?.shop ?? 0);
+  const liveListingCount = (listingData?.pages ?? 0) + (listingData?.shop ?? 0);
 
   const stats = useMemo(
     () => [
-      { icon: 'document-text-outline' as const, value: listingData?.profiles ?? '—', label: 'Profiles', color: Luxe.colors.indigo },
+      { icon: 'document-text-outline' as const, value: listingData?.pages ?? '—', label: 'Host pages', color: Luxe.colors.indigo },
       { icon: 'storefront-outline' as const, value: listingData?.shop ?? '—', label: 'Market', color: Luxe.colors.emerald },
-      { icon: 'calendar-outline' as const, value: '—', label: 'Events', color: Luxe.colors.appBlue },
-      { icon: 'people-outline' as const, value: '—', label: 'Communities', color: Luxe.colors.plum },
+      { icon: 'calendar-outline' as const, value: listingData?.events ?? '—', label: 'Events', color: Luxe.colors.appBlue },
+      { icon: 'people-outline' as const, value: listingData?.pages ?? '—', label: 'Orgs', color: Luxe.colors.plum },
     ],
     [listingData],
   );
@@ -72,18 +76,18 @@ export function HostspaceCreateShell({ children, flow, categoryId }: HostspaceCr
   const quickActions = useMemo(
     () => [
       {
+        key: 'org',
+        label: 'Org page',
+        icon: 'people-outline' as const,
+        color: Luxe.colors.plum,
+        onPress: () => navigateToCreateById('organisation-community', { source: 'hostspace_create_shell_org' }),
+      },
+      {
         key: 'event',
         label: 'New event',
         icon: 'calendar-outline' as const,
         color: Luxe.colors.appBlue,
         onPress: () => navigateToCreateById('event', { source: 'hostspace_create_shell_event' }),
-      },
-      {
-        key: 'community',
-        label: 'Community',
-        icon: 'people-outline' as const,
-        color: Luxe.colors.plum,
-        onPress: () => navigateToCreateById('community', { source: 'hostspace_create_shell_community' }),
       },
       {
         key: 'market',
@@ -103,17 +107,23 @@ export function HostspaceCreateShell({ children, flow, categoryId }: HostspaceCr
     [],
   );
 
+  const isOrgCommunityFlow = categoryId === 'organisation-community' || categoryId === 'organisation';
+
   const headline =
     flow === 'catalog'
-      ? 'Create a Page'
-      : flow === 'category'
-        ? categoryLabel ?? 'Create'
-        : 'HostSpace';
+      ? 'Creation Lab'
+      : flow === 'category' && isOrgCommunityFlow
+        ? 'Organisations & Communities'
+        : flow === 'category'
+          ? categoryLabel ?? 'Create'
+          : 'HostSpace';
 
   const subtitle =
     flow === 'catalog'
-      ? 'Your Page is your home on CulturePass — communities, venues, businesses, and creators.'
-      : 'Draft events, listings, offers, and marketplace products from one studio.';
+      ? 'Orgs & Communities, Venues, Businesses, CultureMarket, and Templates — all from one studio.'
+      : flow === 'category' && isOrgCommunityFlow
+        ? 'One unified form — pick Community, Organizer, Association, Organisation, NGO, Charity, Government, Council, or Club or Society.'
+        : 'Draft events, listings, offers, and marketplace products from one studio.';
 
   if (flow === 'wizard') {
     return (
@@ -137,7 +147,9 @@ export function HostspaceCreateShell({ children, flow, categoryId }: HostspaceCr
         categoryLabel={categoryLabel}
         liveListingCount={liveListingCount}
         listingCountLoading={listingCountLoading}
-      />
+      >
+        <HostspaceHubNav activePanel="create" hPad={hPad} />
+      </HostspaceStickyBar>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[

@@ -9,7 +9,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { router } from 'expo-router';
-import { navigateToCreateById } from '@/lib/creationRouting';
+import { navigateToCreateById, navigateToCreate } from '@/lib/creationRouting';
+import { ORGANISATION_COMMUNITY_CATALOG_CATEGORY } from '@/modules/host/config/hostspaceCreateCategories.config';
+import { HOSTSPACE_CREATE_PAGE_PATHNAME } from '@/constants/navigation/createNav';
 import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import { useColors } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
@@ -42,24 +44,6 @@ interface EntityCard {
 }
 
 const ENTITY_TYPES: EntityCard[] = [
-  {
-    type: 'community',
-    icon: 'people-outline',
-    title: 'Community',
-    description: 'Launch a diaspora group or cultural association with free, paid, or invite-only membership.',
-    color: Luxe.colors.dark.accent,
-    requiresVerification: false,
-    category: 'communities',
-  },
-  {
-    type: 'organiser',
-    icon: 'flag-outline',
-    title: 'Organiser',
-    description: 'The producing brand behind festivals, series, and ticketing experiences.',
-    color: Luxe.colors.dark.accent,
-    requiresVerification: true,
-    category: 'communities',
-  },
   {
     type: 'venue',
     icon: 'location-outline',
@@ -99,9 +83,17 @@ const ENTITY_TYPES: EntityCard[] = [
 ];
 
 const CATEGORY_LABELS: Record<string, string> = {
-  communities: 'Communities & Organisers',
+  communities: 'Organisations & Communities',
   venues: 'Venues & Spaces',
   businesses: 'Businesses & Creators',
+};
+
+const ORG_COMMUNITY_CARD = {
+  icon: 'people-outline' as const,
+  title: 'Organisations & Communities',
+  description:
+    'One form with a dropdown — Community, Organizer, Association, Organisation, NGO, Charity, Government, Council, and Club or Society.',
+  color: CultureTokens.teal,
 };
 
 export function CreatePageSelector({
@@ -117,14 +109,20 @@ export function CreatePageSelector({
   const isNationBuilder = intent === 'nation-builder';
 
   const groupedTypes = useMemo(() => {
-    const groups: Record<string, EntityCard[]> = { communities: [], venues: [], businesses: [] };
+    const groups: Record<string, EntityCard[]> = { venues: [], businesses: [] };
     ENTITY_TYPES.forEach((t) => groups[t.category].push(t));
     return groups;
   }, []);
 
+  const openOrganisationCommunityForm = () => {
+    navigateToCreate(ORGANISATION_COMMUNITY_CATALOG_CATEGORY, {
+      source: 'create_page_selector_org_community',
+      replace: true,
+    });
+  };
+
   const hasPage = (type: PageEntityType) =>
-    existingPages.some((p) => p.entityType === type || (type === 'organiser' && p.entityType === 'organizer')) ||
-    existingProfiles.some((p) => p.entityType === type);
+    existingPages.some((p) => p.entityType === type || (type === 'organiser' && p.entityType === 'organizer'));
 
   const renderCard = (entity: EntityCard, index: number) => {
     const alreadyCreated = hasPage(entity.type);
@@ -179,9 +177,52 @@ export function CreatePageSelector({
     <>
         {embedded ? (
           <Text style={[styles.sectionLead, { color: colors.textSecondary }]}>
-            Which option is best for you?
+            Six creation paths — pick a page type, host content, market listing, or template.
           </Text>
         ) : null}
+
+        <View style={styles.categorySection}>
+          <Text style={[styles.categoryLabel, { color: colors.textSecondary }]}>
+            {CATEGORY_LABELS.communities}
+          </Text>
+          <View style={[styles.cardsGrid, isDesktop && styles.cardsGridDesktop]}>
+            <Animated.View
+              entering={FadeInDown.delay(0).springify()}
+              style={[styles.cardWrapper, isDesktop && styles.cardWrapperDesktop, isCompact && styles.cardWrapperCompact]}
+            >
+              <Pressable
+                onPress={openOrganisationCommunityForm}
+                style={({ pressed }) => [styles.cardPressable, pressed && styles.cardPressed]}
+                accessibilityRole="button"
+                accessibilityLabel={`Create ${ORG_COMMUNITY_CARD.title}. ${ORG_COMMUNITY_CARD.description}`}
+                accessibilityHint={`Opens ${HOSTSPACE_CREATE_PAGE_PATHNAME}`}
+              >
+                <LuxeCard
+                  style={[
+                    styles.card,
+                    { backgroundColor: colors.surface, borderColor: ORG_COMMUNITY_CARD.color + '44' },
+                  ]}
+                >
+                  <View style={[styles.iconContainer, { backgroundColor: ORG_COMMUNITY_CARD.color + '18' }]}>
+                    <Ionicons name={ORG_COMMUNITY_CARD.icon} size={32} color={ORG_COMMUNITY_CARD.color} />
+                  </View>
+                  <View style={styles.cardContent}>
+                    <View style={styles.titleRow}>
+                      <Text style={[styles.title, { color: colors.text }]}>{ORG_COMMUNITY_CARD.title}</Text>
+                      <Badge variant="success" size="sm" style={{ marginLeft: 6 }}>
+                        Unified form
+                      </Badge>
+                    </View>
+                    <Text style={[styles.description, { color: colors.textSecondary }]} numberOfLines={4}>
+                      {ORG_COMMUNITY_CARD.description}
+                    </Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
+                </LuxeCard>
+              </Pressable>
+            </Animated.View>
+          </View>
+        </View>
 
         {Object.entries(groupedTypes).map(([category, types]) => (
           <View key={category} style={styles.categorySection}>
@@ -193,7 +234,9 @@ export function CreatePageSelector({
         ))}
 
         <View style={styles.templatesSection}>
-          <Text style={[styles.categoryLabel, { color: colors.textSecondary }]}>Start with a template</Text>
+          <Text style={[styles.categoryLabel, { color: colors.textSecondary }]}>
+            Page Pro Templates (5)
+          </Text>
           <View style={styles.templatesGrid}>
             {PAGE_TEMPLATES.map((tpl) => (
               <Pressable

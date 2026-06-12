@@ -4,6 +4,7 @@
  */
 
 import { resolveCreationDataflow, type CreationCategoryInput, type CreationWizard } from './dataflow';
+import { isOrganisationCommunityCategoryId, ORGANISATION_COMMUNITY_CREATE_PATH } from './orgCommunity';
 
 const EVENT_CREATE_PATH = '/hostspace/event/create';
 const HOSTSPACE_CREATE_CATALOG = '/hostspace/create';
@@ -15,7 +16,10 @@ function hostspaceCategoryCreatePath(categoryId: string): string {
 }
 
 export interface CreateNavigationOpts {
+  /** @deprecated Host pages replaced legacy profiles — use parentHostPageId. */
   parentProfileId?: string;
+  /** Org/community host page that owns child listings and events. */
+  parentHostPageId?: string;
   editId?: string;
   pageId?: string;
   draftId?: string;
@@ -58,9 +62,33 @@ export function resolveCreateNavigation(
       if (opts.templateId) params.template = opts.templateId;
       if (opts.intent) params.intent = opts.intent;
       if (opts.editId) params.editId = opts.editId;
+      if (isOrganisationCommunityCategoryId(category.id)) {
+        params.type = category.id;
+      } else if (category.id === 'organisation-community') {
+        params.type = 'community';
+      } else if (category.group === 'templates') {
+        const et = category.entityType;
+        if (et === 'community') params.type = 'community';
+        if (et === 'organizer' || et === 'organiser') params.type = 'organizer';
+      }
+      const orgUnifiedPath =
+        isOrganisationCommunityCategoryId(category.id) ||
+        category.id === 'organisation-community' ||
+        (category.group === 'templates' &&
+          (category.entityType === 'community' ||
+            category.entityType === 'organizer' ||
+            category.entityType === 'organiser'));
+      const templatePageProPath =
+        category.group === 'templates' && !orgUnifiedPath
+          ? hostspaceCategoryCreatePath(
+              category.entityType === 'organizer' || category.entityType === 'organiser'
+                ? 'organizer'
+                : category.entityType,
+            )
+          : hostspaceCategoryCreatePath(category.id);
       return {
         wizard: flow.wizard,
-        pathname: hostspaceCategoryCreatePath(category.id),
+        pathname: orgUnifiedPath ? ORGANISATION_COMMUNITY_CREATE_PATH : templatePageProPath,
         params,
         layer: flow.layer,
         storage: flow.storage,
@@ -68,8 +96,9 @@ export function resolveCreateNavigation(
         requiresParent: flow.requiresParent,
       };
 
-    case 'event':
-      if (opts.parentProfileId) params.publisherProfileId = opts.parentProfileId;
+    case 'event': {
+      const parentPageId = opts.parentHostPageId ?? opts.parentProfileId;
+      if (parentPageId) params.pageId = parentPageId;
       if (opts.editId) params.editId = opts.editId;
       return {
         wizard: flow.wizard,
@@ -80,9 +109,11 @@ export function resolveCreateNavigation(
         manageTab: flow.manageTab,
         requiresParent: flow.requiresParent,
       };
+    }
 
-    case 'listing':
-      if (opts.parentProfileId) params.publisherProfileId = opts.parentProfileId;
+    case 'listing': {
+      const parentPageId = opts.parentHostPageId ?? opts.parentProfileId;
+      if (parentPageId) params.pageId = parentPageId;
       if (opts.editId) params.editId = opts.editId;
       return {
         wizard: flow.wizard,
@@ -93,6 +124,7 @@ export function resolveCreateNavigation(
         manageTab: flow.manageTab,
         requiresParent: flow.requiresParent,
       };
+    }
 
     case 'culture-market':
       if (opts.editId) params.edit = opts.editId;

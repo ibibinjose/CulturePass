@@ -21,7 +21,8 @@ import { useOnboarding } from '@/contexts/OnboardingContext';
 import { useColors } from '@/hooks/useColors';
 import { useM3Colors } from '@/hooks/useM3Colors';
 import { useLayout } from '@/hooks/useLayout';
-import { luxeDark } from '@/design-system/tokens/luxeHeritage';
+import { useOnboardingTheme } from '@/hooks/useOnboardingTheme';
+import { luxeDark, luxeLight } from '@/design-system/tokens/luxeHeritage';
 import { LuxeText } from '@/design-system/ui/LuxeText';
 import { LuxeCard } from '@/design-system/ui/LuxeCard';
 import { LuxeButton } from '@/design-system/ui/LuxeButton';
@@ -48,6 +49,8 @@ import { getCountryFlag ,
 import { api } from '@/lib/api';
 import { syncUserMarketplaceLocation } from '@/lib/syncMarketplaceLocation';
 import { CountrySelectList } from '@/components/location/CountrySelectList';
+import { showUserAlert } from '@/lib/showUserAlert';
+import { OnboardingRestartLink } from '@/components/onboarding/OnboardingFlowPrimitives';
 
 // Define types directly since they may not be properly exported
 type AustralianState = {
@@ -120,6 +123,8 @@ const australianStatesFallback: { code: string; name: string; emoji: string; cit
 
 export default function LocationScreen() {
   const colors = useColors();
+  const { au, isDark } = useOnboardingTheme();
+  const luxe = isDark ? luxeDark : luxeLight;
   const m3Colors = useM3Colors();
   const { isDesktop, windowSizeClass, hPad = 16 } = useLayout();
   const searchParams = useLocalSearchParams();
@@ -128,7 +133,7 @@ export default function LocationScreen() {
 
   const { user } = useAuth();
   const { state, setCountry, setCity, setCouncil } = useOnboarding();
-  const { states, getStateForCity, isLoading: locationsLoading, error: locationsError } = useLocations();
+  const { states, getStateForCity, isLoading: locationsLoading } = useLocations();
 
   // City detection — marketplace countries (region step)
   const { detect: detectCity, status: cityDetectStatus } = useNearestMarketplaceLocation();
@@ -199,15 +204,17 @@ export default function LocationScreen() {
       councilStatus === 'idle';
 
     if (shouldAutoDetectCouncil) {
-      // Small micro-delay via setTimeout(0) to let the step transition and any pending location promises settle.
-      // Much safer and shorter than the previous 1500ms hardcoded delay.
       const t = setTimeout(() => {
-        void detectCouncil();
+        void detectCouncil({
+          city: state.city,
+          state: pendingState || getStateForCity(state.city) || undefined,
+          country: 'Australia',
+        });
       }, 0);
 
       return () => clearTimeout(t);
     }
-  }, [step, pendingCountry, state.city, detectedCouncil, councilStatus, detectCouncil]);
+  }, [step, pendingCountry, state.city, pendingState, detectedCouncil, councilStatus, detectCouncil, getStateForCity]);
 
   // ---------------------------------------------------------------------------
   // Navigation helpers
@@ -343,13 +350,41 @@ export default function LocationScreen() {
     }
   };
 
+  const councilDetectContext = useMemo(
+    () => ({
+      city: state.city || undefined,
+      state: pendingState || getStateForCity(state.city) || undefined,
+      country: 'Australia',
+    }),
+    [state.city, pendingState, getStateForCity],
+  );
+
   const handleDetectCouncil = async () => {
     if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    const result = await detectCouncil();
-    if (result?.council) {
+    const outcome = await detectCouncil(councilDetectContext);
+    if (outcome?.ok) {
       if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      return;
+    }
+    if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    const failStatus = outcome && !outcome.ok ? outcome.status : 'error';
+    if (failStatus === 'denied') {
+      showUserAlert(
+        'Location Permission Required',
+        'Please allow location access to detect your local council, or continue without it.',
+      );
+    } else if (failStatus === 'unavailable') {
+      showUserAlert(
+        'Location Services Off',
+        'Turn on location services to detect your council automatically.',
+      );
     } else {
-      if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      showUserAlert(
+        'Could Not Detect Council',
+        state.city
+          ? `We could not match your position to an LGA near ${state.city}. Try again or continue without selecting a council.`
+          : 'We could not match your position to a local council. Select your city first, then try again.',
+      );
     }
   };
 
@@ -429,31 +464,32 @@ export default function LocationScreen() {
         style={[
           s.gpsSuggestCard,
           {
-            backgroundColor: luxeDark.primaryContainer,
-            marginBottom: 16,
+            backgroundColor: au.blue,
+            marginBottom: 12,
           },
         ]}
-      ><View style={[s.gpsSuggestIconWrap, { backgroundColor: luxeDark.onPrimaryContainer + '20' }]}>
-          <Ionicons name="navigate-circle" size={24} color={luxeDark.onPrimaryContainer} />
+      ><View style={[s.gpsSuggestIconWrap, { backgroundColor: 'rgba(255,255,255,0.15)' }]}>
+          <Ionicons name="navigate-circle" size={20} color="#FFFFFF" />
         </View>
         <View style={s.gpsSuggestTextWrap}>
-          <LuxeText variant="badgeCaps" style={{ color: luxeDark.onPrimaryContainer }}>SUGGESTED FOR YOU</LuxeText>
-          <LuxeText variant="title3" style={{ color: luxeDark.onPrimaryContainer }}>
+          <LuxeText variant="badgeCaps" style={{ color: au.red }}>SUGGESTED FOR YOU</LuxeText>
+          <LuxeText variant="title3" style={{ color: '#FFFFFF' }}>
             {getCountryFlag(gpsCountry)}{'  '}{gpsCountry}
           </LuxeText>
         </View>
-        <Ionicons name="chevron-forward" size={18} color={luxeDark.onPrimaryContainer} /></LuxeCard>
+        <Ionicons name="chevron-forward" size={18} color="#FFFFFF" /></LuxeCard>
       );
     }
 
     return (
       <LuxeButton
-        variant="tonal"
+        variant="filled"
+        gradientColors={au.gradient}
         onPress={handleDetectCountry}
         disabled={isDetectingCountry}
         loading={isDetectingCountry}
         leftIcon="navigate-circle"
-        style={{ marginBottom: 16, height: 64, borderRadius: 16 }}
+        style={{ marginBottom: 12, height: 46, borderRadius: 12 }}
       >
         Detect my country
       </LuxeButton>
@@ -494,13 +530,15 @@ export default function LocationScreen() {
                 {breadcrumbItems.map((item, i) => (
                   <React.Fragment key={i}>
                     {i > 0 && (
-                      <Ionicons name="chevron-forward" size={12} color={luxeDark.textSecondary} />
+                      <Ionicons name="chevron-forward" size={12} color={luxe.textSecondary} />
                     )}
                     <LuxeFilterChip
                       label={item.label}
                       onPress={() => {}}
                       selected={item.active}
                       compact
+                      activeBgColor={au.blueContainer}
+                      activeTextColor={au.selectedText}
                     />
                   </React.Fragment>
                 ))}
@@ -520,10 +558,10 @@ export default function LocationScreen() {
                           style={[
                             s.desktopStepDot,
                             isDone
-                              ? { backgroundColor: CultureTokens.teal, borderColor: CultureTokens.teal }
+                              ? { backgroundColor: au.blue, borderColor: au.blue }
                               : isActive
                                 ? {
-                                    borderColor: CultureTokens.gold,
+                                    borderColor: au.red,
                                     borderWidth: 2.5,
                                     backgroundColor: colors.surfaceSecondary,
                                   }
@@ -540,13 +578,13 @@ export default function LocationScreen() {
                               style={[
                                 s.desktopDotInner,
                                 isActive
-                                  ? { backgroundColor: CultureTokens.gold }
+                                  ? { backgroundColor: au.red }
                                   : { backgroundColor: colors.textTertiary },
                               ]}
                             />
                           )}
                         </View>
-                        <Text style={[s.desktopStepLabel, { color: isActive ? colors.text : colors.textTertiary }]}>
+                        <Text style={[s.desktopStepLabel, { color: isActive ? au.heading : colors.textTertiary }]}>
                           {STEP_LABELS[i]}
                         </Text>
                       </View>
@@ -554,7 +592,7 @@ export default function LocationScreen() {
                         <View
                           style={[
                             s.desktopStepLine,
-                            { backgroundColor: isDone ? CultureTokens.teal : colors.borderLight },
+                            { backgroundColor: isDone ? au.blue : colors.borderLight },
                           ]}
                         />
                       )}
@@ -570,13 +608,25 @@ export default function LocationScreen() {
 
             {/* Step icon + title */}
             <View style={s.headerBlock}>
-              <View style={[s.iconWrapper, { backgroundColor: luxeDark.primaryContainer }]}>
+              <View style={[s.iconWrapper, { backgroundColor: au.blueContainer, borderWidth: 2, borderColor: au.red }]}>
                 <Animated.View key={step} entering={FadeIn.duration(200)}>
-                  <Ionicons name={STEP_ICON[step]} size={34} color={luxeDark.onPrimaryContainer} />
+                  <Ionicons name={STEP_ICON[step]} size={26} color={au.onBlueSurface} />
                 </Animated.View>
               </View>
-              <LuxeText variant="display" style={[s.title, { color: luxeDark.text }]}>{STEP_TITLE[step](pendingCountry)}</LuxeText>
-              <LuxeText variant="body" style={[s.subtitle, { color: luxeDark.textSecondary }]}>{STEP_SUBTITLE[step]}</LuxeText>
+              {step !== 'city' ? (
+                <>
+                  <LuxeText variant="display" style={[s.title, { color: au.heading }]}>
+                    {STEP_TITLE[step](pendingCountry)}
+                  </LuxeText>
+                  <View style={s.titleAccentRow}>
+                    <View style={[s.titleAccentBar, { backgroundColor: au.blue }]} />
+                    <View style={[s.titleAccentBar, { backgroundColor: au.red }]} />
+                  </View>
+                  <LuxeText variant="body" style={[s.subtitle, { color: au.body }]}>
+                    {STEP_SUBTITLE[step]}
+                  </LuxeText>
+                </>
+              ) : null}
             </View>
 
             {/* Step content */}
@@ -602,66 +652,69 @@ export default function LocationScreen() {
                   {/* GPS city detect — AU only */}
                   {pendingCountry === 'Australia' && (
                     <LuxeButton
-                        variant="tonal"
+                        variant="filled"
+                        gradientColors={au.gradient}
                         onPress={handleDetectCity}
                         disabled={isDetectingCity}
                         loading={isDetectingCity}
                         leftIcon="navigate-circle"
-                        style={{ height: 64, borderRadius: 16, marginBottom: 16 }}
+                        style={{ height: 46, borderRadius: 12, marginBottom: 10 }}
                     >
                         Use my location
                     </LuxeButton>
                   )}
 
                   {pendingCountry === 'Australia' && locationsLoading && (
-                    <ActivityIndicator size="large" color={luxeDark.primary} style={{ paddingVertical: 20 }} />
+                    <ActivityIndicator size="large" color={au.blue} style={{ paddingVertical: 20 }} />
                   )}
 
-                  {/* Error state (still fully usable via hardcoded fallback grid below) */}
-                  {pendingCountry === 'Australia' && !!locationsError && !locationsLoading && (
-                    <View style={[s.errorBanner, { backgroundColor: luxeDark.error + '12', borderColor: luxeDark.error + '25' }]}>
-                      <Ionicons name="alert-circle-outline" size={20} color={luxeDark.error} />
-                      <View style={{ flex: 1, gap: 2 }}>
-                        <LuxeText variant="body" style={{ color: luxeDark.error, fontFamily: FontFamily.semibold }}>
-                          Failed to load states
+                  {/* State picker — bordered panel with header + list */}
+                  {pendingCountry === 'Australia' && !locationsLoading && (
+                    <View
+                      style={[
+                        s.statePickerPanel,
+                        {
+                          borderColor: au.panelBorder,
+                          backgroundColor: colors.surface,
+                        },
+                      ]}
+                    >
+                      <View style={s.statePickerAccent}>
+                        <View style={[s.statePickerAccentBar, { backgroundColor: au.blue }]} />
+                        <View style={[s.statePickerAccentBar, { backgroundColor: au.red }]} />
+                      </View>
+                      <View style={s.statePickerHeader}>
+                        <LuxeText
+                          variant="title3"
+                          style={{
+                            color: au.heading,
+                            textAlign: 'center',
+                            fontSize: 20,
+                            fontFamily: FontFamily.semibold,
+                          }}
+                        >
+                          Your home state
                         </LuxeText>
-                        <LuxeText variant="caption" style={{ color: luxeDark.textSecondary }}>
-                          You can still choose your state below.
+                        <LuxeText
+                          variant="caption"
+                          style={{
+                            color: au.body,
+                            textAlign: 'center',
+                            marginTop: 4,
+                            fontSize: 15,
+                            lineHeight: 20,
+                          }}
+                        >
+                          We&apos;ll prioritize cultural events and communities near you.
                         </LuxeText>
                       </View>
-                    </View>
-                  )}
-
-                  {/* Single clean header (changes based on error state) */}
-                  {pendingCountry === 'Australia' && !locationsLoading && (
-                    <View style={{ marginBottom: 12 }}>
-                      <LuxeText 
-                        variant="title3" 
-                        style={{ 
-                          color: luxeDark.text, 
-                          textAlign: 'center',
-                          fontSize: 18,
-                          fontFamily: FontFamily.semibold 
-                        }}
-                      >
-                        {locationsError ? 'Choose a state' : 'Your home state'}
-                      </LuxeText>
-                      <LuxeText 
-                        variant="caption" 
-                        style={{ 
-                          color: luxeDark.textSecondary, 
-                          textAlign: 'center', 
-                          marginTop: 4 
-                        }}
-                      >
-                        We&apos;ll prioritize cultural events and communities near you.
-                      </LuxeText>
-                    </View>
-                  )}
-
-                  {/* States — vertical list, top to bottom, one full-width card per line (clean, scannable, long names have room) */}
-                  {pendingCountry === 'Australia' && !locationsLoading && (
-                    <View style={s.stateList}>
+                      <View
+                        style={[
+                          s.statePickerDivider,
+                          { backgroundColor: au.panelBorder },
+                        ]}
+                      />
+                      <View style={s.stateList}>
                       {(() => {
                         const auRegions = (regions || []).filter((r: any) =>
                           ['NSW', 'VIC', 'QLD', 'WA', 'SA', 'TAS', 'ACT', 'NT'].includes(r.code)
@@ -685,43 +738,59 @@ export default function LocationScreen() {
                         return statesToShow.map((st) => {
                           const isSelected = st.code === pendingState;
                           return (
-                            <LuxeCard
-                              key={st.code}
-                              variant={isSelected ? 'tonal' : 'default'}
-                              onPress={() => selectRegion(st.code)}
-                              style={s.stateCard}
-                            >
-                              <View style={{ flexDirection: 'row', alignItems: 'center', padding: 14, gap: 14 }}>
-                                <Text style={{ fontSize: 26 }}>{st.emoji}</Text>
-                                <View style={{ flex: 1, minWidth: 0 }}>
+                            <View key={st.code} style={s.pickerGridItem}>
+                              <LuxeCard
+                                variant="default"
+                                onPress={() => selectRegion(st.code)}
+                                style={[
+                                  s.pickerCard,
+                                  {
+                                    borderWidth: 1.5,
+                                    borderColor: isSelected ? au.blue : au.cardBorder,
+                                    backgroundColor: isSelected ? au.selectedBg : colors.surfaceElevated,
+                                  },
+                                ]}
+                              >
+                                <View style={s.pickerCardInner}>
+                                  {isSelected ? (
+                                    <Ionicons
+                                      name="checkmark-circle"
+                                      size={16}
+                                      color={au.red}
+                                      style={s.pickerCardBadge}
+                                    />
+                                  ) : null}
+                                  <Text style={s.pickerEmoji}>{st.emoji}</Text>
                                   <LuxeText
-                                    variant="bodyMedium"
+                                    variant="caption"
                                     style={{
-                                      color: isSelected ? luxeDark.onPrimaryContainer : luxeDark.text,
+                                      color: isSelected ? au.selectedText : au.heading,
                                       fontFamily: FontFamily.semibold,
+                                      fontSize: 16,
+                                      lineHeight: 20,
+                                      textAlign: 'center',
                                     }}
-                                    numberOfLines={1}
+                                    numberOfLines={2}
                                   >
                                     {st.name}
                                   </LuxeText>
                                   <LuxeText
                                     variant="caption"
                                     style={{
-                                      color: isSelected ? luxeDark.onPrimaryContainer : luxeDark.textSecondary,
-                                      marginTop: 2,
+                                      color: isSelected ? au.onBlueMuted : au.body,
+                                      fontSize: 13,
+                                      textAlign: 'center',
                                     }}
                                   >
                                     {st.cityCount} cities
                                   </LuxeText>
                                 </View>
-                                {isSelected && (
-                                  <Ionicons name="checkmark-circle" size={22} color={luxeDark.onPrimaryContainer} />
-                                )}
-                              </View>
-                            </LuxeCard>
+                              </LuxeCard>
+                            </View>
                           );
                         });
                       })()}
+                      </View>
                     </View>
                   )}
                 </View>
@@ -729,77 +798,153 @@ export default function LocationScreen() {
 
               {/* ── City Step ── */}
               {step === 'city' && (
-                <View>
+                <View
+                  style={[
+                    s.statePickerPanel,
+                    {
+                      borderColor: au.panelBorder,
+                      backgroundColor: colors.surface,
+                    },
+                  ]}
+                >
+                  <View style={s.statePickerAccent}>
+                    <View style={[s.statePickerAccentBar, { backgroundColor: au.blue }]} />
+                    <View style={[s.statePickerAccentBar, { backgroundColor: au.red }]} />
+                  </View>
+                  <View style={s.statePickerHeader}>
+                    <LuxeText
+                      variant="title3"
+                      style={{
+                        color: au.heading,
+                        textAlign: 'center',
+                        fontSize: 20,
+                        fontFamily: FontFamily.semibold,
+                      }}
+                    >
+                      Choose your city
+                    </LuxeText>
+                    <LuxeText
+                      variant="caption"
+                      style={{
+                        color: au.body,
+                        textAlign: 'center',
+                        marginTop: 4,
+                        fontSize: 15,
+                        lineHeight: 20,
+                      }}
+                    >
+                      Pick your city and we&apos;ll show what&apos;s happening nearby.
+                    </LuxeText>
+                  </View>
                   <View
                     style={[
-                      s.searchBar,
-                      { backgroundColor: luxeDark.surfaceElevated, borderWidth: 1, borderColor: luxeDark.border, height: 56, borderRadius: 28, marginBottom: 16 },
+                      s.statePickerDivider,
+                      { backgroundColor: au.panelBorder },
                     ]}
-                  >
-                    <Ionicons name="search" size={24} color={luxeDark.textSecondary} />
-                    <TextInput
-                      style={[s.searchInput, { color: luxeDark.text, fontSize: 16, marginLeft: 12 }]}
-                      placeholder={`Search ${allCitiesForState.length} cities…`}
-                      placeholderTextColor={luxeDark.textTertiary}
-                      value={citySearch}
-                      onChangeText={setCitySearch}
-                      autoCorrect={false}
-                      autoCapitalize="words"
-                      returnKeyType="search"
-                      clearButtonMode="while-editing"
-                    />
-                    {citySearch.length > 0 && Platform.OS !== 'ios' && (
-                      <Pressable onPress={() => setCitySearch('')} hitSlop={8}>
-                        <Ionicons name="close" size={24} color={luxeDark.textSecondary} />
-                      </Pressable>
+                  />
+                  <View style={s.cityPickerBody}>
+                    <View
+                      style={[
+                        s.searchBar,
+                        {
+                          backgroundColor: colors.surfaceElevated,
+                          borderWidth: 1.5,
+                          borderColor: au.cardBorder,
+                          height: 44,
+                          borderRadius: 12,
+                          marginBottom: 8,
+                        },
+                      ]}
+                    >
+                      <Ionicons name="search" size={18} color={au.body} />
+                      <TextInput
+                        style={[s.searchInput, { color: au.heading, fontSize: 17, marginLeft: 8 }]}
+                        placeholder={`Search ${allCitiesForState.length} cities…`}
+                        placeholderTextColor={au.bodyMuted}
+                        value={citySearch}
+                        onChangeText={setCitySearch}
+                        autoCorrect={false}
+                        autoCapitalize="words"
+                        returnKeyType="search"
+                        clearButtonMode="while-editing"
+                      />
+                      {citySearch.length > 0 && Platform.OS !== 'ios' && (
+                        <Pressable onPress={() => setCitySearch('')} hitSlop={8}>
+                          <Ionicons name="close" size={18} color={au.body} />
+                        </Pressable>
+                      )}
+                    </View>
+
+                    {citiesToShow.length === 0 ? (
+                      <LuxeCard
+                        variant="default"
+                        style={[
+                          s.noResults,
+                          {
+                            borderWidth: 1.5,
+                            borderColor: au.cardBorder,
+                          },
+                        ]}
+                      >
+                        <Ionicons name="search-outline" size={48} color={au.bodyMuted} />
+                        <LuxeText variant="title3" style={{ color: au.heading }}>
+                          No cities match
+                        </LuxeText>
+                        <LuxeButton variant="glass" size="sm" onPress={() => setCitySearch('')}>
+                          Clear search
+                        </LuxeButton>
+                      </LuxeCard>
+                    ) : (
+                      <View style={s.pickerGrid}>
+                        {citiesToShow.map((city) => {
+                          const isActive = state.city === city;
+                          return (
+                            <View key={city} style={s.pickerGridItem}>
+                              <LuxeCard
+                                variant="default"
+                                onPress={() => selectCity(city)}
+                                style={[
+                                  s.pickerCard,
+                                  {
+                                    borderWidth: 1.5,
+                                    borderColor: isActive ? au.blue : au.cardBorder,
+                                    backgroundColor: isActive ? au.selectedBg : colors.surfaceElevated,
+                                  },
+                                ]}
+                              >
+                                <View style={s.pickerCardInnerCompact}>
+                                  <Ionicons
+                                    name={isActive ? 'checkmark-circle' : 'location-outline'}
+                                    size={14}
+                                    color={isActive ? au.red : au.blue}
+                                  />
+                                  <LuxeText
+                                    variant="caption"
+                                    style={{
+                                      color: isActive ? au.selectedText : au.heading,
+                                      fontFamily: FontFamily.semibold,
+                                      fontSize: 16,
+                                      lineHeight: 20,
+                                      textAlign: 'center',
+                                    }}
+                                    numberOfLines={2}
+                                  >
+                                    {city}
+                                  </LuxeText>
+                                </View>
+                              </LuxeCard>
+                            </View>
+                          );
+                        })}
+                      </View>
                     )}
                   </View>
-
-                  {citiesToShow.length === 0 ? (
-                    <LuxeCard variant="default" style={s.noResults}><Ionicons name="search-outline" size={48} color={luxeDark.textTertiary} />
-                      <LuxeText variant="title3" style={{ color: luxeDark.text }}>
-                        No cities match
-                      </LuxeText>
-                      <LuxeButton variant="glass" size="sm" onPress={() => setCitySearch('')}>Clear search</LuxeButton></LuxeCard>
-                  ) : (
-                    <View style={s.cityList}>
-                      {citiesToShow.map((city) => {
-                        const isActive = state.city === city;
-                        return (
-                          <LuxeCard
-                            key={city}
-                            variant={isActive ? 'tonal' : 'default'}
-                            onPress={() => selectCity(city)}
-                            style={s.cityCard}
-                          >
-                            <View style={{ flexDirection: 'row', alignItems: 'center', padding: 14, gap: 14 }}>
-                              <Ionicons
-                                name={isActive ? "checkmark-circle" : "location-outline"}
-                                size={22}
-                                color={isActive ? luxeDark.onPrimaryContainer : luxeDark.primary}
-                              />
-                              <LuxeText
-                                variant="bodyMedium"
-                                style={{ color: isActive ? luxeDark.onPrimaryContainer : luxeDark.text, flex: 1 }}
-                                numberOfLines={1}
-                              >
-                                {city}
-                              </LuxeText>
-                              {isActive && (
-                                <Ionicons name="checkmark-circle" size={20} color={luxeDark.onPrimaryContainer} />
-                              )}
-                            </View>
-                          </LuxeCard>
-                        );
-                      })}
-                    </View>
-                  )}
                 </View>
               )}
             </Animated.View>
 
-            {/* Back-within-flow link */}
-            {step !== 'country' && (
+            {/* Back-within-flow link — country/region only (city step uses footer panel) */}
+            {step !== 'country' && step !== 'city' && (
               <View style={s.backLinkRow}>
                 <LuxeButton
                   variant="glass"
@@ -812,54 +957,68 @@ export default function LocationScreen() {
               </View>
             )}
 
-            <View style={s.spacer} />
+            {step !== 'city' ? <View style={s.spacer} /> : null}
 
             {/* Council / LGA Detection — Slice 2 (polished) — AU only */}
             {!!state.city && (pendingCountry === 'Australia' || state.country === 'Australia') && (
-              <LuxeCard variant="default" style={{ marginBottom: 16, padding: 18 }}><View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
-                  <LuxeText variant="title3" style={{ color: luxeDark.text, flex: 1 }}>
+              <LuxeCard variant="default" style={{ marginBottom: 10, padding: 12 }}><View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+                  <LuxeText variant="title3" style={{ color: luxe.text, flex: 1, fontSize: 17 }}>
                     Local Council (LGA)
                   </LuxeText>
                   {!!detectedCouncil && !!confidence && (
-                    <LuxeText variant="badgeCaps" style={{ color: confidence === 'strong' ? luxeDark.primary : luxeDark.textSecondary }}>
+                    <LuxeText variant="badgeCaps" style={{ color: confidence === 'strong' ? au.red : luxe.textSecondary }}>
                       {confidence.toUpperCase()}
                     </LuxeText>
                   )}
                 </View>
 
-                <LuxeText variant="body" style={{ color: luxeDark.textSecondary, marginBottom: 14, fontSize: 14 }}>
+                <LuxeText variant="body" style={{ color: luxe.textSecondary, marginBottom: 10, fontSize: 15, lineHeight: 20 }}>
                   Get more tailored events and communities near you.
                 </LuxeText>
 
                 {councilStatus === 'requesting' ? (
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    <ActivityIndicator size="small" color={luxeDark.primary} />
-                    <LuxeText variant="body" style={{ color: luxeDark.textSecondary }}>Detecting your council…</LuxeText>
+                    <ActivityIndicator size="small" color={au.blue} />
+                    <LuxeText variant="body" style={{ color: luxe.textSecondary }}>Detecting your council…</LuxeText>
                   </View>
                 ) : !detectedCouncil ? (
-                  <LuxeButton
-                    variant="tonal"
-                    onPress={handleDetectCouncil}
-                    leftIcon="navigate-circle"
-                    style={{ height: 52 }}
-                  >
-                    Detect my local council
-                  </LuxeButton>
+                  <View style={{ gap: 10 }}>
+                    <LuxeButton
+                      variant="filled"
+                      gradientColors={au.gradient}
+                      onPress={handleDetectCouncil}
+                      leftIcon="navigate-circle"
+                      style={{ height: 46 }}
+                    >
+                      Detect my local council
+                    </LuxeButton>
+                    {councilStatus === 'error' ? (
+                      <LuxeText variant="caption" style={{ color: au.red, textAlign: 'center' }}>
+                        No council matched your location. Check browser location permission and try again.
+                      </LuxeText>
+                    ) : null}
+                    {councilStatus === 'denied' ? (
+                      <LuxeText variant="caption" style={{ color: au.red, textAlign: 'center' }}>
+                        Location permission is required to detect your council.
+                      </LuxeText>
+                    ) : null}
+                  </View>
                 ) : (
-                  <View style={{ backgroundColor: luxeDark.surfaceElevated, borderRadius: 12, padding: 14 }}>
+                  <View style={{ backgroundColor: luxe.surfaceElevated, borderRadius: 12, padding: 14 }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                       <View>
-                        <LuxeText variant="body" style={{ color: luxeDark.text, fontWeight: '600' }}>
+                        <LuxeText variant="body" style={{ color: luxe.text, fontWeight: '600' }}>
                           {detectedCouncil.name}
                         </LuxeText>
                         {distanceKm != null && (
-                          <LuxeText variant="caption" style={{ color: luxeDark.textSecondary, marginTop: 2 }}>
+                          <LuxeText variant="caption" style={{ color: luxe.textSecondary, marginTop: 2 }}>
                             {distanceKm.toFixed(0)} km away • {matchMethod}
                           </LuxeText>
                         )}
                       </View>
                       <LuxeButton
                         variant="filled"
+                        gradientColors={au.gradient}
                         size="sm"
                         onPress={async () => {
                           setCouncil(detectedCouncil.id, detectedCouncil.lgaCode);
@@ -889,25 +1048,78 @@ export default function LocationScreen() {
                 )}</LuxeCard>
             )}
 
-            <LuxeButton
-              variant="filled"
-              rightIcon="arrow-forward"
-              disabled={!state.country || !state.city}
-              onPress={handleNext}
-              style={{ height: 58 }}
-            >
-              Continue
-            </LuxeButton>
+            {step === 'city' ? (
+              <View
+                style={[
+                  s.locationFooterPanel,
+                  {
+                    borderColor: au.panelBorder,
+                    backgroundColor: colors.surface,
+                  },
+                ]}
+              >
+                <View style={s.statePickerAccent}>
+                  <View style={[s.statePickerAccentBar, { backgroundColor: au.blue }]} />
+                  <View style={[s.statePickerAccentBar, { backgroundColor: au.red }]} />
+                </View>
+                <View style={s.locationFooterBody}>
+                  <LuxeButton
+                    variant="glass"
+                    size="sm"
+                    onPress={goBackWithinFlow}
+                    leftIcon="arrow-back"
+                    style={{
+                      alignSelf: 'flex-start',
+                      borderWidth: 1.5,
+                      borderColor: au.cardBorder,
+                    }}
+                  >
+                    Back
+                  </LuxeButton>
+                  <LuxeButton
+                    variant="filled"
+                    gradientColors={au.gradient}
+                    rightIcon="arrow-forward"
+                    disabled={!state.country || !state.city}
+                    onPress={handleNext}
+                    style={{ height: 46, marginTop: 10 }}
+                  >
+                    Continue
+                  </LuxeButton>
+                  {(!state.country || !state.city) && (
+                    <LuxeText
+                      variant="caption"
+                      style={[s.continueHint, { color: luxe.textTertiary, fontSize: 15 }]}
+                    >
+                      Choose a city to continue
+                    </LuxeText>
+                  )}
+                </View>
+              </View>
+            ) : (
+              <>
+                <LuxeButton
+                  variant="filled"
+                  gradientColors={au.gradient}
+                  rightIcon="arrow-forward"
+                  disabled={!state.country || !state.city}
+                  onPress={handleNext}
+                  style={{ height: 46 }}
+                >
+                  Continue
+                </LuxeButton>
 
-            {(!state.country || !state.city) && (
-              <LuxeText variant="caption" style={{ textAlign: 'center', marginTop: 12, color: luxeDark.textTertiary }}>
-                {step === 'country'
-                  ? 'Select a country to continue'
-                  : step === 'region'
-                    ? 'Select your state to continue'
-                    : 'Choose a city to continue'}
-              </LuxeText>
+                {(!state.country || !state.city) && (
+                  <LuxeText variant="caption" style={{ textAlign: 'center', marginTop: 10, color: luxe.textTertiary, fontSize: 15 }}>
+                    {step === 'country'
+                      ? 'Select a country to continue'
+                      : 'Select your state to continue'}
+                  </LuxeText>
+                )}
+              </>
             )}
+
+            <OnboardingRestartLink redirectTo={redirectTo} au={au} />
           </LuxeCard>
         </Animated.View>
       </ScrollView>
@@ -925,11 +1137,11 @@ const s = StyleSheet.create({
   scrollView: { flex: 1 },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 20,
-    paddingBottom: 80,
+    paddingHorizontal: 14,
+    paddingBottom: 48,
     justifyContent: 'center',
   },
-  scrollContentDesktop: { paddingVertical: 80 },
+  scrollContentDesktop: { paddingVertical: 36 },
 
   mobileProgressWrap: {
     paddingHorizontal: 24,
@@ -950,27 +1162,27 @@ const s = StyleSheet.create({
 
   formContainer: {
     width: '100%',
-    maxWidth: 460,
+    maxWidth: 380,
     alignSelf: 'center',
-    borderRadius: 32,
+    borderRadius: 20,
   },
-  formContainerDesktop: { maxWidth: 520 },
+  formContainerDesktop: { maxWidth: 420 },
 
-  formContent: { padding: 24 },
+  formContent: { padding: 14 },
 
   // Breadcrumb
   breadcrumbRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    marginBottom: 20,
+    marginBottom: 10,
     flexWrap: 'wrap',
   },
   desktopStepRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 28,
+    marginBottom: 14,
   },
   desktopStepItem: {
     alignItems: 'center',
@@ -1002,35 +1214,45 @@ const s = StyleSheet.create({
   },
 
   // Header
-  headerBlock: { alignItems: 'center', marginBottom: 24 },
+  headerBlock: { alignItems: 'center', marginBottom: 10 },
   iconWrapper: {
-    width: 64,
-    height: 64,
-    borderRadius: 20,
+    width: 48,
+    height: 48,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
+    marginBottom: 6,
   },
-  title: { textAlign: 'center', marginBottom: 6, fontSize: 26 },
+  title: { textAlign: 'center', marginBottom: 6, fontSize: 28, lineHeight: 34 },
+  titleAccentRow: {
+    flexDirection: 'row',
+    gap: 5,
+    marginBottom: 6,
+  },
+  titleAccentBar: {
+    width: 24,
+    height: 3,
+    borderRadius: 2,
+  },
   subtitle: {
     textAlign: 'center',
-    maxWidth: 320,
-    fontSize: 14,
-    lineHeight: 20,
+    maxWidth: 300,
+    fontSize: 16,
+    lineHeight: 22,
   },
 
   // GPS suggestion card (country detected)
   gpsSuggestCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
-    padding: 20,
-    borderRadius: 20,
+    gap: 10,
+    padding: 12,
+    borderRadius: 12,
   },
   gpsSuggestIconWrap: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
+    width: 36,
+    height: 36,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1055,38 +1277,104 @@ const s = StyleSheet.create({
   errorText: { flex: 1, fontFamily: FontFamily.medium, fontSize: 14 },
 
   // Back link
-  backLinkRow: { marginTop: 16, alignItems: 'flex-start' },
+  backLinkRow: { marginTop: 10, alignItems: 'flex-start' },
 
-  // Vertical list for Australian States (top-to-bottom, one full-width card per line)
-  stateList: {
-    gap: 12,
+  statePickerPanel: {
+    borderWidth: 2,
+    borderRadius: 14,
+    overflow: 'hidden',
+    marginBottom: 2,
   },
-  stateCard: {
+  locationFooterPanel: {
+    borderWidth: 2,
+    borderRadius: 14,
+    overflow: 'hidden',
+    marginTop: 10,
+  },
+  locationFooterBody: {
+    padding: 12,
+    gap: 0,
+  },
+  statePickerAccent: {
+    flexDirection: 'row',
+    height: 4,
+  },
+  statePickerAccentBar: {
+    flex: 1,
+  },
+  statePickerHeader: {
+    paddingHorizontal: 12,
+    paddingTop: 10,
+    paddingBottom: 8,
+  },
+  statePickerDivider: {
+    height: StyleSheet.hairlineWidth * 2,
+    marginHorizontal: 12,
+  },
+  // Compact three-column picker grid (states & cities)
+  stateList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    padding: 8,
+    paddingTop: 6,
+  },
+  pickerGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  pickerGridItem: {
+    width: '31.5%',
+    flexGrow: 0,
+  },
+  pickerCard: {
     width: '100%',
-    borderRadius: 16,
+    borderRadius: 10,
+  },
+  pickerCardInner: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 4,
+    gap: 2,
+    minHeight: 50,
+  },
+  pickerCardInnerCompact: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 4,
+    gap: 4,
+    minHeight: 44,
+  },
+  pickerEmoji: {
+    fontSize: 18,
+  },
+  pickerCardBadge: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
   },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
   },
   searchInput: { flex: 1, height: '100%' },
 
-  // City vertical list (top to bottom, full-width cards, same pattern as States)
-  cityList: {
-    gap: 10,
+  cityPickerBody: {
+    padding: 8,
+    paddingTop: 6,
   },
-  cityCard: {
-    width: '100%',
-    borderRadius: 16,
-  },
-
-  noResults: { alignItems: 'center', paddingVertical: 48, gap: 12 },
+  noResults: { alignItems: 'center', paddingVertical: 28, gap: 8 },
   noResultsText: { textAlign: 'center' },
 
-  spacer: { height: 24 },
+  spacer: { height: 12 },
   continueHint: {
     textAlign: 'center',
-    marginTop: 12,
+    marginTop: 8,
+    fontSize: 15,
+    lineHeight: 20,
   },
 });

@@ -112,7 +112,7 @@ export function HostspaceHeroShell({
                 onPress={() => router.push('/hostspace/dashboard' as never)}
                 style={s.ctaBtn}
               >
-                Dashboard
+                View your creator analytics
               </M3Button>
             ) : null}
           </Animated.View>

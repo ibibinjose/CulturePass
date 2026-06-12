@@ -4,10 +4,9 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
-import { router, Stack } from 'expo-router';
+import { Stack } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInUp } from 'react-native-reanimated';
@@ -17,28 +16,38 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useColors, useIsDark } from '@/hooks/useColors';
 import { createLazyComponent } from '@/lib/lazy';
 import { useLayout } from '@/hooks/useLayout';
-import { CultureTokens, Spacing, Radius } from '@/design-system/tokens/theme';
-import { Luxe } from '@/design-system/tokens/luxeHeritage';
-import { GlassView, LuxeText, LuxeButton } from '@/design-system/ui';
+import { CultureTokens, Radius } from '@/design-system/tokens/theme';
+import { GlassView, LuxeText } from '@/design-system/ui';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { hostApi } from '@/modules/host/api';
 import {
   HostspaceCreateFormPanel,
   invalidateCultureMarketListings,
 } from '@/modules/host/components/HostspaceCreateFormPanel';
- 
-import type { Profile, ShopListing, ShopListingType } from '@/shared/schema';
+
+import type { EventData, ShopListing, ShopListingType } from '@/shared/schema';
 
 import {
-  CREATE_CATEGORIES,
   findCategory,
+  getCategoryDataflow,
+  getCreateLabCatalogCategories,
   type CategoryGroup,
   type CreateCategory,
 } from '@/modules/host/config/hostspaceCreateCategories.config';
+import {
+  filterHostPagesForCategory,
+  isOrgCommunityHostPage,
+} from '@/modules/host/lib/hostspaceCreateParents';
 
-import { navigateOnCategorySelect, navigateToCreate, navigateToEditListing } from '@/lib/creationRouting';
-import { captureCreationCatalogView } from '@/lib/creationAnalytics';
- 
+import {
+  navigateOnCategorySelect,
+  navigateToCreate,
+  navigateToEditEvent,
+  navigateToEditHostPage,
+} from '@/lib/creationRouting';
+import { captureCreationCatalogView, captureCreationCategorySelect } from '@/lib/creationAnalytics';
+
 const LazyHostspaceCreateListingsColumn = createLazyComponent(
   () => import('./HostspaceCreateListingsColumn'),
   'HostspaceCreateListingsColumn'
@@ -77,10 +86,11 @@ export function HostspaceCreatePanel({
   const { user } = useAuth();
   const { hPad, isDesktop } = useLayout();
   const initialSelected = useMemo(() => findCategory(initialCategory), [initialCategory]);
+  const catalogCategories = useMemo(() => getCreateLabCatalogCategories(), []);
   const [selectedId, setSelectedId] = useState(() => initialSelected.id);
   const selected = useMemo(
-    () => CREATE_CATEGORIES.find((item) => item.id === selectedId) ?? CREATE_CATEGORIES[0],
-    [selectedId],
+    () => catalogCategories.find((item) => item.id === selectedId) ?? catalogCategories[0],
+    [catalogCategories, selectedId],
   );
   const queryClient = useQueryClient();
   const [query, setQuery] = useState('');
@@ -93,7 +103,7 @@ export function HostspaceCreatePanel({
   const [marketWizardSeedType, setMarketWizardSeedType] = useState<ShopListingType | undefined>(undefined);
   const [marketWizardSession, setMarketWizardSession] = useState(0);
   const [hostInfoVerified, setHostInfoVerified] = useState(false);
-  const [selectedParentProfileId, setSelectedParentProfileId] = useState<string | null>(null);
+  const [selectedParentHostPageId, setSelectedParentHostPageId] = useState<string | null>(null);
 
   const [showSelector, setShowSelector] = useState(Platform.OS !== 'web' && !initialCategory);
 
@@ -152,38 +162,34 @@ export function HostspaceCreatePanel({
     haptic();
     setSelectedId(category.id);
     setShowSelector(false);
-    navigateOnCategorySelect(category, 'creation_lab_select');
-  };
-
-  const openCreateFlow = () => {
-    haptic();
-    if (!hostInfoVerified) {
-      Alert.alert('Verify host information', 'Please review and verify your information before creating anything.');
-      return;
-    }
-    if (requiresParentProfile && !selectedParentProfile) {
-      Alert.alert('Select a profile', 'Please select or create a host profile first.');
-      return;
-    }
-    if (selected.group === 'market' || selected.contentKind === 'market') {
-      const subType = selected.subCategory as ShopListingType | undefined;
-      openMarketWizard({
-        seedType: subType && ['product', 'service', 'link'].includes(subType) ? subType : undefined,
+    if (embedded) {
+      const flow = getCategoryDataflow(category);
+      captureCreationCategorySelect({
+        categoryId: category.id,
+        categoryLabel: category.label,
+        layer: flow.layer,
+        wizard: flow.wizard,
+        storage: flow.storage,
+        manageTab: flow.manageTab,
+        source: 'creation_lab_select',
+        entityType: category.entityType,
+        subCategory: category.subCategory,
       });
       return;
     }
-    navigateToCreate(selected, {
-      source: 'creation_lab_launch',
-      parentProfileId: selectedParentProfile?.id,
-      trackSelect: false,
-    });
+    navigateOnCategorySelect(category, 'creation_lab_select');
   };
 
-  const { data: myProfiles = [], isLoading: profilesLoading } = useQuery({
-    queryKey: ['hostspace-my-profiles'],
-    queryFn: () => api.profiles.my(),
+  const { data: myHostPages = [], isLoading: hostPagesLoading } = useQuery({
+    queryKey: ['hostspace-my-host-pages'],
+    queryFn: () => hostApi.hostPages.my(),
     staleTime: 30_000,
   });
+
+  const orgHostPages = useMemo(
+    () => myHostPages.filter(isOrgCommunityHostPage),
+    [myHostPages],
+  );
 
   const { data: hostApplicationData } = useQuery({
     queryKey: ['host-application', 'me'],
@@ -193,10 +199,10 @@ export function HostspaceCreatePanel({
   });
 
   useEffect(() => {
-    if (!selectedParentProfileId && myProfiles.length > 0) {
-      setSelectedParentProfileId(myProfiles[0].id);
+    if (!selectedParentHostPageId && orgHostPages.length > 0) {
+      setSelectedParentHostPageId(orgHostPages[0].id);
     }
-  }, [myProfiles, selectedParentProfileId]);
+  }, [orgHostPages, selectedParentHostPageId]);
 
   useEffect(() => {
     setHostInfoVerified(false);
@@ -209,19 +215,23 @@ export function HostspaceCreatePanel({
     staleTime: 30_000,
   });
 
+  const { data: myEvents = [], isLoading: eventsLoading } = useQuery({
+    queryKey: ['hostspace-create-my-events', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [] as EventData[];
+      const response = await hostApi.events.list(user.id);
+      return response.events ?? [];
+    },
+    enabled: !!user,
+    staleTime: 30_000,
+  });
+
   const liveListingCount = useMemo(() => {
     const shop = myShopData?.listings?.length ?? 0;
-    return myProfiles.length + shop;
-  }, [myProfiles.length, myShopData?.listings?.length]);
+    return myHostPages.length + shop;
+  }, [myHostPages.length, myShopData?.listings?.length]);
 
-  const listingCountLoading = !!user && (profilesLoading || shopListingsLoading);
-
-  const deleteProfileMutation = useMutation({
-    mutationFn: (id: string) => api.profiles.remove(id),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['hostspace-my-profiles'] });
-    },
-  });
+  const listingCountLoading = !!user && (hostPagesLoading || shopListingsLoading);
 
   const deleteShopListingMutation = useMutation({
     mutationFn: (id: string) => api.cultureShop.deleteListing(id),
@@ -230,13 +240,12 @@ export function HostspaceCreatePanel({
     },
   });
 
-  const selectedEntityType = selected.entityType;
-  const selectedParentProfile = useMemo(
-    () => myProfiles.find((profile) => profile.id === selectedParentProfileId) ?? null,
-    [myProfiles, selectedParentProfileId],
+  const selectedParentHostPage = useMemo(
+    () => orgHostPages.find((page) => page.id === selectedParentHostPageId) ?? null,
+    [orgHostPages, selectedParentHostPageId],
   );
-  const requiresParentProfile = selected.requiresParent === true || selected.kind === 'content';
-  const canCreateSelected = hostInfoVerified && (!requiresParentProfile || !!selectedParentProfile);
+  const requiresParentHostPage = selected.orgCatalogKind === 'host-listing' || selected.requiresParent === true;
+  const canCreateSelected = hostInfoVerified && (!requiresParentHostPage || !!selectedParentHostPage);
   const hostApplication = hostApplicationData?.application ?? null;
   const hostInfoRows = useMemo(
     () => [
@@ -251,12 +260,21 @@ export function HostspaceCreatePanel({
     ],
     [hostApplication, user],
   );
-  const filteredListings = useMemo(() => {
-    return myProfiles.filter((profile) => {
-      if (profile.entityType !== selectedEntityType) return false;
-      return true;
-    });
-  }, [myProfiles, selectedEntityType]);
+
+  const filteredHostPages = useMemo(
+    () => filterHostPagesForCategory(myHostPages, selected),
+    [myHostPages, selected],
+  );
+
+  const filteredEvents = useMemo(() => {
+    if (selected.id !== 'event') return [];
+    if (!selectedParentHostPageId) return myEvents;
+    return myEvents.filter(
+      (event) =>
+        event.publisherProfileId === selectedParentHostPageId ||
+        event.organizerId === selectedParentHostPageId,
+    );
+  }, [myEvents, selected.id, selectedParentHostPageId]);
 
   const marketTypeFilter = useMemo((): ShopListingType | null => {
     if (selected.group !== 'market') return null;
@@ -271,20 +289,43 @@ export function HostspaceCreatePanel({
     if (!marketTypeFilter) return rows;
     return rows.filter((l) => l.type === marketTypeFilter);
   }, [myShopData?.listings, marketTypeFilter]);
+
+  const isEventListing = selected.id === 'event';
+  const outputItemCount = selected.group === 'market'
+    ? filteredShopListings.length
+    : isEventListing
+      ? filteredEvents.length
+      : filteredHostPages.length;
+
   const showOutputColumn = selected.group !== 'market' || shopListingsLoading || filteredShopListings.length > 0;
 
-  const onEditListing = (profile: Profile) => {
+  const openCreateFlow = () => {
     haptic();
-    navigateToEditListing(profile.id, profile.entityType, 'creation_lab_edit_listing', {
-      subCategory: profile.subCategory ?? profile.category,
+    if (!hostInfoVerified) {
+      Alert.alert('Verify host information', 'Please review and verify your information before creating anything.');
+      return;
+    }
+    if (requiresParentHostPage && !selectedParentHostPage) {
+      Alert.alert('Select a host page', 'Please select or create an org/community host page first.');
+      return;
+    }
+    if (selected.group === 'market' || selected.contentKind === 'market') {
+      const subType = selected.subCategory as ShopListingType | undefined;
+      openMarketWizard({
+        seedType: subType && ['product', 'service', 'link'].includes(subType) ? subType : undefined,
+      });
+      return;
+    }
+    navigateToCreate(selected, {
+      source: 'creation_lab_launch',
+      parentHostPageId: selectedParentHostPage?.id,
+      trackSelect: false,
     });
   };
 
-  const onDeleteListing = (profile: Profile) => {
-    Alert.alert('Delete listing', `Delete "${profile.name}"?`, [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => void deleteProfileMutation.mutateAsync(profile.id) },
-    ]);
+  const onEditEvent = (event: EventData) => {
+    haptic();
+    navigateToEditEvent(event.id, 'creation_lab_edit_event', event.publisherProfileId ?? selectedParentHostPageId ?? undefined);
   };
 
   const onEditShopListing = (listing: ShopListing) => {
@@ -301,30 +342,28 @@ export function HostspaceCreatePanel({
 
   const filteredCategories = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const RICH_PROFILE_TYPES = ['community', 'organiser', 'venue', 'business', 'artist', 'professional'];
-    return CREATE_CATEGORIES.filter((item) => {
+    return catalogCategories.filter((item) => {
       if (!activeGroups.includes('all') && !activeGroups.includes(item.group)) return false;
-      if (RICH_PROFILE_TYPES.includes(item.entityType as string)) return false;
       if (!q) return true;
       const haystack = `${item.label} ${item.purpose} ${item.description} ${item.aliases.join(' ')}`.toLowerCase();
       return haystack.includes(q);
     });
-  }, [query, activeGroups]);
+  }, [catalogCategories, query, activeGroups]);
 
   const body = (
     <>
         {!embedded ? (
           <Animated.View entering={FadeInUp.duration(600)} style={styles.introBlock}>
             <LuxeText variant="body" style={{ color: colors.textSecondary, textAlign: 'center', maxWidth: 640 }}>
-              Launch your cultural presence. Create profiles, events, and marketplace listings to connect with your community.
+              Five creation paths — Orgs & Communities (pages + listings), Venues, Businesses, CultureMarket, and Templates.
             </LuxeText>
 
             <GlassView intensity={10} style={[styles.unificationCallout, { borderColor: colors.borderLight, borderWidth: 1 }]}>
-              <View style={[styles.calloutIconBox, { backgroundColor: Luxe.colors.indigo + '18' }]}>
-                <Ionicons name="sparkles" size={14} color={Luxe.colors.indigo} />
+              <View style={[styles.calloutIconBox, { backgroundColor: CultureTokens.teal + '18' }]}>
+                <Ionicons name="people-outline" size={14} color={CultureTokens.teal} />
               </View>
               <LuxeText variant="caption" style={{ color: colors.textSecondary, fontFamily: Radius.sm ? 'Poppins_600SemiBold' : 'System' }}>
-                Rich profiles use the guided 6-step creation studio.
+                Organisations & Communities use one form — pick your type from the dropdown (Community through Club or Society).
               </LuxeText>
             </GlassView>
           </Animated.View>
@@ -379,11 +418,11 @@ export function HostspaceCreatePanel({
                 closeMarketWizard();
               }}
               canCreateSelected={canCreateSelected}
-              requiresParentProfile={requiresParentProfile}
-              myProfiles={myProfiles}
-              selectedParentProfileId={selectedParentProfileId}
-              onSelectParentProfileId={setSelectedParentProfileId}
-              selectedParentProfile={selectedParentProfile}
+              requiresParentHostPage={requiresParentHostPage}
+              orgHostPages={orgHostPages}
+              selectedParentHostPageId={selectedParentHostPageId}
+              onSelectParentHostPageId={setSelectedParentHostPageId}
+              selectedParentHostPage={selectedParentHostPage}
               hostInfoVerified={hostInfoVerified}
               onOpenCreateFlow={openCreateFlow}
             />
@@ -393,17 +432,23 @@ export function HostspaceCreatePanel({
                 <LazyHostspaceCreateListingsColumn
                     selected={selected}
                     isMarket={selected.group === 'market'}
-                    itemCount={selected.group === 'market' ? filteredShopListings.length : filteredListings.length}
+                    isEventListing={isEventListing}
+                    itemCount={outputItemCount}
                     shopListingsLoading={shopListingsLoading}
-                    profilesLoading={profilesLoading}
+                    hostPagesLoading={hostPagesLoading}
+                    eventsLoading={eventsLoading}
                     userSignedIn={!!user}
                     filteredShopListings={filteredShopListings}
-                    filteredListings={filteredListings}
+                    filteredHostPages={filteredHostPages}
+                    filteredEvents={filteredEvents}
                     onOpenCreateFlow={openCreateFlow}
+                    onEditHostPage={(page) => {
+                      haptic();
+                      navigateToEditHostPage(page.entityType, page.id, 'creation_lab_edit_host_page');
+                    }}
+                    onEditEvent={onEditEvent}
                     onEditShopListing={onEditShopListing}
                     onDeleteShopListing={onDeleteShopListing}
-                    onEditListing={onEditListing}
-                    onDeleteListing={onDeleteListing}
                 />
               </Suspense>
             ) : null}

@@ -4,21 +4,47 @@
  */
 
 import { Router, Request, Response } from 'express';
+import {
+  calculateDistance,
+  findNearestPostcodes,
+  getPostcodeData,
+  getPostcodesByPlace,
+} from '../../../shared/location/australian-postcodes';
 import { db } from '../admin';
 import { requireAuth } from '../middleware/auth';
 import { nowIso, captureRouteError } from './utils';
 import { usersService } from '../services/firestore';
+import { councilsService } from '../services/councils';
 
 export const councilRouter = Router();
 
 type CouncilDoc = Record<string, unknown>;
 
+const AU_STATE_NAME_TO_CODE: Record<string, string> = {
+  'new south wales': 'NSW',
+  victoria: 'VIC',
+  queensland: 'QLD',
+  'western australia': 'WA',
+  'south australia': 'SA',
+  tasmania: 'TAS',
+  'australian capital territory': 'ACT',
+  'northern territory': 'NT',
+};
+
+const AU_STATE_CODES = new Set(['NSW', 'VIC', 'QLD', 'WA', 'SA', 'TAS', 'ACT', 'NT']);
+
 function normCity(city?: string): string {
   return String(city ?? '').trim().toLowerCase();
 }
 
+/** Map full state names or codes to canonical AU state codes (NSW, VIC, …). */
 function normState(state?: string): string {
-  return String(state ?? '').trim().toUpperCase();
+  const raw = String(state ?? '').trim();
+  if (!raw) return '';
+  const upper = raw.toUpperCase();
+  if (AU_STATE_CODES.has(upper)) return upper;
+  const fromName = AU_STATE_NAME_TO_CODE[raw.toLowerCase()];
+  return fromName ?? upper;
 }
 
 function docMatchesCityState(data: CouncilDoc, cityNorm: string, stateNorm: string): boolean {
@@ -38,7 +64,46 @@ function docMatchesCityState(data: CouncilDoc, cityNorm: string, stateNorm: stri
   push(data.suburb);
   push(data.serviceCities);
   push(data.serviceSuburbs);
-  return buckets.some((b) => b && (b === cityNorm || b.includes(cityNorm) || cityNorm.includes(b)));
+  if (buckets.some((b) => b && (b === cityNorm || b.includes(cityNorm) || cityNorm.includes(b)))) {
+    return true;
+  }
+  const councilName = String(data.name ?? '').toLowerCase();
+  return Boolean(cityNorm && councilName.includes(cityNorm));
+}
+
+function resolveCouncilCoordinates(data: CouncilDoc): { lat: number; lng: number } | null {
+  const lat =
+    toNumber(data.latitude) ??
+    toNumber(data.lat) ??
+    toNumber(data.centreLat) ??
+    toNumber(data.centerLat);
+  const lng =
+    toNumber(data.longitude) ??
+    toNumber(data.lng) ??
+    toNumber(data.centreLng) ??
+    toNumber(data.centerLng);
+  if (lat != null && lng != null) return { lat, lng };
+
+  const postcode = toNumber(data.postcode);
+  if (postcode != null) {
+    const pc = getPostcodeData(postcode);
+    if (pc) return { lat: pc.latitude, lng: pc.longitude };
+  }
+
+  const placeCandidates = [
+    data.suburb,
+    data.city,
+    ...(Array.isArray(data.serviceCities) ? data.serviceCities : []),
+    ...(Array.isArray(data.serviceSuburbs) ? data.serviceSuburbs : []),
+  ];
+  for (const place of placeCandidates) {
+    const name = String(place ?? '').trim();
+    if (!name) continue;
+    const matches = getPostcodesByPlace(name);
+    if (matches[0]) return { lat: matches[0].latitude, lng: matches[0].longitude };
+  }
+
+  return null;
 }
 
 function toNumber(v: unknown): number | null {
@@ -48,16 +113,6 @@ function toNumber(v: unknown): number | null {
     return Number.isFinite(parsed) ? parsed : null;
   }
   return null;
-}
-
-function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const toRad = (deg: number) => (deg * Math.PI) / 180;
-  const dLat = toRad(lat2 - lat1);
-  const dLng = toRad(lng2 - lng1);
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
-  return 6371 * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
 }
 
 async function findCouncilByCityState(city?: string, state?: string): Promise<FirebaseFirestore.QueryDocumentSnapshot | null> {
@@ -85,21 +140,16 @@ async function findNearestCouncilByCoordinates(
 
   for (const doc of snap.docs) {
     const data = doc.data() as CouncilDoc;
-    const lat =
-      toNumber(data.latitude) ??
-      toNumber(data.lat) ??
-      toNumber(data.centreLat) ??
-      toNumber(data.centerLat);
-    const lng =
-      toNumber(data.longitude) ??
-      toNumber(data.lng) ??
-      toNumber(data.centreLng) ??
-      toNumber(data.centerLng);
-    if (lat == null || lng == null) continue;
-    const distanceKm = haversineKm(latitude, longitude, lat, lng);
+    const coords = resolveCouncilCoordinates(data);
+    if (!coords) continue;
+    const distanceKm = calculateDistance(latitude, longitude, coords.lat, coords.lng);
     if (!best || distanceKm < best.distanceKm) {
       best = { doc, distanceKm };
     }
+  }
+
+  if (!best && stateNorm) {
+    return findNearestCouncilByCoordinates(latitude, longitude);
   }
 
   return best ?? null;
@@ -207,12 +257,13 @@ councilRouter.get('/council/resolve', async (req: Request, res: Response) => {
 /** GET /api/council/nearest — best LGA from lat/lng, with city/state fallback */
 councilRouter.get('/council/nearest', async (req: Request, res: Response) => {
   const city = String(req.query.city ?? '').trim();
-  const state = String(req.query.state ?? '').trim();
+  const stateRaw = String(req.query.state ?? '').trim();
+  const state = normState(stateRaw);
   const country = String(req.query.country ?? '').trim().toLowerCase();
   const latitude = toNumber(req.query.latitude);
   const longitude = toNumber(req.query.longitude);
 
-  const requestInfo = { latitude, longitude, city, state, country };
+  const requestInfo = { latitude, longitude, city, state, stateRaw, country };
 
   if (country && country !== 'australia' && country !== 'au') {
     console.log('[council/nearest] non-AU request ignored', requestInfo);
@@ -220,6 +271,8 @@ councilRouter.get('/council/nearest', async (req: Request, res: Response) => {
   }
 
   try {
+    await councilsService.seedIfEmpty();
+
     let result: { doc: FirebaseFirestore.QueryDocumentSnapshot; distanceKm: number } | null = null;
     let matchMethod: 'coordinate' | 'city-state' | 'none' = 'none';
 
@@ -231,8 +284,27 @@ councilRouter.get('/council/nearest', async (req: Request, res: Response) => {
     if (!result) {
       const hit = await findCouncilByCityState(city || undefined, state || undefined);
       if (hit) {
-        result = { doc: hit, distanceKm: 0 }; // distance not meaningful for city-state fallback
+        result = { doc: hit, distanceKm: 0 };
         matchMethod = 'city-state';
+      }
+    }
+
+    if (!result && latitude != null && longitude != null) {
+      const nearestPlace = findNearestPostcodes(latitude, longitude, 1)[0];
+      if (nearestPlace) {
+        const hit = await findCouncilByCityState(nearestPlace.place_name, nearestPlace.state_code);
+        if (hit) {
+          result = {
+            doc: hit,
+            distanceKm: calculateDistance(
+              latitude,
+              longitude,
+              nearestPlace.latitude,
+              nearestPlace.longitude,
+            ),
+          };
+          matchMethod = 'city-state';
+        }
       }
     }
 

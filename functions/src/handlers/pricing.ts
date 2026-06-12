@@ -32,6 +32,7 @@ pricingRouter.get('/pricing/membership', async (req: Request, res: Response) => 
       currency: plans.currency,
       plans: plans.membership,
       platform: plans.platform,
+      organizer: plans.organizer,
       fetchedAt: plans.fetchedAt,
     });
   } catch (err) {

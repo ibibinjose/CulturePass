@@ -7,6 +7,7 @@ export interface MembershipPricingResponse {
   currency: string;
   plans: PricingPlansResponse['membership'];
   platform: PricingPlansResponse['platform'];
+  organizer: PricingPlansResponse['organizer'];
   fetchedAt: string;
 }
 

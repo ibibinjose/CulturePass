@@ -1,4 +1,5 @@
 import { useAuth } from '@/lib/auth';
+import { avatarDisplayUri, avatarRecyclingKey } from '@/lib/avatarUri';
 import { useCallback } from 'react';
 
 /**
@@ -46,13 +47,16 @@ export function useProfileImage() {
     return initials || '?';
   }, [user?.displayName, user?.email]);
 
+  const recyclingKey = avatarRecyclingKey(user);
+  const profileImage = avatarDisplayUri(user?.avatarUrl, recyclingKey);
+
   return {
-    profileImage: user?.avatarUrl || null,
+    profileImage,
     updateProfileImage,
     getProfileImage,
     getInitials,
     initials: getInitials(),
     firstName: user?.displayName?.split(' ')[0] || user?.username || 'Profile',
-    recyclingKey: (user as any)?.avatarUpdatedAt || (user as any)?.updatedAt || user?.id || 'guest',
+    recyclingKey,
   };
 }

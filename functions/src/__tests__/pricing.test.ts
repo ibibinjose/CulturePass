@@ -6,6 +6,7 @@ import {
   membershipPlanId,
   MEMBERSHIP_CATALOG_AMOUNTS,
 } from '../../../shared/constants/pricingCatalog';
+import { buildOrganizerTicketingFees } from '../../../shared/constants/organizerTicketingFees';
 import {
   getPlatformPricingConfig,
   membershipPlanIdFromPeriod,
@@ -44,5 +45,17 @@ describe('platform pricing config', () => {
     const cfg = getPlatformPricingConfig();
     expect(cfg.connectPlatformFeeBps).toBeGreaterThanOrEqual(0);
     expect(cfg.supportedMarkets).toContain('AU');
+  });
+
+  it('derives organiser tiers from connect bps', () => {
+    const cfg = getPlatformPricingConfig();
+    const organizer = buildOrganizerTicketingFees({
+      connectPlatformFeeBps: cfg.connectPlatformFeeBps,
+      currency: 'AUD',
+      market: 'AU',
+    });
+    expect(organizer.standard.percentBps).toBe(cfg.connectPlatformFeeBps);
+    expect(organizer.premium.percentBps).toBeLessThanOrEqual(cfg.connectPlatformFeeBps);
+    expect(organizer.standard.priceLine).toMatch(/%$/);
   });
 });

@@ -30,6 +30,7 @@ import { Skeleton, PageContainer, GlassView } from '@/design-system/ui';
 import { withAlpha } from '@/lib/withAlpha';
 import { siteUrl } from '@/lib/publicPaths';
 import { canAccessDigitalIdDevTools, DIGITAL_ID_DEV_ROUTE, DIGITAL_ID_ROUTE } from '@/lib/digitalIdRoutes';
+
 import { AuthGuard } from '@/modules/core/auth/AuthGuard';
 import { AppHeaderBar } from '@/modules/core/ui/AppHeaderBar';
 import { useDigitalIdScreen } from '@/modules/profile/hooks/useDigitalIdScreen';
@@ -188,6 +189,7 @@ export default function DigitalIdUserScreen() {
                     tierLabel={d.tierLabel}
                     tierColor={d.tierConf.color}
                     avatarUrl={d.avatarUrl}
+                    avatarRecyclingKey={d.avatarRecyclingKey}
                     initials={d.initials}
                     isDark={isDark}
                     panelBg={panelBg}
@@ -221,6 +223,7 @@ export default function DigitalIdUserScreen() {
                       qrValue={d.qrValue}
                       qrSize={lanyardQrSize}
                       avatarUrl={d.avatarUrl}
+                      avatarRecyclingKey={d.avatarRecyclingKey}
                       initials={d.initials}
                       isVerified={d.digitalId?.isVerified}
                       onCopyCpid={d.handleCopy}
@@ -320,6 +323,7 @@ export default function DigitalIdUserScreen() {
                         qrValue={d.qrValue}
                         qrSize={businessQrSize}
                         avatarUrl={d.avatarUrl}
+                        avatarRecyclingKey={d.avatarRecyclingKey}
                         initials={d.initials}
                         isVerified={d.digitalId?.isVerified}
                         affiliation={d.affiliation ? { name: d.affiliation.name, avatarUrl: d.affiliation.avatarUrl } : null}
@@ -381,6 +385,7 @@ function MemberStrip({
   tierLabel,
   tierColor,
   avatarUrl,
+  avatarRecyclingKey,
   initials,
   isDark,
   panelBg,
@@ -395,6 +400,7 @@ function MemberStrip({
   tierLabel: string;
   tierColor: string;
   avatarUrl?: string | null;
+  avatarRecyclingKey?: string | number | null;
   initials: string;
   isDark: boolean;
   panelBg: string;
@@ -416,7 +422,13 @@ function MemberStrip({
       >
         <View style={[s.avatarInner, { backgroundColor: panelBg }]}>
           {avatarUrl ? (
-            <Image source={{ uri: avatarUrl }} style={s.avatar} contentFit="cover" accessibilityLabel={`${name} avatar`} />
+            <Image
+              source={{ uri: avatarUrl }}
+              style={s.avatar}
+              contentFit="cover"
+              recyclingKey={avatarRecyclingKey != null ? String(avatarRecyclingKey) : avatarUrl}
+              accessibilityLabel={`${name} avatar`}
+            />
           ) : (
             <View style={[s.avatarFallback, { backgroundColor: withAlpha(CultureTokens.indigo, 0.12) }]}>
               <Text style={[s.avatarInitials, { color: CultureTokens.indigo }]}>{initials}</Text>

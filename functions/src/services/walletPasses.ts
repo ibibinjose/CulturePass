@@ -3,7 +3,7 @@ import { PKPass } from 'passkit-generator';
 import jwt from 'jsonwebtoken';
 import sharp from 'sharp';
 import { createHmac, randomUUID } from 'node:crypto';
-import { storageBucket } from '../admin';
+import { db, isFirestoreConfigured, storageBucket } from '../admin';
 
 export type WalletPassUser = {
   id: string;
@@ -226,6 +226,91 @@ export function resolveUserIdFromApplePassSerial(serialNumber: string): string |
   if (!serialNumber.startsWith('cp-card-')) return null;
   const userId = serialNumber.slice('cp-card-'.length).trim();
   return userId || null;
+}
+
+function parseWalletFirestoreDate(value: unknown): string | undefined {
+  if (!value) return undefined;
+  if (typeof value === 'string') return value;
+  if (value instanceof Date) return value.toISOString();
+  if (typeof value === 'object' && value !== null) {
+    const maybe = value as { toDate?: () => Date; _seconds?: number };
+    if (typeof maybe.toDate === 'function') {
+      try {
+        return maybe.toDate().toISOString();
+      } catch {
+        return undefined;
+      }
+    }
+    if (typeof maybe._seconds === 'number') {
+      return new Date(maybe._seconds * 1000).toISOString();
+    }
+  }
+  return undefined;
+}
+
+export async function loadWalletPassUserFromFirestore(
+  userId: string,
+  fallback?: Partial<WalletPassUser>,
+): Promise<WalletPassUser> {
+  if (!isFirestoreConfigured) {
+    return {
+      id: userId,
+      username: fallback?.username ?? userId,
+      displayName: fallback?.displayName ?? fallback?.username ?? userId,
+      email: fallback?.email,
+      city: fallback?.city ?? 'Sydney',
+      country: fallback?.country ?? 'Australia',
+      culturePassId: fallback?.culturePassId ?? 'CP-123456',
+      tier: fallback?.tier ?? 'free',
+      avatarUrl: fallback?.avatarUrl,
+      createdAt: fallback?.createdAt,
+      affiliationName: fallback?.affiliationName,
+    };
+  }
+
+  const snap = await db.collection('users').doc(userId).get();
+  const data = snap.data() ?? {};
+  let tier = (data.membership as { tier?: string } | undefined)?.tier
+    ?? (data.tier as string | undefined)
+    ?? fallback?.tier
+    ?? 'free';
+  try {
+    const membershipSnap = await db.collection('users').doc(userId).collection('membership').doc('current').get();
+    if (membershipSnap.exists) {
+      const membershipData = membershipSnap.data() as { tier?: string } | undefined;
+      if (membershipData?.tier) tier = membershipData.tier;
+    }
+  } catch {
+    // optional membership subcollection
+  }
+  const affiliation = data.affiliation as { name?: string } | undefined;
+  const createdAt = parseWalletFirestoreDate(data.createdAt)
+    ?? parseWalletFirestoreDate(data.created_at)
+    ?? fallback?.createdAt;
+  return {
+    id: userId,
+    username: (data.username as string | undefined) ?? fallback?.username ?? userId,
+    displayName:
+      (data.displayName as string | undefined)
+      ?? (data.name as string | undefined)
+      ?? fallback?.displayName
+      ?? fallback?.username
+      ?? userId,
+    email: (data.email as string | undefined) ?? fallback?.email,
+    city: (data.city as string | undefined) ?? fallback?.city,
+    country: (data.country as string | undefined) ?? fallback?.country,
+    culturePassId: (data.culturePassId as string | undefined) ?? fallback?.culturePassId,
+    tier,
+    avatarUrl: (data.avatarUrl as string | undefined) ?? fallback?.avatarUrl,
+    createdAt,
+    affiliationName: affiliation?.name ?? fallback?.affiliationName,
+  };
+}
+
+export function buildGoogleBusinessCardObjectId(userId: string): string {
+  const config = getGoogleWalletConfig();
+  const slug = slugify(userId).slice(0, 48);
+  return `${config.issuerId}.cp_card_${slug}`;
 }
 
 export function getApplePassTypeIdentifier(): string {
@@ -501,10 +586,59 @@ function buildGoogleBusinessCardObject(user: WalletPassUser, objectId: string, c
   };
 }
 
+export async function patchGoogleBusinessCardIfExists(user: WalletPassUser): Promise<void> {
+  const config = getGoogleWalletConfig();
+  const accessToken = await getGoogleAccessToken(config);
+  const objectId = buildGoogleBusinessCardObjectId(user.id);
+  const existingResponse = await fetch(
+    `${GOOGLE_WALLET_BASE_URL}/genericObject/${encodeURIComponent(objectId)}`,
+    { headers: { Authorization: `Bearer ${accessToken}` } },
+  );
+  if (!existingResponse.ok) return;
+
+  const displayName = formatWalletDisplayName(user.displayName ?? '', String(user.username ?? user.id));
+  const patchBody: Record<string, unknown> = {
+    header: {
+      defaultValue: { language: 'en-AU', value: displayName },
+    },
+    subheader: {
+      defaultValue: { language: 'en-AU', value: `@${String(user.username ?? user.id)}` },
+    },
+  };
+  if (user.avatarUrl) {
+    patchBody.imageModulesData = [
+      {
+        id: 'avatar',
+        mainImage: {
+          sourceUri: { uri: user.avatarUrl },
+          contentDescription: {
+            defaultValue: { language: 'en-AU', value: `${displayName} avatar` },
+          },
+        },
+      },
+    ];
+  }
+
+  const patchResponse = await fetch(
+    `${GOOGLE_WALLET_BASE_URL}/genericObject/${encodeURIComponent(objectId)}`,
+    {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(patchBody),
+    },
+  );
+  if (!patchResponse.ok) {
+    const text = await patchResponse.text();
+    throw new Error(`Google Wallet object patch failed: ${patchResponse.status} ${text}`);
+  }
+}
+
 export async function createGoogleBusinessCardSaveUrl(user: WalletPassUser): Promise<string> {
   const config = getGoogleWalletConfig();
-  const username = String(user.username ?? user.id);
-  const objectId = `${config.issuerId}.${slugify(`${username}-${randomUUID()}`).slice(0, 48)}`;
+  const objectId = buildGoogleBusinessCardObjectId(user.id);
 
   const payload = {
     genericObjects: [buildGoogleBusinessCardObject(user, objectId, config.classId)],

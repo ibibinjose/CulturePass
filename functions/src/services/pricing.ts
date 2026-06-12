@@ -17,6 +17,7 @@ import {
   type BillingPeriod,
   type MembershipPlanId,
 } from '../../../shared/constants/pricingCatalog';
+import { buildOrganizerTicketingFees } from '../../../shared/constants/organizerTicketingFees';
 import type {
   MembershipChargeSnapshot,
   PlatformPricingConfig,
@@ -180,12 +181,20 @@ export async function getMembershipPricingPlans(country?: string | null): Promis
     buildMembershipPlan(market, 'yearly'),
   ]);
 
+  const platform = getPlatformPricingConfig();
+  const organizer = buildOrganizerTicketingFees({
+    connectPlatformFeeBps: platform.connectPlatformFeeBps,
+    currency: market.currency,
+    market: market.code,
+  });
+
   return {
     market: market.code,
     country: market.defaultCountry,
     currency: market.currency,
     membership: [monthly, yearly],
-    platform: getPlatformPricingConfig(),
+    platform,
+    organizer,
     fetchedAt: nowIso(),
   };
 }

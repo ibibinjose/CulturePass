@@ -38,12 +38,35 @@ export interface PlatformPricingConfig {
   supportedMarkets: string[];
 }
 
+export type OrganizerTierId = 'standard' | 'premium';
+
+/** Paid-ticket fee row for organiser pricing page (derived from Connect bps). */
+export interface OrganizerTicketingTierFee {
+  id: OrganizerTierId;
+  percentBps: number;
+  percentDisplay: string;
+  fixedFeeCents: number;
+  fixedFeeDisplay: string | null;
+  priceLine: string;
+  priceSub: string;
+}
+
+export interface OrganizerTicketingFeesConfig {
+  market: string;
+  currency: string;
+  connectPlatformFeeBps: number;
+  standard: OrganizerTicketingTierFee;
+  premium: OrganizerTicketingTierFee;
+}
+
 export interface PricingPlansResponse {
   market: string;
   country: string;
   currency: string;
   membership: PricingPlan[];
   platform: PlatformPricingConfig;
+  /** Live organiser ticket fees — Standard matches Connect; Premium is discounted. */
+  organizer: OrganizerTicketingFeesConfig;
   fetchedAt: string;
 }
 

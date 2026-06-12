@@ -67,11 +67,14 @@ export default function QRScreen() {
 
   const d = useDigitalIdScreen();
 
+  const cardTheme = React.useMemo(
+    () => resolveQrCardTheme(d.tierLabel === 'Standard' ? 'free' : d.tierLabel.toLowerCase()),
+    [d.tierLabel],
+  );
+
   if (!canAccessDigitalIdDevTools(isAdmin)) {
     return <Redirect href={DIGITAL_ID_ROUTE} />;
   }
-
-  const cardTheme = React.useMemo(() => resolveQrCardTheme(d.tierLabel === 'Standard' ? 'free' : d.tierLabel.toLowerCase()), [d.tierLabel]);
   const panelBg = isDark ? withAlpha(colors.surface, 0.92) : colors.surface;
   const panelBorder = isDark ? withAlpha(cardTheme.accent, 0.22) : colors.borderLight;
   const mutedOnPanel = colors.textSecondary;

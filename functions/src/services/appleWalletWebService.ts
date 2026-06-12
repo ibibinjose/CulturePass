@@ -92,3 +92,26 @@ export async function listSerialNumbersForDevice(params: {
     lastUpdated: latestUpdatedMs > 0 ? new Date(latestUpdatedMs).toISOString() : undefined,
   };
 }
+
+/** Bump PassKit registration timestamps so devices know to re-fetch a pass. */
+export async function touchAppleWalletRegistrationsForSerial(
+  serialNumber: string,
+  updatedAt: string,
+): Promise<void> {
+  if (!serialNumber.trim()) return;
+
+  if (isFirestoreConfigured) {
+    const snap = await collection().where('serialNumber', '==', serialNumber).get();
+    if (snap.empty) return;
+    const batch = db.batch();
+    snap.docs.forEach((doc) => batch.update(doc.ref, { updatedAt }));
+    await batch.commit();
+    return;
+  }
+
+  for (const entry of registrations.values()) {
+    if (entry.serialNumber === serialNumber) {
+      entry.updatedAt = updatedAt;
+    }
+  }
+}

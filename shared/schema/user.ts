@@ -77,6 +77,10 @@ export interface User {
   displayName?: string;
   email?: string;
   avatarUrl?: string;
+  /** Server-set when avatarUrl changes — used for cache busting across surfaces */
+  avatarUpdatedAt?: string;
+  /** Server-set when pass-visible profile fields change — Wallet pass revision signal */
+  walletPassUpdatedAt?: string;
   city?: string;
   state?: string;
   postcode?: number;

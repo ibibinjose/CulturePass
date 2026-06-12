@@ -39,6 +39,7 @@ export type BusinessPassCardProps = {
   qrValue: string;
   qrSize?: number;
   avatarUrl?: string | null;
+  avatarRecyclingKey?: string | number | null;
   initials: string;
   isVerified?: boolean;
   affiliation?: { name: string; avatarUrl?: string | null } | null;
@@ -56,6 +57,7 @@ export function BusinessPassCard({
   qrValue,
   qrSize,
   avatarUrl,
+  avatarRecyclingKey,
   initials,
   isVerified = false,
   affiliation,
@@ -79,6 +81,7 @@ export function BusinessPassCard({
           <PassAvatar
             size={AVATAR_SIZE}
             avatarUrl={avatarUrl}
+            recyclingKey={avatarRecyclingKey}
             initials={initials}
             ringWidth={2}
             accessibilityLabel={`${name} profile photo`}

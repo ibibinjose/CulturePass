@@ -408,24 +408,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         queryClient.invalidateQueries({ queryKey: ['/api/users'] }),
         queryClient.invalidateQueries({ queryKey: ['/api/users/me'] }),
         queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] }),
+        queryClient.invalidateQueries({ queryKey: ['/api/wallet/digital-id'] }),
+        queryClient.invalidateQueries({ queryKey: [`/api/users/${session.user.id}`] }),
         queryClient.invalidateQueries({ queryKey: ['users', session.user.id] }),
         queryClient.invalidateQueries({ queryKey: ['user', session.user.id] }),
       ]);
-      
-      // If avatarUrl was updated, aggressively clear image caches + add a version bump
+
       if (updatedFields.avatarUrl) {
         queryClient.removeQueries({ queryKey: ['avatar', session.user.id] });
-        // Force consumers (sidebar, public self-view, etc.) to see fresh image
-        setSession(prev => {
-          if (!prev) return prev;
-          return {
-            ...prev,
-            user: {
-              ...prev.user,
-              avatarUpdatedAt: Date.now(),
-            },
-          };
-        });
+        if (Platform.OS === 'web') {
+          try {
+            const { Image } = await import('expo-image');
+            await Promise.all([Image.clearDiskCache(), Image.clearMemoryCache()]);
+          } catch {
+            // non-fatal cache clear
+          }
+        }
       }
     } catch (error) {
       devErrorLog('updateUserProfile failed', error);

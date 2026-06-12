@@ -34,6 +34,7 @@ export type LanyardPassCardProps = {
   qrValue: string;
   qrSize?: number;
   avatarUrl?: string | null;
+  avatarRecyclingKey?: string | number | null;
   initials: string;
   isVerified?: boolean;
   isActive?: boolean;
@@ -54,6 +55,7 @@ export function LanyardPassCard({
   qrValue,
   qrSize,
   avatarUrl,
+  avatarRecyclingKey,
   initials,
   isActive = true,
   onCopyCpid,
@@ -132,6 +134,7 @@ export function LanyardPassCard({
                   <PassAvatar
                     size={AVATAR_SIZE}
                     avatarUrl={avatarUrl}
+                    recyclingKey={avatarRecyclingKey}
                     initials={initials}
                     ringWidth={0}
                     accessibilityLabel={`${name} profile photo`}

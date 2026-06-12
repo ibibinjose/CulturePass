@@ -60,8 +60,8 @@ export default function HostspaceCreatePageScreen() {
           pageId={pageId}
           templateId={templateId}
           onCancel={handleCancel}
-          categorySelector="dropdown"
-          showHero
+          embeddedInShell
+          showHero={false}
         />
       </HostspaceCreateShell>
     </HostspaceAccessGate>

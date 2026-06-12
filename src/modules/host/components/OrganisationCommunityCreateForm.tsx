@@ -20,7 +20,7 @@ import { useAuth } from '@/lib/auth';
 import { buildHostspaceCreateHref } from '@/constants/navigation/createNav';
 import { CultureTokens, Spacing, TextStyles } from '@/design-system/tokens/theme';
 import { Button } from '@/design-system/ui/Button';
-import { GlassView } from '@/design-system/ui/GlassView';
+
 import {
   Section,
   Field,
@@ -33,12 +33,13 @@ import {
 import { MediaUploadField } from './fields/MediaUploadField';
 import { AutoSaveIndicator } from './AutoSaveIndicator';
 import { PagePublishSuccess } from './PagePublishSuccess';
+import { PageHomePreview } from './PageHomePreview';
 import { OrgHostListingCreateSection } from './OrgHostListingCreateSection';
 import { usePageWizard } from '../hooks/usePageWizard';
 import { PAGE_CATEGORY_PRESETS } from '../constants/pageTagPresets';
 import type { HostPageTemplateId } from '@/shared/schema';
 import type { HostEntityType } from '@/shared/schema/hostTypes';
-import { validateHostPagePublishFormData } from '@/shared/schema/hostPage';
+import type { HostPageFormData } from '@/shared/schema/hostPage';
 import {
   ORGANISATION_COMMUNITY_TYPES,
   buildOrgCommunityCategoryTags,
@@ -63,13 +64,83 @@ export type OrganisationCommunityCreateFormProps = {
   pageId?: string;
   templateId?: HostPageTemplateId;
   onCancel?: () => void;
-  /** Dropdown is the canonical selector for all org/community types. */
+  /** Desktop defaults to grid; mobile defaults to dropdown. */
   categorySelector?: OrganisationCommunityCategorySelector;
   showHero?: boolean;
+  /** Parent HostspaceCreateShell owns scrolling — avoids nested scroll on web. */
+  embeddedInShell?: boolean;
 };
 
-const ORG_TYPE_DROPDOWN_HINT =
-  'Community · Organizer · Association · Organisation · NGO · Charity · Government · Council · Club or Society';
+const REQUIRED_PROGRESS_KEYS: (keyof HostPageFormData)[] = [
+  'name',
+  'bio',
+  'categoryTags',
+  'publicEmail',
+  'logoUrl',
+  'coverUrl',
+];
+
+function computeFormProgress(formData: HostPageFormData): { done: number; total: number } {
+  let done = 0;
+  if (formData.name?.trim()) done += 1;
+  if ((formData.bio?.trim().length ?? 0) >= 20) done += 1;
+  if ((formData.categoryTags?.length ?? 0) > 0) done += 1;
+  if (formData.publicEmail?.trim()) done += 1;
+  if (formData.logoUrl?.trim()) done += 1;
+  if (formData.coverUrl?.trim()) done += 1;
+  return { done, total: REQUIRED_PROGRESS_KEYS.length };
+}
+
+function FormProgressBar({ done, total }: { done: number; total: number }) {
+  const colors = useColors();
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+  const ready = done >= total;
+
+  return (
+    <View style={styles.progressWrap}>
+      <View style={[styles.progressTrack, { backgroundColor: colors.surfaceElevated, borderColor: colors.borderLight }]}>
+        <View
+          style={[
+            styles.progressFill,
+            {
+              width: `${pct}%`,
+              backgroundColor: ready ? CultureTokens.teal : CultureTokens.appBlue,
+            },
+          ]}
+        />
+      </View>
+      <Text style={[styles.progressLabel, { color: ready ? CultureTokens.teal : colors.textSecondary }]}>
+        {ready ? 'Ready to publish' : `${done}/${total} required`}
+      </Text>
+    </View>
+  );
+}
+
+function PageTypeSummaryCard({ pageType }: { pageType: OrganisationCommunityType }) {
+  const colors = useColors();
+
+  return (
+    <View
+      style={[
+        styles.typeSummary,
+        {
+          borderColor: `${pageType.color}55`,
+          backgroundColor: `${pageType.color}10`,
+        },
+      ]}
+    >
+      <View style={[styles.typeSummaryIcon, { backgroundColor: `${pageType.color}20` }]}>
+        <Ionicons name={pageType.icon} size={22} color={pageType.color} />
+      </View>
+      <View style={styles.typeSummaryCopy}>
+        <Text style={[styles.typeSummaryLabel, { color: colors.text }]}>{pageType.label}</Text>
+        <Text style={[styles.typeSummaryNotes, { color: colors.textSecondary }]} numberOfLines={2}>
+          {pageType.notes}
+        </Text>
+      </View>
+    </View>
+  );
+}
 
 function OrganisationCommunityTypeSelector({
   selectedId,
@@ -124,14 +195,15 @@ function OrganisationCommunityTypeSelector({
 function OrganisationCommunityTypeDropdown({
   selectedId,
   onSelect,
+  pageType,
 }: {
   selectedId: OrganisationCommunityTypeId;
   onSelect: (id: OrganisationCommunityTypeId) => void;
+  pageType: OrganisationCommunityType;
 }) {
-  const pageType = findOrganisationCommunityType(selectedId);
-
   return (
     <View style={styles.dropdownBlock}>
+      <PageTypeSummaryCard pageType={pageType} />
       <CreateFormSelect
         value={selectedId}
         onChange={onSelect}
@@ -142,10 +214,6 @@ function OrganisationCommunityTypeDropdown({
           description: type.notes,
         }))}
       />
-      <View style={[styles.dropdownMeta, { borderColor: `${pageType.color}40`, backgroundColor: `${pageType.color}10` }]}>
-        <Ionicons name={pageType.icon} size={18} color={pageType.color} />
-        <Text style={[styles.dropdownMetaText, { color: pageType.color }]}>{pageType.notes}</Text>
-      </View>
     </View>
   );
 }
@@ -161,6 +229,7 @@ function OrganisationCommunityCreateFormBody({
   onCancel,
   categorySelector,
   showHero,
+  embeddedInShell,
 }: {
   pageType: OrganisationCommunityType;
   entityType: HostEntityType;
@@ -170,11 +239,14 @@ function OrganisationCommunityCreateFormBody({
   pageId?: string;
   templateId?: HostPageTemplateId;
   onCancel?: () => void;
-  categorySelector: OrganisationCommunityCategorySelector;
+  categorySelector?: OrganisationCommunityCategorySelector;
   showHero: boolean;
+  embeddedInShell: boolean;
 }) {
   const colors = useColors();
   const { isDesktop, hPad } = useLayout();
+  const selectorMode: OrganisationCommunityCategorySelector =
+    categorySelector ?? (isDesktop ? 'grid' : 'dropdown');
   const { user } = useAuth();
   const [published, setPublished] = useState<{ pageId: string; verificationRequired: boolean } | null>(null);
   const [publishError, setPublishError] = useState<string | null>(null);
@@ -191,6 +263,7 @@ function OrganisationCommunityCreateFormBody({
   });
 
   const categoryPresets = PAGE_CATEGORY_PRESETS[entityType] ?? PAGE_CATEGORY_PRESETS.community;
+  const progress = computeFormProgress(wizard.formData);
 
   useEffect(() => {
     const current = wizard.formData.categoryTags ?? [];
@@ -283,45 +356,23 @@ function OrganisationCommunityCreateFormBody({
     );
   }
 
-  return (
-    <ScrollView
-      style={styles.scroll}
-      contentContainerStyle={[styles.scrollContent, { paddingHorizontal: hPad }]}
-      keyboardShouldPersistTaps="handled"
-    >
-      {publishError ? (
-        <View style={[styles.publishErrorBanner, { borderColor: CultureTokens.coral, backgroundColor: `${CultureTokens.coral}14` }]}>
-          <Ionicons name="alert-circle-outline" size={18} color={CultureTokens.coral} />
-          <Text style={[styles.publishErrorText, { color: colors.text }]}>{publishError}</Text>
-        </View>
-      ) : null}
-
-      {showHero ? (
-        <View style={styles.hero}>
-          <Text style={[styles.eyebrow, { color: CultureTokens.appBlue }]}>Organisations & Communities</Text>
-          <Text style={[styles.title, { color: colors.text }]}>Create your page</Text>
-          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-            One form for all organisation and community page types — choose yours from the dropdown below.
-          </Text>
-          <AutoSaveIndicator status={wizard.saveStatus} lastSaved={wizard.lastSaved} />
-        </View>
-      ) : (
-        <View style={styles.heroCompact}>
-          <AutoSaveIndicator status={wizard.saveStatus} lastSaved={wizard.lastSaved} />
-        </View>
-      )}
-
+  const formSections = (
+    <>
       <Section
         title="Page category"
-        icon={categorySelector === 'dropdown' ? 'list-outline' : 'grid-outline'}
+        icon={selectorMode === 'dropdown' ? 'list-outline' : 'grid-outline'}
       >
         <Text style={[styles.sectionHint, { color: colors.textSecondary }]}>
-          {categorySelector === 'dropdown'
-            ? `Choose your page type: ${ORG_TYPE_DROPDOWN_HINT}.`
+          {selectorMode === 'dropdown'
+            ? 'Pick the type that best matches your group — you can change it before publishing.'
             : 'Choose the type that best describes your organisation. This sets how your page appears in discovery.'}
         </Text>
-        {categorySelector === 'dropdown' ? (
-          <OrganisationCommunityTypeDropdown selectedId={selectedTypeId} onSelect={handleTypeChange} />
+        {selectorMode === 'dropdown' ? (
+          <OrganisationCommunityTypeDropdown
+            selectedId={selectedTypeId}
+            onSelect={handleTypeChange}
+            pageType={pageType}
+          />
         ) : (
           <OrganisationCommunityTypeSelector selectedId={selectedTypeId} onSelect={handleTypeChange} />
         )}
@@ -530,36 +581,95 @@ function OrganisationCommunityCreateFormBody({
           source="org_community_form_edit"
         />
       ) : null}
+    </>
+  );
 
-      {isDesktop ? (
-        <GlassView style={[styles.previewPanel, { borderColor: colors.borderLight }]}>
-          <Text style={[styles.previewTitle, { color: colors.text }]}>Preview</Text>
-          <Text style={[styles.previewName, { color: colors.text }]} numberOfLines={2}>
-            {wizard.formData.name || pageType.label}
-          </Text>
-          <Text style={[styles.previewBio, { color: colors.textSecondary }]} numberOfLines={4}>
-            {wizard.formData.bio || pageType.notes}
-          </Text>
-          <View style={styles.previewMetaRow}>
-            <Ionicons name={pageType.icon} size={14} color={pageType.color} />
-            <Text style={[styles.previewMeta, { color: pageType.color }]}>{pageType.label}</Text>
+  const toolbar = (
+    <View style={[styles.toolbar, { borderColor: colors.borderLight, backgroundColor: colors.surface }]}>
+      <View style={styles.toolbarLeft}>
+        {showHero ? (
+          <View style={styles.hero}>
+            <Text style={[styles.eyebrow, { color: CultureTokens.appBlue }]}>Organisations & Communities</Text>
+            <Text style={[styles.title, { color: colors.text }]}>Create your page</Text>
+            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+              One form for every org and community type.
+            </Text>
           </View>
-        </GlassView>
+        ) : null}
+        <AutoSaveIndicator status={wizard.saveStatus} lastSaved={wizard.lastSaved} />
+      </View>
+      <FormProgressBar done={progress.done} total={progress.total} />
+    </View>
+  );
+
+  const footer = (
+    <View
+      style={[
+        styles.footer,
+        {
+          borderColor: colors.borderLight,
+          backgroundColor: colors.surface,
+        },
+        embeddedInShell && Platform.OS === 'web' ? (styles.footerSticky as object) : null,
+      ]}
+    >
+      <Button variant="secondary" onPress={handleCancel} accessibilityLabel="Cancel create page">
+        Cancel
+      </Button>
+      <Button
+        variant="primary"
+        onPress={handlePublish}
+        loading={wizard.isPublishing}
+        disabled={progress.done < progress.total}
+        accessibilityLabel="Publish organisation page"
+        style={isDesktop ? undefined : { flex: 1 }}
+      >
+        Publish page
+      </Button>
+    </View>
+  );
+
+  const content = (
+    <>
+      {publishError ? (
+        <View style={[styles.publishErrorBanner, { borderColor: CultureTokens.coral, backgroundColor: `${CultureTokens.coral}14` }]}>
+          <Ionicons name="alert-circle-outline" size={18} color={CultureTokens.coral} />
+          <Text style={[styles.publishErrorText, { color: colors.text }]}>{publishError}</Text>
+        </View>
       ) : null}
 
-      <View style={styles.actions}>
-        <Button variant="secondary" onPress={handleCancel} accessibilityLabel="Cancel create page">
-          Cancel
-        </Button>
-        <Button
-          variant="primary"
-          onPress={handlePublish}
-          loading={wizard.isPublishing}
-          accessibilityLabel="Publish organisation page"
-        >
-          Publish page
-        </Button>
+      {toolbar}
+
+      <View style={[styles.layout, isDesktop && styles.layoutDesktop]}>
+        <View style={styles.formColumn}>{formSections}</View>
+        {isDesktop ? (
+          <View style={styles.previewColumn}>
+            <PageHomePreview formData={wizard.formData} entityType={entityType} />
+          </View>
+        ) : (
+          <PageHomePreview formData={wizard.formData} entityType={entityType} />
+        )}
       </View>
+
+      {footer}
+    </>
+  );
+
+  if (embeddedInShell) {
+    return (
+      <View style={[styles.shellContent, { paddingHorizontal: 0 }]}>
+        {content}
+      </View>
+    );
+  }
+
+  return (
+    <ScrollView
+      style={styles.scroll}
+      contentContainerStyle={[styles.scrollContent, { paddingHorizontal: hPad }]}
+      keyboardShouldPersistTaps="handled"
+    >
+      {content}
     </ScrollView>
   );
 }
@@ -570,8 +680,9 @@ export function OrganisationCommunityCreateForm({
   pageId,
   templateId,
   onCancel,
-  categorySelector = 'dropdown',
+  categorySelector,
   showHero = true,
+  embeddedInShell = false,
 }: OrganisationCommunityCreateFormProps) {
   const [selectedTypeId, setSelectedTypeId] = useState<OrganisationCommunityTypeId>(() => {
     const found = findOrganisationCommunityType(initialTypeId);
@@ -594,6 +705,7 @@ export function OrganisationCommunityCreateForm({
       onCancel={onCancel}
       categorySelector={categorySelector}
       showHero={showHero}
+      embeddedInShell={embeddedInShell}
     />
   );
 }
@@ -604,9 +716,120 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.md,
     paddingBottom: Spacing.xl,
     gap: 4,
-    maxWidth: 920,
+    maxWidth: 1100,
     alignSelf: 'center',
     width: '100%',
+  },
+  shellContent: {
+    gap: Spacing.md,
+    paddingBottom: Spacing.lg,
+    maxWidth: 1100,
+    alignSelf: 'center',
+    width: '100%',
+  },
+  toolbar: {
+    borderWidth: 1,
+    borderRadius: 14,
+    padding: 14,
+    gap: 12,
+    marginBottom: 4,
+  },
+  toolbarLeft: {
+    gap: 8,
+  },
+  progressWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  progressTrack: {
+    flex: 1,
+    height: 8,
+    borderRadius: 4,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: 8,
+    borderRadius: 4,
+  },
+  progressLabel: {
+    fontSize: 11,
+    fontFamily: 'Poppins_600SemiBold',
+    minWidth: 108,
+    textAlign: 'right',
+  },
+  layout: {
+    gap: Spacing.md,
+  },
+  layoutDesktop: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: Spacing.lg,
+  },
+  formColumn: {
+    flex: 1,
+    minWidth: 0,
+    gap: 4,
+  },
+  previewColumn: {
+    width: 360,
+    flexShrink: 0,
+    ...(Platform.OS === 'web'
+      ? ({
+          position: 'sticky' as const,
+          top: 12,
+          alignSelf: 'flex-start',
+        } as object)
+      : {}),
+  },
+  footer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.sm,
+    marginTop: Spacing.md,
+    padding: 14,
+    borderWidth: 1,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+  },
+  footerSticky: Platform.OS === 'web'
+    ? ({
+        position: 'sticky',
+        bottom: 8,
+        zIndex: 20,
+        boxShadow: '0 -4px 24px rgba(0,0,0,0.06)',
+      } as object)
+    : {},
+  typeSummary: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    borderWidth: 1.5,
+    borderRadius: 12,
+    padding: 12,
+  },
+  typeSummaryIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  typeSummaryCopy: {
+    flex: 1,
+    minWidth: 0,
+    gap: 2,
+  },
+  typeSummaryLabel: {
+    fontSize: 16,
+    fontFamily: 'Poppins_700Bold',
+  },
+  typeSummaryNotes: {
+    fontSize: 12,
+    fontFamily: 'Poppins_400Regular',
+    lineHeight: 16,
   },
   loading: {
     flex: 1,
@@ -637,26 +860,8 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
     gap: 6,
   },
-  heroCompact: {
-    marginBottom: Spacing.sm,
-    alignItems: 'flex-start',
-  },
   dropdownBlock: {
     gap: 10,
-  },
-  dropdownMeta: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 8,
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 12,
-  },
-  dropdownMetaText: {
-    flex: 1,
-    fontSize: 13,
-    fontFamily: 'Poppins_500Medium',
-    lineHeight: 18,
   },
   eyebrow: {
     ...TextStyles.caption,
@@ -746,44 +951,5 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: 'Poppins_400Regular',
     marginTop: 2,
-  },
-  previewPanel: {
-    borderWidth: 1,
-    borderRadius: 18,
-    padding: Spacing.md,
-    marginTop: Spacing.sm,
-    gap: 8,
-  },
-  previewTitle: {
-    ...TextStyles.caption,
-    fontFamily: 'Poppins_700Bold',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  previewName: {
-    ...TextStyles.title3,
-    fontSize: 20,
-  },
-  previewBio: {
-    ...TextStyles.body,
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  previewMetaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginTop: 4,
-  },
-  previewMeta: {
-    ...TextStyles.caption,
-    fontFamily: 'Poppins_600SemiBold',
-  },
-  actions: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.sm,
-    marginTop: Spacing.lg,
-    paddingBottom: Spacing.md,
   },
 });

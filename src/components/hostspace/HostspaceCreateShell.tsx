@@ -40,8 +40,12 @@ export function HostspaceCreateShell({ children, flow, categoryId }: HostspaceCr
     flow === 'wizard' ? 'wizard' : flow === 'category' ? 'create' : 'create';
 
   const categoryLabel = categoryId ? findCategory(categoryId).label : undefined;
+  const isOrgCommunityFlow = categoryId === 'organisation-community' || categoryId === 'organisation';
+  const compactHero = flow === 'category' && isOrgCommunityFlow;
   const showHero = flow !== 'wizard';
-  const heroHeight = hostspaceCreateHeroHeight(isDesktop);
+  const heroHeight = compactHero
+    ? (isDesktop ? 168 : 148)
+    : hostspaceCreateHeroHeight(isDesktop);
 
   const { data: listingData, isLoading: listingCountLoading } = useQuery({
     queryKey: ['hostspace-create-live-count', user?.id],
@@ -107,13 +111,11 @@ export function HostspaceCreateShell({ children, flow, categoryId }: HostspaceCr
     [],
   );
 
-  const isOrgCommunityFlow = categoryId === 'organisation-community' || categoryId === 'organisation';
-
   const headline =
     flow === 'catalog'
       ? 'Creation Lab'
       : flow === 'category' && isOrgCommunityFlow
-        ? 'Organisations & Communities'
+        ? 'Create a Page'
         : flow === 'category'
           ? categoryLabel ?? 'Create'
           : 'HostSpace';
@@ -122,7 +124,7 @@ export function HostspaceCreateShell({ children, flow, categoryId }: HostspaceCr
     flow === 'catalog'
       ? 'Orgs & Communities, Venues, Businesses, CultureMarket, and Templates — all from one studio.'
       : flow === 'category' && isOrgCommunityFlow
-        ? 'One unified form — pick Community, Organizer, Association, Organisation, NGO, Charity, Government, Council, or Club or Society.'
+        ? 'One form for communities, organisers, NGOs, councils, and clubs — your preview updates as you type.'
         : 'Draft events, listings, offers, and marketplace products from one studio.';
 
   if (flow === 'wizard') {
@@ -165,8 +167,8 @@ export function HostspaceCreateShell({ children, flow, categoryId }: HostspaceCr
             hPad={hPad}
             headline={headline}
             subtitle={subtitle}
-            stats={stats}
-            quickActions={quickActions}
+            stats={compactHero ? [] : stats}
+            quickActions={compactHero ? [] : quickActions}
           />
         ) : null}
         <View style={{ paddingHorizontal: hPad }}>{children}</View>

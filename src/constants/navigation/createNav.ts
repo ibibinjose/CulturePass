@@ -36,10 +36,15 @@ export const DOMAIN_LISTING_WIZARD_PATHNAME = '/(domain)/listing/create' as cons
 export const EVENT_WIZARD_PATHNAME = '/hostspace/event/create' as const;
 
 /** Unified organisation & community page form (all 9 org types). */
+import {
+  ORGANISATION_COMMUNITY_CREATE_PATH,
+  isOrganisationCommunityCategoryId,
+} from '@shared/creation/orgCommunity';
+
 export {
   ORGANISATION_COMMUNITY_CREATE_PATH as ORGANISATION_COMMUNITY_CREATE_PATHNAME,
   isOrganisationCommunityCategoryId,
-} from '@shared/creation/orgCommunity';
+};
 
 /** @deprecated Legacy top-level event create — redirects to EVENT_WIZARD_PATHNAME */
 export const LEGACY_EVENT_WIZARD_PATHNAME = '/event/create' as const;

@@ -15,7 +15,8 @@
     "typecheck": "tsc --noEmit",
     "seed:demo-fixtures": "ts-node scripts/seed-demo-fixtures.ts",
     "rebuild:pkpass": "ts-node scripts/rebuild-pkpass.ts",
-    "rebuild:wallet-passes": "ts-node scripts/rebuild-all-wallet-passes.ts"
+    "rebuild:wallet-passes": "ts-node scripts/rebuild-all-wallet-passes.ts",
+    "cleanup:fresh-backend": "ts-node scripts/fresh-backend-cleanup.ts"
   },
   "engines": {
     "node": "22"

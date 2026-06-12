@@ -43,6 +43,7 @@ rm -f backup.sh # Since we have a dedicated cleanup script now
 rm -rf dist-bundle-analyze/
 rm -rf dist-next-analyze/
 rm -f dev-preview.html
+rm -rf web/
 
 # Remove potentially unnecessary config files
 echo "Removing non-essential config files..."

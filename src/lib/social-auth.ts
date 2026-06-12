@@ -3,6 +3,12 @@ import * as Crypto from 'expo-crypto';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { FirebaseError } from 'firebase/app';
 import {
+  GoogleSignin,
+  isCancelledResponse,
+  isErrorWithCode,
+  statusCodes,
+} from '@/lib/googleSignInModule';
+import {
   GoogleAuthProvider,
   OAuthProvider,
   signInWithCredential,
@@ -83,8 +89,6 @@ let googleConfigured = false;
 export async function ensureGoogleSignInConfigured(): Promise<void> {
   if (Platform.OS === 'web' || googleConfigured) return;
 
-  const { GoogleSignin } = await import('@react-native-google-signin/google-signin');
-
   GoogleSignin.configure({
     webClientId: GOOGLE_WEB_CLIENT_ID,
     ...(GOOGLE_IOS_CLIENT_ID ? { iosClientId: GOOGLE_IOS_CLIENT_ID } : {}),
@@ -95,13 +99,6 @@ export async function ensureGoogleSignInConfigured(): Promise<void> {
 }
 
 async function signInWithGoogleNative(auth: Auth): Promise<void> {
-  const {
-    GoogleSignin,
-    isCancelledResponse,
-    isErrorWithCode,
-    statusCodes,
-  } = await import('@react-native-google-signin/google-signin');
-
   await ensureGoogleSignInConfigured();
 
   if (!GOOGLE_WEB_CLIENT_ID) {

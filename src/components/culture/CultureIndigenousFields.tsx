@@ -23,6 +23,8 @@ import {
 } from '@/constants/indigenousTags';
 import { isAustralianNationality } from '@/constants/australianCultureTags';
 import { CultureTagPicker } from '@/components/culture/CultureTagPicker';
+import { TagSectionHeader } from '@/components/culture/TagSectionHeader';
+import { HOST_PAGE_TAG_LIST_MAX } from '@/shared/schema/hostPage';
 
 export interface CultureIndigenousValue {
   nationalityId?: string;
@@ -49,6 +51,7 @@ export interface CultureIndigenousFieldsProps {
   initialNationalityId?: string | null;
   onHaptic?: () => void;
   testID?: string;
+  maxTagSelections?: number;
 }
 
 const GLOBAL_NATIONALITY = { id: 'global', label: 'Global / International', emoji: '🌍' };
@@ -63,6 +66,7 @@ export function CultureIndigenousFields({
   initialNationalityId,
   onHaptic,
   testID = 'culture-indigenous-fields',
+  maxTagSelections = HOST_PAGE_TAG_LIST_MAX,
 }: CultureIndigenousFieldsProps) {
   const [cultureNationalityId, setCultureNationalityId] = useState<string | null>(
     value.nationalityId ?? initialNationalityId ?? null,
@@ -83,9 +87,9 @@ export function CultureIndigenousFields({
       return getCulturesForNationality(cultureNationalityId);
     }
     if (cultureNationalityId === 'global') {
-      return Object.values(CULTURES).slice(0, 24);
+      return Object.values(CULTURES).slice(0, 48);
     }
-    return ALL_NATIONALITIES.slice(0, 6).flatMap((n) => getCulturesForNationality(n.id)).slice(0, 24);
+    return ALL_NATIONALITIES.slice(0, 6).flatMap((n) => getCulturesForNationality(n.id)).slice(0, 32);
   }, [cultureNationalityId]);
 
   const indigenousOptions = useMemo(
@@ -108,6 +112,10 @@ export function CultureIndigenousFields({
   }, [value.cultureIds]);
 
   const haptic = () => onHaptic?.();
+  const surface = colors.surface ?? colors.background;
+  const cultureAtMax = value.cultureIds.length >= maxTagSelections;
+  const indigenousAtMax = value.indigenousTags.length >= maxTagSelections;
+  const languageAtMax = value.languageIds.length >= maxTagSelections;
 
   const selectNationality = (id: string) => {
     haptic();
@@ -119,20 +127,25 @@ export function CultureIndigenousFields({
 
   const toggleCulture = (id: string) => {
     haptic();
-    const next = value.cultureIds.includes(id)
-      ? value.cultureIds.filter((c) => c !== id)
-      : [...value.cultureIds, id];
-    onChange({ cultureIds: next });
+    const removing = value.cultureIds.includes(id);
+    if (!removing && cultureAtMax) return;
+
+    const next = removing ? value.cultureIds.filter((c) => c !== id) : [...value.cultureIds, id];
+    const patch: Partial<CultureIndigenousValue> = { cultureIds: next };
     if (!value.nationalityId && CULTURES[id]) {
-      onChange({ nationalityId: CULTURES[id].nationalityId, cultureIds: next });
+      patch.nationalityId = CULTURES[id].nationalityId;
       setCultureNationalityId(CULTURES[id].nationalityId);
     }
+    onChange(patch);
   };
 
   const toggleIndigenous = (id: string) => {
     haptic();
     const label = INDIGENOUS_TAG_PRESETS.find((t) => t.id === id)?.label ?? id;
-    const stored = value.indigenousTags.includes(id)
+    const hasTag = value.indigenousTags.includes(id) || value.indigenousTags.includes(label);
+    if (!hasTag && indigenousAtMax) return;
+
+    const stored = hasTag
       ? value.indigenousTags.filter((t) => t !== id && t !== label)
       : [...value.indigenousTags, id];
     onChange({ indigenousTags: stored, isIndigenousOwned: stored.length > 0 ? true : value.isIndigenousOwned });
@@ -140,30 +153,31 @@ export function CultureIndigenousFields({
 
   const toggleLanguage = (id: string) => {
     haptic();
+    const removing = value.languageIds.includes(id);
+    if (!removing && languageAtMax) return;
+
     onChange({
-      languageIds: value.languageIds.includes(id)
-        ? value.languageIds.filter((l) => l !== id)
-        : [...value.languageIds, id],
+      languageIds: removing ? value.languageIds.filter((l) => l !== id) : [...value.languageIds, id],
     });
   };
 
-  const surface = colors.surface ?? colors.background;
-
   return (
     <View style={styles.root} testID={testID}>
-      <Text style={[styles.note, { color: colors.textSecondary }]}>
-        Help people discover your listing with origin flags, culture tags, and First Nations identifiers.
-      </Text>
+      <TagSectionHeader
+        title="Origin & heritage"
+        subtitle="Nationality flags and culture tags power diaspora discovery and city feeds."
+        titleColor={colors.text}
+        subtitleColor={colors.textSecondary}
+        accentColor={CultureTokens.indigo}
+      />
 
-      {/* Nationality / flags */}
-      <Text style={[styles.label, { color: colors.text }]}>Origin / background</Text>
       <View style={[styles.searchWrap, { borderColor: colors.border, backgroundColor: surface }]}>
-        <Ionicons name="search" size={16} color={colors.textSecondary} />
+        <Ionicons name="flag-outline" size={16} color={colors.textSecondary} />
         <TextInput
           style={[styles.searchInput, { color: colors.text }]}
           value={nationalitySearch}
           onChangeText={setNationalitySearch}
-          placeholder="e.g. Indian, Chinese, Māori…"
+          placeholder="Search origin — Indian, Chinese, Māori…"
           placeholderTextColor={colors.textTertiary ?? colors.textSecondary}
         />
       </View>
@@ -203,18 +217,25 @@ export function CultureIndigenousFields({
         })}
       </ScrollView>
 
-      {/* Culture tags */}
-      <Text style={[styles.label, { color: colors.text, marginTop: Spacing.md }]}>Culture tags</Text>
-      {isAustralianNationality(cultureNationalityId) ? (
-        <Text style={[styles.hint, { color: colors.textSecondary }]}>
-          Australian culture tags are grouped by values, lifestyle, heritage, and expression.
-        </Text>
-      ) : null}
+      <TagSectionHeader
+        title="Culture tags"
+        subtitle={
+          isAustralianNationality(cultureNationalityId)
+            ? 'Australian tags are grouped by values, lifestyle, heritage, and expression.'
+            : 'Pick the cultures your Page represents or serves.'
+        }
+        count={value.cultureIds.length}
+        max={maxTagSelections}
+        titleColor={colors.text}
+        subtitleColor={colors.textSecondary}
+        accentColor={CultureTokens.gold}
+      />
       <CultureTagPicker
         cultures={filteredCultures}
         nationalityId={cultureNationalityId}
         selectedIds={value.cultureIds}
         onToggle={toggleCulture}
+        maxSelections={maxTagSelections}
         colors={{
           text: colors.text,
           textSecondary: colors.textSecondary,
@@ -224,18 +245,22 @@ export function CultureIndigenousFields({
         }}
         searchQuery={cultureSearch}
         onSearchQueryChange={setCultureSearch}
-        showSearch={isAustralianNationality(cultureNationalityId) || filteredCultures.length > 16}
+        showSearch={isAustralianNationality(cultureNationalityId) || filteredCultures.length > 12}
         testID={`${testID}-culture-tags`}
       />
 
-      {/* Indigenous tags */}
       {showIndigenous ? (
         <>
-          <Text style={[styles.label, { color: colors.text, marginTop: Spacing.md }]}>Indigenous tags</Text>
-          <Text style={[styles.hint, { color: colors.textSecondary }]}>
-            First Nations nations, NAIDOC, Māori groups, and Indigenous-owned identifiers.
-          </Text>
-          <View style={[styles.searchWrap, { borderColor: colors.border, backgroundColor: surface, marginTop: 8 }]}>
+          <TagSectionHeader
+            title="Indigenous & First Nations"
+            subtitle="Nations, NAIDOC, Māori groups, and Indigenous-owned identifiers."
+            count={value.indigenousTags.length}
+            max={maxTagSelections}
+            titleColor={colors.text}
+            subtitleColor={colors.textSecondary}
+            accentColor={CultureTokens.teal}
+          />
+          <View style={[styles.searchWrap, { borderColor: colors.border, backgroundColor: surface }]}>
             <Ionicons name="leaf-outline" size={16} color={CultureTokens.teal} />
             <TextInput
               style={[styles.searchInput, { color: colors.text }]}
@@ -248,15 +273,18 @@ export function CultureIndigenousFields({
           <View style={styles.tagGrid}>
             {indigenousOptions.map((t) => {
               const active = value.indigenousTags.includes(t.id) || value.indigenousTags.includes(t.label);
+              const disabled = !active && indigenousAtMax;
               return (
                 <Pressable
                   key={t.id}
-                  onPress={() => toggleIndigenous(t.id)}
+                  onPress={disabled ? undefined : () => toggleIndigenous(t.id)}
+                  disabled={disabled}
                   style={[
                     styles.tagChip,
                     {
                       borderColor: active ? CultureTokens.teal : colors.border,
                       backgroundColor: active ? CultureTokens.teal + '22' : surface,
+                      opacity: disabled ? 0.45 : 1,
                     },
                   ]}
                 >
@@ -281,11 +309,18 @@ export function CultureIndigenousFields({
         </>
       ) : null}
 
-      {/* Languages */}
       {showLanguages ? (
         <>
-          <Text style={[styles.label, { color: colors.text, marginTop: Spacing.md }]}>Languages</Text>
-          <View style={[styles.searchWrap, { borderColor: colors.border, backgroundColor: surface, marginBottom: 8 }]}>
+          <TagSectionHeader
+            title="Languages"
+            subtitle="Languages spoken or used by your community — suggested from culture picks."
+            count={value.languageIds.length}
+            max={maxTagSelections}
+            titleColor={colors.text}
+            subtitleColor={colors.textSecondary}
+            accentColor={CultureTokens.teal}
+          />
+          <View style={[styles.searchWrap, { borderColor: colors.border, backgroundColor: surface }]}>
             <Ionicons name="language-outline" size={16} color={colors.textSecondary} />
             <TextInput
               style={[styles.searchInput, { color: colors.text }]}
@@ -299,15 +334,18 @@ export function CultureIndigenousFields({
             {languageOptions.map((l) => {
               const active = value.languageIds.includes(l.id);
               const suggested = suggestedLanguageIds.has(l.id) && !active;
+              const disabled = !active && languageAtMax;
               return (
                 <Pressable
                   key={l.id}
-                  onPress={() => toggleLanguage(l.id)}
+                  onPress={disabled ? undefined : () => toggleLanguage(l.id)}
+                  disabled={disabled}
                   style={[
                     styles.tagChip,
                     {
                       borderColor: active ? CultureTokens.teal : suggested ? CultureTokens.indigo + '80' : colors.border,
                       backgroundColor: active ? CultureTokens.teal + '22' : suggested ? CultureTokens.indigo + '10' : surface,
+                      opacity: disabled ? 0.45 : 1,
                     },
                   ]}
                 >
@@ -323,10 +361,7 @@ export function CultureIndigenousFields({
 }
 
 const styles = StyleSheet.create({
-  root: { gap: 6 },
-  note: { fontSize: 14, lineHeight: 20, marginBottom: 4 },
-  label: { fontSize: 15, fontWeight: '600' },
-  hint: { fontSize: 13, lineHeight: 18 },
+  root: { gap: Spacing.sm },
   searchWrap: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -337,7 +372,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   searchInput: { flex: 1, fontSize: 15, padding: 0 },
-  chipRow: { gap: 8, paddingVertical: 8 },
+  chipRow: { gap: 8, paddingVertical: 4 },
   natChip: {
     flexDirection: 'row',
     alignItems: 'center',

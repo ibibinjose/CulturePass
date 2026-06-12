@@ -1,5 +1,59 @@
 [
   {
+    "hash": "6cd5288",
+    "fullHash": "6cd52888739ff6ad61d4430a2b3ef89a251efc43",
+    "author": "ibibinjose",
+    "email": "NeoTech@outlook.com.au",
+    "date": "2026-06-12T16:27:29+10:00",
+    "message": "chore: update iOS CocoaPods dependencies and Node.js module packages",
+    "executor": "Human Developer",
+    "systemLabel": "ibibinjose",
+    "files": [
+      "package-lock.json",
+      "src/constants/timesheetData.json"
+    ]
+  },
+  {
+    "hash": "b98d8d0",
+    "fullHash": "b98d8d0e6fc98dfce8f346c51eb599eea80ac22e",
+    "author": "ibibinjose",
+    "email": "NeoTech@outlook.com.au",
+    "date": "2026-06-12T16:18:54+10:00",
+    "message": "chore: extend cleanup.sh to wipe iOS, Android, and web build outputs",
+    "executor": "Human Developer",
+    "systemLabel": "ibibinjose",
+    "files": [
+      "scripts/cleanup.sh"
+    ]
+  },
+  {
+    "hash": "b6b9e5e",
+    "fullHash": "b6b9e5e5f2069f63bd64c82b2be7d6d0dbb88802",
+    "author": "ibibinjose",
+    "email": "NeoTech@outlook.com.au",
+    "date": "2026-06-12T16:17:19+10:00",
+    "message": "chore: remove duplicate fullRebuildWipe admin script",
+    "executor": "Human Developer",
+    "systemLabel": "ibibinjose",
+    "files": [
+      "scripts/admin/fullRebuildWipe.ts"
+    ]
+  },
+  {
+    "hash": "b431d93",
+    "fullHash": "b431d9379f6bbc32bd933a79767e3c03b6dac241",
+    "author": "ibibinjose",
+    "email": "NeoTech@outlook.com.au",
+    "date": "2026-06-12T16:11:16+10:00",
+    "message": "chore(functions): add fresh-backend cleanup script for user-only resets",
+    "executor": "Human Developer",
+    "systemLabel": "ibibinjose",
+    "files": [
+      "functions/package.json",
+      "functions/scripts/fresh-backend-cleanup.ts"
+    ]
+  },
+  {
     "hash": "eae659b",
     "fullHash": "eae659b00973411efb2fdc3cf38e31cd6554496e",
     "author": "ibibinjose",

@@ -199,7 +199,7 @@ it('Property 28e: profile/tickets deletions fall back to My Space', () => {
     const result = resolveNotificationRoute({ type, entityId: 'x1' }, false);
     expect(isResolvedRoute(result)).toBe(false);
     if (!isResolvedRoute(result)) {
-      expect(result.fallbackTab).toBe('/(tabs)/my-space');
+      expect(result.fallbackTab).toBe('/(tabs)/myspace');
     }
   }
 });

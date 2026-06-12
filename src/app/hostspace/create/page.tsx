@@ -1,10 +1,10 @@
 import { Redirect, useLocalSearchParams } from 'expo-router';
 
-import { resolveLegacyHostspaceCreateHref } from '@/constants/navigation/createNav';
+import { resolveCreateLabHref } from '@/constants/navigation/createNav';
 
-/** Legacy `/hostspace/create/page` → `/pages/create?entityType=…`. */
-export default function LegacyHostspaceCreatePageRedirect() {
+/** Path-style `/hostspace/create/page` → `/hostspace/create` (forwards entityType query params). */
+export default function HostspaceCreatePageRedirect() {
   const params = useLocalSearchParams();
-  const href = resolveLegacyHostspaceCreateHref(params);
+  const href = resolveCreateLabHref(params);
   return <Redirect href={href as never} />;
 }

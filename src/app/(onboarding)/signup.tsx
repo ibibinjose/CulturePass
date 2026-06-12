@@ -30,6 +30,7 @@ import {
 import { AuthAmbientBackground } from '@/components/onboarding/AuthScreenPrimitives';
 import { AuthSocialSection } from '@/components/onboarding/AuthSocialSection';
 import { AuthWebMarketingPanel } from '@/components/onboarding/AuthWebMarketingPanel';
+import { OnboardingDestinationBanner } from '@/components/onboarding/OnboardingDestinationBanner';
 
 
 import {
@@ -310,6 +311,10 @@ export default function SignUpScreen() {
           </View>
         </Animated.View>
       )}
+
+      {redirectTo ? (
+        <OnboardingDestinationBanner redirectTo={redirectTo} variant="auth" />
+      ) : null}
 
       {/* Global error */}
       {Boolean(globalError) && (

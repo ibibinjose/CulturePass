@@ -17,6 +17,7 @@ import Head from 'expo-router/head';
 import Animated, { FadeInDown, FadeIn, FadeInUp } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import * as Clipboard from 'expo-clipboard';
 
 import {
   CultureTokens,
@@ -43,6 +44,34 @@ import {
 } from '@/lib/app-meta';
 import { Footer } from '@/components/Footer';
 
+function showUserAlert(title: string, message: string) {
+  if (Platform.OS === 'web' && typeof window !== 'undefined' && typeof window.alert === 'function') {
+    window.alert(`${title}\n\n${message}`);
+    return;
+  }
+  Alert.alert(title, message);
+}
+
+function isShareCancelled(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  const msg = error.message.toLowerCase();
+  return msg.includes('cancel') || msg.includes('abort') || msg.includes('dismiss');
+}
+
+async function shareLandingLink(title: string, message: string, url: string) {
+  if (Platform.OS === 'web') {
+    if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+      await navigator.share({ title, text: message, url });
+      return;
+    }
+    await Clipboard.setStringAsync(url);
+    showUserAlert('Link copied', 'Share link copied to your clipboard.');
+    return;
+  }
+
+  await Share.share({ title, message, url });
+}
+
 export function WaitlistLanding() {
   const { isDesktop, contentWidth } = useLayout();
   const colors = useColors();
@@ -58,7 +87,7 @@ export function WaitlistLanding() {
 
   const handleSubmit = async () => {
     if (!email || !email.includes('@')) {
-      Alert.alert('Invalid Email', 'Please enter a valid email address.');
+      showUserAlert('Invalid Email', 'Please enter a valid email address.');
       return;
     }
     setIsSubmitting(true);
@@ -66,8 +95,8 @@ export function WaitlistLanding() {
       await api.cultureX.subscribe({ email });
       setIsSubmitted(true);
     } catch (err) {
-      console.error('Landing submission failed:', err);
-      Alert.alert('Error', 'Something went wrong. Please try again.');
+      if (__DEV__) console.error('Landing submission failed:', err);
+      showUserAlert('Error', 'Something went wrong. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -87,14 +116,19 @@ export function WaitlistLanding() {
   const goHost = () => router.push('/hostspace');
 
   const onShare = async () => {
+    const url = `${SITE_ORIGIN}/landing`;
+    const message = `Join the movement at ${APP_NAME}! Connecting cultures, building belonging. ${url}`;
     try {
-      await Share.share({
-        message: `Join the movement at ${APP_NAME}! Connecting cultures, building belonging. ${SITE_ORIGIN}/landing`,
-        url: `${SITE_ORIGIN}/landing`,
-        title: APP_NAME,
-      });
+      await shareLandingLink(APP_NAME, message, url);
     } catch (error) {
-      console.error('Share error:', error);
+      if (isShareCancelled(error)) return;
+      try {
+        await Clipboard.setStringAsync(url);
+        showUserAlert('Link copied', 'Share link copied to your clipboard.');
+      } catch {
+        if (__DEV__) console.error('Share error:', error);
+        showUserAlert('Share unavailable', 'Copy this link manually: ' + url);
+      }
     }
   };
 

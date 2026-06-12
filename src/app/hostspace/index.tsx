@@ -8,22 +8,27 @@ import {
   Text,
   View,
 } from 'react-native';
-import { router, Stack } from 'expo-router';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
 import Head from 'expo-router/head';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useQuery } from '@tanstack/react-query';
 
 import { useColors, useIsDark } from '@/hooks/useColors';
-import { useM3Colors } from '@/hooks/useM3Colors';
+
 import { useLayout } from '@/hooks/useLayout';
 import { useRole } from '@/hooks/useRole';
 import { useAuth } from '@/lib/auth';
 import { api } from '@/lib/api';
 import { CultureTokens, FontFamily } from '@/design-system/tokens/theme';
-import { M3TopAppBar, Skeleton, GlassView, PageContainer, LuxeText, LuxeButton, LuxeCard } from '@/design-system/ui';
+import { Skeleton, GlassView, PageContainer, LuxeText, LuxeButton, LuxeCard } from '@/design-system/ui';
+import { HostspaceHeroShell } from '@/components/hostspace/HostspaceHeroShell';
+import { HostspaceManageStickyBar } from '@/components/hostspace/HostspaceManageStickyBar';
+import { HostspaceStickyBar } from '@/components/hostspace/HostspaceStickyBar';
+import { hostspaceHeroHeight, hostspaceScrollBottom } from '@/components/hostspace/hostspaceLayout';
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import { Luxe } from '@/design-system/tokens/luxeHeritage';
 import { ErrorBoundary } from '@/modules/core/ui/ErrorBoundary';
 import { HostspaceAccessGate } from '@/modules/host/components/HostspaceAccessGate';
@@ -33,7 +38,6 @@ import { formatCompactDate } from '@/lib/format';
 import { APP_NAME, SITE_ORIGIN } from '@/lib/app-meta';
 import type { EventData, Profile, HostApplication, ShopListing, HostPage } from '@/shared/schema';
 import {
-  HostspaceManageTabs,
   HostspaceManageTabHint,
   filterHostspaceManageItems,
   type HostspaceManageTab,
@@ -51,6 +55,8 @@ import {
   navigateToEditShopListing,
   navigateToResumeDraft,
 } from '@/lib/creationRouting';
+import { isHostspaceCreateMode } from '@/lib/hostspacePanel';
+import { HostspaceCreateHub } from '@/modules/host/screens/HostspaceCreateHub';
 
 // Creator Trust: Ongoing verification status visibility in HostSpace dashboard
 import { VerificationStatusBanner } from '@/modules/host/components/VerificationStatusBanner';
@@ -155,33 +161,6 @@ function routeToHostPage(page: HostPage) {
 
 function routeToShopListing(listing: ShopListing) {
   navigateToEditShopListing(listing.id, 'hostspace_manage_market_card');
-}
-
-// ---------------------------------------------------------------------------
-// Stat Card
-// ---------------------------------------------------------------------------
-
-function StatCard({
-  label,
-  value,
-  icon,
-  color,
-}: {
-  label: string;
-  value: string | number;
-  icon: keyof typeof Ionicons.glyphMap;
-  color: string;
-}) {
-  const colors = useColors();
-  return (
-    <GlassView intensity={10} style={[styles.statCard, { borderColor: colors.borderLight, borderWidth: 1 }]}>
-      <View style={[styles.statIcon, { backgroundColor: color + '16' }]}>
-        <Ionicons name={icon} size={18} color={color} />
-      </View>
-      <LuxeText variant="title3" style={{ color: colors.text }}>{value}</LuxeText>
-      <LuxeText variant="badgeCaps" style={{ color: colors.textTertiary, fontSize: 10 }}>{label}</LuxeText>
-    </GlassView>
-  );
 }
 
 // ---------------------------------------------------------------------------
@@ -543,48 +522,14 @@ function DraftRecoveryBanner({
 }
 
 // ---------------------------------------------------------------------------
-// Quick Action Card
+// Manage panel (default /hostspace view)
 // ---------------------------------------------------------------------------
 
-function QuickAction({
-  label,
-  icon,
-  color,
-  onPress,
-}: {
-  label: string;
-  icon: keyof typeof Ionicons.glyphMap;
-  color: string;
-  onPress: () => void;
-}) {
-  const colors = useColors();
-
-  return (
-    <GlassView
-      intensity={10}
-      onPress={onPress}
-      style={[styles.quickActionCard, { borderColor: colors.borderLight, borderWidth: 1 }]}
-      contentStyle={{ padding: 16, alignItems: 'flex-start', gap: 12 }}
-    >
-      <View style={[styles.quickActionIcon, { backgroundColor: color + '18' }]}>
-        <Ionicons name={icon} size={22} color={color} />
-      </View>
-      <LuxeText variant="chip" style={{ color: colors.text, fontFamily: FontFamily.semibold }} numberOfLines={2}>
-        {label}
-      </LuxeText>
-    </GlassView>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Main Workspace
-// ---------------------------------------------------------------------------
-
-function HostspaceWorkspace() {
+function HostspaceManagePanel() {
   const colors = useColors();
   const isDark = useIsDark();
-  const m3Colors = useM3Colors();
-  const { hPad, isDesktop, windowSizeClass } = useLayout();
+  const insets = useSafeAreaInsetsWeb();
+  const { hPad, isDesktop, windowSizeClass, contentWidth } = useLayout();
   const { userId, user } = useAuth();
   const { isOrganizer } = useRole();
   const [showDraftModal, setShowDraftModal] = useState(false);
@@ -613,7 +558,7 @@ function HostspaceWorkspace() {
   });
 
   const { data, isLoading, isRefetching, refetch } = useQuery({
-    queryKey: ['hostspace', 'workspace', userId],
+    queryKey: ['hostspace', 'manage', userId],
     queryFn: () => fetchHostspaceSummary(userId!),
     enabled: Boolean(userId),
   });
@@ -723,6 +668,78 @@ function HostspaceWorkspace() {
     }
   }, [drafts]);
 
+  const heroHeight = hostspaceHeroHeight(isDesktop, windowSizeClass === 'expanded');
+  const heroStats = useMemo(
+    () => [
+      {
+        icon: 'radio-outline' as const,
+        value: events.filter((e) => e.status === 'published').length,
+        label: 'Published',
+        color: Luxe.colors.appBlue,
+      },
+      {
+        icon: 'calendar-outline' as const,
+        value: events.filter((e) => e.date && new Date(e.date) > new Date()).length,
+        label: 'Upcoming',
+        color: Luxe.colors.emerald,
+      },
+      {
+        icon: 'stats-chart-outline' as const,
+        value: events.length,
+        label: 'Events',
+        color: Luxe.colors.indigo,
+      },
+      {
+        icon: 'grid-outline' as const,
+        value: profiles.length,
+        label: 'Profiles',
+        color: Luxe.colors.plum,
+      },
+    ],
+    [events, profiles.length],
+  );
+
+  const heroQuickActions = useMemo(
+    () => [
+      {
+        key: 'event',
+        label: 'New event',
+        icon: 'calendar-outline' as const,
+        color: Luxe.colors.appBlue,
+        onPress: () => navigateToCreateById('event', { source: 'hostspace_hero_quick_event' }),
+      },
+      {
+        key: 'scan',
+        label: 'Scan tickets',
+        icon: 'scan-outline' as const,
+        color: Luxe.colors.indigo,
+        onPress: () => router.push('/scanner' as never),
+      },
+      {
+        key: 'community',
+        label: 'Community',
+        icon: 'people-outline' as const,
+        color: Luxe.colors.plum,
+        onPress: () => navigateToCreateById('community', { source: 'hostspace_hero_quick_community' }),
+      },
+      {
+        key: 'market',
+        label: 'CultureMarket',
+        icon: 'storefront-outline' as const,
+        color: Luxe.colors.emerald,
+        onPress: () => navigateToCreateById('market-product', { source: 'hostspace_hero_quick_market' }),
+      },
+      {
+        key: 'create',
+        label: 'Creation lab',
+        icon: 'add-circle-outline' as const,
+        color: Luxe.colors.gold,
+        onPress: () => navigateToCreationLab('hostspace_hero_quick_create'),
+      },
+    ],
+    [],
+  );
+
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       <Head>
@@ -741,60 +758,49 @@ function HostspaceWorkspace() {
         style={StyleSheet.absoluteFill}
       />
 
-      <M3TopAppBar
-        title="HostSpace"
+      <HostspaceStickyBar
+        mode="manage"
+        topInset={insets.top}
+        hPad={hPad}
         onBack={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)' as never))}
-        variant={windowSizeClass === 'expanded' ? 'large' : 'medium'}
-        titleLeading={
-          <Image
-            source={require('@/assets/images/culturepass-logo.png')}
-            style={{ width: 40, height: 40, borderRadius: 20, marginLeft: 8 }}
-            contentFit="contain"
-          />
-        }
-        actions={[
-          { icon: 'add-circle-outline', onPress: () => navigateToCreationLab('hostspace_appbar') },
-          { icon: 'scan-outline', onPress: () => router.push('/scanner' as never) },
-        ]}
       />
 
       <ScrollView
+        style={styles.scrollView}
+        stickyHeaderIndices={[1]}
         contentContainerStyle={[
           styles.scroll,
-          { maxWidth: 1120, alignSelf: 'center', width: '100%' },
+          { paddingBottom: hostspaceScrollBottom(insets.bottom) },
+          (isDesktop || windowSizeClass === 'expanded') && {
+            maxWidth: contentWidth,
+            alignSelf: 'center',
+            width: '100%',
+          },
         ]}
         refreshControl={
           <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={Luxe.colors.appBlue} />
         }
         showsVerticalScrollIndicator={false}
       >
-        <PageContainer compact noTopPadding>
+        <HostspaceHeroShell
+          mode="manage"
+          heroHeight={heroHeight}
+          topInset={0}
+          hPad={hPad}
+          eyebrow="HOST WORKSPACE"
+          headline={getHostGreeting(user?.displayName)}
+          subtitle="Create events, manage communities, and grow your cultural impact."
+          stats={heroStats}
+          quickActions={heroQuickActions}
+          primaryCta={{
+            label: 'Create',
+            onPress: () => navigateToCreationLab('hostspace_hero_create'),
+          }}
+        />
 
-        {/* Hero */}
-        <Animated.View entering={FadeInUp.duration(500)} style={styles.hero}>
-          <GlassView intensity={10} style={styles.badge}>
-            <LuxeText variant="badgeCaps" style={{ color: Luxe.colors.appBlue }}>HOST WORKSPACE</LuxeText>
-          </GlassView>
-          <View style={styles.heroRow}>
-            <View style={styles.heroCopy}>
-              <LuxeText variant="caption" style={{ color: colors.textSecondary, letterSpacing: 1 }}>
-                {getHostGreeting(user?.displayName).toUpperCase()}
-              </LuxeText>
-              <LuxeText variant="display" style={{ color: colors.text }}>Command Center</LuxeText>
-              <LuxeText variant="body" style={{ color: colors.textSecondary, marginTop: 4 }}>
-                Create events, manage communities, and grow your cultural impact.
-              </LuxeText>
-            </View>
-            <LuxeButton
-              variant="filled"
-              onPress={() => navigateToCreationLab('hostspace_hero_create')}
-              style={styles.createButton}
-              leftIcon="add"
-            >
-              Create
-            </LuxeButton>
-          </View>
-        </Animated.View>
+        <HostspaceManageStickyBar hPad={hPad} activeTab={manageTab} onTabChange={setManageTab} />
+
+        <PageContainer compact noTopPadding>
 
         {/* Draft Recovery */}
         {!isLoading && drafts.length > 0 && (
@@ -819,7 +825,7 @@ function HostspaceWorkspace() {
               <LuxeButton
                 variant="tonal"
                 size="sm"
-                onPress={() => router.push('/pages/create' as any)}
+                onPress={() => navigateToCreationLab('hostspace_sandbox_apply')}
                 style={{ marginTop: 8, alignSelf: 'flex-start' }}
                 rightIcon="arrow-forward"
               >
@@ -863,7 +869,7 @@ function HostspaceWorkspace() {
                 <LuxeButton
                   variant="tonal"
                   size="sm"
-                  onPress={() => router.push('/pages/create' as any)}
+                  onPress={() => navigateToCreationLab('hostspace_sandbox_apply')}
                   style={{ marginTop: 8, alignSelf: 'flex-start' }}
                   leftIcon="create-outline"
                 >
@@ -873,65 +879,6 @@ function HostspaceWorkspace() {
             </View>
           </GlassView>
         )}
-
-        {/* Quick Actions */}
-        <View style={styles.quickActionsSection}>
-          <LuxeText variant="badgeCaps" style={{ color: colors.textTertiary, marginBottom: 12 }}>QUICK ACTIONS</LuxeText>
-          <View style={styles.quickActionsGrid}>
-            <QuickAction
-              label="New Event"
-              icon="calendar"
-              color={Luxe.colors.appBlue}
-              onPress={() => navigateToCreateById('event', { source: 'hostspace_quick_event' })}
-            />
-            <QuickAction
-              label="Scan Tickets"
-              icon="scan"
-              color={Luxe.colors.indigo}
-              onPress={() => router.push('/scanner' as never)}
-            />
-            <QuickAction
-              label="New Community"
-              icon="people"
-              color={Luxe.colors.plum}
-              onPress={() => navigateToCreateById('community', { source: 'hostspace_quick_community' })}
-            />
-            <QuickAction
-              label="Create Listing"
-              icon="storefront"
-              color={Luxe.colors.emerald}
-              onPress={() => navigateToCreateById('market-product', { source: 'hostspace_quick_market' })}
-            />
-          </View>
-        </View>
-
-        {/* Stats */}
-        <View style={styles.statsRow}>
-          <StatCard
-            label="Published"
-            value={events.filter(e => e.status === 'published').length}
-            icon="radio-outline"
-            color={Luxe.colors.appBlue}
-          />
-          <StatCard
-            label="Upcoming"
-            value={events.filter(e => e.date && new Date(e.date) > new Date()).length}
-            icon="calendar-outline"
-            color={Luxe.colors.emerald}
-          />
-          <StatCard
-            label="Total"
-            value={events.length}
-            icon="stats-chart-outline"
-            color={Luxe.colors.indigo}
-          />
-          <StatCard
-            label="Profiles"
-            value={profiles.length}
-            icon="grid-outline"
-            color={Luxe.colors.plum}
-          />
-        </View>
 
         {/* Insights Bar */}
         <GlassView
@@ -959,11 +906,6 @@ function HostspaceWorkspace() {
               Create
             </LuxeButton>
           </View>
-          <HostspaceManageTabs
-            activeTab={manageTab}
-            onTabChange={setManageTab}
-            colors={{ onSurface: colors.text, onSurfaceVariant: colors.textSecondary }}
-          />
           <HostspaceManageTabHint tab={manageTab} />
 
           {isLoading ? (
@@ -1154,10 +1096,13 @@ function HostspaceWorkspace() {
 }
 
 export default function HostspaceIndexScreen() {
+  const params = useLocalSearchParams();
+  const showCreate = isHostspaceCreateMode(params);
+
   return (
     <ErrorBoundary>
-      <HostspaceAccessGate intent="hub">
-        <HostspaceWorkspace />
+      <HostspaceAccessGate intent={showCreate ? 'creationLab' : 'hub'}>
+        {showCreate ? <HostspaceCreateHub /> : <HostspaceManagePanel />}
       </HostspaceAccessGate>
     </ErrorBoundary>
   );
@@ -1192,6 +1137,7 @@ function CreateFAB({ onPress }: { onPress: () => void }) {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
+  scrollView: { flex: 1 },
   scroll: {
     paddingTop: 16,
     paddingBottom: 120,

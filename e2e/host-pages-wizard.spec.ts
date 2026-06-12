@@ -24,7 +24,7 @@ test.describe('Host Pages — Create a Page wizard', () => {
 
   test('selector shows entity categories and templates', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
-    await page.goto('/pages/create');
+    await page.goto('/hostspace/create');
     await expect(page.getByTestId('create-page-selector')).toBeVisible({ timeout: 15000 });
     await expect(page.getByText('Which option is best for you?')).toBeVisible();
     await expect(page.getByText('Communities & Organisers')).toBeVisible();
@@ -34,7 +34,7 @@ test.describe('Host Pages — Create a Page wizard', () => {
 
   test('template launches Page Pro Wizard basics step', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto('/pages/create');
+    await page.goto('/hostspace/create');
     await page.getByText('Indie Venue').click();
     await expect(page.getByTestId('page-pro-wizard')).toBeVisible({ timeout: 15000 });
     await expect(page.getByTestId('page-pro-wizard').getByText('Basics', { exact: true })).toBeVisible();
@@ -42,7 +42,7 @@ test.describe('Host Pages — Create a Page wizard', () => {
   });
 
   test('wizard advances through steps to live preview', async ({ page }) => {
-    await page.goto('/pages/create?entityType=community');
+    await page.goto('/hostspace/community/create');
     await expect(page.getByTestId('page-pro-wizard')).toBeVisible({ timeout: 15000 });
 
     await page.getByLabel('Page name').fill('Kerala Cultural Society');
@@ -52,7 +52,8 @@ test.describe('Host Pages — Create a Page wizard', () => {
     await page.getByTestId('page-pro-wizard').getByText('Community', { exact: true }).click();
     await page.getByTestId('page-wizard-continue').click();
 
-    await expect(page.getByText('Cultural tags')).toBeVisible();
+    await expect(page.getByTestId('page-wizard-tags-step')).toBeVisible();
+    await expect(page.getByText('Heritage & tags')).toBeVisible();
     await page.getByText('Multicultural').click();
     await page.getByTestId('page-wizard-continue').click();
 
@@ -66,7 +67,7 @@ test.describe('Host Pages — Create a Page wizard', () => {
   });
 
   test('community page publish shows success shortcuts', async ({ page }) => {
-    await page.goto('/pages/create?entityType=community');
+    await page.goto('/hostspace/community/create');
     await expect(page.getByTestId('page-pro-wizard')).toBeVisible({ timeout: 15000 });
 
     // Fast-path: jump to preview by filling required fields through steps

@@ -55,7 +55,7 @@ type Route<T extends string, P extends object | undefined = object | undefined> 
   path?: string;
 };
 
-type MainTabName = 'index' | 'calendar' | 'community' | 'city' | 'my-space';
+type MainTabName = 'index' | 'calendar' | 'community' | 'city' | 'myspace';
 
 type MainTabConfig = {
   name: MainTabName;
@@ -95,7 +95,7 @@ const MAIN_TABS: readonly MainTabConfig[] = [
     accessibilityLabel: 'My City tab',
   },
   {
-    name: 'my-space',
+    name: 'myspace',
     label: 'Profile',
     icon: 'person-circle-outline',
     activeIcon: 'person-circle',

@@ -1,10 +1,13 @@
-import { Redirect, useLocalSearchParams } from 'expo-router';
+/**
+ * /hostspace/create — create catalog (category grid + page selector).
+ */
+import { HostspaceAccessGate } from '@/modules/host/components/HostspaceAccessGate';
+import { HostspaceCreateHub } from '@/modules/host/screens/HostspaceCreateHub';
 
-import { resolveLegacyHostspaceCreateHref } from '@/constants/navigation/createNav';
-
-/** Legacy `/hostspace/create` → canonical `/pages/create`. */
-export default function LegacyHostspaceCreateIndexRedirect() {
-  const params = useLocalSearchParams();
-  const href = resolveLegacyHostspaceCreateHref(params);
-  return <Redirect href={href as never} />;
+export default function HostspaceCreateCatalogScreen() {
+  return (
+    <HostspaceAccessGate intent="creationLab">
+      <HostspaceCreateHub />
+    </HostspaceAccessGate>
+  );
 }

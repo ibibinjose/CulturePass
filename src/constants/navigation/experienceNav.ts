@@ -6,18 +6,18 @@ import { Ionicons } from '@expo/vector-icons';
 import { CultureTokens } from '@/design-system/tokens/theme';
 
 import {
-  CREATE_LAB_PATHNAME,
-  LISTING_WIZARD_PUBLIC_PATHNAME,
+  buildHostspaceCreateHref,
+  hostspaceCategoryCreatePath,
   createLabCategoryHref,
 } from '@/constants/navigation/createNav';
 
 export type IonIcon = keyof typeof Ionicons.glyphMap;
 
 /** Canonical HostSpace Creation Lab URL (events, communities, listings entry). */
-export const HOSTSPACE_CREATE_ROUTE = CREATE_LAB_PATHNAME;
+export const HOSTSPACE_CREATE_ROUTE = buildHostspaceCreateHref();
 
-/** Unified create entry — opens the HostSpace Creation Lab. */
-export const CREATE_HUB_ROUTE = CREATE_LAB_PATHNAME;
+/** Unified create entry — opens the HostSpace create panel. */
+export const CREATE_HUB_ROUTE = buildHostspaceCreateHref();
 
 /** @deprecated Host tab no longer hosts Create; use `CREATE_HUB_ROUTE` / `HOST_CREATE_PARAMS` only if a deep link still references this shape. */
 export const HOST_CREATE_PARAMS = { space: 'create' } as const;
@@ -25,8 +25,11 @@ export const HOST_CREATE_PARAMS = { space: 'create' } as const;
 /** @deprecated Prefer `CREATE_HUB_ROUTE`; Host tab routes to `/hostspace`. */
 export const HOST_TAB_PATHNAME = '/(tabs)/host' as const;
 
-/** Public URL for the unified listing / directory profile wizard. */
-export const LISTING_CREATE_ROUTE = LISTING_WIZARD_PUBLIC_PATHNAME;
+/**
+ * @deprecated Use `listingCreateNavigateParams()` for canonical paths.
+ * Legacy `/listing/create` still works for bookmarks and auth return URLs.
+ */
+export const LISTING_CREATE_ROUTE = '/listing/create';
 
 /**
  * Host workspace deep link: Listings tab + open unified listing wizard.
@@ -58,10 +61,16 @@ export function listingCreateNavigateParams(entityType?: ListingWizardEntityPara
     return { pathname: createLabCategoryHref('community') } as const;
   }
 
-  return {
-    pathname: LISTING_CREATE_ROUTE,
-    ...(entityType ? { params: { listingEntityType: entityType } } : {}),
-  } as const;
+  if (!entityType) {
+    return { pathname: hostspaceCategoryCreatePath('business') } as const;
+  }
+  const categoryId =
+    entityType === 'restaurant'
+      ? 'dining'
+      : entityType === 'organizer'
+        ? 'organizer'
+        : entityType;
+  return { pathname: hostspaceCategoryCreatePath(categoryId) } as const;
 }
 
 /** Profile “tool” rows (title + subtitle + path). */
@@ -108,7 +117,7 @@ export const SIDEBAR_MAIN_NAV: SidebarNavLink[] = [
   { label: 'Calendar', icon: 'calendar-outline', iconActive: 'calendar', route: '/(tabs)/calendar' },
   { label: 'Community', icon: 'people-circle-outline', iconActive: 'people-circle', route: '/(tabs)/community' },
   { label: 'My City', icon: 'location-outline', iconActive: 'location', route: '/(tabs)/city' },
-  { label: 'Profile', icon: 'person-circle-outline', iconActive: 'person-circle', route: '/(tabs)/my-space' },
+  { label: 'Profile', icon: 'person-circle-outline', iconActive: 'person-circle', route: '/(tabs)/myspace' },
   { label: 'Perks', icon: 'pricetag-outline', iconActive: 'pricetag', route: '/perks', matchPrefix: true },
 ];
 

@@ -1,6 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 
-import { createLabCategoryHref, createPageWizardHref, EVENT_WIZARD_PATHNAME } from '@/constants/navigation/createNav';
+import {
+  buildHostspaceCreateHref,
+  createLabCategoryHref,
+  createPageWizardHref,
+  EVENT_WIZARD_PATHNAME,
+} from '@/constants/navigation/createNav';
 import { CultureTokens } from '@/design-system/tokens/theme';
 import type { ListingWizardEntityParam } from '@/constants/navigation/experienceNav';
 
@@ -63,7 +68,7 @@ export const HOSTSPACE_CREATE_CATEGORIES: HostspaceCreateCategory[] = [
     icon: 'calendar-outline',
     color: CultureTokens.indigo,
     kind: 'event',
-    createRoute: '/event/create',
+    createRoute: EVENT_WIZARD_PATHNAME,
   },
   {
     id: 'business',
@@ -212,7 +217,7 @@ export const HOSTSPACE_PRIMARY_LINKS: HostspaceAction[] = [
     id: 'create',
     label: 'Create',
     description: 'Communities, events, profiles, dining, shopping, offers, and more.',
-    route: '/pages/create',
+    route: buildHostspaceCreateHref(),
     icon: 'add-circle-outline',
     color: CultureTokens.teal,
   },
@@ -243,9 +248,9 @@ export const HOSTSPACE_WORKFLOW_STEPS: HostspaceWorkflowStep[] = [
 export const HOSTSPACE_DASHBOARD_COMMANDS: HostspaceAction[] = [
   {
     id: 'create',
-    label: 'Create workspace',
+    label: 'Create',
     description: 'Draft, preview, update, and launch new HostSpace records.',
-    route: '/pages/create',
+    route: buildHostspaceCreateHref(),
     icon: 'add-circle-outline',
     color: CultureTokens.teal,
   },
@@ -280,7 +285,7 @@ export const HOSTSPACE_MANAGEMENT_LINKS: HostspaceAction[] = [
     id: 'content',
     label: 'Content Studio',
     description: 'Manage culture content, playlists, and host storytelling.',
-    route: '/pages/create',
+    route: buildHostspaceCreateHref(),
     icon: 'document-text-outline',
     color: CultureTokens.indigo,
   },

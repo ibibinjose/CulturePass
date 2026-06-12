@@ -17,6 +17,7 @@ import Animated, {
   FadeInRight, FadeOutLeft, FadeIn,
 } from 'react-native-reanimated';
 import { OnboardingProgressHeader } from '@/components/onboarding/OnboardingProgressHeader';
+import { OnboardingDestinationBanner } from '@/components/onboarding/OnboardingDestinationBanner';
 
 // ---------------------------------------------------------------------------
 // Per-step design tokens
@@ -83,6 +84,7 @@ export default function CultureMatchScreen() {
     goNext,
     skipStep,
     redirectTo,
+    canProceed,
   } = useCultureMatch();
 
   return (
@@ -184,6 +186,10 @@ export default function CultureMatchScreen() {
                   );
                 })}
               </View>
+
+              {redirectTo ? (
+                <OnboardingDestinationBanner redirectTo={redirectTo} variant="step" />
+              ) : null}
 
               {/* ── Step header ── */}
               <Animated.View key={step} entering={FadeIn.duration(220)} style={s.headerBlock}>
@@ -503,12 +509,26 @@ export default function CultureMatchScreen() {
                 <LuxeButton
                   variant="filled"
                   onPress={goNext}
+                  disabled={!canProceed}
                   rightIcon={step !== 'language' ? "arrow-forward" : undefined}
                   style={{ flex: 1 }}
                 >
                   {step === 'language' ? 'Continue' : 'Next'}
                 </LuxeButton>
               </View>
+
+              {!canProceed ? (
+                <LuxeText
+                  variant="caption"
+                  style={{ textAlign: 'center', marginTop: 10, color: luxeDark.textTertiary }}
+                >
+                  {step === 'nationality'
+                    ? 'Select your nationality to continue'
+                    : step === 'culture'
+                      ? 'Pick at least one culture'
+                      : 'Select at least one language'}
+                </LuxeText>
+              ) : null}
 
               <LuxeButton
                 variant="glass"

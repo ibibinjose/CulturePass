@@ -153,7 +153,7 @@ export default function SettingsScreen() {
   const { user, isAuthenticated, logout, updateUserProfile } = useAuth();
   const { resetOnboarding } = useOnboarding();
   const { isOrganizer, isAdmin, hasMinRole } = useRole();
-  const goBack = useSafeBack('/(tabs)/my-space');
+  const goBack = useSafeBack('/(tabs)/myspace');
 
   const safeInsets = useSafeAreaInsetsWeb();
   const pageTopPadding = safeInsets.top + ScreenTokens.topOffset;

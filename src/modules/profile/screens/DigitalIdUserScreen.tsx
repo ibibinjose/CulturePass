@@ -131,7 +131,7 @@ export default function DigitalIdUserScreen() {
         <AppHeaderBar
           title="Digital ID"
           subtitle={DIGITAL_ID_BRAND.tagline}
-          backFallback="/(tabs)/my-space"
+          backFallback="/(tabs)/myspace"
           topInset={topInset}
           rightAction={{
             icon: 'share-outline',

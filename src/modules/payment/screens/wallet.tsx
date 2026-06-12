@@ -173,7 +173,7 @@ export default function WalletScreen() {
       <View style={styles.container}>
         <AppHeaderBar
           title="Wallet & Rewards"
-          backFallback="/(tabs)/my-space"
+          backFallback="/(tabs)/myspace"
           topInset={topInset}
           rightAction={{
             icon: 'receipt-outline',

@@ -11,7 +11,7 @@ import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import { useColors } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
 import { CultureTokens, FontFamily, Radius, Spacing } from '@/design-system/tokens/theme';
-import { LISTING_CREATE_ROUTE } from '@/constants/navigation/experienceNav';
+import { hostspaceCategoryCreatePath } from '@/constants/navigation/createNav';
 import { COMMUNITY_CATEGORIES } from '@/modules/communities/components/create/types';
 import type { CommunityCategory } from '@/shared/schema';
 
@@ -38,9 +38,13 @@ export default function CommunityTopicPickerScreen() {
   const cardWidth = columnWidth(cols);
 
   function handlePick(category: CommunityCategory) {
-    router.push(
-      `${LISTING_CREATE_ROUTE}?listingEntityType=community&communityCategory=${encodeURIComponent(category)}` as never,
-    );
+    router.push({
+      pathname: hostspaceCategoryCreatePath('community'),
+      params: {
+        listingEntityType: 'community',
+        communityCategory: category,
+      },
+    } as never);
   }
 
   return (

@@ -63,6 +63,7 @@ import {
 } from '@/lib/creationAnalytics';
 import { getCategoryDataflow } from '@/modules/host/config/hostspaceCreateCategories.config';
 import { navigateToCreateById, findCategoryForListingEntity } from '@/lib/creationRouting';
+import { findCategory } from '@/modules/host/config/hostspaceCreateCategories.config';
 import {
   ListingStepIdentity,
   ListingStepAbout,
@@ -235,7 +236,7 @@ function CommunityLivePreview({
   );
 }
 
-export default function ListingCreateScreen() {
+export default function ListingCreateScreen({ seedCategoryId }: { seedCategoryId?: string } = {}) {
   const colors = useColors();
   const s = getStyles(colors);
   const safeInsets = useSafeAreaInsetsWeb();
@@ -254,8 +255,13 @@ export default function ListingCreateScreen() {
   }>();
 
   const eventRedirected = useRef(false);
-  const listingEntityParam = parseEntityType(asParam(params.listingEntityType));
-  const listingSubCategory = asParam(params.listingSubCategory);
+  const seededCategory = seedCategoryId ? findCategory(seedCategoryId) : null;
+  const listingEntityParam =
+    parseEntityType(asParam(params.listingEntityType)) ??
+    (seededCategory?.entityType && seededCategory.entityType !== 'event'
+      ? (seededCategory.entityType as Profile['entityType'])
+      : undefined);
+  const listingSubCategory = asParam(params.listingSubCategory) ?? seededCategory?.subCategory;
   const communityCategoryParam = asParam(params.communityCategory) as CommunityCategory | undefined;
   const editingCommunityId =
     asParam(params.editId) && listingEntityParam === 'community' ? asParam(params.editId)! : null;
@@ -492,7 +498,7 @@ export default function ListingCreateScreen() {
       return;
     }
     if (router.canGoBack()) router.back();
-    else router.replace('/(tabs)/host' as never);
+    else router.replace('/hostspace/create' as never);
   }, [stepIndex]);
 
   const handlePrimary = useCallback(async () => {

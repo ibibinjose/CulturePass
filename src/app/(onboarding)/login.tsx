@@ -46,6 +46,7 @@ import {
 
 import { routeWithRedirect, sanitizeInternalRedirect } from '@/lib/routes';
 import { AuthAmbientBackground } from '@/components/onboarding/AuthScreenPrimitives';
+import { OnboardingDestinationBanner } from '@/components/onboarding/OnboardingDestinationBanner';
 import Head from 'expo-router/head';
 import { APP_NAME, SITE_ORIGIN } from '@/lib/app-meta';
 
@@ -118,6 +119,10 @@ export default function LoginScreen() {
           Sign in to your cultural home.
         </LuxeText>
       </Animated.View>
+
+      {redirectTo ? (
+        <OnboardingDestinationBanner redirectTo={redirectTo} variant="auth" />
+      ) : null}
 
       {/* Global error */}
       {globalError ? (

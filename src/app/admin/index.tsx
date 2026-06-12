@@ -26,7 +26,7 @@ const SafeFadeInDown = FadeInDown ?? FadeIn;
 
 export default function AdminDashboard() {
   const colors = useColors();
-  const handleBack = useSafeBack('/(tabs)/my-space');
+  const handleBack = useSafeBack('/(tabs)/myspace');
   const { hPad, isDesktop } = useLayout();
   const { data: stats } = useAdminStats();
   const { data: logsData } = useAuditLogs(8);

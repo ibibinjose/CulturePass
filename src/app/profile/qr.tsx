@@ -111,7 +111,7 @@ export default function QRScreen() {
         <AppHeaderBar
           title="Digital ID Lab"
           subtitle={`${DIGITAL_ID_BRAND.name} · Dev tools · Exports`}
-          backFallback="/(tabs)/my-space"
+          backFallback="/(tabs)/myspace"
           topInset={topInset}
           rightAction={{
             icon: 'scan-outline',

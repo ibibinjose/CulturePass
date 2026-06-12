@@ -5,6 +5,15 @@
 
 import { resolveCreationDataflow, type CreationCategoryInput, type CreationWizard } from './dataflow';
 
+const EVENT_CREATE_PATH = '/hostspace/event/create';
+const HOSTSPACE_CREATE_CATALOG = '/hostspace/create';
+
+function hostspaceCategoryCreatePath(categoryId: string): string {
+  const id = categoryId.trim().replace(/^\/+|\/+$/g, '').toLowerCase();
+  if (!id || id === 'event' || id === 'events') return EVENT_CREATE_PATH;
+  return `/hostspace/${id}/create`;
+}
+
 export interface CreateNavigationOpts {
   parentProfileId?: string;
   editId?: string;
@@ -44,14 +53,14 @@ export function resolveCreateNavigation(
 
   switch (flow.wizard) {
     case 'page-pro':
-      params.entityType = category.entityType === 'organizer' ? 'organiser' : category.entityType;
       if (opts.pageId) params.pageId = opts.pageId;
       if (opts.draftId) params.draftId = opts.draftId;
       if (opts.templateId) params.template = opts.templateId;
       if (opts.intent) params.intent = opts.intent;
+      if (opts.editId) params.editId = opts.editId;
       return {
         wizard: flow.wizard,
-        pathname: '/pages/create',
+        pathname: hostspaceCategoryCreatePath(category.id),
         params,
         layer: flow.layer,
         storage: flow.storage,
@@ -64,7 +73,7 @@ export function resolveCreateNavigation(
       if (opts.editId) params.editId = opts.editId;
       return {
         wizard: flow.wizard,
-        pathname: '/event/create',
+        pathname: EVENT_CREATE_PATH,
         params,
         layer: flow.layer,
         storage: flow.storage,
@@ -73,13 +82,11 @@ export function resolveCreateNavigation(
       };
 
     case 'listing':
-      params.listingEntityType = category.entityType;
-      if (category.subCategory) params.listingSubCategory = category.subCategory;
       if (opts.parentProfileId) params.publisherProfileId = opts.parentProfileId;
       if (opts.editId) params.editId = opts.editId;
       return {
         wizard: flow.wizard,
-        pathname: '/(domain)/listing/create',
+        pathname: hostspaceCategoryCreatePath(category.id),
         params,
         layer: flow.layer,
         storage: flow.storage,
@@ -94,7 +101,7 @@ export function resolveCreateNavigation(
       }
       return {
         wizard: flow.wizard,
-        pathname: '/pages/create/listing',
+        pathname: '/hostspace/listing',
         params,
         layer: flow.layer,
         storage: flow.storage,
@@ -104,19 +111,11 @@ export function resolveCreateNavigation(
 
     case 'creation-lab':
     default: {
-      // category.route is already `/pages/create?category=…`
-      const href = category.route ?? '/pages/create';
-      const qIndex = href.indexOf('?');
-      const pathname = qIndex >= 0 ? href.slice(0, qIndex) : href;
-      const search = qIndex >= 0 ? href.slice(qIndex + 1) : '';
-      const parsed = new URLSearchParams(search);
-      parsed.forEach((v, k) => {
-        params[k] = v;
-      });
       if (opts.parentProfileId) params.publisherProfileId = opts.parentProfileId;
+      if (opts.editId) params.editId = opts.editId;
       return {
         wizard: 'creation-lab',
-        pathname,
+        pathname: category.id ? hostspaceCategoryCreatePath(category.id) : HOSTSPACE_CREATE_CATALOG,
         params,
         layer: flow.layer,
         storage: flow.storage,

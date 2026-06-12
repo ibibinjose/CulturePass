@@ -46,7 +46,7 @@ const MAX_STACK_DEPTH = 10;
 /** Background TTL in milliseconds (5 minutes). */
 const BACKGROUND_TTL_MS = 5 * 60 * 1000;
 
-const ALL_TABS: TabKey[] = ['discover', 'calendar', 'community', 'city', 'my-space'];
+const ALL_TABS: TabKey[] = ['discover', 'calendar', 'community', 'city', 'myspace'];
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -69,7 +69,7 @@ function createDefaultAllTabStates(): Record<TabKey, TabState> {
     calendar: createDefaultTabState(),
     community: createDefaultTabState(),
     city: createDefaultTabState(),
-    'my-space': createDefaultTabState(),
+    myspace: createDefaultTabState(),
   };
 }
 

@@ -543,7 +543,7 @@ function HostDashboard() {
             <LuxeText variant="title3" style={{ color: colors.text }}>
               Your pages
             </LuxeText>
-            <LuxeButton variant="ghost" size="sm" onPress={() => router.push('/pages/create' as never)}>
+            <LuxeButton variant="ghost" size="sm" onPress={() => navigateToCreationLab('hostspace_dashboard')}>
               Manage
             </LuxeButton>
           </View>
@@ -571,7 +571,7 @@ function HostDashboard() {
                 variant="filled"
                 size="sm"
                 style={{ marginTop: 8 }}
-                onPress={() => router.push('/pages/create' as never)}
+                onPress={() => navigateToCreationLab('hostspace_dashboard')}
               >
                 Create a Page
               </LuxeButton>
@@ -691,7 +691,7 @@ function HostDashboard() {
                 variant="tonal"
                 size="sm"
                 style={{ marginTop: 8 }}
-                onPress={() => router.push('/pages/create' as never)}
+                onPress={() => navigateToCreationLab('hostspace_dashboard')}
               >
                 Start a profile
               </LuxeButton>
@@ -755,7 +755,7 @@ function HostDashboard() {
           <LuxeText variant="caption" style={{ color: colors.textSecondary, flex: 1 }}>
             High-quality cover images increase profile engagement. Update your page branding in Create a Page.
           </LuxeText>
-          <LuxeButton variant="ghost" size="sm" onPress={() => router.push('/pages/create' as never)}>
+          <LuxeButton variant="ghost" size="sm" onPress={() => navigateToCreationLab('hostspace_dashboard')}>
             Update
           </LuxeButton>
         </GlassView>

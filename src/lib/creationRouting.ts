@@ -21,6 +21,7 @@ import {
   captureCreationWizardOpen,
   type CreationAnalyticsContext,
 } from '@/lib/creationAnalytics';
+import { hostspaceCreateRoute } from '@/constants/navigation/createNav';
 
 function analyticsContext(
   category: CreateCategory,
@@ -90,10 +91,10 @@ export function navigateToCreateById(
   navigateToCreate(findCategory(categoryId), opts);
 }
 
-/** Open Creation Lab catalog with analytics. */
+/** Open HostSpace create panel with analytics. */
 export function navigateToCreationLab(source: string) {
   captureCreationCatalogView(source);
-  router.push('/pages/create' as never);
+  router.push(hostspaceCreateRoute() as never);
 }
 
 /** Map directory/listing entity + subcategory to a Creation Lab category. */

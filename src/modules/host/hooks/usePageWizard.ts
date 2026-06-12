@@ -10,7 +10,11 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import type { HostPageFormData, HostPageTemplateId } from '@/shared/schema';
 import type { HostEntityType } from '@/shared/schema/hostTypes';
-import { validateHostPagePublishFormData } from '@/shared/schema/hostPage';
+import {
+  clampHostPageHeritageFields,
+  prepareHostPageDraftFormData,
+  validateHostPagePublishFormData,
+} from '@/shared/schema/hostPage';
 import { getPageTemplate } from '../config/pageTemplates.config';
 import { getPageWizardSteps } from '../config/pageWizardSteps';
 import type { PageWizardStepId } from '../config/pageWizardSteps';
@@ -124,10 +128,17 @@ export function usePageWizard({
   });
 
   const saveDraftToServer = useCallback(async () => {
+    const safeFormData = prepareHostPageDraftFormData(formData);
+    if (!safeFormData) {
+      if (__DEV__) {
+        console.warn('[PageWizard] Skipping draft autosave — payload failed draft validation');
+      }
+      return;
+    }
     const result = await api.hostPages.saveDraft({
       pageId: pageId ?? undefined,
       entityType,
-      formData,
+      formData: safeFormData,
       currentStep,
       completedSteps: Array.from(completedSteps),
       templateId,
@@ -160,10 +171,12 @@ export function usePageWizard({
     (async () => {
       try {
         const draft = await api.hostPages.getDraft(initialDraftId);
-        setFormData({
-          ...buildInitialFormData(entityType, templateId),
-          ...draft.formData,
-        });
+        setFormData(
+          clampHostPageHeritageFields({
+            ...buildInitialFormData(entityType, templateId),
+            ...draft.formData,
+          }),
+        );
         const clampedStep = Math.min(Math.max(draft.currentStep, 1), totalSteps);
         setCurrentStep(clampedStep);
         setCompletedSteps(new Set(draft.completedSteps.filter((s) => s <= totalSteps)));

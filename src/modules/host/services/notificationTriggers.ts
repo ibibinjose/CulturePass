@@ -203,7 +203,7 @@ function buildNotificationContent(payload: NotificationTriggerPayload): Notifica
         title: 'Complete Your Profile',
         message: `You have an unfinished draft for "${profileName}". Complete it to start getting discovered.`,
         type: 'system',
-        actionUrl: `/pages/create?draft=${profileId}`,
+        actionUrl: `/hostspace/create?draftId=${profileId}`,
       };
 
     default:

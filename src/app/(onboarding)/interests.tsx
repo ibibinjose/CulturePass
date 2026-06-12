@@ -9,7 +9,7 @@ import {
   Alert,
   type DimensionValue,
 } from 'react-native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
@@ -25,6 +25,8 @@ import { LuxeCard } from '@/design-system/ui/LuxeCard';
 import { M3TopAppBar } from '@/design-system/ui/M3TopAppBar';
 import { useInterestsSelection } from '@/hooks/useInterestsSelection';
 import { OnboardingProgressHeader } from '@/components/onboarding/OnboardingProgressHeader';
+import { OnboardingDestinationBanner } from '@/components/onboarding/OnboardingDestinationBanner';
+import { sanitizeInternalRedirect } from '@/lib/routes';
 import {
   interestCategories,
   popularInterestsSydney,
@@ -51,6 +53,8 @@ export default function InterestsScreen() {
   const insets = useSafeAreaInsets();
   const bottomInset = Platform.OS === 'web' ? 34 : insets.bottom;
   const isExpanded = windowSizeClass === 'expanded';
+  const searchParams = useLocalSearchParams();
+  const redirectTo = sanitizeInternalRedirect(searchParams.redirectTo ?? searchParams.redirect);
 
   const {
     selected,
@@ -60,6 +64,7 @@ export default function InterestsScreen() {
     isReady,
     remaining,
     MIN_REQUIRED,
+    destinationLabel,
     toggle,
     toggleAll,
     toggleSection,
@@ -95,7 +100,7 @@ export default function InterestsScreen() {
         }
       />
 
-      <OnboardingProgressHeader currentStep="interests" />
+      <OnboardingProgressHeader currentStep="interests" redirectTo={redirectTo} />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -109,6 +114,10 @@ export default function InterestsScreen() {
         <Animated.View
           entering={FadeInUp.springify().damping(16).delay(100)}
         >
+          {redirectTo ? (
+            <OnboardingDestinationBanner redirectTo={redirectTo} variant="step" />
+          ) : null}
+
           {/* Title */}
           <View style={s.titleBlock}>
             <LuxeText variant="display" style={[s.title, { color: luxeDark.text }]}>What interests you?</LuxeText>
@@ -271,7 +280,13 @@ export default function InterestsScreen() {
           onPress={handleFinish}
           style={{ height: 56 }}
         >
-          {isSubmitting ? 'Starting...' : isReady ? 'Start Exploring' : `Select ${remaining} more`}
+          {isSubmitting
+            ? 'Saving...'
+            : isReady
+              ? destinationLabel
+                ? `Go to ${destinationLabel}`
+                : 'Create your page'
+              : `Select ${remaining} more`}
         </LuxeButton>
       </Animated.View>
     </View>

@@ -1,6 +1,7 @@
 import { describe, it, expect } from '@jest/globals';
 import {
   HostPageFormDataSchema,
+  HostPageDraftFormDataSchema,
   HostPagePublishFormDataSchema,
   HostPageSchema,
   HostPageDraftSchema,
@@ -10,6 +11,9 @@ import {
   hostPageRequiresAbn,
   validateHostPagePublishFormData,
   getHostPageVerificationChecklist,
+  clampHostPageHeritageFields,
+  prepareHostPageDraftFormData,
+  HOST_PAGE_TAG_LIST_MAX,
 } from '../hostPage';
 
 describe('HostPage Schema', () => {
@@ -32,8 +36,39 @@ describe('HostPage Schema', () => {
     executiveMembers: [],
   };
 
+  describe('clampHostPageHeritageFields', () => {
+    it('trims cultureIds to HOST_PAGE_TAG_LIST_MAX', () => {
+      const ids = Array.from({ length: 15 }, (_, i) => `culture-${i}`);
+      const clamped = clampHostPageHeritageFields({ cultureIds: ids });
+      expect(clamped.cultureIds).toHaveLength(HOST_PAGE_TAG_LIST_MAX);
+      expect(clamped.cultureIds?.[0]).toBe('culture-0');
+    });
+  });
+
+  describe('HostPageDraftFormDataSchema', () => {
+    it('allows partial autosave while the user is still typing', () => {
+      expect(() =>
+        HostPageDraftFormDataSchema.parse({
+          name: 'T',
+          bio: 'Still typing',
+          categoryTags: ['Community'],
+        }),
+      ).not.toThrow();
+    });
+
+    it('prepareHostPageDraftFormData clamps heritage fields before save', () => {
+      const ids = Array.from({ length: 15 }, (_, i) => `culture-${i}`);
+      const prepared = prepareHostPageDraftFormData({
+        name: 'Draft',
+        bio: 'wip',
+        cultureIds: ids,
+      });
+      expect(prepared?.cultureIds).toHaveLength(HOST_PAGE_TAG_LIST_MAX);
+    });
+  });
+
   describe('HostPageFormDataSchema', () => {
-    it('validates minimal draft form data', () => {
+    it('validates create/update form data with minimum name and bio', () => {
       expect(() =>
         HostPageFormDataSchema.parse({
           name: 'Test Page',
@@ -41,6 +76,16 @@ describe('HostPage Schema', () => {
           categoryTags: [],
         }),
       ).not.toThrow();
+    });
+
+    it('rejects bio shorter than 10 characters for page records', () => {
+      expect(() =>
+        HostPageFormDataSchema.parse({
+          name: 'Test Page',
+          bio: 'Too short',
+          categoryTags: [],
+        }),
+      ).toThrow();
     });
 
     it('rejects more than 3 category tags', () => {

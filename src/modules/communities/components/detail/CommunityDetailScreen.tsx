@@ -22,7 +22,7 @@ import {
 import { useColors } from '@/hooks/useColors';
 import { useM3Colors } from '@/hooks/useM3Colors';
 import { useLayout } from '@/hooks/useLayout';
-import { LISTING_CREATE_ROUTE } from '@/constants/navigation/experienceNav';
+import { hostspaceCategoryCreatePath } from '@/constants/navigation/createNav';
 import {
   getCommunityAccent,
   getCommunityActivityMeta,
@@ -158,7 +158,7 @@ export default function CommunityDetailScreen() {
     if (!community) return;
     haptic();
     router.push({
-      pathname: LISTING_CREATE_ROUTE,
+      pathname: hostspaceCategoryCreatePath('community'),
       params: { listingEntityType: 'community', editId: community.id },
     } as never);
   }, [community]);

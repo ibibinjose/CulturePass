@@ -30,6 +30,7 @@ import { M3TopAppBar } from '@/design-system/ui/M3TopAppBar';
 import { CultureTokens, FontFamily } from '@/design-system/tokens/theme';
 import { australianPostcodes } from '@shared/location/australian-postcodes';
 import { OnboardingProgressHeader } from '@/components/onboarding/OnboardingProgressHeader';
+import { OnboardingDestinationBanner } from '@/components/onboarding/OnboardingDestinationBanner';
 
 // Import missing hooks and utils
 import { useAuth } from '@/lib/auth';
@@ -201,7 +202,6 @@ export default function LocationScreen() {
       // Small micro-delay via setTimeout(0) to let the step transition and any pending location promises settle.
       // Much safer and shorter than the previous 1500ms hardcoded delay.
       const t = setTimeout(() => {
-        console.log('[LocationScreen] Auto-triggering council detection (declarative)');
         void detectCouncil();
       }, 0);
 
@@ -359,7 +359,7 @@ export default function LocationScreen() {
 
   const handleNext = () => {
     if (state.country && state.city) {
-      // Slice 2: council is already persisted via setCouncil when user chooses it
+      void syncUserMarketplaceLocation(user?.id, state.country, state.city);
       router.replace(routeWithRedirect('/(onboarding)/communities', redirectTo) as string);
       return;
     }
@@ -563,6 +563,10 @@ export default function LocationScreen() {
                 })}
               </Animated.View>
             )}
+
+            {redirectTo ? (
+              <OnboardingDestinationBanner redirectTo={redirectTo} variant="step" />
+            ) : null}
 
             {/* Step icon + title */}
             <View style={s.headerBlock}>
@@ -809,22 +813,6 @@ export default function LocationScreen() {
             )}
 
             <View style={s.spacer} />
-
-            {/* TEMP DEBUG: Manual trigger for council / JSI crash reproduction testing (available in all dev builds for easier testing) */}
-            {__DEV__ && (
-              <View style={{ paddingHorizontal: hPad, marginBottom: 12 }}>
-                <LuxeButton
-                  variant="glass"
-                  size="sm"
-                  onPress={() => {
-                    console.log('[DEBUG] Manual detectCouncil triggered from button');
-                    void detectCouncil();
-                  }}
-                >
-                  [DEBUG] Trigger Council Detect (for crash test)
-                </LuxeButton>
-              </View>
-            )}
 
             {/* Council / LGA Detection — Slice 2 (polished) — AU only */}
             {!!state.city && (pendingCountry === 'Australia' || state.country === 'Australia') && (

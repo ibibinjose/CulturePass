@@ -27,7 +27,7 @@ export interface ProfileHeaderBarProps {
 }
 
 const PROFILE_MENU_ITEMS = [
-  { key: 'profile', label: 'MySpace', icon: 'person-outline', route: '/(tabs)/my-space' },
+  { key: 'profile', label: 'MySpace', icon: 'person-outline', route: '/(tabs)/myspace' },
   { key: 'edit', label: 'Edit Profile', icon: 'create-outline', route: '/profile/edit' },
   { key: 'tickets', label: 'My Tickets', icon: 'ticket-outline', route: '/tickets' },
   { key: 'wallet', label: 'Wallet', icon: 'wallet-outline', route: '/payment/wallet' },

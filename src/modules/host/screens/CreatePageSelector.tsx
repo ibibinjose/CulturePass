@@ -27,6 +27,8 @@ export interface CreatePageSelectorProps {
   existingPages?: HostPage[];
   existingProfiles?: Profile[];
   intent?: string;
+  /** When true, parent HostspaceCreateShell owns chrome and hero. */
+  embedded?: boolean;
 }
 
 interface EntityCard {
@@ -107,6 +109,7 @@ export function CreatePageSelector({
   existingPages = [],
   existingProfiles = [],
   intent,
+  embedded = false,
 }: CreatePageSelectorProps) {
   const colors = useColors();
   const { hPad, isDesktop, isCompact } = useLayout();
@@ -172,40 +175,13 @@ export function CreatePageSelector({
     );
   };
 
-  return (
-    <View style={[styles.container, { backgroundColor: colors.background }]} testID="create-page-selector">
-      <View style={[styles.topBar, { paddingTop: topInset, backgroundColor: colors.surface, borderColor: colors.borderLight }]}>
-        <View style={styles.topBarInner}>
-          <Pressable
-            onPress={() => (router.canGoBack() ? router.back() : router.replace('/hostspace' as never))}
-            style={styles.backBtn}
-            accessibilityRole="button"
-            accessibilityLabel="Back to host workspace"
-          >
-            <Ionicons name="chevron-back" size={24} color={colors.text} />
-          </Pressable>
-          <Text style={[styles.topBarTitle, { color: colors.text }]}>
-            {isNationBuilder ? 'Nation Builder Partner' : 'Create a Page'}
+  const content = (
+    <>
+        {embedded ? (
+          <Text style={[styles.sectionLead, { color: colors.textSecondary }]}>
+            Which option is best for you?
           </Text>
-          <View style={{ width: 40 }} />
-        </View>
-      </View>
-
-      <ScrollView
-        contentContainerStyle={[styles.scrollContent, { paddingHorizontal: hPad }]}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.heroSection}>
-          <LinearGradient colors={SignatureGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.heroGradient}>
-            <Text style={styles.heroTitle}>Create a Page</Text>
-            <Text style={styles.heroSubtitle}>
-              Your Page is your home on CulturePass — where people discover your culture, events, stories and community.
-            </Text>
-            <Text style={[styles.heroSubtitle, { fontSize: 13, marginTop: 8, opacity: 0.9 }]}>
-              Which option is best for you?
-            </Text>
-          </LinearGradient>
-        </View>
+        ) : null}
 
         {Object.entries(groupedTypes).map(([category, types]) => (
           <View key={category} style={styles.categorySection}>
@@ -260,6 +236,52 @@ export function CreatePageSelector({
         )}
 
         <View style={{ height: Spacing.xxl }} />
+    </>
+  );
+
+  if (embedded) {
+    return (
+      <View testID="create-page-selector" style={styles.embeddedRoot}>
+        {content}
+      </View>
+    );
+  }
+
+  return (
+    <View style={[styles.container, { backgroundColor: colors.background }]} testID="create-page-selector">
+      <View style={[styles.topBar, { paddingTop: topInset, backgroundColor: colors.surface, borderColor: colors.borderLight }]}>
+        <View style={styles.topBarInner}>
+          <Pressable
+            onPress={() => (router.canGoBack() ? router.back() : router.replace('/hostspace' as never))}
+            style={styles.backBtn}
+            accessibilityRole="button"
+            accessibilityLabel="Back to host workspace"
+          >
+            <Ionicons name="chevron-back" size={24} color={colors.text} />
+          </Pressable>
+          <Text style={[styles.topBarTitle, { color: colors.text }]}>
+            {isNationBuilder ? 'Nation Builder Partner' : 'Create a Page'}
+          </Text>
+          <View style={{ width: 40 }} />
+        </View>
+      </View>
+
+      <ScrollView
+        contentContainerStyle={[styles.scrollContent, { paddingHorizontal: hPad }]}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.heroSection}>
+          <LinearGradient colors={SignatureGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.heroGradient}>
+            <Text style={styles.heroTitle}>Create a Page</Text>
+            <Text style={styles.heroSubtitle}>
+              Your Page is your home on CulturePass — where people discover your culture, events, stories and community.
+            </Text>
+            <Text style={[styles.heroSubtitle, { fontSize: 13, marginTop: 8, opacity: 0.9 }]}>
+              Which option is best for you?
+            </Text>
+          </LinearGradient>
+        </View>
+        {content}
       </ScrollView>
     </View>
   );
@@ -267,6 +289,8 @@ export function CreatePageSelector({
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  embeddedRoot: { paddingTop: 8, paddingBottom: 24, gap: 8 },
+  sectionLead: { ...TextStyles.body, textAlign: 'center', marginBottom: Spacing.md },
   topBar: { borderBottomWidth: 1, zIndex: 10 },
   topBarInner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', height: 56, paddingHorizontal: 16 },
   backBtn: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },

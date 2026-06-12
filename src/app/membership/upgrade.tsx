@@ -489,7 +489,7 @@ const pc = StyleSheet.create({
 
 export default function UpgradeScreen() {
   const pathname   = usePathname();
-  const handleBack = useSafeBack('/(tabs)/my-space');
+  const handleBack = useSafeBack('/(tabs)/myspace');
   const { hPad } = useLayout();
   const safeInsets = useSafeAreaInsetsWeb();
   const topInset = safeInsets.top;

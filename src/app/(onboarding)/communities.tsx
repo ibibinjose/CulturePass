@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -6,7 +6,8 @@ import {
   ScrollView,
   Platform,
   KeyboardAvoidingView,
-  Alert,
+  TextInput,
+  Pressable,
 } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -26,6 +27,9 @@ import { useLayout } from '@/hooks/useLayout';
 import { luxeDark } from '@/design-system/tokens/theme';
 import { routeWithRedirect, sanitizeInternalRedirect } from '@/lib/routes';
 import { OnboardingProgressHeader } from '@/components/onboarding/OnboardingProgressHeader';
+import { OnboardingDestinationBanner } from '@/components/onboarding/OnboardingDestinationBanner';
+import { useAuth } from '@/lib/auth';
+import { syncOnboardingProfilePatch } from '@/lib/syncOnboardingProfile';
 
 export default function CommunitiesScreen() {
   const m3Colors = useM3Colors();
@@ -35,8 +39,11 @@ export default function CommunitiesScreen() {
   const searchParams = useLocalSearchParams();
   const redirectTo = sanitizeInternalRedirect(searchParams.redirectTo ?? searchParams.redirect);
 
-  const { state, setCommunities } = useOnboarding();
+  const { user } = useAuth();
+  const { state, setCommunities, skipStep, completeStep } = useOnboarding();
   const [selected, setSelected] = useState<string[]>(state.communities || []);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
   const toggle = useCallback((community: string) => {
     if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -47,14 +54,35 @@ export default function CommunitiesScreen() {
     );
   }, []);
 
-  const handleNext = useCallback(() => {
-    if (selected.length === 0) {
-      Alert.alert('Select at least one', 'Choose one or more communities to continue.');
-      return;
-    }
+  const filteredGroups = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return communityGroups;
+    return communityGroups
+      .map((group) => ({
+        ...group,
+        members: group.members.filter((m) => m.toLowerCase().includes(q)),
+      }))
+      .filter((group) => group.members.length > 0);
+  }, [searchQuery]);
+
+  const handleNext = useCallback(async () => {
+    if (selected.length === 0 || isSaving) return;
+    setIsSaving(true);
     setCommunities(selected);
-    router.replace(routeWithRedirect('/(onboarding)/culture-match', redirectTo));
-  }, [selected, setCommunities, redirectTo]);
+    await syncOnboardingProfilePatch(user?.id, { communities: selected });
+    await completeStep('communities').catch(() => {});
+    router.replace(routeWithRedirect('/(onboarding)/culture-match', redirectTo) as string);
+    setIsSaving(false);
+  }, [selected, setCommunities, redirectTo, user?.id, completeStep, isSaving]);
+
+  const handleSkip = useCallback(async () => {
+    if (isSaving) return;
+    setIsSaving(true);
+    setCommunities([]);
+    await skipStep('communities').catch(() => {});
+    router.replace(routeWithRedirect('/(onboarding)/culture-match', redirectTo) as string);
+    setIsSaving(false);
+  }, [setCommunities, skipStep, redirectTo, isSaving]);
 
   const selectedCount = selected.length;
 
@@ -101,6 +129,10 @@ export default function CommunitiesScreen() {
                 isDesktop && styles.formContainerDesktop,
               ]}
             >
+            {redirectTo ? (
+              <OnboardingDestinationBanner redirectTo={redirectTo} variant="step" />
+            ) : null}
+
             {/* Hero Header */}
             <View style={styles.header}>
               <View style={styles.emojiCircle}>
@@ -123,9 +155,33 @@ export default function CommunitiesScreen() {
               )}
             </View>
 
+            <View style={[styles.searchBar, { backgroundColor: luxeDark.surfaceElevated, borderColor: luxeDark.border }]}>
+              <Ionicons name="search" size={20} color={luxeDark.textSecondary} />
+              <TextInput
+                style={[styles.searchInput, { color: luxeDark.text }]}
+                placeholder="Search communities…"
+                placeholderTextColor={luxeDark.textTertiary}
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                autoCorrect={false}
+                returnKeyType="search"
+                accessibilityLabel="Search communities"
+              />
+              {searchQuery.length > 0 ? (
+                <Pressable onPress={() => setSearchQuery('')} hitSlop={8} accessibilityLabel="Clear search">
+                  <Ionicons name="close-circle" size={20} color={luxeDark.textSecondary} />
+                </Pressable>
+              ) : null}
+            </View>
+
             {/* Community Groups */}
             <View style={styles.groupsContainer}>
-              {communityGroups.map((group) => (
+              {filteredGroups.length === 0 ? (
+                <LuxeText variant="body" style={{ textAlign: 'center', color: luxeDark.textSecondary, paddingVertical: 24 }}>
+                  No communities match your search.
+                </LuxeText>
+              ) : null}
+              {filteredGroups.map((group) => (
                 <View key={group.label} style={styles.section}>
                   <View style={styles.sectionHeader}>
                     <LuxeText variant="title3" style={styles.sectionTitle}>
@@ -171,11 +227,21 @@ export default function CommunitiesScreen() {
             <LuxeButton
               variant="filled"
               rightIcon="arrow-forward"
-              disabled={selected.length === 0}
+              disabled={selected.length === 0 || isSaving}
+              loading={isSaving}
               onPress={handleNext}
               size="lg"
             >
-              Continue
+              {selected.length === 0 ? 'Select at least one' : 'Continue'}
+            </LuxeButton>
+
+            <LuxeButton
+              variant="glass"
+              onPress={handleSkip}
+              disabled={isSaving}
+              style={{ marginTop: 12 }}
+            >
+              Skip for now
             </LuxeButton>
           </LuxeCard>
         </Animated.View>
@@ -269,6 +335,22 @@ const styles = StyleSheet.create({
   },
   chip: {
     marginBottom: 4, // helps with last row spacing
+  },
+
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 16,
+    height: 52,
+    borderRadius: 26,
+    borderWidth: 1,
+    marginBottom: 24,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    height: '100%',
   },
 
   footerSpacer: {

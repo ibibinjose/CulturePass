@@ -4,7 +4,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { CultureTokens } from '@/design-system/tokens/theme';
 import type { ListingWizardEntityParam } from '@/constants/navigation/experienceNav';
-import { CREATE_LAB_PATHNAME, createLabCategoryHref } from '@/constants/navigation/createNav';
+import { buildHostspaceCreateHref, createLabCategoryHref } from '@/constants/navigation/createNav';
 import { resolveCreationDataflow, type CreationDataflow } from '@shared/creation/dataflow';
 
 export type CategoryGroup = 'all' | 'venues' | 'businesses' | 'communities' | 'events' | 'market';
@@ -527,7 +527,7 @@ export const CREATE_CATEGORIES: CreateCategory[] = [
     id: 'market-listing',
     aliases: ['listing', 'marketplace', 'culturemarketplace', 'culturemarket', 'market', 'sell', 'product', 'service'],
     label: 'CultureMarket Listing',
-    route: CREATE_LAB_PATHNAME,
+    route: buildHostspaceCreateHref(),
     browseRoute: '/CultureMarket',
     type: 'Creation',
     purpose: 'List on CultureMarket',
@@ -541,7 +541,7 @@ export const CREATE_CATEGORIES: CreateCategory[] = [
     id: 'market-product',
     aliases: ['product', 'sell-product', 'physical', 'digital'],
     label: 'Sell a Product',
-    route: CREATE_LAB_PATHNAME,
+    route: buildHostspaceCreateHref(),
     browseRoute: '/CultureMarket',
     type: 'Creation',
     purpose: 'Sell physical or digital products',
@@ -556,7 +556,7 @@ export const CREATE_CATEGORIES: CreateCategory[] = [
     id: 'market-service',
     aliases: ['service', 'offer-service', 'bookable', 'lesson', 'experience'],
     label: 'Offer a Service',
-    route: CREATE_LAB_PATHNAME,
+    route: buildHostspaceCreateHref(),
     browseRoute: '/CultureMarket',
     type: 'Creation',
     purpose: 'Offer a bookable service or experience',
@@ -571,7 +571,7 @@ export const CREATE_CATEGORIES: CreateCategory[] = [
     id: 'market-link',
     aliases: ['link', 'website', 'external', 'link-site'],
     label: 'Link Your Website',
-    route: CREATE_LAB_PATHNAME,
+    route: buildHostspaceCreateHref(),
     browseRoute: '/CultureMarket',
     type: 'Creation',
     purpose: 'Link your cultural business website',

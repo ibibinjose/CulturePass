@@ -34,7 +34,7 @@ export function WidgetIdentityQRCard({
   return (
     <Pressable
       style={styles.card}
-      onPress={() => router.push('/profile/qr')}
+      onPress={() => router.push('/profile/digital-id')}
       accessibilityRole="button"
       accessibilityLabel="Open Identity QR Code"
     >

@@ -52,7 +52,7 @@ const DEFAULT_WEATHER_COORDS = { lat: -33.8688, lon: 151.2093 };
 
 const PROFILE_ACTIONS = [
   { key: 'edit', label: 'Edit Profile', icon: 'create-outline' as const, route: '/profile/edit' },
-  { key: 'qr', label: 'Digital ID', icon: 'qr-code-outline' as const, route: '/profile/qr' },
+  { key: 'qr', label: 'Digital ID', icon: 'id-card-outline' as const, route: '/profile/digital-id' },
   { key: 'network', label: 'Network', icon: 'people-outline' as const, route: '/network' },
   { key: 'wallet', label: 'Wallet', icon: 'wallet-outline' as const, route: '/payment/wallet' },
 ] as const;

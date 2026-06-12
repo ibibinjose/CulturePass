@@ -1,6 +1,7 @@
-import { brandDomainLabel } from '@/modules/profile/components/digitalId/digitalIdBrand';
+import { brandDomainLabel, DIGITAL_ID_BRAND } from '@/modules/profile/components/digitalId/digitalIdBrand';
 import { getPassColorTheme, type PassColorVariant } from '@/modules/profile/components/digitalId/passCardUtils';
 import { WALLET_PASS_THEME } from '@/modules/profile/components/digitalId/walletPassTheme';
+import { CultureTokens } from '@/design-system/tokens/theme';
 
 /** Fixed export dimensions — match on-screen pass cards at CARD_WIDTH_FIXED. */
 export const PASS_EXPORT_WIDTH = 330;
@@ -120,33 +121,88 @@ function buildBusinessExportHtml(opts: PassExportInput): string {
 </div>`;
 }
 
+function officialLanyardStripHtml(): string {
+  const gold = WALLET_PASS_THEME.lanyardAccentGold;
+  return `
+    <div style="position:relative;background:linear-gradient(90deg,${CultureTokens.cultureRed},${CultureTokens.appBlue});z-index:4;">
+      <div style="display:flex;justify-content:center;align-items:center;padding:16px 20px 14px;">
+        <span style="font-size:18px;font-weight:800;letter-spacing:2.2px;color:#FFFFFF;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">CULTUREPASS</span>
+      </div>
+      <div style="height:2px;background:${gold};"></div>
+    </div>`;
+}
+
+function lanyardAvatarHtml(size: number, initials: string, avatarUrl?: string | null): string {
+  const gold = WALLET_PASS_THEME.lanyardAccentGold;
+  const outer = size + 6;
+  const inner = avatarUrl
+    ? `<img src="${avatarUrl}" style="width:${size}px;height:${size}px;border-radius:50%;object-fit:cover;display:block;" crossorigin="anonymous"/>`
+    : `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${WALLET_PASS_THEME.whiteHex};display:flex;align-items:center;justify-content:center;font-size:${Math.round(size * 0.34)}px;font-weight:800;color:#4F46E5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">${esc(initials)}</div>`;
+  return `
+    <div style="width:${outer}px;height:${outer}px;border-radius:50%;background:linear-gradient(135deg,${gold},${WALLET_PASS_THEME.lanyardAccentGoldSoft},${gold});display:flex;align-items:center;justify-content:center;padding:2px;box-sizing:border-box;">
+      <div style="width:${size + 2}px;height:${size + 2}px;border-radius:50%;background:${WALLET_PASS_THEME.lanyardBody};display:flex;align-items:center;justify-content:center;overflow:hidden;">${inner}</div>
+    </div>`;
+}
+
+function lanyardQrFrameHtml(qrDataUrl: string, logoDataUrl: string | null | undefined, size: number): string {
+  const gold = WALLET_PASS_THEME.lanyardAccentGold;
+  const logoSize = Math.round(size * 0.22);
+  return `
+    <div style="border:2px solid ${gold};border-radius:4px;padding:3px;background:${WALLET_PASS_THEME.qrPad};box-shadow:0 4px 20px rgba(0,0,0,0.25);">
+      <div style="border:1px solid ${gold}88;padding:8px;background:${WALLET_PASS_THEME.qrPad};">
+        <div style="position:relative;display:inline-block;">
+          <img src="${qrDataUrl}" width="${size}" height="${size}" style="display:block;" crossorigin="anonymous"/>
+          ${logoDataUrl ? `<img src="${logoDataUrl}" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:${logoSize}px;height:${logoSize}px;border-radius:${Math.max(4, Math.round(logoSize * 0.28))}px;background:${WALLET_PASS_THEME.qrPad};padding:2px;" crossorigin="anonymous"/>` : ''}
+        </div>
+      </div>
+    </div>`;
+}
+
 function buildLanyardExportHtml(opts: PassExportInput): string {
-  const theme = getPassColorTheme(opts.colorVariant ?? 'cyan', opts.tier);
-  const qrSize = 132;
-  const avatarSize = 88;
-  const ring = 5;
-  const overlap = 14;
+  const variant = opts.colorVariant ?? 'cyan';
+  const theme = getPassColorTheme(variant, opts.tier);
+  const isOfficial = variant === 'cyan';
+  const bodyBg = isOfficial ? WALLET_PASS_THEME.lanyardBody : theme.bodyBg;
+  const bodyBorder = isOfficial ? WALLET_PASS_THEME.lanyardBodyBorder : theme.bodyBorder;
+  const textPrimary = isOfficial ? '#FFFFFF' : theme.primary;
+  const textSecondary = isOfficial ? 'rgba(255,255,255,0.88)' : theme.secondary;
+  const textMuted = isOfficial ? 'rgba(255,255,255,0.65)' : theme.tertiary;
+  const qrSize = 128;
+  const avatarSize = 72;
   const verified = opts.isVerified ? `<span style="color:${theme.tierLabel};font-size:14px;"> ✓</span>` : '';
+  const header = isOfficial ? officialLanyardStripHtml() : stripHtml(opts.tier, theme, false, true);
 
   return `
-<div id="card-root" style="width:${PASS_EXPORT_WIDTH}px;height:${PASS_EXPORT_LANYARD_HEIGHT}px;border-radius:20px;border:1px solid ${theme.bodyBorder};background:${theme.bodyBg};display:flex;flex-direction:column;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;overflow:hidden;">
-  ${stripHtml(opts.tier, theme, false, true)}
-  <div style="display:flex;flex-direction:column;align-items:center;margin-top:${-overlap}px;z-index:2;position:relative;">
-    ${avatarHtml(avatarSize, ring, opts.initials, opts.avatarUrl)}
-  </div>
-  <div style="flex:1;display:flex;flex-direction:column;justify-content:space-between;padding:6px 18px 18px;">
-    <div style="text-align:center;">
-      <div style="font-size:20px;font-weight:700;color:${theme.primary};line-height:24px;">${esc(opts.name)}${verified}</div>
-      <div style="font-size:13px;font-weight:600;color:${theme.secondary};margin-top:2px;">@${esc(opts.username)}</div>
-      ${opts.affiliation ? affiliationRowHtml(opts.affiliation.name, 12, theme.secondary, true) : ''}
-      <div style="font-size:10px;font-weight:500;color:${theme.tertiary};margin-top:2px;">Member Since ${esc(opts.memberSince)}</div>
-      ${idRowHtml(opts.cpid, theme, true)}
+<div id="card-root" style="width:${PASS_EXPORT_WIDTH}px;height:${PASS_EXPORT_LANYARD_HEIGHT}px;border-radius:20px;border:1px solid ${bodyBorder};background:${bodyBg};display:flex;flex-direction:column;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;overflow:hidden;">
+  ${header}
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:space-between;padding:16px 18px 14px;gap:14px;">
+    <div style="display:flex;align-items:flex-start;gap:12px;">
+      <div style="flex:1;min-width:0;padding-top:4px;">
+        <div style="font-size:20px;font-weight:700;color:${textPrimary};line-height:24px;">${esc(opts.name)}${verified}</div>
+        <div style="font-size:13px;font-weight:600;color:${textSecondary};margin-top:4px;">@${esc(opts.username)}</div>
+        ${opts.affiliation ? affiliationRowHtml(opts.affiliation.name, 11, textMuted) : ''}
+        <div style="font-size:11px;font-weight:500;color:${textMuted};margin-top:4px;">Member Since: ${esc(opts.memberSince)}</div>
+        <div style="font-size:11px;font-weight:500;color:${textMuted};margin-top:2px;">ID: ${esc(opts.cpid)}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px;width:96px;flex-shrink:0;">
+        ${lanyardAvatarHtml(avatarSize, opts.initials, opts.avatarUrl)}
+        <div style="padding:5px 10px;border-radius:20px;background:${CultureTokens.passGreen};min-width:88px;text-align:center;">
+          <span style="font-size:9px;font-weight:800;color:#FFFFFF;letter-spacing:0.3px;">Active Member</span>
+        </div>
+      </div>
     </div>
-    <div style="display:flex;justify-content:center;margin-top:12px;">
-      ${qrBlockHtml(opts.qrDataUrl, opts.logoDataUrl, qrSize, theme.qrBorder)}
+    <div style="display:flex;flex-direction:column;align-items:center;margin-top:4px;">
+      <div style="min-width:200px;align-self:center;">
+        ${lanyardQrFrameHtml(opts.qrDataUrl, opts.logoDataUrl, qrSize)}
+        <div style="width:100%;padding:8px 16px;text-align:center;background:linear-gradient(90deg,${CultureTokens.cultureRed},${CultureTokens.appBlue});border-bottom-left-radius:4px;border-bottom-right-radius:4px;margin-top:-1px;">
+          <span style="font-size:12px;font-weight:800;color:#FFFFFF;letter-spacing:1.4px;">${esc(opts.cpid)}</span>
+        </div>
+      </div>
+    </div>
+    <div style="font-size:10px;font-weight:600;color:${textMuted};text-align:center;letter-spacing:0.4px;margin-top:4px;">
+      ${esc(DIGITAL_ID_BRAND.name)} • ${esc(DIGITAL_ID_BRAND.tagline)}
     </div>
   </div>
-  ${footerHtml(theme, true)}
 </div>`;
 }
 

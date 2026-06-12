@@ -155,6 +155,7 @@ function RootLayoutNav() {
       <Stack.Screen name="organiser/[id]" />
       <Stack.Screen name="profile/edit" />
       <Stack.Screen name="profile/public" />
+      <Stack.Screen name="profile/digital-id" />
       <Stack.Screen name="profile/qr" />
 
       <Stack.Screen name="payment/methods" />

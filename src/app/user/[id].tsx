@@ -793,7 +793,7 @@ function UserPublicScreen() {
                 {isOwner && (
                   <Pressable
                     style={({ pressed }) => [s.unifiedCardFullBtn, { borderColor: CultureTokens.violet + '40', backgroundColor: CultureTokens.violet + '08', opacity: pressed ? 0.8 : 1 }]}
-                    onPress={() => router.push('/profile/qr')}
+                    onPress={() => router.push('/profile/digital-id')}
                   >
                     <Ionicons name="qr-code-outline" size={14} color={CultureTokens.violet} />
                     <Text style={[s.unifiedCardFullBtnText, { color: CultureTokens.violet }]} numberOfLines={1}>Save / Download Passes</Text>

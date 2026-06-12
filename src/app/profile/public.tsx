@@ -434,7 +434,7 @@ export default function PublicProfileScreen() {
               style={styles.viewQrBtn}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                router.push('/profile/qr');
+                router.push('/profile/digital-id');
               }}
             >
               <LinearGradient colors={[CP.teal + '1A', CP.purple + '0D']} style={styles.viewQrIconWrap}>

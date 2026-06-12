@@ -8,11 +8,25 @@ type PassCardShellProps = {
   colorVariant?: PassColorVariant;
   tierLabel?: string;
   nativeID?: string;
+  /** Override shell background (e.g. official lanyard dark body) */
+  shellBg?: string;
+  shellBorder?: string;
   children: ReactNode;
 };
 
-export function PassCardShell({ width, height, colorVariant = 'cyan', tierLabel, nativeID, children }: PassCardShellProps) {
+export function PassCardShell({
+  width,
+  height,
+  colorVariant = 'cyan',
+  tierLabel,
+  nativeID,
+  shellBg,
+  shellBorder,
+  children,
+}: PassCardShellProps) {
   const theme = getPassColorTheme(colorVariant, tierLabel);
+  const cardBg = shellBg ?? theme.bodyBg;
+  const cardBorder = shellBorder ?? theme.bodyBorder;
   const shadow = theme.shellShadowNative;
   const isWhite = colorVariant === 'white';
   const isBlack = colorVariant === 'black';
@@ -26,8 +40,8 @@ export function PassCardShell({ width, height, colorVariant = 'cyan', tierLabel,
         {
           width,
           height,
-          backgroundColor: theme.bodyBg,
-          borderColor: theme.bodyBorder,
+          backgroundColor: cardBg,
+          borderColor: cardBorder,
           ...Platform.select({
             web: {
               boxShadow: isWhite

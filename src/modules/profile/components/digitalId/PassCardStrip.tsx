@@ -9,24 +9,29 @@ type PassCardStripProps = {
   tierLabel: string;
   compact?: boolean;
   lanyard?: boolean;
+  /** Official lanyard — centered CULTUREPASS on wordmark gradient, no tier badge */
+  official?: boolean;
   colorVariant?: PassColorVariant;
 };
 
 /**
  * Full-bleed header strip — always edge-to-edge within PassCardShell.
- * Apple Wallet layout: logo mark left · tier badge right.
- * No overlap zone — avatar sits cleanly BELOW this strip.
+ * Official lanyard: centered CULTUREPASS · wordmark gradient · gold rule below.
+ * Default: logo mark left · tier badge right.
  */
 export function PassCardStrip({
   tierLabel,
   compact = false,
   lanyard = false,
+  official = false,
   colorVariant = 'cyan',
 }: PassCardStripProps) {
   const theme = getPassColorTheme(colorVariant, tierLabel);
   const tier = tierLabel.toUpperCase();
-  const height = lanyard ? 60 : compact ? 44 : 52;
-  const stripColors: [string, string] = [theme.stripStart, theme.stripEnd];
+  const height = official ? 56 : lanyard ? 60 : compact ? 44 : 52;
+  const stripColors: [string, string] = official
+    ? [CultureTokens.cultureRed, CultureTokens.appBlue]
+    : [theme.stripStart, theme.stripEnd];
   const cultureColor = colorVariant === 'white' ? CultureTokens.indigo : '#FFFFFF';
 
   return (
@@ -34,24 +39,32 @@ export function PassCardStrip({
       colors={stripColors}
       start={{ x: 0, y: 0.5 }}
       end={{ x: 1, y: 0.5 }}
-      style={[styles.strip, { height }]}
+      style={[styles.strip, official && styles.stripOfficial, { height }]}
     >
-      <View style={styles.logoGroup}>
-        <Ionicons name="finger-print" size={compact ? 12 : 14} color={theme.stripText} />
-        <Text style={[styles.brand, { fontSize: compact ? 10 : 11 }]}>
-          <Text style={{ color: cultureColor }}>CULTURE</Text>
-          <Text style={{ color: CultureTokens.teal }}>PASS</Text>
-          <Text style={{ color: CultureTokens.heritageGold }}> ID</Text>
+      {official ? (
+        <Text style={styles.officialBrand} accessibilityRole="header">
+          CULTUREPASS
         </Text>
-      </View>
+      ) : (
+        <>
+          <View style={styles.logoGroup}>
+            <Ionicons name="finger-print" size={compact ? 12 : 14} color={theme.stripText} />
+            <Text style={[styles.brand, { fontSize: compact ? 10 : 11 }]}>
+              <Text style={{ color: cultureColor }}>CULTURE</Text>
+              <Text style={{ color: CultureTokens.teal }}>PASS</Text>
+              <Text style={{ color: CultureTokens.heritageGold }}> ID</Text>
+            </Text>
+          </View>
 
-      {/* Tier — compact pill on right */}
-      <View style={[styles.tierBadge, { backgroundColor: theme.stripTierBadgeBg, borderColor: theme.stripTierBadgeBorder }]}>
-        <Text style={[styles.tier, { color: theme.stripText, fontSize: compact ? 9 : 10 }]}>{tier}</Text>
-      </View>
+          <View style={[styles.tierBadge, { backgroundColor: theme.stripTierBadgeBg, borderColor: theme.stripTierBadgeBorder }]}>
+            <Text style={[styles.tier, { color: theme.stripText, fontSize: compact ? 9 : 10 }]}>{tier}</Text>
+          </View>
+        </>
+      )}
 
-      {/* Bottom separator line */}
-      <View style={[styles.separator, { backgroundColor: theme.stripSeparator }]} pointerEvents="none" />
+      {!official ? (
+        <View style={[styles.separator, { backgroundColor: theme.stripSeparator }]} pointerEvents="none" />
+      ) : null}
     </LinearGradient>
   );
 }
@@ -64,6 +77,17 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     position: 'relative',
+  },
+  stripOfficial: {
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+  },
+  officialBrand: {
+    fontFamily: FontFamily.bold,
+    fontSize: 18,
+    letterSpacing: 2.2,
+    color: '#FFFFFF',
+    textAlign: 'center',
   },
   logoGroup: {
     flexDirection: 'row',

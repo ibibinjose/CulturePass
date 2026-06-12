@@ -52,11 +52,12 @@ const GOOGLE_WALLET_BASE_URL = 'https://walletobjects.googleapis.com/walletobjec
 /** CulturePass wallet — full cyan member pass with white typography. */
 const WALLET_BRAND_CYAN = 'rgb(0, 173, 239)';
 const WALLET_CARD = {
-  appleBackground: 'rgb(0, 173, 239)',
+  appleBackground: 'rgb(15, 15, 26)',
   appleForeground: 'rgb(255, 255, 255)',
   appleLabel: 'rgb(255, 255, 255)',
-  googleHex: '#00ADEF',
-  passRevision: '2026-06-12-v11',
+  googleHex: '#0F0F1A',
+  passRevision: '2026-06-12-wallet-v3',
+  ticketBody: '#061F2E',
   avatarIndigo: '#4F46E5',
   cyan: '#00ADEF',
   cyanDark: '#0096D6',
@@ -64,6 +65,11 @@ const WALLET_CARD = {
   indigo: '#4F46E5',
   emerald: '#0A8C7F',
   gold: '#D4A017',
+  cultureRed: '#f80020',
+  appBlue: '#009EDB',
+  passGreen: '#00A651',
+  lanyardBody: '#0F0F1A',
+  lanyardGold: '#C9A227',
 } as const;
 
 function formatWalletDisplayName(name: string, fallback: string): string {
@@ -405,11 +411,9 @@ export async function bootstrapGoogleBusinessCardClass(): Promise<{ classId: str
   return { classId: config.classId, created: true };
 }
 
-export async function createGoogleBusinessCardSaveUrl(user: WalletPassUser): Promise<string> {
-  const config = getGoogleWalletConfig();
+function buildGoogleBusinessCardObject(user: WalletPassUser, objectId: string, classId: string) {
   const username = String(user.username ?? user.id);
   const displayName = formatWalletDisplayName(user.displayName ?? '', username);
-  const objectId = `${config.issuerId}.${slugify(`${username}-${randomUUID()}`).slice(0, 48)}`;
   const profileUrl = buildProfileUrl(user);
   const tierLabel = formatWalletTierLabel(user.tier || 'free');
   const culturePassId = String(user.culturePassId ?? `CP-${user.id}`);
@@ -417,87 +421,93 @@ export async function createGoogleBusinessCardSaveUrl(user: WalletPassUser): Pro
   const qrPayload = buildWalletQrPayload(user);
   const location = [user.city, user.country].filter(Boolean).join(', ');
 
-  const tierKey = (user.tier || 'free').toLowerCase();
-  let googleBg: string = WALLET_CARD.googleHex; // Default Cyan '#00ADEF'
-  if (tierKey === 'elite' || tierKey === 'vip') {
-    googleBg = '#0F0A02';
-  } else if (tierKey === 'pro') {
-    googleBg = '#061F2E';
-  } else if (tierKey === 'premium' || tierKey === 'plus') {
-    googleBg = '#1A0F0A';
-  }
-
-  const payload = {
-    genericObjects: [
+  return {
+    id: objectId,
+    classId,
+    state: 'ACTIVE' as const,
+    hexBackgroundColor: WALLET_CARD.lanyardBody,
+    cardTitle: {
+      defaultValue: { language: 'en-AU', value: 'CULTUREPASS' },
+    },
+    header: {
+      defaultValue: { language: 'en-AU', value: displayName },
+    },
+    subheader: {
+      defaultValue: { language: 'en-AU', value: `@${username}` },
+    },
+    barcode: {
+      type: 'QR_CODE' as const,
+      value: qrPayload,
+      alternateText: culturePassId,
+    },
+    textModulesData: [
       {
-        id: objectId,
-        classId: config.classId,
-        state: 'ACTIVE',
-        hexBackgroundColor: googleBg,
-        cardTitle: {
-          defaultValue: { language: 'en-AU', value: `CULTUREPASS ID · ${tierLabel.toUpperCase()}` },
-        },
-        header: {
-          defaultValue: { language: 'en-AU', value: displayName },
-        },
-        subheader: {
-          defaultValue: { language: 'en-AU', value: `@${username}` },
-        },
-        barcode: {
-          type: 'QR_CODE',
-          value: qrPayload,
-          alternateText: culturePassId,
-        },
-        textModulesData: [
-          {
-            id: 'member_since',
-            header: 'Member Since',
-            body: memberSince,
-          },
-          {
-            id: 'cpid',
-            header: 'ID',
-            body: culturePassId,
-          },
-          {
-            id: 'membership',
-            header: 'Tier',
-            body: tierLabel,
-          },
-          ...(location ? [{
-            id: 'location',
-            header: 'Location',
-            body: location,
-          }] : []),
-          ...(user.affiliationName ? [{
-            id: 'affiliation',
-            header: 'Affiliation',
-            body: user.affiliationName,
-          }] : []),
-          {
-            id: 'profile',
-            header: 'Profile',
-            body: profileUrl.replace(/^https?:\/\//, ''),
-          },
-        ],
-        ...(user.avatarUrl ? {
-          imageModulesData: [
-            {
-              id: 'avatar',
-              mainImage: {
-                sourceUri: { uri: user.avatarUrl },
-                contentDescription: {
-                  defaultValue: { language: 'en-AU', value: `${displayName} avatar` },
-                },
-              },
-            },
-          ],
-        } : {}),
-        linksModuleData: {
-          uris: [{ id: 'open-profile', uri: profileUrl, description: 'View profile' }],
-        },
+        id: 'status',
+        header: 'Status',
+        body: 'Active Member',
+      },
+      {
+        id: 'member_since',
+        header: 'Member Since',
+        body: memberSince,
+      },
+      {
+        id: 'cpid',
+        header: 'CPID',
+        body: culturePassId,
+      },
+      {
+        id: 'membership',
+        header: 'Tier',
+        body: tierLabel,
+      },
+      ...(location ? [{
+        id: 'location',
+        header: 'Location',
+        body: location,
+      }] : []),
+      ...(user.affiliationName ? [{
+        id: 'affiliation',
+        header: 'Affiliation',
+        body: user.affiliationName,
+      }] : []),
+      {
+        id: 'profile',
+        header: 'Profile',
+        body: profileUrl.replace(/^https?:\/\//, ''),
+      },
+      {
+        id: 'revision',
+        header: 'Pass',
+        body: WALLET_CARD.passRevision,
       },
     ],
+    ...(user.avatarUrl ? {
+      imageModulesData: [
+        {
+          id: 'avatar',
+          mainImage: {
+            sourceUri: { uri: user.avatarUrl },
+            contentDescription: {
+              defaultValue: { language: 'en-AU', value: `${displayName} avatar` },
+            },
+          },
+        },
+      ],
+    } : {}),
+    linksModuleData: {
+      uris: [{ id: 'open-profile', uri: profileUrl, description: 'View profile' }],
+    },
+  };
+}
+
+export async function createGoogleBusinessCardSaveUrl(user: WalletPassUser): Promise<string> {
+  const config = getGoogleWalletConfig();
+  const username = String(user.username ?? user.id);
+  const objectId = `${config.issuerId}.${slugify(`${username}-${randomUUID()}`).slice(0, 48)}`;
+
+  const payload = {
+    genericObjects: [buildGoogleBusinessCardObject(user, objectId, config.classId)],
   };
 
   const claims = {
@@ -549,19 +559,22 @@ async function renderWalletLogo(width: number, height: number, onWarmBackground 
   }
 }
 
-async function renderWalletIcon(size: number): Promise<Buffer> {
+async function renderWalletIcon(size: number, onDark = true): Promise<Buffer> {
   const logoBuffer = await fetchRemoteBuffer(publicAppIconUrl());
+  const bg = onDark
+    ? { r: 15, g: 15, b: 26, alpha: 1 }
+    : { r: 0, g: 173, b: 239, alpha: 1 };
   if (logoBuffer) {
     try {
       return await sharp(logoBuffer)
-        .resize(size, size, { fit: 'contain', background: { r: 0, g: 173, b: 239, alpha: 1 } })
+        .resize(size, size, { fit: 'contain', background: bg })
         .png()
         .toBuffer();
     } catch {
       // fall through to vector brand mark
     }
   }
-  return renderWalletLogo(size, Math.max(20, Math.round(size * 0.38)), false);
+  return renderWalletLogo(size, Math.max(20, Math.round(size * 0.38)), onDark);
 }
 
 function escapeXml(value: string): string {
@@ -767,6 +780,34 @@ async function renderWalletAvatarThumbnail(size: number, avatarBuffer: Buffer | 
     .toBuffer();
 }
 
+/** Lanyard pass thumbnail — gold ring on dark body (matches in-app LanyardPassCard). */
+async function renderLanyardGoldAvatarThumbnail(size: number, avatarBuffer: Buffer | null, initials: string): Promise<Buffer> {
+  const ring = Math.max(3, Math.round(size * 0.05));
+  const pad = 2;
+  const outer = size + (ring + pad) * 2;
+  const inner = avatarBuffer
+    ? await applyCircleMask(avatarBuffer, size)
+    : await renderInitialsAvatarCircle(size, initials);
+
+  const ringSvg =
+    '<svg width="' + outer + '" height="' + outer + '" xmlns="http://www.w3.org/2000/svg">' +
+    '<defs><linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">' +
+    '<stop offset="0%" stop-color="' + WALLET_CARD.lanyardGold + '"/>' +
+    '<stop offset="50%" stop-color="#E8D48B"/>' +
+    '<stop offset="100%" stop-color="' + WALLET_CARD.lanyardGold + '"/>' +
+    '</linearGradient></defs>' +
+    '<circle cx="' + (outer / 2) + '" cy="' + (outer / 2) + '" r="' + (outer / 2 - 1) + '" fill="url(#gold)"/>' +
+    '<circle cx="' + (outer / 2) + '" cy="' + (outer / 2) + '" r="' + (size / 2 + pad) + '" fill="' + WALLET_CARD.lanyardBody + '"/>' +
+    '</svg>';
+
+  const ringBuffer = await sharp(Buffer.from(ringSvg)).png().toBuffer();
+  const inset = ring + pad;
+  return sharp(ringBuffer)
+    .composite([{ input: inner, top: inset, left: inset }])
+    .png()
+    .toBuffer();
+}
+
 async function renderAvatarThumbnails(user: Pick<WalletPassUser, 'displayName' | 'username' | 'avatarUrl'>): Promise<{ thumb: Buffer; thumb2x: Buffer }> {
   const fallbackName = formatWalletDisplayName(user.displayName ?? '', String(user.username ?? 'U'));
   const initials = walletPassInitials(fallbackName);
@@ -822,6 +863,133 @@ function getTierStripColors(tierLabel: string): { start: string; end: string } {
     return { start: '#312E81', end: '#1B1545' };
   }
   return { start: WALLET_CARD.cyanDark, end: WALLET_CARD.cyanDeep };
+}
+
+/** Official lanyard header — centered CULTUREPASS on wordmark gradient + gold rule */
+async function renderOfficialLanyardStrip(width: number, height: number): Promise<Buffer> {
+  const brandSize = Math.max(14, Math.round(height * 0.34));
+  const textY = Math.round(height * 0.58);
+  const goldY = height - 2;
+  const svg =
+    '<svg width="' + width + '" height="' + height + '" xmlns="http://www.w3.org/2000/svg">' +
+    '<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="0">' +
+    '<stop offset="0%" stop-color="' + WALLET_CARD.cultureRed + '"/><stop offset="100%" stop-color="' + WALLET_CARD.appBlue + '"/>' +
+    '</linearGradient></defs>' +
+    '<rect width="' + width + '" height="' + height + '" fill="url(#bg)"/>' +
+    '<text x="50%" y="' + textY + '" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="' + brandSize + '" font-weight="800" fill="#FFFFFF" letter-spacing="2.2">CULTUREPASS</text>' +
+    '<rect x="0" y="' + goldY + '" width="' + width + '" height="2" fill="' + WALLET_CARD.lanyardGold + '"/>' +
+    '</svg>';
+
+  try {
+    return await sharp(Buffer.from(svg)).png().toBuffer();
+  } catch {
+    return TRANSPARENT_PNG_BUFFER;
+  }
+}
+
+type LanyardStripIdentity = {
+  displayName: string;
+  username: string;
+  memberSince: string;
+  culturePassId: string;
+};
+
+/**
+ * Apple Wallet strip — lanyard composite (375×123 @1x).
+ * Wordmark header + dark identity band (matches in-app lanyard preview).
+ */
+async function renderLanyardWalletStrip(width: number, height: number, identity: LanyardStripIdentity): Promise<Buffer> {
+  const headerH = Math.max(44, Math.round(height * 0.46));
+  const bodyY = headerH;
+  const bodyH = height - headerH;
+  const brandSize = Math.max(13, Math.round(headerH * 0.32));
+  const headerTextY = Math.round(headerH * 0.56);
+  const goldY = headerH - 2;
+  const name = escapeXml(truncateText(identity.displayName, 26));
+  const handle = escapeXml(`@${identity.username}`);
+  const since = escapeXml(`Member Since: ${identity.memberSince}`);
+  const cpid = escapeXml(identity.culturePassId);
+  const nameSize = Math.max(12, Math.round(bodyH * 0.24));
+  const metaSize = Math.max(9, Math.round(bodyH * 0.16));
+  const nameY = bodyY + Math.round(bodyH * 0.34);
+  const handleY = nameY + Math.round(metaSize * 1.45);
+  const sinceY = handleY + Math.round(metaSize * 1.35);
+  const cpidY = sinceY + Math.round(metaSize * 1.35);
+  const pillW = 92;
+  const pillH = 18;
+  const pillX = width - pillW - 16;
+  const pillY = bodyY + Math.round(bodyH * 0.22);
+
+  const svg =
+    '<svg width="' + width + '" height="' + height + '" xmlns="http://www.w3.org/2000/svg">' +
+    '<defs>' +
+    '<linearGradient id="hdr" x1="0" y1="0" x2="1" y2="0">' +
+    '<stop offset="0%" stop-color="' + WALLET_CARD.cultureRed + '"/><stop offset="100%" stop-color="' + WALLET_CARD.appBlue + '"/>' +
+    '</linearGradient>' +
+    '</defs>' +
+    '<rect width="' + width + '" height="' + headerH + '" fill="url(#hdr)"/>' +
+    '<text x="50%" y="' + headerTextY + '" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="' + brandSize + '" font-weight="800" fill="#FFFFFF" letter-spacing="2">CULTUREPASS</text>' +
+    '<rect x="0" y="' + goldY + '" width="' + width + '" height="2" fill="' + WALLET_CARD.lanyardGold + '"/>' +
+    '<rect x="0" y="' + bodyY + '" width="' + width + '" height="' + bodyH + '" fill="' + WALLET_CARD.lanyardBody + '"/>' +
+    '<circle cx="' + (width - 48) + '" cy="' + (bodyY + bodyH * 0.72) + '" r="52" fill="none" stroke="#FFFFFF" stroke-width="1" opacity="0.06"/>' +
+    '<circle cx="24" cy="' + (bodyY + bodyH * 0.55) + '" r="36" fill="none" stroke="#FFFFFF" stroke-width="1" opacity="0.05"/>' +
+    '<text x="18" y="' + nameY + '" font-family="Arial,Helvetica,sans-serif" font-size="' + nameSize + '" font-weight="700" fill="#FFFFFF">' + name + '</text>' +
+    '<text x="18" y="' + handleY + '" font-family="Arial,Helvetica,sans-serif" font-size="' + metaSize + '" font-weight="600" fill="rgba(255,255,255,0.88)">' + handle + '</text>' +
+    '<text x="18" y="' + sinceY + '" font-family="Arial,Helvetica,sans-serif" font-size="' + metaSize + '" font-weight="500" fill="rgba(255,255,255,0.65)">' + since + '</text>' +
+    '<text x="18" y="' + cpidY + '" font-family="Arial,Helvetica,sans-serif" font-size="' + metaSize + '" font-weight="500" fill="rgba(255,255,255,0.65)">ID: ' + cpid + '</text>' +
+    '<rect x="' + pillX + '" y="' + pillY + '" width="' + pillW + '" height="' + pillH + '" rx="9" fill="' + WALLET_CARD.passGreen + '"/>' +
+    '<text x="' + (pillX + pillW / 2) + '" y="' + (pillY + pillH * 0.68) + '" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="8" font-weight="800" fill="#FFFFFF" letter-spacing="0.3">Active Member</text>' +
+    '</svg>';
+
+  try {
+    return await sharp(Buffer.from(svg)).png().toBuffer();
+  } catch {
+    return await renderOfficialLanyardStrip(width, headerH);
+  }
+}
+
+type EventTicketStripInfo = {
+  eventTitle: string;
+  when: string;
+  venue: string;
+};
+
+/** Event ticket strip — wordmark header + ticket details on dark ink body */
+async function renderEventTicketStrip(width: number, height: number, info: EventTicketStripInfo): Promise<Buffer> {
+  const headerH = Math.max(44, Math.round(height * 0.46));
+  const bodyY = headerH;
+  const bodyH = height - headerH;
+  const brandSize = Math.max(12, Math.round(headerH * 0.3));
+  const headerTextY = Math.round(headerH * 0.56);
+  const goldY = headerH - 2;
+  const title = escapeXml(truncateText(info.eventTitle, 32));
+  const when = escapeXml(truncateText(info.when, 36));
+  const venue = escapeXml(truncateText(info.venue, 36));
+  const titleSize = Math.max(11, Math.round(bodyH * 0.22));
+  const metaSize = Math.max(9, Math.round(bodyH * 0.16));
+  const titleY = bodyY + Math.round(bodyH * 0.34);
+  const whenY = titleY + Math.round(metaSize * 1.45);
+  const venueY = whenY + Math.round(metaSize * 1.35);
+
+  const svg =
+    '<svg width="' + width + '" height="' + height + '" xmlns="http://www.w3.org/2000/svg">' +
+    '<defs><linearGradient id="hdr" x1="0" y1="0" x2="1" y2="0">' +
+    '<stop offset="0%" stop-color="' + WALLET_CARD.cultureRed + '"/><stop offset="100%" stop-color="' + WALLET_CARD.appBlue + '"/>' +
+    '</linearGradient></defs>' +
+    '<rect width="' + width + '" height="' + headerH + '" fill="url(#hdr)"/>' +
+    '<text x="50%" y="' + headerTextY + '" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="' + brandSize + '" font-weight="800" fill="#FFFFFF" letter-spacing="1.8">CULTUREPASS TICKET</text>' +
+    '<rect x="0" y="' + goldY + '" width="' + width + '" height="2" fill="' + WALLET_CARD.lanyardGold + '"/>' +
+    '<rect x="0" y="' + bodyY + '" width="' + width + '" height="' + bodyH + '" fill="' + WALLET_CARD.ticketBody + '"/>' +
+    '<text x="18" y="' + titleY + '" font-family="Arial,Helvetica,sans-serif" font-size="' + titleSize + '" font-weight="700" fill="#FFFFFF">' + title + '</text>' +
+    '<text x="18" y="' + whenY + '" font-family="Arial,Helvetica,sans-serif" font-size="' + metaSize + '" font-weight="600" fill="rgba(255,255,255,0.88)">' + when + '</text>' +
+    '<text x="18" y="' + venueY + '" font-family="Arial,Helvetica,sans-serif" font-size="' + metaSize + '" font-weight="500" fill="rgba(255,255,255,0.65)">' + venue + '</text>' +
+    '</svg>';
+
+  try {
+    return await sharp(Buffer.from(svg)).png().toBuffer();
+  } catch {
+    return await renderOfficialLanyardStrip(width, headerH);
+  }
 }
 
 // Enhanced version with better visual design
@@ -889,11 +1057,18 @@ export async function generateAppleBusinessCardPass(user: WalletPassUser): Promi
   const icon2x = await renderWalletIcon(116);
   const logo = await renderWalletLogo(160, 50, false);
   const logo2x = await renderWalletLogo(320, 100, false);
-  // Using enhanced strip with new branding
-  const strip = await renderEnhancedWalletStrip(375, 44, tierLabel);
-  const strip2x = await renderEnhancedWalletStrip(750, 88, tierLabel);
-  const thumb = await renderWalletAvatarThumbnail(96, avatarBuffer, initials);
-  const thumb2x = await renderWalletAvatarThumbnail(192, avatarBuffer, initials);
+  const stripIdentity: LanyardStripIdentity = {
+    displayName,
+    username,
+    memberSince,
+    culturePassId,
+  };
+  const stripW = 375;
+  const stripH = 123;
+  const strip = await renderLanyardWalletStrip(stripW, stripH, stripIdentity);
+  const strip2x = await renderLanyardWalletStrip(stripW * 2, stripH * 2, stripIdentity);
+  const thumb = await renderLanyardGoldAvatarThumbnail(90, avatarBuffer, initials);
+  const thumb2x = await renderLanyardGoldAvatarThumbnail(180, avatarBuffer, initials);
 
   const passJson = {
     formatVersion: 1,
@@ -909,24 +1084,9 @@ export async function generateAppleBusinessCardPass(user: WalletPassUser): Promi
     },
   };
 
-  const tierKey = (user.tier || 'free').toLowerCase();
-  let walletBg = 'rgb(0, 173, 239)'; // Default Cyan
-  let walletFg = 'rgb(255, 255, 255)';
-  let walletLabel = 'rgb(255, 255, 255)';
-
-  if (tierKey === 'elite' || tierKey === 'vip') {
-    walletBg = 'rgb(15, 10, 2)';
-    walletFg = 'rgb(224, 247, 255)';
-    walletLabel = 'rgb(212, 160, 23)';
-  } else if (tierKey === 'pro') {
-    walletBg = 'rgb(6, 31, 46)';
-    walletFg = 'rgb(224, 250, 255)';
-    walletLabel = 'rgb(0, 240, 255)';
-  } else if (tierKey === 'premium' || tierKey === 'plus') {
-    walletBg = 'rgb(27, 21, 69)';
-    walletFg = 'rgb(245, 243, 255)';
-    walletLabel = 'rgb(255, 94, 91)';
-  }
+  const walletBg = 'rgb(15, 15, 26)';
+  const walletFg = 'rgb(255, 255, 255)';
+  const walletLabel = 'rgb(200, 210, 220)';
 
   const pass = new PKPass(
     {
@@ -953,14 +1113,20 @@ export async function generateAppleBusinessCardPass(user: WalletPassUser): Promi
 
   pass.primaryFields.push({
     key: 'member_name',
-    label: ' ',
+    label: 'MEMBER',
     value: displayName,
   });
 
   pass.secondaryFields.push({
     key: 'username',
-    label: ' ',
+    label: 'HANDLE',
     value: `@${username}`,
+  });
+
+  pass.auxiliaryFields.push({
+    key: 'status',
+    label: 'STATUS',
+    value: 'Active Member',
   });
 
   pass.auxiliaryFields.push({
@@ -971,7 +1137,7 @@ export async function generateAppleBusinessCardPass(user: WalletPassUser): Promi
 
   pass.auxiliaryFields.push({
     key: 'cpid_front',
-    label: 'ID',
+    label: 'CPID',
     value: culturePassId,
   });
 
@@ -1101,7 +1267,7 @@ async function ensureGoogleEventTicketClass(): Promise<string> {
       id: classId,
       issuerName: 'CulturePass.App',
       reviewStatus: 'UNDER_REVIEW',
-      hexBackgroundColor: WALLET_CARD.googleHex,
+      hexBackgroundColor: WALLET_CARD.ticketBody,
       homepageUri: {
         uri: getPublicAppOrigin(),
         description: 'CulturePass.App',
@@ -1146,9 +1312,9 @@ export async function createGoogleEventTicketSaveUrl(
         id: objectId,
         classId,
         state: 'ACTIVE',
-        hexBackgroundColor: WALLET_CARD.googleHex,
+        hexBackgroundColor: WALLET_CARD.ticketBody,
         cardTitle: {
-          defaultValue: { language: 'en-AU', value: 'CulturePass Ticket' },
+          defaultValue: { language: 'en-AU', value: 'CULTUREPASS TICKET' },
         },
         header: {
           defaultValue: { language: 'en-AU', value: eventTitle },
@@ -1177,6 +1343,16 @@ export async function createGoogleEventTicketSaveUrl(
             header: 'Tier',
             body: ticket.tierName ?? 'General',
           },
+          {
+            id: 'status',
+            header: 'Status',
+            body: ticket.status,
+          },
+          {
+            id: 'revision',
+            header: 'Pass',
+            body: WALLET_CARD.passRevision,
+          },
         ],
         linksModuleData: {
           uris: [{ id: 'open-ticket', uri: ticketPageUrl, description: 'Open ticket in CulturePass' }],
@@ -1196,7 +1372,6 @@ export async function createGoogleEventTicketSaveUrl(
   return `https://pay.google.com/gp/v/save/${token}`;
 }
 
-// Enhanced ticket pass with improved branding
 export async function generateAppleEventTicketPass(
   ticket: WalletTicketInput,
   event: WalletEventSnapshot | null,
@@ -1214,18 +1389,23 @@ export async function generateAppleEventTicketPass(
     envOptional('APPLE_PASS_WEBSERVICE_URL') ?? `${getPublicAppOrigin()}/api/wallet/apple/v1`;
   const ticketPageUrl = `${getPublicAppOrigin()}/tickets/${encodeURIComponent(ticket.id)}`;
 
-  const icon = await renderWalletIcon(58);
-  const icon2x = await renderWalletIcon(116);
+  const icon = await renderWalletIcon(58, true);
+  const icon2x = await renderWalletIcon(116, true);
   const logo = await renderWalletLogo(160, 50, true);
   const logo2x = await renderWalletLogo(320, 100, true);
+  const stripInfo: EventTicketStripInfo = { eventTitle, when, venue };
+  const stripW = 375;
+  const stripH = 123;
+  const strip = await renderEventTicketStrip(stripW, stripH, stripInfo);
+  const strip2x = await renderEventTicketStrip(stripW * 2, stripH * 2, stripInfo);
 
   const passJson = {
     formatVersion: 1,
     passTypeIdentifier,
     teamIdentifier,
     organizationName: 'CulturePass.App',
-    description: eventTitle,
-    logoText: 'CulturePass.App',
+    description: `CulturePass Ticket · ${WALLET_CARD.passRevision}`,
+    logoText: ' ',
     authenticationToken,
     webServiceURL: webServiceBaseUrl,
     eventTicket: {},
@@ -1238,15 +1418,17 @@ export async function generateAppleEventTicketPass(
       'icon@2x.png': icon2x,
       'logo.png': logo,
       'logo@2x.png': logo2x,
+      'strip.png': strip,
+      'strip@2x.png': strip2x,
     },
     certificates,
     {
       serialNumber,
-      description: eventTitle,
+      description: `${eventTitle} · ${ticket.cpTicketId}`,
       organizationName: 'CulturePass.App',
-      backgroundColor: 'rgb(227, 106, 78)',
-      foregroundColor: 'rgb(255,255,255)',
-      labelColor: 'rgb(212, 160, 23)', // Heritage gold
+      backgroundColor: 'rgb(6, 31, 46)',
+      foregroundColor: 'rgb(255, 255, 255)',
+      labelColor: 'rgb(200, 210, 220)',
     }
   );
 
@@ -1267,7 +1449,7 @@ export async function generateAppleEventTicketPass(
   });
   pass.auxiliaryFields.push({
     key: 'ticket_code',
-    label: 'CODE',
+    label: 'TICKET',
     value: ticket.cpTicketId,
   });
   pass.backFields.push({
@@ -1285,7 +1467,12 @@ export async function generateAppleEventTicketPass(
     label: 'TICKET',
     value: ticketPageUrl,
   });
-  pass.setBarcodes(ticket.cpTicketId || ticket.qrCode);
+  pass.setBarcodes({
+    message: ticket.cpTicketId || ticket.qrCode,
+    format: 'PKBarcodeFormatQR',
+    messageEncoding: 'iso-8859-1',
+    altText: ticket.cpTicketId,
+  });
 
   return pass.getAsBuffer();
 }

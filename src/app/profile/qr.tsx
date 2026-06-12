@@ -1,7 +1,7 @@
 /**
- * CulturePass Digital ID — /profile/qr
- * Business pass · Lanyard pass · Event ticket · Apple/Google Wallet
- * Brand: CulturePass.App (https://culturepass.app)
+ * CulturePass Digital ID Lab — /profile/qr
+ * Developer & admin only — pass themes, exports, affiliations, event ticket previews.
+ * Members use /profile/digital-id
  */
 
 import React from 'react';
@@ -21,9 +21,12 @@ import Head from 'expo-router/head';
 import * as Haptics from 'expo-haptics';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
+import { Redirect } from 'expo-router';
 import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import { useColors, useIsDark } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
+import { useRole } from '@/hooks/useRole';
+import { canAccessDigitalIdDevTools, DIGITAL_ID_ROUTE } from '@/lib/digitalIdRoutes';
 import { CultureTokens, FontFamily } from '@/design-system/tokens/theme';
 import { resolveQrCardTheme } from '@/design-system/tokens/qrCardThemes';
 import { Skeleton, PageContainer, GlassView, M3SectionHeader } from '@/design-system/ui';
@@ -53,6 +56,7 @@ function capitalize(s: string) {
 }
 
 export default function QRScreen() {
+  const { isAdmin } = useRole();
   const colors = useColors();
   const isDark = useIsDark();
   const { width: screenWidth } = useWindowDimensions();
@@ -62,6 +66,10 @@ export default function QRScreen() {
   const bottomInset = safeInsets.bottom;
 
   const d = useDigitalIdScreen();
+
+  if (!canAccessDigitalIdDevTools(isAdmin)) {
+    return <Redirect href={DIGITAL_ID_ROUTE} />;
+  }
 
   const cardTheme = React.useMemo(() => resolveQrCardTheme(d.tierLabel === 'Standard' ? 'free' : d.tierLabel.toLowerCase()), [d.tierLabel]);
   const panelBg = isDark ? withAlpha(colors.surface, 0.92) : colors.surface;
@@ -98,8 +106,8 @@ export default function QRScreen() {
 
       <View style={[s.root, { backgroundColor: colors.background }]}>
         <AppHeaderBar
-          title="Digital ID"
-          subtitle={`${DIGITAL_ID_BRAND.name} · Member passes · Wallet`}
+          title="Digital ID Lab"
+          subtitle={`${DIGITAL_ID_BRAND.name} · Dev tools · Exports`}
           backFallback="/(tabs)/my-space"
           topInset={topInset}
           rightAction={{

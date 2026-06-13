@@ -1,19 +1,13 @@
 import type { User, AdminStats, AuditLog, VerificationTask, CommunityHomeBanner } from '@/shared/schema';
+import type { HostspaceAdminOverview } from '@/shared/schema';
 import type { ContentReport, ModerationReportContext } from '@/shared/schema/moderation';
 import type { ApiRequestFn } from '../client';
 
 export function createAdminNamespace(request: ApiRequestFn) {
   return {
-  stats: () => request<AdminStats & {
-    multiOrganizerProfiles?: number;
-    activeOrganizers?: number;
-    signupTrends?: { date: string; count: number }[];
-    newProfiles30d?: number;
-    newEvents30d?: number;
-    organizerRoleCounts?: Record<string, number>;
-    multiOrganizerCommunities?: number;
-    multiOrganizerBusinesses?: number;
-  }>('GET', 'api/admin/stats'),
+  stats: () => request<AdminStats>('GET', 'api/admin/stats'),
+
+  hostspaceOverview: () => request<HostspaceAdminOverview>('GET', 'api/admin/hostspace/overview'),
 
   recomputeDailyStats: () =>
     request<{ ok: boolean; date: string; stats: Record<string, unknown> }>('POST', 'api/admin/stats/recompute-daily'),
@@ -272,6 +266,12 @@ export function createAdminNamespace(request: ApiRequestFn) {
     request<{ ok: boolean }>('POST', `api/admin/host-pages/${encodeURIComponent(pageId)}/block`, { reason }),
   unblockHostPage: (pageId: string) =>
     request<{ ok: boolean }>('POST', `api/admin/host-pages/${encodeURIComponent(pageId)}/unblock`),
+
+  blockProfile: (profileId: string, reason?: string) =>
+    request<{ ok: boolean }>('POST', `api/admin/profiles/${encodeURIComponent(profileId)}/block`, { reason }),
+
+  unblockProfile: (profileId: string) =>
+    request<{ ok: boolean }>('POST', `api/admin/profiles/${encodeURIComponent(profileId)}/unblock`),
 
   communityHomeBanners: () =>
     request<{ banners: CommunityHomeBanner[] }>('GET', 'api/admin/community-home-banners'),

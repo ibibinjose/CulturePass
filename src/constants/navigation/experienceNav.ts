@@ -322,6 +322,7 @@ export function settingsAboutWhatsNewItem(): SettingsNavRow {
 // ── Admin / SuperAdmin sidebar nav (for WebSidebar + admin shell consistency) ─
 export const SIDEBAR_ADMIN_LINKS: SidebarNavLink[] = [
   { label: 'AdminSpace', icon: 'shield-half-outline', iconActive: 'shield-half', route: '/admin', matchPrefix: false },
+  { label: 'HostSpace Ops', icon: 'briefcase-outline', iconActive: 'briefcase', route: '/admin/hostspace', matchPrefix: true },
   { label: 'Discover Curation', icon: 'sparkles-outline', iconActive: 'sparkles', route: '/admin/discover', matchPrefix: true },
   { label: 'Users', icon: 'people-outline', iconActive: 'people', route: '/admin/users', matchPrefix: true },
   { label: 'Audit Logs', icon: 'list-outline', iconActive: 'list', route: '/admin/audit-logs', matchPrefix: true },

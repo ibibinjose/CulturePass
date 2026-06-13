@@ -13,6 +13,8 @@ import { M3Button } from '@/design-system/ui';
 import { Input } from '@/design-system/ui/Input';
 import { useMutation } from '@tanstack/react-query';
 import { api } from '@/lib/api';
+import { AdminPageHeader } from '@/modules/admin/components/AdminPageHeader';
+import { CultureTokens } from '@/design-system/tokens/colors';
 
 export default function AdminNotificationsScreen() {
   const colors = useColors();
@@ -35,9 +37,13 @@ export default function AdminNotificationsScreen() {
       }),
     onSuccess: (data, dryRun) => {
       const n = data.targetedCount ?? 0;
-      const lines =
-        data.audiencePreview?.map((u) => `• ${u.userId.slice(0, 8)}… ${u.city ?? ''} ${u.country ?? ''}`).join('\n') ??
-        '';
+      const preview = data.audiencePreview ?? [];
+      const lines = preview
+        .map((u) => {
+          if (typeof u === 'string') return `• ${u.slice(0, 8)}…`;
+          return `• ${u.userId.slice(0, 8)}… ${u.city ?? ''} ${u.country ?? ''}`.trim();
+        })
+        .join('\n');
       setLastPreview(`Matched ${n} users.\n${lines}`);
       if (dryRun) {
         Alert.alert('Dry run', `Would target ${n} users.`);
@@ -55,12 +61,15 @@ export default function AdminNotificationsScreen() {
       showsVerticalScrollIndicator={false}
       contentContainerStyle={[styles.container, { paddingHorizontal: hPad, backgroundColor: colors.background }]}
     >
-      <Text style={[styles.title, { color: colors.text }]}>Campaign push</Text>
-      <Text style={[styles.sub, { color: colors.textSecondary }]}>
-        Always run a dry run first. Live sends require the notifications approval flow when configured on the backend.
-      </Text>
+      <AdminPageHeader
+        eyebrow="GROWTH"
+        title="Campaign push"
+        subtitle="Target users by city or country. Always dry-run first to preview audience size."
+        icon="megaphone"
+        iconColor={CultureTokens.indigo}
+      />
 
-      <GlassView contentStyle={{ padding: 20, gap: 16, marginTop: 20 }}>
+      <GlassView contentStyle={{ padding: 20, gap: 16 }}>
         <Input label="Title" value={title} onChangeText={setTitle} placeholder="e.g. Sydney weekend picks" />
         <Input
           label="Message"

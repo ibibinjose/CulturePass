@@ -1,6 +1,50 @@
 // Jest setup file for CulturePass
 // Mocks native modules that aren't available in the test environment
 
+// expo-router pulls in standard-navigation (ESM) — mock before any app imports load it.
+jest.mock('expo-router', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+
+  const router = {
+    push: jest.fn(),
+    replace: jest.fn(),
+    back: jest.fn(),
+    canGoBack: jest.fn(() => false),
+    setParams: jest.fn(),
+    dismiss: jest.fn(),
+    dismissAll: jest.fn(),
+  };
+
+  const StackScreen = ({ children }) => React.createElement(View, null, children);
+  const Stack = Object.assign(
+    ({ children }) => React.createElement(View, null, children),
+    { Screen: StackScreen },
+  );
+
+  return {
+    __esModule: true,
+    router,
+    useRouter: jest.fn(() => router),
+    useSegments: jest.fn(() => []),
+    useLocalSearchParams: jest.fn(() => ({})),
+    useGlobalSearchParams: jest.fn(() => ({})),
+    usePathname: jest.fn(() => '/'),
+    useRootNavigationState: jest.fn(() => ({ key: 'root' })),
+    useNavigation: jest.fn(),
+    Link: ({ children, ...props }) => React.createElement(View, props, children),
+    Redirect: () => null,
+    Stack,
+    Tabs: Stack,
+    Slot: () => null,
+  };
+});
+
+jest.mock('expo-router/head', () => ({
+  __esModule: true,
+  default: ({ children }) => children ?? null,
+}));
+
 // Mock AsyncStorage
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock')

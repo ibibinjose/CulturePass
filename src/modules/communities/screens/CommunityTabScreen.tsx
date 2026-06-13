@@ -225,6 +225,7 @@ export default function CommunityTabScreen() {
             onSortChange={setSort}
             resultCount={filteredCommunities.length}
             cityName={userCity}
+            onClearAll={clearFilters}
           />
 
           {useSplitLayout ? (

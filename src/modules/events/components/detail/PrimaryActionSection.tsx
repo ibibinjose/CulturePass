@@ -4,6 +4,7 @@ import { LuxeButton } from '@/design-system/ui/LuxeButton';
 import type { EventData } from '@/shared/schema';
 import type { ColorTheme } from '@/design-system/tokens/colors';
 import { Spacing } from '@/design-system/tokens/theme';
+import { externalTicketProviderLabel, usesExternalTicketing } from '@/modules/events/utils/externalTicketing';
 
 interface PrimaryActionSectionProps {
   event: EventData;
@@ -24,26 +25,52 @@ interface PrimaryActionSectionProps {
 }
 
 export function PrimaryActionSection({
+  event,
   isFreeOrOpen,
   handlePrimaryGoingPress,
+  handleExternalTicketPress,
   openTicketModal,
   rsvpMutation,
   myRsvp,
 }: PrimaryActionSectionProps) {
   const isGoing = myRsvp === 'going';
+  const externalTickets = usesExternalTicketing(event);
+  const provider = externalTicketProviderLabel(event);
+
+  const label = externalTickets
+    ? `Buy on ${provider}`
+    : isFreeOrOpen
+      ? isGoing
+        ? "You're going"
+        : "I'm Going"
+      : 'Get Tickets';
+
+  const onPress = externalTickets
+    ? handleExternalTicketPress
+    : isFreeOrOpen
+      ? handlePrimaryGoingPress
+      : () => openTicketModal?.();
+
+  const leftIcon = externalTickets
+    ? 'open-outline'
+    : isGoing
+      ? 'checkmark-circle'
+      : isFreeOrOpen
+        ? 'calendar'
+        : 'ticket-outline';
 
   return (
     <View style={styles.container}>
       <LuxeButton
-        variant={isGoing ? 'glass' : 'filled'}
+        variant={isGoing && !externalTickets ? 'glass' : 'filled'}
         size="lg"
         fullWidth
         haptic
         loading={rsvpMutation.isPending}
-        onPress={isFreeOrOpen ? handlePrimaryGoingPress : () => openTicketModal?.()}
-        leftIcon={isGoing ? 'checkmark-circle' : isFreeOrOpen ? 'calendar' : 'ticket-outline'}
+        onPress={onPress}
+        leftIcon={leftIcon}
       >
-        {isFreeOrOpen ? (isGoing ? "You're going" : "I'm Going") : 'Get Tickets'}
+        {label}
       </LuxeButton>
     </View>
   );

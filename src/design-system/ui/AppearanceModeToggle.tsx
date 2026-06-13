@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useM3Colors } from '@/hooks/useM3Colors';
 import { useAppAppearance } from '@/hooks/useAppAppearance';
+import { pressableA11yRole } from '@/lib/webPressable';
 
 type Props = {
   compact?: boolean;
@@ -33,7 +34,7 @@ export function AppearanceModeToggle({ compact }: Props) {
         { backgroundColor: m3.surfaceContainerHighest },
         pressed && { opacity: 0.75 },
       ]}
-      accessibilityRole="button"
+      accessibilityRole={pressableA11yRole('button')}
       accessibilityLabel={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
     >
       <Ionicons

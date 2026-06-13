@@ -9,7 +9,11 @@ Disallow: /api/
 Disallow: /login
 Disallow: /signup
 Disallow: /forgot-password
+Disallow: /myspace
 Disallow: /my-space
+Disallow: /listing/create
+Disallow: /create/
+Disallow: /event/create
 Disallow: /saved
 Disallow: /scanner
 Disallow: /notifications/

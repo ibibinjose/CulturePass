@@ -35,6 +35,11 @@ import {
   TicketPricingError,
 } from '../services/ticketPricing';
 import { awardOnTicketPaid as awardCultureExplorerOnTicketPaid } from '../services/cultureExplorer';
+import {
+  externalTicketingBlockedMessage,
+  getExternalTicketUrl,
+  usesExternalTicketing,
+} from '../lib/externalTicketing';
 
 export const ticketsRouter = Router();
 
@@ -364,6 +369,12 @@ ticketsRouter.post('/tickets', requireAuth, slidingWindowRateLimit(60000, 20), a
       if (!eventDoc.exists) throw new Error('EVENT_NOT_FOUND');
 
       const event = { id: eventDoc.id, ...(eventDoc.data() as Omit<FirestoreEvent, 'id'>) } as FirestoreEvent;
+      if (usesExternalTicketing(event)) {
+        const err = new Error('EXTERNAL_TICKETING');
+        (err as Error & { externalTicketUrl?: string | null }).externalTicketUrl = getExternalTicketUrl(event);
+        (err as Error & { externalMessage?: string }).externalMessage = externalTicketingBlockedMessage(event);
+        throw err;
+      }
       const tierFromBody =
         typeof req.body?.tierName === 'string'
           ? req.body.tierName
@@ -453,6 +464,13 @@ ticketsRouter.post('/tickets', requireAuth, slidingWindowRateLimit(60000, 20), a
       if (err instanceof TicketPricingError) return res.status(400).json({ error: err.message, code: err.code });
       if (err instanceof PromoCodeError) return res.status(400).json({ error: err.message, code: err.code });
       if (err.message === 'EVENT_NOT_FOUND') return res.status(404).json({ error: 'Event not found' });
+      if (err.message === 'EXTERNAL_TICKETING') {
+        return res.status(409).json({
+          error: (err as Error & { externalMessage?: string }).externalMessage ?? externalTicketingBlockedMessage({ metadata: {} }),
+          code: 'EXTERNAL_TICKETING',
+          externalTicketUrl: (err as Error & { externalTicketUrl?: string | null }).externalTicketUrl ?? null,
+        });
+      }
       if (err.message === 'PAYMENT_REQUIRED') return res.status(409).json({ error: 'Paid tickets must be purchased through Stripe checkout', code: 'PAYMENT_REQUIRED' });
       if (err.message === 'NOT_ENOUGH_CAPACITY') return res.status(400).json({ error: 'Not enough tickets available for this quantity' });
     }

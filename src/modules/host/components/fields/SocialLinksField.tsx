@@ -15,7 +15,7 @@ import { LuxeCard } from '@/design-system/ui/LuxeCard';
 import { LuxeButton } from '@/design-system/ui/LuxeButton';
 import { FontFamily, Radius } from '@/design-system/tokens/theme';
 import { FIELD_LIMITS } from '@/modules/host/schemas/validationRules';
-import { api } from '@/lib/api';
+
 import {
   normalizeHostSocialUrl,
   socialDisplay,
@@ -256,22 +256,8 @@ export function SocialLinksField({
         return false;
       }
 
-      // Validate URL accessibility via API
-      try {
-        setIsValidating(true);
-        // Attempt to validate the URL is accessible (HTTP 200)
-        // The backend will make a HEAD request to check accessibility
-        await api.profiles.update('current', {} as any);
-        setUrlError(undefined);
-        return true;
-      } catch {
-        // If API validation fails, still allow the URL if format is valid
-        // The URL will be re-validated when the profile is published
-        setUrlError(undefined);
-        return true;
-      } finally {
-        setIsValidating(false);
-      }
+      setUrlError(undefined);
+      return true;
     },
     []
   );

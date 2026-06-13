@@ -32,7 +32,7 @@ function normalizeCommunityEventsResponse(payload: unknown): CommunityEventsResp
   const fallback = {
     events: [],
     windowStart: new Date().toISOString(),
-    windowEnd: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+    windowEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
   };
 
   if (!payload || typeof payload !== 'object') return fallback;

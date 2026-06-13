@@ -1,5 +1,5 @@
 /**
- * /pages/create — Create a Page + content creation (noindex).
+ * Legacy `/pages/create/*` — thin redirects to `/hostspace/create`.
  */
 import Head from 'expo-router/head';
 import { Stack } from 'expo-router';

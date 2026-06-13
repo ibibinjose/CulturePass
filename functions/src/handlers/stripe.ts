@@ -24,6 +24,15 @@ import {
   getConnectPlatformFeeBps,
   handleStripeAccountUpdated,
 } from '../services/stripeConnect';
+import {
+  externalTicketingBlockedMessage,
+  getExternalTicketUrl,
+  usesExternalTicketing,
+} from '../lib/externalTicketing';
+import {
+  buildChargeSnapshotFromSubscription,
+  recordMembershipCharge,
+} from '../services/pricing';
 import { registerStripeConnectRoutes } from './stripeConnect';
 import { db, authAdmin, stripeClient } from '../admin';
 import {
@@ -147,6 +156,13 @@ export function createStripeRouter() {
     const event = await eventsService.getById(td.eventId);
     if (!event) {
       return res.status(404).json({ error: 'Event not found' });
+    }
+    if (usesExternalTicketing(event)) {
+      return res.status(409).json({
+        error: externalTicketingBlockedMessage(event),
+        code: 'EXTERNAL_TICKETING',
+        externalTicketUrl: getExternalTicketUrl(event),
+      });
     }
     let pricing;
     try {
@@ -413,6 +429,13 @@ export function createStripeRouter() {
     const event = await eventsService.getById(td.eventId);
     if (!event) {
       return res.status(404).json({ error: 'Event not found' });
+    }
+    if (usesExternalTicketing(event)) {
+      return res.status(409).json({
+        error: externalTicketingBlockedMessage(event),
+        code: 'EXTERNAL_TICKETING',
+        externalTicketUrl: getExternalTicketUrl(event),
+      });
     }
 
     let pricing;
@@ -718,12 +741,23 @@ export function createStripeRouter() {
           const subscriptionId = String(obj.subscription ?? '');
           let expiresAt: string | undefined;
           let tier: 'free' | 'plus' | 'premium' = 'plus';
+          const billingCountryMeta = String(meta?.billingCountry ?? '');
           if (subscriptionId) {
             const sub = await stripeClient!.subscriptions.retrieve(subscriptionId).catch(() => null);
             if (sub) {
               expiresAt = new Date((sub as unknown as { current_period_end: number }).current_period_end * 1000).toISOString();
               const priceId = (sub as unknown as { items: { data: { price: { id: string } }[] } }).items?.data?.[0]?.price?.id;
               if (priceId && priceId === process.env.STRIPE_PRICE_YEARLY_ID) tier = 'premium';
+
+              const subscriber = await usersService.getById(userIdMeta).catch(() => null);
+              const chargeSnapshot = await buildChargeSnapshotFromSubscription(
+                sub,
+                billingCountryMeta || subscriber?.country || undefined,
+                String(obj.id ?? ''),
+              );
+              if (chargeSnapshot) {
+                await recordMembershipCharge(userIdMeta, chargeSnapshot);
+              }
             }
           }
           await usersService.upsert(userIdMeta, {

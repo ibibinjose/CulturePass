@@ -173,7 +173,7 @@ export default function WalletScreen() {
       <View style={styles.container}>
         <AppHeaderBar
           title="Wallet & Rewards"
-          backFallback="/(tabs)/my-space"
+          backFallback="/(tabs)/myspace"
           topInset={topInset}
           rightAction={{
             icon: 'receipt-outline',
@@ -344,7 +344,7 @@ export default function WalletScreen() {
             <View style={styles.quickNavGrid}>
               {([
                 { icon: 'ticket-outline',  label: 'My Tickets',    route: '/tickets' },
-                { icon: 'id-card-outline', label: 'Digital ID',    route: '/profile/qr' },
+                { icon: 'id-card-outline', label: 'Digital ID',    route: '/profile/digital-id' },
                 { icon: 'card-outline',    label: 'Transactions',  route: '/payment/transactions' },
                 { icon: 'star-outline',    label: 'Membership',    route: '/membership/upgrade' },
               ] as const).map(({ icon, label, route }) => (

@@ -1,9 +1,10 @@
 import React from 'react';
-import { Pressable, StyleSheet } from 'react-native';
+import { Platform, Pressable, StyleSheet, type GestureResponderEvent } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { CultureTokens } from '@/design-system/tokens/theme';
 import { useColors } from '@/hooks/useColors';
 import { GlassView } from './GlassView';
+import { pressableA11yRole } from '@/lib/webPressable';
 
 type LikeToggleSize = 'sm' | 'md' | 'lg';
 
@@ -20,6 +21,13 @@ export function LikeToggle({ liked, onToggle, size = 'md', tone = 'default', sty
   const iconSize = size === 'sm' ? 16 : size === 'lg' ? 24 : 20;
   const containerSize = size === 'sm' ? 32 : size === 'lg' ? 48 : 40;
 
+  const handlePress = (event: GestureResponderEvent) => {
+    if (Platform.OS === 'web') {
+      event.stopPropagation?.();
+    }
+    onToggle();
+  };
+
   const content = (
     <Ionicons
       name={liked ? 'heart' : 'heart-outline'}
@@ -31,8 +39,8 @@ export function LikeToggle({ liked, onToggle, size = 'md', tone = 'default', sty
   if (tone === 'glass') {
     return (
       <Pressable
-        onPress={onToggle}
-        accessibilityRole="button"
+        onPress={handlePress}
+        accessibilityRole={pressableA11yRole('button')}
         accessibilityLabel={liked ? 'Unlike' : 'Like'}
         accessibilityState={{ selected: liked }}
         style={[styles.container, { width: containerSize, height: containerSize }, style]}
@@ -52,8 +60,8 @@ export function LikeToggle({ liked, onToggle, size = 'md', tone = 'default', sty
 
   return (
     <Pressable
-      onPress={onToggle}
-      accessibilityRole="button"
+      onPress={handlePress}
+      accessibilityRole={pressableA11yRole('button')}
       accessibilityLabel={liked ? 'Unlike' : 'Like'}
       accessibilityState={{ selected: liked }}
       style={[

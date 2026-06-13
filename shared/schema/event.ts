@@ -166,6 +166,9 @@ export interface EventData {
   hostEmail?: string;
   hostPhone?: string;
   sponsors?: string | null;
+  /** Provider-specific fields (e.g. Eventik categories/types, sync timestamps). */
+  metadata?: Record<string, unknown>;
+  sourceSystem?: string;
 }
 
 export interface DiscoveryResult {

@@ -15,6 +15,8 @@ import {
 import { verificationService } from '../services/verificationService';
 import { logger } from 'firebase-functions';
 import { runGeohashBackfill } from '../jobs/geohashBackfill';
+import { syncEventbriteEvents } from '../services/eventbriteSync';
+import { syncEventikEvents } from '../services/eventikSync';
 import { profilesService } from '../services/profiles';
 import { hostPageService } from '../services/host-page.service';
 
@@ -271,6 +273,40 @@ adminRouter.post('/admin/jobs/geohash-backfill', async (req: AdminRequest, res: 
   } catch (error) {
     logger.error('Geohash Backfill Error:', error);
     return res.status(500).json({ error: 'Failed to run geohash backfill job' });
+  }
+});
+
+/**
+ * POST /api/admin/integrations/eventbrite/sync
+ * Manual Eventbrite Australia import (superAdmin).
+ */
+adminRouter.post('/admin/integrations/eventbrite/sync', async (req: AdminRequest, res: Response) => {
+  try {
+    if (req.user?.role !== 'superAdmin') {
+      return res.status(403).json({ error: 'superAdmin required' });
+    }
+    const result = await syncEventbriteEvents();
+    return res.json({ ok: true, result });
+  } catch (error) {
+    logger.error('Eventbrite sync error:', error);
+    return res.status(500).json({ error: 'Eventbrite sync failed' });
+  }
+});
+
+/**
+ * POST /api/admin/integrations/eventik/sync
+ * Manual Eventik import (superAdmin).
+ */
+adminRouter.post('/admin/integrations/eventik/sync', async (req: AdminRequest, res: Response) => {
+  try {
+    if (req.user?.role !== 'superAdmin') {
+      return res.status(403).json({ error: 'superAdmin required' });
+    }
+    const result = await syncEventikEvents();
+    return res.json({ ok: true, result });
+  } catch (error) {
+    logger.error('Eventik sync error:', error);
+    return res.status(500).json({ error: 'Eventik sync failed' });
   }
 });
 

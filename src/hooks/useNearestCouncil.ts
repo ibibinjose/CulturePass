@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import * as Location from 'expo-location';
 import { api } from '@/lib/api';
+import { acquireDeviceLocation } from '@/lib/location/acquireDeviceLocation';
+import { toAuStateCode } from '@/lib/location/auState';
 import type { CouncilData } from '@/shared/schema';
 
 export type CouncilDetectStatus = 'idle' | 'requesting' | 'success' | 'error' | 'denied' | 'unavailable';
@@ -15,6 +16,22 @@ export interface NearestCouncilResult {
   confidence: CouncilConfidence;
 }
 
+export type CouncilDetectOptions = {
+  /** User-selected marketplace city (improves city-state fallback). */
+  city?: string;
+  /** AU state code or full name (NSW / New South Wales). */
+  state?: string;
+  country?: string;
+};
+
+export type CouncilDetectOutcome =
+  | { ok: true; result: NearestCouncilResult }
+  | { ok: false; status: Exclude<CouncilDetectStatus, 'idle' | 'requesting' | 'success'> };
+
+const devLog = (...args: unknown[]) => {
+  if (__DEV__) console.log('[useNearestCouncil]', ...args);
+};
+
 export function useNearestCouncil() {
   const [status, setStatus] = useState<CouncilDetectStatus>('idle');
   const [council, setCouncil] = useState<CouncilData | null>(null);
@@ -22,7 +39,6 @@ export function useNearestCouncil() {
   const [matchMethod, setMatchMethod] = useState<CouncilMatchMethod>('none');
   const [confidence, setConfidence] = useState<CouncilConfidence>('weak');
 
-  // Prevent state updates after unmount (critical to avoid JSI promise crashes)
   const isMounted = useRef(true);
 
   useEffect(() => {
@@ -31,79 +47,72 @@ export function useNearestCouncil() {
     };
   }, []);
 
-  const detect = useCallback(async (): Promise<NearestCouncilResult | null> => {
-    if (!isMounted.current) {
-      console.log('[useNearestCouncil] detect() called but component unmounted — aborting');
-      return null;
-    }
+  const detect = useCallback(async (options?: CouncilDetectOptions): Promise<CouncilDetectOutcome | null> => {
+    if (!isMounted.current) return null;
 
-    console.log('[useNearestCouncil] detect() started');
+    devLog('detect() started', options);
     setStatus('requesting');
 
     try {
-      const hasServices = await Location.hasServicesEnabledAsync();
-      if (!hasServices) {
-        if (isMounted.current) setStatus('unavailable');
-        console.log('[useNearestCouncil] Location services unavailable');
-        return null;
+      const device = await acquireDeviceLocation();
+      if (!isMounted.current) return null;
+
+      if (!device.ok) {
+        setStatus(device.reason === 'denied' ? 'denied' : device.reason);
+        devLog('Location unavailable:', device.reason);
+        return { ok: false, status: device.reason };
       }
 
-      const { status: perm } = await Location.requestForegroundPermissionsAsync();
-      if (perm !== 'granted') {
-        if (isMounted.current) setStatus('denied');
-        console.log('[useNearestCouncil] Location permission denied');
-        return null;
-      }
+      const { latitude, longitude, city: geoCity, state: geoState, country: geoCountry } = device;
+      const stateForApi = toAuStateCode(options?.state) ?? geoState;
+      const cityForApi = options?.city?.trim() || geoCity || undefined;
+      const countryForApi = options?.country?.trim() || geoCountry || 'Australia';
 
-      const pos = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
+      devLog('Calling api.council.nearest...', {
+        latitude,
+        longitude,
+        city: cityForApi,
+        state: stateForApi,
+        country: countryForApi,
       });
 
-      const { latitude, longitude } = pos.coords;
-
-      const addresses = await Location.reverseGeocodeAsync({ latitude, longitude });
-      const geo = addresses[0];
-
-      console.log('[useNearestCouncil] Calling api.council.nearest...');
       const result = await api.council.nearest({
         latitude,
         longitude,
-        city: geo?.city || undefined,
-        state: geo?.region || undefined,
-        country: geo?.isoCountryCode || undefined,
+        city: cityForApi,
+        state: stateForApi,
+        country: countryForApi,
       });
 
-      if (!isMounted.current) {
-        console.log('[useNearestCouncil] Promise resolved but component unmounted — ignoring result (prevents JSI crash)');
-        return null;
-      }
+      if (!isMounted.current) return null;
 
       if (result?.council) {
-        setCouncil(result.council);
-        setDistanceKm(result.distanceKm ?? null);
-        setMatchMethod(result.matchMethod ?? 'coordinate');
-        setConfidence(result.confidence ?? 'medium');
-        setStatus('success');
-
-        console.log('[useNearestCouncil] Success:', result.council.name, 'distance:', result.distanceKm);
-
-        return {
+        const resolved: NearestCouncilResult = {
           council: result.council,
           distanceKm: result.distanceKm,
           matchMethod: result.matchMethod ?? 'coordinate',
           confidence: result.confidence ?? 'medium',
         };
-      } else {
-        setStatus('error');
-        console.log('[useNearestCouncil] No council found');
-        return null;
+        setCouncil(result.council);
+        setDistanceKm(result.distanceKm ?? null);
+        setMatchMethod(resolved.matchMethod);
+        setConfidence(resolved.confidence);
+        setStatus('success');
+
+        devLog('Success:', result.council.name, 'distance:', result.distanceKm);
+
+        return { ok: true, result: resolved };
       }
+
+      setStatus('error');
+      devLog('No council found');
+      return { ok: false, status: 'error' };
     } catch (err) {
       if (isMounted.current) {
-        console.error('[useNearestCouncil] error:', err);
+        if (__DEV__) console.error('[useNearestCouncil] error:', err);
         setStatus('error');
       }
-      return null;
+      return { ok: false, status: 'error' };
     }
   }, []);
 

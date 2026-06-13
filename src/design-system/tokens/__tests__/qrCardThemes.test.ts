@@ -7,9 +7,9 @@ describe('qrCardThemes', () => {
     expect(resolveQrCardTheme('PLUS').cardGradients).toEqual(QR_CARD_THEMES.plus.cardGradients);
   });
 
-  it('maps aliases', () => {
-    expect(resolveQrCardTheme('vip')).toEqual(QR_CARD_THEMES.elite);
-    expect(resolveQrCardTheme('premium')).toEqual(QR_CARD_THEMES.plus);
+  it('maps dedicated tier themes', () => {
+    expect(resolveQrCardTheme('vip')).toEqual(QR_CARD_THEMES.vip);
+    expect(resolveQrCardTheme('premium')).toEqual(QR_CARD_THEMES.premium);
   });
 
   it('falls back to free', () => {

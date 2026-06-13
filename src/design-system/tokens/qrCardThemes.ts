@@ -1,4 +1,5 @@
 import { BRAND_CYAN, BRAND_CYAN_DEEP, cyanAlpha } from './brandCyanPalette';
+import { appBlueAlpha } from './brandWordmarkPalette';
 import { CultureTokens } from './theme';
 
 export type QrCardTheme = {
@@ -17,10 +18,10 @@ export type QrCardTheme = {
 export const QR_CARD_THEMES: Record<string, QrCardTheme> = {
   free: {
     cardGradients: ['#1C1917', '#292524', '#1C1917'],
-    accent: CultureTokens.terracottaGlow,
-    border: 'rgba(227, 106, 78, 0.25)',
+    accent: CultureTokens.appBlue,
+    border: appBlueAlpha(0.25),
     text: '#F5F5F4',
-    glow: 'rgba(227, 106, 78, 0.15)',
+    glow: appBlueAlpha(0.15),
     chipColor: '#A8A29E',
     chipBorder: '#78716C',
     isDarkCard: true,
@@ -60,7 +61,7 @@ export const QR_CARD_THEMES: Record<string, QrCardTheme> = {
     bgGradient: ['#020C12', '#051C2B', '#010608'],
   },
   premium: {
-    cardGradients: ['#1A0F0A', '#2C1810', '#1A0F0A'],
+    cardGradients: ['#1B1545', '#312E81', '#1B1545'],
     accent: CultureTokens.coral,
     border: 'rgba(255, 94, 91, 0.5)',
     text: '#FFF1EB',

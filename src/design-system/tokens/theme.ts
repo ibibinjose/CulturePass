@@ -24,7 +24,9 @@ import {
   Luxe,
   LuxeTextStyles,
   luxeGradients,
-  TERRACOTTA_GLOW,
+  BRAND_APP,
+  BRAND_CULTURE,
+  BRAND_PASS,
   DEEP_SAFFRON,
   RICH_INDIGO,
   EMERALD_HARMONY,
@@ -64,6 +66,16 @@ export {
   cyanDeepAlpha,
 } from './brandCyanPalette';
 
+export {
+  BRAND_CULTURE_RED,
+  BRAND_PASS_GREEN,
+  BRAND_APP_BLUE,
+  WORDMARK_COLORS,
+  cultureRedAlpha,
+  passGreenAlpha,
+  appBlueAlpha,
+} from './brandWordmarkPalette';
+
 export const SignatureGradient = _gradients.culturepassBrand;
 
 export { darkM3, lightM3 } from './material3';
@@ -79,7 +91,9 @@ export {
   luxeLight,
   LuxeTextStyles,
   luxeGradients,
-  TERRACOTTA_GLOW,
+  BRAND_APP,
+  BRAND_CULTURE,
+  BRAND_PASS,
   DEEP_SAFFRON,
   RICH_INDIGO,
   EMERALD_HARMONY,
@@ -348,7 +362,7 @@ export const MaterialExpressive = {
     fab: 10,
   },
   heroChrome: {
-    iconFill: _gradients.culturepassBrand[0], // terracotta
+    iconFill: _gradients.culturepassBrand[0],
     iconOnFill: '#FFFFFF',
   },
 } as const;
@@ -369,21 +383,24 @@ export const LiquidGlassAccents = {
 // ---------------------------------------------------------------------------
 
 export const CulturalAccents = {
-  terracottaGlow: CultureTokens.terracottaGlow,
+  cultureRed: CultureTokens.cultureRed,
+  passGreen: CultureTokens.passGreen,
+  appBlue: CultureTokens.appBlue,
   deepSaffron: CultureTokens.deepSaffron,
   richIndigo: CultureTokens.richIndigo,
   emeraldHarmony: CultureTokens.emeraldHarmony,
   heritageGold: CultureTokens.heritageGold,
-  
-  // Cultural-themed background patterns
-  terracottaSurface: `rgba(227, 106, 78, 0.05)`,
+
+  appBlueSurface: `rgba(0, 158, 219, 0.05)`,
+  cultureRedSurface: `rgba(248, 0, 32, 0.05)`,
+  passGreenSurface: `rgba(0, 166, 81, 0.05)`,
   saffronSurface: `rgba(0, 167, 239, 0.05)`,
   indigoSurface: `rgba(74, 94, 191, 0.05)`,
   emeraldSurface: `rgba(10, 140, 127, 0.05)`,
   goldSurface: `rgba(0, 173, 239, 0.05)`,
-  
-  // Cultural-themed borders
-  terracottaBorder: `rgba(227, 106, 78, 0.3)`,
+
+  appBlueBorder: `rgba(0, 158, 219, 0.3)`,
+  cultureRedBorder: `rgba(248, 0, 32, 0.3)`,
   saffronBorder: `rgba(0, 167, 239, 0.3)`,
   indigoBorder: `rgba(74, 94, 191, 0.3)`,
   emeraldBorder: `rgba(10, 140, 127, 0.3)`,
@@ -461,7 +478,9 @@ const theme = {
   Luxe,
   LuxeTextStyles,
   luxeGradients,
-  TERRACOTTA_GLOW,
+  BRAND_APP,
+  BRAND_CULTURE,
+  BRAND_PASS,
   DEEP_SAFFRON,
   RICH_INDIGO,
   EMERALD_HARMONY,

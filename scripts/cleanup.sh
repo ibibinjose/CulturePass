@@ -6,6 +6,17 @@ echo "Starting cleanup of unnecessary files and directories..."
 echo "Removing build artifacts and caches..."
 rm -rf .expo/
 rm -rf dist/
+rm -rf dist-bundle-analyze/
+rm -rf dist-next-analyze/
+rm -rf functions/lib/
+rm -rf shared/dist/
+rm -rf ios/build/
+rm -rf ios/DerivedData/
+rm -rf android/build/
+rm -rf android/app/build/
+rm -rf android/.gradle/
+rm -rf android/app/.cxx/
+rm -f build-*.aab build-*.apk build-*.ipa *.aab *.apk *.ipa
 rm -rf node_modules/
 rm -rf functions/node_modules/
 rm -rf .next/
@@ -21,15 +32,12 @@ find . -name "*.log" -type f -delete
 find . -name "*.tmp" -type f -delete
 find . -name "*~" -type f -delete
 
-# Remove development/testing related directories that aren't needed for production
-echo "Removing development/testing artifacts..."
+# Remove local IDE/agent caches (never delete docs/ or source trees)
+echo "Removing local IDE/agent caches..."
 rm -rf .cursor/
 rm -rf .claude/
 rm -rf .jules/
 rm -rf .kiro/
-rm -rf docs/ # Documentation may not be needed in production
-rm -rf design-system/culturepass/pages/ # Assuming these are design docs
-rm -rf design-system/culturepass-2026/ # Assuming these are design docs
 
 # Remove IDE specific directories that aren't needed for production
 echo "Removing IDE specific directories..."
@@ -42,20 +50,8 @@ rm -f *.bak
 rm -f *.backup
 rm -f backup.sh # Since we have a dedicated cleanup script now
 
-# Remove potentially unnecessary markdown files
-echo "Removing non-essential documentation files..."
-rm -f AGENTS.md
-rm -f CLAUDE.md
-rm -f DEPLOYMENT_CHECKLIST.md
-rm -f NEW_FIREBASE_SETUP.md
-rm -f QUICK_RULES.md
-rm -f SeniorEngineer.md
-rm -f TAGGING_GUIDE.md
-rm -f TASKS.md
-rm -f TASKS_EXECUTION.md
-rm -f WORKSPACES.md
-rm -f culturepass-rules.md
-rm -f posthog-setup-report.md
+rm -f dev-preview.html
+rm -rf web/
 
 # Remove potentially unnecessary config files
 echo "Removing non-essential config files..."

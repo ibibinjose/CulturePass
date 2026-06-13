@@ -24,7 +24,7 @@ import { Vitrine, vitrineGhostBorder } from '@/design-system/tokens/vitrineTheme
 import {
   Luxe,
   LuxeTextStyles,
-  TERRACOTTA_GLOW,
+  BRAND_APP_BLUE,
   DEEP_SAFFRON,
   HERITAGE_GOLD,
   DEEP_PLUM,
@@ -219,8 +219,10 @@ export default function DesignVitrineScreen() {
         </Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 24 }}>
           {[
-            { name: 'Terracotta', hex: TERRACOTTA_GLOW },
-            { name: 'Saffron', hex: DEEP_SAFFRON },
+            { name: 'Culture Red', hex: Luxe.colors.cultureRed },
+            { name: 'Pass Green', hex: Luxe.colors.passGreen },
+            { name: 'App Blue', hex: BRAND_APP_BLUE },
+            { name: 'Cyan Deep', hex: DEEP_SAFFRON },
             { name: 'Indigo', hex: RICH_INDIGO },
             { name: 'Emerald', hex: EMERALD_HARMONY },
             { name: 'Gold', hex: HERITAGE_GOLD },

@@ -20,6 +20,7 @@ import {
   generateAppleEventTicketPass,
   getApplePassTypeIdentifier,
   getWalletPassReadiness,
+  loadWalletPassUserFromFirestore,
   mergeWalletPassUserFromToken,
   resolveUserIdFromApplePassSerial,
   verifyAppleDownloadToken,
@@ -52,64 +53,9 @@ function parseFirestoreDate(value: unknown): string | undefined {
   return undefined;
 }
 
-async function loadWalletPassUserFromDoc(
-  userId: string,
-  fallback?: Partial<WalletPassUser>,
-): Promise<WalletPassUser> {
-  if (!isFirestoreConfigured) {
-    return {
-      id: userId,
-      username: fallback?.username ?? userId,
-      displayName: fallback?.displayName ?? fallback?.username ?? userId,
-      email: fallback?.email,
-      city: fallback?.city ?? 'Sydney',
-      country: fallback?.country ?? 'Australia',
-      culturePassId: fallback?.culturePassId ?? 'CP-123456',
-      tier: fallback?.tier ?? 'free',
-    };
-  }
-  const snap = await db.collection('users').doc(userId).get();
-  const data = snap.data() ?? {};
-  let tier = (data.membership as { tier?: string } | undefined)?.tier
-    ?? (data.tier as string | undefined)
-    ?? fallback?.tier
-    ?? 'free';
-  try {
-    const membershipSnap = await db.collection('users').doc(userId).collection('membership').doc('current').get();
-    if (membershipSnap.exists) {
-      const membershipData = membershipSnap.data() as { tier?: string } | undefined;
-      if (membershipData?.tier) tier = membershipData.tier;
-    }
-  } catch {
-    // optional membership subcollection
-  }
-  const affiliation = data.affiliation as { name?: string } | undefined;
-  const createdAt = parseFirestoreDate(data.createdAt)
-    ?? parseFirestoreDate(data.created_at)
-    ?? fallback?.createdAt;
-  return {
-    id: userId,
-    username: (data.username as string | undefined) ?? fallback?.username ?? userId,
-    displayName:
-      (data.displayName as string | undefined)
-      ?? (data.name as string | undefined)
-      ?? fallback?.displayName
-      ?? fallback?.username
-      ?? userId,
-    email: (data.email as string | undefined) ?? fallback?.email,
-    city: (data.city as string | undefined) ?? fallback?.city,
-    country: (data.country as string | undefined) ?? fallback?.country,
-    culturePassId: (data.culturePassId as string | undefined) ?? fallback?.culturePassId,
-    tier,
-    avatarUrl: (data.avatarUrl as string | undefined) ?? fallback?.avatarUrl,
-    createdAt,
-    affiliationName: affiliation?.name ?? fallback?.affiliationName,
-  };
-}
-
 async function loadWalletPassUser(req: Request): Promise<WalletPassUser> {
   const u = req.user!;
-  return loadWalletPassUserFromDoc(u.id, {
+  return loadWalletPassUserFromFirestore(u.id, {
     username: u.username,
     email: u.email,
     city: u.city,
@@ -152,7 +98,7 @@ walletRouter.get('/wallet/business-card/apple/pass', async (req: Request, res: R
     if (!token) return res.status(400).send('Missing token');
 
     const payload = verifyAppleDownloadToken(token);
-    const userDoc = await loadWalletPassUserFromDoc(payload.sub, { username: payload.username });
+    const userDoc = await loadWalletPassUserFromFirestore(payload.sub, { username: payload.username });
     const user = mergeWalletPassUserFromToken(userDoc, payload);
 
     const buffer = await generateAppleBusinessCardPass(user);
@@ -350,17 +296,39 @@ walletRouter.get(
       }
 
       const ifModifiedSince = req.get('if-modified-since');
-      if (ifModifiedSince) {
-        return res.status(304).send();
-      }
+      const ifModifiedSinceMs = ifModifiedSince ? Date.parse(ifModifiedSince) : Number.NaN;
 
       if (serialNumber.startsWith('cp-card-')) {
         const userId = resolveUserIdFromApplePassSerial(serialNumber);
         if (!userId) return res.status(404).send('Unknown pass');
-        const user = await loadWalletPassUserFromDoc(userId);
+
+        let passLastModified = new Date().toUTCString();
+        if (isFirestoreConfigured) {
+          const userSnap = await db.collection('users').doc(userId).get();
+          const userData = userSnap.data() ?? {};
+          const passUpdatedAt = parseFirestoreDate(userData.walletPassUpdatedAt)
+            ?? parseFirestoreDate(userData.avatarUpdatedAt)
+            ?? parseFirestoreDate(userData.updatedAt);
+          if (passUpdatedAt) {
+            passLastModified = new Date(passUpdatedAt).toUTCString();
+          }
+          if (
+            Number.isFinite(ifModifiedSinceMs)
+            && passUpdatedAt
+            && Date.parse(passUpdatedAt) <= ifModifiedSinceMs
+          ) {
+            res.setHeader('Last-Modified', passLastModified);
+            return res.status(304).send();
+          }
+        } else if (Number.isFinite(ifModifiedSinceMs)) {
+          res.setHeader('Last-Modified', passLastModified);
+          return res.status(304).send();
+        }
+
+        const user = await loadWalletPassUserFromFirestore(userId);
         const buffer = await generateAppleBusinessCardPass(user);
         res.setHeader('Content-Type', 'application/vnd.apple.pkpass');
-        res.setHeader('Last-Modified', new Date().toUTCString());
+        res.setHeader('Last-Modified', passLastModified);
         return res.send(buffer);
       }
 

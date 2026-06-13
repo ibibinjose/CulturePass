@@ -1,4 +1,5 @@
 import type { MembershipTier, UserRole, SocialLinks } from './common';
+import type { MembershipChargeSnapshot } from './pricing';
 
 export interface Membership {
   id: string;
@@ -76,6 +77,10 @@ export interface User {
   displayName?: string;
   email?: string;
   avatarUrl?: string;
+  /** Server-set when avatarUrl changes — used for cache busting across surfaces */
+  avatarUpdatedAt?: string;
+  /** Server-set when pass-visible profile fields change — Wallet pass revision signal */
+  walletPassUpdatedAt?: string;
   city?: string;
   state?: string;
   postcode?: number;
@@ -141,6 +146,8 @@ export interface User {
   familyMembers?: FamilyMember[];
   /** Server-set when user completes their first paid CulturePass+ subscription checkout (intro pricing consumed). */
   premiumIntroDiscountUsedAt?: string;
+  /** Latest membership charge snapshot for analytics (market, currency, Stripe Price ID). */
+  membershipPricing?: MembershipChargeSnapshot;
   /** Admin-granted: may publish CultureShop Daily Deals (organiser tier + flag). */
   approvedMarketplacePublisher?: boolean;
 }

@@ -14,9 +14,12 @@ import { CultureMarketListingWizard } from '@/modules/host/screens/CultureMarket
 import {
   GROUP_COLORS,
   GROUP_TABS,
+  ORGANISATION_COMMUNITY_CATALOG_CATEGORY,
   type CreateCategory,
 } from '@/modules/host/config/hostspaceCreateCategories.config';
-import type { Profile, ShopListingType } from '@/shared/schema';
+import { hostPageLabel, hostPageSubtitle } from '@/modules/host/lib/hostspaceCreateParents';
+import type { HostPage, ShopListingType } from '@/shared/schema';
+import { HOSTSPACE_CREATE_PAGE_PATHNAME } from '@/constants/navigation/createNav';
 
 export function HostspaceCreateFormPanel({
   selected,
@@ -27,11 +30,11 @@ export function HostspaceCreateFormPanel({
   onCloseMarketWizard,
   onListingPublished,
   canCreateSelected,
-  requiresParentProfile,
-  myProfiles,
-  selectedParentProfileId,
-  onSelectParentProfileId,
-  selectedParentProfile,
+  requiresParentHostPage,
+  orgHostPages,
+  selectedParentHostPageId,
+  onSelectParentHostPageId,
+  selectedParentHostPage,
   hostInfoVerified,
   onOpenCreateFlow,
 }: {
@@ -43,11 +46,11 @@ export function HostspaceCreateFormPanel({
   onCloseMarketWizard: () => void;
   onListingPublished: () => void;
   canCreateSelected: boolean;
-  requiresParentProfile: boolean;
-  myProfiles: Profile[];
-  selectedParentProfileId: string | null;
-  onSelectParentProfileId: (id: string) => void;
-  selectedParentProfile: Profile | null;
+  requiresParentHostPage: boolean;
+  orgHostPages: HostPage[];
+  selectedParentHostPageId: string | null;
+  onSelectParentHostPageId: (id: string) => void;
+  selectedParentHostPage: HostPage | null;
   hostInfoVerified: boolean;
   onOpenCreateFlow: () => void;
 }) {
@@ -145,12 +148,12 @@ export function HostspaceCreateFormPanel({
         </View>
       </View>
 
-      {requiresParentProfile ? (
+      {requiresParentHostPage ? (
         <View
           style={[
             styles.parentBox,
             {
-              borderColor: selectedParentProfile ? colors.borderLight : CultureTokens.coral + '70',
+              borderColor: selectedParentHostPage ? colors.borderLight : CultureTokens.coral + '70',
               backgroundColor: colors.background + '70',
             },
           ]}
@@ -159,34 +162,40 @@ export function HostspaceCreateFormPanel({
             <Ionicons
               name="git-branch-outline"
               size={17}
-              color={selectedParentProfile ? selected.color : CultureTokens.coral}
+              color={selectedParentHostPage ? selected.color : CultureTokens.coral}
             />
             <View style={{ flex: 1 }}>
               <Text style={[styles.parentTitle, { color: colors.text }]}>Create under</Text>
               <Text style={[styles.parentSub, { color: colors.textSecondary }]}>
-                Choose the community, association, organisation, business, venue, charity, council, club, or society that
-                owns this item.
+                Choose the org or community host page that will own this {selected.label.toLowerCase()}.
               </Text>
             </View>
           </View>
-          {myProfiles.length === 0 ? (
+          {orgHostPages.length === 0 ? (
             <View style={[styles.emptyState, { borderColor: colors.borderLight, backgroundColor: colors.surface + '70' }]}>
-              <Ionicons name="business-outline" size={16} color={colors.textTertiary} />
+              <Ionicons name="people-outline" size={16} color={colors.textTertiary} />
               <Text style={[styles.emptyStateText, { color: colors.textSecondary }]}>
-                No verified owner profile yet. Create one of the organisation, community, business, or venue types
-                first.
+                No org or community page yet. Create one first, then add listings under it.
               </Text>
+              <Button
+                variant="outline"
+                size="sm"
+                leftIcon="add-outline"
+                onPress={() => router.push(HOSTSPACE_CREATE_PAGE_PATHNAME as never)}
+              >
+                Create org page
+              </Button>
             </View>
           ) : (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.parentPickerRow}>
-              {myProfiles.map((profile) => {
-                const active = profile.id === selectedParentProfileId;
+              {orgHostPages.map((page) => {
+                const active = page.id === selectedParentHostPageId;
                 return (
                   <Pressable
-                    key={profile.id}
-                    onPress={() => onSelectParentProfileId(profile.id)}
+                    key={page.id}
+                    onPress={() => onSelectParentHostPageId(page.id)}
                     accessibilityRole="button"
-                    accessibilityLabel={`Create under ${profile.name}`}
+                    accessibilityLabel={`Create under ${hostPageLabel(page)}`}
                     accessibilityState={{ selected: active }}
                   >
                     <View
@@ -199,10 +208,10 @@ export function HostspaceCreateFormPanel({
                       ]}
                     >
                       <Text style={[styles.parentChipTitle, { color: colors.text }]} numberOfLines={1}>
-                        {profile.name}
+                        {hostPageLabel(page)}
                       </Text>
                       <Text style={[styles.parentChipSub, { color: colors.textTertiary }]} numberOfLines={1}>
-                        {profile.subCategory ?? profile.category ?? profile.entityType}
+                        {hostPageSubtitle(page)}
                       </Text>
                     </View>
                   </Pressable>
@@ -219,11 +228,13 @@ export function HostspaceCreateFormPanel({
           <Text style={[styles.launchSummaryText, { color: colors.textSecondary }]}>
             {!hostInfoVerified
               ? 'Verify the host setup card above to unlock creation.'
-              : requiresParentProfile && !selectedParentProfile
-                ? 'Create or select an owner profile before creating this content.'
+              : requiresParentHostPage && !selectedParentHostPage
+                ? 'Create or select an org/community host page before creating this listing.'
                 : isMarket
                   ? 'Use the buttons below to open the CultureMarket wizard here, or browse the marketplace.'
-                  : `Create a new ${selected.label.toLowerCase()} listing, then return here to read, edit, or delete it.`}
+                  : selected.id === ORGANISATION_COMMUNITY_CATALOG_CATEGORY.id
+                    ? 'Opens the unified form with a dropdown for all nine org and community types.'
+                    : `Create a new ${selected.label.toLowerCase()}, then return here to read, edit, or delete it.`}
           </Text>
         </View>
 
@@ -286,11 +297,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    flexWrap: 'wrap',
   },
   emptyStateText: {
     fontSize: 12,
     fontFamily: 'Poppins_500Medium',
     flex: 1,
+    minWidth: '60%',
   },
   formPanel: {
     flex: 1,

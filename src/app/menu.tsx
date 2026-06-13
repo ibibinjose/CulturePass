@@ -79,7 +79,7 @@ const MENU_CORE_SECTIONS: MenuSection[] = [
   {
     title: 'Account & profile',
     items: [
-      { id: 'profile', label: 'MySpace',           icon: 'person-circle-outline', route: '/(tabs)/my-space', requiresAuth: true },
+      { id: 'profile', label: 'MySpace',           icon: 'person-circle-outline', route: '/(tabs)/myspace', requiresAuth: true },
       { id: 'wallet',  label: 'Wallet & Rewards',  icon: 'wallet-outline',        route: '/payment/wallet',  requiresAuth: true, color: CultureTokens.teal },
     ],
   },
@@ -288,7 +288,7 @@ export default function MenuScreen() {
           {/* ── Profile card ── */}
           {isAuthenticated && user ? (
             <Pressable
-              onPress={() => { if (!isWeb) Haptics.selectionAsync(); router.push('/(tabs)/my-space'); }}
+              onPress={() => { if (!isWeb) Haptics.selectionAsync(); router.push('/(tabs)/myspace'); }}
               accessibilityRole="button"
               accessibilityLabel="View profile"
               style={({ pressed }) => [pressed && { opacity: 0.85 }]}

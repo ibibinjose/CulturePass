@@ -112,6 +112,77 @@ export function formatEventDateTime(date: string, time?: string, country?: strin
   return `${dateLabel} • ${formatEventTime(time)}`;
 }
 
+const DEFAULT_EVENT_TIMEZONE = 'Australia/Sydney';
+
+/** Short timezone label for event detail (e.g. AEST, AEDT, PST). */
+export function formatEventTimezoneAbbrev(
+  timezone?: string | null,
+  country?: string,
+  at?: Date,
+): string {
+  const tz = timezone?.trim() || (country === 'Australia' || !country ? DEFAULT_EVENT_TIMEZONE : undefined);
+  if (!tz) return '';
+  const when = at ?? new Date();
+  try {
+    const parts = new Intl.DateTimeFormat('en-AU', {
+      timeZone: tz,
+      timeZoneName: 'short',
+    }).formatToParts(when);
+    const name = parts.find((p) => p.type === 'timeZoneName')?.value;
+    return name ?? '';
+  } catch {
+    return '';
+  }
+}
+
+/** Long-form single datetime for event detail pages — e.g. Sunday, 23 Aug @ 11:00 AM (AEST). */
+export function formatEventDateTimeLong(
+  date: string,
+  time?: string,
+  country?: string,
+  timezone?: string | null,
+): string {
+  const day = toDate(date.includes('T') ? date.split('T')[0] : `${date}T00:00:00`);
+  if (!day) return date || '';
+
+  const locale = getLocaleForCountry(country);
+  const dateLabel = day.toLocaleDateString(locale, {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'short',
+  });
+  const timeLabel = formatEventTime(time);
+  const tz = formatEventTimezoneAbbrev(timezone, country, day);
+
+  if (timeLabel && tz) return `${dateLabel} @ ${timeLabel} (${tz})`;
+  if (timeLabel) return `${dateLabel} @ ${timeLabel}`;
+  return dateLabel;
+}
+
+/** Start–end range for event detail — mirrors ticketing-site copy. */
+export function formatEventDateTimeRange(event: {
+  date: string;
+  time?: string;
+  endDate?: string;
+  endTime?: string;
+  country?: string;
+  timezone?: string | null;
+}): string {
+  const start = formatEventDateTimeLong(event.date, event.time, event.country, event.timezone);
+  if (!start) return 'Date TBA';
+
+  const hasEnd = Boolean(event.endDate?.trim() || event.endTime?.trim());
+  if (!hasEnd) return start;
+
+  const end = formatEventDateTimeLong(
+    event.endDate?.trim() || event.date,
+    event.endTime?.trim() || event.time,
+    event.country,
+    event.timezone,
+  );
+  return end && end !== start ? `${start} - ${end}` : start;
+}
+
 export function formatEventDateTimeBadge(date: string, time?: string, country?: string): string {
   const day = toDate(date);
   if (!day) return time ? `${date} • ${formatEventTime(time)}` : date;

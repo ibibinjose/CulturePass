@@ -7,6 +7,11 @@ import { interestCategories, type InterestCategory } from '@/constants/onboardin
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { routeWithRedirect, sanitizeInternalRedirect } from '@/lib/routes';
+import {
+  isCreationLabDestination,
+  labelForOnboardingDestination,
+  resolvePostOnboardingDestination,
+} from '@/lib/onboardingDestination';
 import type { User } from '@/shared/schema';
 
 const MIN_REQUIRED = 5;
@@ -102,7 +107,13 @@ export function useInterestsSelection() {
     try {
       await completeOnboarding();
       if (Platform.OS !== 'web') await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      router.push(routeWithRedirect('/pages/create', redirectTo) as string);
+
+      const destination = resolvePostOnboardingDestination(redirectTo);
+      if (isCreationLabDestination(redirectTo)) {
+        router.push(routeWithRedirect(destination, redirectTo) as string);
+      } else {
+        router.replace(destination as never);
+      }
       return { success: true };
     } catch (error) {
       if (__DEV__) console.warn('[onboarding] failed to complete onboarding:', error);
@@ -124,9 +135,11 @@ export function useInterestsSelection() {
     isReady,
     remaining,
     MIN_REQUIRED,
+    redirectTo,
+    destinationLabel: labelForOnboardingDestination(redirectTo),
     toggle,
     toggleAll,
     toggleSection,
-    handleFinish
+    handleFinish,
   };
 }

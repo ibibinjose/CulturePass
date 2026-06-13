@@ -1,9 +1,11 @@
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useCouncil } from '@/hooks/useCouncil';
-import { useNearbyEvents } from '@/modules/events/hooks/useNearbyEvents';
+import { eventsApi } from '@/modules/events/api';
 import { api, type ActivityData, type IndigenousOrganisation, type IndigenousTraditionalLand } from '@/lib/api';
 import type { Community, DiscoverFeedContract, EventData, MovieData, PerkData, RestaurantData, ShopData } from '@/shared/schema';
+import type { DiscoverLocation } from './useDiscoverLocation';
+import { eventMatchesCouncil } from '@/lib/locationFallback';
 
 type DiscoverStateShape = {
   city?: string;
@@ -11,15 +13,21 @@ type DiscoverStateShape = {
   cultureIds?: string[];
 };
 
-export function useDiscoverQueries(state: DiscoverStateShape, userId?: string | null, today?: string) {
+export function useDiscoverQueries(
+  state: DiscoverStateShape,
+  userId: string | null | undefined,
+  location: DiscoverLocation,
+  today?: string,
+) {
   const stableToday = today ?? new Date().toLocaleDateString('en-CA');
+  const effectiveCity = location.city || state.city || '';
+  const effectiveCountry = location.country || state.country || 'Australia';
 
   const eventsQuery = useQuery<EventData[]>({
-    queryKey: ['/api/events', state.country, state.city, stableToday],
+    queryKey: ['/api/events', effectiveCountry, stableToday],
     queryFn: async () => {
       const result = await api.events.list({
-        country: state.country || undefined,
-        city: state.city || undefined,
+        country: effectiveCountry || undefined,
         pageSize: 50,
         dateFrom: stableToday,
       });
@@ -29,23 +37,27 @@ export function useDiscoverQueries(state: DiscoverStateShape, userId?: string | 
   });
 
   const communitiesQuery = useQuery<Community[]>({
-    queryKey: ['/api/communities', state.city, state.country],
-    queryFn: () => api.communities.list({ city: state.city || undefined, country: state.country || undefined }),
+    queryKey: ['/api/communities', effectiveCountry, 'country-wide'],
+    queryFn: () => api.communities.list({ country: effectiveCountry || undefined }),
     staleTime: 5 * 60 * 1000,
   });
 
   const activitiesQuery = useQuery<ActivityData[]>({
-    queryKey: ['/api/activities', state.country, state.city],
-    queryFn: () => api.activities.list({ country: state.country || undefined, city: state.city || undefined }),
+    queryKey: ['/api/activities', effectiveCountry, effectiveCity],
+    queryFn: () =>
+      api.activities.list({
+        country: effectiveCountry || undefined,
+        city: effectiveCity || undefined,
+      }),
     staleTime: 5 * 60 * 1000,
   });
 
   const discoverFeedQuery = useQuery<DiscoverFeedContract>({
-    queryKey: ['/api/discover', userId ?? 'guest', state.city, state.country, stableToday],
+    queryKey: ['/api/discover', userId ?? 'guest', effectiveCity, effectiveCountry, stableToday],
     queryFn: () =>
       api.discover.feed(userId ?? 'guest', {
-        city: state.city || undefined,
-        country: state.country || undefined,
+        city: effectiveCity || undefined,
+        country: effectiveCountry || undefined,
       }),
     staleTime: 5 * 60 * 1000,
   });
@@ -57,10 +69,10 @@ export function useDiscoverQueries(state: DiscoverStateShape, userId?: string | 
   });
 
   const indigenousOrganisationsQuery = useQuery<IndigenousOrganisation[]>({
-    queryKey: ['/api/indigenous/organisations', state.country],
+    queryKey: ['/api/indigenous/organisations', effectiveCountry],
     queryFn: () =>
       api.culture.indigenousOrganisations({
-        country: state.country || 'Australia',
+        country: effectiveCountry || 'Australia',
         featured: true,
         limit: 6,
       }),
@@ -68,36 +80,50 @@ export function useDiscoverQueries(state: DiscoverStateShape, userId?: string | 
   });
 
   const restaurantsQuery = useQuery<RestaurantData[]>({
-    queryKey: ['/api/restaurants', state.city, state.country],
-    queryFn: () => api.restaurants.list({ city: state.city || undefined, country: state.country || undefined }),
+    queryKey: ['/api/restaurants', effectiveCity, effectiveCountry],
+    queryFn: () =>
+      api.restaurants.list({
+        city: effectiveCity || undefined,
+        country: effectiveCountry || undefined,
+      }),
     staleTime: 10 * 60 * 1000,
   });
 
   const moviesQuery = useQuery<MovieData[]>({
-    queryKey: ['/api/movies', state.city, state.country],
+    queryKey: ['/api/movies', effectiveCity, effectiveCountry],
     queryFn: () =>
       (api.movies as { list: (params: Record<string, unknown>) => Promise<MovieData[]> }).list({
-        city: state.city || undefined,
-        country: state.country || undefined,
+        city: effectiveCity || undefined,
+        country: effectiveCountry || undefined,
         pageSize: 8,
       }),
     staleTime: 10 * 60 * 1000,
   });
 
   const shoppingQuery = useQuery<ShopData[]>({
-    queryKey: ['/api/shopping', state.city, state.country],
-    queryFn: () => api.shopping.list({ city: state.city || undefined, country: state.country || undefined }),
+    queryKey: ['/api/shopping', effectiveCity, effectiveCountry],
+    queryFn: () =>
+      api.shopping.list({
+        city: effectiveCity || undefined,
+        country: effectiveCountry || undefined,
+      }),
     staleTime: 10 * 60 * 1000,
   });
 
   const perksQuery = useQuery<PerkData[]>({
-    queryKey: ['/api/perks', state.city, state.country],
-    queryFn: () => api.perks.list(),
+    queryKey: ['/api/perks', effectiveCity, effectiveCountry],
+    queryFn: () =>
+      api.perks.list({
+        city: effectiveCity || undefined,
+        country: effectiveCountry || undefined,
+        pageSize: 8,
+      }),
     staleTime: 10 * 60 * 1000,
   });
 
   const { data: councilData } = useCouncil();
-  const council = councilData?.council;
+  const onboardingCouncil = councilData?.council ?? null;
+  const council = location.council ?? onboardingCouncil;
 
   const councilEventsQuery = useQuery<EventData[]>({
     queryKey: ['/api/events/council', council?.id, council?.lgaCode, stableToday],
@@ -115,27 +141,64 @@ export function useDiscoverQueries(state: DiscoverStateShape, userId?: string | 
     staleTime: 5 * 60 * 1000,
   });
 
-  const nearbyProbe = useNearbyEvents({ radiusKm: 15, pageSize: 20 });
-  const triggerNearbyProbe = nearbyProbe.trigger;
-  useEffect(() => {
-    triggerNearbyProbe();
-  }, [triggerNearbyProbe]);
+  const nearbyCoords = location.coordinates;
+  const nearbyEventsQuery = useQuery({
+    queryKey: ['/api/events/nearby', nearbyCoords?.latitude, nearbyCoords?.longitude, 15, 20],
+    queryFn: () =>
+      eventsApi.events.nearby({
+        lat: nearbyCoords!.latitude,
+        lng: nearbyCoords!.longitude,
+        radius: 15,
+        pageSize: 20,
+      }),
+    enabled: nearbyCoords != null && location.status === 'ready',
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const nearbyProbe = useMemo(
+    () => ({
+      isLoading:
+        location.status === 'detecting' ||
+        (nearbyCoords != null && location.status === 'ready' && nearbyEventsQuery.isFetching),
+      status:
+        location.status === 'detecting'
+          ? ('locating' as const)
+          : location.status === 'denied'
+            ? ('denied' as const)
+            : location.status === 'unavailable'
+              ? ('unavailable' as const)
+              : location.status === 'error'
+                ? ('error' as const)
+                : nearbyEventsQuery.isFetching
+                  ? ('fetching' as const)
+                  : nearbyEventsQuery.data
+                    ? ('success' as const)
+                    : ('idle' as const),
+      error: location.errorMessage,
+      coords: nearbyCoords
+        ? { lat: nearbyCoords.latitude, lng: nearbyCoords.longitude }
+        : null,
+      trigger: location.refresh,
+    }),
+    [
+      location.status,
+      location.errorMessage,
+      location.refresh,
+      nearbyCoords,
+      nearbyEventsQuery.isFetching,
+      nearbyEventsQuery.data,
+    ],
+  );
 
   const councilEvents = useMemo(() => {
     const fromCouncilQuery = councilEventsQuery.data ?? [];
     const fromCityQuery = eventsQuery.data ?? [];
-
-    // Merge and deduplicate
     const seen = new Set<string>();
     const merged: EventData[] = [];
 
     const add = (e: EventData) => {
       if (seen.has(e.id)) return;
-      // Double check LGA match if it's from city query
-      if (
-        (e.lgaCode && council?.lgaCode && e.lgaCode === council.lgaCode) ||
-        (e.councilId && council?.id && e.councilId === council.id)
-      ) {
+      if (eventMatchesCouncil(e, council)) {
         seen.add(e.id);
         merged.push(e);
       }
@@ -147,10 +210,12 @@ export function useDiscoverQueries(state: DiscoverStateShape, userId?: string | 
     return merged;
   }, [council, eventsQuery.data, councilEventsQuery.data]);
 
+  const gpsNearbyEvents = nearbyEventsQuery.data?.events ?? [];
   const nearbyEvents = useMemo(() => {
-    if (nearbyProbe.events.length > 0) return nearbyProbe.events.slice(0, 10);
-    return councilEvents.slice(0, 10);
-  }, [nearbyProbe.events, councilEvents]);
+    if (gpsNearbyEvents.length > 0) return gpsNearbyEvents.slice(0, 12);
+    if (councilEvents.length > 0) return councilEvents.slice(0, 12);
+    return [];
+  }, [gpsNearbyEvents, councilEvents]);
 
   return {
     stableToday,
@@ -169,5 +234,6 @@ export function useDiscoverQueries(state: DiscoverStateShape, userId?: string | 
     nearbyProbe,
     nearbyEvents,
     councilEvents,
+    location,
   };
 }

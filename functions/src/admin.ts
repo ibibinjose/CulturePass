@@ -7,8 +7,17 @@ import * as admin from 'firebase-admin';
 import Stripe from 'stripe';
 
 const explicitBucket = process.env.FIREBASE_STORAGE_BUCKET;
+const resolvedProjectId =
+  process.env.FIREBASE_PROJECT_ID ??
+  process.env.GOOGLE_CLOUD_PROJECT ??
+  process.env.GCLOUD_PROJECT ??
+  'culturepass-4f264';
+
 if (!admin.apps.length) {
-  admin.initializeApp(explicitBucket ? { storageBucket: explicitBucket } : undefined);
+  admin.initializeApp({
+    projectId: resolvedProjectId,
+    ...(explicitBucket ? { storageBucket: explicitBucket } : {}),
+  });
 }
 
 /** Firebase Admin SDK instance */

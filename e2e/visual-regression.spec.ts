@@ -32,7 +32,7 @@ test.describe('Visual regression — critical layout surfaces (FIXES-001)', () =
 
   test('host apply / entity selector — desktop', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
-    await page.goto('/pages/create');
+    await page.goto('/hostspace/create');
     await expect(page.getByTestId('create-page-selector')).toBeVisible({ timeout: 15000 });
     await expect(page.getByText('Which option is best for you?')).toBeVisible();
     await page.waitForTimeout(400);
@@ -46,7 +46,7 @@ test.describe('Visual regression — critical layout surfaces (FIXES-001)', () =
 
   test('host apply / entity selector — mobile', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto('/pages/create');
+    await page.goto('/hostspace/create');
     await expect(page.getByTestId('create-page-selector')).toBeVisible({ timeout: 15000 });
     await expect(page.getByText('Which option is best for you?')).toBeVisible();
     await page.waitForTimeout(400);

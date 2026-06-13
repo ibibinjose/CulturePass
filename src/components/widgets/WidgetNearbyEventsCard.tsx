@@ -5,6 +5,7 @@ import { router } from 'expo-router';
 import { CardTokens, CultureTokens } from '@/design-system/tokens/theme';
 import { useColors } from '@/hooks/useColors';
 import type { WidgetNearbyEventItem } from '@/lib/api';
+import { formatEventLocation, formatEventPriceLabel } from '@/lib/presentation';
 
 interface WidgetNearbyEventsCardProps {
   events: WidgetNearbyEventItem[];
@@ -89,11 +90,9 @@ export function WidgetNearbyEventsCard({ events }: WidgetNearbyEventsCardProps) 
               <Text style={[styles.meta, { color: accent }]} numberOfLines={1}>
                 {formatStart(event.date, event.time)}
               </Text>
-              {event.venue ? (
-                <Text style={[styles.venue, { color: colors.textTertiary }]} numberOfLines={1}>
-                  {event.venue}
-                </Text>
-              ) : null}
+              <Text style={[styles.venue, { color: colors.textTertiary }]} numberOfLines={1}>
+                {formatEventLocation(event)}
+              </Text>
             </View>
 
             {/* Price badge */}
@@ -103,7 +102,7 @@ export function WidgetNearbyEventsCard({ events }: WidgetNearbyEventsCardProps) 
               <Text style={[styles.price, {
                 color: event.isFree ? CultureTokens.teal : CultureTokens.gold,
               }]}>
-                {event.isFree ? 'Free' : `$${Math.round((event.priceCents ?? 0) / 100)}`}
+                {formatEventPriceLabel(event)}
               </Text>
             </View>
           </Pressable>

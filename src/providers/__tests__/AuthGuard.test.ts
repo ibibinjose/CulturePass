@@ -4,6 +4,7 @@ import { useSegments, useRouter } from 'expo-router';
 import { useAuth } from '@/lib/auth';
 import { useOnboarding } from '@/contexts/OnboardingContext';
 import { AuthGuard } from '../AuthGuard';
+import { isAuthProtectedRoute } from '@/lib/authGuardRoutes';
 import { sanitizeInternalRedirect } from '@/lib/routes';
 
 // Mock the necessary hooks and modules
@@ -61,14 +62,14 @@ describe('AuthGuard', () => {
     });
 
     test('should accept valid internal paths', () => {
-      expect(sanitizeInternalRedirect('/profile')).toBe('/profile');
+      expect(sanitizeInternalRedirect('/profile')).toBe('/(tabs)/myspace');
       expect(sanitizeInternalRedirect('/tickets/123')).toBe('/tickets/123');
-      expect(sanitizeInternalRedirect('/pages/create')).toBe('/pages/create');
+      expect(sanitizeInternalRedirect('/pages/create')).toBe('/hostspace/create');
     });
 
     test('should handle array inputs correctly', () => {
-      expect(sanitizeInternalRedirect(['/profile'])).toBe('/profile');
-      expect(sanitizeInternalRedirect(['/profile', '/tickets'])).toBe('/profile');
+      expect(sanitizeInternalRedirect(['/profile'])).toBe('/(tabs)/myspace');
+      expect(sanitizeInternalRedirect(['/profile', '/tickets'])).toBe('/(tabs)/myspace');
     });
   });
 
@@ -111,7 +112,7 @@ describe('AuthGuard', () => {
           !(segments[0] === 'membership' && membershipGuestMarketing)) ||
         (segments[0] === '(tabs)' &&
           (segments[1] === 'profile' ||
-            segments[1] === 'my-space' ||
+            segments[1] === 'myspace' ||
             segments[1] === 'perks' ||
             segments[1] === 'calendar')) ||
         (segments[0] === 'event' && segments[1] === 'create') ||
@@ -144,7 +145,7 @@ describe('AuthGuard', () => {
           !(segments[0] === 'membership' && membershipGuestMarketing)) ||
         (segments[0] === '(tabs)' &&
           (segments[1] === 'profile' ||
-            segments[1] === 'my-space' ||
+            segments[1] === 'myspace' ||
             segments[1] === 'perks' ||
             segments[1] === 'calendar')) ||
         (segments[0] === 'event' && segments[1] === 'create') ||
@@ -189,7 +190,7 @@ describe('AuthGuard', () => {
           !(segments[0] === 'membership' && membershipGuestMarketing)) ||
         (segments[0] === '(tabs)' &&
           (segments[1] === 'profile' ||
-            segments[1] === 'my-space' ||
+            segments[1] === 'myspace' ||
             segments[1] === 'perks' ||
             segments[1] === 'calendar')) ||
         (segments[0] === 'event' && segments[1] === 'create') ||
@@ -264,70 +265,15 @@ describe('AuthGuard', () => {
     });
   });
 
-  describe('Hostspace/apply route handling', () => {
-    test('should protect /pages/create route for unauthenticated users', () => {
-      (useAuth as jest.Mock).mockReturnValue({
-        user: null,
-        isRestoring: false,
-      });
-      
-      const segments = ['hostspace', 'apply'];
-      
-      const protectedRoutes = [
-        'profile', 'tickets', 'checkout', 'payment', 'saved',
-        'settings', 'membership', 'submit', 'scanner',
-        'notifications', 'contacts', 'admin', 'network', 'create',
-      ];
-      
-      const membershipGuestMarketing =
-        segments[0] === 'membership' &&
-        (segments[1] === undefined || segments[1] === 'index' || segments[1] === 'upgrade');
-
-      const isProtected =
-        (protectedRoutes.includes(segments[0] as string) &&
-          !(segments[0] === 'membership' && membershipGuestMarketing)) ||
-        (segments[0] === '(tabs)' &&
-          (segments[1] === 'profile' ||
-            segments[1] === 'my-space' ||
-            segments[1] === 'perks' ||
-            segments[1] === 'calendar')) ||
-        (segments[0] === 'event' && segments[1] === 'create') ||
-        (segments[0] === 'hostspace' && segments[1] === 'apply');
-
-      expect(isProtected).toBe(true);
+  describe('Create route protection', () => {
+    test('protects legacy and canonical create URLs', () => {
+      expect(isAuthProtectedRoute(['pages', 'create'])).toBe(true);
+      expect(isAuthProtectedRoute(['listing', 'create'])).toBe(true);
+      expect(isAuthProtectedRoute(['hostspace', 'venue', 'create'])).toBe(true);
     });
 
-    test('should allow authenticated users to access /pages/create', () => {
-      (useAuth as jest.Mock).mockReturnValue({
-        user: { id: 'user123' },
-        isRestoring: false,
-      });
-      
-      const segments = ['hostspace', 'apply'];
-      
-      const protectedRoutes = [
-        'profile', 'tickets', 'checkout', 'payment', 'saved',
-        'settings', 'membership', 'submit', 'scanner',
-        'notifications', 'contacts', 'admin', 'network', 'create',
-      ];
-      
-      const membershipGuestMarketing =
-        segments[0] === 'membership' &&
-        (segments[1] === undefined || segments[1] === 'index' || segments[1] === 'upgrade');
-
-      const isProtected =
-        (protectedRoutes.includes(segments[0] as string) &&
-          !(segments[0] === 'membership' && membershipGuestMarketing)) ||
-        (segments[0] === '(tabs)' &&
-          (segments[1] === 'profile' ||
-            segments[1] === 'my-space' ||
-            segments[1] === 'perks' ||
-            segments[1] === 'calendar')) ||
-        (segments[0] === 'event' && segments[1] === 'create') ||
-        (segments[0] === 'hostspace' && segments[1] === 'apply');
-
-      // The route is protected (requires authentication), but an authenticated user should be able to access it
-      expect(isProtected).toBe(true);
+    test('does not treat public profile detail as protected', () => {
+      expect(isAuthProtectedRoute(['profile', 'venue-123'])).toBe(false);
     });
   });
 });

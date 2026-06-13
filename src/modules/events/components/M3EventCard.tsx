@@ -9,6 +9,7 @@ import { formatEventDateTime } from '@/lib/dateUtils';
 import { router } from 'expo-router';
 import { eventPaths } from '@/modules/events/services/navigation';
 import type { EventData } from '@/shared/schema';
+import { getEventCoverImageUrl } from '@/modules/events/utils/eventCoverImage';
 
 interface M3EventCardProps {
   event: EventData;
@@ -19,6 +20,7 @@ export function M3EventCard({ event, variant = 'filled' }: M3EventCardProps) {
   const colors = useM3Colors();
   const attendingCount = event.attending || event.rsvpGoing || 0;
   const isVerified = (event.organizerReputationScore ?? 0) > 0 || event.isFeatured;
+  const coverImageUrl = getEventCoverImageUrl(event);
 
   const handlePress = () => {
     router.push(eventPaths.detailRoute(event.id));
@@ -32,7 +34,7 @@ export function M3EventCard({ event, variant = 'filled' }: M3EventCardProps) {
     >
       <View style={styles.imageContainer}>
         <CultureImage
-          uri={event.imageUrl ?? undefined}
+          uri={coverImageUrl}
           style={styles.image}
         />
 

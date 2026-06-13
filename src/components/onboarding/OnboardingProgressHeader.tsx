@@ -5,162 +5,217 @@ import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 
 import { FontFamily } from '@/design-system/tokens/theme';
-import { luxeDark } from '@/design-system/tokens/luxeHeritage';
 import { LuxeText } from '@/design-system/ui/LuxeText';
 import { useLayout } from '@/hooks/useLayout';
+import { useOnboardingTheme } from '@/hooks/useOnboardingTheme';
 
 export type OnboardingStep = 'location' | 'communities' | 'culture-match' | 'interests';
 
 interface OnboardingProgressHeaderProps {
   currentStep: OnboardingStep;
-  /** Optional parameter to preserve redirect routes */
   redirectTo?: string | null;
+  /** @deprecated Palette is always AU-themed via useOnboardingTheme */
+  accentColor?: string;
+  /** @deprecated Palette is always AU-themed via useOnboardingTheme */
+  accentSecondaryColor?: string;
 }
 
-const STEPS: { key: OnboardingStep; label: string; icon: keyof typeof Ionicons.glyphMap; route: string }[] = [
-  { key: 'location', label: 'Location', icon: 'location-sharp', route: '/(onboarding)/location' },
-  { key: 'communities', label: 'Communities', icon: 'people-sharp', route: '/(onboarding)/communities' },
-  { key: 'culture-match', label: 'Culture Match', icon: 'globe-sharp', route: '/(onboarding)/culture-match' },
-  { key: 'interests', label: 'Interests', icon: 'sparkles-sharp', route: '/(onboarding)/interests' },
+const STEPS: {
+  key: OnboardingStep;
+  label: string;
+  shortLabel: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  route: string;
+}[] = [
+  { key: 'location', label: 'Location', shortLabel: 'Location', icon: 'location-sharp', route: '/(onboarding)/location' },
+  { key: 'communities', label: 'Communities', shortLabel: 'Groups', icon: 'people-sharp', route: '/(onboarding)/communities' },
+  { key: 'culture-match', label: 'Culture Match', shortLabel: 'Culture', icon: 'globe-sharp', route: '/(onboarding)/culture-match' },
+  { key: 'interests', label: 'Interests', shortLabel: 'Interests', icon: 'sparkles-sharp', route: '/(onboarding)/interests' },
 ];
 
-export function OnboardingProgressHeader({ currentStep, redirectTo }: OnboardingProgressHeaderProps) {
+export function OnboardingProgressHeader({
+  currentStep,
+  redirectTo,
+}: OnboardingProgressHeaderProps) {
   const { isDesktop } = useLayout();
+  const { colors, au } = useOnboardingTheme();
   const currentIndex = STEPS.findIndex((s) => s.key === currentStep);
 
   const handleStepPress = (targetIndex: number) => {
-    if (targetIndex >= currentIndex) return; // Cannot jump forward without completing steps
+    if (targetIndex >= currentIndex) return;
     if (Platform.OS !== 'web') {
       void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
     const step = STEPS[targetIndex];
     router.replace({
-      pathname: step.route as any,
+      pathname: step.route as never,
       params: redirectTo ? { redirectTo } : undefined,
     });
   };
 
   return (
     <View style={s.outer}>
-      {isDesktop ? (
-        // Desktop full stepper
-        <View style={s.desktopStepper}>
-          {STEPS.map((step, i) => {
-            const isDone = i < currentIndex;
-            const isActive = i === currentIndex;
-            const isFuture = i > currentIndex;
-
-            return (
-              <React.Fragment key={step.key}>
-                <Pressable
-                  onPress={() => handleStepPress(i)}
-                  disabled={isFuture}
-                  style={({ pressed }) => [
-                    s.desktopStepItem,
-                    isDone && s.interactiveStep,
-                    pressed && isDone && { opacity: 0.7 },
-                  ]}
-                >
-                  <View
-                    style={[
-                      s.stepCircle,
-                      isDone
-                        ? s.stepCircleDone
-                        : isActive
-                        ? s.stepCircleActive
-                        : s.stepCircleFuture,
-                    ]}
-                  >
-                    {isDone ? (
-                      <Ionicons name="checkmark" size={14} color="#FFF" />
-                    ) : (
-                      <Ionicons
-                        name={step.icon}
-                        size={14}
-                        color={isActive ? luxeDark.primary : luxeDark.textTertiary}
-                      />
-                    )}
-                  </View>
-                  <View style={s.stepTextWrap}>
-                    <LuxeText
-                      variant="caption"
-                      style={[
-                        s.stepNumber,
-                        { color: isActive ? luxeDark.primary : luxeDark.textTertiary },
-                      ]}
-                    >
-                      STEP {i + 1}
-                    </LuxeText>
-                    <LuxeText
-                      variant="bodyMedium"
-                      style={[
-                        s.stepLabel,
-                        {
-                          color: isActive ? luxeDark.text : isDone ? luxeDark.textSecondary : luxeDark.textTertiary,
-                          fontFamily: isActive ? FontFamily.semibold : FontFamily.regular,
-                        },
-                      ]}
-                    >
-                      {step.label}
-                    </LuxeText>
-                  </View>
-                </Pressable>
-                {i < STEPS.length - 1 && (
-                  <View
-                    style={[
-                      s.desktopLine,
-                      { backgroundColor: isDone ? luxeDark.primary : luxeDark.border },
-                    ]}
-                  />
-                )}
-              </React.Fragment>
-            );
-          })}
+      <View
+        style={[
+          s.trackShell,
+          {
+            borderColor: au.panelBorder,
+            backgroundColor: colors.surface,
+          },
+        ]}
+      >
+        <View style={s.accent}>
+          <View style={[s.accentBar, { backgroundColor: au.blue }]} />
+          <View style={[s.accentBar, { backgroundColor: au.red }]} />
         </View>
-      ) : (
-        // Mobile segment indicator
-        <View style={s.mobileStepper}>
-          <View style={s.mobileStepLabelRow}>
-            <LuxeText variant="badgeCaps" style={{ color: luxeDark.primary, letterSpacing: 1.2 }}>
-              STEP {currentIndex + 1} OF 4
-            </LuxeText>
-            <LuxeText variant="bodyMedium" style={{ color: luxeDark.text, fontFamily: FontFamily.semibold }}>
-              {STEPS[currentIndex].label}
-            </LuxeText>
-          </View>
 
-          <View style={s.segmentsRow}>
+        {isDesktop ? (
+          <View style={s.desktopRow}>
             {STEPS.map((step, i) => {
               const isDone = i < currentIndex;
               const isActive = i === currentIndex;
               const isFuture = i > currentIndex;
 
               return (
-                <Pressable
-                  key={step.key}
-                  onPress={() => handleStepPress(i)}
-                  disabled={isFuture}
-                  style={({ pressed }) => [
-                    s.segmentPressable,
-                    isDone && pressed && { opacity: 0.7 },
-                  ]}
-                >
-                  <View
-                    style={[
-                      s.segmentBar,
-                      isDone
-                        ? s.segmentBarDone
-                        : isActive
-                        ? s.segmentBarActive
-                        : s.segmentBarFuture,
+                <React.Fragment key={step.key}>
+                  <Pressable
+                    onPress={() => handleStepPress(i)}
+                    disabled={isFuture}
+                    style={({ pressed }) => [
+                      s.desktopStep,
+                      isDone && s.tappable,
+                      pressed && isDone && { opacity: 0.75 },
                     ]}
-                  />
-                </Pressable>
+                  >
+                    <View
+                      style={[
+                        s.circle,
+                        isDone
+                          ? { backgroundColor: au.blue, borderColor: au.blue }
+                          : isActive
+                            ? { borderColor: au.red, borderWidth: 2, backgroundColor: colors.surfaceElevated }
+                            : { borderColor: au.cardBorder, backgroundColor: colors.surfaceElevated },
+                      ]}
+                    >
+                      {isDone ? (
+                        <Ionicons name="checkmark" size={12} color="#FFF" />
+                      ) : (
+                        <Ionicons
+                          name={step.icon}
+                          size={13}
+                          color={isActive ? au.blue : au.bodyMuted}
+                        />
+                      )}
+                    </View>
+                    <View style={s.stepCopy}>
+                      <LuxeText
+                        variant="caption"
+                        style={{
+                          color: isActive ? au.blue : au.bodyMuted,
+                          fontSize: 10,
+                          fontFamily: FontFamily.bold,
+                          letterSpacing: 0.6,
+                        }}
+                      >
+                        STEP {i + 1}
+                      </LuxeText>
+                      <LuxeText
+                        variant="caption"
+                        style={{
+                          color: isActive ? au.heading : isDone ? au.body : au.bodyMuted,
+                          fontFamily: isActive ? FontFamily.semibold : FontFamily.medium,
+                          fontSize: 13,
+                        }}
+                      >
+                        {step.label}
+                      </LuxeText>
+                    </View>
+                  </Pressable>
+                  {i < STEPS.length - 1 ? (
+                    <View
+                      style={[
+                        s.connector,
+                        { backgroundColor: isDone ? au.blue : au.cardBorder },
+                      ]}
+                    />
+                  ) : null}
+                </React.Fragment>
               );
             })}
           </View>
-        </View>
-      )}
+        ) : (
+          <View style={s.mobileBody}>
+            <View style={s.mobileTopRow}>
+              <LuxeText
+                variant="badgeCaps"
+                style={{ color: au.blue, letterSpacing: 1, fontSize: 11 }}
+              >
+                STEP {currentIndex + 1} OF {STEPS.length}
+              </LuxeText>
+              <LuxeText
+                variant="bodyMedium"
+                style={{ color: au.heading, fontFamily: FontFamily.semibold, fontSize: 15 }}
+              >
+                {STEPS[currentIndex]?.label}
+              </LuxeText>
+            </View>
+
+            <View style={s.mobileChips}>
+              {STEPS.map((step, i) => {
+                const isDone = i < currentIndex;
+                const isActive = i === currentIndex;
+                const isFuture = i > currentIndex;
+
+                return (
+                  <Pressable
+                    key={step.key}
+                    onPress={() => handleStepPress(i)}
+                    disabled={isFuture}
+                    style={({ pressed }) => [
+                      s.chip,
+                      {
+                        borderColor: isActive ? au.blue : isDone ? au.blue : au.cardBorder,
+                        backgroundColor: isActive
+                          ? au.selectedBg
+                          : isDone
+                            ? au.blueContainer
+                            : colors.surfaceElevated,
+                      },
+                      isDone && pressed && { opacity: 0.8 },
+                    ]}
+                  >
+                    {isDone ? (
+                      <Ionicons name="checkmark" size={10} color={au.blue} />
+                    ) : (
+                      <LuxeText
+                        variant="caption"
+                        style={{
+                          color: isActive ? au.selectedText : au.bodyMuted,
+                          fontSize: 10,
+                          fontFamily: FontFamily.bold,
+                        }}
+                      >
+                        {i + 1}
+                      </LuxeText>
+                    )}
+                    <LuxeText
+                      variant="caption"
+                      numberOfLines={1}
+                      style={{
+                        color: isActive ? au.selectedText : isDone ? au.body : au.bodyMuted,
+                        fontSize: 9,
+                        fontFamily: FontFamily.medium,
+                      }}
+                    >
+                      {step.shortLabel}
+                    </LuxeText>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+        )}
+      </View>
     </View>
   );
 }
@@ -168,100 +223,71 @@ export function OnboardingProgressHeader({ currentStep, redirectTo }: Onboarding
 const s = StyleSheet.create({
   outer: {
     width: '100%',
-    paddingBottom: 16,
+    paddingHorizontal: 14,
+    paddingBottom: 10,
   },
-  // Desktop Layout
-  desktopStepper: {
+  trackShell: {
+    borderWidth: 2,
+    borderRadius: 14,
+    overflow: 'hidden',
+  },
+  accent: { flexDirection: 'row', height: 4 },
+  accentBar: { flex: 1 },
+
+  desktopRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 12,
-    backgroundColor: luxeDark.surfaceElevated,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: luxeDark.border,
-    paddingHorizontal: 24,
+    paddingHorizontal: 16,
+    gap: 4,
   },
-  desktopStepItem: {
+  desktopStep: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 8,
   },
-  interactiveStep: {
-    cursor: Platform.select({ web: 'pointer', default: undefined }),
+  tappable: {
+    ...(Platform.OS === 'web' ? { cursor: 'pointer' } as object : {}),
   },
-  stepCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+  circle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1.5,
   },
-  stepCircleDone: {
-    backgroundColor: luxeDark.primary,
-    borderColor: luxeDark.primary,
-  },
-  stepCircleActive: {
-    backgroundColor: 'transparent',
-    borderColor: luxeDark.primary,
-  },
-  stepCircleFuture: {
-    backgroundColor: 'transparent',
-    borderColor: luxeDark.border,
-  },
-  stepTextWrap: {
-    gap: 2,
-  },
-  stepNumber: {
-    fontSize: 10,
-    letterSpacing: 0.8,
-    fontFamily: FontFamily.bold,
-  },
-  stepLabel: {
-    fontSize: 14,
-  },
-  desktopLine: {
-    flex: 1,
+  stepCopy: { gap: 1 },
+  connector: {
+    width: 28,
     height: 2,
-    marginHorizontal: 16,
-    maxWidth: 60,
+    marginHorizontal: 4,
   },
 
-  // Mobile Layout
-  mobileStepper: {
-    width: '100%',
-    paddingHorizontal: 16,
-    paddingTop: 8,
+  mobileBody: {
+    paddingHorizontal: 12,
+    paddingVertical: 10,
     gap: 8,
   },
-  mobileStepLabelRow: {
+  mobileTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  segmentsRow: {
+  mobileChips: {
     flexDirection: 'row',
     gap: 6,
-    height: 4,
-    width: '100%',
   },
-  segmentPressable: {
+  chip: {
     flex: 1,
-    height: '100%',
-  },
-  segmentBar: {
-    height: '100%',
-    borderRadius: 2,
-  },
-  segmentBarDone: {
-    backgroundColor: luxeDark.primary,
-  },
-  segmentBarActive: {
-    backgroundColor: luxeDark.primary,
-  },
-  segmentBarFuture: {
-    backgroundColor: luxeDark.border,
-    opacity: 0.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 2,
+    borderRadius: 8,
+    borderWidth: 1.5,
+    gap: 2,
+    minHeight: 40,
   },
 });

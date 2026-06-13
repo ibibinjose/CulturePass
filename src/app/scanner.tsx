@@ -430,7 +430,7 @@ export default function ScannerScreen() {
           {mode === 'tickets' && (
             <GlassView
               intensity={10}
-              style={[styles.statsGlass, { borderColor: Luxe.colors.terracotta + '22' }]}
+              style={[styles.statsGlass, { borderColor: Luxe.colors.appBlue + '22' }]}
             >
               <ScannerSessionStrip session={session} durationLabel={sessionDuration} />
             </GlassView>

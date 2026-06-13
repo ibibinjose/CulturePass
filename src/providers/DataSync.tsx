@@ -33,6 +33,23 @@ export function DataSync() {
     async function syncOnboarding() {
       if (user && prevUserIdRef.current !== user.id) {
         prevUserIdRef.current = user.id;
+        identifyUser(user.id, {
+          email: user.email,
+          city: user.city,
+          country: user.country,
+          subscriptionTier: user.subscriptionTier,
+        });
+      } else if (!user && prevUserIdRef.current !== null) {
+        prevUserIdRef.current = null;
+        resetUser();
+        resetOnboarding();
+        return;
+      }
+
+      if (!user) return;
+
+      // During redo/mid-flow onboarding, local state owns the truth — do not re-hydrate from server.
+      if (state.isComplete) {
         if (user.city && user.city !== state.city) setCity(user.city);
         if (user.country && user.country !== state.country) setCountry(user.country);
         if (JSON.stringify(user.interests ?? []) !== JSON.stringify(state.interests)) {
@@ -45,23 +62,11 @@ export function DataSync() {
         if (nextTier !== state.subscriptionTier) {
           setSubscriptionTier(nextTier);
         }
-        if (
-          !state.isComplete &&
-          isServerOnboardingProfileComplete(user) &&
-          !isLocalOnboardingMidFlow(state, user.interests?.length ?? 0)
-        ) {
-          await completeOnboarding();
-        }
-        identifyUser(user.id, {
-          email: user.email,
-          city: user.city,
-          country: user.country,
-          subscriptionTier: user.subscriptionTier,
-        });
-      } else if (!user && prevUserIdRef.current !== null) {
-        prevUserIdRef.current = null;
-        resetUser();
-        resetOnboarding();
+      } else if (
+        isServerOnboardingProfileComplete(user) &&
+        !isLocalOnboardingMidFlow(state, user.interests?.length ?? 0)
+      ) {
+        await completeOnboarding();
       }
     }
     syncOnboarding();

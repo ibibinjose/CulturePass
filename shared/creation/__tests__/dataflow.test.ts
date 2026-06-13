@@ -6,7 +6,7 @@ describe('resolveCreationDataflow', () => {
     const flow = resolveCreationDataflow({
       id: 'event',
       entityType: 'event',
-      group: 'events',
+      group: 'communities',
       kind: 'content',
       contentKind: 'event',
       requiresParent: true,
@@ -34,7 +34,7 @@ describe('resolveCreationDataflow', () => {
     const flow = resolveCreationDataflow({
       id: 'offer',
       entityType: 'business',
-      group: 'events',
+      group: 'communities',
       kind: 'content',
       contentKind: 'offer',
       requiresParent: true,
@@ -57,8 +57,8 @@ describe('resolveCreationDataflow', () => {
   });
 
   it('exposes wizard paths for all wizard kinds', () => {
-    expect(WIZARD_PATHS.event).toBe('/event/create');
-    expect(WIZARD_PATHS['culture-market']).toBe('/pages/create/listing');
+    expect(WIZARD_PATHS.event).toBe('/hostspace/event/create');
+    expect(WIZARD_PATHS['culture-market']).toBe('/hostspace/listing');
   });
 
   it('documents Firebase-backed platform flow', () => {

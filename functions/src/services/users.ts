@@ -12,6 +12,10 @@ export interface FirestoreUser {
   postcode?: number;
   country?: string;
   avatarUrl?: string;
+  /** ISO timestamp — bumps client image caches when avatar changes */
+  avatarUpdatedAt?: string;
+  /** ISO timestamp — Apple/Google Wallet pass revision signal */
+  walletPassUpdatedAt?: string;
   bio?: string;
   website?: string;
   location?: string;

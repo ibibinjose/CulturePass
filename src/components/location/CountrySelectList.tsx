@@ -6,6 +6,7 @@ import type { ColorTheme } from '@/design-system/tokens/colors';
 import { CultureTokens, Radius, Spacing } from '@/design-system/tokens/theme';
 import { FontFamily } from '@/design-system/tokens/typography';
 import type { MarketplaceCountryItem } from '@/lib/marketplaceLocation';
+import type { LocationScreenPalette } from '@/constants/locationScreenTheme';
 
 const isWeb = Platform.OS === 'web';
 const MIN_TOUCH = 52;
@@ -32,6 +33,10 @@ export interface CountrySelectListProps {
    * Still respects search: only reorders within matching rows.
    */
   preferCountryFirst?: string;
+  /** AU onboarding palette — when set, onboarding tiles/rows use location theme colors. */
+  au?: LocationScreenPalette;
+  /** Onboarding layout; list is easier to scan on web. */
+  onboardingLayout?: 'grid' | 'list';
 }
 
 export function CountrySelectList({
@@ -46,6 +51,8 @@ export function CountrySelectList({
   showSearch = countries.length > 5,
   showFooterHint = variant === 'sheet',
   preferCountryFirst,
+  au,
+  onboardingLayout = 'list',
 }: CountrySelectListProps) {
   const [query, setQuery] = useState('');
   const filtered = useMemo(() => {
@@ -129,6 +136,120 @@ export function CountrySelectList({
         <Text style={[styles.empty, { color: colors.textSecondary }]}>
           No country matches &quot;{query.trim()}&quot;. Try another spelling.
         </Text>
+      ) : variant === 'onboarding' && onboardingLayout === 'list' ? (
+        <View style={styles.list} accessibilityRole="list">
+          {filtered.map((c) => {
+            const active = selectedName === c.name;
+            const borderActive = active
+              ? (au?.blue ?? CultureTokens.indigo)
+              : (au?.cardBorder ?? colors.borderLight);
+            const bg = active
+              ? (au?.selectedBg ?? colors.primarySoft)
+              : colors.surfaceElevated;
+            const titleColor = active
+              ? (au?.selectedText ?? CultureTokens.indigo)
+              : (au?.heading ?? colors.text);
+
+            return (
+              <Pressable
+                key={c.name}
+                onPress={() => onPick(c.name)}
+                style={({ pressed }) => [
+                  styles.row,
+                  {
+                    minHeight: MIN_TOUCH,
+                    backgroundColor: bg,
+                    borderColor: borderActive,
+                    ...(Platform.OS === 'ios' ? { opacity: pressed ? 0.92 : 1 } : {}),
+                  },
+                  isWeb ? ({ cursor: 'pointer' } as object) : null,
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel={`${c.name}. ${c.hint}`}
+                accessibilityState={{ selected: active }}
+              >
+                <View
+                  style={[
+                    styles.flagCircle,
+                    {
+                      backgroundColor: au?.blueContainer ?? colors.backgroundSecondary,
+                      borderWidth: au ? 1 : 0,
+                      borderColor: au?.cardBorder,
+                    },
+                  ]}
+                >
+                  <Text style={styles.flagEmoji}>{c.flag}</Text>
+                </View>
+                <View style={styles.rowText}>
+                  <Text style={[styles.rowTitle, { color: titleColor }]} numberOfLines={1}>
+                    {c.name}
+                  </Text>
+                  <Text
+                    style={[styles.rowHint, { color: au?.body ?? colors.textSecondary }]}
+                    numberOfLines={1}
+                  >
+                    {c.hint}
+                  </Text>
+                </View>
+                {active ? (
+                  <Ionicons name="checkmark-circle" size={22} color={au?.red ?? CultureTokens.indigo} />
+                ) : (
+                  <Ionicons name="chevron-forward" size={18} color={au?.bodyMuted ?? colors.textTertiary} />
+                )}
+              </Pressable>
+            );
+          })}
+        </View>
+      ) : variant === 'onboarding' ? (
+        <View style={styles.onboardingGrid} accessibilityRole="list">
+          {filtered.map((c) => {
+            const active = selectedName === c.name;
+            const borderActive = active
+              ? (au?.blue ?? CultureTokens.indigo)
+              : (au?.cardBorder ?? colors.borderLight);
+            const bg = active
+              ? (au?.selectedBg ?? colors.primarySoft)
+              : colors.surfaceElevated;
+            const titleColor = active
+              ? (au?.selectedText ?? CultureTokens.indigo)
+              : (au?.heading ?? colors.text);
+
+            return (
+              <Pressable
+                key={c.name}
+                onPress={() => onPick(c.name)}
+                style={({ pressed }) => [
+                  styles.onboardingTile,
+                  {
+                    backgroundColor: bg,
+                    borderColor: borderActive,
+                    ...(Platform.OS === 'ios' ? { opacity: pressed ? 0.92 : 1 } : {}),
+                  },
+                  isWeb ? ({ cursor: 'pointer' } as object) : null,
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel={`${c.name}. ${c.hint}`}
+                accessibilityState={{ selected: active }}
+              >
+                {active ? (
+                  <Ionicons
+                    name="checkmark-circle"
+                    size={14}
+                    color={au?.red ?? CultureTokens.indigo}
+                    style={styles.onboardingTileBadge}
+                  />
+                ) : null}
+                <Text style={styles.onboardingFlag}>{c.flag}</Text>
+                <Text
+                  style={[styles.onboardingTitle, { color: titleColor }]}
+                  numberOfLines={2}
+                >
+                  {c.name}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
       ) : (
         <View style={styles.list} accessibilityRole="list">
           {filtered.map((c) => {
@@ -211,7 +332,7 @@ export function CountrySelectList({
 }
 
 const styles = StyleSheet.create({
-  wrap: { gap: Spacing.md },
+  wrap: { gap: Spacing.sm },
   introBlock: { gap: 6, marginBottom: 4 },
   introTitle: {
     fontSize: 17,
@@ -234,7 +355,7 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    fontSize: 16,
+    fontSize: 17,
     fontFamily: FontFamily.medium,
     padding: 0,
     minWidth: 0,
@@ -291,5 +412,35 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 4,
     lineHeight: 16,
+  },
+  onboardingGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  onboardingTile: {
+    width: '31.5%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    minHeight: 72,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    gap: 4,
+  },
+  onboardingTileBadge: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+  },
+  onboardingFlag: {
+    fontSize: 20,
+  },
+  onboardingTitle: {
+    fontSize: 15,
+    fontFamily: FontFamily.semibold,
+    lineHeight: 19,
+    textAlign: 'center',
   },
 });

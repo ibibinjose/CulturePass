@@ -24,7 +24,6 @@ import { useIsDark } from '@/hooks/useColors';
 
 import {
   Luxe,
-  TERRACOTTA_GLOW,
   DEEP_SAFFRON,
   HERITAGE_GOLD,
   DEEP_PLUM,
@@ -72,7 +71,7 @@ const getVariantStyles = (variant: LuxeButtonVariant, isDark: boolean) => {
         text: '#FFFFFF',
         border: 'transparent',
         isGradient: true,
-        gradient: [TERRACOTTA_GLOW, DEEP_SAFFRON] as [string, string],
+        gradient: Luxe.gradients.culturepassBrand,
       };
     case 'glass':
       return {
@@ -124,7 +123,7 @@ const getVariantStyles = (variant: LuxeButtonVariant, isDark: boolean) => {
         text: '#FFFFFF',
         border: 'transparent',
         isGradient: true,
-        gradient: [TERRACOTTA_GLOW, DEEP_SAFFRON] as [string, string],
+        gradient: Luxe.gradients.culturepassBrand,
       };
   }
 };
@@ -240,7 +239,7 @@ export function LuxeButton({
   );
 
   const isGradient = !isDisabled && (v.isGradient || !!gradientColors);
-  const finalGradientColors = gradientColors ?? v.gradient ?? [TERRACOTTA_GLOW, DEEP_SAFFRON];
+  const finalGradientColors = gradientColors ?? v.gradient ?? Luxe.gradients.culturepassBrand;
 
   const buttonStyle = [
     styles.base,

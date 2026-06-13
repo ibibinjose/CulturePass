@@ -5,6 +5,7 @@ import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import { useM3Colors } from '@/hooks/useM3Colors';
 import { M3Typography } from '@/design-system/tokens/typography';
 import { HeaderTokens, ScreenTokens } from '@/design-system/tokens/theme';
+import { pressableA11yRole } from '@/lib/webPressable';
 
 export interface M3TopAppBarProps {
   title: string;
@@ -78,7 +79,7 @@ export function M3TopAppBar({
           {onBack && (
             <Pressable
               onPress={onBack}
-              accessibilityRole="button"
+              accessibilityRole={pressableA11yRole('button')}
               accessibilityLabel="Go back"
               style={[
                 styles.iconButton,
@@ -119,7 +120,7 @@ export function M3TopAppBar({
             <Pressable
               key={index}
               onPress={action.onPress}
-              accessibilityRole="button"
+              accessibilityRole={pressableA11yRole('button')}
               accessibilityLabel={action.label ?? 'Action'}
               style={[
                 styles.iconButton,

@@ -38,6 +38,8 @@ export interface DigitalIdSummary {
   name: string;
   username: string;
   avatarUrl?: string | null;
+  avatarUpdatedAt?: string | null;
+  updatedAt?: string | null;
   memberSince: string;
   tier: string;
   tierLabel: string;

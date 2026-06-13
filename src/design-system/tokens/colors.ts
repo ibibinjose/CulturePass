@@ -1,43 +1,16 @@
 /**
- * CulturePass UI Token System
- * ===========================
+ * CulturePass UI Token System (2026)
+ * ==================================
  *
- * A comprehensive, theme-aware color system designed for cultural discovery.
+ * Canonical palette: docs/DESIGN_TOKENS.md
  *
- * Core Brand Tokens (2026 — see docs/DESIGN_TOKENS.md & docs/STYLE_GUIDE.md):
- *   - Indigo-Violet (#4F46E5) — primary brand identity
- *   - Rich Violet (#9333EA) — active states, gradient start
- *   - Movement Coral (#FF5E5B) — action and emotion
- *   - Brand Cyan (#00ADEF) — premium/cultural marker (accent only, not body/datetime text)
- *   - Warm Teal (#0D9488) — global belonging, venues
+ * Wordmark (CulturePass.App):
+ *   - cultureRed #f80020 — "Culture"
+ *   - passGreen  #00A651 — "Pass"
+ *   - appBlue    #009EDB — ".App" primary chrome
  *
- * Design Principles:
- *   ✓ Black-first premium surfaces across all platforms
- *   ✓ Warm discovery + action-oriented CTAs
- *   ✓ Cultural authenticity over tech-startup aesthetics
- *   ✓ Accessible contrast ratios (WCAG AA minimum)
- *
- * Usage:
- *   import { useColors } from '@/hooks/useColors';
- *   const colors = useColors(); // Runtime theme access
-/**
- * CulturePass Cultural Color System
- * ================================
- *
- * A comprehensive, theme-aware cultural color system designed for global heritage experiences.
- *
- * Core Cultural Colors:
- *   - Terracotta Glow (#E36A4E) — Primary action, cultural identity
- *   - Brand Cyan Deep (#00A7EF) — Secondary action, highlights
- *   - Rich Indigo (#4A5EBF) — Accent 1, cultural stories, links
- *   - Emerald Harmony (#0A8C7F) — Accent 2, trust, community sections
- *   - Brand Cyan (#00ADEF) — Accent 3, premium elements (replaces deprecated gold/saffron)
- *
- * Design Principles:
- *   ✓ Cultural authenticity over generic palettes
- *   ✓ Warm heritage tones for discovery and action
- *   ✓ Accessible contrast ratios (WCAG AA minimum)
- *   ✓ Platform-agnostic design with native performance
+ * Platform UI:
+ *   - indigo, violet, coral, teal, BRAND_CYAN family
  */
 
 import {
@@ -46,6 +19,11 @@ import {
   BRAND_CYAN_LIGHT,
   JET_BLACK,
 } from './brandCyanPalette';
+import {
+  BRAND_APP_BLUE,
+  BRAND_CULTURE_RED,
+  BRAND_PASS_GREEN,
+} from './brandWordmarkPalette';
 
 export interface ShadowStyle {
   shadowColor?: string;
@@ -87,7 +65,6 @@ const BRAND_PURPLE = "#4F46E5"; // Remapped to indigo — purple removed from br
  * Core Cultural Colors
  * Primary cultural identity and action palette.
  */
-const TERRACOTTA_GLOW = "#E36A4E";    // Primary - Main buttons, accents, hero highlights
 /** @deprecated Name retained — value is BRAND_CYAN_DEEP (replaces saffron). */
 const DEEP_SAFFRON = BRAND_CYAN_DEEP;
 const RICH_INDIGO = "#4A5EBF";        // Accent 1 - Cultural stories, map pins, links
@@ -128,8 +105,12 @@ export const CultureTokens = {
   /** Onboarding / auth primary button fill */
   ctaVivid: CTA_VIVID_BLUE,
 
-  // Cultural Accents
-  terracottaGlow: TERRACOTTA_GLOW,
+  // Wordmark palette (CulturePass.App)
+  cultureRed: BRAND_CULTURE_RED,
+  passGreen: BRAND_PASS_GREEN,
+  appBlue: BRAND_APP_BLUE,
+
+  // Cyan-backed accent aliases
   deepSaffron: DEEP_SAFFRON,
   richIndigo: RICH_INDIGO,
   emeraldHarmony: EMERALD_HARMONY,
@@ -179,7 +160,7 @@ export const EntityTypeColors: Record<EntityType, string> = {
   community: CultureTokens.heritageGold,
   organizer: CultureTokens.deepSaffron,
   organiser: CultureTokens.deepSaffron,
-  host: CultureTokens.terracottaGlow,
+  host: CultureTokens.appBlue,
   festival: CultureTokens.deepSaffron,
   tradition: "#8B5CF6",
   organisation: CultureTokens.indigo,
@@ -306,8 +287,8 @@ export const light: ColorTheme = {
   secondaryLight: "#E0F7FF",
   secondaryDark: "#006B8F",
 
-  accent: CultureTokens.terracottaGlow,
-  accentLight: "#FFDBCB",
+  accent: CultureTokens.appBlue,
+  accentLight: "#B3E5FC",
 
   background: CultureTokens.backgroundLight,
   backgroundSecondary: "#F5F1EE",
@@ -344,9 +325,9 @@ export const light: ColorTheme = {
 
   tint: CultureTokens.indigo,
 
-  cultureBrand: CultureTokens.terracottaGlow,
-  culturePrimary: CultureTokens.terracottaGlow,
-  cultureSecondary: CultureTokens.deepSaffron,
+  cultureBrand: CultureTokens.appBlue,
+  culturePrimary: CultureTokens.cultureRed,
+  cultureSecondary: CultureTokens.passGreen,
   cultureAccent: CultureTokens.heritageGold,
   cultureHighlight: CultureTokens.emeraldHarmony,
 };
@@ -374,8 +355,8 @@ export const dark: ColorTheme = {
   secondaryLight: "#005A78",
   secondaryDark: "#E0F7FF",
 
-  accent: CultureTokens.terracottaGlow,
-  accentLight: "#7D2900",
+  accent: CultureTokens.appBlue,
+  accentLight: "#004A6E",
 
   background: CultureTokens.backgroundDark,
   backgroundSecondary: "#121214",
@@ -412,9 +393,9 @@ export const dark: ColorTheme = {
 
   tint: CultureTokens.indigo,
 
-  cultureBrand: CultureTokens.terracottaGlow,
-  culturePrimary: CultureTokens.terracottaGlow,
-  cultureSecondary: CultureTokens.deepSaffron,
+  cultureBrand: CultureTokens.appBlue,
+  culturePrimary: CultureTokens.cultureRed,
+  cultureSecondary: CultureTokens.passGreen,
   cultureAccent: CultureTokens.heritageGold,
   cultureHighlight: CultureTokens.emeraldHarmony,
 };
@@ -461,19 +442,18 @@ export const glass = {
  */
 export const gradients = {
   /**
-   * CulturePass Signature Gradient (2026)
-   * Terracotta Glow #E36A4E → Brand Cyan Deep #00A7EF — cultural + cyan signature.
-   * Max ONE per screen. Hero / onboarding / CulturePass+ only.
+   * CulturePass Signature Gradient — wordmark spectrum (Culture red → .App blue).
+   * Max ONE per screen. Hero / onboarding / flagship CTA only.
    */
   culturepassBrand: [
-    CultureTokens.terracottaGlow,
-    CultureTokens.deepSaffron,
+    CultureTokens.cultureRed,
+    CultureTokens.appBlue,
   ] as [string, string],
 
   /** Primary brand gradient alias */
   primary: [
-    CultureTokens.terracottaGlow,
-    CultureTokens.deepSaffron,
+    CultureTokens.cultureRed,
+    CultureTokens.appBlue,
   ] as [string, string],
 
   /** Midnight / dark depth gradient */
@@ -501,10 +481,10 @@ export const gradients = {
   ] as [string, string],
   /** Premium cyan gradient for membership/pro badges */
   gold: [BRAND_CYAN, BRAND_CYAN_DEEP] as [string, string],
-  /** Terracotta + cyan sunset */
-  terracottaSunset: [
-    CultureTokens.terracottaGlow,
-    BRAND_CYAN_DEEP,
+  /** Wordmark sunset — culture red → app blue */
+  brandSunset: [
+    CultureTokens.cultureRed,
+    CultureTokens.appBlue,
   ] as [string, string],
   /** Hero banner overlay (transparent → dark) */
   heroOverlay: ["transparent", "rgba(0,0,0,0.8)"] as [string, string],
@@ -525,11 +505,11 @@ export const gradients = {
     BRAND_CYAN,
     BRAND_CYAN_LIGHT,
   ] as [string, string],
-  /** Cultural blend — Terracotta → Cyan Deep → Cyan */
+  /** Wordmark tricolor — Culture → Pass → .App */
   culturalBlend: [
-    CultureTokens.terracottaGlow,
-    BRAND_CYAN_DEEP,
-    BRAND_CYAN,
+    CultureTokens.cultureRed,
+    CultureTokens.passGreen,
+    CultureTokens.appBlue,
   ] as [string, string, string],
   /** Passport prestige — Cyan → Cyan Deep → Rich Indigo */
   passportPrestige: [
@@ -544,7 +524,7 @@ export const gradients = {
  * Use sparingly — only on focal points, not general UI.
  */
 export const neon = {
-  culturalHighlight: { color: CultureTokens.terracottaGlow, glow: "rgba(227, 106, 78, 0.3)" },      // Terracotta glow
+  culturalHighlight: { color: CultureTokens.appBlue, glow: "rgba(0, 158, 219, 0.3)" },
   festivalGlow: { color: BRAND_CYAN_DEEP, glow: "rgba(0, 167, 239, 0.3)" },
   storySpotlight: { color: CultureTokens.richIndigo, glow: "rgba(74, 94, 191, 0.3)" },          // Indigo glow
   communityPulse: { color: CultureTokens.emeraldHarmony, glow: "rgba(10, 140, 127, 0.3)" },         // Emerald glow

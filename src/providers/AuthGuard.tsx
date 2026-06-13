@@ -4,6 +4,7 @@ import { useRouter, useSegments } from 'expo-router';
 
 import { useOnboarding } from '@/contexts/OnboardingContext';
 import { useAuth } from '@/lib/auth';
+import { isAuthProtectedRoute } from '@/lib/authGuardRoutes';
 import { routeWithRedirect } from '@/lib/routes';
 
 /**
@@ -18,36 +19,7 @@ export function AuthGuard() {
   useEffect(() => {
     if (isRestoring) return;
 
-    const protectedRoutes = [
-      'profile',
-      'tickets',
-      'checkout',
-      'payment',
-      'saved',
-      'settings',
-      'membership',
-      'submit',
-      'scanner',
-      'notifications',
-      'contacts',
-      'admin',
-      'network',
-      'create',
-    ];
-
-    const membershipGuestMarketing =
-      segments[0] === 'membership' &&
-      (segments[1] === undefined || segments[1] === 'index' || segments[1] === 'upgrade');
-
-    const isProtected =
-      (protectedRoutes.includes(segments[0] as string) &&
-        !(segments[0] === 'membership' && membershipGuestMarketing)) ||
-      (segments[0] === '(tabs)' &&
-        (segments[1] === 'profile' ||
-          segments[1] === 'my-space' ||
-          segments[1] === 'perks' ||
-          segments[1] === 'calendar')) ||
-      (segments[0] === 'event' && segments[1] === 'create');
+    const isProtected = isAuthProtectedRoute(segments);
 
     const inOnboardingGroup = segments[0] === '(onboarding)';
     const currentOnboardingScreen = segments[1] ?? 'index';
@@ -86,7 +58,7 @@ export function AuthGuard() {
       inOnboardingGroup &&
       !preAuthScreens.has(currentOnboardingScreen) &&
       onboardingState.isComplete &&
-      // Interests finishes into Creation Lab — avoid racing router.push('/pages/create')
+      // Interests finishes into Creation Lab — avoid racing router.push('/hostspace/create')
       currentOnboardingScreen !== 'interests'
     ) {
       router.replace('/(tabs)');

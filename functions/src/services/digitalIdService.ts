@@ -191,6 +191,8 @@ export async function buildDigitalIdSummary(userId: string): Promise<DigitalIdSu
     name,
     username,
     avatarUrl: (data.avatarUrl as string | undefined) ?? null,
+    avatarUpdatedAt: parseFirestoreDate(data.avatarUpdatedAt) ?? null,
+    updatedAt: parseFirestoreDate(data.updatedAt) ?? null,
     memberSince,
     tier,
     tierLabel: formatTierLabel(tier),

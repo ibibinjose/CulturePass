@@ -172,7 +172,7 @@ function EventDisplayCard({ event }: { event: EventData }) {
   const isDraft = !event.status || event.status === 'draft';
   const imageUri = event.heroImageUrl || event.imageUrl || PLACEHOLDER_EVENT;
 
-  const statusColor = isPublished ? Luxe.colors.emerald : isDraft ? Luxe.colors.gold : Luxe.colors.terracotta;
+  const statusColor = isPublished ? Luxe.colors.emerald : isDraft ? Luxe.colors.gold : Luxe.colors.appBlue;
   const statusLabel = isPublished ? 'LIVE' : isDraft ? 'DRAFT' : (event.status ?? 'DRAFT').toUpperCase();
 
   return (
@@ -456,7 +456,7 @@ function HostDashboard() {
         ]}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={isRefetching} onRefresh={handleRefresh} tintColor={Luxe.colors.terracotta} />
+          <RefreshControl refreshing={isRefetching} onRefresh={handleRefresh} tintColor={Luxe.colors.appBlue} />
         }
       >
         <View style={[styles.topBar, isCompact && styles.topBarCompact]}>
@@ -522,7 +522,7 @@ function HostDashboard() {
           <StatCard label="Live events" value={stats.published} icon="radio-outline" color={Luxe.colors.emerald} isDesktop={isDesktop} />
           <StatCard label="Drafts" value={stats.drafts} icon="document-outline" color={Luxe.colors.gold} isDesktop={isDesktop} />
           <StatCard label="Live pages" value={stats.livePages} icon="layers-outline" color={CultureTokens.indigo} isDesktop={isDesktop} />
-          <StatCard label="Upcoming" value={stats.upcoming} icon="calendar-outline" color={Luxe.colors.terracotta} isDesktop={isDesktop} />
+          <StatCard label="Upcoming" value={stats.upcoming} icon="calendar-outline" color={Luxe.colors.appBlue} isDesktop={isDesktop} />
         </View>
 
         <View style={styles.section}>
@@ -543,7 +543,7 @@ function HostDashboard() {
             <LuxeText variant="title3" style={{ color: colors.text }}>
               Your pages
             </LuxeText>
-            <LuxeButton variant="ghost" size="sm" onPress={() => router.push('/pages/create' as never)}>
+            <LuxeButton variant="ghost" size="sm" onPress={() => navigateToCreationLab('hostspace_dashboard')}>
               Manage
             </LuxeButton>
           </View>
@@ -571,7 +571,7 @@ function HostDashboard() {
                 variant="filled"
                 size="sm"
                 style={{ marginTop: 8 }}
-                onPress={() => router.push('/pages/create' as never)}
+                onPress={() => navigateToCreationLab('hostspace_dashboard')}
               >
                 Create a Page
               </LuxeButton>
@@ -691,7 +691,7 @@ function HostDashboard() {
                 variant="tonal"
                 size="sm"
                 style={{ marginTop: 8 }}
-                onPress={() => router.push('/pages/create' as never)}
+                onPress={() => navigateToCreationLab('hostspace_dashboard')}
               >
                 Start a profile
               </LuxeButton>
@@ -755,7 +755,7 @@ function HostDashboard() {
           <LuxeText variant="caption" style={{ color: colors.textSecondary, flex: 1 }}>
             High-quality cover images increase profile engagement. Update your page branding in Create a Page.
           </LuxeText>
-          <LuxeButton variant="ghost" size="sm" onPress={() => router.push('/pages/create' as never)}>
+          <LuxeButton variant="ghost" size="sm" onPress={() => navigateToCreationLab('hostspace_dashboard')}>
             Update
           </LuxeButton>
         </GlassView>

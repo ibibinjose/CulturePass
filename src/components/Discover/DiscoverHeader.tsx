@@ -21,8 +21,10 @@ import { withAlpha } from '@/lib/withAlpha';
 
 interface DiscoverHeaderProps {
   currentTime: string;
+  dateLabel?: string;
   weatherSummary: string;
   city: string;
+  locationLabel?: string;
   country: string;
   isAuthenticated: boolean;
   onRefresh?: () => void;
@@ -30,8 +32,10 @@ interface DiscoverHeaderProps {
 
 function DiscoverHeaderComponent({
   currentTime,
+  dateLabel,
   weatherSummary,
   city,
+  locationLabel,
 }: DiscoverHeaderProps) {
   const colors = useColors();
   const vitrine = useDiscoverVitrine();
@@ -65,7 +69,9 @@ function DiscoverHeaderComponent({
     if (len <= 32) return FontSize.hero - 4;   // longer names
     return FontSize.hero - 6;                  // very long names
   }, [greeting]);
+  const placeLabel = locationLabel || city;
   const mobileMetaLabel = [currentTime, weatherSummary].filter(Boolean).join(' · ');
+  const desktopMetaLabel = [dateLabel, currentTime, weatherSummary].filter(Boolean).join(' · ');
 
   return (
     <View>
@@ -89,10 +95,9 @@ function DiscoverHeaderComponent({
                   },
                 ]}
               >
-                <Ionicons name="sparkles" size={12} color={accentColor} />
+                <Ionicons name="location" size={12} color={accentColor} />
                 <Text style={[styles.desktopMeta, { color: accentColor, fontFamily: FontFamily.semibold, marginBottom: 0 }]}>
-                  {currentTime}
-                  {weatherSummary ? ` · ${weatherSummary}` : ''}
+                  {desktopMetaLabel}
                 </Text>
               </LinearGradient>
               <LuxeText
@@ -110,7 +115,7 @@ function DiscoverHeaderComponent({
                 {greeting}
               </LuxeText>
               <LuxeText variant="body" style={[styles.desktopSub, { color: metaColor, fontFamily: FontFamily.regular, opacity: 0.9 }]}>
-                {`Explore festivals, communities, and events in ${city}.`}
+                {`Events near ${placeLabel} today — communities, dining, and culture around you.`}
               </LuxeText>
             </View>
           </View>
@@ -133,9 +138,10 @@ function DiscoverHeaderComponent({
               },
             ]}
           >
-            <Ionicons name="time" size={12} color={accentColor} />
+            <Ionicons name="location" size={12} color={accentColor} />
             <Text style={[styles.mobileMetaLabel, { color: accentColor, fontFamily: FontFamily.semibold }]} numberOfLines={1}>
-              {mobileMetaLabel}
+              {placeLabel}
+              {mobileMetaLabel ? ` · ${mobileMetaLabel}` : ''}
             </Text>
           </LinearGradient>
           <LuxeText

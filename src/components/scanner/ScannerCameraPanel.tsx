@@ -116,7 +116,7 @@ function Corner({ position }: { position: 'tl' | 'tr' | 'bl' | 'br' }) {
         isTop && !isRight && { borderTopWidth: CORNER_W, borderLeftWidth: CORNER_W, borderTopLeftRadius: 14 },
         !isTop && isRight && { borderBottomWidth: CORNER_W, borderRightWidth: CORNER_W, borderBottomRightRadius: 14 },
         !isTop && !isRight && { borderBottomWidth: CORNER_W, borderLeftWidth: CORNER_W, borderBottomLeftRadius: 14 },
-        { borderColor: Luxe.colors.terracotta },
+        { borderColor: Luxe.colors.appBlue },
       ]}
     />
   );
@@ -196,8 +196,8 @@ const styles = StyleSheet.create({
     left: 12,
     right: 12,
     height: 2,
-    backgroundColor: Luxe.colors.terracotta,
-    shadowColor: Luxe.colors.terracotta,
+    backgroundColor: Luxe.colors.appBlue,
+    shadowColor: Luxe.colors.appBlue,
     shadowOpacity: 0.9,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 0 },

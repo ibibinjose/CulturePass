@@ -17,6 +17,7 @@ import { useAuth } from '@/lib/auth';
 import { useColors } from '@/hooks/useColors';
 import { CultureTokens, BorderTokens } from '@/design-system/tokens/theme';
 import { routeWithRedirect } from '@/lib/routes';
+import { DIGITAL_ID_ROUTE } from '@/lib/digitalIdRoutes';
 
 export interface ProfileHeaderBarProps {
   compact?: boolean;
@@ -26,12 +27,12 @@ export interface ProfileHeaderBarProps {
 }
 
 const PROFILE_MENU_ITEMS = [
-  { key: 'profile', label: 'MySpace', icon: 'person-outline', route: '/(tabs)/my-space' },
+  { key: 'profile', label: 'MySpace', icon: 'person-outline', route: '/(tabs)/myspace' },
   { key: 'edit', label: 'Edit Profile', icon: 'create-outline', route: '/profile/edit' },
   { key: 'tickets', label: 'My Tickets', icon: 'ticket-outline', route: '/tickets' },
   { key: 'wallet', label: 'Wallet', icon: 'wallet-outline', route: '/payment/wallet' },
   { key: 'saved', label: 'Saved', icon: 'bookmark-outline', route: '/saved' },
-  { key: 'qr', label: 'Digital ID', icon: 'qr-code-outline', route: '/profile/qr' },
+  { key: 'qr', label: 'Digital ID', icon: 'id-card-outline', route: DIGITAL_ID_ROUTE },
   { key: 'communities', label: 'Communities', icon: 'people-outline', route: '/(tabs)/communities' },
   { key: 'settings', label: 'Settings', icon: 'settings-outline', route: '/settings' },
 ] as const;

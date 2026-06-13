@@ -32,30 +32,35 @@ export interface CultureTagPickerProps {
   onSearchQueryChange?: (query: string) => void;
   showSearch?: boolean;
   activeColor?: string;
+  maxSelections?: number;
   testID?: string;
 }
 
 function CultureTagChip({
   culture,
   active,
+  disabled,
   onPress,
   colors,
   activeColor,
 }: {
   culture: CultureTagChipCulture;
   active: boolean;
+  disabled?: boolean;
   onPress: () => void;
   colors: CultureTagPickerColors;
   activeColor: string;
 }) {
   return (
     <Pressable
-      onPress={onPress}
+      onPress={disabled ? undefined : onPress}
+      disabled={disabled}
       style={[
         styles.tagChip,
         {
           borderColor: active ? activeColor : colors.border,
           backgroundColor: active ? `${activeColor}22` : colors.surface,
+          opacity: disabled ? 0.45 : 1,
         },
       ]}
       accessibilityRole="button"
@@ -78,8 +83,10 @@ export function CultureTagPicker({
   onSearchQueryChange,
   showSearch = false,
   activeColor = CultureTokens.gold,
+  maxSelections,
   testID = 'culture-tag-picker',
 }: CultureTagPickerProps) {
+  const atMax = maxSelections != null && selectedIds.length >= maxSelections;
   const useAustralianSections = isAustralianNationality(nationalityId);
 
   const australianSections = useMemo(
@@ -130,16 +137,20 @@ export function CultureTagPicker({
                 <Text style={[styles.sectionTitle, { color: colors.text }]}>{section.label}</Text>
               </View>
               <View style={styles.tagGrid}>
-                {section.cultures.map((culture) => (
-                  <CultureTagChip
-                    key={culture.id}
-                    culture={culture}
-                    active={selectedIds.includes(culture.id)}
-                    onPress={() => onToggle(culture.id)}
-                    colors={colors}
-                    activeColor={activeColor}
-                  />
-                ))}
+                {section.cultures.map((culture) => {
+                  const active = selectedIds.includes(culture.id);
+                  return (
+                    <CultureTagChip
+                      key={culture.id}
+                      culture={culture}
+                      active={active}
+                      disabled={!active && atMax}
+                      onPress={() => onToggle(culture.id)}
+                      colors={colors}
+                      activeColor={activeColor}
+                    />
+                  );
+                })}
               </View>
             </View>
           ))
@@ -150,16 +161,20 @@ export function CultureTagPicker({
         )
       ) : (
         <View style={styles.tagGrid}>
-          {flatCultures.map((culture) => (
-            <CultureTagChip
-              key={culture.id}
-              culture={culture}
-              active={selectedIds.includes(culture.id)}
-              onPress={() => onToggle(culture.id)}
-              colors={colors}
-              activeColor={activeColor}
-            />
-          ))}
+          {flatCultures.map((culture) => {
+            const active = selectedIds.includes(culture.id);
+            return (
+              <CultureTagChip
+                key={culture.id}
+                culture={culture}
+                active={active}
+                disabled={!active && atMax}
+                onPress={() => onToggle(culture.id)}
+                colors={colors}
+                activeColor={activeColor}
+              />
+            );
+          })}
         </View>
       )}
     </View>

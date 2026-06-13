@@ -256,7 +256,7 @@ export default function TicketsScreen() {
         <View style={[styles.root, { backgroundColor: colors.background }]}>
           <M3TopAppBar
             title="My Tickets"
-            onBack={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)/my-space'))}
+            onBack={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)/myspace'))}
             variant="small"
             titleLeading={
               <Image

@@ -193,7 +193,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const resetOnboarding = useCallback(async () => {
     stateSnapshotRef.current = defaultState;
     setState(defaultState);
-    await AsyncStorage.removeItem(STORAGE_KEY).catch(() => {});
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(defaultState)).catch(() => {});
   }, []);
   const updateLocation = useCallback(async (country: string, city: string) => {
     persistUpdate({ country, city });

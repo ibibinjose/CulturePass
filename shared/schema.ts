@@ -44,3 +44,4 @@ export * from './schema/hostProfileAnalytics';
 export * from './schema/communityHomeBanner';
 export * from './schema/promoCode';
 export * from './schema/digitalId';
+export * from './schema/pricing';

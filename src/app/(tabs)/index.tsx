@@ -267,7 +267,7 @@ export default function DiscoverScreen() {
               width: 400,
               height: 400,
               borderRadius: 200,
-              backgroundColor: CultureTokens.terracottaGlow + (isDark ? '14' : '0f'),
+              backgroundColor: CultureTokens.appBlue + (isDark ? '14' : '0f'),
               ...Platform.select({
                 web: { filter: 'blur(100px)' },
               }),
@@ -381,9 +381,11 @@ export default function DiscoverScreen() {
 
             <DiscoverHeader
               currentTime={d.currentTime}
+              dateLabel={d.dateLabel}
               weatherSummary={d.weatherSummary}
-              city={d.state.city || 'Sydney'}
-              country={d.state.country || 'Australia'}
+              city={d.effectiveCity || d.state.city || 'Sydney'}
+              locationLabel={d.locationDisplayLabel}
+              country={d.effectiveCountry || d.state.country || 'Australia'}
               isAuthenticated={d.isAuthenticated}
               onRefresh={d.handleRefresh}
             />
@@ -398,7 +400,7 @@ export default function DiscoverScreen() {
             <IntentPill
               label="Today"
               icon="today"
-              accentColor={CultureTokens.terracottaGlow}
+              accentColor={CultureTokens.appBlue}
               onPress={() => {
                 if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 setActiveFilter('events');
@@ -422,6 +424,23 @@ export default function DiscoverScreen() {
                 setActiveFilter('events');
               }}
             />
+            {d.council ? (
+              <IntentPill
+                label={d.council.name.split(' ')[0] || 'Council'}
+                icon="business"
+                accentColor={CultureTokens.teal}
+                onPress={() => {
+                  if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  router.push({
+                    pathname: '/events',
+                    params: {
+                      councilId: d.council!.id,
+                      lgaCode: d.council!.lgaCode || undefined,
+                    },
+                  });
+                }}
+              />
+            ) : null}
             <IntentPill
               label="Free"
               icon="pricetag"

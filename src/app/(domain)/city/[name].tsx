@@ -24,12 +24,26 @@ import { GlassView } from '@/design-system/ui/GlassView';
 import EventCard from '@/components/Discover/EventCard';
 import { useOnboarding } from '@/contexts/OnboardingContext';
 import { useAuth } from '@/lib/auth';
-import { useCityPage, LISTING_TYPE_ROWS, type ListingTypeKey, type ExploreCategoryKey } from '@/hooks/useCityPage';
+import { useCityPage, type ListingTypeKey, type ExploreCategoryKey } from '@/hooks/useCityPage';
 import {
   cityAmbient,
   StatPill,
   CITY_HERO_FG,
 } from '@/components/city/CityDestinationStyles';
+import { DestinationBrowseByType } from '@/components/city/DestinationBrowseByType';
+import { DestinationExploreChips } from '@/components/city/DestinationExploreChips';
+import { DestinationMapFab } from '@/components/city/DestinationMapFab';
+import { DestinationStickyBar } from '@/components/city/DestinationStickyBar';
+import {
+  buildDestinationListingHref,
+  destinationFabBottom,
+  destinationHeroHeight,
+  destinationHubScrollBottom,
+  DESTINATION_HERO_GRADIENT,
+  filterEventsByExploreCategory,
+  filterVenuesByExploreCategory,
+  isVenuePrimaryExploreCategory,
+} from '@/components/city/destinationLayout';
 import { FilterRail, type FilterRailAction, type FilterChipItem, type FilterRailMode } from '@/components/browse/FilterRail';
 import { downloadICS } from '@/lib/ical';
 import { useSafeBack } from '@/lib/navigation';
@@ -40,22 +54,6 @@ import { Footer } from '@/components/Footer';
 import { M3Card } from '@/design-system/ui';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-
-const EXPLORE_CATEGORY_LINKS: readonly {
-  key: ExploreCategoryKey;
-  label: string;
-  icon: keyof typeof Ionicons.glyphMap;
-}[] = [
-  { key: 'events', label: 'Events', icon: 'calendar-outline' },
-  { key: 'movies', label: 'Movies', icon: 'film-outline' },
-  { key: 'dining', label: 'Dining', icon: 'restaurant-outline' },
-  { key: 'activities', label: 'Activities', icon: 'compass-outline' },
-  { key: 'shopping', label: 'Shopping', icon: 'bag-handle-outline' },
-  { key: 'offers', label: 'Offers', icon: 'pricetag-outline' },
-  { key: 'artists', label: 'Artists', icon: 'color-palette-outline' },
-  { key: 'directory', label: 'Directory', icon: 'grid-outline' },
-  { key: 'indigenous', label: 'Indigenous', icon: 'leaf-outline' },
-];
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
@@ -162,9 +160,11 @@ function VenueCard({ venue, colors }: { venue: Profile; colors: ReturnType<typeo
 export default function CityScreen() {
   const { name, country } = useLocalSearchParams<{ name: string; country?: string }>();
   const colors = useColors();
-  const { isDesktop, contentWidth, width, hPad } = useLayout();
+  const { isDesktop, contentWidth, width, hPad, isExpanded, safeAreaBottom } = useLayout();
   const safeInsets = useSafeAreaInsetsWeb();
   const topInset = safeInsets.top;
+  const heroHeight = destinationHeroHeight({ isExpanded, isDesktop, variant: 'hub' });
+  const fabBottom = destinationFabBottom(0, safeAreaBottom);
   const { state: onboarding } = useOnboarding();
   const { isAuthenticated } = useAuth();
   const scrollRef   = useRef<ScrollView>(null);
@@ -195,7 +195,7 @@ export default function CityScreen() {
     }).length;
   }, [page.allEvents]);
 
-  const { isCitySubscribed, toggleSubscribeCity, citySubscriptionSync } = useSaved();
+  const { isCitySubscribed, toggleSubscribeCity } = useSaved();
   const subscribed = isCitySubscribed(cityName, cityCountry);
   const handleSubscribe = useCallback(() => {
     if (!isAuthenticated) {
@@ -253,55 +253,22 @@ export default function CityScreen() {
 
   const openListingTypeResults = useCallback(
     (listingType: ListingTypeKey) => {
-      const hubQuery = encodeURIComponent(cityName);
-      const routes: Record<ListingTypeKey, string> = {
-        event: `/events`,
-        festival: `/search?q=${encodeURIComponent(`${cityName} festival`)}`,
-        concert: `/search?q=${encodeURIComponent(`${cityName} concert`)}`,
-        workshop: `/search?q=${encodeURIComponent(`${cityName} workshop`)}`,
-        movie: `/movies`,
-        dining: `/restaurants`,
-        shopping: `/shopping`,
-        activity: `/a`,
-        professional: `/search?q=${encodeURIComponent(`${cityName} professional`)}`,
-        organisation: `/search?q=${encodeURIComponent(`${cityName} organisation`)}`,
-        business: `/directory`,
-        artist: `/search?q=${encodeURIComponent(`${cityName} artist`)}`,
-        perk: `/perks`,
-      };
-      const route = routes[listingType];
-      if (route.includes('?q=')) {
-        router.push(route as never);
-        return;
-      }
-      const suffix = route.includes('?') ? '&' : '?';
-      router.push(`${route}${suffix}q=${hubQuery}` as never);
+      router.push(buildDestinationListingHref(listingType, cityName) as never);
     },
     [cityName],
   );
 
-  const filteredEventsByExplore = useMemo(() => {
-    const includesAny = (haystack: string, needles: string[]) => needles.some((n) => haystack.includes(n));
-    return page.filteredEvents.filter((e) => {
-      const blob = `${e.category ?? ''} ${(e.tags ?? []).join(' ')} ${(e.cultureTag ?? []).join(' ')} ${(e.cultureTags ?? []).join(' ')}`.toLowerCase();
-      switch (activeExploreCategory) {
-        case 'events':
-          return true;
-        case 'movies':
-          return includesAny(blob, ['movie', 'film', 'cinema', 'screening']);
-        case 'activities':
-          return includesAny(blob, ['activity', 'tour', 'experience', 'workshop', 'class']);
-        case 'offers':
-          return includesAny(blob, ['offer', 'deal', 'discount', 'free', 'perk']);
-        case 'indigenous':
-          return includesAny(blob, ['indigenous', 'aboriginal', 'first nations', 'torres strait']);
-        case 'artists':
-          return includesAny(blob, ['artist', 'music', 'dance', 'creative', 'performance', 'concert']);
-        default:
-          return true;
-      }
-    });
-  }, [activeExploreCategory, page.filteredEvents]);
+  const filteredEventsByExplore = useMemo(
+    () => filterEventsByExploreCategory(page.filteredEvents, activeExploreCategory),
+    [activeExploreCategory, page.filteredEvents],
+  );
+
+  const filteredVenuesByExplore = useMemo(
+    () => filterVenuesByExploreCategory(page.venues, activeExploreCategory),
+    [activeExploreCategory, page.venues],
+  );
+
+  const showVenueResults = isVenuePrimaryExploreCategory(activeExploreCategory);
 
   return (
     <View style={[s.root, { backgroundColor: colors.background }]}>
@@ -317,7 +284,11 @@ export default function CityScreen() {
       <ScrollView
         ref={scrollRef}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[s.scroll, isDesktop && { width: contentWidth, alignSelf: 'center' }]}
+        contentContainerStyle={[
+          s.scroll,
+          { paddingBottom: destinationHubScrollBottom(safeAreaBottom) },
+          isDesktop && { width: contentWidth, alignSelf: 'center' },
+        ]}
         stickyHeaderIndices={[2]}
         refreshControl={
           <RefreshControl
@@ -328,16 +299,16 @@ export default function CityScreen() {
         }
       >
         {/* ── Hero ────────────────────────────────────────────────────────── */}
-        <View style={[s.hero, { paddingTop: topInset + 16 }]}>
+        <View style={[s.hero, { height: heroHeight }]}>
           <Image source={{ uri: page.heroImage }} style={StyleSheet.absoluteFill} contentFit="cover" transition={600} />
           <LinearGradient
-            colors={['rgba(0,0,0,0.7)', 'rgba(0,0,0,0.12)', 'rgba(0,0,0,0.92)']}
+            colors={DESTINATION_HERO_GRADIENT}
             locations={[0, 0.42, 1]}
             style={StyleSheet.absoluteFill}
           />
 
           {/* Nav bar */}
-          <View style={[s.heroNav, { paddingTop: 10 }]}>
+          <View style={[s.heroNav, { paddingTop: topInset + 12 }]}>
             <GlassView borderRadius={20} bordered={false} style={[s.heroNavBtn, s.heroNavBtnBlue]} contentStyle={s.heroNavBtnInner}>
               <Pressable onPress={goBackSafe} style={s.heroIconHit} accessibilityLabel="Go back" accessibilityRole="button">
                 <Ionicons name="chevron-back" size={22} color={CultureTokens.indigo} />
@@ -392,11 +363,7 @@ export default function CityScreen() {
                 {subscribed ? 'Subscribed' : 'Subscribe'}
               </Text>
             </Pressable>
-            {__DEV__ && (
-              <Text style={s.debugSyncText}>
-                Sync: {citySubscriptionSync.mode === 'account' ? 'Account' : 'Local'} · {citySubscriptionSync.status}
-              </Text>
-            )}
+
           </View>
         </View>
 
@@ -433,60 +400,14 @@ export default function CityScreen() {
           </ScrollView>
         </View>
 
-        {/* ── Sticky filter bar — single row ───────────────────────────────── */}
-        <View style={[s.filterBar, { backgroundColor: colors.background }]}>
-          <ScrollView
-            horizontal
-            nestedScrollEnabled
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={[
-              s.exploreRow,
-              { paddingHorizontal: hPad, paddingVertical: 8, paddingRight: hPad + 32 },
-            ]}
-          >
-            {EXPLORE_CATEGORY_LINKS.map((item) => {
-              const active = activeExploreCategory === item.key;
-              return (
-                <Pressable
-                  key={item.key}
-                  onPress={() => {
-                    setActiveExploreCategory(item.key);
-                  }}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Show ${item.label}`}
-                  accessibilityState={{ selected: active }}
-                >
-                  {active ? (
-                    <LinearGradient
-                      colors={gradients.culturepassBrand}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                      style={s.exploreChipGradient}
-                    >
-                      <Ionicons name={item.icon} size={14} color="#fff" />
-                      <Text style={s.exploreChipOnGradient}>{item.label}</Text>
-                    </LinearGradient>
-                  ) : (
-                    <View
-                      style={[
-                        s.exploreChipIdle,
-                        {
-                          backgroundColor: colors.surfaceElevated,
-                          borderColor: colors.borderLight,
-                        },
-                      ]}
-                    >
-                      <Ionicons name={item.icon} size={14} color={colors.textSecondary} />
-                      <Text style={[s.exploreChipIdleText, { color: colors.textSecondary }]}>
-                        {item.label}
-                      </Text>
-                    </View>
-                  )}
-                </Pressable>
-              );
-            })}
-          </ScrollView>
-
+        {/* ── Sticky filter bar ───────────────────────────────────────────── */}
+        <DestinationStickyBar tone="legacy">
+          <DestinationExploreChips
+            active={activeExploreCategory}
+            onSelect={setActiveExploreCategory}
+            hPad={hPad}
+            variant="gradient"
+          />
           <FilterRail
             modes={railModes}
             groups={[{ items: railChips }]}
@@ -494,7 +415,7 @@ export default function CityScreen() {
             activeCount={page.totalActiveFilters}
             onClearAll={page.clearAllFilters}
           />
-        </View>
+        </DestinationStickyBar>
 
         {/* ── Main content ─────────────────────────────────────────────────── */}
         <View style={isDesktop ? s.desktopRow : undefined}>
@@ -504,9 +425,13 @@ export default function CityScreen() {
             <View style={[s.section, isDesktop && { paddingHorizontal: 0 }]}>
               <View style={s.sectionHeader}>
                 <View>
-                  <Text style={[TextStyles.title3, { color: colors.text }]}>{page.sectionTitle}</Text>
+                  <Text style={[TextStyles.title3, { color: colors.text }]}>
+                    {showVenueResults ? 'Local places' : page.sectionTitle}
+                  </Text>
                   <Text style={[TextStyles.caption, { color: colors.textTertiary, marginTop: 2 }]}>
-                    {filteredEventsByExplore.length} result{filteredEventsByExplore.length !== 1 ? 's' : ''} · {page.venues.length} places in {cityName}
+                    {showVenueResults
+                      ? `${filteredVenuesByExplore.length} place${filteredVenuesByExplore.length === 1 ? '' : 's'} in ${cityName}`
+                      : `${filteredEventsByExplore.length} result${filteredEventsByExplore.length !== 1 ? 's' : ''} · ${page.venues.length} places in ${cityName}`}
                   </Text>
                 </View>
                 {page.totalActiveFilters > 0 && (
@@ -519,23 +444,64 @@ export default function CityScreen() {
                 )}
               </View>
 
-              <EventsGrid
-                events={filteredEventsByExplore}
-                isLoading={page.isLoading}
-                width={width}
-                isDesktop={isDesktop}
-                desktopCardWidth={page.desktopCardWidth}
-                gridGap={page.gridGap}
-                onClear={page.clearAllFilters}
-              />
+              {showVenueResults ? (
+                page.isLoading ? (
+                  <View style={{ gap: 10 }}>
+                    {[1, 2, 3].map((i) => (
+                      <View key={i} style={[eg.skeleton, { backgroundColor: colors.backgroundSecondary, width: '100%', height: 72 }]} />
+                    ))}
+                  </View>
+                ) : filteredVenuesByExplore.length === 0 ? (
+                  <View style={eg.empty}>
+                    <Ionicons name="business-outline" size={52} color={colors.textTertiary} />
+                    <Text style={[eg.emptyTitle, { color: colors.text }]}>No places found</Text>
+                    <Text style={[eg.emptySub, { color: colors.textSecondary }]}>
+                      Try another category or browse the directory for {cityName}.
+                    </Text>
+                    <Pressable
+                      style={[eg.clearBtn, { backgroundColor: colors.primarySoft, borderColor: colors.primary + '40' }]}
+                      onPress={() => router.push('/directory')}
+                    >
+                      <Text style={[eg.clearText, { color: colors.primary }]}>Browse directory</Text>
+                    </Pressable>
+                  </View>
+                ) : (
+                  <View style={{ gap: 10 }}>
+                    {filteredVenuesByExplore.map((venue) => (
+                      <VenueCard key={venue.id} venue={venue} colors={colors} />
+                    ))}
+                  </View>
+                )
+              ) : (
+                <EventsGrid
+                  events={filteredEventsByExplore}
+                  isLoading={page.isLoading}
+                  width={width}
+                  isDesktop={isDesktop}
+                  desktopCardWidth={page.desktopCardWidth}
+                  gridGap={page.gridGap}
+                  onClear={page.clearAllFilters}
+                />
+              )}
             </View>
           </View>
 
           {/* Sidebar */}
           <View style={isDesktop ? s.desktopSidebar : undefined}>
+            <DestinationBrowseByType
+              counts={page.listingResultCounts}
+              onSelect={openListingTypeResults}
+              hPad={isDesktop ? 0 : hPad}
+              contextName={cityName}
+              layout="auto"
+              inSidebar
+              isDesktop={isDesktop}
+              tone="legacy"
+            />
+
             {page.venues.length > 0 && (
               <View
-                style={[s.section, isDesktop && { paddingHorizontal: 0, paddingTop: 0 }]}
+                style={[s.section, isDesktop && { paddingHorizontal: 0, paddingTop: 20 }]}
                 onLayout={(e) => { venueAnchor.current = e.nativeEvent.layout.y; }}
               >
                 <Text style={[TextStyles.title3, { color: colors.text, marginBottom: 14 }]}>Local Places</Text>
@@ -553,50 +519,6 @@ export default function CityScreen() {
                 )}
               </View>
             )}
-
-            <View style={[s.section, isDesktop && { paddingHorizontal: 0 }]}>
-              <Text style={[TextStyles.title3, { color: colors.text, marginBottom: 4 }]}>
-                Browse by type
-              </Text>
-              <Text style={[TextStyles.caption, { color: colors.textSecondary, marginBottom: 16 }]}>
-                Explore {cityName} across different categories.
-              </Text>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-                {LISTING_TYPE_ROWS.map((row) => (
-                  <Pressable
-                    key={row.key}
-                    onPress={() => openListingTypeResults(row.key)}
-                    style={({ pressed }) => [
-                      {
-                        width: isDesktop ? '100%' : '48.2%',
-                        borderWidth: 1.5,
-                        borderColor: colors.borderLight,
-                        borderRadius: Radius.lg,
-                        padding: 12,
-                        backgroundColor: colors.surfaceElevated,
-                        opacity: pressed ? 0.9 : 1,
-                      },
-                    ]}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Open ${row.title} results`}
-                  >
-                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                      <Text style={[TextStyles.callout, { color: colors.text, fontFamily: FontFamily.bold, fontSize: 13 }]}>
-                        {row.title}
-                      </Text>
-                      <View style={{ borderRadius: Radius.full, paddingHorizontal: 6, paddingVertical: 1, backgroundColor: colors.primarySoft }}>
-                        <Text style={{ fontSize: 10, color: colors.primary, fontFamily: FontFamily.bold }}>
-                          {page.listingResultCounts[row.key]}
-                        </Text>
-                      </View>
-                    </View>
-                    <Text style={[TextStyles.caption, { color: colors.textSecondary, lineHeight: 14, fontSize: 11 }]} numberOfLines={2}>
-                      {row.description}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
-            </View>
 
             {page.uniqueCultureTags.length > 0 && (
               <View style={[s.section, isDesktop && { paddingHorizontal: 0 }]}>
@@ -664,22 +586,11 @@ export default function CityScreen() {
 
         {/* ── Footer ────────────────────────────────────────────────────────── */}
         <Footer />
-        
-        <View style={{ height: 120 }} />
       </ScrollView>
 
-      {/* FAB — map, mobile only */}
-      {!isDesktop && (
-        <Pressable
-          style={s.fab}
-          onPress={goToMap}
-          accessibilityLabel="Open map"
-          accessibilityRole="button"
-        >
-          <Ionicons name="map" size={20} color="#fff" />
-          <Text style={s.fabText}>Map</Text>
-        </Pressable>
-      )}
+      {!isDesktop ? (
+        <DestinationMapFab bottom={fabBottom} onPress={goToMap} />
+      ) : null}
     </View>
   );
 }
@@ -691,7 +602,7 @@ const s = StyleSheet.create({
   scroll: { paddingBottom: 40 },
 
   // Hero
-  hero: { height: 400, overflow: 'hidden' },
+  hero: { overflow: 'hidden' },
   heroNav: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -747,12 +658,6 @@ const s = StyleSheet.create({
   },
   subscribeBtnText: { fontSize: 14, fontFamily: 'Poppins_600SemiBold', color: '#fff' },
   subscribeBtnTextActive: { color: '#0F172A' },
-  debugSyncText: {
-    marginTop: 8,
-    fontSize: 11,
-    fontFamily: 'Poppins_500Medium',
-    color: 'rgba(255,255,255,0.85)',
-  },
 
   // Stats strip
   statsStripContainer: {
@@ -766,50 +671,10 @@ const s = StyleSheet.create({
   },
   statDiv: { width: 1, height: 28, opacity: 0.6, marginHorizontal: 4 },
 
-  // Filter bar
-  filterBar: { zIndex: 10 },
-
   // Layout
   desktopRow: { flexDirection: 'row', gap: 32, paddingHorizontal: 20 },
   desktopEvents: { flex: 2.8 },
   desktopSidebar: { flex: 1, paddingTop: 28 },
-
-  exploreRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    flexGrow: 1,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(0,0,0,0.05)',
-  },
-  exploreChipGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'transparent',
-  },
-  exploreChipOnGradient: {
-    fontSize: 12,
-    fontFamily: 'Poppins_600SemiBold',
-    color: '#fff',
-  },
-  exploreChipIdle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    borderRadius: 999,
-    borderWidth: StyleSheet.hairlineWidth,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  exploreChipIdleText: {
-    fontSize: 12,
-    fontFamily: 'Poppins_600SemiBold',
-  },
 
   // Section
   section: { paddingHorizontal: 20, paddingTop: 28 },
@@ -849,25 +714,6 @@ const s = StyleSheet.create({
   },
   mapBtnText: { fontSize: 14, fontFamily: 'Poppins_600SemiBold' },
 
-  // FAB
-  fab: {
-    position: 'absolute',
-    right: 24,
-    bottom: 32,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: CultureTokens.indigo,
-    borderRadius: 32,
-    paddingHorizontal: 18,
-    paddingVertical: 14,
-    ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 10 },
-      android: { elevation: 8 },
-      default: {},
-    }),
-  },
-  fabText: { color: '#fff', fontSize: 14, fontFamily: 'Poppins_700Bold' },
 });
 
 // ─── Events grid styles ───────────────────────────────────────────────────────

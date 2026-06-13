@@ -58,7 +58,7 @@ const SLIDES: Slide[] = [
     headline: 'Discover your\ncultural world',
     sub: 'Find events, food, and cultural experiences — curated for your city.',
     icon: 'calendar',
-    gradientColors: [CultureTokens.terracottaGlow, CultureTokens.deepSaffron],
+    gradientColors: [CultureTokens.cultureRed, CultureTokens.appBlue],
   },
   {
     id: 'connect',

@@ -20,35 +20,45 @@ import {
   IconSize,
   FontFamily,
   FontSize,
-  CultureTokens,
   ScreenTokens,
   shadows,
   Luxe,
   LuxeTextStyles,
 } from '@/design-system/tokens/theme';
-import { useColors } from '@/hooks/useColors';
+import { useColors, useIsDark } from '@/hooks/useColors';
 import { GlassView } from '@/design-system/ui/GlassView';
 import { LuxeText } from '@/design-system/ui/LuxeText';
+import { getAuthScreenPalette, type AuthScreenVariant } from '@/components/onboarding/authScreenTheme';
 
-export function AuthAmbientBackground() {
+type AuthAmbientBackgroundProps = {
+  variant?: AuthScreenVariant;
+};
+
+export function AuthAmbientBackground({ variant = 'login' }: AuthAmbientBackgroundProps) {
   const colors = useColors();
+  const isDark = useIsDark();
+  const palette = getAuthScreenPalette(variant, isDark, colors);
 
   return (
     <View pointerEvents="none" style={StyleSheet.absoluteFill}>
       <LinearGradient
-        colors={[colors.background, colors.backgroundSecondary, colors.background]}
+        colors={
+          isDark
+            ? [colors.background, '#050508', colors.backgroundSecondary]
+            : [colors.background, palette.accentMuted, colors.backgroundSecondary]
+        }
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFill}
       />
       <LinearGradient
-        colors={[`${CultureTokens.gold}22`, `${CultureTokens.gold}08`, 'transparent']}
+        colors={[palette.orbPrimary, palette.orbSecondary, 'transparent']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.ambientOrbTop}
       />
       <LinearGradient
-        colors={[`${CultureTokens.gold}12`, 'transparent', 'transparent']}
+        colors={[palette.orbSecondary, 'transparent', 'transparent']}
         start={{ x: 1, y: 0 }}
         end={{ x: 0, y: 1 }}
         style={styles.ambientOrbBottom}

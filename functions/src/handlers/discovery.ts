@@ -6,6 +6,10 @@ import { requireAuth, isOwnerOrAdmin } from '../middleware/auth';
 import { searchService } from '../services/firestore';
 import { resolveDiscoverCuration } from '../services/discoverCuration';
 import { getDiscoverFeedWithContracts } from '../services/discoverDomain';
+import {
+  getCommunityEventsForUser,
+  getContinueBrowsingForUser,
+} from '../services/discoverRails';
 
 export const discoveryRouter = Router();
 
@@ -43,6 +47,38 @@ discoveryRouter.get('/discover', requireAuth, async (req: Request, res: Response
  *  - userId === 'guest' → public, no auth required
  *  - any other userId  → requires auth + must be owner or admin
  */
+/** GET /api/discover/continue-browsing — recent event visits for current user */
+discoveryRouter.get('/discover/continue-browsing', requireAuth, async (req: Request, res: Response) => {
+  try {
+    if (!isFirestoreConfigured) return res.json({ items: [] });
+    const payload = await getContinueBrowsingForUser(req.user!.id);
+    return res.json(payload);
+  } catch (err) {
+    captureRouteError(err, 'GET /api/discover/continue-browsing');
+    return res.status(500).json({ error: 'Failed to fetch continue browsing' });
+  }
+});
+
+/** GET /api/discover/community-events — upcoming events from joined communities */
+discoveryRouter.get('/discover/community-events', requireAuth, async (req: Request, res: Response) => {
+  try {
+    if (!isFirestoreConfigured) {
+      const now = new Date();
+      const windowEnd = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+      return res.json({
+        events: [],
+        windowStart: now.toISOString(),
+        windowEnd: windowEnd.toISOString(),
+      });
+    }
+    const payload = await getCommunityEventsForUser(req.user!.id);
+    return res.json(payload);
+  } catch (err) {
+    captureRouteError(err, 'GET /api/discover/community-events');
+    return res.status(500).json({ error: 'Failed to fetch community events' });
+  }
+});
+
 discoveryRouter.get('/discover/curation', async (req: Request, res: Response) => {
   try {
     const cultureIds = String(req.query.cultureIds ?? '')

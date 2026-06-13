@@ -14,6 +14,7 @@ import { db, stripeClient } from '../admin';
 import { buildMembershipResponse, nowIso, qparam,
   captureRouteError,
 } from './utils';
+import { resolveMembershipStripePriceId } from '../services/pricing';
 
 export const membershipRouter = Router();
 
@@ -85,6 +86,8 @@ membershipRouter.get('/membership/:userId', requireAuth, async (req: Request, re
 const subscribeSchema = z.object({
   billingPeriod: z.enum(['monthly', 'yearly']),
   promoCode: z.string().optional(),
+  /** Optional override; defaults to users/{uid}.country */
+  country: z.string().optional(),
 });
 
 membershipRouter.post('/membership/subscribe', requireAuth, requireRevocationCheck, async (req: Request, res: Response) => {
@@ -197,11 +200,19 @@ membershipRouter.post('/membership/subscribe', requireAuth, requireRevocationChe
     });
   }
 
-  const priceId = parsed.billingPeriod === 'yearly'
-    ? process.env.STRIPE_PRICE_YEARLY_ID
-    : process.env.STRIPE_PRICE_MONTHLY_ID;
-
-  if (!priceId) {
+  const billingCountry = parsed.country?.trim() || user.country || undefined;
+  let priceId: string;
+  let pricingPlanMeta: { market: string; currency: string; amountCents: number; stripePriceId: string } | undefined;
+  try {
+    const resolved = await resolveMembershipStripePriceId(parsed.billingPeriod, billingCountry);
+    priceId = resolved.priceId;
+    pricingPlanMeta = {
+      market: resolved.market.code,
+      currency: resolved.plan.currency,
+      amountCents: resolved.plan.amountCents,
+      stripePriceId: resolved.plan.stripePriceId!,
+    };
+  } catch {
     return res.status(503).json({ error: 'Subscription price not configured', code: 'PRICE_NOT_CONFIGURED' });
   }
 
@@ -231,10 +242,18 @@ membershipRouter.post('/membership/subscribe', requireAuth, requireRevocationChe
       customer: stripeCustomerId,
       line_items: [{ price: priceId, quantity: 1 }],
       client_reference_id: userId,
-      metadata: { userId },
+      metadata: {
+        userId,
+        billingMarket: pricingPlanMeta?.market ?? '',
+        billingCountry: billingCountry ?? '',
+      },
       subscription_data: {
         trial_period_days: 14,
-        metadata: { userId },
+        metadata: {
+          userId,
+          billingMarket: pricingPlanMeta?.market ?? '',
+          billingCountry: billingCountry ?? '',
+        },
       },
       success_url: `${appUrl}/membership/upgrade?session_id={CHECKOUT_SESSION_ID}&status=success`,
       cancel_url: `${appUrl}/membership/upgrade?status=cancelled`,
@@ -258,6 +277,7 @@ membershipRouter.post('/membership/subscribe', requireAuth, requireRevocationChe
       checkoutUrl: session.url,
       sessionId: session.id,
       introDiscountApplied: introEligible && !stripePromoCodeId,
+      pricing: pricingPlanMeta,
     });
   } catch (err) {
     captureRouteError(err, 'membership/subscribe');

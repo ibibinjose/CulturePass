@@ -27,6 +27,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { useLocation } from '@/contexts/LocationContext';
+import { useOnboarding } from '@/contexts/OnboardingContext';
 import { useColors } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
 import { useRole } from '@/hooks/useRole';
@@ -520,8 +522,10 @@ function CultureMarketScreenInner() {
   const colors = useColors();
   const { isDesktop, isTablet, hPad, contentWidth, columnGap } = useLayout();
   const { user } = useAuth();
-  const city = user?.city?.trim();
-  const country = user?.country?.trim();
+  const appLocation = useLocation();
+  const { state: onboarding } = useOnboarding();
+  const city = appLocation.city || user?.city?.trim() || onboarding.city?.trim();
+  const country = appLocation.country || user?.country?.trim() || onboarding.country?.trim();
   const { isModerator, isOrganizer } = useRole();
   const canManage = isModerator || isOrganizer;
 

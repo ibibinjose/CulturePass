@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useColors } from '@/hooks/useColors';
 import { CardTokens, CultureTokens, TextStyles } from '@/design-system/tokens/theme';
 import { formatEventDateTime } from '@/lib/dateUtils';
+import { formatEventLocation } from '@/lib/presentation';
 import type { EventData } from '@/shared/schema';
 
 interface Props {
@@ -38,14 +39,12 @@ export default function EventCard({ event }: Props) {
           </Text>
         </View>
 
-        {event.venue ? (
-          <View style={styles.metaRow}>
-            <Ionicons name="location-outline" size={12} color={colors.textSecondary} />
-            <Text style={[styles.meta, { color: colors.textSecondary }]} numberOfLines={1}>
-              {event.venue}
-            </Text>
-          </View>
-        ) : null}
+        <View style={styles.metaRow}>
+          <Ionicons name="location-outline" size={12} color={colors.textSecondary} />
+          <Text style={[styles.meta, { color: colors.textSecondary }]} numberOfLines={1}>
+            {formatEventLocation(event)}
+          </Text>
+        </View>
 
         {event.publisherProfileId ? (
           <View style={styles.publisherWrap}>

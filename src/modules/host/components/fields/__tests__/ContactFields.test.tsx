@@ -42,7 +42,7 @@ describe('EmailField', () => {
     );
 
     await waitFor(() => {
-      expect(getByText('Send Verification Email')).toBeTruthy();
+      expect(getByText('Confirm email')).toBeTruthy();
     }, { timeout: 500 });
   });
 

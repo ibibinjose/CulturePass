@@ -88,7 +88,7 @@ export default function HelpScreen() {
         style={helpAmbient.mesh}
         pointerEvents="none"
       />
-      <M3TopAppBar title="Help & Support" onBack={() => goBackOrReplace('/(tabs)/my-space')} denseWeb webChromeless />
+      <M3TopAppBar title="Help & Support" onBack={() => goBackOrReplace('/(tabs)/myspace')} denseWeb webChromeless />
 
       <ScrollView
         showsVerticalScrollIndicator={false}

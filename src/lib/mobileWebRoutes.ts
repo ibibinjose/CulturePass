@@ -4,7 +4,7 @@ const MOBILE_WEB_TAB_PATHS = new Set([
   '/calendar',
   '/community',
   '/city',
-  '/my-space',
+  '/myspace',
   '/perks',
   '/menu',
   '/directory',

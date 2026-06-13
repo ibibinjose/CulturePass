@@ -46,6 +46,10 @@
 - Route all changes through the dispatcher in `EventCard.tsx` (feature-flagged via `eventcard-v2`).
 - The goal is eventual 100% V2 rollout, after which V1 and the dispatcher will be removed.
 
+### 8b. Event Detail Info Document
+- **Always** surface organiser, date/time range, location, event type, category, calendar export, and share actions via `EventInfoDocument` — never hide these rows when data is partial; use `DISPLAY_FALLBACK` from `src/lib/presentation.ts`.
+- Spec: `docs/EVENT_DETAIL_UI.md`.
+
 ### 9. Layout Hardcoding
 - **Never** hardcode the old `67px` top bar value.
 - Always compute: `const topInset = Platform.OS === 'web' ? 0 : insets.top;`

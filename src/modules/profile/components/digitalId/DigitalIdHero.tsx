@@ -12,7 +12,7 @@ type DigitalIdHeroProps = {
 };
 
 /**
- * Signature-gradient hero strip for /profile/qr — one flagship CTA surface per screen rules.
+ * Signature-gradient hero strip for Digital ID Lab (/profile/qr) — one flagship CTA surface per screen rules.
  */
 export function DigitalIdHero({ width, tierLabel, isDark }: DigitalIdHeroProps) {
   return (

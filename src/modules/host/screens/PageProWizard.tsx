@@ -12,7 +12,9 @@ import {
   ActivityIndicator,
   Pressable,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { Redirect, useRouter } from 'expo-router';
+import { showUserAlert } from '@/lib/showUserAlert';
+import { buildHostspaceCreateHref } from '@/constants/navigation/createNav';
 import { useM3Colors } from '@/hooks/useM3Colors';
 import { useLayout } from '@/hooks/useLayout';
 import { useAuth } from '@/lib/auth';
@@ -39,8 +41,6 @@ import {
 } from '../config/pageWizardSteps';
 import {
   PAGE_CATEGORY_PRESETS,
-  PAGE_CULTURAL_TAG_PRESETS,
-  PAGE_LANGUAGE_TAG_PRESETS,
 } from '../constants/pageTagPresets';
 import { PAGE_TEMPLATES } from '../config/pageTemplates.config';
 import { PageWizardBusinessStep } from '../components/pageWizard/PageWizardBusinessStep';
@@ -82,8 +82,6 @@ function PageProWizardInner({
   const router = useRouter();
   const { user } = useAuth();
   const [published, setPublished] = useState<{ pageId: string; verificationRequired: boolean } | null>(null);
-  const [tagSearch, setTagSearch] = useState('');
-
   const wizard = usePageWizard({
     entityType,
     templateId,
@@ -106,12 +104,6 @@ function PageProWizardInner({
   }, [wizard.updateFormData]);
 
   const categoryPresets = PAGE_CATEGORY_PRESETS[entityType] ?? PAGE_CATEGORY_PRESETS.community;
-
-  const filteredCulturalTags = useMemo(() => {
-    const q = tagSearch.trim().toLowerCase();
-    if (!q) return PAGE_CULTURAL_TAG_PRESETS;
-    return PAGE_CULTURAL_TAG_PRESETS.filter((t) => t.toLowerCase().includes(q));
-  }, [tagSearch]);
 
   const toggleCategory = useCallback(
     (tag: string) => {
@@ -139,8 +131,32 @@ function PageProWizardInner({
 
   const handleCancel = () => {
     if (onCancel) onCancel();
-    else router.replace('/pages/create' as never);
+    else router.replace(buildHostspaceCreateHref() as never);
   };
+
+  const handlePublish = async () => {
+    const result = await wizard.publish();
+    if (result.ok) return;
+    if (result.reason === 'validation' && result.issues?.length) {
+      showUserAlert(
+        'Complete required fields',
+        result.issues.map((issue) => issue.message).join('\n'),
+      );
+      return;
+    }
+    if (result.reason === 'api') {
+      showUserAlert('Publish failed', result.message ?? 'Please try again in a moment.');
+      return;
+    }
+    if (result.reason === 'step') {
+      showUserAlert('Check this step', 'Fix the highlighted fields before continuing.');
+    }
+  };
+
+  if (entityType === 'community' || entityType === 'organiser' || entityType === 'organizer') {
+    const type = entityType === 'community' ? 'community' : 'organizer';
+    return <Redirect href={`/hostspace/create/page?type=${type}` as never} />;
+  }
 
   if (published) {
     return (
@@ -245,9 +261,6 @@ function PageProWizardInner({
             entityType={entityType}
             formData={wizard.formData}
             updateFormData={wizard.updateFormData}
-            tagSearch={tagSearch}
-            onTagSearchChange={setTagSearch}
-            filteredCulturalTags={filteredCulturalTags}
             toggleCategory={toggleCategory}
           />
         );
@@ -468,7 +481,7 @@ function PageProWizardInner({
           </M3Button>
         ) : (
           <M3Button
-            onPress={() => void wizard.publish()}
+            onPress={() => void handlePublish()}
             loading={wizard.isPublishing}
             accessibilityLabel="Publish page"
             testID="page-wizard-publish"

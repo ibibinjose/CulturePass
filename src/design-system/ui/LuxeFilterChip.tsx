@@ -84,7 +84,7 @@ export function LuxeFilterChip({
         <Ionicons
           name={iconName}
           size={iconSize}
-          color={selected ? activeContent : Luxe.colors.terracotta}
+          color={selected ? activeContent : Luxe.colors.appBlue}
           style={[styles.icon, compact && styles.iconCompact]}
         />
       ) : icon ? (
@@ -92,7 +92,7 @@ export function LuxeFilterChip({
           style={[
             styles.textIcon,
             compact && styles.textIconCompact,
-            { fontSize: iconSize, color: selected ? activeContent : Luxe.colors.terracotta },
+            { fontSize: iconSize, color: selected ? activeContent : Luxe.colors.appBlue },
           ]}
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants"

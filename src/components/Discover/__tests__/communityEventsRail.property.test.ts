@@ -21,7 +21,7 @@ import type { EventData } from '@/shared/schema';
 // Helpers
 // ---------------------------------------------------------------------------
 
-const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+const COMMUNITY_EVENTS_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
 
 /** Formats a timestamp as an ISO date string (YYYY-MM-DD). */
 function toISODate(ts: number): string {
@@ -53,7 +53,7 @@ const eventArb: fc.Arbitrary<EventData> = fc.record({
   country: fc.constant('Australia'),
   city: fc.constant('Sydney'),
   date: fc
-    .integer({ min: -(SEVEN_DAYS_MS * 2), max: SEVEN_DAYS_MS * 3 })
+    .integer({ min: -(COMMUNITY_EVENTS_WINDOW_MS * 2), max: COMMUNITY_EVENTS_WINDOW_MS * 3 })
     .map((delta) => toISODate(NOW_TS + delta)),
   communityId: communityIdArb,
 } as any);
@@ -85,14 +85,14 @@ it('Property 2a: result only contains events from joined communities', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Property 2b: Only events within the next 7 days are included
+// Property 2b: Only events within the upcoming window are included
 // ---------------------------------------------------------------------------
 
-it('Property 2b: result only contains events within 7 days of now', () => {
+it('Property 2b: result only contains events within 30 days of now', () => {
   fc.assert(
     fc.property(joinedIdsArb, eventListArb, (joined, events) => {
       const result = getCommunityEventsRail(joined, events, NOW);
-      const windowEnd = NOW_TS + SEVEN_DAYS_MS;
+      const windowEnd = NOW_TS + COMMUNITY_EVENTS_WINDOW_MS;
 
       for (const event of result) {
         const eventTs = new Date(event.date).getTime();
@@ -219,10 +219,10 @@ describe('Known scenarios', () => {
     expect(result.map((e) => e.id)).toEqual(['e_future']);
   });
 
-  it('excludes events beyond the 7-day window', () => {
+  it('excludes events beyond the 30-day window', () => {
     const events: EventData[] = [
-      makeEvent({ id: 'e_within', communityId: 'c1', date: toISODate(NOW_TS + 6 * 86400000) }),
-      makeEvent({ id: 'e_beyond', communityId: 'c1', date: toISODate(NOW_TS + 8 * 86400000) }),
+      makeEvent({ id: 'e_within', communityId: 'c1', date: toISODate(NOW_TS + 20 * 86400000) }),
+      makeEvent({ id: 'e_beyond', communityId: 'c1', date: toISODate(NOW_TS + 35 * 86400000) }),
     ];
 
     const result = getCommunityEventsRail(['c1'], events, NOW);

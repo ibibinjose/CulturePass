@@ -36,13 +36,13 @@ async function main() {
     const eventCat = {
       id: 'event',
       entityType: 'event',
-      route: '/pages/create?category=event',
+      route: '/hostspace?panel=create&category=event',
     };
     const nav = resolveCreateNavigation(eventCat, { parentProfileId: 'profile-1' });
-    assert.equal(nav.pathname, '/event/create');
+    assert.equal(nav.pathname, '/hostspace/event/create');
     assert.equal(nav.wizard, 'event');
     assert.equal(nav.params.publisherProfileId, 'profile-1');
-    ok('event category → /event/create with publisherProfileId');
+    ok('event category → /hostspace/event/create with publisherProfileId');
   } catch (e) {
     failed += 1;
     console.error('  ✗ routing', e);

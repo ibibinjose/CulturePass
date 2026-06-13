@@ -1,21 +1,14 @@
-import { Redirect, useLocalSearchParams } from 'expo-router';
+import { Redirect } from 'expo-router';
 
 import { EVENT_WIZARD_PATHNAME } from '@/constants/navigation/createNav';
-
-function firstParam(v: string | string[] | undefined): string | undefined {
-  return Array.isArray(v) ? v[0] : v;
-}
+import { firstRouteParam, useRouteParams } from '@/lib/routeParams';
 
 /** Legacy `/event/create` → `/hostspace/event/create`. */
 export default function LegacyEventCreateRedirect() {
-  const params = useLocalSearchParams<{
-    editId?: string | string[];
-    id?: string | string[];
-    publisherProfileId?: string | string[];
-  }>();
+  const params = useRouteParams();
 
-  const editId = firstParam(params.editId) ?? firstParam(params.id);
-  const publisherProfileId = firstParam(params.publisherProfileId);
+  const editId = firstRouteParam(params.editId) ?? firstRouteParam(params.id);
+  const publisherProfileId = firstRouteParam(params.publisherProfileId);
 
   return (
     <Redirect

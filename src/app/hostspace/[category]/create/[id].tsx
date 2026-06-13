@@ -1,21 +1,15 @@
 /**
  * /hostspace/[category]/create/[id] — edit listing or page by path id.
  */
-import { Redirect, useLocalSearchParams } from 'expo-router';
+import { Redirect } from 'expo-router';
 
-function firstParam(v: string | string[] | undefined): string | undefined {
-  return Array.isArray(v) ? v[0] : v;
-}
+import { firstRouteParam, useRouteParams } from '@/lib/routeParams';
 
 export default function HostspaceCategoryEditRedirect() {
-  const params = useLocalSearchParams<{
-    category?: string | string[];
-    id?: string | string[];
-    publisherProfileId?: string | string[];
-  }>();
-  const category = firstParam(params.category);
-  const editId = firstParam(params.id);
-  const publisherProfileId = firstParam(params.publisherProfileId);
+  const params = useRouteParams();
+  const category = firstRouteParam(params.category);
+  const editId = firstRouteParam(params.id);
+  const publisherProfileId = firstRouteParam(params.publisherProfileId);
 
   if (!category) {
     return <Redirect href="/hostspace/create" />;

@@ -9,6 +9,7 @@ import {
   buildHostspaceCreateHref,
   hostspaceCategoryCreatePath,
   createLabCategoryHref,
+  entityTypeToCategoryId,
 } from '@/constants/navigation/createNav';
 
 export type IonIcon = keyof typeof Ionicons.glyphMap;
@@ -45,7 +46,7 @@ export const HOST_NEW_LISTING_PARAMS = {
 export type HostListingEntityParam = 'business' | 'venue' | 'artist' | 'organizer' | 'restaurant';
 
 /** Entity param values accepted by `listing/create` (directory subset + community + event redirect). */
-export type ListingWizardEntityParam = HostListingEntityParam | 'community' | 'event' | 'brand' | 'creator';
+export type ListingWizardEntityParam = HostListingEntityParam | 'community' | 'event' | 'brand' | 'creator' | 'professional';
 
 export function hostNewListingParams(entityType?: ListingWizardEntityParam) {
   if (!entityType) return { ...HOST_NEW_LISTING_PARAMS };
@@ -64,13 +65,7 @@ export function listingCreateNavigateParams(entityType?: ListingWizardEntityPara
   if (!entityType) {
     return { pathname: hostspaceCategoryCreatePath('business') } as const;
   }
-  const categoryId =
-    entityType === 'restaurant'
-      ? 'dining'
-      : entityType === 'organizer'
-        ? 'organizer'
-        : entityType;
-  return { pathname: hostspaceCategoryCreatePath(categoryId) } as const;
+  return { pathname: hostspaceCategoryCreatePath(entityTypeToCategoryId(entityType)) } as const;
 }
 
 /** Profile “tool” rows (title + subtitle + path). */

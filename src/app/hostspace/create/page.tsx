@@ -2,7 +2,7 @@
  * /hostspace/create/page — unified Create a Page form with category dropdown.
  */
 import { useCallback } from 'react';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router } from 'expo-router';
 import Head from 'expo-router/head';
 
 import { HostspaceAccessGate } from '@/modules/host/components/HostspaceAccessGate';
@@ -15,32 +15,22 @@ import {
 import { resolveOrganisationPageTypeId } from '@/modules/host/config/organisationCommunityTypes.config';
 import { APP_NAME, SITE_ORIGIN } from '@/lib/app-meta';
 import type { HostPageTemplateId } from '@/shared/schema';
-
-function firstParam(v: string | string[] | undefined): string | undefined {
-  return Array.isArray(v) ? v[0] : v;
-}
+import { firstRouteParam, useRouteParams } from '@/lib/routeParams';
 
 export default function HostspaceCreatePageScreen() {
-  const params = useLocalSearchParams<{
-    type?: string | string[];
-    category?: string | string[];
-    entityType?: string | string[];
-    profileType?: string | string[];
-    pageType?: string | string[];
-    template?: string | string[];
-    draftId?: string | string[];
-    pageId?: string | string[];
-    intent?: string | string[];
-  }>();
+  const params = useRouteParams();
 
   const initialTypeId = resolveOrganisationPageTypeId({
-    type: firstParam(params.type),
-    category: firstParam(params.category),
-    entityType: firstParam(params.entityType) ?? firstParam(params.profileType) ?? firstParam(params.pageType),
+    type: firstRouteParam(params.type),
+    category: firstRouteParam(params.category),
+    entityType:
+      firstRouteParam(params.entityType) ??
+      firstRouteParam(params.profileType) ??
+      firstRouteParam(params.pageType),
   });
-  const templateId = firstParam(params.template) as HostPageTemplateId | undefined;
-  const draftId = firstParam(params.draftId);
-  const pageId = firstParam(params.pageId);
+  const templateId = firstRouteParam(params.template) as HostPageTemplateId | undefined;
+  const draftId = firstRouteParam(params.draftId);
+  const pageId = firstRouteParam(params.pageId);
 
   const handleCancel = useCallback(() => {
     router.replace(buildHostspaceCreateHref() as never);

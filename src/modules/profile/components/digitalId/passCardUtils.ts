@@ -134,15 +134,15 @@ export function getPassColorTheme(variant: PassColorVariant = 'cyan', tier?: str
         ...CYAN_THEME,
         variant: 'cyan',
         bodyBg: '#0F0A02',
-        bodyBorder: '#D4A017',
+        bodyBorder: '#00ADEF',
         stripStart: '#1F1608',
         stripEnd: '#0F0A02',
         primary: '#E0F7FF',
         secondary: 'rgba(255,255,255,0.88)',
         tertiary: 'rgba(255,255,255,0.72)',
-        tierLabel: '#D4A017',
-        qrBorder: '#D4A017',
-        shellShadowWeb: '0 10px 28px rgba(212, 160, 23, 0.35)',
+        tierLabel: '#00ADEF',
+        qrBorder: '#00ADEF',
+        shellShadowWeb: '0 10px 28px rgba(0, 173, 239, 0.35)',
       };
     }
     if (key === 'pro') {

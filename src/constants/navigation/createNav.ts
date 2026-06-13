@@ -74,7 +74,7 @@ export function hostspaceCategoryCreatePath(categoryId: string): string {
   return `/hostspace/${id}/create`;
 }
 
-function entityTypeToCategoryId(entityType: string): string {
+export function entityTypeToCategoryId(entityType: string): string {
   const normalized = entityType.trim().toLowerCase();
   if (normalized === 'organizer' || normalized === 'organiser') return 'organizer';
   if (normalized === 'restaurant') return 'dining';

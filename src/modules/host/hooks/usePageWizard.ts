@@ -8,7 +8,7 @@ import { ZodError } from 'zod';
 import { Platform } from 'react-native';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
-import type { HostPageFormData, HostPageTemplateId } from '@/shared/schema';
+import type { HostPage, HostPageFormData, HostPageTemplateId } from '@/shared/schema';
 import type { HostEntityType } from '@/shared/schema/hostTypes';
 import {
   clampHostPageHeritageFields,
@@ -23,6 +23,7 @@ import {
   getPageWizardTotalSteps,
 } from '../schemas/pageWizardSchema';
 import { mapSubmitMutationError } from '@/features/submit/mapSubmitMutationError';
+import { communityKeys } from '@/modules/communities/hooks/communityKeys';
 import { useAutoSave, type SaveStatus } from './useAutoSave';
 
 export type PageWizardPublishResult =
@@ -43,6 +44,8 @@ export interface UsePageWizardOptions {
   /** Single-page org/community form — skip per-step gate on publish. */
   singlePageForm?: boolean;
   onPublishSuccess?: (pageId: string, verificationRequired: boolean) => void;
+  /** Fired after a draft or published page is hydrated from the API. */
+  onPageRestored?: (page: HostPage) => void;
 }
 
 function buildInitialFormData(
@@ -98,6 +101,7 @@ export function usePageWizard({
   draftId: initialDraftId,
   singlePageForm = false,
   onPublishSuccess,
+  onPageRestored,
 }: UsePageWizardOptions) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -114,7 +118,9 @@ export function usePageWizard({
   const [isDirty, setIsDirty] = useState(false);
   const [pageId, setPageId] = useState<string | null>(initialPageId ?? null);
   const [draftId, setDraftId] = useState<string | null>(initialDraftId ?? null);
-  const [isInitializing, setIsInitializing] = useState(!!initialDraftId);
+  const [pageStatus, setPageStatus] = useState<HostPage['status'] | null>(null);
+  const [resolvedTemplateId, setResolvedTemplateId] = useState<HostPageTemplateId | undefined>(templateId);
+  const [isInitializing, setIsInitializing] = useState(!!initialDraftId || !!initialPageId);
   const initializedRef = useRef(false);
 
   const currentStepId: PageWizardStepId = wizardSteps[currentStep - 1] ?? 'basics';
@@ -126,17 +132,23 @@ export function usePageWizard({
         const created = await api.hostPages.create({
           entityType,
           formData,
-          templateId,
+          templateId: resolvedTemplateId ?? templateId,
         });
         activePageId = created.id;
         setPageId(created.id);
       } else {
-        await api.hostPages.update(activePageId, { formData, templateId });
+        await api.hostPages.update(activePageId, {
+          formData,
+          templateId: resolvedTemplateId ?? templateId,
+        });
       }
       return api.hostPages.publish(activePageId!);
     },
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['host-pages-my'] });
+      if (entityType === 'community') {
+        queryClient.invalidateQueries({ queryKey: communityKeys.all });
+      }
       onPublishSuccess?.(result.pageId, result.verificationRequired);
     },
   });
@@ -155,7 +167,7 @@ export function usePageWizard({
       formData: safeFormData,
       currentStep,
       completedSteps: Array.from(completedSteps),
-      templateId,
+      templateId: resolvedTemplateId ?? templateId,
       draftId: draftId ?? undefined,
       ...(Platform.OS !== 'web' && {
         deviceInfo: { platform: Platform.OS, userAgent: `${Platform.OS}-app` },
@@ -179,30 +191,58 @@ export function usePageWizard({
   });
 
   useEffect(() => {
-    if (!initialDraftId || initializedRef.current) return;
+    if (initializedRef.current) return;
+    if (!initialDraftId && !initialPageId) {
+      setIsInitializing(false);
+      return;
+    }
     initializedRef.current = true;
 
     (async () => {
       try {
-        const draft = await api.hostPages.getDraft(initialDraftId);
-        setFormData(
-          clampHostPageHeritageFields({
-            ...buildInitialFormData(entityType, templateId),
-            ...draft.formData,
-          }),
-        );
-        const clampedStep = Math.min(Math.max(draft.currentStep, 1), totalSteps);
-        setCurrentStep(clampedStep);
-        setCompletedSteps(new Set(draft.completedSteps.filter((s) => s <= totalSteps)));
-        setDraftId(draft.id);
-        if (draft.pageId) setPageId(draft.pageId);
+        if (initialDraftId) {
+          const draft = await api.hostPages.getDraft(initialDraftId);
+          setFormData(
+            clampHostPageHeritageFields({
+              ...buildInitialFormData(entityType, resolvedTemplateId ?? templateId),
+              ...draft.formData,
+            }),
+          );
+          const clampedStep = Math.min(Math.max(draft.currentStep, 1), totalSteps);
+          setCurrentStep(clampedStep);
+          setCompletedSteps(new Set(draft.completedSteps.filter((s) => s <= totalSteps)));
+          setDraftId(draft.id);
+          if (draft.templateId) setResolvedTemplateId(draft.templateId);
+          if (draft.pageId) {
+            setPageId(draft.pageId);
+            const linkedPage = await api.hostPages.get(draft.pageId);
+            setPageStatus(linkedPage.status);
+            onPageRestored?.(linkedPage);
+          }
+        } else if (initialPageId) {
+          const page = await api.hostPages.get(initialPageId);
+          setFormData(
+            clampHostPageHeritageFields({
+              ...buildInitialFormData(entityType, page.templateId ?? templateId),
+              ...page.formData,
+            }),
+          );
+          setPageId(page.id);
+          setPageStatus(page.status);
+          if (page.templateId) setResolvedTemplateId(page.templateId);
+          if (page.status === 'published' || page.status === 'pending_verification') {
+            const allSteps = Array.from({ length: totalSteps }, (_, i) => i + 1);
+            setCompletedSteps(new Set(allSteps));
+          }
+          onPageRestored?.(page);
+        }
       } catch (err) {
-        if (__DEV__) console.error('[PageWizard] Draft restore failed', err);
+        if (__DEV__) console.error('[PageWizard] Restore failed', err);
       } finally {
         setIsInitializing(false);
       }
     })();
-  }, [initialDraftId, entityType, templateId, totalSteps]);
+  }, [initialDraftId, initialPageId, entityType, templateId, resolvedTemplateId, totalSteps, onPageRestored]);
 
   const updateFormData = useCallback((patch: Partial<HostPageFormData>) => {
     setFormData((prev: HostPageFormData) => ({ ...prev, ...patch }));
@@ -284,7 +324,7 @@ export function usePageWizard({
 
   return {
     entityType,
-    templateId,
+    templateId: resolvedTemplateId ?? templateId,
     wizardSteps,
     currentStep,
     currentStepId,
@@ -294,6 +334,7 @@ export function usePageWizard({
     validationErrors,
     pageId,
     draftId,
+    pageStatus,
     isDirty,
     isInitializing,
     saveStatus: saveStatus as SaveStatus,

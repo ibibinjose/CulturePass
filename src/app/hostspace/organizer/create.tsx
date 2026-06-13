@@ -1,18 +1,15 @@
-import { Redirect, useLocalSearchParams } from 'expo-router';
+import { Redirect } from 'expo-router';
 
 import { HOSTSPACE_CREATE_PAGE_PATHNAME } from '@/constants/navigation/createNav';
-
-function firstParam(v: string | string[] | undefined): string | undefined {
-  return Array.isArray(v) ? v[0] : v;
-}
+import { firstRouteParam, useRouteParams } from '@/lib/routeParams';
 
 /** Legacy deep link — unified org form at /hostspace/create/page?type=organizer */
 export default function OrganizerCreateRedirect() {
-  const params = useLocalSearchParams<Record<string, string | string[] | undefined>>();
+  const params = useRouteParams();
   const q = new URLSearchParams();
-  q.set('type', firstParam(params.type) ?? firstParam(params.category) ?? 'organizer');
+  q.set('type', firstRouteParam(params.type) ?? firstRouteParam(params.category) ?? 'organizer');
   for (const key of ['draftId', 'pageId', 'template', 'intent', 'entityType'] as const) {
-    const v = firstParam(params[key]);
+    const v = firstRouteParam(params[key]);
     if (v) q.set(key, v);
   }
   const suffix = q.toString();

@@ -138,6 +138,41 @@ export function buildOrgCommunityCategoryTags(
 }
 
 /** Resolve page type from /hostspace/create/page query params. */
+/** Infer org/community page type from a stored host page record. */
+export function resolveOrganisationTypeFromHostPage(
+  entityType: string | undefined,
+  categoryTags: string[] = [],
+): OrganisationCommunityTypeId {
+  const normalizedEntity = (entityType ?? '').trim().toLowerCase();
+  if (normalizedEntity === 'community') return 'community';
+
+  const normalizedTags = categoryTags.map((tag) => tag.trim().toLowerCase()).filter(Boolean);
+
+  for (const type of ORGANISATION_COMMUNITY_TYPES) {
+    if (normalizedTags.includes(type.id) || normalizedTags.includes(type.label.toLowerCase())) {
+      return type.id;
+    }
+  }
+
+  for (const type of ORGANISATION_COMMUNITY_TYPES) {
+    if (!type.subCategory) continue;
+    const subLabel = type.subCategory.replace(/_/g, ' ');
+    if (
+      normalizedTags.some(
+        (tag) => tag.includes(subLabel) || tag.includes(type.subCategory!),
+      )
+    ) {
+      return type.id;
+    }
+  }
+
+  if (normalizedEntity === 'organizer' || normalizedEntity === 'organiser') {
+    return 'organizer';
+  }
+
+  return 'community';
+}
+
 export function resolveOrganisationPageTypeId(params: {
   type?: string;
   category?: string;

@@ -39,7 +39,7 @@ export function HostspaceCreateCategoryGrid({
     <Animated.View entering={FadeInDown.duration(400)} style={styles.gridSelector}>
       <Text style={[styles.gridTitle, { color: colors.text }]}>What are you creating?</Text>
 
-      <View style={[styles.searchRow, { borderColor: colors.borderLight, backgroundColor: colors.background + '80', marginBottom: 8 }]}>
+      <View style={[styles.searchRow, { borderColor: colors.borderLight, backgroundColor: colors.background + '80' }]}>
         <Ionicons name="search-outline" size={16} color={colors.textTertiary} />
         <TextInput
           value={query}
@@ -52,7 +52,7 @@ export function HostspaceCreateCategoryGrid({
         />
       </View>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[styles.groupTabsRow, { marginBottom: 4 }]}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.groupTabsRow}>
         {GROUP_TABS.map((tab) => {
           const active = activeGroups.includes(tab.id);
           const tabColor = GROUP_COLORS[tab.id];
@@ -85,7 +85,7 @@ export function HostspaceCreateCategoryGrid({
 
       {query === '' && activeGroups.includes('all') && (
         <View style={styles.suggestedSection}>
-          <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>Suggested for you</Text>
+          <Text style={[styles.suggestedSubtitle, { color: colors.textSecondary }]}>Suggested for you</Text>
           <View style={styles.suggestedRow}>
             {categories.filter(c => ['organisation-community', 'event', 'market-listing'].includes(c.id)).map((c) => (
               <Pressable
@@ -284,9 +284,8 @@ const styles = StyleSheet.create({
   },
   suggestedSection: {
     gap: 12,
-    marginBottom: 10,
   },
-  sectionSubtitle: {
+  suggestedSubtitle: {
     fontSize: 12,
     fontFamily: 'Poppins_700Bold',
     textTransform: 'uppercase',

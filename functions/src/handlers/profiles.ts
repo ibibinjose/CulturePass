@@ -34,6 +34,10 @@ import {
 import { eventsService } from '../services/events';
 /** Public directory profiles (`profiles` collection) — not HostSpace `hostProfiles`. */
 import { profilesService as directoryProfilesService } from '../services/profiles';
+import {
+  getPublicCommunityByIdOrHandle,
+  listPublicCommunities,
+} from '../services/communityDirectory';
 import { isFirestoreConfigured } from '../admin';
 import { allowInlineDemoFallback, resolveDemoProfileById } from '../dev/demoFixtures';
 import {
@@ -803,8 +807,18 @@ profilesRouter.post(
   }
 );
 
+const COMMUNITY_ROUTE_RESERVED = new Set([
+  'joined',
+  'join',
+  'leave',
+  'members',
+  'businesses',
+  'publish',
+  'recommended-events',
+]);
+
 // ── GET /api/communities ────────────────────────────────────────────────────
-// List community profiles (entityType === 'community')
+// List public community hubs (directory profiles + synced community host pages)
 profilesRouter.get(
   '/communities',
   slidingWindowRateLimit(60000, 100),
@@ -815,11 +829,36 @@ profilesRouter.get(
       }
       const city    = qstr(req.query.city).trim()    || undefined;
       const country = qstr(req.query.country).trim() || undefined;
-      const communities = await directoryProfilesService.list({ entityType: 'community', city, country });
+      const communities = await listPublicCommunities({ city, country });
       return res.json({ communities });
     } catch (err) {
       captureRouteError(err, 'GET /api/communities');
       return res.status(500).json({ error: 'Failed to fetch communities' });
+    }
+  }
+);
+
+// ── GET /api/communities/:id ────────────────────────────────────────────────
+profilesRouter.get(
+  '/communities/:id',
+  slidingWindowRateLimit(60000, 100),
+  async (req: Request, res: Response) => {
+    try {
+      if (!isFirestoreConfigured) {
+        return res.status(404).json({ error: 'Community not found' });
+      }
+      const id = qparam(req.params.id);
+      if (COMMUNITY_ROUTE_RESERVED.has(id)) {
+        return res.status(404).json({ error: 'Community not found' });
+      }
+      const community = await getPublicCommunityByIdOrHandle(id);
+      if (!community) {
+        return res.status(404).json({ error: 'Community not found' });
+      }
+      return res.json(community);
+    } catch (err) {
+      captureRouteError(err, 'GET /api/communities/:id');
+      return res.status(500).json({ error: 'Failed to fetch community' });
     }
   }
 );
@@ -837,11 +876,15 @@ profilesRouter.get(
       }
       const communityId = qparam(req.params.id);
       const pagination = { page: 1, pageSize: 20 };
-      const result = await eventsService.list({ communityId }, pagination);
+      const community = await getPublicCommunityByIdOrHandle(communityId);
+      const resolvedId = typeof community?.id === 'string' ? community.id : communityId;
+      const result = await eventsService.list({ communityId: resolvedId }, pagination);
       let events = result.items;
       if (events.length === 0) {
-        const profile = await directoryProfilesService.getById(communityId);
-        const tags = (profile as any)?.cultureTag;
+        const profile = community
+          ? (community as Record<string, unknown>)
+          : await directoryProfilesService.getById(communityId);
+        const tags = (profile as { cultureTags?: string[] })?.cultureTags;
         const tag = Array.isArray(tags) ? tags[0] : undefined;
         if (tag) {
           const fallback = await eventsService.list({ tag }, pagination);

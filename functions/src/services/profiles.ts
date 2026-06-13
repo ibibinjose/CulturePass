@@ -48,6 +48,7 @@ export interface FirestoreProfile {
   telegram?: string;
   cultureTags?: string[];
   languages?: string[];
+  indigenousTags?: string[];
   countryOfOrigin?: string;
   isIndigenous?: boolean;
   joinMode?: 'open' | 'request' | 'invite';
@@ -89,6 +90,10 @@ export interface FirestoreProfile {
     website?: string;
     description?: string;
   }[];
+  /** Source host page when synced from Page Pro Wizard */
+  hostPageId?: string;
+  activityLevel?: 'new' | 'steady' | 'active' | 'thriving';
+  publishedAt?: string;
   createdAt: string;
   updatedAt: string;
 }

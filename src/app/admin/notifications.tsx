@@ -39,10 +39,7 @@ export default function AdminNotificationsScreen() {
       const n = data.targetedCount ?? 0;
       const preview = data.audiencePreview ?? [];
       const lines = preview
-        .map((u) => {
-          if (typeof u === 'string') return `• ${u.slice(0, 8)}…`;
-          return `• ${u.userId.slice(0, 8)}… ${u.city ?? ''} ${u.country ?? ''}`.trim();
-        })
+        .map((row) => `• ${row.userId.slice(0, 8)}… ${row.city ?? ''} ${row.country ?? ''}`.trim())
         .join('\n');
       setLastPreview(`Matched ${n} users.\n${lines}`);
       if (dryRun) {

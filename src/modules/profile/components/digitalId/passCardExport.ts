@@ -56,7 +56,7 @@ function stripHtml(tier: string, theme: ReturnType<typeof getPassColorTheme>, co
   return `
     <div style="position:relative;background:linear-gradient(90deg,${theme.stripStart},${theme.stripEnd});z-index:4;">
       <div style="display:flex;justify-content:space-between;align-items:center;padding:${rowPad};">
-        <span style="font-size:${brandSize}px;font-weight:800;letter-spacing:0.8px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;"><span style="color:#FFFFFF;">CULTURE</span><span style="color:#0A8C7F;">PASS</span><span style="color:#D4A017;"> ID</span></span>
+        <span style="font-size:${brandSize}px;font-weight:800;letter-spacing:0.8px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;"><span style="color:#FFFFFF;">CULTURE</span><span style="color:#0A8C7F;">PASS</span><span style="color:#00ADEF;"> ID</span></span>
         <span style="font-size:${tierSize}px;font-weight:800;letter-spacing:1.1px;color:${theme.stripText};padding:4px 10px;border-radius:6px;background:${theme.stripTierBadgeBg};border:1px solid ${theme.stripTierBadgeBorder};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">${tierText}</span>
       </div>
       ${overlapZone}

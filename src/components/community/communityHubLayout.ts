@@ -78,11 +78,15 @@ export function filterHubCommunities(
   }
 
   if (location === 'near-you') {
-    result = result.filter(
-      (c) =>
-        normCity(c.city) === city ||
-        (c.chapterCities ?? []).some((ch) => normCity(ch) === city),
-    );
+    result = result.filter((c) => {
+      const hubCity = normCity(c.city);
+      // Nationwide / online hubs without a city are visible in every metro filter.
+      if (!hubCity) return true;
+      return (
+        hubCity === city ||
+        (c.chapterCities ?? []).some((ch) => normCity(ch) === city)
+      );
+    });
   }
 
   if (sort === 'size') {

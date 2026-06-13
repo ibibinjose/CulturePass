@@ -7,29 +7,9 @@ import {
   getMarkedJoinedCommunityIds,
   markCommunityJoined,
 } from '@/lib/community-storage';
+import { communityKeys, type CommunitiesListParams } from './communityKeys';
 
-// ─── Query Keys ───────────────────────────────────────────────────────────────
-
-export const communityKeys = {
-  all: ['/api/communities'] as const,
-  list: (params?: CommunitiesListParams) => ['/api/communities', 'list', params] as const,
-  detail: (id: string) => ['/api/communities', id] as const,
-  joined: () => ['/api/communities', 'joined'] as const,
-  followingCommunities: () => ['/api/social/following-communities'] as const,
-  members: (id: string) => ['/api/communities', id, 'members'] as const,
-  events: (id: string) => ['/api/communities', id, 'events'] as const,
-  businesses: (id: string) => ['/api/communities', id, 'businesses'] as const,
-};
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-export interface CommunitiesListParams {
-  city?: string;
-  country?: string;
-  nationalityId?: string;
-  cultureId?: string;
-  limit?: number;
-}
+export { communityKeys, type CommunitiesListParams };
 
 // ─── Hooks ────────────────────────────────────────────────────────────────────
 

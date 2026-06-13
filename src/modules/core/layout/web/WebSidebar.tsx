@@ -8,6 +8,7 @@ import {
   Platform,
   TextInput,
   Linking,
+  type ViewStyle,
 } from 'react-native';
 import { usePathname, router, Link } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -58,7 +59,11 @@ const PROFILE_ACTIONS = [
 ] as const;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-interface NavItem extends SidebarNavLink {}
+type NavItem = SidebarNavLink;
+
+const WEB_STICKY_SIDEBAR: ViewStyle = Platform.OS === 'web'
+  ? ({ position: 'sticky', top: 0 } as unknown as ViewStyle)
+  : {};
 
 // ─── Nav Arrays ───────────────────────────────────────────────────────────────
 const MAIN_NAV: NavItem[] = SIDEBAR_MAIN_NAV;
@@ -421,7 +426,6 @@ function WebSidebarContent() {
     return groups.every((group) => filterNav(group as NavItem[]).length === 0);
   }, [searchQuery, hostHubNav, filterNav]);
 
-  const bg = colors.surface;
   const border = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)';
   const mutedColor = withAlpha(colors.textSecondary, isDark ? 0.48 : 0.52);
   const sidebarWidth = isDesktop ? SIDEBAR_WIDTH : '100%';
@@ -436,7 +440,7 @@ function WebSidebarContent() {
       <GlassView
         intensity={isDark ? 25 : 15}
         tone={isDark ? 'dark' : 'light'}
-        accessibilityRole="navigation"
+        accessibilityRole="menu"
         accessibilityLabel="Main navigation"
         style={[
           railStyles.rail,
@@ -506,7 +510,7 @@ function WebSidebarContent() {
     <GlassView
       intensity={isDark ? 25 : 15}
       tone={isDark ? 'dark' : 'light'}
-      accessibilityRole="navigation"
+      accessibilityRole="menu"
       accessibilityLabel="Main navigation"
       style={[
         styles.sidebar,
@@ -934,7 +938,7 @@ const styles = StyleSheet.create({
     flexShrink: 0,
     borderRightWidth: 1,
     position: 'relative',
-    ...Platform.select({ web: { position: 'sticky', top: 0 } as const }),
+    ...WEB_STICKY_SIDEBAR,
   },
   sidebarAccent: {
     position: 'absolute',

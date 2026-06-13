@@ -44,6 +44,7 @@ import {
   ORGANISATION_COMMUNITY_TYPES,
   buildOrgCommunityCategoryTags,
   findOrganisationCommunityType,
+  resolveOrganisationTypeFromHostPage,
   type OrganisationCommunityType,
   type OrganisationCommunityTypeId,
 } from '../config/organisationCommunityTypes.config';
@@ -257,6 +258,15 @@ function OrganisationCommunityCreateFormBody({
     draftId,
     pageId,
     singlePageForm: true,
+    onPageRestored: (page) => {
+      const resolvedTypeId = resolveOrganisationTypeFromHostPage(
+        page.entityType,
+        page.formData.categoryTags ?? [],
+      );
+      if (resolvedTypeId !== selectedTypeId) {
+        onTypeChange(resolvedTypeId);
+      }
+    },
     onPublishSuccess: (id, verificationRequired) => {
       setPublished({ pageId: id, verificationRequired });
     },
@@ -684,10 +694,9 @@ export function OrganisationCommunityCreateForm({
   showHero = true,
   embeddedInShell = false,
 }: OrganisationCommunityCreateFormProps) {
-  const [selectedTypeId, setSelectedTypeId] = useState<OrganisationCommunityTypeId>(() => {
-    const found = findOrganisationCommunityType(initialTypeId);
-    return found.id;
-  });
+  const [selectedTypeId, setSelectedTypeId] = useState<OrganisationCommunityTypeId>(() =>
+    findOrganisationCommunityType(initialTypeId).id,
+  );
 
   const pageType = findOrganisationCommunityType(selectedTypeId);
   const entityType = pageType.entityType;
@@ -715,7 +724,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingTop: Spacing.md,
     paddingBottom: Spacing.xl,
-    gap: 4,
+    gap: Spacing.md,
     maxWidth: 1100,
     alignSelf: 'center',
     width: '100%',
@@ -732,7 +741,6 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     padding: 14,
     gap: 12,
-    marginBottom: 4,
   },
   toolbarLeft: {
     gap: 8,
@@ -770,7 +778,7 @@ const styles = StyleSheet.create({
   formColumn: {
     flex: 1,
     minWidth: 0,
-    gap: 4,
+    gap: Spacing.md,
   },
   previewColumn: {
     width: 360,
@@ -857,11 +865,10 @@ const styles = StyleSheet.create({
     lineHeight: 19,
   },
   hero: {
-    marginBottom: Spacing.md,
     gap: 6,
   },
   dropdownBlock: {
-    gap: 10,
+    gap: Spacing.sm,
   },
   eyebrow: {
     ...TextStyles.caption,
@@ -883,12 +890,12 @@ const styles = StyleSheet.create({
     ...TextStyles.caption,
     fontSize: 13,
     lineHeight: 18,
-    marginBottom: 10,
+    marginBottom: Spacing.sm,
   },
   typeGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
+    gap: Spacing.sm,
     ...(Platform.OS === 'web'
       ? ({
           display: 'grid',

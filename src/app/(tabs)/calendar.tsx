@@ -26,6 +26,9 @@ import { useM3Colors } from '@/hooks/useM3Colors';
 import { useLayout } from '@/hooks/useLayout';
 import { useAuth } from '@/lib/auth';
 import { useOnboarding } from '@/contexts/OnboardingContext';
+import { useLocation } from '@/contexts/LocationContext';
+import { useCouncil } from '@/hooks/useCouncil';
+import { eventMatchesCouncil } from '@/lib/locationFallback';
 import { useSaved } from '@/contexts/SavedContext';
 import { modulesApi } from '@/modules/api';
 import { useEventsList } from '@/modules/events/hooks/useEvents';
@@ -65,12 +68,14 @@ export default function CalendarScreen() {
   const { user, userId, isAuthenticated } = useAuth();
   const { savedEvents } = useSaved();
   const { state: onboarding } = useOnboarding();
+  const appLocation = useLocation();
+  const { council } = useCouncil();
   const reducedMotion = useReducedMotion();
   const bottomInset = IS_WEB ? 0 : insets.bottom;
 
-
-  const city = user?.city ?? onboarding?.city;
-  const country = user?.country ?? onboarding?.country;
+  const city = appLocation.city || user?.city || onboarding?.city;
+  const country = appLocation.country || user?.country || onboarding?.country;
+  const todayKeyIso = useMemo(() => new Date().toLocaleDateString('en-CA'), []);
 
   const today = useMemo(() => new Date(), []);
 
@@ -95,8 +100,8 @@ export default function CalendarScreen() {
   }, []);
 
   const handleWebcalSubscribe = useCallback(async () => {
-    const targetCity    = city    || 'Sydney';
-    const targetCountry = country || 'Australia';
+    const targetCity = city || appLocation.city;
+    const targetCountry = country || appLocation.country || 'Australia';
 
     // webcal:// opens the system calendar subscription dialog on iOS / macOS
     const webcalUrl = generateWebcalUrl(targetCity, targetCountry);
@@ -110,7 +115,7 @@ export default function CalendarScreen() {
       // Web or devices without webcal support: offer HTTPS .ics download
       offerIcsDownload(httpsUrl);
     }
-  }, [city, country, offerIcsDownload]);
+  }, [city, country, appLocation.city, appLocation.country, offerIcsDownload]);
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
   const [selectedDate, setSelectedDate] = useState<string | null>(formatDateKey(today.getFullYear(), today.getMonth(), today.getDate()));
@@ -136,6 +141,7 @@ export default function CalendarScreen() {
     city,
     country,
     pageSize: 300,
+    dateFrom: todayKeyIso,
   });
 
   const { data: tickets = [] } = useQuery<Ticket[]>({
@@ -172,12 +178,17 @@ export default function CalendarScreen() {
         case 'Interested':
           return savedEvents.includes(event.id);
         case 'Council':
-          return Boolean(event.councilId) || event.category?.toLowerCase() === 'civic' || event.category?.toLowerCase() === 'council';
+          if (council) return eventMatchesCouncil(event, council);
+          return (
+            Boolean(event.councilId) ||
+            event.category?.toLowerCase() === 'civic' ||
+            event.category?.toLowerCase() === 'council'
+          );
         default:
           return true;
       }
     });
-  }, [allEvents, activeFilter, isAuthenticated, ticketedEventIds, savedEvents]);
+  }, [allEvents, activeFilter, isAuthenticated, ticketedEventIds, savedEvents, council]);
 
   const eventsByDate = useMemo(() => {
     const map = new Map<string, EventData[]>();

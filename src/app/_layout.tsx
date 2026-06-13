@@ -31,6 +31,7 @@ import { ErrorBoundary } from "@/modules/core/ui/ErrorBoundary";
 import { queryClient, queryPersister } from "@/lib/query-client";
 import { AuthProvider } from "@/lib/auth";
 import { OnboardingProvider } from "@/contexts/OnboardingContext";
+import { LocationProvider } from "@/contexts/LocationContext";
 import { SavedProvider } from "@/contexts/SavedContext";
 import { LikesProvider } from "@/contexts/LikesContext";
 import { ContactsProvider } from "@/contexts/ContactsContext";
@@ -491,6 +492,7 @@ function RootLayoutContent() {
     >
       <OnboardingProvider>
         <AuthProvider>
+          <LocationProvider>
           <SavedProvider>
             <LikesProvider>
               <ContactsProvider>
@@ -506,6 +508,7 @@ function RootLayoutContent() {
               </ContactsProvider>
             </LikesProvider>
           </SavedProvider>
+          </LocationProvider>
         </AuthProvider>
       </OnboardingProvider>
     </PersistQueryClientProvider>

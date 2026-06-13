@@ -7,6 +7,11 @@ import type { EventData } from '@/shared/schema';
 import type { ColorTheme } from '@/design-system/tokens/colors';
 import { M3Card } from '@/design-system/ui/M3Card';
 import { useM3Colors } from '@/hooks/useM3Colors';
+import {
+  externalTicketProviderLabel,
+  getExternalTicketUrl,
+  usesExternalTicketing,
+} from '@/modules/events/utils/externalTicketing';
 
 interface TicketTier {
   name: string;
@@ -18,12 +23,54 @@ interface TicketsSectionProps {
   event: EventData;
   eventTiers: TicketTier[];
   openTicketModal: (tierIndex?: number) => void;
+  onExternalTicketPress?: () => void;
   colors: ColorTheme;
   s?: Record<string, unknown>;
 }
 
-export function TicketsSection({ event, eventTiers, openTicketModal, colors }: TicketsSectionProps) {
+export function TicketsSection({
+  event,
+  eventTiers,
+  openTicketModal,
+  onExternalTicketPress,
+}: TicketsSectionProps) {
   const m3Colors = useM3Colors();
+  const externalUrl = getExternalTicketUrl(event);
+  const externalTickets = usesExternalTicketing(event);
+  const provider = externalTicketProviderLabel(event);
+
+  if (externalTickets && externalUrl) {
+    const priceHint = event.priceLabel?.trim()
+      || (event.priceCents != null && event.priceCents > 0
+        ? formatCurrency(event.priceCents, event.country)
+        : 'See pricing on site');
+
+    return (
+      <View style={styles.container}>
+        <M3Card variant="outlined" onPress={onExternalTicketPress} style={styles.tierCard}>
+          <View style={styles.tierContent}>
+            <View style={[styles.externalIcon, { backgroundColor: m3Colors.primaryContainer }]}>
+              <Ionicons name="open-outline" size={20} color={m3Colors.onPrimaryContainer} />
+            </View>
+            <View style={styles.tierInfo}>
+              <Text style={[styles.tierName, M3Typography.titleMedium, { color: m3Colors.onSurface }]}>
+                Tickets on {provider}
+              </Text>
+              <Text style={[styles.tierAvail, M3Typography.bodySmall, { color: m3Colors.onSurfaceVariant }]}>
+                Purchase and registration are handled on {provider}. CulturePass links you there securely.
+              </Text>
+            </View>
+            <View style={[styles.priceBox, { backgroundColor: m3Colors.secondaryContainer }]}>
+              <Text style={[styles.priceText, M3Typography.labelLarge, { color: m3Colors.onSecondaryContainer }]}>
+                {priceHint}
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={m3Colors.onSurfaceVariant} />
+          </View>
+        </M3Card>
+      </View>
+    );
+  }
 
   if (!eventTiers || eventTiers.length === 0) {
     return (
@@ -45,23 +92,23 @@ export function TicketsSection({ event, eventTiers, openTicketModal, colors }: T
           onPress={() => openTicketModal(index)}
           style={styles.tierCard}
         >
-            <View style={styles.tierContent}>
-                <View style={styles.tierInfo}>
-                    <Text style={[styles.tierName, M3Typography.titleMedium, { color: m3Colors.onSurface }]}>{tier.name}</Text>
-                    <View style={styles.availRow}>
-                        <View style={[styles.availDot, { backgroundColor: tier.available > 0 ? CultureTokens.emerald : CultureTokens.coral }]} />
-                        <Text style={[styles.tierAvail, M3Typography.bodySmall, { color: m3Colors.onSurfaceVariant }]}>
-                        {tier.available > 0 ? `${tier.available} spots left` : 'Sold out'}
-                        </Text>
-                    </View>
-                </View>
-                <View style={[styles.priceBox, { backgroundColor: m3Colors.primaryContainer }]}>
-                    <Text style={[styles.priceText, M3Typography.labelLarge, { color: m3Colors.onPrimaryContainer }]}>
-                    {tier.priceCents === 0 ? 'FREE' : formatCurrency(tier.priceCents, event.country)}
-                    </Text>
-                </View>
-                <Ionicons name="chevron-forward" size={18} color={m3Colors.onSurfaceVariant} />
+          <View style={styles.tierContent}>
+            <View style={styles.tierInfo}>
+              <Text style={[styles.tierName, M3Typography.titleMedium, { color: m3Colors.onSurface }]}>{tier.name}</Text>
+              <View style={styles.availRow}>
+                <View style={[styles.availDot, { backgroundColor: tier.available > 0 ? CultureTokens.emerald : CultureTokens.coral }]} />
+                <Text style={[styles.tierAvail, M3Typography.bodySmall, { color: m3Colors.onSurfaceVariant }]}>
+                  {tier.available > 0 ? `${tier.available} spots left` : 'Sold out'}
+                </Text>
+              </View>
             </View>
+            <View style={[styles.priceBox, { backgroundColor: m3Colors.primaryContainer }]}>
+              <Text style={[styles.priceText, M3Typography.labelLarge, { color: m3Colors.onPrimaryContainer }]}>
+                {tier.priceCents === 0 ? 'FREE' : formatCurrency(tier.priceCents, event.country)}
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={m3Colors.onSurfaceVariant} />
+          </View>
         </M3Card>
       ))}
     </View>
@@ -70,13 +117,19 @@ export function TicketsSection({ event, eventTiers, openTicketModal, colors }: T
 
 const styles = StyleSheet.create({
   container: { gap: 12, marginBottom: Spacing.lg },
-  tierCard: {
-  },
+  tierCard: {},
   tierContent: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
     gap: 16,
+  },
+  externalIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   tierInfo: { flex: 1, gap: 4 },
   tierName: { letterSpacing: -0.2 },

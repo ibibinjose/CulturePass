@@ -38,6 +38,7 @@ import {
   getPublicCommunityByIdOrHandle,
   listPublicCommunities,
 } from '../services/communityDirectory';
+import { communityMembershipService } from '../services/communityMembership';
 import { isFirestoreConfigured } from '../admin';
 import { allowInlineDemoFallback, resolveDemoProfileById } from '../dev/demoFixtures';
 import {
@@ -817,6 +818,75 @@ const COMMUNITY_ROUTE_RESERVED = new Set([
   'recommended-events',
 ]);
 
+// ── GET /api/communities/joined ─────────────────────────────────────────────
+profilesRouter.get(
+  '/communities/joined',
+  requireAuth,
+  slidingWindowRateLimit(60000, 60),
+  async (req: Request, res: Response) => {
+    try {
+      if (!isFirestoreConfigured) return res.json({ communityIds: [] });
+      const communityIds = await communityMembershipService.listJoinedCommunityIds(req.user!.id);
+      return res.json({ communityIds });
+    } catch (err) {
+      captureRouteError(err, 'GET /api/communities/joined');
+      return res.status(500).json({ error: 'Failed to fetch joined communities' });
+    }
+  },
+);
+
+// ── POST /api/communities/:id/join ──────────────────────────────────────────
+profilesRouter.post(
+  '/communities/:id/join',
+  requireAuth,
+  slidingWindowRateLimit(60000, 40),
+  async (req: Request, res: Response) => {
+    try {
+      if (!isFirestoreConfigured) {
+        return res.json({ success: true, communityId: qparam(req.params.id) });
+      }
+      const communityId = qparam(req.params.id);
+      if (COMMUNITY_ROUTE_RESERVED.has(communityId)) {
+        return res.status(404).json({ error: 'Community not found' });
+      }
+      const community = await getPublicCommunityByIdOrHandle(communityId);
+      if (!community) return res.status(404).json({ error: 'Community not found' });
+      const resolvedId = typeof community.id === 'string' ? community.id : communityId;
+      await communityMembershipService.join(req.user!.id, resolvedId);
+      return res.json({ success: true, communityId: resolvedId });
+    } catch (err) {
+      captureRouteError(err, 'POST /api/communities/:id/join');
+      return res.status(500).json({ error: 'Failed to join community' });
+    }
+  },
+);
+
+// ── DELETE /api/communities/:id/leave ───────────────────────────────────────
+profilesRouter.delete(
+  '/communities/:id/leave',
+  requireAuth,
+  slidingWindowRateLimit(60000, 40),
+  async (req: Request, res: Response) => {
+    try {
+      if (!isFirestoreConfigured) {
+        return res.json({ success: true, communityId: qparam(req.params.id) });
+      }
+      const communityId = qparam(req.params.id);
+      if (COMMUNITY_ROUTE_RESERVED.has(communityId)) {
+        return res.status(404).json({ error: 'Community not found' });
+      }
+      const community = await getPublicCommunityByIdOrHandle(communityId);
+      const resolvedId =
+        typeof community?.id === 'string' ? community.id : communityId;
+      await communityMembershipService.leave(req.user!.id, resolvedId);
+      return res.json({ success: true, communityId: resolvedId });
+    } catch (err) {
+      captureRouteError(err, 'DELETE /api/communities/:id/leave');
+      return res.status(500).json({ error: 'Failed to leave community' });
+    }
+  },
+);
+
 // ── GET /api/communities ────────────────────────────────────────────────────
 // List public community hubs (directory profiles + synced community host pages)
 profilesRouter.get(
@@ -863,9 +933,23 @@ profilesRouter.get(
   }
 );
 
+const SPARSE_COMMUNITY_EVENTS_MIN = 3;
+
+function dedupeCommunityEvents<T extends { id?: string }>(primary: T[], extra: T[]): T[] {
+  const seen = new Set(primary.map((e) => e.id).filter(Boolean));
+  const out = [...primary];
+  for (const e of extra) {
+    if (!e.id || seen.has(e.id)) continue;
+    seen.add(e.id);
+    out.push(e);
+    if (out.length >= 20) break;
+  }
+  return out;
+}
+
 // ── GET /api/communities/:id/recommended-events ─────────────────────────────
 // Return published events associated with a community (by communityId, with
-// cultureTag fallback so the list is non-empty even for newer communities).
+// cultureTag and location fallbacks so the list stays useful while inventory is sparse).
 profilesRouter.get(
   '/communities/:id/recommended-events',
   slidingWindowRateLimit(60000, 100),
@@ -875,22 +959,40 @@ profilesRouter.get(
         return res.json([]);
       }
       const communityId = qparam(req.params.id);
+      const dateFrom = new Date().toISOString().split('T')[0]!;
       const pagination = { page: 1, pageSize: 20 };
       const community = await getPublicCommunityByIdOrHandle(communityId);
       const resolvedId = typeof community?.id === 'string' ? community.id : communityId;
-      const result = await eventsService.list({ communityId: resolvedId }, pagination);
+      const result = await eventsService.list({ communityId: resolvedId, dateFrom }, pagination);
       let events = result.items;
-      if (events.length === 0) {
+
+      if (events.length < SPARSE_COMMUNITY_EVENTS_MIN) {
         const profile = community
           ? (community as Record<string, unknown>)
           : await directoryProfilesService.getById(communityId);
         const tags = (profile as { cultureTags?: string[] })?.cultureTags;
-        const tag = Array.isArray(tags) ? tags[0] : undefined;
-        if (tag) {
-          const fallback = await eventsService.list({ tag }, pagination);
-          events = fallback.items;
+        if (Array.isArray(tags)) {
+          for (const tag of tags.slice(0, 3)) {
+            if (events.length >= SPARSE_COMMUNITY_EVENTS_MIN) break;
+            const fallback = await eventsService.list({ tag, dateFrom }, pagination);
+            events = dedupeCommunityEvents(events, fallback.items);
+          }
         }
       }
+
+      if (events.length < SPARSE_COMMUNITY_EVENTS_MIN && community) {
+        const country = String((community as { country?: string }).country ?? 'Australia');
+        const city = String((community as { city?: string }).city ?? '').trim();
+        if (city) {
+          const cityResult = await eventsService.list({ city, country, dateFrom }, pagination);
+          events = dedupeCommunityEvents(events, cityResult.items);
+        }
+        if (events.length < SPARSE_COMMUNITY_EVENTS_MIN) {
+          const countryResult = await eventsService.list({ country, dateFrom }, pagination);
+          events = dedupeCommunityEvents(events, countryResult.items);
+        }
+      }
+
       return res.json(events);
     } catch (err) {
       captureRouteError(err, 'GET /api/communities/:id/recommended-events');

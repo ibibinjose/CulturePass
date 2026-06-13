@@ -1,6 +1,16 @@
+import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { communitiesApi } from '@/modules/communities/api';
+import { eventsApi } from '@/modules/events/api';
 import { useAuth } from '@/lib/auth';
+import {
+  eventMatchesCity,
+  mergeLocalWithFallback,
+  rankEventsByLocation,
+  scopeSubtitle,
+  SPARSE_LIST_MIN,
+  type LocationScope,
+} from '@/lib/locationFallback';
 import type { Community, EventData, Profile } from '@/shared/schema';
 import {
   clearCommunityJoinedMark,
@@ -82,6 +92,108 @@ export function useCommunityRecommendedEvents(id: string, options?: { enabled?: 
     enabled: !!id && (options?.enabled ?? true),
     staleTime: 1000 * 60 * 5,
   });
+}
+
+function todayDateOnly(): string {
+  return new Date().toISOString().split('T')[0]!;
+}
+
+export type CommunityDisplayEventsResult = {
+  events: EventData[];
+  scope: LocationScope;
+  scopeNote?: string;
+  isLoading: boolean;
+  isFetching: boolean;
+  refetch: () => Promise<unknown[]>;
+};
+
+/** Community events with local-first + national padding when the catalog is sparse. */
+export function useCommunityDisplayEvents(
+  community: Community | undefined,
+  options?: { enabled?: boolean },
+): CommunityDisplayEventsResult {
+  const communityId = community?.id ?? '';
+  const enabled = !!communityId && (options?.enabled ?? true);
+  const city = (community?.city ?? '').trim();
+  const country = (community?.country ?? 'Australia').trim();
+
+  const recommendedQuery = useCommunityRecommendedEvents(communityId, { enabled });
+
+  const needsSupplement =
+    enabled && !recommendedQuery.isLoading && (recommendedQuery.data?.length ?? 0) < SPARSE_LIST_MIN;
+
+  const supplementQuery = useQuery({
+    queryKey: [...communityKeys.events(communityId), 'supplement', country, city],
+    queryFn: async () => {
+      const dateFrom = todayDateOnly();
+      const merged: EventData[] = [];
+      const seen = new Set<string>();
+
+      const push = (list: EventData[]) => {
+        for (const e of list) {
+          if (!e?.id || seen.has(e.id)) continue;
+          seen.add(e.id);
+          merged.push(e);
+        }
+      };
+
+      if (city) {
+        const cityRes = await eventsApi.events.list({ city, country, dateFrom, pageSize: 20 });
+        push(cityRes.events ?? []);
+      }
+      if (merged.length < SPARSE_LIST_MIN) {
+        const countryRes = await eventsApi.events.list({ country, dateFrom, pageSize: 20 });
+        push(countryRes.events ?? []);
+      }
+      return merged;
+    },
+    enabled: needsSupplement,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const { events, scope, scopeNote } = useMemo(() => {
+    const recommended = recommendedQuery.data ?? [];
+
+    const inferScope = (items: EventData[]): LocationScope => {
+      const linked = items.filter((e) => e.communityId === communityId).length;
+      if (linked === 0) return 'national';
+      if (linked < items.length) return 'mixed';
+      const localish = items.filter((e) => !city || eventMatchesCity(e, city) || e.communityId === communityId).length;
+      return localish < items.length ? 'mixed' : 'local';
+    };
+
+    if (recommended.length >= SPARSE_LIST_MIN) {
+      const scope = inferScope(recommended);
+      return {
+        events: recommended,
+        scope,
+        scopeNote: scope === 'local' ? undefined : scopeSubtitle(scope, city, country),
+      };
+    }
+
+    const ranked = rankEventsByLocation(supplementQuery.data ?? [], city, country);
+    const merged = mergeLocalWithFallback(recommended, ranked, { minLocal: SPARSE_LIST_MIN, limit: 12 });
+    return {
+      events: merged.items,
+      scope: merged.scope,
+      scopeNote: scopeSubtitle(merged.scope, city, country),
+    };
+  }, [recommendedQuery.data, supplementQuery.data, city, country, communityId]);
+
+  const refetch = () =>
+    Promise.all([
+      recommendedQuery.refetch(),
+      needsSupplement ? supplementQuery.refetch() : Promise.resolve(),
+    ]);
+
+  return {
+    events,
+    scope,
+    scopeNote,
+    isLoading: recommendedQuery.isLoading || (needsSupplement && supplementQuery.isLoading),
+    isFetching: recommendedQuery.isFetching || supplementQuery.isFetching,
+    refetch,
+  };
 }
 
 export function useJoinCommunity() {

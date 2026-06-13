@@ -1,6 +1,16 @@
 import { Platform } from 'react-native';
 import type { Community } from '@/shared/schema';
 import { getCommunityMemberCount } from '@/lib/community';
+import {
+  communityMatchesCity,
+  communityScopeSubtitle as communityScopeSubtitleFromLib,
+  mergeLocalWithFallback,
+  rankCommunitiesByLocation,
+  SPARSE_LIST_MIN,
+  type LocationScope,
+} from '@/lib/locationFallback';
+
+export const communityScopeSubtitle = communityScopeSubtitleFromLib;
 
 export type CommunityHubSegment = 'discover' | 'joined' | 'following' | 'saved';
 export type CommunitySortMode = 'activity' | 'size' | 'name';
@@ -46,6 +56,11 @@ function communityCategoryKey(c: Community): string {
   return String(c.communityCategory ?? c.category ?? '').toLowerCase();
 }
 
+export type FilterHubCommunitiesResult = {
+  communities: Community[];
+  locationScope: LocationScope;
+};
+
 export function filterHubCommunities(
   communities: Community[],
   opts: {
@@ -53,17 +68,19 @@ export function filterHubCommunities(
     category: CommunityCategoryFilter;
     location: CommunityLocationFilter;
     userCity: string;
+    userCountry?: string;
     joinedIds: Set<string>;
     followingIds: Set<string>;
     savedIds: string[];
     sort: CommunitySortMode;
   },
-): Community[] {
-  const { segment, category, location, userCity, joinedIds, followingIds, savedIds, sort } = opts;
+): FilterHubCommunitiesResult {
+  const { segment, category, location, userCity, userCountry, joinedIds, followingIds, savedIds, sort } = opts;
   const city = normCity(userCity);
   const savedSet = new Set(savedIds);
 
   let result = [...communities];
+  let locationScope: LocationScope = 'local';
 
   if (segment === 'joined') {
     result = result.filter((c) => joinedIds.has(c.id));
@@ -77,16 +94,18 @@ export function filterHubCommunities(
     result = result.filter((c) => communityCategoryKey(c) === category || communityCategoryKey(c).includes(category));
   }
 
-  if (location === 'near-you') {
-    result = result.filter((c) => {
-      const hubCity = normCity(c.city);
-      // Nationwide / online hubs without a city are visible in every metro filter.
-      if (!hubCity) return true;
-      return (
-        hubCity === city ||
-        (c.chapterCities ?? []).some((ch) => normCity(ch) === city)
-      );
-    });
+  if (location === 'near-you' && segment === 'discover') {
+    const local = result.filter((c) => communityMatchesCity(c, userCity));
+    if (local.length < SPARSE_LIST_MIN) {
+      const ranked = rankCommunitiesByLocation(result, userCity, userCountry ?? 'Australia');
+      const merged = mergeLocalWithFallback(local, ranked, { minLocal: SPARSE_LIST_MIN, limit: ranked.length });
+      result = merged.items as Community[];
+      locationScope = merged.scope;
+    } else {
+      result = local;
+    }
+  } else if (location === 'near-you') {
+    result = result.filter((c) => communityMatchesCity(c, userCity));
   }
 
   if (sort === 'size') {
@@ -102,7 +121,7 @@ export function filterHubCommunities(
     });
   }
 
-  return result;
+  return { communities: result, locationScope };
 }
 
 export function communityHubScrollBottom(tabBarHeight: number, safeBottom: number): number {

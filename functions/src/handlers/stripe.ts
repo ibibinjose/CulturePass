@@ -25,6 +25,11 @@ import {
   handleStripeAccountUpdated,
 } from '../services/stripeConnect';
 import {
+  externalTicketingBlockedMessage,
+  getExternalTicketUrl,
+  usesExternalTicketing,
+} from '../lib/externalTicketing';
+import {
   buildChargeSnapshotFromSubscription,
   recordMembershipCharge,
 } from '../services/pricing';
@@ -151,6 +156,13 @@ export function createStripeRouter() {
     const event = await eventsService.getById(td.eventId);
     if (!event) {
       return res.status(404).json({ error: 'Event not found' });
+    }
+    if (usesExternalTicketing(event)) {
+      return res.status(409).json({
+        error: externalTicketingBlockedMessage(event),
+        code: 'EXTERNAL_TICKETING',
+        externalTicketUrl: getExternalTicketUrl(event),
+      });
     }
     let pricing;
     try {
@@ -417,6 +429,13 @@ export function createStripeRouter() {
     const event = await eventsService.getById(td.eventId);
     if (!event) {
       return res.status(404).json({ error: 'Event not found' });
+    }
+    if (usesExternalTicketing(event)) {
+      return res.status(409).json({
+        error: externalTicketingBlockedMessage(event),
+        code: 'EXTERNAL_TICKETING',
+        externalTicketUrl: getExternalTicketUrl(event),
+      });
     }
 
     let pricing;

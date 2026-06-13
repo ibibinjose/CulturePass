@@ -21,6 +21,7 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/lib/auth';
 import { useOnboarding } from '@/contexts/OnboardingContext';
+import { useLocation } from '@/contexts/LocationContext';
 import { useCouncil } from '@/hooks/useCouncil';
 import { useColors } from '@/hooks/useColors';
 import { useM3Colors } from '@/hooks/useM3Colors';
@@ -145,8 +146,9 @@ function ExploreTabScreenInner() {
   const { lgaCode, councilId, council } = useCouncil();
   const queryClient = useQueryClient();
 
-  const city = (user?.city ?? onboarding.city ?? '').trim();
-  const country = (user?.country ?? onboarding.country ?? 'Australia').trim();
+  const appLocation = useLocation();
+  const city = (appLocation.city || user?.city || onboarding.city || '').trim();
+  const country = (appLocation.country || user?.country || onboarding.country || 'Australia').trim();
 
   const userState = useMemo(() => {
     const fromUser = (user?.state ?? '').trim().toUpperCase();

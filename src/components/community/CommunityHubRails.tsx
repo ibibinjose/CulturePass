@@ -104,6 +104,10 @@ export function CommunityHubRails({ hPad, joined, following, recommended, compac
         communities={following.slice(0, 6)}
         hPad={hPad}
         compact={compact}
+        emptyTitle="Not following any hubs yet"
+        emptyBody="Follow communities to keep up with their events without joining."
+        emptyCta="Discover hubs"
+        onEmptyPress={() => router.push('/(tabs)/community')}
       />
       <CommunityRail
         title="Recommended for you"
@@ -111,6 +115,10 @@ export function CommunityHubRails({ hPad, joined, following, recommended, compac
         communities={recommended.slice(0, 6)}
         hPad={hPad}
         compact={compact}
+        emptyTitle="Recommendations coming soon"
+        emptyBody="Set your culture interests in onboarding to see tailored hub suggestions."
+        emptyCta="Explore all hubs"
+        onEmptyPress={() => router.push('/(tabs)/community')}
       />
     </View>
   );

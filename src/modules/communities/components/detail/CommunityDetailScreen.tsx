@@ -14,7 +14,7 @@ import {
   useCommunity,
   useCommunityBusinesses,
   useCommunityMembers,
-  useCommunityRecommendedEvents,
+  useCommunityDisplayEvents,
   useJoinCommunity,
   useJoinedCommunities,
   useLeaveCommunity,
@@ -45,7 +45,8 @@ import {
   type CommunityDetailTab,
   type CommunityMemberItem,
 } from '@/modules/communities/components/detail/communityDetailUtils';
-import { DetailSkeleton, EventRow, SectionCard } from '@/modules/communities/components/detail/CommunityDetailScreen.parts';
+import { DetailSkeleton } from '@/modules/communities/components/detail/CommunityDetailScreen.parts';
+import { CommunityEventsSection } from '@/modules/communities/components/detail/CommunityEventsSection';
 import { CommunityDetailHero } from '@/modules/communities/components/detail/CommunityDetailHero';
 import { CommunityDetailTabBody } from '@/modules/communities/components/detail/CommunityDetailTabBody';
 import {
@@ -93,7 +94,7 @@ export default function CommunityDetailScreen() {
   const canManageCommunity = isOwner || isAppAdmin;
 
   const membersQuery = useCommunityMembers(docId, { enabled: !!docId });
-  const eventsQuery = useCommunityRecommendedEvents(docId, { enabled: !!docId });
+  const displayEvents = useCommunityDisplayEvents(community, { enabled: !!docId });
   const businessesQuery = useCommunityBusinesses(docId, { enabled: !!docId });
   const joinedQuery = useJoinedCommunities();
   const joinMutation = useJoinCommunity();
@@ -127,7 +128,8 @@ export default function CommunityDetailScreen() {
   const joinLabel = community ? getCommunityJoinLabel(community) : null;
   const cadenceLabel = community ? getCommunityCadenceLabel(community) : null;
   const members: MemberItem[] = membersQuery.data?.members ?? [];
-  const recommendedEvents = eventsQuery.data ?? [];
+  const recommendedEvents = displayEvents.events;
+  const eventsScopeNote = displayEvents.scopeNote;
   const memberBusinesses = businessesQuery.data?.businesses ?? [];
   const memberCountValue = Math.max(0, getCommunityMemberCount(community ?? {}) + optimisticMemberDelta);
   const heroImage = community?.coverImageUrl || community?.imageUrl;
@@ -232,7 +234,8 @@ export default function CommunityDetailScreen() {
       cadenceLabel={cadenceLabel}
       trustSignals={trustSignals}
       recommendedEvents={recommendedEvents}
-      eventsLoading={eventsQuery.isLoading}
+      eventsLoading={displayEvents.isLoading}
+      eventsScopeNote={eventsScopeNote}
       members={members}
       membersLoading={membersQuery.isLoading}
       memberCountValue={memberCountValue}
@@ -296,7 +299,7 @@ export default function CommunityDetailScreen() {
                 onRefresh={() => {
                   communityQuery.refetch();
                   membersQuery.refetch();
-                  eventsQuery.refetch();
+                  void displayEvents.refetch();
                 }}
                 tintColor={m3Colors.primary}
               />
@@ -321,19 +324,19 @@ export default function CommunityDetailScreen() {
 
           {/* ── Main content ──────────────────────────────────────────── */}
           <View style={[s.mainShell, s.content, isWeb && s.contentWeb, { paddingHorizontal: isDesktop ? hPad : 16 }]}>
-            {isDesktop ? (
+            {isDesktop && tab !== 'events' ? (
               <View style={s.desktopGrid}>
-                {/* Left column: about + registry */}
                 <View style={s.desktopLeft}>{tabContent}</View>
-                {/* Right column: events preview */}
                 <View style={s.desktopRight}>
-                  {recommendedEvents.length > 0 && (
-                    <SectionCard title="Upcoming Events">
-                      {recommendedEvents.slice(0, 5).map((event) => (
-                        <EventRow key={event.id} event={event} accent={accent} />
-                      ))}
-                    </SectionCard>
-                  )}
+                  <CommunityEventsSection
+                    events={recommendedEvents}
+                    loading={displayEvents.isLoading}
+                    accent={accent}
+                    communityName={community.name}
+                    locationScopeNote={eventsScopeNote}
+                    compact
+                    maxCompact={5}
+                  />
                 </View>
               </View>
             ) : (

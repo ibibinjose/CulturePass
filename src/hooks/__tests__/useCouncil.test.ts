@@ -28,6 +28,10 @@ jest.mock('../../contexts/OnboardingContext', () => ({
   })),
 }));
 
+jest.mock('../../contexts/LocationContext', () => ({
+  useLocationOptional: jest.fn(() => null),
+}));
+
 jest.mock('../../lib/auth', () => ({
   useAuth: jest.fn(() => ({
     isAuthenticated: true,

@@ -3,12 +3,14 @@ import { modulesApi } from '@/modules/api';
 type SearchScope = {
   city?: string;
   country?: string;
+  lgaCode?: string;
 };
 
 export function searchDirectory(params: {
   q: string;
   city?: string;
   country?: string;
+  lgaCode?: string;
   publisherProfileId?: string;
   venueProfileId?: string;
   pageSize?: number;
@@ -18,7 +20,12 @@ export function searchDirectory(params: {
 
 export async function fetchTrendingSearchSources(scope: SearchScope) {
   const [eventsPage, communities, movies, profiles] = await Promise.all([
-    modulesApi.events.list({ city: scope.city, country: scope.country, pageSize: 120 }),
+    modulesApi.events.list({
+      city: scope.city,
+      country: scope.country,
+      lgaCode: scope.lgaCode,
+      pageSize: 120,
+    }),
     modulesApi.communities.list({ city: scope.city, country: scope.country }),
     modulesApi.movies.list({
       ...(scope.city ? { city: scope.city } : {}),

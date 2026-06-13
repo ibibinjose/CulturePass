@@ -16,6 +16,7 @@ import { useLikes } from '@/contexts/LikesContext';
 import { eventPaths } from '@/modules/events/services/navigation';
 import { useColors } from '@/hooks/useColors';
 import { formatEventDateTime } from '@/lib/dateUtils';
+import { formatEventLocation, formatEventPriceLabel, isFallbackValue } from '@/lib/presentation';
 import type { EventData } from '@/shared/schema';
 
 interface EventCardProps {
@@ -81,16 +82,11 @@ function EventCardInner({ event, isLive, canEdit, onEdit, onDelete }: EventCardP
     setShowUndo(false);
   }, []);
 
-  const priceDisplay =
-    event.priceLabel ??
-    (event.priceCents === 0
-      ? 'Free'
-      : event.priceCents != null
-        ? `$${(event.priceCents / 100).toFixed(2)}`
-        : null);
+  const priceDisplay = formatEventPriceLabel(event);
+  const locationDisplay = formatEventLocation(event);
+  const locationMuted = isFallbackValue(locationDisplay, 'Location TBC');
 
-  const isFreeDisplay =
-    priceDisplay != null && String(priceDisplay).trim().toLowerCase() === 'free';
+  const isFreeDisplay = priceDisplay.trim().toLowerCase() === 'free';
 
   const ageBadge =
     event.ageSuitability && event.ageSuitability !== 'all' ? event.ageSuitability : null;
@@ -176,14 +172,19 @@ function EventCardInner({ event, isLive, canEdit, onEdit, onDelete }: EventCardP
                 </Text>
               </View>
 
-              {event.venue ? (
-                <View style={styles.meta}>
-                  <Ionicons name="location-outline" size={13} color={colors.textSecondary} />
-                  <Text style={[styles.metaText, { color: colors.textSecondary }]} numberOfLines={1}>
-                    {event.venue}
-                  </Text>
-                </View>
-              ) : null}
+              <View style={styles.meta}>
+                <Ionicons name="location-outline" size={13} color={colors.textSecondary} />
+                <Text
+                  style={[
+                    styles.metaText,
+                    { color: locationMuted ? colors.textTertiary : colors.textSecondary },
+                    locationMuted && { fontStyle: 'italic' },
+                  ]}
+                  numberOfLines={1}
+                >
+                  {locationDisplay}
+                </Text>
+              </View>
 
               {event.publisherProfileId ? (
                 <View style={{ marginTop: 4 }}>
@@ -213,13 +214,16 @@ function EventCardInner({ event, isLive, canEdit, onEdit, onDelete }: EventCardP
               <CultureTagRow tags={cultureTags} max={1} />
             </View>
             
-            {priceDisplay ? (
-              <View style={[styles.priceContainer, isFreeDisplay && { backgroundColor: CultureTokens.teal + '14', borderColor: CultureTokens.teal + '30' }]}>
-                <Text style={[styles.price, { color: isFreeDisplay ? CultureTokens.teal : colors.text }]}>
-                  {priceDisplay}
-                </Text>
-              </View>
-            ) : null}
+            <View
+              style={[
+                styles.priceContainer,
+                isFreeDisplay && { backgroundColor: CultureTokens.teal + '14', borderColor: CultureTokens.teal + '30' },
+              ]}
+            >
+              <Text style={[styles.price, { color: isFreeDisplay ? CultureTokens.teal : colors.text }]}>
+                {priceDisplay}
+              </Text>
+            </View>
           </View>
         </View>
       </Pressable>

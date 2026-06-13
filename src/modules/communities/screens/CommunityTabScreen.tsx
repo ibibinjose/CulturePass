@@ -14,6 +14,7 @@ import { useM3Colors } from '@/hooks/useM3Colors';
 import { useLayout } from '@/hooks/useLayout';
 import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import { useOnboarding } from '@/contexts/OnboardingContext';
+import { useLocation } from '@/contexts/LocationContext';
 import { useSaved } from '@/contexts/SavedContext';
 import { useAuth } from '@/lib/auth';
 import { getCommunityRecommendations } from '@/lib/community-utils';
@@ -30,6 +31,7 @@ import { CommunityDiscoverGrid } from '@/components/community/CommunityDiscoverG
 import {
   communityHubHeroHeight,
   communityHubScrollBottom,
+  communityScopeSubtitle,
   filterHubCommunities,
   type CommunityCategoryFilter,
   type CommunityHubSegment,
@@ -50,11 +52,13 @@ export default function CommunityTabScreen() {
   const useSplitLayout = isDesktop || isTablet;
 
   const { state: onboarding } = useOnboarding();
+  const appLocation = useLocation();
   const { user } = useAuth();
   const { savedCommunityBookmarks } = useSaved();
   const queryClient = useQueryClient();
 
-  const userCity = onboarding?.city?.trim() || 'Sydney';
+  const userCity = appLocation.city;
+  const userCountry = appLocation.country;
   const userCultureTags = onboarding?.interests ?? [];
 
   const [refreshing, setRefreshing] = useState(false);
@@ -85,19 +89,25 @@ export default function CommunityTabScreen() {
     [userCultureTags, allCommunities, joinedSet],
   );
 
-  const filteredCommunities = useMemo(
+  const { communities: filteredCommunities, locationScope } = useMemo(
     () =>
       filterHubCommunities(allCommunities, {
         segment,
         category,
         location,
         userCity,
+        userCountry,
         joinedIds: joinedSet,
         followingIds: followingSet,
         savedIds: savedCommunityBookmarks,
         sort,
       }),
-    [allCommunities, segment, category, location, userCity, joinedSet, followingSet, savedCommunityBookmarks, sort],
+    [allCommunities, segment, category, location, userCity, userCountry, joinedSet, followingSet, savedCommunityBookmarks, sort],
+  );
+
+  const locationScopeNote = useMemo(
+    () => (segment === 'discover' && location === 'near-you' ? communityScopeSubtitle(locationScope, userCity, userCountry) : undefined),
+    [segment, location, locationScope, userCity, userCountry],
   );
 
   const numColumns = useSplitLayout ? (isDesktop ? 3 : 2) : windowSizeClass === 'expanded' ? 3 : 2;
@@ -178,6 +188,7 @@ export default function CommunityTabScreen() {
           numColumns={numColumns}
           isLoading={isLoading}
           onClearFilters={filteredCommunities.length === 0 ? clearFilters : undefined}
+          emptyBody={locationScopeNote ?? undefined}
         />
       </View>
     </View>

@@ -14,6 +14,7 @@ import { isSafeExternalUrl, openExternalUrl } from '@/lib/openExternalUrl';
 import type { EventData } from '@/shared/schema';
 import { isWeb } from './utils';
 import { eventPaths } from '@/modules/events/services/navigation';
+import { getExternalTicketUrl, usesExternalTicketing } from '@/modules/events/utils/externalTicketing';
 
 type BuyMode = 'single' | 'family' | 'group';
 
@@ -54,7 +55,7 @@ export function useEventTicketing({
   const effectiveQty = buyMode === 'family' ? familySize : quantity;
 
   const handleExternalTicketPress = useCallback(async () => {
-    const url = event.externalTicketUrl ?? event.externalUrl;
+    const url = getExternalTicketUrl(event);
     if (!url) return;
     if (!isWeb) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     eventsApi.events.trackTicketClick(event.id).catch(() => {});
@@ -64,7 +65,7 @@ export function useEventTicketing({
     } catch {
       Alert.alert('Error', 'Could not open the ticket page.');
     }
-  }, [event.id, event.externalTicketUrl, event.externalUrl]);
+  }, [event]);
 
   const purchaseMutation = useMutation({
     mutationFn: async (body: Record<string, unknown>) => {
@@ -123,6 +124,10 @@ export function useEventTicketing({
   });
 
   const purchaseFreeTicket = useCallback(async (body: Record<string, unknown>) => {
+    if (usesExternalTicketing(event)) {
+      await handleExternalTicketPress();
+      return;
+    }
     try {
       const data = await eventsApi.tickets.purchase(body as { eventId: string; tierId?: string; quantity?: number });
       captureTicketPurchaseCompleted({
@@ -145,9 +150,13 @@ export function useEventTicketing({
     } catch {
       Alert.alert('Error', 'Failed to reserve ticket. Please try again.');
     }
-  }, [effectiveQty, event, setTicketModalVisible]);
+  }, [effectiveQty, event, setTicketModalVisible, handleExternalTicketPress]);
 
   const handlePurchase = useCallback(() => {
+    if (usesExternalTicketing(event)) {
+      void handleExternalTicketPress();
+      return;
+    }
     if (!userId) {
       Alert.alert('Login required', 'Please sign in to complete ticket purchase.', [
         { text: 'Cancel', style: 'cancel' },
@@ -189,7 +198,7 @@ export function useEventTicketing({
         priceCents: String(selectedTier.priceCents ?? 0),
       },
     });
-  }, [buyMode, effectiveQty, event, pathname, purchaseFreeTicket, selectedTier, totalPrice, userId, setTicketModalVisible]);
+  }, [buyMode, effectiveQty, event, pathname, purchaseFreeTicket, selectedTier, totalPrice, userId, setTicketModalVisible, handleExternalTicketPress]);
 
   return {
     eventTiers,

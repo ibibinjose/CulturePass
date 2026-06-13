@@ -11,12 +11,31 @@ import { useDiscoverPreviewRails } from '@/hooks/discover/useDiscoverPreviewRail
 import { cityToCoordinates, useDiscoverServiceState } from './useDiscoverServices';
 import { useDiscoverUIState } from './useDiscoverUIState';
 import { useDiscoverQueries } from './useDiscoverQueries';
+import { useLocation } from '@/contexts/LocationContext';
+import {
+  bucketEventsByTimeOfDay,
+  eventMatchesCity,
+  filterLocalEvents,
+  mergeLocalWithFallback,
+  rankCommunitiesByLocation,
+  rankEventsByLocation,
+  type LocationScope,
+} from '@/lib/locationFallback';
 
 export function useDiscoverData() {
   const { state } = useOnboarding();
   const { isAuthenticated, userId } = useAuth();
 
-  const { currentTime, weatherSummary, selectedCityCoordinates } = useDiscoverServiceState(state.city);
+  const location = useLocation();
+  const {
+    currentTime,
+    dateLabel,
+    timeLabel,
+    weatherSummary,
+    selectedCityCoordinates,
+    locationDisplayLabel,
+  } = useDiscoverServiceState(location);
+
   const { refreshing, discoverViewedRef, handleRefresh } = useDiscoverUIState();
   const {
     eventsQuery,
@@ -33,7 +52,10 @@ export function useDiscoverData() {
     councilEvents,
     nearbyProbe,
     nearbyEvents,
-  } = useDiscoverQueries(state, userId);
+  } = useDiscoverQueries(state, userId, location);
+
+  const effectiveCity = location.city || state.city || '';
+  const effectiveCountry = location.country || state.country || 'Australia';
 
   const allEvents = useMemo(() => eventsQuery.data ?? [], [eventsQuery.data]);
   const allCommunities = useMemo(() => communitiesQuery.data ?? [], [communitiesQuery.data]);
@@ -46,80 +68,111 @@ export function useDiscoverData() {
   const shoppingRaw = shoppingQuery.data ?? [];
   const perksRaw = perksQuery.data ?? [];
 
+  const nearbyIds = useMemo(() => new Set(nearbyEvents.map((e) => e.id)), [nearbyEvents]);
+
+  const localEventScope = useMemo(
+    () => ({
+      city: effectiveCity,
+      country: effectiveCountry,
+      council,
+      nearbyIds,
+    }),
+    [effectiveCity, effectiveCountry, council, nearbyIds],
+  );
+
+  const localUpcomingEvents = useMemo(
+    () => filterLocalEvents(allEvents, localEventScope),
+    [allEvents, localEventScope],
+  );
+
   const trendingEvents = useMemo(() => discoverFeed?.trendingEvents ?? [], [discoverFeed]);
 
   const distanceSortedEvents = useMemo(() => {
     if (!selectedCityCoordinates || allEvents.length === 0) return [];
-    return allEvents
-      .reduce((acc: (EventData & { distanceKm: number })[], event) => {
-        if (!event.venue || !event.city) return acc;
-        const coords = cityToCoordinates(event.city);
-        if (!coords) return acc;
-        const dist = calculateDistance(
-          selectedCityCoordinates.latitude,
-          selectedCityCoordinates.longitude,
-          coords.latitude,
-          coords.longitude,
-        );
-        acc.push({ ...event, distanceKm: dist });
-        return acc;
-      }, [])
-      .sort((a, b) => a.distanceKm - b.distanceKm)
-      .slice(0, 12);
-  }, [allEvents, selectedCityCoordinates]);
+    const pool = localUpcomingEvents.length > 0 ? localUpcomingEvents : allEvents;
+    const withDistance: (EventData & { distanceKm: number })[] = [];
+    const withoutDistance: EventData[] = [];
+
+    for (const event of pool) {
+      if (!event.city) {
+        withoutDistance.push(event);
+        continue;
+      }
+      const coords = cityToCoordinates(event.city);
+      if (!coords) {
+        withoutDistance.push(event);
+        continue;
+      }
+      const dist = calculateDistance(
+        selectedCityCoordinates.latitude,
+        selectedCityCoordinates.longitude,
+        coords.latitude,
+        coords.longitude,
+      );
+      withDistance.push({ ...event, distanceKm: dist });
+    }
+
+    withDistance.sort((a, b) => a.distanceKm - b.distanceKm);
+    return [...withDistance, ...withoutDistance.map((e) => ({ ...e, distanceKm: 9999 }))].slice(0, 12);
+  }, [allEvents, localUpcomingEvents, selectedCityCoordinates]);
 
   const popularEvents = useMemo(() => {
-    if (trendingEvents.length > 0) return trendingEvents;
+    const localTrending = trendingEvents.filter((e) =>
+      localUpcomingEvents.some((l) => l.id === e.id) || nearbyIds.has(e.id),
+    );
+    if (localTrending.length > 0) return localTrending;
+    if (trendingEvents.length > 0 && localUpcomingEvents.length === 0) return trendingEvents;
     if (distanceSortedEvents.length > 0) return distanceSortedEvents;
-    return allEvents
-      .filter((e) => e.venue)
+    if (localUpcomingEvents.length > 0) {
+      return [...localUpcomingEvents]
+        .sort((a, b) => (b.attending || 0) - (a.attending || 0))
+        .slice(0, 12);
+    }
+    return [...allEvents]
       .sort((a, b) => (b.attending || 0) - (a.attending || 0))
       .slice(0, 12);
-  }, [trendingEvents, allEvents, distanceSortedEvents]);
+  }, [trendingEvents, allEvents, distanceSortedEvents, localUpcomingEvents, nearbyIds]);
 
   const forYouEvents = useMemo(() => {
-    // Prefer server-ranked cultural events (includes both root + exploring culture matches)
     const serverRanked = discoverFeed?.forYouEvents?.map((r) => r.event as EventData) ?? [];
-    if (serverRanked.length > 0) return serverRanked;
-    // Fallback: client-side filter for unauthenticated users or when server data is absent
+    if (serverRanked.length > 0) {
+      const localRanked = serverRanked.filter((e) =>
+        localUpcomingEvents.some((l) => l.id === e.id) || nearbyIds.has(e.id),
+      );
+      if (localRanked.length > 0) return localRanked;
+      if (localUpcomingEvents.length > 0) return serverRanked;
+      return serverRanked;
+    }
+
     const { nationalityId, cultureIds } = state;
-    if (!nationalityId && (!cultureIds || cultureIds.length === 0)) return [];
-    return allEvents
-      .filter((e) => {
-        const tags: string[] = Array.isArray(e.cultureTag) ? (e.cultureTag as string[]) : [];
-        if (nationalityId && tags.some((t) => t.toLowerCase().includes(nationalityId.toLowerCase()))) return true;
-        if (cultureIds?.length) return cultureIds.some((id: string) => tags.some((t) => t.toLowerCase().includes(id.toLowerCase())));
-        return false;
-      })
-      .slice(0, 10);
-  }, [discoverFeed, allEvents, state]);
-
-  const nowBuckets = useMemo(() => {
-    const now = new Date();
-    const nowHours = now.getHours();
-    const nowMinutes = now.getMinutes();
-    const nowTotalMinutes = nowHours * 60 + nowMinutes;
-
-    const happeningNow: EventData[] = [];
-    const startingSoon: EventData[] = [];
-    const laterTonight: EventData[] = [];
-
-    allEvents.forEach((event) => {
-      if (!event.time) return;
-      const [h, m] = event.time.split(':').map(Number);
-      const eventMinutes = h * 60 + m;
-
-      if (eventMinutes <= nowTotalMinutes + 30 && eventMinutes >= nowTotalMinutes - 120) {
-        happeningNow.push(event);
-      } else if (eventMinutes > nowTotalMinutes + 30 && eventMinutes <= nowTotalMinutes + 120) {
-        startingSoon.push(event);
-      } else if (eventMinutes > nowTotalMinutes + 120) {
-        laterTonight.push(event);
+    const culturePool = localUpcomingEvents.length > 0 ? localUpcomingEvents : allEvents;
+    const cultureMatched = culturePool.filter((e) => {
+      const tags: string[] = [
+        ...(Array.isArray(e.cultureTag) ? (e.cultureTag as string[]) : []),
+        ...(Array.isArray(e.cultureTags) ? e.cultureTags : []),
+      ];
+      if (nationalityId && tags.some((t) => t.toLowerCase().includes(nationalityId.toLowerCase()))) return true;
+      if (cultureIds?.length) {
+        return cultureIds.some((id: string) => tags.some((t) => t.toLowerCase().includes(id.toLowerCase())));
       }
+      return false;
     });
 
-    return { happeningNow, startingSoon, laterTonight };
-  }, [allEvents]);
+    if (cultureMatched.length > 0) return cultureMatched.slice(0, 10);
+    return popularEvents.slice(0, 10);
+  }, [discoverFeed, allEvents, localUpcomingEvents, nearbyIds, state, popularEvents]);
+
+  const nowBuckets = useMemo(() => {
+    const localBuckets = bucketEventsByTimeOfDay(localUpcomingEvents);
+    if (
+      localBuckets.happeningNow.length > 0 ||
+      localBuckets.startingSoon.length > 0 ||
+      localBuckets.laterTonight.length > 0
+    ) {
+      return localBuckets;
+    }
+    return bucketEventsByTimeOfDay(allEvents);
+  }, [localUpcomingEvents, allEvents]);
 
   const startingSoonRailData = useMemo(() => {
     const seen = new Set<string>();
@@ -146,14 +199,46 @@ export function useDiscoverData() {
       if (aLive !== bLive) return aLive ? -1 : 1;
       return ta - tb;
     });
-    return merged;
-  }, [nowBuckets]);
+    if (merged.length > 0) return merged;
+    if (localUpcomingEvents.length > 0) return localUpcomingEvents.slice(0, 8);
+    return allEvents.slice(0, 8);
+  }, [nowBuckets, allEvents, localUpcomingEvents]);
+
+  const nearbyEventsMerged = useMemo(() => {
+    const localCityEvents = allEvents.filter((e) => eventMatchesCity(e, effectiveCity));
+    const local =
+      nearbyEvents.length > 0
+        ? nearbyEvents
+        : councilEvents.length > 0
+          ? councilEvents
+          : localCityEvents;
+    const ranked = rankEventsByLocation(allEvents, effectiveCity, effectiveCountry);
+    return mergeLocalWithFallback(local, ranked, { minLocal: 1, limit: 12 });
+  }, [nearbyEvents, councilEvents, allEvents, effectiveCity, effectiveCountry]);
+
+  const discoverCommunitiesMerged = useMemo(() => {
+    const local = allCommunities.filter((c) => {
+      const hubCity = (c.city ?? '').trim().toLowerCase();
+      if (!hubCity) return true;
+      return (
+        hubCity === effectiveCity.trim().toLowerCase() ||
+        (c.chapterCities ?? []).some((ch) => ch.trim().toLowerCase() === effectiveCity.trim().toLowerCase())
+      );
+    });
+    const ranked = rankCommunitiesByLocation(allCommunities, effectiveCity, effectiveCountry);
+    return mergeLocalWithFallback(local, ranked, { minLocal: 3, limit: 16 });
+  }, [allCommunities, effectiveCity, effectiveCountry]);
 
   const featuredEvents = useMemo(() => {
+    const localFeatured = allEvents.filter(
+      (e) => e.isFeatured && (localUpcomingEvents.some((l) => l.id === e.id) || nearbyIds.has(e.id)),
+    );
+    if (localFeatured.length >= 3) return localFeatured.slice(0, 5);
     const featured = allEvents.filter((e) => e.isFeatured);
     if (featured.length >= 3) return featured.slice(0, 5);
-    return [...featured, ...allEvents.filter((e) => !e.isFeatured)].slice(0, 5);
-  }, [allEvents]);
+    const pool = localUpcomingEvents.length > 0 ? localUpcomingEvents : allEvents;
+    return pool.slice(0, 5);
+  }, [allEvents, localUpcomingEvents, nearbyIds]);
 
   useEffect(() => {
     if (discoverViewedRef.current || allEvents.length === 0) return;
@@ -169,8 +254,11 @@ export function useDiscoverData() {
   });
 
   const land = useMemo(
-    () => (Array.isArray(traditionalLandsRaw) ? traditionalLandsRaw.find((l) => l.city === state.city) : undefined),
-    [traditionalLandsRaw, state.city],
+    () =>
+      Array.isArray(traditionalLandsRaw)
+        ? traditionalLandsRaw.find((l) => l.city === effectiveCity || l.city === state.city)
+        : undefined,
+    [traditionalLandsRaw, effectiveCity, state.city],
   );
 
   const nearbyLoading = nearbyProbe.isLoading || eventsQuery.isLoading;
@@ -187,18 +275,21 @@ export function useDiscoverData() {
   });
 
   const popularRailData = useMemo(
-    (): (EventData | string)[] => (eventsQuery.isLoading || discoverFeedQuery.isLoading ? ['s1', 's2', 's3', 's4'] : popularEvents),
+    (): (EventData | string)[] =>
+      eventsQuery.isLoading || discoverFeedQuery.isLoading ? ['s1', 's2', 's3', 's4'] : popularEvents,
     [eventsQuery.isLoading, discoverFeedQuery.isLoading, popularEvents],
   );
 
   const communityRailData = useMemo(
-    (): (Community | string)[] => (communitiesQuery.isLoading ? ['s1', 's2', 's3', 's4'] : allCommunities),
-    [communitiesQuery.isLoading, allCommunities],
+    (): (Community | string)[] =>
+      communitiesQuery.isLoading ? ['s1', 's2', 's3', 's4'] : discoverCommunitiesMerged.items,
+    [communitiesQuery.isLoading, discoverCommunitiesMerged.items],
   );
 
   const nearbyRailData = useMemo(
-    (): (EventData | string)[] => (nearbyLoading ? ['s1', 's2', 's3', 's4'] : nearbyEvents),
-    [nearbyLoading, nearbyEvents],
+    (): (EventData | string)[] =>
+      nearbyLoading ? ['s1', 's2', 's3', 's4'] : nearbyEventsMerged.items,
+    [nearbyLoading, nearbyEventsMerged.items],
   );
 
   const activityRailData = useMemo(
@@ -219,19 +310,30 @@ export function useDiscoverData() {
     [activitiesQuery.isError],
   );
   const nearbyRailError = useMemo(() => {
-    if (nearbyLoading || nearbyEvents.length > 0) return null;
-    if (eventsQuery.isError) return 'Could not load local events.';
+    if (nearbyLoading || nearbyEventsMerged.items.length > 0) return null;
+    if (eventsQuery.isError) return 'Could not load events.';
     if (nearbyProbe.error) return nearbyProbe.error;
-    if (nearbyProbe.status === 'error') return 'Could not determine your location. Try again.';
+    if (nearbyProbe.status === 'error' && allEvents.length === 0) {
+      return 'Could not determine your location. Showing nationwide events when available.';
+    }
     return null;
-  }, [nearbyLoading, nearbyEvents.length, eventsQuery.isError, nearbyProbe.error, nearbyProbe.status]);
+  }, [nearbyLoading, nearbyEventsMerged.items.length, eventsQuery.isError, nearbyProbe.error, nearbyProbe.status, allEvents.length]);
+
+  const nearbyScope: LocationScope = nearbyEventsMerged.scope;
+  const communitiesScope: LocationScope = discoverCommunitiesMerged.scope;
+
   return {
     currentTime,
+    dateLabel,
+    timeLabel,
     weatherSummary,
+    locationDisplayLabel,
+    location,
     refreshing,
     handleRefresh: () =>
       handleRefresh({
         refetch: discoverFeedQuery.refetch,
+        refreshLocation: location.refresh,
       }),
     allEvents,
     eventsLoading: eventsQuery.isLoading,
@@ -279,5 +381,11 @@ export function useDiscoverData() {
     communitiesRailError,
     activitiesRailError,
     nearbyRailError,
+    nearbyScope,
+    communitiesScope,
+    discoverCommunities: discoverCommunitiesMerged.items,
+    effectiveCity,
+    effectiveCountry,
+    localUpcomingEvents,
   };
 }

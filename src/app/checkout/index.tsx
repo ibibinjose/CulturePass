@@ -16,7 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
 import { CultureTokens, TextStyles } from '@/design-system/tokens/theme';
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import * as Haptics from 'expo-haptics';
 import { useQuery } from '@tanstack/react-query';
 import { modulesApi } from '@/modules/api';
@@ -29,6 +29,13 @@ import * as WebBrowser from 'expo-web-browser';
 import { getCurrencyForCountry, formatCurrency } from '@/lib/currency';
 import { captureTicketPurchaseCompleted } from '@/lib/analytics';
 import { useSafeBack } from '@/lib/navigation';
+import {
+  externalTicketProviderLabel,
+  getExternalTicketUrl,
+  usesExternalTicketing,
+} from '@/modules/events/utils/externalTicketing';
+import { eventsApi } from '@/modules/events/api';
+import { openExternalUrl } from '@/lib/openExternalUrl';
 
 import { StripeNativeProvider, useSafeStripe } from '@/lib/stripe-wrapper';
 
@@ -76,6 +83,25 @@ function CheckoutPageInner() {
     queryFn: () => modulesApi.rewards.get(userId!),
     enabled: !!userId,
   });
+
+  useEffect(() => {
+    if (!event || eventLoading) return;
+    if (!usesExternalTicketing(event)) return;
+    const url = getExternalTicketUrl(event);
+    if (!url) {
+      Alert.alert(
+        'External tickets',
+        `This event sells tickets on ${externalTicketProviderLabel(event)}. Open the event page for ticket links.`,
+        [{ text: 'OK', onPress: () => dismissCheckout() }],
+      );
+      return;
+    }
+    void (async () => {
+      eventsApi.events.trackTicketClick(event.id).catch(() => {});
+      await openExternalUrl(url, { failureTitle: 'Could not open ticket page' });
+      dismissCheckout();
+    })();
+  }, [event, eventLoading, dismissCheckout]);
 
   const availablePoints = rewards?.points ?? 0;
   const totalPriceBeforePoints = Math.max(0, (basePriceCents * quantity) - promoDiscount);

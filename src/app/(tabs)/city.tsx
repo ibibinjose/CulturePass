@@ -15,6 +15,7 @@ import { modulesApi } from '@/modules/api';
 import { useM3Colors } from '@/hooks/useM3Colors';
 import { useLayout } from '@/hooks/useLayout';
 import { useOnboarding } from '@/contexts/OnboardingContext';
+import { useLocation } from '@/contexts/LocationContext';
 import { FilterRail, type FilterRailMode } from '@/components/browse/FilterRail';
 import {
   communityKeys,
@@ -68,12 +69,13 @@ export default function MyCityScreen() {
   const heroHeight = destinationHeroHeight({ isExpanded, isDesktop, variant: 'tab' });
   const fabBottom = destinationFabBottom(tabBarHeight, safeAreaBottom);
   const { state: onboarding } = useOnboarding();
+  const appLocation = useLocation();
   const { user, isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
   const scrollRef = useRef<ScrollView>(null);
 
-  const cityName = onboarding?.city ?? 'Sydney';
-  const cityCountry = onboarding?.country ?? 'Australia';
+  const cityName = appLocation.city || onboarding?.city || 'Sydney';
+  const cityCountry = appLocation.country || onboarding?.country || 'Australia';
 
   const [citySession, setCitySession] = React.useState(() => createCitySession(cityName));
   const effectiveCity = citySession.viewingCity ?? cityName;

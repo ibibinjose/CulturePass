@@ -257,6 +257,20 @@ import {
 
 Use `TextStyles.eventCardTitle` / `TextStyles.eventCardDate` with `useColors().eventDate` (light UI) or `useColors().eventDateOnMedia` (text on dark hero images). Never use gold/yellow for event dates or primary card labels.
 
+### Event detail info document
+
+Every event detail page renders **`EventInfoDocument`** with ticketing-style fields:
+
+- **Organised by** (publisher / host name, links to community when applicable)
+- **Contact Organiser** (in-app enquiry or email fallback)
+- **Date And Time** — long range with timezone, e.g. `Sunday, 23 Aug @ 11:00 AM (AEST) - Sunday, 23 Aug @ 09:00 PM (AEST)`
+- **Location** — street-first address line
+- **Event Types** / **Event Category**
+- **Add to Calendar** (ICS on web, native calendar on device)
+- **Share With Friends** — Copy Link, Facebook, Twitter, LinkedIn, Pinterest
+
+Desktop: right sidebar. Mobile: panel below hero. Full spec: [`docs/EVENT_DETAIL_UI.md`](docs/EVENT_DETAIL_UI.md). Fallbacks: `src/lib/presentation.ts`.
+
 ---
 
 ## Engineering rules

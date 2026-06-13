@@ -1,6 +1,8 @@
 import { Alert, Platform } from 'react-native';
 import * as Haptics from 'expo-haptics';
 
+import { formatEventPriceLabel } from '@/lib/presentation';
+
 export type CommunityDetailTab = 'about' | 'events' | 'members';
 
 export const COMMUNITY_DETAIL_TABS: CommunityDetailTab[] = ['about', 'events', 'members'];
@@ -43,15 +45,32 @@ export function showUnavailableMemberProfileNotice() {
   Alert.alert('Profile unavailable', message);
 }
 
-export function communityEventPriceLabel(priceCents?: number, isFree?: boolean): string {
-  if (isFree || priceCents === 0) return 'Free';
-  if (!priceCents) return '';
-  return `$${(priceCents / 100).toFixed(2)}`;
+export function communityEventPriceLabel(
+  eventOrCents?: { priceCents?: number; isFree?: boolean; priceLabel?: string | null } | number,
+  isFree?: boolean,
+): string {
+  const event =
+    typeof eventOrCents === 'object' && eventOrCents != null
+      ? eventOrCents
+      : { priceCents: eventOrCents, isFree };
+  return formatEventPriceLabel(event);
 }
 
 export function formatCommunityEventDate(date: string): string {
   try {
     return new Date(date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  } catch {
+    return date;
+  }
+}
+
+export function formatCommunityEventDateLong(date: string): string {
+  try {
+    return new Date(date).toLocaleDateString(undefined, {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+    });
   } catch {
     return date;
   }

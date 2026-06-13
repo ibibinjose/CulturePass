@@ -4,6 +4,11 @@ import { getPostcodesByPlace } from '@shared/location/australian-postcodes';
 import { routeWithRedirect } from '@/lib/routes';
 import type { EventData } from '@/shared/schema';
 import type { Profile } from '@/shared/schema/profile';
+import {
+  DISPLAY_FALLBACK,
+  isOrganiserIdPlaceholder,
+  sanitizeOrganiserDisplayName,
+} from '@/lib/presentation';
 
 export const isWeb = Platform.OS === 'web';
 
@@ -146,15 +151,46 @@ export function resolveEventOrganizer(
     };
   }
 
-  const id = ev.organizerId?.trim();
   return {
-    name: id ? `Organiser (${id})` : 'Event organiser',
+    name: DISPLAY_FALLBACK.organisedBy,
     avatarUrl: null,
     website: null,
     isVerified: false,
     email: null,
     phone: null,
   };
+}
+
+export type ResolveOrganiserLabelOptions = {
+  communityName?: string | null;
+  profileLoading?: boolean;
+};
+
+/**
+ * User-facing organiser label — never exposes raw uids; prefers profile & community names.
+ */
+export function resolveOrganiserLabel(
+  event: EventData,
+  publisherProfile?: unknown,
+  options?: ResolveOrganiserLabelOptions,
+): string {
+  const profilePending = Boolean(options?.profileLoading);
+  if (profilePending) {
+    const interim = resolveEventOrganizer(event, publisherProfile)?.name?.trim();
+    if (interim && !isOrganiserIdPlaceholder(interim)) {
+      return sanitizeOrganiserDisplayName(interim);
+    }
+    return DISPLAY_FALLBACK.organiserLoading;
+  }
+
+  const resolvedName = resolveEventOrganizer(event, publisherProfile)?.name;
+  const fromResolver = sanitizeOrganiserDisplayName(resolvedName);
+  if (fromResolver !== DISPLAY_FALLBACK.organisedBy) return fromResolver;
+
+  const community = options?.communityName?.trim();
+  if (community) return community;
+
+  return DISPLAY_FALLBACK.organisedBy;
 }
 
 export function buildICS(title: string, start: Date, end: Date, description: string, location: string): string {

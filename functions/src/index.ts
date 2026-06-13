@@ -17,4 +17,6 @@ setGlobalOptions({ region: 'australia-southeast1' });
 export const api = https.onRequest(app);
 
 export * from './triggers';
+export { syncEventikDaily } from './triggers/eventikSync';
+export { syncEventbriteDaily } from './triggers/eventbriteSync';
 export * from './payments/stripeCheckout';

@@ -8,6 +8,7 @@ import type { ColorTheme } from '@/design-system/tokens/colors';
 import { Image } from 'expo-image';
 import { M3Button, M3Card, NameTaglineLockup } from '@/design-system/ui';
 import { useM3Colors } from '@/hooks/useM3Colors';
+import { DISPLAY_FALLBACK, sanitizeOrganiserDisplayName } from '@/lib/presentation';
 
 interface HostSectionProps {
   event: EventData;
@@ -36,16 +37,15 @@ export function HostSection({
   handleVisitWebsite,
 }: HostSectionProps) {
   const m3Colors = useM3Colors();
-  if (!organizer?.name) {
-    return null;
-  }
+  const hostName = sanitizeOrganiserDisplayName(organizer?.name, DISPLAY_FALLBACK.hostedBy);
+  const nameIsFallback = hostName === DISPLAY_FALLBACK.hostedBy || hostName === DISPLAY_FALLBACK.organisedBy;
 
-  const initial = (organizer.name.trim().charAt(0) || '?').toUpperCase();
+  const initial = (hostName.trim().charAt(0) || '?').toUpperCase();
 
   const topRow = (
     <View style={styles.topRow}>
       <View style={styles.avatarWrap}>
-        {organizer.avatarUrl ? (
+        {organizer?.avatarUrl ? (
           <Image source={{ uri: organizer.avatarUrl }} style={styles.avatar} contentFit="cover" />
         ) : (
           <View style={[styles.avatar, styles.fallback, { backgroundColor: m3Colors.primaryContainer }]}>
@@ -55,8 +55,8 @@ export function HostSection({
       </View>
       <View style={styles.info}>
         <NameTaglineLockup
-          name={organizer.name}
-          nameColor={m3Colors.onSurface}
+          name={hostName}
+          nameColor={nameIsFallback ? m3Colors.onSurfaceVariant : m3Colors.onSurface}
           size="sm"
           align="left"
           marginBottom={0}
@@ -65,7 +65,7 @@ export function HostSection({
           <View style={[styles.badge, { backgroundColor: m3Colors.secondaryContainer }]}>
             <Text style={[styles.badgeText, { color: m3Colors.onSecondaryContainer }]}>{displayCategory.toUpperCase()}</Text>
           </View>
-          {organizer.isVerified ? (
+          {organizer?.isVerified ? (
             <View style={[styles.badge, { backgroundColor: m3Colors.tertiaryContainer }]}>
               <Ionicons name="shield-checkmark" size={10} color={m3Colors.onTertiaryContainer} />
               <Text style={[styles.badgeText, { color: m3Colors.onTertiaryContainer }]}>VERIFIED</Text>
@@ -82,7 +82,7 @@ export function HostSection({
           <Pressable
             onPress={() => router.push({ pathname: '/c/[id]', params: { id: hostCommunityPathId } })}
             accessibilityRole="link"
-            accessibilityLabel={`Open ${organizer.name} community`}
+            accessibilityLabel={`Open ${hostName} community`}
             style={({ pressed }) => [pressed && { opacity: 0.92 }, Platform.OS === 'web' && { cursor: 'pointer' as const }]}
           >
             {topRow}
@@ -107,7 +107,7 @@ export function HostSection({
                 <View style={{ flex: 1 }}>
                     <M3Button variant="tonal" leftIcon="mail-outline" onPress={handleEmailHost} fullWidth>Email</M3Button>
                 </View>
-                {organizer.website ? (
+                {organizer?.website ? (
                     <View style={{ flex: 1 }}>
                         <M3Button variant="tonal" leftIcon="globe-outline" onPress={handleVisitWebsite} fullWidth>Website</M3Button>
                     </View>

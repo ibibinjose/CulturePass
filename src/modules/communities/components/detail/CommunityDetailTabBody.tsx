@@ -6,6 +6,8 @@ import { Image } from 'expo-image';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { M3Button, M3Card, M3FilterChip } from '@/design-system/ui';
+import { pressableA11yRole } from '@/lib/webPressable';
+import { FontFamily } from '@/design-system/tokens/theme';
 import { Skeleton } from '@/design-system/ui/Skeleton';
 import { openExternalUrl } from '@/lib/openExternalUrl';
 import { useM3Colors } from '@/hooks/useM3Colors';
@@ -21,7 +23,6 @@ import {
 import {
   ChipRow,
   CollapsibleSection,
-  EventRow,
   InfoRow,
   MemberRow,
   SectionCard,
@@ -29,7 +30,9 @@ import {
   TabPill,
   reg,
 } from '@/modules/communities/components/detail/CommunityDetailScreen.parts';
+import { CommunityEventsSection } from '@/modules/communities/components/detail/CommunityEventsSection';
 import { communityDetailStyles as s } from '@/modules/communities/components/detail/CommunityDetailScreen.styles';
+import { DISPLAY_FALLBACK } from '@/lib/presentation';
 
 const haptic = communityDetailHaptic;
 const bizRoute = communityBusinessRoute;
@@ -47,6 +50,7 @@ export type CommunityDetailTabBodyProps = {
   trustSignals: string[];
   recommendedEvents: EventData[];
   eventsLoading: boolean;
+  eventsScopeNote?: string;
   members: CommunityMemberItem[];
   membersLoading: boolean;
   memberCountValue: number;
@@ -75,6 +79,7 @@ export function CommunityDetailTabBody({
   trustSignals,
   recommendedEvents,
   eventsLoading,
+  eventsScopeNote,
   members,
   membersLoading,
   memberCountValue,
@@ -95,16 +100,18 @@ export function CommunityDetailTabBody({
     <View style={{ gap: 12 }}>
       <View style={[s.tabBarWrap, { backgroundColor: m3Colors.surfaceContainerLow, borderColor: m3Colors.outlineVariant }]}>
         <View style={s.tabBar}>
-          <TabPill label="About" active={tab === 'about'} onPress={() => onTabChange('about')} />
+          <TabPill label="About" active={tab === 'about'} accent={accent} onPress={() => onTabChange('about')} />
           <TabPill
             label="Events"
             active={tab === 'events'}
+            accent={accent}
             count={recommendedEvents.length}
             onPress={() => onTabChange('events')}
           />
           <TabPill
             label="Members"
             active={tab === 'members'}
+            accent={accent}
             count={memberCountValue > 0 ? memberCountValue : undefined}
             onPress={() => onTabChange('members')}
           />
@@ -114,11 +121,18 @@ export function CommunityDetailTabBody({
       {tab === 'about' && (
         <Animated.View entering={isWeb ? undefined : FadeInDown.duration(220)} style={{ gap: 12 }}>
           <SectionCard title="About this community">
-            {community.description ? (
-              <Text style={[s.bodyText, M3Typography.bodyMedium, { color: m3Colors.onSurfaceVariant }]}>
-                {community.description}
-              </Text>
-            ) : null}
+            <Text
+              style={[
+                s.bodyText,
+                M3Typography.bodyMedium,
+                {
+                  color: community.description ? m3Colors.onSurfaceVariant : m3Colors.outline,
+                  fontStyle: community.description ? 'normal' : 'italic',
+                },
+              ]}
+            >
+              {community.description?.trim() || DISPLAY_FALLBACK.noDescription}
+            </Text>
             {community.mission && community.mission !== community.description ? (
               <View
                 style={[
@@ -131,29 +145,46 @@ export function CommunityDetailTabBody({
                   {community.mission}
                 </Text>
               </View>
+            ) : !community.description ? (
+              <View
+                style={[
+                  s.missionBox,
+                  { backgroundColor: m3Colors.secondaryContainer, borderLeftColor: m3Colors.primary },
+                ]}
+              >
+                <Text style={[s.missionLabel, M3Typography.labelSmall, { color: m3Colors.primary }]}>MISSION</Text>
+                <Text
+                  style={[
+                    s.bodyText,
+                    M3Typography.bodyMedium,
+                    { color: m3Colors.onSurfaceVariant, fontStyle: 'italic' },
+                  ]}
+                >
+                  {DISPLAY_FALLBACK.noMission}
+                </Text>
+              </View>
             ) : null}
             <SocialLinksRow community={community} />
           </SectionCard>
 
-          {locationLabel || joinLabel || cadenceLabel || community.chapterCount ? (
-            <SectionCard title="Details">
-              {locationLabel ? <InfoRow label="Location" value={locationLabel} /> : null}
-              {joinLabel ? <InfoRow label="Membership" value={joinLabel} /> : null}
-              {cadenceLabel ? <InfoRow label="Gatherings" value={cadenceLabel} /> : null}
-              {community.chapterCount && community.chapterCount > 1 ? (
-                <InfoRow label="Chapters" value={`${community.chapterCount} cities`} />
-              ) : null}
-              {community.countryOfOrigin ? (
-                <InfoRow label="Country of origin" value={community.countryOfOrigin} />
-              ) : null}
-            </SectionCard>
-          ) : null}
+          <SectionCard title="Details">
+            <InfoRow label="Location" value={locationLabel} />
+            <InfoRow label="Membership" value={joinLabel} />
+            <InfoRow label="Gatherings" value={cadenceLabel} />
+            <InfoRow
+              label="Chapters"
+              value={
+                community.chapterCount && community.chapterCount > 1
+                  ? `${community.chapterCount} cities`
+                  : null
+              }
+            />
+            <InfoRow label="Country of origin" value={community.countryOfOrigin} />
+          </SectionCard>
 
-          {trustSignals.length > 0 ? (
-            <SectionCard title="Trust & Safety">
-              <ChipRow items={trustSignals} />
-            </SectionCard>
-          ) : null}
+          <SectionCard title="Trust & Safety">
+            <ChipRow items={trustSignals} emptyLabel={DISPLAY_FALLBACK.noTrustSignals} />
+          </SectionCard>
 
           {hasLinks ? (
             <SectionCard title="Links">
@@ -201,29 +232,13 @@ export function CommunityDetailTabBody({
 
       {tab === 'events' && (
         <Animated.View entering={isWeb ? undefined : FadeInDown.duration(220)}>
-          {eventsLoading ? (
-            <View style={{ gap: 10 }}>
-              <Skeleton width="100%" height={84} borderRadius={14} />
-              <Skeleton width="100%" height={84} borderRadius={14} />
-              <Skeleton width="100%" height={84} borderRadius={14} />
-            </View>
-          ) : recommendedEvents.length > 0 ? (
-            <SectionCard title={`${recommendedEvents.length} Event${recommendedEvents.length !== 1 ? 's' : ''}`}>
-              {recommendedEvents.map((event) => (
-                <EventRow key={event.id} event={event} accent={accent} />
-              ))}
-            </SectionCard>
-          ) : (
-            <M3Card variant="outlined" style={s.emptyState}>
-              <Ionicons name="calendar-outline" size={36} color={m3Colors.onSurfaceVariant} />
-              <Text style={[s.emptyStateTitle, M3Typography.titleMedium, { color: m3Colors.onSurface }]}>
-                No events yet
-              </Text>
-              <Text style={[s.emptyStateSub, M3Typography.bodyMedium, { color: m3Colors.onSurfaceVariant }]}>
-                Events hosted by this community will appear here.
-              </Text>
-            </M3Card>
-          )}
+          <CommunityEventsSection
+            events={recommendedEvents}
+            loading={eventsLoading}
+            accent={accent}
+            communityName={community.name}
+            locationScopeNote={eventsScopeNote}
+          />
         </Animated.View>
       )}
 
@@ -235,6 +250,16 @@ export function CommunityDetailTabBody({
               <Skeleton width="100%" height={72} borderRadius={14} />
               <Skeleton width="100%" height={72} borderRadius={14} />
             </View>
+          ) : memberCountValue > 0 && members.length === 0 ? (
+            <M3Card variant="outlined" style={s.emptyState}>
+              <Ionicons name="lock-closed-outline" size={36} color={m3Colors.onSurfaceVariant} />
+              <Text style={[s.emptyStateTitle, M3Typography.titleMedium, { color: m3Colors.onSurface }]}>
+                {memberCountValue.toLocaleString()} members
+              </Text>
+              <Text style={[s.emptyStateSub, M3Typography.bodyMedium, { color: m3Colors.onSurfaceVariant }]}>
+                {DISPLAY_FALLBACK.membersPrivate}
+              </Text>
+            </M3Card>
           ) : members.length > 0 ? (
             <SectionCard
               title={`${memberCountValue > 0 ? memberCountValue.toLocaleString() + ' ' : ''}Members`}
@@ -250,17 +275,19 @@ export function CommunityDetailTabBody({
                 <MemberRow key={m.id} member={m} />
               ))}
               {members.length > 6 ? (
-                <M3Button
-                  variant="text"
+                <Pressable
                   onPress={() => {
                     haptic();
                     router.push(routeCommunityMembers({ id: pathId }) as never);
                   }}
-                  rightIcon="arrow-forward"
-                  fullWidth
+                  accessibilityRole={pressableA11yRole('link')}
+                  style={({ pressed }) => [s.seeAllMembersBtn, { opacity: pressed ? 0.75 : 1 }]}
                 >
-                  See all {memberCountValue > 0 ? memberCountValue.toLocaleString() : ''} members
-                </M3Button>
+                  <Text style={[M3Typography.labelLarge, { color: m3Colors.primary, fontFamily: FontFamily.semibold }]}>
+                    See all {memberCountValue > 0 ? memberCountValue.toLocaleString() : ''} members
+                  </Text>
+                  <Ionicons name="arrow-forward" size={16} color={m3Colors.primary} />
+                </Pressable>
               ) : null}
             </SectionCard>
           ) : (
@@ -270,7 +297,7 @@ export function CommunityDetailTabBody({
                 No visible members yet
               </Text>
               <Text style={[s.emptyStateSub, M3Typography.bodyMedium, { color: m3Colors.onSurfaceVariant }]}>
-                Members will appear here as people join.
+                {DISPLAY_FALLBACK.membersEmpty}
               </Text>
               {!isJoined ? (
                 <M3Button onPress={onJoinToggle} style={{ marginTop: 12 }} variant="filled">
@@ -369,9 +396,14 @@ export function CommunityDetailTabBody({
                     </Text>
                   </View>
                   {partner.website ? (
-                    <M3Button variant="text" onPress={() => openExternalUrl(partner.website!)} style={{ paddingHorizontal: 0 }}>
+                    <Pressable
+                      onPress={() => openExternalUrl(partner.website!)}
+                      accessibilityRole={pressableA11yRole('link')}
+                      hitSlop={8}
+                      style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1, padding: 4 })}
+                    >
                       <Ionicons name="open-outline" size={18} color={m3Colors.primary} />
-                    </M3Button>
+                    </Pressable>
                   ) : null}
                 </View>
               ))}
@@ -388,7 +420,7 @@ export function CommunityDetailTabBody({
                     router.push(bizRoute(biz.entityType, biz.id) as never);
                   }}
                   style={[reg.row, { borderColor: m3Colors.outlineVariant }]}
-                  accessibilityRole="button"
+                  accessibilityRole={pressableA11yRole('link')}
                 >
                   <View style={[reg.avatar, { backgroundColor: m3Colors.surfaceContainerHigh }]}>
                     {biz.imageUrl ? (

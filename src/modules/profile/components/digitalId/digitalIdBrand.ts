@@ -4,6 +4,8 @@
  */
 export const DIGITAL_ID_BRAND = {
   name: 'CulturePass.App',
+  /** Wallet pass header strip + logo mark */
+  walletBrandLabel: 'CULTUREPASS ID',
   domain: 'culturepass.app',
   /** Shown on pass footers and wallet back fields */
   domainDisplay: 'CulturePass.App',

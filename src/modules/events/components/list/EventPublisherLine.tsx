@@ -8,6 +8,7 @@ import { getCommunityProfilePathId } from '@/lib/community';
 import { eventsApi } from '@/modules/events/api';
 import { Spacing, FontFamily, FontSize } from '@/design-system/tokens/theme';
 import type { Profile } from '@/shared/schema';
+import { DISPLAY_FALLBACK, sanitizeOrganiserDisplayName } from '@/lib/presentation';
 
 export type EventPublisherLineVariant = 'default' | 'compact' | 'onDark';
 
@@ -56,16 +57,22 @@ export function EventPublisherLine({
   variant?: EventPublisherLineVariant;
 }) {
   const colors = useColors();
-  const { data: profile } = useQuery({
+  const { data: profile, isLoading, isFetching } = useQuery({
     queryKey: ['/api/profiles', profileId],
     queryFn: () => eventsApi.profiles.get(profileId) as Promise<Profile>,
     enabled: !!profileId,
     staleTime: 120_000,
   });
-  if (!profile?.name) return null;
 
-  const isCommunity = profile.entityType === 'community';
-  const communityPathId = isCommunity ? getCommunityProfilePathId(profile) : null;
+  const displayName = profile?.name?.trim()
+    ? sanitizeOrganiserDisplayName(profile.name.trim())
+    : (isLoading || isFetching
+      ? DISPLAY_FALLBACK.organiserLoading
+      : DISPLAY_FALLBACK.organisedBy);
+  const namePending = !profile?.name?.trim() && (isLoading || isFetching);
+
+  const isCommunity = profile?.entityType === 'community';
+  const communityPathId = isCommunity && profile ? getCommunityProfilePathId(profile) : null;
 
   const iconColor =
     variant === 'onDark' ? 'rgba(255,255,255,0.85)' : colors.textSecondary;
@@ -89,8 +96,11 @@ export function EventPublisherLine({
   const rowInner = (
     <>
       <Ionicons name={iconName} size={iconSize} color={iconColor} />
-      <Text style={textStyle} numberOfLines={1}>
-        {profile.name}
+      <Text
+        style={[textStyle, namePending && { fontStyle: 'italic', opacity: 0.85 }]}
+        numberOfLines={1}
+      >
+        {displayName}
       </Text>
     </>
   );
@@ -108,7 +118,7 @@ export function EventPublisherLine({
         router.push({ pathname: '/c/[id]', params: { id: communityPathId } });
       }}
       accessibilityRole="link"
-      accessibilityLabel={`Open ${profile.name} community`}
+      accessibilityLabel={`Open ${displayName} community`}
       style={({ pressed }) => [
         ...metaStyle,
         { opacity: pressed ? 0.88 : 1 },

@@ -5,7 +5,7 @@
 
 import { randomBytes } from 'node:crypto';
 import { type Request, type Response, type NextFunction } from 'express';
-import { getPostcodeData, getPostcodesByPlace } from '../shared/australian-postcodes';
+import { getPostcodeData, getPostcodesByPlace } from '../../../shared/location/australian-postcodes';
 import { log, setCorrelationId } from '../lib/logger';
 import { walletsService, notificationsService } from '../services/firestore';
 import { isFirestoreConfigured } from '../admin';

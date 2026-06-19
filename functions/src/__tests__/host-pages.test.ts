@@ -145,4 +145,26 @@ describe('Host Pages API', () => {
     });
     expect(res.status).toBe(401);
   });
+
+  it('POST /api/host-pages/drafts allows partial name and bio during autosave', async () => {
+    const res = await request(app)
+      .post('/api/host-pages/drafts')
+      .set(organizerHeaders)
+      .send({
+        entityType: 'community',
+        formData: {
+          name: 'K',
+          bio: 'typing…',
+          categoryTags: ['Community'],
+          culturalTags: [],
+          languageTags: ['English'],
+          membershipModel: 'free',
+        },
+        currentStep: 1,
+        completedSteps: [],
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+  });
 });

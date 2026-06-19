@@ -178,11 +178,11 @@ export function resolveCreationDataflow(category: CreationCategoryInput): Creati
 
 /** Wizard pathname for each creation wizard kind. */
 export const WIZARD_PATHS: Record<CreationWizard, string> = {
-  'page-pro': '/pages/create',
-  'creation-lab': '/pages/create',
-  event: '/event/create',
-  listing: '/(domain)/listing/create',
-  'culture-market': '/pages/create/listing',
+  'page-pro': '/hostspace/[category]/create',
+  'creation-lab': '/hostspace/[category]/create',
+  event: '/hostspace/event/create',
+  listing: '/hostspace/[category]/create',
+  'culture-market': '/hostspace/listing',
 };
 
 /**
@@ -198,7 +198,7 @@ export const WIZARD_PATHS: Record<CreationWizard, string> = {
  * shared/creation/* instead.
  */
 export const PLATFORM_DATAFLOW = {
-  entryPoints: ['/pages/create', '/event/create', '/(domain)/listing/create', '/pages/create/listing', '/hostspace'],
+  entryPoints: ['/hostspace', '/hostspace/create', '/hostspace/event/create', '/hostspace/[category]/create', '/hostspace/listing'],
   auth: 'Firebase Auth + HostspaceAccessGate + organizer role (hostApplications)',
   api: 'Firebase Functions v2 → Express handlers',
   database: 'Firestore (not Supabase)',

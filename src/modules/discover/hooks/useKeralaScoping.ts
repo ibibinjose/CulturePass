@@ -1,5 +1,16 @@
 import { EventData, Community } from '@/shared/schema';
+import { SPARSE_LIST_MIN } from '@/lib/locationFallback';
 import { useDiscoverData } from './useDiscoverData';
+
+function scopeWithSparseFallback<T>(
+  items: T[],
+  predicate: (item: T) => boolean,
+  enabled: boolean,
+): T[] {
+  if (!enabled) return items;
+  const scoped = items.filter(predicate);
+  return scoped.length >= SPARSE_LIST_MIN ? scoped : items;
+}
 
 export function useKeralaScoping(keralaDomain: boolean, data: ReturnType<typeof useDiscoverData>) {
   const isKeralaEvent = (event: EventData) => {
@@ -41,15 +52,19 @@ export function useKeralaScoping(keralaDomain: boolean, data: ReturnType<typeof 
     return /kerala|malayali|malayalee|malayalam/.test(haystack);
   };
 
-  const scope = <T extends EventData | string>(arr: T[]): T[] =>
-    keralaDomain ? arr.filter((i) => typeof i === 'string' || isKeralaEvent(i as EventData)) : arr;
+  const scopeEvents = <T extends EventData | string>(arr: T[]): T[] =>
+    scopeWithSparseFallback(
+      arr,
+      (i) => typeof i === 'string' || isKeralaEvent(i as EventData),
+      keralaDomain,
+    );
 
   return {
-    featured: keralaDomain ? data.featuredEvents.filter(isKeralaEvent) : data.featuredEvents,
-    soon: scope(data.startingSoonRailData),
-    nearby: scope(data.nearbyRailData),
-    popular: scope(data.popularRailData),
-    forYou: keralaDomain ? data.forYouEvents.filter(isKeralaEvent) : data.forYouEvents,
-    communities: keralaDomain ? data.allCommunities.filter(isKeralaCommunity) : data.allCommunities,
+    featured: scopeWithSparseFallback(data.featuredEvents, isKeralaEvent, keralaDomain),
+    soon: scopeEvents(data.startingSoonRailData),
+    nearby: scopeEvents(data.nearbyRailData),
+    popular: scopeEvents(data.popularRailData),
+    forYou: scopeWithSparseFallback(data.forYouEvents, isKeralaEvent, keralaDomain),
+    communities: scopeWithSparseFallback(data.discoverCommunities, isKeralaCommunity, keralaDomain),
   };
 }

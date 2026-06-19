@@ -37,6 +37,8 @@ import {
   type AppStateStatus,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { hostspaceCreateRoute } from '@/constants/navigation/createNav';
+import { navigateToCreationLab } from '@/lib/creationRouting';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -153,8 +155,8 @@ export function WizardContainer({
       // The wizard hook will handle loading the draft via draftId prop
       // We need to trigger a re-initialization with the draft
       router.replace({
-        pathname: '/pages/create' as any,
-        params: { entityType, draftId: draft.id } as any,
+        pathname: hostspaceCreateRoute({ entityType, draftId: draft.id }).pathname as any,
+        params: hostspaceCreateRoute({ entityType, draftId: draft.id }).params as any,
       });
     },
     onStartFresh: () => {
@@ -268,7 +270,7 @@ export function WizardContainer({
     if (!isOrganizer) {
       if (Platform.OS === 'web') {
         if (window.confirm('You are in Sandbox Mode. You must apply to become a host and be approved before you can publish. Would you like to apply now?')) {
-          router.push('/pages/create');
+          navigateToCreationLab('form_wizard_sandbox_publish');
         }
       } else {
         Alert.alert(
@@ -276,7 +278,7 @@ export function WizardContainer({
           'You are in Sandbox Mode. You must apply to become a host and be approved before you can publish.',
           [
             { text: 'Cancel', style: 'cancel' },
-            { text: 'Create Host Profile', onPress: () => router.push('/pages/create') }
+            { text: 'Create Host Profile', onPress: () => navigateToCreationLab('form_wizard_sandbox_publish') }
           ]
         );
       }

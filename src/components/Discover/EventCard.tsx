@@ -28,6 +28,8 @@ import {
 import { USE_NATIVE_DRIVER } from '@/design-system/tokens/animations';
 import { CULTUREX_EXPLORES_CULTURE_TAG } from '@/shared/schema';
 import { normalizeRemoteImageUri } from '@/lib/mediaUrls';
+import { pressableA11yRole } from '@/lib/webPressable';
+import { formatEventLocation, formatEventPriceLabel, isFallbackValue } from '@/lib/presentation';
 
 /** RN Animated avoids Reanimated host/JSI init during Expo web SSR (HostFunction crashes). */
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -71,10 +73,14 @@ interface EventCardProps {
     time?: string;
     venue?: string;
     city?: string;
+    state?: string;
+    address?: string;
     imageUrl?: string;
     communityId?: string;
     attending?: number;
     priceLabel?: string;
+    priceCents?: number;
+    isFree?: boolean;
     isFeatured?: boolean;
     distanceKm?: number;
     cultureTag?: string[];
@@ -162,6 +168,9 @@ function OverlayCardContent({
   const eventDate = new Date(event.date);
   const isToday = eventDate.toDateString() === now.toDateString();
   const isStartingNext = !isLive && isToday;
+  const locationDisplay = formatEventLocation(event);
+  const locationMuted = isFallbackValue(locationDisplay, 'Location TBC');
+  const priceDisplay = formatEventPriceLabel(event);
 
   return (
     <View style={styles.centeredContent}>
@@ -189,8 +198,17 @@ function OverlayCardContent({
 
       <View style={styles.metaRowCentered}>
         <Ionicons name="location" size={12} color={`${colors.textInverse}CC`} />
-        <Text style={[styles.locationText, { color: `${colors.textInverse}E6` }]} numberOfLines={1}>
-          {event.venue || event.city}
+        <Text
+          style={[
+            styles.locationText,
+            {
+              color: locationMuted ? `${colors.textInverse}99` : `${colors.textInverse}E6`,
+              fontStyle: locationMuted ? 'italic' : 'normal',
+            },
+          ]}
+          numberOfLines={1}
+        >
+          {locationDisplay}
         </Text>
       </View>
 
@@ -198,21 +216,19 @@ function OverlayCardContent({
         <EventPublisherLine profileId={event.publisherProfileId} variant="onDark" />
       ) : null}
 
-      {event.priceLabel && (
-        <GlassView
-          intensity={30}
-          colorScheme="dark"
-          style={[
-            styles.pricePill,
-            isFreePriceLabel(event.priceLabel) && {
-              backgroundColor: 'rgba(46, 196, 182, 0.4)',
-              borderColor: 'rgba(46, 196, 182, 0.6)',
-            },
-          ]}
-        >
-          <Text style={styles.pricePillText}>{event.priceLabel}</Text>
-        </GlassView>
-      )}
+      <GlassView
+        intensity={30}
+        colorScheme="dark"
+        style={[
+          styles.pricePill,
+          isFreePriceLabel(priceDisplay) && {
+            backgroundColor: 'rgba(46, 196, 182, 0.4)',
+            borderColor: 'rgba(46, 196, 182, 0.6)',
+          },
+        ]}
+      >
+        <Text style={styles.pricePillText}>{priceDisplay}</Text>
+      </GlassView>
     </View>
   );
 }
@@ -245,7 +261,9 @@ function StackedCardContent({
   const tags = mergeCultureTagFields(event.cultureTag, event.cultureTags);
   const cxLower = CULTUREX_EXPLORES_CULTURE_TAG.toLowerCase();
   const displayTags = tags.filter((t) => String(t).toLowerCase() !== cxLower);
-  const footerVisible = Boolean(event.priceLabel) || displayTags.length > 0;
+  const locationDisplay = formatEventLocation(event);
+  const locationMuted = isFallbackValue(locationDisplay, 'Location TBC');
+  const priceDisplay = formatEventPriceLabel(event);
 
   return (
     <View style={styles.stackedBody}>
@@ -264,8 +282,17 @@ function StackedCardContent({
       </View>
       <View style={styles.stackedMetaRow}>
         <Ionicons name="location-outline" size={13} color={colors.textTertiary} />
-        <Text style={[TextStyles.eventCardMeta, { color: colors.textSecondary }]} numberOfLines={1}>
-          {event.venue || event.city || ' '}
+        <Text
+          style={[
+            TextStyles.eventCardMeta,
+            {
+              color: locationMuted ? colors.textTertiary : colors.textSecondary,
+              fontStyle: locationMuted ? 'italic' : 'normal',
+            },
+          ]}
+          numberOfLines={1}
+        >
+          {locationDisplay}
         </Text>
       </View>
       {event.publisherProfileId ? (
@@ -273,30 +300,24 @@ function StackedCardContent({
           <EventPublisherLine profileId={event.publisherProfileId} variant="compact" />
         </View>
       ) : null}
-      {footerVisible ? (
-        <View style={[styles.stackedFooter, { borderTopColor: colors.borderLight }]}>
-          <View style={styles.stackedFooterLeft}>
-            {event.priceLabel ? (
-              <GlassView
-                intensity={10}
-                style={[
-                  styles.stackedPricePill,
-                  { borderColor: colors.borderLight, backgroundColor: colors.backgroundSecondary },
-                  isFreePriceLabel(event.priceLabel) && {
-                    backgroundColor: CultureTokens.teal + '1A',
-                    borderColor: CultureTokens.teal + '33',
-                  },
-                ]}
-              >
-                <Text style={[styles.stackedPriceText, { color: colors.text }]}>{event.priceLabel}</Text>
-              </GlassView>
-            ) : null}
-            {displayTags.length > 0 ? <CultureTagRow tags={displayTags} max={1} /> : null}
-          </View>
+      <View style={[styles.stackedFooter, { borderTopColor: colors.borderLight }]}>
+        <View style={styles.stackedFooterLeft}>
+          <GlassView
+            intensity={10}
+            style={[
+              styles.stackedPricePill,
+              { borderColor: colors.borderLight, backgroundColor: colors.backgroundSecondary },
+              isFreePriceLabel(priceDisplay) && {
+                backgroundColor: CultureTokens.teal + '1A',
+                borderColor: CultureTokens.teal + '33',
+              },
+            ]}
+          >
+            <Text style={[styles.stackedPriceText, { color: colors.text }]}>{priceDisplay}</Text>
+          </GlassView>
+          {displayTags.length > 0 ? <CultureTagRow tags={displayTags} max={1} /> : null}
         </View>
-      ) : (
-        <View style={{ marginTop: 'auto' }} />
-      )}
+      </View>
     </View>
   );
 }
@@ -341,7 +362,9 @@ function EventCard({
 
   const cardWidth = containerWidth ?? (layout === 'stacked' ? RAIL_CARD_WIDTH : 240);
   const showCultureXBadge = eventInvitesCultureExplore(event);
-  const imageUri = normalizeRemoteImageUri(event.imageUrl);
+  const imageUri = normalizeRemoteImageUri(
+    event.heroImageUrl ?? event.imageUrl,
+  );
 
   if (layout === 'stacked') {
     return (
@@ -366,7 +389,7 @@ function EventCard({
             onHoverIn: () => setIsHovered(true),
             onHoverOut: () => setIsHovered(false),
           } as Record<string, unknown>)}
-          accessibilityRole="button"
+          accessibilityRole={pressableA11yRole('button')}
           accessibilityLabel={`${event.title}, ${formatEventDateTimeBadge(event.date, event.time)}`}
           accessibilityHint="Opens event details"
         >
@@ -384,7 +407,7 @@ function EventCard({
                 <EventPublisherLogo profileId={event.publisherProfileId} size={42} />
               </View>
             ) : null}
-            <View style={styles.likeToggleStacked}>
+            <View style={styles.likeToggleStacked} pointerEvents="box-none">
               <LikeToggle
                 liked={liked}
                 onToggle={() => toggleLike(event.id)}
@@ -433,7 +456,7 @@ function EventCard({
           onHoverIn: () => setIsHovered(true),
           onHoverOut: () => setIsHovered(false),
         } as Record<string, unknown>)}
-        accessibilityRole="button"
+        accessibilityRole={pressableA11yRole('button')}
         accessibilityLabel={`${event.title}, ${formatEventDateTimeBadge(event.date, event.time)}`}
         accessibilityHint="Opens event details"
       >
@@ -459,7 +482,7 @@ function EventCard({
           </View>
         ) : null}
 
-        <View style={styles.likeToggleOverlay}>
+        <View style={styles.likeToggleOverlay} pointerEvents="box-none">
           <LikeToggle
             liked={liked}
             onToggle={() => toggleLike(event.id)}

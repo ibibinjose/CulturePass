@@ -38,6 +38,7 @@ import {
 
 import { useDiscoverData } from '../hooks/useDiscoverData';
 import { useKeralaScoping } from '../hooks/useKeralaScoping';
+import { communityScopeSubtitle, scopeSubtitle } from '@/lib/locationFallback';
  
 
 import type { DiscoverFilter } from '@/components/Discover/DiscoverFilterModal';
@@ -131,9 +132,23 @@ export function DiscoverContent({
   };
 
   const goEvents = () => router.push('/events');
+  const goCommunities = () => router.push('/(tabs)/community');
 
-  const nearbyRailResolved = s.nearby.filter((i) => typeof i !== 'string');
-  const hasNearby = nearbyRailResolved.length > 0;
+  const userCity = d.effectiveCity || onboardingState.city || '';
+  const userCountry = d.effectiveCountry || onboardingState.country || 'Australia';
+
+  const nearbyRailResolved = s.nearby.filter((i) => typeof i !== 'string') as EventData[];
+  const showNearbyRail = d.nearbyLoading || nearbyRailResolved.length > 0 || !!d.nearbyRailError;
+  const nearbySubtitle =
+    scopeSubtitle(d.nearbyScope, userCity, userCountry) ??
+    (d.location?.isGps ? `Upcoming near ${d.locationDisplayLabel}` : 'Trending in your area');
+
+  const popularRailResolved = s.popular.filter((i) => typeof i !== 'string') as EventData[];
+  const showPopularRail = d.eventsLoading || popularRailResolved.length > 0 || !!d.eventsRailError;
+
+  const communitiesSubtitle =
+    communityScopeSubtitle(d.communitiesScope, userCity, userCountry) ??
+    (keralaDomain ? 'Malayalee groups & cultural circles' : 'Connect with your culture');
 
   if (activeFilter === 'search') {
     return (
@@ -201,7 +216,11 @@ export function DiscoverContent({
       {show(['events', 'art']) && (
         <EventRail
           title="Starting Soon"
-          subtitle="Grab your spot before they start"
+          subtitle={
+            d.localUpcomingEvents?.length
+              ? `Happening around ${d.locationDisplayLabel || userCity} today`
+              : 'Grab your spot before they start'
+          }
           data={d.eventsLoading && s.soon.length === 0 ? ['sk1', 'sk2', 'sk3'] : s.soon}
           isLoading={d.eventsLoading}
           schedulingMode="live_and_countdown"
@@ -211,36 +230,65 @@ export function DiscoverContent({
         />
       )}
 
-      {show(['events', 'art']) &&
-        hasNearby &&
+      {show(['all', 'events', 'art']) && showNearbyRail &&
         (isExpanded ? (
           <View style={{ paddingHorizontal: sidePad, marginVertical: 24 }}>
             <M3SectionHeader
               title="Popular Near You"
-              subtitle="Trending in your area"
+              subtitle={nearbySubtitle}
               onAction={goEvents}
             />
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16 }}>
-              {nearbyRailResolved.slice(0, 4).map((event) => (
-                <View key={(event as EventData).id} style={{ width: (contentWidth - 16) / 2 }}>
-                  <M3EventCard event={event as EventData} />
-                </View>
-              ))}
+              {(d.nearbyLoading && nearbyRailResolved.length === 0
+                ? (['sk1', 'sk2', 'sk3', 'sk4'] as const)
+                : nearbyRailResolved.slice(0, 4)
+              ).map((event) =>
+                typeof event === 'string' ? (
+                  <View key={event} style={{ width: (contentWidth - 16) / 2, height: 280 }} />
+                ) : (
+                  <View key={event.id} style={{ width: (contentWidth - 16) / 2 }}>
+                    <M3EventCard event={event} />
+                  </View>
+                ),
+              )}
             </View>
           </View>
         ) : (
-          <M3EventRail
+          <EventRail
             title="Popular Near You"
-            subtitle="Trending in your area"
-            data={nearbyRailResolved as EventData[]}
+            subtitle={nearbySubtitle}
+            data={d.nearbyLoading && nearbyRailResolved.length === 0 ? ['s1', 's2', 's3', 's4'] : s.nearby}
+            isLoading={d.nearbyLoading}
             onSeeAll={goEvents}
+            errorMessage={d.nearbyRailError}
+            onRetry={() => void d.refetchEvents()}
           />
         ))}
 
-      {show(['events', 'art']) && d.council && d.councilEvents.length > 0 && (
+      {show(['all', 'events', 'art']) && showPopularRail && (
+        <EventRail
+          title="Popular Events"
+          subtitle={
+            d.nearbyScope !== 'local'
+              ? `Trending across ${userCountry}`
+              : 'What people are attending'
+          }
+          data={d.eventsLoading && popularRailResolved.length === 0 ? ['s1', 's2', 's3', 's4'] : s.popular}
+          isLoading={d.eventsLoading}
+          onSeeAll={goEvents}
+          errorMessage={d.eventsRailError}
+          onRetry={() => void d.refetchEvents()}
+        />
+      )}
+
+      {show(['all', 'events', 'art']) && d.council && d.councilEvents.length > 0 && (
         <EventRail
           title={`In ${d.council.name}`}
-          subtitle="Events in your council area"
+          subtitle={
+            d.location?.councilMatchMethod === 'coordinate' && d.location.councilDistanceKm != null
+              ? `Your local council · ${Math.round(d.location.councilDistanceKm)} km away`
+              : 'Events in your council area'
+          }
           data={d.councilEvents}
           onSeeAll={() =>
             router.push({
@@ -255,10 +303,14 @@ export function DiscoverContent({
         />
       )}
 
-      {show(['events', 'art']) && (s.forYou.length > 0 || d.eventsLoading) && (
+      {show(['all', 'events', 'art']) && (s.forYou.length > 0 || d.eventsLoading || showPopularRail) && (
         <EventRail
           title="For Your Culture"
-          subtitle="Personalised to your heritage"
+          subtitle={
+            s.forYou.length > 0
+              ? 'Personalised to your heritage'
+              : 'Showing popular events while we learn your tastes'
+          }
           data={d.eventsLoading && s.forYou.length === 0 ? ['s1', 's2', 's3'] : s.forYou}
           isLoading={d.eventsLoading}
           onSeeAll={goEvents}
@@ -280,14 +332,13 @@ export function DiscoverContent({
 
       {show(['events', 'hubs']) && <CultureHubRail />}
 
-      {show(['hubs']) && (
+      {show(['all', 'hubs']) && (
         <LazyCommunityRail
           title="Communities"
-          subtitle={
-            keralaDomain ? 'Malayalee groups & cultural circles' : 'Connect with your culture'
-          }
+          subtitle={communitiesSubtitle}
           data={d.communitiesLoading ? ['s1', 's2', 's3', 's4'] : s.communities}
           isLoading={d.communitiesLoading}
+          onSeeAll={goCommunities}
           errorMessage={d.communitiesRailError}
           onRetry={() => void d.refetchCommunities()}
         />

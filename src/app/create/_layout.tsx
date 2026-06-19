@@ -1,5 +1,5 @@
 /**
- * Legacy `/create/*` shell — thin redirects into the canonical Creation Lab (`/pages/create`).
+ * Legacy `/create/*` shell — thin redirects into the canonical Creation Lab (`/hostspace/create`).
  */
 import { Stack } from 'expo-router';
 

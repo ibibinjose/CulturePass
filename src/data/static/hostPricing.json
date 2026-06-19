@@ -1,0 +1,107 @@
+{
+  "hero": {
+    "eyebrow": "Host & organiser pricing",
+    "title": "Find the perfect plan for your event",
+    "subtitle": "CulturePass provides fair, transparent pricing for cultural organisers and attendees — with Stripe-backed payouts, wallet passes, and diaspora discovery built in."
+  },
+  "tiers": [
+    {
+      "id": "free",
+      "name": "Free Tickets",
+      "priceLine": "Nothing.",
+      "priceSub": "zero.",
+      "feeDetail": "Per free RSVP or ticket",
+      "description": "Ideal for community meetups, open rehearsals, and cultural gatherings with no admission charge.",
+      "cta": "Start free",
+      "ctaHref": "/hostspace",
+      "highlight": false
+    },
+    {
+      "id": "premium",
+      "name": "Premium",
+      "priceLine": "—",
+      "priceSub": "Per paid ticket",
+      "feeDetail": "Best for festivals & flagship events",
+      "description": "Full HostSpace toolkit, priority support, and advanced promotion for high-impact cultural programs.",
+      "cta": "Talk to us",
+      "ctaHref": "/contact",
+      "highlight": true
+    },
+    {
+      "id": "standard",
+      "name": "Standard",
+      "priceLine": "—",
+      "priceSub": "Per paid ticket",
+      "feeDetail": "Most community organisers",
+      "description": "Everything you need to sell tickets, manage guests, and grow your cultural audience on CulturePass.",
+      "cta": "Apply to host",
+      "ctaHref": "/hostspace",
+      "highlight": false
+    },
+    {
+      "id": "ngo",
+      "name": "NGO & Enterprise",
+      "priceLine": "Custom",
+      "priceSub": "Let's talk",
+      "feeDetail": "Councils, charities, universities",
+      "description": "Tailored pricing, governance workflows, and partnership support for institutions thinking at scale.",
+      "cta": "Book demo",
+      "ctaHref": "/contact",
+      "highlight": false
+    }
+  ],
+  "passFeeNote": "Don't want organiser fees? Pass the platform fee to attendees at checkout — you keep your full ticket revenue.",
+  "features": [
+    { "label": "HostSpace dashboard", "free": true, "premium": true, "standard": true },
+    { "label": "Registration & RSVP tools", "free": true, "premium": true, "standard": true },
+    { "label": "PDF & QR code tickets", "free": true, "premium": true, "standard": true },
+    { "label": "24/7 support (ticket)", "free": true, "premium": true, "standard": true },
+    { "label": "Phone support", "free": false, "premium": true, "standard": false },
+    { "label": "Instagram paid promotion", "free": false, "premium": true, "standard": false },
+    { "label": "HostSpace mobile app", "free": false, "premium": true, "standard": true },
+    { "label": "Automated invoice email", "free": false, "premium": true, "standard": true },
+    { "label": "Automated event information email", "free": false, "premium": true, "standard": true },
+    { "label": "Event-day email reminders", "free": false, "premium": true, "standard": true },
+    { "label": "Apple & Google Wallet passes", "free": false, "premium": true, "standard": true },
+    { "label": "Custom information emails", "free": false, "premium": true, "standard": false },
+    { "label": "Custom data collection", "free": false, "premium": true, "standard": true },
+    { "label": "Manage guest invitations", "free": false, "premium": true, "standard": false },
+    { "label": "Post-event survey", "free": false, "premium": true, "standard": false },
+    { "label": "Basic sales reports", "free": true, "premium": true, "standard": true },
+    { "label": "Unlimited coupon codes", "free": false, "premium": true, "standard": true },
+    { "label": "Marketing emails", "free": "—", "premium": "1,000 incl.", "standard": "50¢ / email" },
+    { "label": "Early payouts", "free": "3 payouts", "premium": "Unlimited", "standard": "3 payouts" },
+    { "label": "Tailored sales reports", "free": false, "premium": true, "standard": false },
+    { "label": "Live seating chart", "free": false, "premium": true, "standard": false },
+    { "label": "Check-in staff app", "free": false, "premium": "Unlimited users", "standard": "Up to 3 users" },
+    { "label": "CultureMarket listings", "free": false, "premium": true, "standard": true },
+    { "label": "HostSpace forms", "free": false, "premium": true, "standard": true },
+    { "label": "Expression of interest forms", "free": false, "premium": true, "standard": true },
+    { "label": "Event success team collaboration", "free": false, "premium": true, "standard": false },
+    { "label": "Zoom integration", "free": false, "premium": true, "standard": false },
+    { "label": "Stripe Connect payouts", "free": true, "premium": true, "standard": true }
+  ],
+  "benefits": [
+    {
+      "icon": "shield-checkmark-outline",
+      "title": "Secured payment gateway",
+      "body": "Stripe powers every checkout — secure, reliable card payments from any device, with automated splits and organiser payouts."
+    },
+    {
+      "icon": "headset-outline",
+      "title": "Full support guaranteed",
+      "body": "From your first listing to doors open. Whether this is your first online event or your hundredth festival season, our team guides you end to end."
+    },
+    {
+      "icon": "flash-outline",
+      "title": "Save time & money",
+      "body": "Replace paper tickets and manual spreadsheets with automated RSVPs, wallet passes, and real-time sales — built for cultural organisers."
+    }
+  ],
+  "footnotes": [
+    "Standard and Premium ticket fees are loaded live from Stripe Connect (STRIPE_CONNECT_PLATFORM_FEE_BPS). Premium is 2.5 percentage points below Standard.",
+    "Card processing fees from Stripe apply in addition to CulturePass platform fees on paid tickets.",
+    "New community hosts may qualify for 0% platform fees on their first events — ask our team.",
+    "CulturePass+ membership is separate — see /membership/upgrade for attendee perks."
+  ]
+}

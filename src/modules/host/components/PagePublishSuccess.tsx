@@ -12,7 +12,7 @@ import { LuxeText, LuxeButton, GlassView } from '@/design-system/ui';
 import { Luxe } from '@/design-system/tokens/luxeHeritage';
 import { Spacing } from '@/design-system/tokens/theme';
 import { VerificationStatusBanner } from './VerificationStatusBanner';
-import { navigateToCreateById } from '@/lib/creationRouting';
+import { OrgHostListingCreateSection } from './OrgHostListingCreateSection';
 
 export interface PagePublishSuccessProps {
   pageId: string;
@@ -20,13 +20,6 @@ export interface PagePublishSuccessProps {
   verificationRequired: boolean;
   onDone?: () => void;
 }
-
-const QUICK_ACTIONS: { label: string; icon: keyof typeof Ionicons.glyphMap; categoryId: string }[] = [
-  { label: 'New Event', icon: 'calendar-outline', categoryId: 'event' },
-  { label: 'New Listing', icon: 'pricetag-outline', categoryId: 'other-listing' },
-  { label: 'New Offer', icon: 'gift-outline', categoryId: 'offer' },
-  { label: 'New Activity', icon: 'flash-outline', categoryId: 'activity' },
-];
 
 export function PagePublishSuccess({
   pageId,
@@ -50,7 +43,7 @@ export function PagePublishSuccess({
           Your Page is live
         </LuxeText>
         <LuxeText variant="body" style={{ color: colors.textSecondary, textAlign: 'center', marginTop: 12, maxWidth: 380 }}>
-          Your Page is your home on CulturePass — start sharing events, stories, and community with the diaspora.
+          Your org or community page is ready — add events, offers, and listings under your host profile.
         </LuxeText>
       </View>
 
@@ -65,25 +58,7 @@ export function PagePublishSuccess({
         />
       )}
 
-      <View style={styles.actions}>
-        {QUICK_ACTIONS.map((action) => (
-          <LuxeButton
-            key={action.label}
-            variant="tonal"
-            size="lg"
-            leftIcon={action.icon}
-            onPress={() =>
-              navigateToCreateById(action.categoryId, {
-                source: 'page_publish_success',
-                parentProfileId: pageId,
-              })
-            }
-            accessibilityLabel={`Create ${action.label}`}
-          >
-            {action.label}
-          </LuxeButton>
-        ))}
-      </View>
+      <OrgHostListingCreateSection hostPageId={pageId} source="page_publish_success" />
 
       {onDone ? (
         <LuxeButton variant="filled" size="lg" onPress={onDone} style={{ marginTop: Spacing.lg }}>
@@ -121,8 +96,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: Spacing.sm,
-  },
-  actions: {
-    gap: Spacing.sm,
   },
 });

@@ -11,6 +11,7 @@ import { Radius, SpringConfig } from '@/design-system/tokens/theme';
 interface M3FilterChipProps {
   label: string;
   selected?: boolean;
+  disabled?: boolean;
   onPress: () => void;
   icon?: keyof typeof Ionicons.glyphMap | string;
   style?: StyleProp<ViewStyle>;
@@ -24,7 +25,15 @@ function isIoniconName(icon: string): icon is keyof typeof Ionicons.glyphMap {
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 /** Premium M3 Filter Chip with tactile feedback and Material 3 Expressive states. */
-export function M3FilterChip({ label, selected, onPress, icon, style, compact = false }: M3FilterChipProps) {
+export function M3FilterChip({
+  label,
+  selected,
+  disabled = false,
+  onPress,
+  icon,
+  style,
+  compact = false,
+}: M3FilterChipProps) {
   const colors = useM3Colors();
   const iconSize = compact ? 16 : 18;
   const typography = compact ? M3Typography.labelMedium : M3Typography.labelLarge;
@@ -37,6 +46,7 @@ export function M3FilterChip({ label, selected, onPress, icon, style, compact = 
   }));
 
   const handlePressIn = () => {
+    if (disabled) return;
     scale.value = withSpring(0.96, SpringConfig.snappy);
     if (Platform.OS !== 'web') {
       void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -49,15 +59,18 @@ export function M3FilterChip({ label, selected, onPress, icon, style, compact = 
 
   return (
     <AnimatedPressable
-      onPress={onPress}
+      onPress={disabled ? undefined : onPress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
+      disabled={disabled}
+      accessibilityState={{ selected: !!selected, disabled }}
       style={[
         styles.container,
         compact && styles.containerCompact,
         {
           backgroundColor: selected ? colors.secondaryContainer : 'transparent',
           borderColor: selected ? 'transparent' : colors.outline,
+          opacity: disabled ? 0.45 : 1,
         },
         animatedStyle,
         style,

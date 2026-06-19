@@ -9,8 +9,8 @@ export class MembershipRepository {
     return api.membership.memberCount();
   }
 
-  async subscribe(billingPeriod: 'monthly' | 'yearly', promoCode?: string) {
-    return api.membership.subscribe({ billingPeriod, promoCode });
+  async subscribe(billingPeriod: 'monthly' | 'yearly', promoCode?: string, country?: string) {
+    return api.membership.subscribe({ billingPeriod, promoCode, country });
   }
 
   async cancelMembership() {

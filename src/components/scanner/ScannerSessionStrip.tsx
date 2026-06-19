@@ -31,8 +31,8 @@ export function ScannerSessionStrip({ session, durationLabel }: Props) {
       <StatPill
         value={session.rejected}
         label="Declined"
-        color={Luxe.colors.terracotta}
-        tint={Luxe.colors.terracotta + '14'}
+        color={Luxe.colors.appBlue}
+        tint={Luxe.colors.appBlue + '14'}
         colors={colors}
       />
       <StatPill

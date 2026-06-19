@@ -303,7 +303,7 @@ export default function MembershipHubScreen() {
   const safeInsets = useSafeAreaInsetsWeb();
   const topInset = safeInsets.top;
   const { hPad } = useLayout();
-  const handleBack = useSafeBack('/(tabs)/my-space');
+  const handleBack = useSafeBack('/(tabs)/myspace');
   const { userId, isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
   const colors = useColors();

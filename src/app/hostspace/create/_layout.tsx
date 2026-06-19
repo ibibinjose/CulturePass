@@ -1,12 +1,12 @@
 /**
- * Legacy `/hostspace/create/*` — thin redirects to `/pages/create`.
+ * /hostspace/create/* — HostSpace Creation Lab (noindex).
  */
 import Head from 'expo-router/head';
 import { Stack } from 'expo-router';
 
 import { APP_NAME } from '@/lib/app-meta';
 
-export default function LegacyHostspaceCreateLayout() {
+export default function HostspaceCreateLayout() {
   return (
     <>
       <Head>

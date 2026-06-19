@@ -1,4 +1,4 @@
-import { sanitizeInternalRedirect, routeWithRedirect, normalizeSystemPath } from '../routes';
+import { sanitizeInternalRedirect, routeWithRedirect, normalizeSystemPath, remapLegacyPath } from '../routes';
 
 describe('Route Utilities', () => {
   describe('sanitizeInternalRedirect', () => {
@@ -29,15 +29,23 @@ describe('Route Utilities', () => {
     });
 
     test('should return safe internal paths beginning with /', () => {
-      expect(sanitizeInternalRedirect('/profile')).toBe('/profile');
+      expect(sanitizeInternalRedirect('/profile')).toBe('/(tabs)/myspace');
       expect(sanitizeInternalRedirect('/tickets/123')).toBe('/tickets/123');
-      expect(sanitizeInternalRedirect('/pages/create')).toBe('/pages/create');
+      expect(sanitizeInternalRedirect('/pages/create')).toBe('/hostspace/create');
       expect(sanitizeInternalRedirect('/membership/plans')).toBe('/membership/plans');
     });
 
+    test('should normalize tab shortcuts for onboarding redirects', () => {
+      expect(sanitizeInternalRedirect('/community')).toBe('/(tabs)/community');
+      expect(sanitizeInternalRedirect('/discover')).toBe('/(tabs)');
+      expect(sanitizeInternalRedirect('/calendar')).toBe('/(tabs)/calendar');
+      expect(sanitizeInternalRedirect('/myspace')).toBe('/(tabs)/myspace');
+      expect(sanitizeInternalRedirect('/MySpace')).toBe('/myspace');
+    });
+
     test('should handle array inputs correctly', () => {
-      expect(sanitizeInternalRedirect(['/profile'])).toBe('/profile');
-      expect(sanitizeInternalRedirect(['/profile', '/tickets'])).toBe('/profile');
+      expect(sanitizeInternalRedirect(['/profile'])).toBe('/(tabs)/myspace');
+      expect(sanitizeInternalRedirect(['/profile', '/tickets'])).toBe('/(tabs)/myspace');
       expect(sanitizeInternalRedirect(['/invalid', '/profile'])).toBe('/invalid'); // Takes first element
     });
 
@@ -65,7 +73,7 @@ describe('Route Utilities', () => {
       const result = routeWithRedirect('/login', '/profile');
       expect(result).toEqual({
         pathname: '/login',
-        params: { redirectTo: '/profile' }
+        params: { redirectTo: '/(tabs)/myspace' }
       });
     });
 
@@ -73,7 +81,7 @@ describe('Route Utilities', () => {
       const result = routeWithRedirect('/login', '/pages/create?entityType=creator');
       expect(result).toEqual({
         pathname: '/login',
-        params: { redirectTo: '/pages/create?entityType=creator' }
+        params: { redirectTo: '/hostspace/creator/create' }
       });
     });
   });
@@ -111,6 +119,35 @@ describe('Route Utilities', () => {
       expect(normalizeSystemPath('/culturehub/kerala?country=Australia&scope=single&state=NSW')).toBe(
         '/culturehub/kerala?country=Australia&scope=single&state=NSW'
       );
+    });
+
+    test('should remap legacy MySpace paths to /myspace', () => {
+      expect(remapLegacyPath('/my-space')).toBe('/myspace');
+      expect(remapLegacyPath('/MySpace')).toBe('/myspace');
+    });
+
+    test('should remap legacy listing create to hostspace category create', () => {
+      expect(remapLegacyPath('/listing/create')).toBe('/hostspace/business/create');
+      expect(remapLegacyPath('/listing/create?listingEntityType=community')).toBe(
+        '/hostspace/community/create',
+      );
+    });
+
+    test('should remap legacy /pages/create paths to /hostspace/create', () => {
+      expect(remapLegacyPath('/pages/create')).toBe('/hostspace/create');
+      expect(remapLegacyPath('/pages/create?category=community')).toBe('/hostspace/community/create');
+      expect(remapLegacyPath('/pages/create/listing')).toBe('/hostspace/listing');
+      expect(remapLegacyPath('/hostspace/create')).toBe('/hostspace/create');
+      expect(remapLegacyPath('/hostspace/create/page')).toBe('/hostspace/create/page');
+      expect(remapLegacyPath('/hostspace/create/page?entityType=community')).toBe(
+        '/hostspace/create/page?entityType=community',
+      );
+      expect(remapLegacyPath('/event/create')).toBe('/hostspace/event/create');
+      expect(remapLegacyPath('/hostspace?panel=create&category=venue')).toBe('/hostspace/venue/create');
+      expect(remapLegacyPath('/hostspace?category=community&intent=onboarding')).toBe(
+        '/hostspace/community/create?intent=onboarding',
+      );
+      expect(remapLegacyPath('/hostspace?entityType=venue')).toBe('/hostspace/venue/create');
     });
 
     test('should normalize legacy paths (restaurant, movie, shop, perk, activity)', () => {

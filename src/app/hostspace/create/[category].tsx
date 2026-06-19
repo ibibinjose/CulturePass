@@ -1,11 +1,11 @@
 import { Redirect, useLocalSearchParams } from 'expo-router';
 
-import { resolveLegacyHostspaceCreateHref } from '@/constants/navigation/createNav';
+import { resolveCreateLabHref } from '@/constants/navigation/createNav';
 
-/** Legacy `/hostspace/create/:category` → `/pages/create?category=…`. */
-export default function LegacyHostspaceCreateCategoryRedirect() {
+/** Path-style `/hostspace/create/:category` → `/hostspace/:category/create`. */
+export default function HostspaceCreateCategoryRedirect() {
   const params = useLocalSearchParams<{ category?: string | string[] }>();
   const raw = Array.isArray(params.category) ? params.category[0] : params.category;
-  const href = resolveLegacyHostspaceCreateHref(params, raw);
+  const href = resolveCreateLabHref(params, raw);
   return <Redirect href={href as never} />;
 }

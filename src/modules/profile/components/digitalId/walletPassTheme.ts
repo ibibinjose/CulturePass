@@ -16,8 +16,14 @@ export const WALLET_PASS_THEME = {
   borderOnWhite: '#E5E7EB',
   borderOnCyan: 'rgba(255, 255, 255, 0.22)',
   qrPad: '#FFFFFF',
-  passRevision: '2026-06-10-v10',
-  lanyardHeight: 448,
+  passRevision: '2026-06-12-wallet-v3',
+  lanyardHeight: 480,
+  /** Official lanyard / Apple Wallet preview — dark ink body */
+  lanyardBody: '#0F0F1A',
+  lanyardBodyBorder: '#1E293B',
+  /** Decorative gold chrome on lanyard QR frame (not readable text) */
+  lanyardAccentGold: '#C9A227',
+  lanyardAccentGoldSoft: '#E8D48B',
   /** WCAG AA — white on cyan body (#00ADEF) ≈ 4.6:1 */
   a11yMinTouchTarget: 44,
 } as const;

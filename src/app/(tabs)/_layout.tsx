@@ -16,7 +16,7 @@ const RAIL_DESTINATIONS: RailDestination[] = [
   { name: 'calendar', label: 'Calendar', icon: 'calendar-outline', activeIcon: 'calendar' },
   { name: 'community', label: 'Community', icon: 'people-outline', activeIcon: 'people' },
   { name: 'city', label: 'My City', icon: 'location-outline', activeIcon: 'location' },
-  { name: 'my-space', label: 'Profile', icon: 'person-circle-outline', activeIcon: 'person-circle' },
+  { name: 'myspace', label: 'Profile', icon: 'person-circle-outline', activeIcon: 'person-circle' },
 ];
 
 /**
@@ -29,7 +29,7 @@ const TAB_NAMES: Record<string, string> = {
   calendar: 'Calendar',
   community: 'Community',
   city: 'My City',
-  'my-space': 'Profile',
+  myspace: 'Profile',
 };
 
 export default function TabsLayout() {
@@ -125,7 +125,7 @@ export default function TabsLayout() {
       />
 
       <Tabs.Screen
-        name="my-space"
+        name="myspace"
         options={{
           title: 'Profile',
           tabBarIcon: ({ color, focused, size }) => (

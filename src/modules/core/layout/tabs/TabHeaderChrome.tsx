@@ -14,6 +14,7 @@ import { useColors, useIsDark } from '@/hooks/useColors';
 import { useAuth } from '@/lib/auth';
 import { coreApi } from '@/modules/core/api';
 import { CultureTokens, FontFamily, FontSize, LineHeight, HeaderTokens } from '@/design-system/tokens/theme';
+import { pressableA11yRole } from '@/lib/webPressable';
 import { MAIN_TAB_UI } from '@/modules/core/layout/tabs/mainTabTokens';
 
 export const BRAND_TAGLINE_SHORT = 'Discover. Connect. Belong.';
@@ -41,7 +42,7 @@ export function HomeLogoMark({ compact = true }: { compact?: boolean }) {
   return (
     <Pressable
       onPress={onHome}
-      accessibilityRole="button"
+      accessibilityRole={pressableA11yRole('link')}
       accessibilityLabel="CulturePass home, Discover"
       accessibilityHint="Navigates to the Discover tab"
       style={markStyles.logoPress}

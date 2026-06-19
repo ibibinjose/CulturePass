@@ -15,7 +15,8 @@ import { NativeMapView } from '@/modules/core/components';
 import type { EventData } from '@/shared/schema';
 import { getPostcodesByPlace } from '@shared/location/australian-postcodes';
 import { useColors, useIsDark } from '@/hooks/useColors';
-import { useOnboarding } from '@/contexts/OnboardingContext';
+import { useLocation } from '@/contexts/LocationContext';
+import { useNearbyEvents } from '@/modules/events/hooks/useEvents';
 import { useLayout } from '@/hooks/useLayout';
 import { isIndigenousEvent } from '@/lib/indigenous';
 import { GlassView } from '@/design-system/ui/GlassView';
@@ -168,7 +169,7 @@ export default function MapScreen() {
   const insets = useSafeAreaInsets();
   const isWeb = Platform.OS === 'web';
   const bottomInset = Platform.OS === 'web' ? 26 : insets.bottom;
-  const { state } = useOnboarding();
+  const appLocation = useLocation();
   const { isDesktop } = useLayout();
   const params = useLocalSearchParams<{ city?: string }>();
 
@@ -180,13 +181,20 @@ export default function MapScreen() {
   const [indigenousOnly, setIndigenousOnly] = useState(false);
   const [citySearch, setCitySearch] = useState('');
 
-  const { data: events = [], isLoading, isError, refetch } = useQuery<EventData[]>({
-    queryKey: ['/api/events/map', state.city, state.country],
+  const coords = appLocation.coordinates;
+  const { data: nearbyPage, isLoading: nearbyLoading } = useNearbyEvents(
+    coords
+      ? { lat: coords.latitude, lng: coords.longitude, radius: 25, pageSize: 80 }
+      : { lat: NaN, lng: NaN },
+  );
+
+  const { data: cityEvents = [], isLoading: cityLoading, isError, refetch } = useQuery<EventData[]>({
+    queryKey: ['/api/events/map', appLocation.city, appLocation.country],
     queryFn: async () => {
       const today = new Date().toLocaleDateString('en-CA');
       const res = await modulesApi.events.list({
-        city: state.city || undefined,
-        country: state.country || undefined,
+        city: appLocation.city || undefined,
+        country: appLocation.country || undefined,
         pageSize: 200,
         dateFrom: today,
       });
@@ -194,6 +202,21 @@ export default function MapScreen() {
     },
     staleTime: 60_000,
   });
+
+  const events = useMemo(() => {
+    const nearby = nearbyPage?.events ?? [];
+    if (nearby.length === 0) return cityEvents;
+    const seen = new Set<string>();
+    const merged: EventData[] = [];
+    for (const e of [...nearby, ...cityEvents]) {
+      if (seen.has(e.id)) continue;
+      seen.add(e.id);
+      merged.push(e);
+    }
+    return merged;
+  }, [nearbyPage?.events, cityEvents]);
+
+  const isLoading = nearbyLoading || cityLoading;
 
   const filteredEvents = useMemo(
     () => (indigenousOnly ? events.filter((event) => isIndigenousEvent(event)) : events),
@@ -323,7 +346,7 @@ export default function MapScreen() {
                 <NativeMapView
                   cityGroups={allMapGroups}
                   groupEntries={groupEntries}
-                  preferredCity={state.city || null}
+                  preferredCity={appLocation.city || null}
                   selectedCity={selectedCity}
                   selectedEvents={selectedEvents}
                   onMarkerPress={setSelectedCity}
@@ -341,7 +364,7 @@ export default function MapScreen() {
         <NativeMapView
           cityGroups={allMapGroups}
           groupEntries={groupEntries}
-          preferredCity={state.city || null}
+          preferredCity={appLocation.city || null}
           selectedCity={selectedCity}
           selectedEvents={selectedEvents}
           onMarkerPress={setSelectedCity}

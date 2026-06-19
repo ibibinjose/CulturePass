@@ -65,7 +65,7 @@ test.describe('Event create — Gadigal NAIDOC heritage', () => {
 
   test('culture step through publish sends indigenous heritage fields', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
-    await page.goto('/event/create');
+    await page.goto('/hostspace/event/create');
 
     await advanceToCultureStep(page);
 

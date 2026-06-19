@@ -91,6 +91,10 @@ CulturePass is a universal (iOS, Android, Web) platform that enables cultural cr
 - **Local/Ephemeral**: React Contexts (limited) + form state inside complex wizards.
 - **No heavy global store** (Zustand is in deps but minimally used).
 
+### Event detail surface
+- **`EventInfoDocument`** (`src/modules/events/components/detail/EventInfoDocument.tsx`) — canonical sidebar/mobile panel: organiser, contact, date/time range (with timezone), address, event type & category, calendar export, and social share row. Spec: `docs/EVENT_DETAIL_UI.md`.
+- **Display fallbacks** — `src/lib/presentation.ts` centralises “show what you have” copy for communities, cards, and detail rows when API fields are missing.
+
 ### Cross-Platform Strategy
 - `useLayout()` hook drives responsive behavior (compact/medium/expanded + `isDesktop`).
 - Platform-specific files (`.native.tsx`, `.web.tsx`).

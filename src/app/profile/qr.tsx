@@ -1,7 +1,7 @@
 /**
- * CulturePass Digital ID — /profile/qr
- * Business pass · Lanyard pass · Event ticket · Apple/Google Wallet
- * Brand: CulturePass.App (https://culturepass.app)
+ * CulturePass Digital ID Lab — /profile/qr
+ * Developer & admin only — pass themes, exports, affiliations, event ticket previews.
+ * Members use /profile/digital-id
  */
 
 import React from 'react';
@@ -19,11 +19,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import Head from 'expo-router/head';
 import * as Haptics from 'expo-haptics';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 
+import { Redirect } from 'expo-router';
 import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import { useColors, useIsDark } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
+import { useRole } from '@/hooks/useRole';
+import { canAccessDigitalIdDevTools, DIGITAL_ID_ROUTE } from '@/lib/digitalIdRoutes';
 import { CultureTokens, FontFamily } from '@/design-system/tokens/theme';
 import { resolveQrCardTheme } from '@/design-system/tokens/qrCardThemes';
 import { Skeleton, PageContainer, GlassView, M3SectionHeader } from '@/design-system/ui';
@@ -53,6 +56,7 @@ function capitalize(s: string) {
 }
 
 export default function QRScreen() {
+  const { isAdmin } = useRole();
   const colors = useColors();
   const isDark = useIsDark();
   const { width: screenWidth } = useWindowDimensions();
@@ -63,7 +67,14 @@ export default function QRScreen() {
 
   const d = useDigitalIdScreen();
 
-  const cardTheme = React.useMemo(() => resolveQrCardTheme(d.tierLabel === 'Standard' ? 'free' : d.tierLabel.toLowerCase()), [d.tierLabel]);
+  const cardTheme = React.useMemo(
+    () => resolveQrCardTheme(d.tierLabel === 'Standard' ? 'free' : d.tierLabel.toLowerCase()),
+    [d.tierLabel],
+  );
+
+  if (!canAccessDigitalIdDevTools(isAdmin)) {
+    return <Redirect href={DIGITAL_ID_ROUTE} />;
+  }
   const panelBg = isDark ? withAlpha(colors.surface, 0.92) : colors.surface;
   const panelBorder = isDark ? withAlpha(cardTheme.accent, 0.22) : colors.borderLight;
   const mutedOnPanel = colors.textSecondary;
@@ -98,9 +109,9 @@ export default function QRScreen() {
 
       <View style={[s.root, { backgroundColor: colors.background }]}>
         <AppHeaderBar
-          title="Digital ID"
-          subtitle={`${DIGITAL_ID_BRAND.name} · Member passes · Wallet`}
-          backFallback="/(tabs)/my-space"
+          title="Digital ID Lab"
+          subtitle={`${DIGITAL_ID_BRAND.name} · Dev tools · Exports`}
+          backFallback="/(tabs)/myspace"
           topInset={topInset}
           rightAction={{
             icon: 'scan-outline',
@@ -137,9 +148,11 @@ export default function QRScreen() {
                   </View>
                 ) : null}
 
-                <DigitalIdHero width={containerWidth} tierLabel={d.tierLabel} isDark={isDark} />
+                <Animated.View entering={FadeInDown.duration(400).springify().damping(20)}>
+                  <DigitalIdHero width={containerWidth} tierLabel={d.tierLabel} isDark={isDark} />
+                </Animated.View>
 
-                <View style={{ width: containerWidth }}>
+                <Animated.View entering={FadeInDown.duration(500).springify().damping(20).delay(100)} style={{ width: containerWidth }}>
                   <PassMemberHero
                     name={d.name}
                     username={d.username}
@@ -164,7 +177,7 @@ export default function QRScreen() {
                       { icon: 'person-outline', label: 'Profile', color: CultureTokens.indigo, onPress: d.goPublicProfile },
                     ]}
                   />
-                </View>
+                </Animated.View>
 
                 <View style={{ width: containerWidth, gap: 10 }}>
                   <M3SectionHeader title="Your passes" subtitle={DIGITAL_ID_BRAND.domainDisplay} />
@@ -201,7 +214,7 @@ export default function QRScreen() {
 
                 <Animated.View
                   key={sideBySide ? 'both' : d.passView}
-                  entering={sideBySide ? undefined : FadeIn.duration(280).springify().damping(20)}
+                  entering={sideBySide ? undefined : FadeInDown.duration(350).springify().damping(18)}
                   id="print-badge-area"
                   nativeID="print-badge-area"
                   style={[s.printBadgeArea, { width: containerWidth, flexDirection: sideBySide ? 'row' : 'column', gap: sideBySide ? 20 : 12 }]}

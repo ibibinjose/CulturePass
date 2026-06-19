@@ -30,7 +30,7 @@ export const PAGE_WIZARD_STEP_LABELS: Record<PageWizardStepId, string> = {
 
 export const PAGE_WIZARD_STEP_HINTS: Record<PageWizardStepId, string> = {
   basics: 'Page name, bio, and categories',
-  tags: 'Cultural and language tags',
+  tags: 'Heritage, audience tags, and languages',
   business: 'ABN, registration name, and tax',
   contact: 'Email, phone, address, and social',
   leadership: 'Directors and executive members',

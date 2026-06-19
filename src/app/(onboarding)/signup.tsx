@@ -13,8 +13,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated,
   { FadeInUp, FadeInDown, useReducedMotion } from 'react-native-reanimated';
 
-import { useColors } from '@/hooks/useColors';
+import { useColors, useIsDark } from '@/hooks/useColors';
 import { useM3Colors } from '@/hooks/useM3Colors';
+import { getAuthScreenPalette } from '@/components/onboarding/authScreenTheme';
 import { useLayout } from '@/hooks/useLayout';
 import { useSignup } from '@/hooks/useSignup';
 import {
@@ -30,6 +31,7 @@ import {
 import { AuthAmbientBackground } from '@/components/onboarding/AuthScreenPrimitives';
 import { AuthSocialSection } from '@/components/onboarding/AuthSocialSection';
 import { AuthWebMarketingPanel } from '@/components/onboarding/AuthWebMarketingPanel';
+import { OnboardingDestinationBanner } from '@/components/onboarding/OnboardingDestinationBanner';
 
 
 import {
@@ -40,7 +42,6 @@ import {
   Spacing,
   IconSize,
   LiquidGlassTokens,
-  luxeDark,
   Radius,
   M3Typography,
 } from '@/design-system/tokens/theme';
@@ -65,13 +66,28 @@ interface AccountTypeSelectorProps {
   role: 'user' | 'organizer';
   setRole: (role: 'user' | 'organizer') => void;
   clearErrors: () => void;
+  accent: string;
+  text: string;
+  textOnAccent: string;
+  surfaceElevated: string;
+  textSecondary: string;
 }
 
-const AccountTypeSelector: React.FC<AccountTypeSelectorProps> = ({ enterAnimation, role, setRole, clearErrors }) => {
+const AccountTypeSelector: React.FC<AccountTypeSelectorProps> = ({
+  enterAnimation,
+  role,
+  setRole,
+  clearErrors,
+  accent,
+  text,
+  textOnAccent,
+  surfaceElevated,
+  textSecondary,
+}) => {
   return (
     <Animated.View entering={enterAnimation(170)} style={s.accountTypeGroup}>
-      <LuxeText variant="badgeCaps" style={{ color: luxeDark.textSecondary }}>ACCOUNT TYPE</LuxeText>
-      <View style={[s.accountTypeRow, { backgroundColor: luxeDark.surfaceElevated, borderColor: 'transparent' }]}>
+      <LuxeText variant="badgeCaps" style={{ color: textSecondary }}>ACCOUNT TYPE</LuxeText>
+      <View style={[s.accountTypeRow, { backgroundColor: surfaceElevated, borderColor: 'transparent' }]}>
         {[
           { key: 'user' as const, label: 'User', icon: 'person-outline' as const },
           { key: 'organizer' as const, label: 'Host', icon: 'briefcase-outline' as const },
@@ -82,7 +98,7 @@ const AccountTypeSelector: React.FC<AccountTypeSelectorProps> = ({ enterAnimatio
               key={option.key}
               style={[
                 s.accountTypeOption,
-                active && { backgroundColor: luxeDark.primary },
+                active && { backgroundColor: accent },
               ]}
               onPress={() => {
                 setRole(option.key);
@@ -94,11 +110,11 @@ const AccountTypeSelector: React.FC<AccountTypeSelectorProps> = ({ enterAnimatio
               <Ionicons
                 name={option.icon}
                 size={18}
-                color={active ? luxeDark.textOnBrandGradient : luxeDark.primary}
+                color={active ? textOnAccent : accent}
               />
               <LuxeText
                 variant="bodyMedium"
-                style={{ color: active ? luxeDark.textOnBrandGradient : luxeDark.text }}
+                style={{ color: active ? textOnAccent : text }}
               >
                 {option.label}
               </LuxeText>
@@ -185,20 +201,29 @@ interface TermsCheckboxProps {
   agreed: boolean;
   setAgreed: (agreed: boolean) => void;
   clearErrors: () => void;
+  accent: string;
+  text: string;
 }
 
-const TermsCheckbox: React.FC<TermsCheckboxProps> = ({ enterAnimation, agreed, setAgreed, clearErrors }) => {
+const TermsCheckbox: React.FC<TermsCheckboxProps> = ({
+  enterAnimation,
+  agreed,
+  setAgreed,
+  clearErrors,
+  accent,
+  text,
+}) => {
   return (
     <Animated.View entering={enterAnimation(260)} style={s.optionsRow}>
       <Checkbox
         checked={agreed}
         onToggle={(v: boolean) => { setAgreed(v); clearErrors(); }}
         label={
-          <LuxeText variant="body" style={{ color: luxeDark.text, flex: 1 }}>
+          <LuxeText variant="body" style={{ color: text, flex: 1 }}>
             I agree to the{' '}
             <LuxeText
               variant="bodyMedium"
-              style={{ color: luxeDark.primary }}
+              style={{ color: accent }}
               onPress={() => router.push('/(static)/legal/terms')}
             >
               Terms
@@ -206,7 +231,7 @@ const TermsCheckbox: React.FC<TermsCheckboxProps> = ({ enterAnimation, agreed, s
             {' & '}
             <LuxeText
               variant="bodyMedium"
-              style={{ color: luxeDark.primary }}
+              style={{ color: accent }}
               onPress={() => router.push('/(static)/legal/privacy')}
             >
               Privacy Policy
@@ -221,6 +246,7 @@ const TermsCheckbox: React.FC<TermsCheckboxProps> = ({ enterAnimation, agreed, s
 export default function SignUpScreen() {
   const colors = useColors();
   const m3Colors = useM3Colors();
+  const isDark = useIsDark();
   const { isDesktop, isWeb, windowSizeClass } = useLayout();
   const insets = useSafeAreaInsets();
   const reducedMotion = useReducedMotion();
@@ -228,6 +254,8 @@ export default function SignUpScreen() {
 
   const searchParams = useLocalSearchParams();
   const isHostIntent = searchParams.intent === 'host' || searchParams.role === 'organizer';
+  const authVariant = isHostIntent ? 'host' : 'signup';
+  const authPalette = getAuthScreenPalette(authVariant, isDark, colors);
 
   const {
     name,
@@ -290,26 +318,39 @@ export default function SignUpScreen() {
 
       {/* Mobile-only info card (What is Host Hub) */}
       {isHostIntent && (
-        <Animated.View entering={enter(80)} style={s.hostHubInfoCard}>
-          <LuxeText variant="bodyMedium" style={[s.hostHubInfoTitle, { color: luxeDark.text }]}>What is Host Hub?</LuxeText>
-          <LuxeText variant="caption" style={[s.hostHubInfoDesc, { color: luxeDark.textSecondary }]}>
+        <Animated.View
+          entering={enter(80)}
+          style={[
+            s.hostHubInfoCard,
+            {
+              borderColor: authPalette.panelBorder,
+              backgroundColor: authPalette.accentMuted,
+            },
+          ]}
+        >
+          <LuxeText variant="bodyMedium" style={[s.hostHubInfoTitle, { color: authPalette.text }]}>What is Host Hub?</LuxeText>
+          <LuxeText variant="caption" style={[s.hostHubInfoDesc, { color: authPalette.textSecondary }]}>
             CulturePass Host Hub allows you to publish events, sell products/services, and build communities.
           </LuxeText>
           <View style={s.hostHubPerksList}>
             {HOST_VALUE_PROPS.map((item) => (
               <View key={item.title} style={s.hostHubPerkItem}>
-                <View style={[s.hostHubPerkIconWrap, { backgroundColor: luxeDark.surfaceElevated }]}>
-                  <Ionicons name={item.icon} size={14} color={luxeDark.primary} />
+                <View style={[s.hostHubPerkIconWrap, { backgroundColor: authPalette.surfaceElevated }]}>
+                  <Ionicons name={item.icon} size={14} color={authPalette.accent} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <LuxeText variant="bodyMedium" style={[s.hostHubPerkTitle, { color: luxeDark.text }]}>{item.title}</LuxeText>
-                  <LuxeText variant="caption" style={[s.hostHubPerkDesc, { color: luxeDark.textSecondary }]}>{item.desc}</LuxeText>
+                  <LuxeText variant="bodyMedium" style={[s.hostHubPerkTitle, { color: authPalette.text }]}>{item.title}</LuxeText>
+                  <LuxeText variant="caption" style={[s.hostHubPerkDesc, { color: authPalette.textSecondary }]}>{item.desc}</LuxeText>
                 </View>
               </View>
             ))}
           </View>
         </Animated.View>
       )}
+
+      {redirectTo ? (
+        <OnboardingDestinationBanner redirectTo={redirectTo} variant="auth" />
+      ) : null}
 
       {/* Global error */}
       {Boolean(globalError) && (
@@ -348,6 +389,11 @@ export default function SignUpScreen() {
         role={role}
         setRole={setRole}
         clearErrors={clearErrors}
+        accent={authPalette.accent}
+        text={authPalette.text}
+        textOnAccent={colors.textOnBrandGradient}
+        surfaceElevated={authPalette.surfaceElevated}
+        textSecondary={authPalette.textSecondary}
       />
 
       <SignUpFormFields
@@ -364,6 +410,8 @@ export default function SignUpScreen() {
         agreed={agreed}
         setAgreed={setAgreed}
         clearErrors={clearErrors}
+        accent={authPalette.accent}
+        text={authPalette.text}
       />
 
       {/* CTA */}
@@ -393,7 +441,7 @@ export default function SignUpScreen() {
         >
           <Text style={[s.switchText, M3Typography.bodyMedium, { color: m3Colors.onSurfaceVariant, textAlign: 'center' }]}>
             Already have an account?{' '}
-            <Text style={{ color: m3Colors.primary, fontWeight: '700' }}>Sign In</Text>
+            <Text style={{ color: authPalette.accent, fontWeight: '700' }}>Sign In</Text>
           </Text>
         </Pressable>
       </Animated.View>
@@ -414,7 +462,7 @@ export default function SignUpScreen() {
         <link rel="canonical" href={SIGNUP_CANONICAL} />
       </Head>
     <View style={[s.container, { backgroundColor: colors.background }]}>
-      <AuthAmbientBackground />
+      <AuthAmbientBackground variant={authVariant} />
 
       <M3TopAppBar
         title="Sign Up"
@@ -446,14 +494,14 @@ export default function SignUpScreen() {
               variant={isHostIntent ? 'host' : 'signup'}
             />
             <Animated.View entering={fadeInUp} style={[s.cardWrap, s.cardWrapDesktop]}>
-              <LuxeCard variant="default" style={{ padding: 32 }}>
+              <LuxeCard variant="default" style={{ padding: 32, borderColor: authPalette.panelBorder, borderWidth: 1 }}>
                 {formContent}
               </LuxeCard>
             </Animated.View>
           </View>
         ) : (
           <Animated.View entering={fadeInUp} style={s.cardWrap}>
-            <LuxeCard variant="default" style={{ padding: isExpanded ? 32 : 24 }}>
+            <LuxeCard variant="default" style={{ padding: isExpanded ? 32 : 24, borderColor: authPalette.panelBorder, borderWidth: 1 }}>
               {formContent}
             </LuxeCard>
           </Animated.View>
@@ -592,8 +640,6 @@ const s = StyleSheet.create({
     padding: 16,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
-    backgroundColor: 'rgba(255, 255, 255, 0.03)',
     marginBottom: 20,
     alignSelf: 'stretch',
   },

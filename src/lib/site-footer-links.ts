@@ -10,6 +10,7 @@ export type FooterLink = {
 
 const GET2KNOW_LINKS = [
   { id: 'about', href: '/about', label: 'About' },
+  { id: 'pricing', href: '/pricing', label: 'Pricing' },
   { id: 'company-info', href: '/company-info', label: 'Company Info' },
   { id: 'founder', href: '/founder', label: 'Founder' },
   { id: 'get-to-know', href: '/about', label: 'Get to Know' },

@@ -167,4 +167,5 @@ export const adminKeys = {
   verificationTask: (id: string) => [...adminKeys.all, 'verification', 'task', id] as const,
   verificationStats: () => [...adminKeys.all, 'verification', 'stats'] as const,
   hostPage: (id: string) => [...adminKeys.all, 'hostPage', id] as const,
+  hostspaceOverview: () => [...adminKeys.all, 'hostspace', 'overview'] as const,
 };

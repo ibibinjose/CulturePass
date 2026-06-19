@@ -120,10 +120,17 @@ const updatePageSchema = z.object({
   templateId: z.string().optional(),
 });
 
+const hostPageDraftFormDataSchema = hostPageFormDataSchema
+  .omit({ name: true, bio: true })
+  .extend({
+    name: z.string().max(120).trim().default(''),
+    bio: z.string().max(300).trim().default(''),
+  });
+
 const saveDraftSchema = z.object({
   pageId: z.string().optional(),
   entityType: hostEntityTypeSchema,
-  formData: hostPageFormDataSchema,
+  formData: hostPageDraftFormDataSchema,
   currentStep: z.number().int().min(1).max(10),
   completedSteps: z.array(z.number().int().min(1).max(10)).optional(),
   templateId: z.string().optional(),

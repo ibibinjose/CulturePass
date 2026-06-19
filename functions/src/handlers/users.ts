@@ -9,6 +9,7 @@ import { sanitizeUserResponse, parseBody,
 
 import { moderationCheck } from '../middleware/moderation';
 import { allowInlineDemoFallback, resolveDemoUserById } from '../dev/demoFixtures';
+import { notifyWalletPassesUpdated } from '../services/walletPassNotify';
 
 export const usersRouter = Router();
 
@@ -149,6 +150,24 @@ usersRouter.put('/users/:id', requireAuth, moderationCheck, async (req: Request,
     }
 
     const updates = parseBody(userUpdateSchema, req.body);
+    const existing = await usersService.getById(userId);
+    if (!existing) return res.status(404).json({ error: 'User not found' });
+
+    const now = new Date().toISOString();
+    const patch: Record<string, unknown> = { ...updates };
+    const avatarChanged =
+      updates.avatarUrl !== undefined && updates.avatarUrl !== existing.avatarUrl;
+    const walletFieldsChanged =
+      avatarChanged
+      || (updates.displayName !== undefined && updates.displayName !== existing.displayName)
+      || (updates.username !== undefined && updates.username !== existing.username);
+
+    if (avatarChanged) {
+      patch.avatarUpdatedAt = now;
+      patch.walletPassUpdatedAt = now;
+    } else if (walletFieldsChanged) {
+      patch.walletPassUpdatedAt = now;
+    }
 
     // Enforce username/handle uniqueness on updates (prevents collisions that registration already guards)
     if (updates.username) {
@@ -168,7 +187,10 @@ usersRouter.put('/users/:id', requireAuth, moderationCheck, async (req: Request,
       }
     }
 
-    await usersService.update(userId, updates as any);
+    await usersService.update(userId, patch as any);
+    if (walletFieldsChanged) {
+      await notifyWalletPassesUpdated(userId);
+    }
     const fresh = await usersService.getById(userId);
     return res.json(fresh);
   } catch (err: any) {

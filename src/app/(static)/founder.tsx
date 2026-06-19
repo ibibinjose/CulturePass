@@ -59,7 +59,7 @@ const TIMELINE = [
   },
   {
     icon: 'eye-outline',
-    color: CultureTokens.terracottaGlow,
+    color: CultureTokens.appBlue,
     title: 'Observation',
     body: 'Bibin watched cultural communities around Sydney organise remarkable events — Diwali nights, cultural film screenings, traditional food markets — but discovery remained broken. WhatsApp groups and word of mouth left most people in the dark.',
   },
@@ -80,7 +80,7 @@ const TIMELINE = [
 const TECH_PHILOSOPHY = [
   {
     icon: 'phone-portrait-outline',
-    color: CultureTokens.terracottaGlow,
+    color: CultureTokens.appBlue,
     title: 'Not Screen Time',
     body: 'We do not optimise for engagement addiction, passive scrolling, or advertising exposure.',
   },
@@ -193,21 +193,21 @@ export default function FounderStory() {
             style={StyleSheet.absoluteFill}
           />
           {/* Decorative ambient background orbs */}
-          <FloatingOrb color={CultureTokens.terracottaGlow} size={250} style={{ top: -70, left: -70 }} />
+          <FloatingOrb color={CultureTokens.appBlue} size={250} style={{ top: -70, left: -70 }} />
           <FloatingOrb color={CultureTokens.deepSaffron} size={180} style={{ top: 80, right: -50 }} />
           <FloatingOrb color={CultureTokens.emeraldHarmony} size={140} style={{ bottom: 20, left: '25%' }} />
 
           <Animated.View entering={FadeInDown.duration(750)} style={[styles.heroContent, { maxWidth: isDesktop ? 920 : '100%' }]}>
             <GlassView tone="dark" borderRadius={999} style={{ backgroundColor: 'rgba(227,106,78,0.08)', borderColor: 'rgba(227,106,78,0.25)', marginBottom: 16 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 6 }}>
-                <Ionicons name="planet" size={14} color={CultureTokens.terracottaGlow} />
-                <Text style={{ color: CultureTokens.terracottaGlow, fontSize: 12, fontFamily: FontFamily.semibold }}>{"CULTUREPASSION ECOSYSTEM"}</Text>
+                <Ionicons name="planet" size={14} color={CultureTokens.appBlue} />
+                <Text style={{ color: CultureTokens.appBlue, fontSize: 12, fontFamily: FontFamily.semibold }}>{"CULTUREPASSION ECOSYSTEM"}</Text>
               </View>
             </GlassView>
 
             <Text style={[styles.heroTitle, { fontSize: isDesktop ? 48 : 34 }]}>
               Building the Global Infrastructure for{'\n'}
-              <Text style={{ color: CultureTokens.terracottaGlow }}>Culture</Text>,
+              <Text style={{ color: CultureTokens.cultureRed }}>Culture</Text>,
               {' '}
               <Text style={{ color: CultureTokens.deepSaffron }}>Community</Text>,
               {' & '}
@@ -229,7 +229,7 @@ export default function FounderStory() {
                     <Ionicons
                       name="planet-outline"
                       size={14}
-                      color={activeTab === 'ecosystem' ? CultureTokens.terracottaGlow : 'rgba(255,255,255,0.6)'}
+                      color={activeTab === 'ecosystem' ? CultureTokens.appBlue : 'rgba(255,255,255,0.6)'}
                       style={{ marginRight: 4 }}
                     />
                     <Text style={[styles.tabText, activeTab === 'ecosystem' && styles.tabTextActive, activeTab === 'ecosystem' && { color: 'white' }]}>
@@ -243,7 +243,7 @@ export default function FounderStory() {
                     <Ionicons
                       name="eye-outline"
                       size={14}
-                      color={activeTab === 'vision' ? CultureTokens.terracottaGlow : 'rgba(255,255,255,0.6)'}
+                      color={activeTab === 'vision' ? CultureTokens.appBlue : 'rgba(255,255,255,0.6)'}
                       style={{ marginRight: 4 }}
                     />
                     <Text style={[styles.tabText, activeTab === 'vision' && styles.tabTextActive, activeTab === 'vision' && { color: 'white' }]}>
@@ -257,7 +257,7 @@ export default function FounderStory() {
                     <Ionicons
                       name="book-outline"
                       size={14}
-                      color={activeTab === 'story' ? CultureTokens.terracottaGlow : 'rgba(255,255,255,0.6)'}
+                      color={activeTab === 'story' ? CultureTokens.appBlue : 'rgba(255,255,255,0.6)'}
                       style={{ marginRight: 4 }}
                     />
                     <Text style={[styles.tabText, activeTab === 'story' && styles.tabTextActive, activeTab === 'story' && { color: 'white' }]}>
@@ -289,14 +289,14 @@ export default function FounderStory() {
             {/* Pillars Detail Layout */}
             <View style={[styles.grid, { maxWidth: 960, gap: 24 }]}>
               {/* CulturePass.App Card */}
-              <GlassView tone="dark" style={StyleSheet.flatten([styles.pillarCardFull, darkGlassOverride, { borderColor: CultureTokens.terracottaGlow + '30' }])}>
+              <GlassView tone="dark" style={StyleSheet.flatten([styles.pillarCardFull, darkGlassOverride, { borderColor: CultureTokens.appBlue + '30' }])}>
                 <View style={styles.pillarHeader}>
-                  <View style={[styles.iconCircle, { backgroundColor: CultureTokens.terracottaGlow + '15', width: 44, height: 44 }]}>
-                    <Ionicons name="apps-outline" size={22} color={CultureTokens.terracottaGlow} />
+                  <View style={[styles.iconCircle, { backgroundColor: CultureTokens.appBlue + '15', width: 44, height: 44 }]}>
+                    <Ionicons name="apps-outline" size={22} color={CultureTokens.appBlue} />
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.pillarTitle, { color: 'white' }]}>CulturePass.App</Text>
-                    <Text style={[styles.pillarSubtitle, { color: CultureTokens.terracottaGlow }]}>The Flagship Platform</Text>
+                    <Text style={[styles.pillarSubtitle, { color: CultureTokens.appBlue }]}>The Flagship Platform</Text>
                   </View>
                 </View>
                 <Text style={styles.pillarBodyText}>
@@ -306,7 +306,7 @@ export default function FounderStory() {
                 <View style={styles.bulletList}>
                   {['Discover cultural events', 'Find communities and organizations', 'Explore heritage and identity', 'Participate in local experiences', 'Connect with like-minded people', 'Strengthen belonging'].map((item) => (
                     <View key={item} style={styles.bulletRow}>
-                      <Ionicons name="checkmark" size={14} color={CultureTokens.terracottaGlow} style={{ marginTop: 2 }} />
+                      <Ionicons name="checkmark" size={14} color={CultureTokens.appBlue} style={{ marginTop: 2 }} />
                       <Text style={styles.bulletText}>{item}</Text>
                     </View>
                   ))}
@@ -315,7 +315,7 @@ export default function FounderStory() {
                 <View style={styles.bulletList}>
                   {['Reach new audiences', 'Promote events and programs', 'Grow communities', 'Increase participation', 'Measure engagement & impact'].map((item) => (
                     <View key={item} style={styles.bulletRow}>
-                      <Ionicons name="checkmark" size={14} color={CultureTokens.terracottaGlow} style={{ marginTop: 2 }} />
+                      <Ionicons name="checkmark" size={14} color={CultureTokens.appBlue} style={{ marginTop: 2 }} />
                       <Text style={styles.bulletText}>{item}</Text>
                     </View>
                   ))}
@@ -448,7 +448,7 @@ export default function FounderStory() {
             {/* Quick Action Navigation */}
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 14, justifyContent: 'center', marginTop: 32 }}>
               <Link href="/pitch" asChild>
-                <Pressable style={StyleSheet.flatten([styles.ctaBtn, { backgroundColor: CultureTokens.terracottaGlow, borderColor: 'transparent', width: 'auto', minWidth: 180 }])}>
+                <Pressable style={StyleSheet.flatten([styles.ctaBtn, { backgroundColor: CultureTokens.appBlue, borderColor: 'transparent', width: 'auto', minWidth: 180 }])}>
                   <Text style={styles.ctaText}>View Pitch Page</Text>
                   <Ionicons name="easel-outline" size={18} color="white" />
                 </Pressable>
@@ -498,23 +498,23 @@ export default function FounderStory() {
                   </Text>
                   <View style={styles.bulletList}>
                     <View style={styles.bulletRow}>
-                      <Ionicons name="alert" size={14} color={CultureTokens.terracottaGlow} style={{ marginTop: 3 }} />
+                      <Ionicons name="alert" size={14} color={CultureTokens.appBlue} style={{ marginTop: 3 }} />
                       <Text style={styles.bulletText}>People struggle to find meaningful social connections in their local areas.</Text>
                     </View>
                     <View style={styles.bulletRow}>
-                      <Ionicons name="alert" size={14} color={CultureTokens.terracottaGlow} style={{ marginTop: 3 }} />
+                      <Ionicons name="alert" size={14} color={CultureTokens.appBlue} style={{ marginTop: 3 }} />
                       <Text style={styles.bulletText}>Cultural organizations struggle to reach new audiences and grow their presence.</Text>
                     </View>
                     <View style={styles.bulletRow}>
-                      <Ionicons name="alert" size={14} color={CultureTokens.terracottaGlow} style={{ marginTop: 3 }} />
+                      <Ionicons name="alert" size={14} color={CultureTokens.appBlue} style={{ marginTop: 3 }} />
                       <Text style={styles.bulletText}>Communities struggle to attract, engage, and retain active members.</Text>
                     </View>
                     <View style={styles.bulletRow}>
-                      <Ionicons name="alert" size={14} color={CultureTokens.terracottaGlow} style={{ marginTop: 3 }} />
+                      <Ionicons name="alert" size={14} color={CultureTokens.appBlue} style={{ marginTop: 3 }} />
                       <Text style={styles.bulletText}>Migrants and diaspora communities struggle to maintain vital cultural connections.</Text>
                     </View>
                     <View style={styles.bulletRow}>
-                      <Ionicons name="alert" size={14} color={CultureTokens.terracottaGlow} style={{ marginTop: 3 }} />
+                      <Ionicons name="alert" size={14} color={CultureTokens.appBlue} style={{ marginTop: 3 }} />
                       <Text style={styles.bulletText}>Governments face growing challenges around social cohesion, inclusion, participation, and community wellbeing.</Text>
                     </View>
                   </View>
@@ -576,7 +576,7 @@ export default function FounderStory() {
             {/* Quick Action Navigation */}
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 14, justifyContent: 'center', marginTop: 32 }}>
               <Link href="/pitch" asChild>
-                <Pressable style={StyleSheet.flatten([styles.ctaBtn, { backgroundColor: CultureTokens.terracottaGlow, borderColor: 'transparent', width: 'auto', minWidth: 180 }])}>
+                <Pressable style={StyleSheet.flatten([styles.ctaBtn, { backgroundColor: CultureTokens.appBlue, borderColor: 'transparent', width: 'auto', minWidth: 180 }])}>
                   <Text style={styles.ctaText}>View Pitch Page</Text>
                   <Ionicons name="easel-outline" size={18} color="white" />
                 </Pressable>
@@ -598,8 +598,8 @@ export default function FounderStory() {
             <Animated.View entering={FadeInDown.delay(80)}>
               <View style={styles.section}>
                 <View style={styles.sectionLabel}>
-                  <Ionicons name="book-outline" size={14} color={CultureTokens.terracottaGlow} />
-                  <Text style={[styles.sectionLabelText, { color: CultureTokens.terracottaGlow }]}>The Beginning</Text>
+                  <Ionicons name="book-outline" size={14} color={CultureTokens.appBlue} />
+                  <Text style={[styles.sectionLabelText, { color: CultureTokens.appBlue }]}>The Beginning</Text>
                 </View>
                 <Text style={[styles.h2, { color: colors.text }]}>A Simple, Profound Realisation</Text>
 
@@ -625,7 +625,7 @@ export default function FounderStory() {
                 {/* Founding insight quote */}
                 <View style={styles.foundingQuote}>
                   <LinearGradient
-                    colors={[CultureTokens.deepSaffron + '12', CultureTokens.terracottaGlow + '08']}
+                    colors={[CultureTokens.deepSaffron + '12', CultureTokens.appBlue + '08']}
                     style={StyleSheet.absoluteFill}
                   />
                   <View style={styles.foundingQuoteLine} />
@@ -647,7 +647,7 @@ export default function FounderStory() {
                 end={{ x: 1, y: 1 }}
                 style={StyleSheet.absoluteFill}
               />
-              <FloatingOrb color={CultureTokens.terracottaGlow} size={200} style={{ top: -60, left: -60 }} />
+              <FloatingOrb color={CultureTokens.appBlue} size={200} style={{ top: -60, left: -60 }} />
               <FloatingOrb color={CultureTokens.emeraldHarmony} size={140} style={{ bottom: -30, right: -30 }} />
 
               <View style={[styles.section, { backgroundColor: 'transparent', paddingVertical: 72 }]}>
@@ -688,7 +688,7 @@ export default function FounderStory() {
         {/* ── CLOSING BANNER ───────────────────────────────────────────────── */}
         <View style={styles.closeWrap}>
           <LinearGradient
-            colors={[CultureTokens.terracottaGlow, CultureTokens.deepSaffron, CultureTokens.emeraldHarmony]}
+            colors={[CultureTokens.appBlue, CultureTokens.deepSaffron, CultureTokens.emeraldHarmony]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={StyleSheet.absoluteFill}
@@ -767,7 +767,7 @@ const getStyles = (c: ColorTheme) => StyleSheet.create({
   letterLabel: {
     fontSize: 12,
     fontFamily: FontFamily.bold,
-    color: CultureTokens.terracottaGlow,
+    color: CultureTokens.appBlue,
     letterSpacing: 2,
     marginBottom: 8,
   },
@@ -781,7 +781,7 @@ const getStyles = (c: ColorTheme) => StyleSheet.create({
   letterLine: {
     width: 60,
     height: 3,
-    backgroundColor: CultureTokens.terracottaGlow,
+    backgroundColor: CultureTokens.appBlue,
     borderRadius: 2,
     marginTop: 20,
   },
@@ -794,7 +794,7 @@ const getStyles = (c: ColorTheme) => StyleSheet.create({
     color: CultureTokens.deepSaffron,
     marginBottom: 10,
     borderLeftWidth: 3,
-    borderLeftColor: CultureTokens.terracottaGlow,
+    borderLeftColor: CultureTokens.appBlue,
     paddingLeft: 10,
   },
   letterBodyText: {
@@ -865,7 +865,7 @@ const getStyles = (c: ColorTheme) => StyleSheet.create({
 
   // Founding quote
   foundingQuote: { marginTop: 28, padding: 24, borderRadius: 20, borderWidth: 1, borderColor: CultureTokens.deepSaffron + '30', maxWidth: 640, width: '100%', overflow: 'hidden', alignItems: 'center', gap: 10 },
-  foundingQuoteLine: { width: 36, height: 3, backgroundColor: CultureTokens.terracottaGlow, borderRadius: 2 },
+  foundingQuoteLine: { width: 36, height: 3, backgroundColor: CultureTokens.appBlue, borderRadius: 2 },
   foundingQuoteText: { fontSize: 20, fontFamily: FontFamily.bold, textAlign: 'center', lineHeight: 30, letterSpacing: -0.2 },
   foundingQuoteAttr: { fontSize: 13, fontFamily: FontFamily.medium },
 

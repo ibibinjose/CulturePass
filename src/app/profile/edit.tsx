@@ -445,9 +445,14 @@ export default function EditProfileScreen() {
     setAvatarPickerVisible(true);
   };
 
-  const handleAvatarSelected = (uri: string) => {
+  const handleAvatarSelected = async (uri: string) => {
     setAvatarUri(uri);
     setDirty(true);
+    try {
+      await updateUserProfile({ avatarUrl: uri });
+    } catch {
+      // Save button will retry; local preview still shows the new image
+    }
   };
 
   const canSave = Boolean(form.displayName.trim()) && dirty && !saveMutation.isPending;
@@ -807,7 +812,7 @@ export default function EditProfileScreen() {
         collectionName="users"
         docId={userId}
         fieldName="avatarUrl"
-        skipDbUpdate={false}
+        skipDbUpdate
         preservePrevious
         historyFieldName="avatarUrlHistory"
         resizeWidth={900}

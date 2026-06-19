@@ -40,7 +40,7 @@ import { APP_NAME, SITE_ORIGIN } from '@/lib/app-meta';
 const MY_SPACE_HEAD_TITLE = `My Space · ${APP_NAME}`;
 const MY_SPACE_HEAD_DESC =
   'Your CulturePass home — profile, tickets, perks, and identity in one place.';
-const MY_SPACE_HEAD_URL = `${SITE_ORIGIN}/my-space`;
+const MY_SPACE_HEAD_URL = `${SITE_ORIGIN}/myspace`;
 
 function MySpaceHead() {
   return (

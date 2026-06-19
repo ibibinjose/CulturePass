@@ -89,7 +89,7 @@ export function LuxeCommunityCard({ community, variant = 'default', size = 'defa
 
         {/* Verified badge */}
         {community.isVerified && (
-          <View style={[styles.badge, { backgroundColor: Luxe.colors.terracotta }]}>
+          <View style={[styles.badge, { backgroundColor: Luxe.colors.appBlue }]}>
             <Ionicons name="checkmark" size={13} color="#FFF" />
           </View>
         )}
@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 9,
     paddingVertical: 4,
     borderRadius: 999,
-    backgroundColor: Luxe.colors.terracotta,
+    backgroundColor: Luxe.colors.appBlue,
     zIndex: 3,
   },
   // Text content overlaid on the image

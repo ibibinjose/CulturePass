@@ -22,8 +22,8 @@ export const OUTCOME_CONFIG = {
     title: 'Already Scanned',
   },
   rejected: {
-    color: Luxe.colors.terracotta,
-    bg: Luxe.colors.terracotta + '18',
+    color: Luxe.colors.appBlue,
+    bg: Luxe.colors.appBlue + '18',
     icon: 'close-circle' as const,
     title: 'Invalid Ticket',
   },

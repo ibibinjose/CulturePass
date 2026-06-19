@@ -7,40 +7,61 @@ import { useLayout } from '@/hooks/useLayout';
 import { Button } from '@/design-system/ui/Button';
 import { GlassView } from '@/design-system/ui/GlassView';
 import type { CreateCategory } from '@/modules/host/config/hostspaceCreateCategories.config';
-import type { Profile, ShopListing } from '@/shared/schema';
+import { hostPageLabel, hostPageSubtitle } from '@/modules/host/lib/hostspaceCreateParents';
+import type { EventData, HostPage, ShopListing } from '@/shared/schema';
 
 export function HostspaceCreateListingsColumn({
   selected,
   isMarket,
+  isEventListing,
   itemCount,
   shopListingsLoading,
-  profilesLoading,
+  hostPagesLoading,
+  eventsLoading,
   userSignedIn,
   filteredShopListings,
-  filteredListings,
+  filteredHostPages,
+  filteredEvents,
   onOpenCreateFlow,
+  onEditHostPage,
+  onEditEvent,
   onEditShopListing,
   onDeleteShopListing,
-  onEditListing,
-  onDeleteListing,
 }: {
   selected: CreateCategory;
   isMarket: boolean;
+  isEventListing: boolean;
   itemCount: number;
   shopListingsLoading: boolean;
-  profilesLoading: boolean;
+  hostPagesLoading: boolean;
+  eventsLoading: boolean;
   userSignedIn: boolean;
   filteredShopListings: ShopListing[];
-  filteredListings: Profile[];
+  filteredHostPages: HostPage[];
+  filteredEvents: EventData[];
   onOpenCreateFlow: () => void;
+  onEditHostPage: (page: HostPage) => void;
+  onEditEvent: (event: EventData) => void;
   onEditShopListing: (listing: ShopListing) => void;
   onDeleteShopListing: (listing: ShopListing) => void;
-  onEditListing: (profile: Profile) => void;
-  onDeleteListing: (profile: Profile) => void;
 }) {
   const colors = useColors();
   const isDark = useIsDark();
   const { isDesktop } = useLayout();
+
+  const outputTitle = isMarket
+    ? 'Your CultureMarket listings'
+    : isEventListing
+      ? 'Your events'
+      : 'Your host pages';
+
+  const outputSub = isMarket
+    ? 'Products, services, and links you have published to CultureMarket.'
+    : isEventListing
+      ? `Events published under your org pages — filtered for “${selected.label}”.`
+      : `Host pages that match “${selected.label}”.`;
+
+  const isLoading = isMarket ? shopListingsLoading : isEventListing ? eventsLoading : hostPagesLoading;
 
   return (
     <View style={[styles.outputColumn, !isDesktop && styles.outputColumnMobile]}>
@@ -54,14 +75,8 @@ export function HostspaceCreateListingsColumn({
       >
         <View style={styles.outputHeader}>
           <View style={{ flex: 1 }}>
-            <Text style={[styles.outputTitle, { color: colors.text }]}>
-              {isMarket ? 'Your CultureMarket listings' : 'Your listings'}
-            </Text>
-            <Text style={[styles.outputSub, { color: colors.textSecondary }]}>
-              {isMarket
-                ? 'Products, services, and links you have published to CultureMarket.'
-                : `Directory profiles that match “${selected.label}”.`}
-            </Text>
+            <Text style={[styles.outputTitle, { color: colors.text }]}>{outputTitle}</Text>
+            <Text style={[styles.outputSub, { color: colors.textSecondary }]}>{outputSub}</Text>
           </View>
           <View style={[styles.outputPill, { borderColor: colors.borderLight }]}>
             <Text style={[styles.outputPillText, { color: colors.text }]}>{itemCount}</Text>
@@ -126,45 +141,70 @@ export function HostspaceCreateListingsColumn({
               ))}
             </View>
           )
-        ) : profilesLoading ? (
+        ) : isLoading ? (
           <View style={styles.outputLoading}>
-            <Text style={[styles.outputSub, { color: colors.textSecondary }]}>Loading listings...</Text>
+            <Text style={[styles.outputSub, { color: colors.textSecondary }]}>Loading...</Text>
           </View>
-        ) : filteredListings.length === 0 ? (
+        ) : isEventListing ? (
+          filteredEvents.length === 0 ? (
+            <View style={[styles.emptyState, { borderColor: colors.borderLight, backgroundColor: colors.background + '70' }]}>
+              <Ionicons name="calendar-outline" size={16} color={colors.textTertiary} />
+              <Text style={[styles.emptyStateText, { color: colors.textSecondary }]}>
+                No events yet. Create one under an org page to get started.
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.outputGrid}>
+              {filteredEvents.slice(0, 8).map((event) => (
+                <View key={event.id} style={styles.outputRow}>
+                  <Text style={[styles.outputLabel, { color: colors.textTertiary }]}>event</Text>
+                  <Text style={[styles.outputValue, { color: colors.text }]} numberOfLines={1}>
+                    {event.title}
+                  </Text>
+                  <View style={styles.outputActions}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      leftIcon="create-outline"
+                      onPress={() => onEditEvent(event)}
+                      style={{ flex: 1 }}
+                      accessibilityLabel={`Edit ${event.title}`}
+                    >
+                      Edit
+                    </Button>
+                  </View>
+                </View>
+              ))}
+            </View>
+          )
+        ) : filteredHostPages.length === 0 ? (
           <View style={[styles.emptyState, { borderColor: colors.borderLight, backgroundColor: colors.background + '70' }]}>
             <Ionicons name="document-text-outline" size={16} color={colors.textTertiary} />
             <Text style={[styles.emptyStateText, { color: colors.textSecondary }]}>
-              No {selected.label.toLowerCase()} listings yet.
+              No {selected.label.toLowerCase()} host pages yet.
             </Text>
           </View>
         ) : (
           <View style={styles.outputGrid}>
-            {filteredListings.slice(0, 8).map((profile) => (
-              <View key={profile.id} style={styles.outputRow}>
-                <Text style={[styles.outputLabel, { color: colors.textTertiary }]}>{profile.entityType}</Text>
+            {filteredHostPages.slice(0, 8).map((page) => (
+              <View key={page.id} style={styles.outputRow}>
+                <Text style={[styles.outputLabel, { color: colors.textTertiary }]}>{page.entityType}</Text>
                 <Text style={[styles.outputValue, { color: colors.text }]} numberOfLines={1}>
-                  {profile.name}
+                  {hostPageLabel(page)}
+                </Text>
+                <Text style={[styles.outputMeta, { color: colors.textTertiary }]} numberOfLines={1}>
+                  {hostPageSubtitle(page)}
                 </Text>
                 <View style={styles.outputActions}>
                   <Button
                     variant="outline"
                     size="sm"
                     leftIcon="create-outline"
-                    onPress={() => onEditListing(profile)}
+                    onPress={() => onEditHostPage(page)}
                     style={{ flex: 1 }}
-                    accessibilityLabel={`Edit ${profile.name}`}
+                    accessibilityLabel={`Edit ${hostPageLabel(page)}`}
                   >
                     Edit
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    leftIcon="trash-outline"
-                    onPress={() => onDeleteListing(profile)}
-                    style={{ flex: 1 }}
-                    accessibilityLabel={`Delete ${profile.name}`}
-                  >
-                    Delete
                   </Button>
                 </View>
               </View>
@@ -256,6 +296,10 @@ const styles = StyleSheet.create({
   },
   outputValue: {
     fontSize: Platform.OS === 'web' ? 12 : 13,
+    fontFamily: 'Poppins_500Medium',
+  },
+  outputMeta: {
+    fontSize: Platform.OS === 'web' ? 10 : 11,
     fontFamily: 'Poppins_500Medium',
   },
 });

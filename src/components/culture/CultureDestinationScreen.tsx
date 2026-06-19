@@ -14,7 +14,7 @@ import { router, Stack } from 'expo-router';
 import Head from 'expo-router/head';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 import { useColors } from '@/hooks/useColors';
 import { useLayout } from '@/hooks/useLayout';
 import { TextStyles } from '@/design-system/tokens/typography';
@@ -43,10 +43,26 @@ import { M3FilterChip } from '@/design-system/ui';
 import {
   cityAmbient,
   getCityDestinationStyles,
-  CITY_HERO_FG,
-  CITY_HERO_FG_MUTED,
   StatPill,
 } from '@/components/city/CityDestinationStyles';
+import { DestinationBrowseByType } from '@/components/city/DestinationBrowseByType';
+import { DestinationExploreChips } from '@/components/city/DestinationExploreChips';
+import { DestinationMapFab } from '@/components/city/DestinationMapFab';
+import { DestinationStickyBar } from '@/components/city/DestinationStickyBar';
+import {
+  buildDestinationListingHref,
+  destinationFabBottom,
+  destinationHeroHeight,
+  destinationHubScrollBottom,
+  DESTINATION_HERO_GRADIENT,
+  filterEventsByExploreCategory,
+  filterVenuesByExploreCategory,
+  isVenuePrimaryExploreCategory,
+} from '@/components/city/destinationLayout';
+import {
+  type ExploreCategoryKey,
+  type ListingTypeKey,
+} from '@/hooks/useCityPage';
 import {
   FilterRail,
   type FilterChipItem,
@@ -56,68 +72,6 @@ import {
 type FilterMode = 'category' | 'culture' | 'language';
 
 const CATEGORY_FILTERS = ['Music', 'Food', 'Arts', 'Nightlife', 'Indigenous', 'Sports', 'Workshop'];
-
-type ExploreCategoryKey =
-  | 'artists'
-  | 'events'
-  | 'movies'
-  | 'dining'
-  | 'activities'
-  | 'shopping'
-  | 'offers'
-  | 'directory'
-  | 'indigenous';
-
-const EXPLORE_CATEGORY_LINKS: readonly {
-  key: ExploreCategoryKey;
-  label: 'Artists' | 'Events' | 'Movies' | 'Dining' | 'Activities' | 'Shopping' | 'Offers' | 'Directory' | 'Indigenous';
-  icon: keyof typeof Ionicons.glyphMap;
-}[] = [
-  { key: 'artists', label: 'Artists', icon: 'color-palette-outline' },
-  { key: 'events', label: 'Events', icon: 'calendar-outline' },
-  { key: 'movies', label: 'Movies', icon: 'film-outline' },
-  { key: 'dining', label: 'Dining', icon: 'restaurant-outline' },
-  { key: 'activities', label: 'Activities', icon: 'compass-outline' },
-  { key: 'shopping', label: 'Shopping', icon: 'bag-handle-outline' },
-  { key: 'offers', label: 'Offers', icon: 'pricetag-outline' },
-  { key: 'directory', label: 'Directory', icon: 'grid-outline' },
-  { key: 'indigenous', label: 'Indigenous', icon: 'leaf-outline' },
-];
-
-type ListingTypeKey =
-  | 'event'
-  | 'festival'
-  | 'concert'
-  | 'workshop'
-  | 'movie'
-  | 'dining'
-  | 'shopping'
-  | 'activity'
-  | 'professional'
-  | 'organisation'
-  | 'business'
-  | 'artist'
-  | 'perk';
-
-const LISTING_TYPE_ROWS: readonly {
-  key: ListingTypeKey;
-  title: string;
-  description: string;
-}[] = [
-  { key: 'event', title: 'Event', description: 'Timed happenings & community gatherings' },
-  { key: 'festival', title: 'Festival', description: 'Multi-day festivals & celebrations' },
-  { key: 'concert', title: 'Concert / show', description: 'Live music, theatre & performances' },
-  { key: 'workshop', title: 'Workshop / class', description: 'Classes, talks & skill sessions' },
-  { key: 'movie', title: 'Movie', description: 'Cinema listings & screenings' },
-  { key: 'dining', title: 'Dining', description: 'Restaurant & café listings' },
-  { key: 'shopping', title: 'Shopping', description: 'Retail & boutique listings' },
-  { key: 'activity', title: 'Activity', description: 'Tours, experiences & cultural sites' },
-  { key: 'professional', title: 'Professional', description: 'Practice & professional profile page' },
-  { key: 'organisation', title: 'Organisation', description: 'Cultural groups & communities' },
-  { key: 'business', title: 'Business', description: 'General business profile' },
-  { key: 'artist', title: 'Artist', description: 'Musicians, dancers & creatives' },
-  { key: 'perk', title: 'Perk', description: 'Discounts & member benefits' },
-];
 
 function getRegionLabel(
   stateCode: string | undefined,
@@ -137,8 +91,10 @@ type Props = {
 
 export function CultureDestinationScreen({ definition: def, routeSearchParams }: Props) {
   const colors = useColors();
-  const { isDesktop, contentWidth, width, hPad } = useLayout();
-  const insets = useSafeAreaInsets();
+  const { isDesktop, contentWidth, width, hPad, isExpanded, safeAreaBottom } = useLayout();
+  const insets = useSafeAreaInsetsWeb();
+  const heroHeight = destinationHeroHeight({ isExpanded, isDesktop, variant: 'hub' });
+  const fabBottom = destinationFabBottom(0, safeAreaBottom);
   const scrollRef = useRef<ScrollView>(null);
   const { state: onboarding, isLoading: onboardingLoading } = useOnboarding();
   const { states: auStates } = useLocations();
@@ -415,74 +371,22 @@ export function CultureDestinationScreen({ definition: def, routeSearchParams }:
   const openListingTypeResults = useCallback(
     (listingType: ListingTypeKey) => {
       haptic();
-      const hubQuery = encodeURIComponent(def.heroTitle);
-      const routes: Record<ListingTypeKey, string> = {
-        event: `/events`,
-        festival: `/search?q=${encodeURIComponent(`${def.heroTitle} festival`)}`,
-        concert: `/search?q=${encodeURIComponent(`${def.heroTitle} concert`)}`,
-        workshop: `/search?q=${encodeURIComponent(`${def.heroTitle} workshop`)}`,
-        movie: `/movies`,
-        dining: `/restaurants`,
-        shopping: `/shopping`,
-        activity: `/a`,
-        professional: `/search?q=${encodeURIComponent(`${def.heroTitle} professional`)}`,
-        organisation: `/search?q=${encodeURIComponent(`${def.heroTitle} organisation`)}`,
-        business: `/directory`,
-        artist: `/search?q=${encodeURIComponent(`${def.heroTitle} artist`)}`,
-        perk: `/perks`,
-      };
-      const route = routes[listingType];
-      if (route.includes('?q=')) {
-        router.push(route as never);
-        return;
-      }
-      const suffix = route.includes('?') ? '&' : '?';
-      router.push(`${route}${suffix}q=${hubQuery}` as never);
+      router.push(buildDestinationListingHref(listingType, def.heroTitle) as never);
     },
     [def.heroTitle, haptic],
   );
 
-  const eventResults = useMemo(() => {
-    const includesAny = (haystack: string, needles: string[]) => needles.some((n) => haystack.includes(n));
-    return events.filter((e) => {
-      const blob = `${e.category ?? ''} ${(e.tags ?? []).join(' ')} ${(e.cultureTag ?? []).join(' ')} ${(e.cultureTags ?? []).join(' ')}`.toLowerCase();
-      switch (activeExploreCategory) {
-        case 'events':
-          return true;
-        case 'movies':
-          return includesAny(blob, ['movie', 'film', 'cinema', 'screening']);
-        case 'activities':
-          return includesAny(blob, ['activity', 'tour', 'experience', 'workshop', 'class']);
-        case 'offers':
-          return includesAny(blob, ['offer', 'deal', 'discount', 'free', 'perk']);
-        case 'indigenous':
-          return includesAny(blob, ['indigenous', 'aboriginal', 'first nations', 'torres strait']);
-        case 'artists':
-          return includesAny(blob, ['artist', 'music', 'dance', 'creative', 'performance', 'concert']);
-        default:
-          return true;
-      }
-    });
-  }, [activeExploreCategory, events]);
+  const eventResults = useMemo(
+    () => filterEventsByExploreCategory(events, activeExploreCategory),
+    [activeExploreCategory, events],
+  );
 
-  const venueResults = useMemo(() => {
-    const includesAny = (haystack: string, needles: string[]) => needles.some((n) => haystack.includes(n));
-    return venues.filter((v) => {
-      const blob = `${v.category ?? ''} ${v.name ?? ''}`.toLowerCase();
-      switch (activeExploreCategory) {
-        case 'directory':
-          return true;
-        case 'dining':
-          return includesAny(blob, ['dining', 'restaurant', 'cafe', 'café', 'food']);
-        case 'shopping':
-          return includesAny(blob, ['shop', 'shopping', 'retail', 'store', 'boutique']);
-        case 'artists':
-          return includesAny(blob, ['artist', 'music', 'creative', 'studio']);
-        default:
-          return true;
-      }
-    });
-  }, [activeExploreCategory, venues]);
+  const venueResults = useMemo(
+    () => filterVenuesByExploreCategory(venues, activeExploreCategory),
+    [activeExploreCategory, venues],
+  );
+
+  const showVenueResults = isVenuePrimaryExploreCategory(activeExploreCategory);
 
   const sectionTitle = useMemo(() => {
     const parts: string[] = [];
@@ -517,6 +421,7 @@ export function CultureDestinationScreen({ definition: def, routeSearchParams }:
           showsVerticalScrollIndicator={false}
           contentContainerStyle={[
             styles.scroll,
+            { paddingBottom: destinationHubScrollBottom(safeAreaBottom) },
             isDesktop && { width: contentWidth, alignSelf: 'center' },
           ]}
           stickyHeaderIndices={[1]}
@@ -528,7 +433,7 @@ export function CultureDestinationScreen({ definition: def, routeSearchParams }:
             />
           }
         >
-          <View style={styles.hero}>
+          <View style={[styles.hero, { height: heroHeight }]}>
             <Image
               source={{ uri: def.heroImage }}
               style={styles.heroImage}
@@ -536,14 +441,14 @@ export function CultureDestinationScreen({ definition: def, routeSearchParams }:
               transition={600}
             />
             <LinearGradient
-              colors={['rgba(0,0,0,0.72)', 'rgba(0,0,0,0.14)', 'rgba(0,0,0,0.94)']}
+              colors={DESTINATION_HERO_GRADIENT}
               locations={[0, 0.42, 1]}
               style={StyleSheet.absoluteFill}
             />
             <View style={[styles.heroTopBar, {
-              paddingTop: Platform.OS === 'web' ? 16 : insets.top + 16,
+              paddingTop: insets.top + 12,
               left: hPad,
-              right: hPad
+              right: hPad,
             }]}>
               <View style={[localStyles.topIconButtonShell, { borderColor: CultureTokens.indigo + 'CC' }]}>
                 <Pressable
@@ -658,75 +563,23 @@ export function CultureDestinationScreen({ definition: def, routeSearchParams }:
             </View>
           </View>
 
-          <View
-            style={[
-              styles.filterBar,
-              localStyles.stickyControls,
-              {
-                backgroundColor: colors.background,
-              },
-            ]}
-          >
-            <ScrollView
-              horizontal
-              nestedScrollEnabled
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={[
-                localStyles.exploreRow,
-                { paddingHorizontal: hPad, paddingVertical: 8, paddingRight: hPad + 24 },
-              ]}
-            >
-              {EXPLORE_CATEGORY_LINKS.map((item) => {
-                const active = activeExploreCategory === item.key;
-                return (
-                  <Pressable
-                    key={item.key}
-                    onPress={() => {
-                      haptic();
-                      setActiveExploreCategory(item.key);
-                    }}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Show ${item.label}`}
-                    accessibilityState={{ selected: active }}
-                  >
-                    {active ? (
-                      <LinearGradient
-                        colors={gradients.culturepassBrand}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 1 }}
-                        style={localStyles.exploreChipGradient}
-                      >
-                        <Ionicons name={item.icon} size={14} color="#fff" />
-                        <Text style={localStyles.exploreChipOnGradient}>{item.label}</Text>
-                      </LinearGradient>
-                    ) : (
-                      <View
-                        style={[
-                          localStyles.exploreChipIdle,
-                          {
-                            backgroundColor: colors.surfaceElevated,
-                            borderColor: colors.borderLight,
-                          },
-                        ]}
-                      >
-                        <Ionicons name={item.icon} size={14} color={colors.textSecondary} />
-                        <Text style={[localStyles.exploreChipIdleText, { color: colors.textSecondary }]}>
-                          {item.label}
-                        </Text>
-                      </View>
-                    )}
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-
+          <DestinationStickyBar tone="legacy">
+            <DestinationExploreChips
+              active={activeExploreCategory}
+              onSelect={(key) => {
+                haptic();
+                setActiveExploreCategory(key);
+              }}
+              hPad={hPad}
+              variant="gradient"
+            />
             <FilterRail
               modes={railModes}
               groups={[{ items: railChips }]}
               activeCount={activeFilters.length}
               onClearAll={onClearMode}
             />
-          </View>
+          </DestinationStickyBar>
 
           {regionFilteredEvents.length > 5 && totalActiveFilters === 0 && (
             <View style={[styles.section, { paddingHorizontal: 0 }]}>
@@ -792,9 +645,13 @@ export function CultureDestinationScreen({ definition: def, routeSearchParams }:
               <View style={[styles.section, { paddingHorizontal: isDesktop ? 0 : hPad }]}>
                 <View style={styles.sectionHeader}>
                   <View>
-                    <Text style={[TextStyles.title3, { color: colors.text }]}>{sectionTitle}</Text>
+                    <Text style={[TextStyles.title3, { color: colors.text }]}>
+                      {showVenueResults ? 'Places & partners' : sectionTitle}
+                    </Text>
                     <Text style={[TextStyles.caption, { color: colors.textTertiary, marginTop: 2 }]}>
-                      {eventResults.length} event result{eventResults.length === 1 ? '' : 's'} · {venueResults.length} places
+                      {showVenueResults
+                        ? `${venueResults.length} place${venueResults.length === 1 ? '' : 's'}`
+                        : `${eventResults.length} event result${eventResults.length === 1 ? '' : 's'} · ${venueResults.length} places`}
                     </Text>
                   </View>
                   {totalActiveFilters > 0 && (
@@ -807,9 +664,45 @@ export function CultureDestinationScreen({ definition: def, routeSearchParams }:
                 {isLoading ? (
                   <View style={styles.skeletonGrid}>
                     {[1, 2, 3, 4, 5, 6].map((i) => (
-                      <View key={i} style={[styles.skeletonCard, { width: cardWidth, height: 240 }]} />
+                      <View key={i} style={[styles.skeletonCard, { width: cardWidth, height: showVenueResults ? 72 : 240 }]} />
                     ))}
                   </View>
+                ) : showVenueResults ? (
+                  venueResults.length === 0 ? (
+                    <View style={styles.emptyState}>
+                      <Ionicons name="business-outline" size={64} color={colors.textTertiary} />
+                      <Text style={styles.emptyTitle}>No places match yet</Text>
+                      <Text style={styles.emptySubtitle}>
+                        Try another category or browse the directory for this community.
+                      </Text>
+                      <Pressable style={styles.retryButton} onPress={() => router.push('/directory')}>
+                        <Text style={styles.retryText}>Browse directory</Text>
+                      </Pressable>
+                    </View>
+                  ) : (
+                    <View style={{ gap: 12 }}>
+                      {venueResults.map((v) => (
+                        <Pressable
+                          key={v.id}
+                          onPress={() => router.push({ pathname: '/profile/[id]', params: { id: v.id } })}
+                          style={[styles.venueCard, isDesktop && { width: '100%' }]}
+                          accessibilityLabel={`View ${v.name} profile`}
+                          accessibilityRole="link"
+                        >
+                          <View style={styles.venueIcon}>
+                            <Ionicons name="business" size={22} color={colors.primary} />
+                          </View>
+                          <View style={{ flex: 1 }}>
+                            <Text style={styles.venueName} numberOfLines={1}>
+                              {v.name}
+                            </Text>
+                            <Text style={styles.venueCategory}>{v.category || 'Culture host'}</Text>
+                          </View>
+                          <Ionicons name="chevron-forward" size={16} color={colors.textTertiary} />
+                        </Pressable>
+                      ))}
+                    </View>
+                  )
                 ) : eventResults.length === 0 ? (
                   <View style={styles.emptyState}>
                     <Ionicons name="calendar-clear-outline" size={64} color={colors.textTertiary} />
@@ -930,84 +823,16 @@ export function CultureDestinationScreen({ definition: def, routeSearchParams }:
                 </View>
               )}
 
-              <View style={[styles.section, { paddingHorizontal: isDesktop ? 0 : hPad }]}>
-                <Text style={[TextStyles.title3, { color: colors.text, marginBottom: 4 }]}>
-                  Browse by type
-                </Text>
-                <Text style={[TextStyles.caption, { color: colors.textSecondary, marginBottom: 20 }]}>
-                  Explore listings across different categories.
-                </Text>
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: isDesktop ? 20 : 12 }}>
-                  {LISTING_TYPE_ROWS.map((row) => (
-                    <Pressable
-                      key={row.key}
-                      onPress={() => openListingTypeResults(row.key)}
-                      style={({ pressed }) => [
-                        {
-                          width: isDesktop ? '31%' : '48%',
-                          borderWidth: 1.5,
-                          borderColor: colors.borderLight,
-                          borderRadius: Radius.lg,
-                          padding: 14,
-                          backgroundColor: colors.surfaceElevated,
-                          opacity: pressed ? 0.9 : 1,
-                          ...Platform.select({
-                            web: { transition: 'transform 0.2s ease, box-shadow 0.2s ease' },
-                            default: {},
-                          }),
-                        },
-                      ]}
-                      accessibilityRole="button"
-                      accessibilityLabel={`Open ${row.title} results`}
-                    >
-                      <View
-                        style={{
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          marginBottom: 6,
-                        }}
-                      >
-                        <Text
-                          style={[
-                            TextStyles.callout,
-                            { color: colors.text, fontFamily: FontFamily.bold, fontSize: 13 },
-                          ]}
-                        >
-                          {row.title}
-                        </Text>
-                        <View
-                          style={{
-                            borderRadius: Radius.full,
-                            paddingHorizontal: 8,
-                            paddingVertical: 2,
-                            backgroundColor: CultureTokens.indigo + '14',
-                          }}
-                        >
-                          <Text
-                            style={{
-                              fontSize: 10,
-                              color: CultureTokens.indigo,
-                              fontFamily: FontFamily.bold,
-                            }}
-                          >
-                            {listingResultCounts[row.key]}
-                          </Text>
-                        </View>
-                      </View>
-                      <Text
-                        style={[
-                          TextStyles.caption,
-                          { color: colors.textSecondary, lineHeight: 14, fontSize: 11 },
-                        ]}
-                        numberOfLines={2}
-                      >
-                        {row.description}
-                      </Text>
-                    </Pressable>
-                  ))}
-                </View>
-              </View>
+              <DestinationBrowseByType
+                counts={listingResultCounts}
+                onSelect={openListingTypeResults}
+                hPad={isDesktop ? 0 : hPad}
+                contextName={def.heroTitle}
+                layout="auto"
+                inSidebar
+                isDesktop={isDesktop}
+                tone="legacy"
+              />
 
               {uniqueCultureTags.length > 0 && (
                 <View style={[styles.section, { paddingHorizontal: isDesktop ? 0 : hPad }]}>
@@ -1083,15 +908,11 @@ export function CultureDestinationScreen({ definition: def, routeSearchParams }:
             </View>
           </View>
 
-          <View style={{ height: 120 }} />
         </ScrollView>
 
-        {!isDesktop && (
-          <Pressable style={styles.fab} onPress={goToMap} accessibilityLabel="Open map" accessibilityRole="button">
-            <Ionicons name="map" size={22} color={colors.textOnBrandGradient} />
-            <Text style={[styles.fabText, { color: colors.textOnBrandGradient }]}>Map</Text>
-          </Pressable>
-        )}
+        {!isDesktop ? (
+          <DestinationMapFab bottom={fabBottom} onPress={goToMap} />
+        ) : null}
 
         <CultureHubLocationModal
           visible={locationModalOpen}
@@ -1109,11 +930,6 @@ export function CultureDestinationScreen({ definition: def, routeSearchParams }:
 }
 
 const localStyles = StyleSheet.create({
-  stickyControls: {
-    zIndex: 5,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(0,0,0,0.08)',
-  },
   heroMetrics: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -1137,40 +953,6 @@ const localStyles = StyleSheet.create({
     fontSize: 13,
     marginHorizontal: 4,
     fontFamily: FontFamily.medium,
-  },
-  exploreRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    flexGrow: 1,
-  },
-  exploreChipGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'transparent',
-  },
-  exploreChipOnGradient: {
-    ...TextStyles.captionSemibold,
-    color: '#fff',
-    fontSize: 12,
-  },
-  exploreChipIdle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    borderRadius: 999,
-    borderWidth: StyleSheet.hairlineWidth,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  exploreChipIdleText: {
-    ...TextStyles.captionSemibold,
-    fontSize: 12,
   },
   topScopeRow: {
     flexDirection: 'row',

@@ -89,6 +89,7 @@ async function materializeUserDocument(
   fields: {
     username?: string;
     displayName?: string;
+    avatarUrl?: string | null;
     city?: string | null;
     state?: string | null;
     postcode?: number | null;
@@ -111,6 +112,7 @@ async function materializeUserDocument(
     displayName,
     handle,
     email: reqUser.email ?? null,
+    ...(fields.avatarUrl ? { avatarUrl: fields.avatarUrl } : {}),
     city: fields.city ?? null,
     state: fields.state ?? null,
     postcode: fields.postcode != null ? Number(fields.postcode) : null,
@@ -154,9 +156,11 @@ const authMeHandler = async (req: Request, res: Response) => {
     if (!snap.exists) {
       try {
         let firebaseDisplayName: string | undefined;
+        let firebasePhotoUrl: string | undefined;
         try {
           const rec = await authAdmin.getUser(uid);
           firebaseDisplayName = rec.displayName ?? undefined;
+          firebasePhotoUrl = rec.photoURL ?? undefined;
         } catch {
           // ignore — bootstrap without display name
         }
@@ -165,6 +169,7 @@ const authMeHandler = async (req: Request, res: Response) => {
           city: req.user!.city ?? null,
           role: 'user',
           displayName: firebaseDisplayName,
+          avatarUrl: firebasePhotoUrl ?? null,
         });
         snap = await db.collection('users').doc(uid).get();
       } catch (bootstrapErr) {
@@ -172,6 +177,24 @@ const authMeHandler = async (req: Request, res: Response) => {
         return res.status(500).json({ error: 'Failed to create user profile' });
       }
     }
+
+    const data = snap.data() ?? {};
+    if (!data.avatarUrl) {
+      try {
+        const rec = await authAdmin.getUser(uid);
+        if (rec.photoURL) {
+          const now = nowIso();
+          await db.collection('users').doc(uid).set(
+            { avatarUrl: rec.photoURL, avatarUpdatedAt: now, updatedAt: now },
+            { merge: true },
+          );
+          snap = await db.collection('users').doc(uid).get();
+        }
+      } catch {
+        // optional OAuth photo backfill
+      }
+    }
+
     return res.json({ id: uid, role: req.user!.role, ...snap.data() });
   } catch (err) {
     captureRouteError(err, 'auth/me');

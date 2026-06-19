@@ -1,6 +1,6 @@
 /**
  * CultureMarket listing creation (product, service, or external link).
- * Routed from /pages/create/listing (see app/pages/create/listing.tsx).
+ * Routed from /hostspace/listing (see app/hostspace/listing.tsx).
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
@@ -16,6 +16,7 @@ import {
   KeyboardAvoidingView,
 } from 'react-native';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { buildHostspaceCreateHref } from '@/constants/navigation/createNav';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
@@ -476,7 +477,7 @@ function CreateListingInner({
               if (router.canGoBack()) {
                 router.back();
               } else {
-                router.replace('/pages/create' as never);
+                router.replace(buildHostspaceCreateHref() as never);
               }
             }}
             style={ss.backBtn}
@@ -636,7 +637,7 @@ function CreateListingInner({
               if (router.canGoBack()) {
                 router.back();
               } else {
-                router.replace('/pages/create' as never);
+                router.replace(buildHostspaceCreateHref() as never);
               }
               return;
             }

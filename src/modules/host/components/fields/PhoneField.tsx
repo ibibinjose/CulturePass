@@ -18,6 +18,8 @@ import { VALIDATION_TIMING } from '@/modules/host/schemas/validationRules';
 import { VerificationCodeInput } from './VerificationCodeInput';
 import { api } from '@/lib/api';
 
+export type PhoneFieldStorage = 'host-page' | 'profile';
+
 // E.164 phone validation: + followed by 7-15 digits
 const PHONE_REGEX = /^\+[1-9]\d{6,14}$/;
 
@@ -67,6 +69,10 @@ export interface PhoneFieldProps {
   disabled?: boolean;
   /** Initial verified state (e.g., when editing existing profile) */
   initialVerified?: boolean;
+  /** Host page wizard skips legacy profile SMS verification. */
+  storage?: PhoneFieldStorage;
+  /** Required when `storage` is `profile`. */
+  profileId?: string;
 }
 
 /**
@@ -161,6 +167,8 @@ export function PhoneField({
   onWhatsAppChange,
   disabled = false,
   initialVerified = false,
+  storage = 'host-page',
+  profileId,
 }: PhoneFieldProps) {
   const colors = useColors();
   const [selectedCountry, setSelectedCountry] = useState<CountryCode>(
@@ -279,15 +287,17 @@ export function PhoneField({
   );
 
   const handleSendVerification = useCallback(async () => {
-    if (!isValid || isVerified || isSending) return;
+    if (!isValid || isVerified || isSending || storage === 'host-page') return;
 
     try {
       setIsSending(true);
-      // Call API to send SMS verification code
       const e164Value = toE164(value);
-      await api.profiles.update('current', {
+      if (!profileId) {
+        throw new Error('Profile id is required to send SMS verification');
+      }
+      await api.profiles.update(profileId, {
         phoneNumber: e164Value,
-      } as any);
+      } as Parameters<typeof api.profiles.update>[1]);
       setVerificationSent(true);
       setShowVerificationModal(true);
     } catch (err) {
@@ -297,19 +307,21 @@ export function PhoneField({
     } finally {
       setIsSending(false);
     }
-  }, [isValid, isVerified, isSending, value]);
+  }, [isValid, isVerified, isSending, profileId, storage, value]);
 
   const handleVerifyCode = useCallback(async () => {
-    if (!verificationCode || verificationCode.length !== 6) return;
+    if (!verificationCode || verificationCode.length !== 6 || storage === 'host-page') return;
 
     try {
       setIsVerifying(true);
-      // Call API to verify code — the backend validates the OTP
       const e164Value = toE164(value);
-      await api.profiles.update('current', {
+      if (!profileId) {
+        throw new Error('Profile id is required to verify SMS code');
+      }
+      await api.profiles.update(profileId, {
         phoneNumber: e164Value,
         phoneVerified: true,
-      } as any);
+      } as Parameters<typeof api.profiles.update>[1]);
 
       setIsVerified(true);
       onVerificationStatusChange?.(true);
@@ -322,7 +334,7 @@ export function PhoneField({
     } finally {
       setIsVerifying(false);
     }
-  }, [verificationCode, value, onVerificationStatusChange]);
+  }, [onVerificationStatusChange, profileId, storage, verificationCode, value]);
 
   const displayError = validationError;
   const displayHint = !displayError && !isVerified ? (hint || defaultHint) : undefined;
@@ -436,7 +448,7 @@ export function PhoneField({
         </View>
       </View>
 
-      {isValid && (
+      {isValid && storage === 'profile' && (
         <View style={styles.statusContainer}>
           {isVerified ? (
             <View

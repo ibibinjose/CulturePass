@@ -24,6 +24,8 @@ import { useColors, useIsDark } from '@/hooks/useColors';
 import { useM3Colors } from '@/hooks/useM3Colors';
 import { useLayout } from '@/hooks/useLayout';
 import { useOnboarding } from '@/contexts/OnboardingContext';
+import { useLocation } from '@/contexts/LocationContext';
+import { useCouncil } from '@/hooks/useCouncil';
 import { fetchTrendingSearchSources, searchDirectory } from '@/services/searchService';
 import { CultureTokens, FontFamily, Radius, ChipTokens, M3Typography } from '@/design-system/tokens/theme';
 import { useSafeBack } from '@/lib/navigation';
@@ -185,6 +187,8 @@ export default function SearchScreen() {
   const reducedMotion = useReducedMotion();
   const goBack = useSafeBack();
   const { state } = useOnboarding();
+  const appLocation = useLocation();
+  const { lgaCode } = useCouncil();
   const params = useLocalSearchParams<{
     q?: string;
     publisherProfileId?: string;
@@ -222,12 +226,13 @@ export default function SearchScreen() {
   const isStructuredOrText = structuredSearch || query.trim().length >= 2;
 
   const { data, isFetching } = useQuery({
-    queryKey: ['search', query, state.city, state.country, publisherProfileId, venueProfileId],
+    queryKey: ['search', query, appLocation.city, appLocation.country, lgaCode, publisherProfileId, venueProfileId],
     queryFn: () =>
       searchDirectory({
         q: query.trim(),
-        city: state.city || undefined,
-        country: state.country || undefined,
+        city: appLocation.city || undefined,
+        country: appLocation.country || undefined,
+        lgaCode: lgaCode || undefined,
         publisherProfileId,
         venueProfileId,
       }),
@@ -249,11 +254,12 @@ export default function SearchScreen() {
   }, [data]);
 
   const { data: liveTrends = FALLBACK_TRENDS } = useQuery({
-    queryKey: ['search-trending', state.city, state.country],
+    queryKey: ['search-trending', appLocation.city, appLocation.country, lgaCode],
     queryFn: async () => {
       const { events, communities, movies, profiles } = await fetchTrendingSearchSources({
-        city: state.city || undefined,
-        country: state.country || undefined,
+        city: appLocation.city || undefined,
+        country: appLocation.country || undefined,
+        lgaCode: lgaCode || undefined,
       });
       const computed = buildTrendingTerms({
         events: events ?? [],

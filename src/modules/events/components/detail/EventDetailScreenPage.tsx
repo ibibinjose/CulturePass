@@ -36,7 +36,9 @@ import { DetailsSection } from '@/modules/events/components/detail/DetailsSectio
 import { TicketsSection } from '@/modules/events/components/detail/TicketsSection';
 import { HostSection } from '@/modules/events/components/detail/HostSection';
 import { DiscoverySection } from '@/modules/events/components/detail/DiscoverySection';
-import { SidebarCard } from '@/modules/events/components/detail/SidebarCard';
+import { EventInfoDocument } from '@/modules/events/components/detail/EventInfoDocument';
+import { useCalendarSync } from '@/hooks/useCalendarSync';
+import { usesExternalTicketing } from '@/modules/events/utils/externalTicketing';
 import { ScreenStateCard } from '@/design-system/ui/ScreenState';
 import { getStyles } from '@/modules/events/components/detail/styles';
 import {
@@ -44,6 +46,7 @@ import {
   confirmRemoveRsvp,
   promptRsvpLogin,
   resolveEventOrganizer,
+  resolveOrganiserLabel,
   startCaseLabel,
   toCalendarDate,
 } from '@/modules/events/components/detail/utils';
@@ -117,6 +120,8 @@ export default function EventDetailScreen() {
   const [myRsvp, setMyRsvp] = useState<'going' | 'maybe' | 'not_going' | null>(null);
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [expandedSnapshotCard, setExpandedSnapshotCard] = useState<'when' | 'where' | 'entry' | 'attendance' | null>(null);
+  const [calendarExporting, setCalendarExporting] = useState(false);
+  const { exportEventToCalendar } = useCalendarSync();
 
   const { data: event, isLoading, error } = useQuery({
     queryKey: ['event', eventId],
@@ -135,10 +140,17 @@ export default function EventDetailScreen() {
     refetchInterval: 20000,
   });
 
-  const { data: publisherProfile } = useQuery({
-    queryKey: ['profile', event?.publisherProfileId],
-    queryFn: () => eventsApi.profiles.get(event!.publisherProfileId!),
-    enabled: Boolean(event?.publisherProfileId),
+  const publisherProfileId = event?.publisherProfileId ?? event?.communityId ?? null;
+
+  const {
+    data: publisherProfile,
+    isLoading: publisherProfileLoading,
+    isFetching: publisherProfileFetching,
+  } = useQuery({
+    queryKey: ['/api/profiles', publisherProfileId],
+    queryFn: () => eventsApi.profiles.get(publisherProfileId!),
+    enabled: Boolean(publisherProfileId),
+    staleTime: 120_000,
   });
 
   const { data: similarEvents = [] } = useQuery({
@@ -215,6 +227,21 @@ export default function EventDetailScreen() {
     () => (event ? resolveEventOrganizer(event, publisherProfile) : null),
     [event, publisherProfile],
   );
+
+  const organiserLabel = useMemo(() => {
+    if (!event) return '';
+    return resolveOrganiserLabel(event, publisherProfile, {
+      communityName: relatedCommunities[0]?.name,
+      profileLoading: Boolean(publisherProfileId) && (publisherProfileLoading || publisherProfileFetching),
+    });
+  }, [
+    event,
+    publisherProfile,
+    publisherProfileId,
+    publisherProfileLoading,
+    publisherProfileFetching,
+    relatedCommunities,
+  ]);
   const hostCommunityPathId = useMemo(() => {
     if (!publisherProfile || publisherProfile.entityType !== 'community') return null;
     return getCommunityProfilePathId(publisherProfile);
@@ -225,8 +252,10 @@ export default function EventDetailScreen() {
     return first?.name ?? 'Independent community';
   }, [relatedCommunities]);
   const isPlus = user?.subscriptionTier === 'plus' || user?.subscriptionTier === 'elite';
+  const externalTickets = Boolean(event && usesExternalTicketing(event));
   const isFreeOrOpen = Boolean(
     event &&
+      !externalTickets &&
       (event.entryType === 'free_open' ||
         event.isFree ||
         (event.priceCents ?? 0) <= 0),
@@ -460,13 +489,32 @@ export default function EventDetailScreen() {
       promptRsvpLogin(pathname);
       return;
     }
-    if (!canContactOrganizer) {
-      Alert.alert('Organiser unavailable', 'This event does not have a direct organiser contact flow yet.');
+    if (canContactOrganizer) {
+      const defaultMessage = `Hi, I am interested in "${event?.title ?? 'this event'}". Could you share more details?`;
+      contactOrganizerMutation.mutate(defaultMessage);
       return;
     }
-    const defaultMessage = `Hi, I am interested in "${event?.title ?? 'this event'}". Could you share more details?`;
-    contactOrganizerMutation.mutate(defaultMessage);
-  }, [canContactOrganizer, contactOrganizerMutation, event?.title, pathname, userId]);
+    if (organizer?.email) {
+      handleEmailHost();
+      return;
+    }
+    Alert.alert('Organiser unavailable', 'This event does not have a direct organiser contact flow yet.');
+  }, [canContactOrganizer, contactOrganizerMutation, event?.title, handleEmailHost, organizer?.email, pathname, userId]);
+
+  const handleAddToCalendar = useCallback(async () => {
+    if (!event) return;
+    setCalendarExporting(true);
+    try {
+      const ok = await exportEventToCalendar(event);
+      if (ok) {
+        captureEvent('event_calendar_export', { event_id: event.id, event_title: event.title });
+      }
+    } catch {
+      Alert.alert('Calendar export failed', 'Please try again in a moment.');
+    } finally {
+      setCalendarExporting(false);
+    }
+  }, [event, exportEventToCalendar]);
 
   const eventForTicketing = event ?? EMPTY_EVENT;
   const {
@@ -495,6 +543,10 @@ export default function EventDetailScreen() {
   });
 
   const openTicketModal = useCallback((tierIndex?: number) => {
+    if (event && usesExternalTicketing(event)) {
+      void handleExternalTicketPress();
+      return;
+    }
     if (typeof tierIndex === 'number') {
       setSelectedTierIndex(tierIndex);
     }
@@ -505,7 +557,7 @@ export default function EventDetailScreen() {
       tier_index: tierIndex ?? null,
     });
     setTicketModalVisible(true);
-  }, [setSelectedTierIndex, eventId, event?.title, event?.city]);
+  }, [setSelectedTierIndex, eventId, event, handleExternalTicketPress]);
 
   if (isLoading) {
     return <EventDetailSkeleton />;
@@ -525,6 +577,24 @@ export default function EventDetailScreen() {
       </View>
     );
   }
+
+  const publicPath = canonicalEventPath(event);
+  const pageUrl = siteUrl(publicPath);
+
+  const eventInfoPanel = (
+    <EventInfoDocument
+      event={event}
+      organizer={organizer ?? resolveEventOrganizer(event)}
+      organiserName={organiserLabel}
+      hostCommunityPathId={hostCommunityPathId}
+      shareUrl={pageUrl}
+      canContactOrganizer={canContactOrganizer || Boolean(organizer?.email)}
+      contactPending={contactOrganizerMutation.isPending}
+      onContactOrganiser={handleContactOrganizer}
+      onAddToCalendar={handleAddToCalendar}
+      calendarPending={calendarExporting}
+    />
+  );
 
   const mainContent = (
     <>
@@ -546,6 +616,7 @@ export default function EventDetailScreen() {
       />
 
       <View style={s.detailShell}>
+        {!isDesktop ? <View style={{ marginBottom: 16 }}>{eventInfoPanel}</View> : null}
         <StorySection
           eyebrow="At a glance"
           title="Quick event snapshot"
@@ -759,13 +830,17 @@ export default function EventDetailScreen() {
             event={event}
             eventTiers={eventTiers ?? []}
             openTicketModal={openTicketModal}
+            onExternalTicketPress={handleExternalTicketPress}
             colors={colors}
             s={s}
           />
 
           <HostSection
             event={event}
-            organizer={organizer ?? resolveEventOrganizer(event)}
+            organizer={{
+              ...(organizer ?? resolveEventOrganizer(event) ?? { name: organiserLabel }),
+              name: organiserLabel,
+            }}
             hostCommunityPathId={hostCommunityPathId}
             displayCategory={displayCategory}
             canContactOrganizer={canContactOrganizer}
@@ -796,21 +871,7 @@ export default function EventDetailScreen() {
     </>
   );
 
-  const sidebarContent = (
-    <SidebarCard
-      event={event}
-      organizer={organizer ?? resolveEventOrganizer(event)}
-      eventTags={eventTags}
-      goingCount={goingCount}
-      handleEmailHost={handleEmailHost}
-      handleCallHost={handleCallHost}
-      handleVisitWebsite={handleVisitWebsite}
-      colors={colors}
-    />
-  );
-
-  const publicPath = canonicalEventPath(event);
-  const pageUrl = siteUrl(publicPath);
+  const sidebarContent = isDesktop ? eventInfoPanel : null;
   const desc =
     event.description && event.description.length > 0
       ? event.description.slice(0, 280).replace(/\s+/g, ' ').trim()
@@ -839,7 +900,7 @@ export default function EventDetailScreen() {
       />
 
       <Modal
-        visible={ticketModalVisible}
+        visible={ticketModalVisible && !externalTickets}
         transparent
         animationType="slide"
         onRequestClose={() => setTicketModalVisible(false)}

@@ -53,7 +53,7 @@ export async function uploadEventImageTemp(uri: string, userId: string): Promise
 // ---------------------------------------------------------------------------
 
 /** The five main tab identifiers used by the navigation state manager. */
-export type TabKey = 'discover' | 'calendar' | 'community' | 'city' | 'my-space';
+export type TabKey = 'discover' | 'calendar' | 'community' | 'city' | 'myspace';
 
 /** AsyncStorage keys for navigation state persistence. */
 export const STORAGE_KEYS = {

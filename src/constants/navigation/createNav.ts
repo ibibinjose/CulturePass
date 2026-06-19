@@ -1,45 +1,126 @@
 /**
  * Create navigation — canonical routes and legacy redirects.
  *
- * Canonical: `/pages/create` (Create a Page selector + wizard; content via `?category=`).
- * Wizards: `/event/create`, `/(domain)/listing/create`, `/pages/create/listing`.
+ * Canonical catalog: `/hostspace/create`
+ * Wizards: `/hostspace/[category]/create`, `/hostspace/event/create`, `/hostspace/listing`
  */
 
-/** Unified Create a Page + content launcher. */
-export const CREATE_LAB_PATHNAME = '/pages/create' as const;
+/** HostSpace manage hub. */
+export const HOSTSPACE_PATHNAME = '/hostspace' as const;
 
-/** @deprecated Use CREATE_LAB_PATHNAME — kept for legacy URL redirects. */
-export const LEGACY_CREATE_LAB_PATHNAME = '/hostspace/create' as const;
+/** Create catalog — category grid and page selector. */
+export const HOSTSPACE_CREATE_CATALOG_PATHNAME = '/hostspace/create' as const;
+
+/** Unified create-a-page form (organisation & community types). */
+export const HOSTSPACE_CREATE_PAGE_PATHNAME = '/hostspace/create/page' as const;
+
+/** @deprecated Query panel on /hostspace — redirects to /hostspace/create */
+export const HOSTSPACE_CREATE_PANEL = 'create' as const;
+
+/** @deprecated Alias — use HOSTSPACE_CREATE_CATALOG_PATHNAME */
+export const CREATE_LAB_PATHNAME = HOSTSPACE_CREATE_CATALOG_PATHNAME;
+
+/** @deprecated Legacy pages/create — redirects to /hostspace/create */
+export const LEGACY_CREATE_LAB_PATHNAME = '/pages/create' as const;
 
 /** CultureMarket product/service/link wizard. */
-export const CULTURE_MARKET_LISTING_LAB_PATHNAME = `${CREATE_LAB_PATHNAME}/listing` as const;
+export const CULTURE_MARKET_LISTING_LAB_PATHNAME = '/hostspace/listing' as const;
 
-/** Public path used in marketing / experienceNav for listing wizard. */
+/** Legacy public URL — still serves listing wizard; prefer `/hostspace/[category]/create`. */
 export const LISTING_WIZARD_PUBLIC_PATHNAME = '/listing/create' as const;
 
-/** Expo Router pathname for the unified listing / directory profile wizard. */
+/** @deprecated Expo Router legacy file path — redirects to /hostspace/[category]/create */
 export const DOMAIN_LISTING_WIZARD_PATHNAME = '/(domain)/listing/create' as const;
 
-export const EVENT_WIZARD_PATHNAME = '/event/create' as const;
+/** Canonical event wizard. */
+export const EVENT_WIZARD_PATHNAME = '/hostspace/event/create' as const;
 
-/** Query-param category deep link — e.g. `/pages/create?category=event`. */
-export function createLabCategoryHref(segment: string): string {
-  const id = segment.trim().replace(/^\/+|\/+$/g, '');
-  if (!id) return CREATE_LAB_PATHNAME;
-  return `${CREATE_LAB_PATHNAME}?category=${encodeURIComponent(id)}`;
+/** Unified organisation & community page form (all 9 org types). */
+import {
+  ORGANISATION_COMMUNITY_CREATE_PATH,
+  isOrganisationCommunityCategoryId,
+} from '@shared/creation/orgCommunity';
+
+export {
+  ORGANISATION_COMMUNITY_CREATE_PATH as ORGANISATION_COMMUNITY_CREATE_PATHNAME,
+  isOrganisationCommunityCategoryId,
+};
+
+/** @deprecated Legacy top-level event create — redirects to EVENT_WIZARD_PATHNAME */
+export const LEGACY_EVENT_WIZARD_PATHNAME = '/event/create' as const;
+
+/** Expo Router dynamic category create pathname. */
+export const HOSTSPACE_CATEGORY_CREATE_PATHNAME = '/hostspace/[category]/create' as const;
+
+function appendQuery(path: string, extra?: Record<string, string | undefined>): string {
+  if (!extra) return path;
+  const qs = new URLSearchParams();
+  for (const [key, value] of Object.entries(extra)) {
+    if (value) qs.set(key, value);
+  }
+  const q = qs.toString();
+  return q ? `${path}?${q}` : path;
 }
 
-/** Page wizard deep link — e.g. `/pages/create?entityType=venue&template=indie-venue`. */
+/** Path for a create category — event uses the dedicated event route. */
+export function hostspaceCategoryCreatePath(categoryId: string): string {
+  const id = categoryId.trim().replace(/^\/+|\/+$/g, '').toLowerCase();
+  if (!id) return HOSTSPACE_CREATE_CATALOG_PATHNAME;
+  if (id === 'event' || id === 'events') return EVENT_WIZARD_PATHNAME;
+  if (id === 'organisation-community' || isOrganisationCommunityCategoryId(id)) {
+    const type = id === 'organisation-community' ? 'community' : id;
+    return `${HOSTSPACE_CREATE_PAGE_PATHNAME}?type=${encodeURIComponent(type)}`;
+  }
+  return `/hostspace/${id}/create`;
+}
+
+export function entityTypeToCategoryId(entityType: string): string {
+  const normalized = entityType.trim().toLowerCase();
+  if (normalized === 'organizer' || normalized === 'organiser') return 'organizer';
+  if (normalized === 'restaurant') return 'dining';
+  return normalized;
+}
+
+/** Build `/hostspace/create` or a category path with optional query params. */
+export function buildHostspaceCreateHref(extra?: Record<string, string | undefined>): string {
+  if (!extra) return HOSTSPACE_CREATE_CATALOG_PATHNAME;
+
+  const category = extra.category?.trim();
+  const entityType = extra.entityType?.trim();
+  const queryKeys = ['template', 'draftId', 'pageId', 'intent', 'profileId', 'publisherProfileId', 'editId'] as const;
+  const query: Record<string, string | undefined> = {};
+  for (const key of queryKeys) {
+    if (extra[key]) query[key] = extra[key];
+  }
+
+  if (category) {
+    return appendQuery(hostspaceCategoryCreatePath(category), query);
+  }
+
+  if (entityType) {
+    return appendQuery(hostspaceCategoryCreatePath(entityTypeToCategoryId(entityType)), query);
+  }
+
+  const hasQuery = Object.values(query).some(Boolean);
+  return hasQuery ? appendQuery(HOSTSPACE_CREATE_CATALOG_PATHNAME, query) : HOSTSPACE_CREATE_CATALOG_PATHNAME;
+}
+
+/** Category deep link — e.g. `/hostspace/venue/create`. */
+export function createLabCategoryHref(segment: string): string {
+  return hostspaceCategoryCreatePath(segment);
+}
+
+/** Page wizard deep link — e.g. `/hostspace/venue/create?template=…`. */
 export function createPageWizardHref(
   entityType: string,
   opts?: { template?: string; draftId?: string; pageId?: string; intent?: string },
 ): string {
-  const qs = new URLSearchParams({ entityType });
-  if (opts?.template) qs.set('template', opts.template);
-  if (opts?.draftId) qs.set('draftId', opts.draftId);
-  if (opts?.pageId) qs.set('pageId', opts.pageId);
-  if (opts?.intent) qs.set('intent', opts.intent);
-  return `${CREATE_LAB_PATHNAME}?${qs.toString()}`;
+  return appendQuery(hostspaceCategoryCreatePath(entityTypeToCategoryId(entityType)), {
+    template: opts?.template,
+    draftId: opts?.draftId,
+    pageId: opts?.pageId,
+    intent: opts?.intent,
+  });
 }
 
 type StringParams = Record<string, string | string[] | undefined>;
@@ -53,33 +134,68 @@ function firstString(v: string | string[] | undefined): string | undefined {
   return undefined;
 }
 
-/** Build canonical `/pages/create?…` from legacy `/hostspace/create` params. */
-export function resolveLegacyHostspaceCreateHref(
+/** Build canonical create href from route params or legacy path segments. */
+export function resolveCreateLabHref(
   params: StringParams,
   pathSegment?: string,
 ): string {
-  const qs = new URLSearchParams();
+  const extra: Record<string, string | undefined> = {};
+
+  const segment = pathSegment?.trim().toLowerCase();
+  if (segment === 'page') {
+    return appendQuery(HOSTSPACE_CREATE_PAGE_PATHNAME, {
+      type: firstString(params.type) ?? firstString(params.category),
+      entityType:
+        firstString(params.entityType) ?? firstString(params.profileType) ?? firstString(params.pageType),
+      template: firstString(params.template),
+      draftId: firstString(params.draftId) ?? firstString(params.draft),
+      pageId: firstString(params.pageId),
+      intent: firstString(params.intent),
+    });
+  }
 
   const category = pathSegment?.trim() || firstString(params.category);
-  if (category) qs.set('category', category);
+  if (category) extra.category = category;
 
   const entityType =
     firstString(params.entityType) ?? firstString(params.profileType) ?? firstString(params.pageType);
-  if (entityType) qs.set('entityType', entityType);
+  if (entityType) extra.entityType = entityType;
 
   const draftId = firstString(params.draftId) ?? firstString(params.draft);
-  if (draftId) qs.set('draftId', draftId);
+  if (draftId) extra.draftId = draftId;
 
-  for (const key of ['template', 'pageId', 'intent', 'profileId'] as const) {
+  for (const key of ['template', 'pageId', 'intent', 'profileId', 'publisherProfileId', 'editId'] as const) {
     const v = firstString(params[key]);
-    if (v) qs.set(key, v);
+    if (v) extra[key] = v;
   }
 
-  const query = qs.toString();
-  return query ? `${CREATE_LAB_PATHNAME}?${query}` : CREATE_LAB_PATHNAME;
+  return buildHostspaceCreateHref(extra);
 }
 
-/** Params forwarded to `/event/create` when present on legacy URLs. */
+/** @deprecated Use resolveCreateLabHref */
+export const resolveLegacyHostspaceCreateHref = resolveCreateLabHref;
+
+/** @deprecated Use resolveCreateLabHref */
+export const resolveLegacyPagesCreateHref = resolveCreateLabHref;
+
+/** Expo Router href object for the create catalog. */
+export function hostspaceCreateRoute(extra?: Record<string, string | undefined>) {
+  if (!extra || (!extra.category && !extra.entityType)) {
+    return { pathname: HOSTSPACE_CREATE_CATALOG_PATHNAME } as const;
+  }
+  const href = buildHostspaceCreateHref(extra);
+  const qIndex = href.indexOf('?');
+  const pathname = qIndex >= 0 ? href.slice(0, qIndex) : href;
+  const search = qIndex >= 0 ? href.slice(qIndex + 1) : '';
+  const parsed = new URLSearchParams(search);
+  const routeParams: Record<string, string> = {};
+  parsed.forEach((v, k) => {
+    routeParams[k] = v;
+  });
+  return { pathname, params: routeParams } as const;
+}
+
+/** Params forwarded to the event wizard when present on legacy URLs. */
 function eventForwardParams(params: StringParams): Record<string, string> {
   const out: Record<string, string> = {};
   const editId = firstString(params.editId) ?? firstString(params.id);
@@ -89,7 +205,7 @@ function eventForwardParams(params: StringParams): Record<string, string> {
   return out;
 }
 
-/** Params forwarded to `/(domain)/listing/create` when present. */
+/** Params forwarded to listing create when present on legacy URLs. */
 function listingForwardParams(params: StringParams): Record<string, string> {
   const out: Record<string, string> = {};
   const keys = ['listingEntityType', 'listingSubCategory', 'publisherProfileId', 'editId'] as const;
@@ -100,21 +216,7 @@ function listingForwardParams(params: StringParams): Record<string, string> {
   return out;
 }
 
-const LISTING_TYPES_FALLTHROUGH_LAB = new Set([
-  'business',
-  'venue',
-  'artist',
-  'organizer',
-  'organiser',
-  'professional',
-  'restaurant',
-  'shop',
-  'shopping',
-  'dining',
-]);
-
-/** Maps legacy `/create/[type]` slug → listing wizard entity param (directory subset). */
-const LEGACY_TYPE_TO_LISTING_ENTITY: Record<string, 'business' | 'venue' | 'artist' | 'organizer' | 'restaurant'> = {
+const LEGACY_ENTITY_TO_CATEGORY: Record<string, string> = {
   business: 'business',
   venue: 'venue',
   artist: 'artist',
@@ -122,15 +224,14 @@ const LEGACY_TYPE_TO_LISTING_ENTITY: Record<string, 'business' | 'venue' | 'arti
   organiser: 'organizer',
   organisation: 'organizer',
   organization: 'organizer',
-  dining: 'restaurant',
-  restaurant: 'restaurant',
-  restaurants: 'restaurant',
-  shopping: 'business',
-  shop: 'business',
-  professional: 'artist',
+  dining: 'dining',
+  restaurant: 'dining',
+  restaurants: 'dining',
+  shopping: 'shopping',
+  shop: 'shopping',
+  professional: 'professional',
 };
 
-/** Target for `<Redirect href={…} />` from legacy `/create/:type` routes. */
 export type LegacyCreateRedirect = { pathname: string; params?: Record<string, string> };
 
 function paramsWithoutType(params: StringParams): StringParams {
@@ -150,7 +251,9 @@ export function resolveLegacyCreateRedirect(typeRaw: string | undefined, params:
     normalized === 'workshop'
   ) {
     const fwd = eventForwardParams(rest);
-    return Object.keys(fwd).length ? { pathname: EVENT_WIZARD_PATHNAME, params: fwd } : { pathname: EVENT_WIZARD_PATHNAME };
+    return Object.keys(fwd).length
+      ? { pathname: EVENT_WIZARD_PATHNAME, params: fwd }
+      : { pathname: EVENT_WIZARD_PATHNAME };
   }
 
   if (
@@ -158,19 +261,19 @@ export function resolveLegacyCreateRedirect(typeRaw: string | undefined, params:
     normalized === 'organisation' ||
     normalized === 'organization'
   ) {
-    return { pathname: CREATE_LAB_PATHNAME, params: { category: 'community' } };
+    return { pathname: hostspaceCategoryCreatePath('community') };
   }
 
   if (normalized === 'perk' || normalized === 'coupon' || normalized === 'voucher') {
-    return { pathname: CREATE_LAB_PATHNAME, params: { category: 'offer' } };
+    return { pathname: hostspaceCategoryCreatePath('offer') };
   }
 
   if (normalized === 'movie' || normalized === 'movies' || normalized === 'film') {
-    return { pathname: CREATE_LAB_PATHNAME, params: { category: 'movie' } };
+    return { pathname: hostspaceCategoryCreatePath('movie') };
   }
 
   if (normalized === 'activity' || normalized === 'activities') {
-    return { pathname: CREATE_LAB_PATHNAME, params: { category: 'activity' } };
+    return { pathname: hostspaceCategoryCreatePath('activity') };
   }
 
   if (normalized === 'market-listing' || normalized === 'culturemarket' || normalized === 'market') {
@@ -184,17 +287,24 @@ export function resolveLegacyCreateRedirect(typeRaw: string | undefined, params:
       : { pathname: CULTURE_MARKET_LISTING_LAB_PATHNAME, params: listingForwardParams(rest) };
   }
 
-  const listingEntity = LEGACY_TYPE_TO_LISTING_ENTITY[normalized];
-  if (listingEntity) {
-    return {
-      pathname: DOMAIN_LISTING_WIZARD_PATHNAME,
-      params: listingForwardParams({ ...rest, listingEntityType: listingEntity }),
-    };
+  const categoryId = LEGACY_ENTITY_TO_CATEGORY[normalized];
+  if (categoryId) {
+    const fwd = listingForwardParams(rest);
+    return Object.keys(fwd).length
+      ? { pathname: hostspaceCategoryCreatePath(categoryId), params: fwd }
+      : { pathname: hostspaceCategoryCreatePath(categoryId) };
   }
 
-  if (LISTING_TYPES_FALLTHROUGH_LAB.has(normalized)) {
-    return { pathname: CREATE_LAB_PATHNAME, params: { entityType: normalized === 'organiser' ? 'organiser' : normalized } };
+  if (
+    normalized === 'business' ||
+    normalized === 'venue' ||
+    normalized === 'artist' ||
+    normalized === 'organizer' ||
+    normalized === 'organiser' ||
+    normalized === 'professional'
+  ) {
+    return { pathname: hostspaceCategoryCreatePath(entityTypeToCategoryId(normalized)) };
   }
 
-  return { pathname: CREATE_LAB_PATHNAME };
+  return { pathname: HOSTSPACE_CREATE_CATALOG_PATHNAME };
 }

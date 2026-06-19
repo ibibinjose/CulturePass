@@ -77,7 +77,7 @@ export const useCulturalColors = () => {
     culturalAccents,
     isDark,
     // Convenience mappings for cultural colors
-    primary: culturalTokens.terracottaGlow,        // Terracotta Glow (#E36A4E) - Primary action
+    primary: culturalTokens.appBlue,
     secondary: culturalTokens.deepSaffron,         // Brand Cyan Deep (#00A7EF) - Secondary action
     accent1: culturalTokens.richIndigo,            // Rich Indigo (#4A5EBF) - Accent 1
     accent2: culturalTokens.emeraldHarmony,        // Emerald Harmony (#0A8C7F) - Accent 2

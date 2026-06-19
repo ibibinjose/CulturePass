@@ -3,8 +3,9 @@ import { View, StyleSheet } from 'react-native';
 import Animated, { type AnimatedProps } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { LuxeCard, LuxeText } from '@/design-system/ui';
-import { CardTokens, luxeDark } from '@/design-system/tokens/theme';
-import { JET_BLACK } from '@/design-system/tokens/brandCyanPalette';
+import { CardTokens } from '@/design-system/tokens/theme';
+import { useColors, useIsDark } from '@/hooks/useColors';
+import { getAuthScreenPalette } from '@/components/onboarding/authScreenTheme';
 
 type ValueProp = {
   icon: keyof typeof Ionicons.glyphMap;
@@ -33,6 +34,9 @@ export function AuthWebMarketingPanel({
   enterAnimation,
   variant = 'login',
 }: AuthWebMarketingPanelProps) {
+  const colors = useColors();
+  const isDark = useIsDark();
+  const palette = getAuthScreenPalette(variant, isDark, colors);
   const isHost = variant === 'host';
   const valueProps = isHost ? HOST_VALUE_PROPS : DEFAULT_VALUE_PROPS;
 
@@ -49,22 +53,22 @@ export function AuthWebMarketingPanel({
       : 'A premium cultural lifestyle marketplace built for diaspora cities.';
 
   return (
-    <View style={[styles.panel, { backgroundColor: luxeDark.accentContainer, borderColor: JET_BLACK }]}>
+    <View style={[styles.panel, { backgroundColor: palette.panelBackground, borderColor: palette.panelBorder }]}>
       <Animated.View entering={enterAnimation(40)} style={styles.kickerRow}>
-        <View style={[styles.dot, { backgroundColor: luxeDark.primary }]} />
-        <LuxeText variant="badgeCaps" style={styles.kickerText}>
+        <View style={[styles.dot, { backgroundColor: palette.accent }]} />
+        <LuxeText variant="badgeCaps" style={[styles.kickerText, { color: palette.text }]}>
           {kicker}
         </LuxeText>
       </Animated.View>
 
       <Animated.View entering={enterAnimation(70)}>
-        <LuxeText variant="displayHero" style={styles.headline}>
+        <LuxeText variant="displayHero" style={[styles.headline, { color: palette.text }]}>
           {headline}
         </LuxeText>
       </Animated.View>
 
       <Animated.View entering={enterAnimation(100)}>
-        <LuxeText variant="hero" style={styles.lead}>
+        <LuxeText variant="hero" style={[styles.lead, { color: palette.textSecondary }]}>
           {lead}
         </LuxeText>
       </Animated.View>
@@ -72,16 +76,16 @@ export function AuthWebMarketingPanel({
       <Animated.View entering={enterAnimation(130)} style={styles.valueGrid}>
         {valueProps.map((item, index) => (
           <Animated.View key={item.title} entering={enterAnimation(160 + index * 30)}>
-            <LuxeCard variant="glass" style={styles.valueCard}>
-              <View style={[styles.valueStripe, { backgroundColor: luxeDark.primary }]} />
-              <View style={[styles.valueIcon, { backgroundColor: luxeDark.surfaceElevated }]}>
-                <Ionicons name={item.icon} size={18} color={luxeDark.primary} />
+            <LuxeCard variant="glass" style={[styles.valueCard, { backgroundColor: palette.surfaceElevated, borderColor: palette.border }]}>
+              <View style={[styles.valueStripe, { backgroundColor: palette.accent }]} />
+              <View style={[styles.valueIcon, { backgroundColor: palette.accentMuted }]}>
+                <Ionicons name={item.icon} size={18} color={palette.accent} />
               </View>
               <View style={styles.valueText}>
-                <LuxeText variant="title3" style={styles.valueTitle}>
+                <LuxeText variant="title3" style={[styles.valueTitle, { color: palette.text }]}>
                   {item.title}
                 </LuxeText>
-                <LuxeText variant="caption" style={styles.valueDesc}>
+                <LuxeText variant="caption" style={[styles.valueDesc, { color: palette.textSecondary }]}>
                   {item.desc}
                 </LuxeText>
               </View>
@@ -105,9 +109,9 @@ const styles = StyleSheet.create({
   },
   kickerRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 14 },
   dot: { width: 8, height: 8, borderRadius: 4 },
-  kickerText: { color: luxeDark.text, letterSpacing: 1.5 },
-  headline: { color: luxeDark.text },
-  lead: { color: luxeDark.textSecondary, marginTop: 12, maxWidth: 520 },
+  kickerText: { letterSpacing: 1.5 },
+  headline: {},
+  lead: { marginTop: 12, maxWidth: 520 },
   valueGrid: { gap: 12, marginTop: 8, maxWidth: 520 },
   valueCard: {
     flexDirection: 'row',
@@ -115,8 +119,6 @@ const styles = StyleSheet.create({
     gap: 14,
     paddingVertical: 14,
     paddingHorizontal: 16,
-    backgroundColor: luxeDark.surfaceElevated,
-    borderColor: luxeDark.border,
     borderWidth: 1,
     borderRadius: CardTokens.radius,
   },
@@ -133,6 +135,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   valueText: { flex: 1, minWidth: 0 },
-  valueTitle: { color: luxeDark.text },
-  valueDesc: { color: luxeDark.textSecondary, marginTop: 2 },
+  valueTitle: {},
+  valueDesc: { marginTop: 2 },
 });

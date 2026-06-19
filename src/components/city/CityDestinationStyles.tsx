@@ -13,7 +13,7 @@ export const CITY_HERO_FG_SOFT = 'rgba(255,255,255,0.9)';
 export const CITY_HERO_FG_MUTED = 'rgba(255,255,255,0.78)';
 export const CITY_HERO_BADGE_ON_GOLD = '#0F172A';
 
-/** Heritage chrome over photographic heroes — terracotta warmth + indigo depth */
+/** Heritage chrome over photographic heroes — wordmark blue + indigo depth */
 export const CITY_HERO_CHROME_MATERIAL = 'rgba(227,106,78,0.38)';
 export const CITY_HERO_CHROME_MATERIAL_TRACK = 'rgba(74,94,191,0.32)';
 export const CITY_HERO_CHROME_MATERIAL_BORDER = 'rgba(255,255,255,0.28)';

@@ -25,6 +25,7 @@ import {
   capturePassCardAssetsFromDom,
 } from '@/modules/profile/components/digitalId';
 import { DIGITAL_ID_BRAND } from '@/modules/profile/components/digitalId/digitalIdBrand';
+import { avatarDisplayUri, avatarRecyclingKey } from '@/lib/avatarUri';
 
 async function fetchImageAsDataUri(url: string): Promise<string | null> {
   try {
@@ -58,7 +59,7 @@ export function useDigitalIdScreen() {
     queryKey: ['/api/wallet/digital-id', authUserId],
     queryFn: () => modulesApi.wallet.digitalId(),
     enabled: Boolean(authUserId) && !isRestoring,
-    staleTime: 30_000,
+    staleTime: 0,
   });
 
   const { data: user } = useQuery<User>({
@@ -79,7 +80,14 @@ export function useDigitalIdScreen() {
   const cpid = digitalId?.cpid ?? user?.culturePassId ?? 'CP-000000';
   const name = digitalId?.name ?? user?.displayName ?? 'CulturePass User';
   const username = digitalId?.username ?? user?.username ?? 'user';
-  const avatarUrl = digitalId?.avatarUrl ?? user?.avatarUrl;
+  const avatarVersionSource = {
+    avatarUpdatedAt: digitalId?.avatarUpdatedAt ?? (user as User & { avatarUpdatedAt?: string })?.avatarUpdatedAt,
+    updatedAt: digitalId?.updatedAt ?? user?.updatedAt,
+    id: userId,
+  };
+  const avatarRecyclingKeyValue = avatarRecyclingKey(avatarVersionSource);
+  const rawAvatarUrl = digitalId?.avatarUrl ?? user?.avatarUrl;
+  const avatarUrl = avatarDisplayUri(rawAvatarUrl, avatarRecyclingKeyValue);
   const memberSince = digitalId?.memberSince ?? '—';
   const tier = digitalId?.tier ?? 'free';
   const tierConf = TIER_CFG[tier] ?? TIER_CFG.free;
@@ -330,6 +338,7 @@ export function useDigitalIdScreen() {
     name,
     username,
     avatarUrl,
+    avatarRecyclingKey: avatarRecyclingKeyValue,
     memberSince,
     tierConf,
     tierLabel,

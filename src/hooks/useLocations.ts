@@ -9,20 +9,36 @@
 
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { api, type AustralianState } from '@/lib/api';
+import { api, type AustralianState, type LocationsResponse } from '@/lib/api';
 import { GLOBAL_REGIONS, CITIES_BY_STATE, getStateForCity as staticStateForCity } from '@/constants/locations';
 
 // ---------------------------------------------------------------------------
 // Build the placeholder from the static constants file so picker is
 // immediately usable on first render / offline.
 // ---------------------------------------------------------------------------
-const STATIC_STATES: any[] = GLOBAL_REGIONS.map((s) => ({
+const STATIC_STATES: AustralianState[] = GLOBAL_REGIONS.map((s) => ({
   name: s.label,
   code: s.value,
   emoji: s.emoji,
-  country: s.country,
   cities: CITIES_BY_STATE[s.value] || [],
 }));
+
+const STATIC_ACKNOWLEDGEMENT =
+  'CulturePass acknowledges the Traditional Custodians of Country throughout Australia.';
+
+function staticLocationsResponse(): LocationsResponse {
+  return {
+    locations: [
+      {
+        country: 'Australia',
+        countryCode: 'AU',
+        states: STATIC_STATES,
+        cities: STATIC_STATES.flatMap((s) => s.cities),
+      },
+    ],
+    acknowledgementOfCountry: STATIC_ACKNOWLEDGEMENT,
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Hook
@@ -43,21 +59,22 @@ export interface UseLocationsResult {
 }
 
 export function useLocations(): UseLocationsResult {
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, isFetched, isSuccess } = useQuery({
     queryKey: ['/api/locations'],
-    queryFn: () => api.locations.list(),
+    queryFn: async () => {
+      try {
+        return await api.locations.list();
+      } catch (err) {
+        if (__DEV__) {
+          console.warn('[useLocations] API unavailable — using bundled AU states', err);
+        }
+        return staticLocationsResponse();
+      }
+    },
     staleTime:  1000 * 60 * 60,      // 1 hour — won't refetch mid-session
     gcTime:     1000 * 60 * 60 * 24, // 24 hours in cache
-    placeholderData: {
-      locations: [{
-        country: 'Australia',
-        countryCode: 'AU',
-        states: STATIC_STATES,
-        cities: STATIC_STATES.flatMap((s) => s.cities),
-      }],
-      acknowledgementOfCountry: '',
-    },
-    retry: 2,
+    placeholderData: staticLocationsResponse(),
+    retry: 1,
   });
 
   const states = useMemo<AustralianState[]>(
@@ -84,12 +101,14 @@ export function useLocations(): UseLocationsResult {
     data?.acknowledgementOfCountry ??
     'CulturePass acknowledges the Traditional Custodians of Country throughout Australia.';
 
+  const hasStates = states.length > 0;
+
   return {
     states,
     citiesByState,
     getStateForCity,
     acknowledgement,
     isLoading,
-    error: error as Error | null,
+    error: isFetched && !isSuccess && !hasStates ? (error as Error | null) : null,
   };
 }

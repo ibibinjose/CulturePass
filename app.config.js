@@ -136,7 +136,13 @@ export default function(appConfig) {
           minSdkVersion: 26,
           targetSdkVersion: 35,
           enableProguardInReleaseBuilds: true,
-          enableShrinkResourcesInReleaseBuilds: true
+          enableShrinkResourcesInReleaseBuilds: true,
+          // Stripe RN references optional Google Pay push-provisioning classes that are not
+          // bundled in our release graph; without these, R8 fails the production AAB build.
+          extraProguardRules: [
+            "-dontwarn com.stripe.android.pushProvisioning.**",
+            "-dontwarn com.google.android.gms.tapandpay.**",
+          ].join("\n"),
         }
       }
     ],

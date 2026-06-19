@@ -278,7 +278,8 @@ socialRouter.post('/notifications/targeted', requireAuth, async (req, res) => {
 
     const {
       title,
-      body: bodyText,
+      body: bodyFromClient,
+      message,
       city,
       country,
       interestsAny,
@@ -289,7 +290,8 @@ socialRouter.post('/notifications/targeted', requireAuth, async (req, res) => {
       deepLink,
     } = req.body ?? {};
 
-    if (!title || !bodyText) return res.status(400).json({ error: 'title and body are required' });
+    const bodyText = String(bodyFromClient ?? message ?? '').trim();
+    if (!title || !bodyText) return res.status(400).json({ error: 'title and body (or message) are required' });
 
     // Build user query filters
     let query = db.collection('users') as FirebaseFirestore.Query;
@@ -314,12 +316,25 @@ socialRouter.post('/notifications/targeted', requireAuth, async (req, res) => {
       eligibleIds.push(doc.id);
     }
 
+    const previewIds = eligibleIds.slice(0, 8);
+    const previewDocs = previewIds.length
+      ? await Promise.all(previewIds.map((id) => db.collection('users').doc(id).get()))
+      : [];
+    const audiencePreview = previewDocs.map((doc) => {
+      const u = doc.data() ?? {};
+      return {
+        userId: doc.id,
+        city: String(u.city ?? ''),
+        country: String(u.country ?? ''),
+      };
+    });
+
     if (dryRun) {
-      return res.json({ dryRun: true, targetedCount: eligibleIds.length, audiencePreview: eligibleIds.slice(0, 5) });
+      return res.json({ dryRun: true, targetedCount: eligibleIds.length, audiencePreview });
     }
 
     await sendToUsers(eligibleIds, { title: String(title), body: String(bodyText) }, deepLink ? { deepLink } : undefined);
-    return res.json({ ok: true, targetedCount: eligibleIds.length, dryRun: false });
+    return res.json({ ok: true, targetedCount: eligibleIds.length, dryRun: false, audiencePreview });
   } catch (err) {
     captureRouteError(err, 'POST /api/notifications/targeted');
     return res.status(500).json({ error: 'Failed to send targeted notifications' });

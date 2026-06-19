@@ -33,6 +33,14 @@ import { Button } from '@/design-system/ui/Button';
 import { GlassView } from '@/design-system/ui/GlassView';
 import { Image } from 'expo-image';
 import { useAuth } from '@/lib/auth';
+import {
+  Section,
+  Field,
+  FormField,
+  FormInput,
+  DraftInput,
+  ChoiceChip,
+} from '@/components/forms';
 
 const OFFER_CATEGORIES = [
   'Discount / Voucher',
@@ -201,166 +209,6 @@ function makePerkPayload(draft: OfferDraft, status: 'draft' | 'active') {
   };
 
   return Object.fromEntries(Object.entries(payload).filter(([, value]) => value !== undefined && value !== ''));
-}
-
-const MujiColors = {
-  bg: '#FAF8F5',
-  card: '#F6F1EA',
-  border: '#DED8CE',
-  text: '#3C3A35',
-  textMuted: '#8E877E',
-  accent: '#7D7060',
-  accentLight: '#EFEAE0',
-  white: '#FFFFFF',
-  accentDark: '#4A4135'
-};
-
-function Section({
-  title,
-  icon,
-  color,
-  children,
-}: {
-  title: string;
-  icon: keyof typeof Ionicons.glyphMap;
-  color?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <View style={[styles.section, { borderColor: MujiColors.border, backgroundColor: MujiColors.card, borderWidth: 1, borderRadius: 18, padding: 16 }]}>
-      <View style={styles.sectionHeader}>
-        <View style={[styles.sectionIcon, { backgroundColor: MujiColors.accentLight, borderRadius: 8 }]}>
-          <Ionicons name={icon} size={18} color={MujiColors.accent} />
-        </View>
-        <Text style={[styles.sectionTitle, { color: MujiColors.text, fontFamily: 'Poppins_700Bold' }]}>{title}</Text>
-      </View>
-      <View style={styles.sectionBody}>{children}</View>
-    </View>
-  );
-}
-
-function FormField({ label, required, hint, children }: { label: string; required?: boolean; hint?: string; children: React.ReactNode }) {
-  return (
-    <View style={styles.field}>
-      <View style={styles.labelRow}>
-        <Text style={[styles.label, { color: MujiColors.text, fontFamily: 'Poppins_600SemiBold' }]}>
-          {label}
-          {required && <Text style={{ color: '#C08A7C' }}> *</Text>}
-        </Text>
-        {hint && <Text style={[styles.hint, { color: MujiColors.textMuted }]}>{hint}</Text>}
-      </View>
-      {children}
-    </View>
-  );
-}
-
-function FormInput({ ...props }: TextInput['props']) {
-  return (
-    <TextInput
-      placeholderTextColor={MujiColors.textMuted}
-      style={[
-        styles.input,
-        {
-          backgroundColor: MujiColors.white,
-          borderColor: MujiColors.border,
-          color: MujiColors.text,
-        },
-        props.multiline && styles.textarea,
-      ]}
-      textAlignVertical={props.multiline ? 'top' : 'center'}
-      {...props}
-    />
-  );
-}
-
-function Field({
-  label,
-  required,
-  hint,
-  children,
-}: {
-  label: string;
-  required?: boolean;
-  hint?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <View style={styles.field}>
-      <View style={styles.labelRow}>
-        <Text style={[styles.label, { color: MujiColors.text, fontFamily: 'Poppins_600SemiBold' }]}>
-          {label}
-          {required ? <Text style={{ color: '#C08A7C' }}> *</Text> : null}
-        </Text>
-        {hint ? <Text style={[styles.hint, { color: MujiColors.textMuted }]}>{hint}</Text> : null}
-      </View>
-      {children}
-    </View>
-  );
-}
-
-function DraftInput({
-  value,
-  onChangeText,
-  placeholder,
-  multiline,
-  accessibilityLabel,
-}: {
-  value: string;
-  onChangeText: (value: string) => void;
-  placeholder: string;
-  multiline?: boolean;
-  accessibilityLabel: string;
-}) {
-  return (
-    <TextInput
-      value={value}
-      onChangeText={onChangeText}
-      placeholder={placeholder}
-      placeholderTextColor={MujiColors.textMuted}
-      multiline={multiline}
-      textAlignVertical={multiline ? 'top' : undefined}
-      style={[
-        multiline ? styles.textarea : styles.input,
-        {
-          borderColor: MujiColors.border,
-          backgroundColor: MujiColors.white,
-          color: MujiColors.text
-        },
-      ]}
-      accessibilityLabel={accessibilityLabel}
-    />
-  );
-}
-
-function ChoiceChip({
-  label,
-  selected,
-  onPress,
-}: {
-  label: string;
-  selected: boolean;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityLabel={`${selected ? 'Remove' : 'Select'} ${label}`}
-      accessibilityState={{ selected }}
-    >
-      <View
-        style={[
-          styles.chip,
-          {
-            backgroundColor: selected ? MujiColors.accent : MujiColors.white,
-            borderColor: selected ? MujiColors.accent : MujiColors.border,
-            borderRadius: 8,
-          },
-        ]}
-      >
-        <Text style={[styles.chipText, { color: selected ? MujiColors.white : MujiColors.text, fontFamily: 'Poppins_600SemiBold' }]}>{label}</Text>
-      </View>
-    </Pressable>
-  );
 }
 
 function SingleChoice<T extends string>({

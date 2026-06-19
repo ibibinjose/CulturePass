@@ -8,6 +8,7 @@ import { WALLET_PASS_THEME } from '@/modules/profile/components/digitalId/wallet
 export type PassAvatarProps = {
   size: number;
   avatarUrl?: string | null;
+  recyclingKey?: string | number | null;
   initials: string;
   showRing?: boolean;
   ringWidth?: number;
@@ -18,6 +19,7 @@ export type PassAvatarProps = {
 export function PassAvatar({
   size,
   avatarUrl,
+  recyclingKey,
   initials,
   showRing = true,
   ringWidth = 4,
@@ -34,7 +36,7 @@ export function PassAvatar({
       contentFit="cover"
       transition={200}
       cachePolicy="memory-disk"
-      recyclingKey={avatarUrl}
+      recyclingKey={recyclingKey != null ? String(recyclingKey) : avatarUrl ?? undefined}
       accessibilityLabel={accessibilityLabel ?? 'Profile photo'}
     />
   ) : (

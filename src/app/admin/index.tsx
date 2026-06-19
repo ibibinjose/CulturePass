@@ -26,7 +26,7 @@ const SafeFadeInDown = FadeInDown ?? FadeIn;
 
 export default function AdminDashboard() {
   const colors = useColors();
-  const handleBack = useSafeBack('/(tabs)/my-space');
+  const handleBack = useSafeBack('/(tabs)/myspace');
   const { hPad, isDesktop } = useLayout();
   const { data: stats } = useAdminStats();
   const { data: logsData } = useAuditLogs(8);
@@ -51,32 +51,33 @@ export default function AdminDashboard() {
   const systemStatus = healthData?.checks?.every(c => c.healthy) ? 'Operational' : 'Degraded';
   const statusColor = systemStatus === 'Operational' ? '#10B981' : '#00A7EF';
 
+  const signupDelta = stats?.signupDelta30 ?? stats?.newProfiles30d;
   const KPI_DATA = [
-    { 
-      label: 'Total Users', 
-      value: stats?.users?.toLocaleString() ?? '—', 
-      change: '+2.4k', 
-      icon: 'people' as const, 
-      color: CultureTokens.indigo 
+    {
+      label: 'Total Users',
+      value: stats?.users?.toLocaleString() ?? '—',
+      change: signupDelta != null ? `+${signupDelta.toLocaleString()} (30d)` : undefined,
+      icon: 'people' as const,
+      color: CultureTokens.indigo,
     },
-    { 
-      label: 'CulturePass+', 
-      value: Math.floor((stats?.users || 42000) * 0.087).toLocaleString(), 
-      change: '+312', 
-      icon: 'star' as const, 
-      color: CultureTokens.gold 
+    {
+      label: 'CulturePass+',
+      value: stats?.plusMembers?.toLocaleString() ?? '—',
+      icon: 'star' as const,
+      color: CultureTokens.gold,
     },
-    { 
-      label: 'Events (30d)', 
-      value: stats?.events ? Math.floor(stats.events * 0.18).toLocaleString() : '—', 
-      icon: 'calendar' as const, 
-      color: CultureTokens.teal 
+    {
+      label: 'Host queue',
+      value: String((stats?.pendingHostApplications ?? 0) + (stats?.pendingVerificationTasks ?? 0)),
+      change: stats?.pendingHostApplications ? `${stats.pendingHostApplications} apps` : undefined,
+      icon: 'briefcase' as const,
+      color: CultureTokens.coral,
     },
-    { 
-      label: 'Revenue (MTD)', 
-      value: stats?.revenue != null ? `$${(stats.revenue / 100).toLocaleString()}` : '—', 
-      icon: 'card' as const, 
-      color: '#10B981' 
+    {
+      label: 'Revenue (30d)',
+      value: stats?.revenue != null ? `$${(stats.revenue / 100).toLocaleString()}` : '—',
+      icon: 'card' as const,
+      color: '#10B981',
     },
   ];
 
@@ -264,6 +265,7 @@ export default function AdminDashboard() {
                   {
                     title: 'CORE OPERATIONS',
                     items: [
+                      { label: 'HostSpace Ops', icon: 'briefcase', route: '/admin/hostspace', color: CultureTokens.indigo, badge: stats?.pendingHostApplications },
                       { label: 'User Directory', icon: 'people', route: '/admin/users', color: CultureTokens.teal },
                       { label: 'Host Applications', icon: 'person-add', route: '/admin/host-applications', color: CultureTokens.indigo },
                       { label: 'Communities', icon: 'people-circle', route: '/admin/communities', color: CultureTokens.violet },

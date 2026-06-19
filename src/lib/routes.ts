@@ -1,9 +1,31 @@
+import { normalizeTabShortcut } from '@/lib/onboardingDestination';
+
+function listingLegacyEntityToCategory(
+  entityType: string | null,
+  subCategory: string | null,
+): string {
+  if (subCategory) {
+    const normalized = subCategory.toLowerCase().replace(/\s+/g, '_');
+    if (normalized === 'dining' || normalized === 'movie' || normalized === 'art') return normalized;
+    if (normalized === 'travel' || normalized === 'shopping') return normalized;
+  }
+  if (!entityType) return 'business';
+  const et = entityType.toLowerCase();
+  if (et === 'restaurant') return 'dining';
+  if (et === 'community') return 'community';
+  if (et === 'event') return 'event';
+  if (et === 'organizer' || et === 'organiser') return 'organizer';
+  return et;
+}
+
 /** Exact path replacements (no trailing slash). */
 const LEGACY_EXACT_PATHS: Record<string, string> = {
   '/activities': '/activities',
   '/restaurants': '/restaurants',
   '/movies': '/movies',
   '/shopping': '/shopping',
+  '/my-space': '/myspace',
+  '/MySpace': '/myspace',
 };
 
 export const LEGACY_ROUTE_REMAPS = [
@@ -63,6 +85,88 @@ export function remapLegacyPath(path: string): string {
     cleanPath = exact;
   }
 
+  if (cleanPath === '/pages/create/listing' || cleanPath === '/hostspace/create/listing') {
+    return `/hostspace/listing${querySuffix}`;
+  }
+
+  if (cleanPath === '/event/create') {
+    return `/hostspace/event/create${querySuffix}`;
+  }
+
+  if (cleanPath === '/listing/create') {
+    const qs = new URLSearchParams(querySuffix.replace(/^\?/, ''));
+    const entityType = qs.get('listingEntityType');
+    const subCategory = qs.get('listingSubCategory');
+    const category = listingLegacyEntityToCategory(entityType, subCategory);
+    qs.delete('listingEntityType');
+    qs.delete('listingSubCategory');
+    const remaining = qs.toString();
+    const suffix = remaining ? `?${remaining}` : '';
+    return `/hostspace/${category}/create${suffix}`;
+  }
+
+  if (cleanPath === '/pages/create' || cleanPath === '/hostspace/create') {
+    const qs = new URLSearchParams(querySuffix.replace(/^\?/, ''));
+    const category = qs.get('category');
+    const entityType = qs.get('entityType');
+    qs.delete('category');
+    qs.delete('entityType');
+    qs.delete('panel');
+    const remaining = qs.toString();
+    const suffix = remaining ? `?${remaining}` : '';
+    if (category) return `/hostspace/${category}/create${suffix}`;
+    if (entityType) {
+      const mapped =
+        entityType === 'organizer' || entityType === 'organiser' ? 'organizer' : entityType;
+      return `/hostspace/${mapped}/create${suffix}`;
+    }
+    return `/hostspace/create${suffix}`;
+  }
+
+  if (cleanPath.startsWith('/hostspace/create/')) {
+    const segment = cleanPath.slice('/hostspace/create/'.length).split('/')[0];
+    if (segment === 'listing') return `/hostspace/listing${querySuffix}`;
+    if (segment === 'page') return `/hostspace/create/page${querySuffix}`;
+    if (!segment) return `/hostspace/create${querySuffix}`;
+    return `/hostspace/${segment}/create${querySuffix}`;
+  }
+
+  if (cleanPath.startsWith('/pages/create/')) {
+    const segment = cleanPath.slice('/pages/create/'.length).split('/')[0];
+    if (segment === 'listing') return `/hostspace/listing${querySuffix}`;
+    if (!segment) return `/hostspace/create${querySuffix}`;
+    return `/hostspace/${segment}/create${querySuffix}`;
+  }
+
+  if (cleanPath === '/hostspace') {
+    const qs = new URLSearchParams(querySuffix.replace(/^\?/, ''));
+    const panel = qs.get('panel');
+    const category = qs.get('category');
+    const entityType = qs.get('entityType');
+    const hasCreateIntent =
+      panel === 'create' ||
+      Boolean(category) ||
+      Boolean(entityType) ||
+      Boolean(qs.get('draftId')) ||
+      Boolean(qs.get('pageId')) ||
+      Boolean(qs.get('template'));
+
+    if (hasCreateIntent) {
+      qs.delete('panel');
+      qs.delete('category');
+      qs.delete('entityType');
+      const remaining = qs.toString();
+      const suffix = remaining ? `?${remaining}` : '';
+      if (category) return `/hostspace/${category}/create${suffix}`;
+      if (entityType) {
+        const mapped =
+          entityType === 'organizer' || entityType === 'organiser' ? 'organizer' : entityType;
+        return `/hostspace/${mapped}/create${suffix}`;
+      }
+      return `/hostspace/create${suffix}`;
+    }
+  }
+
   let changed = true;
   let guard = 0;
   while (changed && guard < 16) {
@@ -120,7 +224,7 @@ export function sanitizeInternalRedirect(value: RedirectValue): string | null {
     return null;
   }
 
-  const normalized = remapLegacyPath(candidate);
+  const normalized = remapLegacyPath(normalizeTabShortcut(candidate));
   const cleanPath = normalized.split('?')[0] || '/';
 
   // Redirects should always leave the auth/onboarding shell.

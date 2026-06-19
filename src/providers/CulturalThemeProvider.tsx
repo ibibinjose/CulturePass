@@ -51,7 +51,7 @@ function getSafeTheme(colorScheme: string | null | undefined): CulturalTheme {
     const themeColors = isDark ? DarkColors : LightColors;
 
     return {
-      primary: CultureTokens.terracottaGlow,
+      primary: CultureTokens.appBlue,
       secondary: CultureTokens.deepSaffron,
       accent1: CultureTokens.richIndigo,
       accent2: CultureTokens.emeraldHarmony,

@@ -48,8 +48,8 @@ const ENTITY_ROUTES: Record<NotificationEntityType, (id: string) => string> = {
 const FALLBACK_TAB: Record<NotificationEntityType, string> = {
   event: '/(tabs)',          // Discover
   community: '/(tabs)/community',
-  profile: '/(tabs)/my-space',
-  tickets: '/(tabs)/my-space',
+  profile: '/(tabs)/myspace',
+  tickets: '/(tabs)/myspace',
   perks: '/perks',
 };
 

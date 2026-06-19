@@ -11,6 +11,7 @@ node_modules/
 .gstack/
 .kiro/
 .junie/
+.cursor/
 skills-lock.json
 
 # Firebase emulator debug logs (regenerated locally)
@@ -31,7 +32,13 @@ junit.xml
 
 # Build outputs (web export + Functions compile)
 dist/
+dist-bundle-analyze/
+dist-next-analyze/
 functions/lib/
+
+# Local dev / CI artifacts
+dev-preview.html
+test-results/
 
 # Never nest a git repo inside functions/ (Cloud Functions live in this monorepo)
 functions/.git/
@@ -58,6 +65,7 @@ credentials/
 *.p12
 *.key
 mykey.key
+*.csr
 GoogleService-Info.plist
 google-services.json
 google-play-service-account.json
@@ -73,6 +81,9 @@ temp-certs/pass-from-keychain.p12
 
 # iOS local env
 ios/.xcode.env.local
+
+# Legacy nested Next/Expo project (removed from monorepo) — never commit
+web/
 
 # Coverage output
 coverage/

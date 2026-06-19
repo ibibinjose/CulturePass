@@ -3,7 +3,7 @@ import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Image } from 'expo-image';
-import { FontFamily } from '@/design-system/tokens/theme';
+import { FontFamily, CultureTokens } from '@/design-system/tokens/theme';
 import { GlassView } from '@/design-system/ui';
 import { withAlpha } from '@/lib/withAlpha';
 
@@ -80,7 +80,7 @@ export function PassMemberHero({
         <View style={styles.avatarCol}>
           {/* Gradient ring */}
           <LinearGradient
-            colors={['#06b6d4', '#8b5cf6', '#ec4899']}
+            colors={[CultureTokens.indigo, CultureTokens.violet, CultureTokens.coral]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.avatarGradientRing}
@@ -104,7 +104,7 @@ export function PassMemberHero({
           </LinearGradient>
           {/* Tier pill with status dot */}
           <View style={[styles.tierPillRow]}>
-            <PulsingActiveDot color="#10b981" />
+            <PulsingActiveDot color={CultureTokens.emerald} />
             <View style={[styles.tierPill, { backgroundColor: withAlpha(tierColor, 0.14), borderColor: withAlpha(tierColor, 0.35) }]}>
               <Text style={[styles.tierText, { color: tierColor }]}>{tierLabel}</Text>
             </View>

@@ -13,6 +13,7 @@ import { CultureTokens } from '@/design-system/tokens/theme';
 import { Card } from '@/design-system/ui/Card';
 import { TextStyles } from '@/design-system/tokens/typography';
 import { CREATE_HUB_ROUTE } from '@/constants/navigation/experienceNav';
+import { DIGITAL_ID_ROUTE } from '@/lib/digitalIdRoutes';
 
 export const QUICK_MENU_ITEMS = [
   { key: 'edit', label: 'Edit Profile', icon: 'create-outline', route: '/profile/edit' },
@@ -20,7 +21,7 @@ export const QUICK_MENU_ITEMS = [
   { key: 'tickets', label: 'My Tickets', icon: 'ticket-outline', route: '/tickets' },
   { key: 'wallet', label: 'Wallet', icon: 'wallet-outline', route: '/payment/wallet' },
   { key: 'saved', label: 'Saved', icon: 'bookmark-outline', route: '/saved' },
-  { key: 'qr', label: 'Digital ID', icon: 'qr-code-outline', route: '/profile/qr' },
+  { key: 'qr', label: 'Digital ID', icon: 'id-card-outline', route: DIGITAL_ID_ROUTE },
   { key: 'communities', label: 'Community', icon: 'people-outline', route: '/(tabs)/community' },
   { key: 'settings', label: 'Settings', icon: 'settings-outline', route: '/settings' },
 ] as const;

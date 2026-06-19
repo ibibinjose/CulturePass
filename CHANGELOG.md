@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Event detail info document** — Organised by, Contact Organiser, date/time range with timezone, full address, event type & category, Add to Calendar, and Share With Friends (Copy Link, Facebook, Twitter, LinkedIn, Pinterest). Desktop sidebar + mobile top panel. See `docs/EVENT_DETAIL_UI.md`.
+- **Partial-data fallbacks** across community and event surfaces — sparse API payloads show italic placeholders instead of hiding rows (`src/lib/presentation.ts`).
+- **Sparse-inventory location fallbacks** — Discover and Community surfaces show local events/communities first, then pad with country-wide listings when fewer than three local results (`src/lib/locationFallback.ts`). Discover adds Popular Events and Communities on the “All” filter; community detail pages supplement recommended events via `useCommunityDisplayEvents`.
+- **Eventbrite Australia sync** — Daily import from `eventbrite.com.au` into the **Australian Event Finder** community (`cpass_australian_event_finder`). Tickets open on Eventbrite (`externalTicketUrl`); no CulturePass checkout. Manual run: `npm run sync:eventbrite`; scheduled `syncEventbriteDaily` at 05:00 Sydney. Requires `EVENTBRITE_PRIVATE_TOKEN`.
 - **Apple PassKit Web Service** routes at `/api/wallet/apple/v1/*` (device registration, pass updates, logs).
 - **Wallet tooling**: `npm run wallet:readiness`, `wallet:setup`, `wallet:secrets:push`; `PUBLIC_APP_ORIGIN` / stable `.pkpass` download URLs.
 - Clear wallet error messages on `/profile/qr` (503 config vs auth failures); web triggers `.pkpass` download.

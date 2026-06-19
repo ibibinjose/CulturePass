@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth';
 import { useOnboarding } from '@/contexts/OnboardingContext';
+import { useLocation } from '@/contexts/LocationContext';
 import { syncCultureWidgetSnapshots } from '@/lib/widgets/sync';
 import { fetchWidgetSyncData } from '@/components/widgets/services/widgetService';
 
@@ -9,8 +10,9 @@ export function WidgetSync() {
   const { user, isAuthenticated } = useAuth();
   const { state: onboarding } = useOnboarding();
 
-  const city = user?.city ?? onboarding.city ?? undefined;
-  const country = user?.country ?? onboarding.country ?? undefined;
+  const appLocation = useLocation();
+  const city = appLocation.city || user?.city || onboarding.city || undefined;
+  const country = appLocation.country || user?.country || onboarding.country || undefined;
 
   const { data } = useQuery({
     queryKey: ['widget-sync', user?.id, city, country],

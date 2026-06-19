@@ -1,70 +1,74 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
-  Text,
-  Pressable,
   ScrollView,
   StyleSheet,
-  TextInput,
   Platform,
   Alert,
   ActivityIndicator,
-  type DimensionValue,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { Image } from 'expo-image';
-import { router , useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import Animated, { FadeIn, FadeInRight, FadeInLeft, FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeInRight, FadeInLeft, FadeInDown } from 'react-native-reanimated';
 
 import { useOnboarding } from '@/contexts/OnboardingContext';
 import { useColors } from '@/hooks/useColors';
 import { useM3Colors } from '@/hooks/useM3Colors';
 import { useLayout } from '@/hooks/useLayout';
-import { luxeDark } from '@/design-system/tokens/luxeHeritage';
+import { useOnboardingTheme } from '@/hooks/useOnboardingTheme';
 import { LuxeText } from '@/design-system/ui/LuxeText';
 import { LuxeCard } from '@/design-system/ui/LuxeCard';
 import { LuxeButton } from '@/design-system/ui/LuxeButton';
-import { LuxeFilterChip } from '@/design-system/ui/LuxeFilterChip';
 import { M3TopAppBar } from '@/design-system/ui/M3TopAppBar';
-import { CultureTokens, FontFamily } from '@/design-system/tokens/theme';
+import { FontFamily } from '@/design-system/tokens/theme';
 import { australianPostcodes } from '@shared/location/australian-postcodes';
 import { OnboardingProgressHeader } from '@/components/onboarding/OnboardingProgressHeader';
-
-// Import missing hooks and utils
+import { OnboardingDestinationBanner } from '@/components/onboarding/OnboardingDestinationBanner';
+import {
+  OnboardingHero,
+  OnboardingPanel,
+  OnboardingSearchBar,
+  OnboardingPickerGrid,
+  OnboardingPickerTile,
+  OnboardingFooterPanel,
+  OnboardingPrimaryButton,
+  OnboardingRestartLink,
+  OnboardingSelectionBadge,
+  onboardingFormStyles,
+} from '@/components/onboarding/OnboardingFlowPrimitives';
 import { useAuth } from '@/lib/auth';
 import { useLocations } from '@/hooks/useLocations';
 import { useNearestMarketplaceLocation } from '@/hooks/useNearestMarketplaceLocation';
 import { useDetectCountry } from '@/hooks/useDetectCountry';
 import { useNearestCouncil } from '@/hooks/useNearestCouncil';
 import { sanitizeInternalRedirect, routeWithRedirect } from '@/lib/routes';
-import { getCountryFlag , 
-  getCountryForCity, 
+import {
+  getCountryFlag,
+  getCountryForCity,
   getRegionsForCountry,
-  listMarketplaceCountries, 
-  resolveCountryPickerPin 
+  listMarketplaceCountries,
+  resolveCountryPickerPin,
 } from '@/lib/marketplaceLocation';
 import { api } from '@/lib/api';
 import { syncUserMarketplaceLocation } from '@/lib/syncMarketplaceLocation';
 import { CountrySelectList } from '@/components/location/CountrySelectList';
+import { showUserAlert } from '@/lib/showUserAlert';
 
-// Define types directly since they may not be properly exported
 type AustralianState = {
   code: string;
   name: string;
   emoji?: string;
 };
 
-// Helper functions
 export function getAustralianStates(): AustralianState[] {
   const statesSet = new Set(australianPostcodes.map((pc: any) => pc.state_code));
-  return Array.from(statesSet).map(code => {
-    const stateName = australianPostcodes.find((pc: any) => pc.state_code === code)?.state_name || code;
-    return {
-      code,
-      name: stateName,
-      emoji: '🇦🇺'
-    };
+  return Array.from(statesSet).map((code) => {
+    const stateName =
+      australianPostcodes.find((pc: any) => pc.state_code === code)?.state_name || code;
+    return { code, name: stateName, emoji: '🇦🇺' };
   });
 }
 
@@ -73,10 +77,6 @@ export function getCitiesForState(stateCode: string): string[] {
   const uniqueCities = Array.from(new Set(filteredPostcodes.map((pc: any) => pc.place_name)));
   return uniqueCities.sort();
 }
-
-// ---------------------------------------------------------------------------
-// Types & constants
-// ---------------------------------------------------------------------------
 
 type LocStep = 'country' | 'region' | 'city';
 
@@ -101,7 +101,6 @@ const STEP_SUBTITLE: Record<LocStep, string> = {
   city: "Pick your city and we'll show what's happening nearby.",
 };
 
-// Reliable fallback list for Australian states (used when dynamic data fails)
 const australianStatesFallback: { code: string; name: string; emoji: string; cities?: number }[] = [
   { code: 'NSW', name: 'New South Wales', emoji: '🏙️', cities: 35 },
   { code: 'VIC', name: 'Victoria', emoji: '🎭', cities: 27 },
@@ -113,28 +112,31 @@ const australianStatesFallback: { code: string; name: string; emoji: string; cit
   { code: 'NT', name: 'Northern Territory', emoji: '🦘', cities: 13 },
 ];
 
-// ---------------------------------------------------------------------------
-// Component
-// ---------------------------------------------------------------------------
-
 export default function LocationScreen() {
   const colors = useColors();
+  const { au } = useOnboardingTheme();
   const m3Colors = useM3Colors();
-  const { isDesktop, windowSizeClass, hPad = 16 } = useLayout();
+  const { isDesktop, windowSizeClass } = useLayout();
   const searchParams = useLocalSearchParams();
   const redirectTo = sanitizeInternalRedirect(searchParams.redirectTo ?? searchParams.redirect);
   const isExpanded = windowSizeClass === 'expanded';
 
   const { user } = useAuth();
   const { state, setCountry, setCity, setCouncil } = useOnboarding();
-  const { states, getStateForCity, isLoading: locationsLoading, error: locationsError } = useLocations();
+  const { states, getStateForCity, isLoading: locationsLoading } = useLocations();
 
-  // City detection — marketplace countries (region step)
   const { detect: detectCity, status: cityDetectStatus } = useNearestMarketplaceLocation();
-  const { detect: detectCouncil, council: detectedCouncil, distanceKm, matchMethod, confidence, status: councilStatus, reset: resetCouncil } = useNearestCouncil();
+  const {
+    detect: detectCouncil,
+    council: detectedCouncil,
+    distanceKm,
+    matchMethod,
+    confidence,
+    status: councilStatus,
+    reset: resetCouncil,
+  } = useNearestCouncil();
   const isDetectingCity = cityDetectStatus === 'requesting';
 
-  // Country detection (country step)
   const {
     detect: detectCountry,
     country: gpsCountry,
@@ -150,14 +152,8 @@ export default function LocationScreen() {
   const [citySearch, setCitySearch] = useState('');
 
   const stepIndex = STEPS.indexOf(step);
-
-  // ---------------------------------------------------------------------------
-  // Derived data
-  // ---------------------------------------------------------------------------
-
   const countries = useMemo(() => listMarketplaceCountries(), []);
 
-  /** Pin list order: profile → city → GPS → locale. Skip list pin when only the GPS chip highlights that country. */
   const preferCountryFirst = useMemo(() => {
     const pin = resolveCountryPickerPin({
       savedCountry: state.country,
@@ -174,7 +170,6 @@ export default function LocationScreen() {
     [pendingCountry, states],
   );
 
-  // Pre-fill if user already has a location
   useEffect(() => {
     if (!state.city) return;
     const c = state.country || getCountryForCity(state.city) || 'Australia';
@@ -186,9 +181,6 @@ export default function LocationScreen() {
     }
   }, [state.city, state.country, getStateForCity]);
 
-  // Slice 2: Declarative auto-trigger for council (LGA) when city is successfully set for Australia.
-  // This replaces the previous fragile setTimeout hack in handleDetectCity (which was a workaround for JSI crashes).
-  // Runs only when entering the city step with AU data and no council detected yet.
   useEffect(() => {
     const shouldAutoDetectCouncil =
       step === 'city' &&
@@ -198,20 +190,16 @@ export default function LocationScreen() {
       councilStatus === 'idle';
 
     if (shouldAutoDetectCouncil) {
-      // Small micro-delay via setTimeout(0) to let the step transition and any pending location promises settle.
-      // Much safer and shorter than the previous 1500ms hardcoded delay.
       const t = setTimeout(() => {
-        console.log('[LocationScreen] Auto-triggering council detection (declarative)');
-        void detectCouncil();
+        void detectCouncil({
+          city: state.city,
+          state: pendingState || getStateForCity(state.city) || undefined,
+          country: 'Australia',
+        });
       }, 0);
-
       return () => clearTimeout(t);
     }
-  }, [step, pendingCountry, state.city, detectedCouncil, councilStatus, detectCouncil]);
-
-  // ---------------------------------------------------------------------------
-  // Navigation helpers
-  // ---------------------------------------------------------------------------
+  }, [step, pendingCountry, state.city, pendingState, detectedCouncil, councilStatus, detectCouncil, getStateForCity]);
 
   const goToStep = (next: LocStep, dir: 'forward' | 'back') => {
     setStepDir(dir);
@@ -221,7 +209,7 @@ export default function LocationScreen() {
   const goBackWithinFlow = () => {
     if (step === 'city') {
       setCitySearch('');
-      resetCouncil(); // Clear any auto-detected council when leaving the city step (prevents stale data on back/forward)
+      resetCouncil();
       if (pendingCountry === 'Australia') {
         goToStep('region', 'back');
       } else {
@@ -238,19 +226,12 @@ export default function LocationScreen() {
     }
   };
 
-  // ---------------------------------------------------------------------------
-  // Selection handlers
-  // ---------------------------------------------------------------------------
-
   const selectMarketplaceCountry = (countryName: string) => {
     if (Platform.OS !== 'web') Haptics.selectionAsync();
     resetGpsCountry();
     setPendingCountry(countryName);
     setCitySearch('');
-    // If switching away from Australia, clear any council data (AU-specific feature)
-    if (countryName !== 'Australia') {
-      resetCouncil();
-    }
+    if (countryName !== 'Australia') resetCouncil();
     const regs = getRegionsForCountry(countryName, states);
     if (regs.length === 1) {
       setPendingState(regs[0].code);
@@ -274,16 +255,8 @@ export default function LocationScreen() {
     setCountry(c);
     setCity(city);
     void syncUserMarketplaceLocation(user?.id, c, city);
-
-    // For AU: reset any previous council so the declarative auto-detect effect can re-trigger for the new city
-    if (c === 'Australia') {
-      resetCouncil();
-    }
+    if (c === 'Australia') resetCouncil();
   };
-
-  // ---------------------------------------------------------------------------
-  // GPS handlers
-  // ---------------------------------------------------------------------------
 
   const handleDetectCountry = async () => {
     if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -318,8 +291,6 @@ export default function LocationScreen() {
       const stateCode = getStateForCity(r.city);
       if (stateCode) setPendingState(stateCode);
       goToStep('city', 'forward');
-
-      // Note: Council auto-detection for AU is now handled declaratively via useEffect below (removes fragile setTimeout hack)
     } else {
       if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       if (cityDetectStatus === 'denied') {
@@ -338,37 +309,60 @@ export default function LocationScreen() {
           'Your GPS position is not in a country we currently support. Please pick your country and city from the lists.',
         );
       } else {
-        Alert.alert('Could Not Detect Location', 'We could not match your position to a city in our list. Please choose your city manually.');
+        Alert.alert(
+          'Could Not Detect Location',
+          'We could not match your position to a city in our list. Please choose your city manually.',
+        );
       }
     }
   };
 
+  const councilDetectContext = useMemo(
+    () => ({
+      city: state.city || undefined,
+      state: pendingState || getStateForCity(state.city) || undefined,
+      country: 'Australia',
+    }),
+    [state.city, pendingState, getStateForCity],
+  );
+
   const handleDetectCouncil = async () => {
     if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    const result = await detectCouncil();
-    if (result?.council) {
+    const outcome = await detectCouncil(councilDetectContext);
+    if (outcome?.ok) {
       if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      return;
+    }
+    if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    const failStatus = outcome && !outcome.ok ? outcome.status : 'error';
+    if (failStatus === 'denied') {
+      showUserAlert(
+        'Location Permission Required',
+        'Please allow location access to detect your local council, or continue without it.',
+      );
+    } else if (failStatus === 'unavailable') {
+      showUserAlert(
+        'Location Services Off',
+        'Turn on location services to detect your council automatically.',
+      );
     } else {
-      if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      showUserAlert(
+        'Could Not Detect Council',
+        state.city
+          ? `We could not match your position to an LGA near ${state.city}. Try again or continue without selecting a council.`
+          : 'We could not match your position to a local council. Select your city first, then try again.',
+      );
     }
   };
 
-  // ---------------------------------------------------------------------------
-  // Finish
-  // ---------------------------------------------------------------------------
-
   const handleNext = () => {
     if (state.country && state.city) {
-      // Slice 2: council is already persisted via setCouncil when user chooses it
+      void syncUserMarketplaceLocation(user?.id, state.country, state.city);
       router.replace(routeWithRedirect('/(onboarding)/communities', redirectTo) as string);
       return;
     }
     Alert.alert('Select Location', 'Please choose your state and city to continue.');
   };
-
-  // ---------------------------------------------------------------------------
-  // Derived UI values
-  // ---------------------------------------------------------------------------
 
   const pendingRegionMeta = useMemo(
     () => regions.find((r) => r.code === pendingState),
@@ -383,89 +377,300 @@ export default function LocationScreen() {
     return allCitiesForState.filter((c) => c.toLowerCase().includes(q));
   }, [allCitiesForState, citySearch]);
 
-  const breadcrumbItems = useMemo(() => {
-    const items: { label: string; active: boolean; done: boolean }[] = [
-      {
-        label: pendingCountry || 'Country',
-        active: step === 'country',
-        done: step !== 'country' && !!pendingCountry,
-      },
-    ];
-    if (step !== 'country') {
-      items.push({
-        label: pendingRegionMeta?.name || 'State',
-        active: step === 'region',
-        done: step === 'city' && !!pendingState,
+  const regionsToShow = useMemo(() => {
+    if (!pendingCountry) return [];
+    if (pendingCountry === 'Australia') {
+      const auRegions = (regions || []).filter((r) =>
+        ['NSW', 'VIC', 'QLD', 'WA', 'SA', 'TAS', 'ACT', 'NT'].includes(r.code),
+      );
+      const rawStates = auRegions.length > 0 ? auRegions : australianStatesFallback;
+      return rawStates.map((st) => {
+        const count = Array.isArray(st.cities)
+          ? st.cities.length
+          : typeof st.cities === 'number'
+            ? st.cities
+            : 0;
+        const safeCount =
+          count > 0 ? count : (australianStatesFallback.find((f) => f.code === st.code)?.cities ?? 0);
+        return {
+          code: st.code,
+          name: st.name,
+          emoji: st.emoji || '🇦🇺',
+          sublabel: safeCount > 0 ? `${safeCount} cities` : undefined,
+        };
       });
     }
-    if (step === 'city') {
-      items.push({
-        label: state.city || 'City',
-        active: step === 'city',
-        done: false,
-      });
-    }
-    return items;
-  }, [step, pendingCountry, pendingRegionMeta, pendingState, state.city]);
+    return regions.map((r) => ({
+      code: r.code,
+      name: r.name,
+      emoji: r.emoji || '📍',
+      sublabel: r.cities?.length ? `${r.cities.length} cities` : undefined,
+    }));
+  }, [pendingCountry, regions]);
+
+  const pathSummary = useMemo(() => {
+    const parts: string[] = [];
+    if (pendingCountry) parts.push(pendingCountry);
+    if (pendingRegionMeta?.name) parts.push(pendingRegionMeta.name);
+    if (state.city) parts.push(state.city);
+    return parts.join(' · ');
+  }, [pendingCountry, pendingRegionMeta?.name, state.city]);
+
+  const continueHint =
+    step === 'country'
+      ? 'Select a country to continue'
+      : step === 'region'
+        ? 'Select your region to continue'
+        : 'Choose a city to continue';
+
+  const canContinue = !!state.country && !!state.city;
+  const showCouncil =
+    !!state.city && (pendingCountry === 'Australia' || state.country === 'Australia');
 
   const stepEntering =
     stepDir === 'forward'
       ? FadeInRight.duration(260).springify().damping(22).stiffness(130)
       : FadeInLeft.duration(260).springify().damping(22).stiffness(130);
 
-  const enter = (delay: number) => FadeInDown.delay(delay).springify().damping(20).stiffness(120);
-
-  // ---------------------------------------------------------------------------
-  // GPS country suggestion slot (shown at top of country list)
-  // Plain render — no useMemo so onPress always has a fresh handler reference.
-  // ---------------------------------------------------------------------------
-
-  const renderGpsSuggestionSlot = () => {
+  const renderGpsCountrySlot = () => {
     if (gpsCountry) {
       return (
-      <LuxeCard
-        variant="filled"
-        onPress={() => selectMarketplaceCountry(gpsCountry)}
-        style={[
-          s.gpsSuggestCard,
-          {
-            backgroundColor: luxeDark.primaryContainer,
-            marginBottom: 16,
-          },
-        ]}
-      ><View style={[s.gpsSuggestIconWrap, { backgroundColor: luxeDark.onPrimaryContainer + '20' }]}>
-          <Ionicons name="navigate-circle" size={24} color={luxeDark.onPrimaryContainer} />
-        </View>
-        <View style={s.gpsSuggestTextWrap}>
-          <LuxeText variant="badgeCaps" style={{ color: luxeDark.onPrimaryContainer }}>SUGGESTED FOR YOU</LuxeText>
-          <LuxeText variant="title3" style={{ color: luxeDark.onPrimaryContainer }}>
-            {getCountryFlag(gpsCountry)}{'  '}{gpsCountry}
-          </LuxeText>
-        </View>
-        <Ionicons name="chevron-forward" size={18} color={luxeDark.onPrimaryContainer} /></LuxeCard>
+        <LuxeCard
+          variant="filled"
+          onPress={() => selectMarketplaceCountry(gpsCountry)}
+          style={[s.gpsCard, { backgroundColor: au.blue }]}
+        >
+          <View style={[s.gpsIcon, { backgroundColor: 'rgba(255,255,255,0.15)' }]}>
+            <Ionicons name="navigate-circle" size={22} color="#FFF" />
+          </View>
+          <View style={s.gpsCopy}>
+            <LuxeText variant="badgeCaps" style={{ color: au.red, fontSize: 10 }}>
+              SUGGESTED FOR YOU
+            </LuxeText>
+            <LuxeText variant="bodyMedium" style={{ color: '#FFF', fontFamily: FontFamily.semibold }}>
+              {getCountryFlag(gpsCountry)} {gpsCountry}
+            </LuxeText>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color="#FFF" />
+        </LuxeCard>
       );
     }
-
     return (
-      <LuxeButton
-        variant="tonal"
+      <OnboardingPrimaryButton
+        au={au}
+        leftIcon="navigate-circle"
         onPress={handleDetectCountry}
         disabled={isDetectingCountry}
         loading={isDetectingCountry}
-        leftIcon="navigate-circle"
-        style={{ marginBottom: 16, height: 64, borderRadius: 16 }}
+        style={{ width: '100%' }}
       >
         Detect my country
-      </LuxeButton>
+      </OnboardingPrimaryButton>
     );
   };
 
-  // ---------------------------------------------------------------------------
-  // Render
-  // ---------------------------------------------------------------------------
+  const renderCountryStep = () => (
+    <OnboardingPanel
+      title="Select your country"
+      subtitle="We'll show events and communities for your marketplace."
+      au={au}
+      colors={colors}
+    >
+      {renderGpsCountrySlot()}
+      <CountrySelectList
+        countries={countries}
+        selectedName={pendingCountry || state.country || undefined}
+        preferCountryFirst={preferCountryFirst}
+        onSelect={selectMarketplaceCountry}
+        variant="onboarding"
+        onboardingLayout="list"
+        au={au}
+        colors={colors}
+        showFooterHint={false}
+      />
+    </OnboardingPanel>
+  );
+
+  const renderRegionStep = () => (
+    <OnboardingPanel
+      title={STEP_TITLE.region(pendingCountry)}
+      subtitle={STEP_SUBTITLE.region}
+      au={au}
+      colors={colors}
+    >
+      {pendingCountry === 'Australia' ? (
+        <OnboardingPrimaryButton
+          au={au}
+          leftIcon="navigate-circle"
+          onPress={handleDetectCity}
+          disabled={isDetectingCity}
+          loading={isDetectingCity}
+          style={{ width: '100%' }}
+        >
+          Use my location
+        </OnboardingPrimaryButton>
+      ) : null}
+
+      {pendingCountry === 'Australia' && locationsLoading ? (
+        <ActivityIndicator size="large" color={au.blue} style={{ paddingVertical: 24 }} />
+      ) : regionsToShow.length === 0 ? (
+        <LuxeText variant="body" style={{ textAlign: 'center', color: au.body, paddingVertical: 16 }}>
+          No regions available for this country.
+        </LuxeText>
+      ) : (
+        <OnboardingPickerGrid columns={2}>
+          {regionsToShow.map((region) => (
+            <OnboardingPickerTile
+              key={region.code}
+              label={region.name}
+              emoji={region.emoji}
+              sublabel={region.sublabel}
+              selected={region.code === pendingState}
+              onPress={() => selectRegion(region.code)}
+              au={au}
+              colors={colors}
+              columns={2}
+            />
+          ))}
+        </OnboardingPickerGrid>
+      )}
+    </OnboardingPanel>
+  );
+
+  const renderCityStep = () => (
+    <OnboardingPanel
+      title={STEP_TITLE.city()}
+      subtitle={STEP_SUBTITLE.city}
+      au={au}
+      colors={colors}
+    >
+      {state.city ? (
+        <OnboardingSelectionBadge label={`${state.city} selected`} au={au} />
+      ) : null}
+
+      <OnboardingSearchBar
+        value={citySearch}
+        onChangeText={setCitySearch}
+        placeholder={`Search ${allCitiesForState.length} cities…`}
+        au={au}
+        colors={colors}
+        accessibilityLabel="Search cities"
+      />
+
+      {citiesToShow.length === 0 ? (
+        <View style={s.emptyState}>
+          <Ionicons name="search-outline" size={36} color={au.bodyMuted} />
+          <LuxeText variant="body" style={{ color: au.heading, textAlign: 'center' }}>
+            No cities match your search
+          </LuxeText>
+          <LuxeButton variant="glass" size="sm" onPress={() => setCitySearch('')}>
+            Clear search
+          </LuxeButton>
+        </View>
+      ) : (
+        <OnboardingPickerGrid columns={1}>
+          {citiesToShow.map((city) => (
+            <OnboardingPickerTile
+              key={city}
+              label={city}
+              emoji="📍"
+              selected={state.city === city}
+              onPress={() => selectCity(city)}
+              au={au}
+              colors={colors}
+              columns={1}
+            />
+          ))}
+        </OnboardingPickerGrid>
+      )}
+    </OnboardingPanel>
+  );
+
+  const renderCouncilSection = () => {
+    if (!showCouncil) return null;
+    return (
+      <OnboardingPanel
+        title="Local council (LGA)"
+        subtitle="Optional — get more tailored events near you."
+        au={au}
+        colors={colors}
+      >
+        {councilStatus === 'requesting' ? (
+          <View style={s.inlineRow}>
+            <ActivityIndicator size="small" color={au.blue} />
+            <LuxeText variant="body" style={{ color: au.body }}>
+              Detecting your council…
+            </LuxeText>
+          </View>
+        ) : !detectedCouncil ? (
+          <View style={{ gap: 8 }}>
+            <OnboardingPrimaryButton
+              au={au}
+              leftIcon="navigate-circle"
+              onPress={handleDetectCouncil}
+              style={{ width: '100%' }}
+            >
+              Detect my local council
+            </OnboardingPrimaryButton>
+            {councilStatus === 'error' || councilStatus === 'denied' ? (
+              <LuxeText variant="caption" style={{ color: au.red, textAlign: 'center' }}>
+                {councilStatus === 'denied'
+                  ? 'Location permission is required to detect your council.'
+                  : 'No council matched your location. Try again or continue without it.'}
+              </LuxeText>
+            ) : null}
+          </View>
+        ) : (
+          <View
+            style={[
+              s.councilResult,
+              { backgroundColor: au.blueContainer, borderColor: au.cardBorder },
+            ]}
+          >
+            <View style={s.councilResultTop}>
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <LuxeText variant="bodyMedium" style={{ color: au.selectedText, fontFamily: FontFamily.semibold }}>
+                  {detectedCouncil.name}
+                </LuxeText>
+                {distanceKm != null ? (
+                  <LuxeText variant="caption" style={{ color: au.body, marginTop: 2 }}>
+                    {distanceKm.toFixed(0)} km away · {matchMethod}
+                    {confidence ? ` · ${confidence}` : ''}
+                  </LuxeText>
+                ) : null}
+              </View>
+              <LuxeButton
+                variant="filled"
+                gradientColors={au.gradient}
+                size="sm"
+                onPress={async () => {
+                  setCouncil(detectedCouncil.id, detectedCouncil.lgaCode);
+                  if (user?.id) {
+                    try {
+                      await api.council.select(detectedCouncil.id);
+                    } catch (e) {
+                      if (__DEV__) console.warn('[location] Failed to persist council', e);
+                    }
+                  }
+                  if (Platform.OS !== 'web') {
+                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                  }
+                }}
+              >
+                Use
+              </LuxeButton>
+            </View>
+            <LuxeButton variant="glass" size="sm" onPress={resetCouncil} style={{ alignSelf: 'flex-start' }}>
+              Detect again
+            </LuxeButton>
+          </View>
+        )}
+      </OnboardingPanel>
+    );
+  };
 
   return (
-    <View style={[s.container, { backgroundColor: m3Colors.background }]}>
+    <View style={[s.root, { backgroundColor: m3Colors.background }]}>
       <M3TopAppBar
         title="Location"
         onBack={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))}
@@ -481,624 +686,220 @@ export default function LocationScreen() {
 
       <OnboardingProgressHeader currentStep="location" redirectTo={redirectTo} />
 
-      <ScrollView
-        style={s.scrollView}
-        contentContainerStyle={[s.scrollContent, isDesktop && s.scrollContentDesktop]}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-        <Animated.View entering={enter(40)} style={[s.formContainer, isDesktop && s.formContainerDesktop]}>
-          <LuxeCard variant="glass" style={s.formContent}>{/* Breadcrumb — shown after country is chosen */}
-            {step !== 'country' && (
-              <View style={s.breadcrumbRow}>
-                {breadcrumbItems.map((item, i) => (
-                  <React.Fragment key={i}>
-                    {i > 0 && (
-                      <Ionicons name="chevron-forward" size={12} color={luxeDark.textSecondary} />
-                    )}
-                    <LuxeFilterChip
-                      label={item.label}
-                      onPress={() => {}}
-                      selected={item.active}
-                      compact
-                    />
-                  </React.Fragment>
-                ))}
-              </View>
-            )}
+      <KeyboardAvoidingView style={s.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={[
+            onboardingFormStyles.scroll,
+            isDesktop && onboardingFormStyles.scrollDesktop,
+          ]}
+        >
+          <Animated.View entering={FadeInDown.springify().damping(20).stiffness(120).delay(80)}>
+            <LuxeCard
+              variant="glass"
+              style={[
+                onboardingFormStyles.glassCard,
+                isDesktop && onboardingFormStyles.glassCardDesktop,
+              ]}
+            >
+              {redirectTo ? <OnboardingDestinationBanner redirectTo={redirectTo} variant="step" /> : null}
 
-            {/* Desktop step progress dots */}
-            {isDesktop && (
-              <Animated.View entering={enter(0)} style={s.desktopStepRow}>
-                {STEPS.map((st, i) => {
+              <View style={s.innerStepper}>
+                {STEPS.map((st, i, arr) => {
                   const isDone = i < stepIndex;
                   const isActive = i === stepIndex;
                   return (
                     <React.Fragment key={st}>
-                      <View style={s.desktopStepItem}>
+                      <View style={s.innerStepItem}>
                         <View
                           style={[
-                            s.desktopStepDot,
+                            s.innerStepCircle,
                             isDone
-                              ? { backgroundColor: CultureTokens.teal, borderColor: CultureTokens.teal }
+                              ? { backgroundColor: au.blue, borderColor: au.blue }
                               : isActive
                                 ? {
-                                    borderColor: CultureTokens.gold,
-                                    borderWidth: 2.5,
-                                    backgroundColor: colors.surfaceSecondary,
+                                    borderColor: au.red,
+                                    borderWidth: 2,
+                                    backgroundColor: colors.surfaceElevated,
                                   }
                                 : {
-                                    borderColor: colors.borderLight,
-                                    backgroundColor: colors.surfaceSecondary,
+                                    borderColor: au.cardBorder,
+                                    borderWidth: 1.5,
+                                    backgroundColor: colors.surfaceElevated,
                                   },
                           ]}
                         >
                           {isDone ? (
-                            <Ionicons name="checkmark" size={10} color={colors.surface} />
+                            <Ionicons name="checkmark" size={11} color="#FFF" />
                           ) : (
-                            <View
-                              style={[
-                                s.desktopDotInner,
-                                isActive
-                                  ? { backgroundColor: CultureTokens.gold }
-                                  : { backgroundColor: colors.textTertiary },
-                              ]}
+                            <Ionicons
+                              name={STEP_ICON[st]}
+                              size={12}
+                              color={isActive ? au.blue : au.bodyMuted}
                             />
                           )}
                         </View>
-                        <Text style={[s.desktopStepLabel, { color: isActive ? colors.text : colors.textTertiary }]}>
+                        <LuxeText
+                          variant="caption"
+                          style={{
+                            marginTop: 4,
+                            color: isActive ? au.heading : au.bodyMuted,
+                            fontSize: 9,
+                            fontFamily: FontFamily.medium,
+                          }}
+                        >
                           {STEP_LABELS[i]}
-                        </Text>
+                        </LuxeText>
                       </View>
-                      {i < STEPS.length - 1 && (
+                      {i < arr.length - 1 ? (
                         <View
                           style={[
-                            s.desktopStepLine,
-                            { backgroundColor: isDone ? CultureTokens.teal : colors.borderLight },
+                            s.innerStepLine,
+                            { backgroundColor: isDone ? au.blue : au.cardBorder },
                           ]}
                         />
-                      )}
+                      ) : null}
                     </React.Fragment>
                   );
                 })}
-              </Animated.View>
-            )}
-
-            {/* Step icon + title */}
-            <View style={s.headerBlock}>
-              <View style={[s.iconWrapper, { backgroundColor: luxeDark.primaryContainer }]}>
-                <Animated.View key={step} entering={FadeIn.duration(200)}>
-                  <Ionicons name={STEP_ICON[step]} size={34} color={luxeDark.onPrimaryContainer} />
-                </Animated.View>
               </View>
-              <LuxeText variant="display" style={[s.title, { color: luxeDark.text }]}>{STEP_TITLE[step](pendingCountry)}</LuxeText>
-              <LuxeText variant="body" style={[s.subtitle, { color: luxeDark.textSecondary }]}>{STEP_SUBTITLE[step]}</LuxeText>
-            </View>
 
-            {/* Step content */}
-            <Animated.View key={step} entering={stepEntering}>
+              <OnboardingHero
+                icon={STEP_ICON[step]}
+                title={STEP_TITLE[step](pendingCountry)}
+                subtitle={STEP_SUBTITLE[step]}
+                au={au}
+              />
 
-              {/* ── Country Step ── */}
-              {step === 'country' && (
-                <CountrySelectList
-                  countries={countries}
-                  selectedName={state.country || undefined}
-                  preferCountryFirst={preferCountryFirst}
-                  onSelect={selectMarketplaceCountry}
-                  variant="onboarding"
-                  colors={colors}
-                  showFooterHint={false}
-                  leadingSlot={renderGpsSuggestionSlot()}
-                />
-              )}
-
-              {/* ── Region Step ── */}
-              {step === 'region' && (
-                <View>
-                  {/* GPS city detect — AU only */}
-                  {pendingCountry === 'Australia' && (
-                    <LuxeButton
-                        variant="tonal"
-                        onPress={handleDetectCity}
-                        disabled={isDetectingCity}
-                        loading={isDetectingCity}
-                        leftIcon="navigate-circle"
-                        style={{ height: 64, borderRadius: 16, marginBottom: 16 }}
-                    >
-                        Use my location
-                    </LuxeButton>
-                  )}
-
-                  {pendingCountry === 'Australia' && locationsLoading && (
-                    <ActivityIndicator size="large" color={luxeDark.primary} style={{ paddingVertical: 20 }} />
-                  )}
-
-                  {/* Error state (still fully usable via hardcoded fallback grid below) */}
-                  {pendingCountry === 'Australia' && !!locationsError && !locationsLoading && (
-                    <View style={[s.errorBanner, { backgroundColor: luxeDark.error + '12', borderColor: luxeDark.error + '25' }]}>
-                      <Ionicons name="alert-circle-outline" size={20} color={luxeDark.error} />
-                      <View style={{ flex: 1, gap: 2 }}>
-                        <LuxeText variant="body" style={{ color: luxeDark.error, fontFamily: FontFamily.semibold }}>
-                          Failed to load states
-                        </LuxeText>
-                        <LuxeText variant="caption" style={{ color: luxeDark.textSecondary }}>
-                          You can still choose your state below.
-                        </LuxeText>
-                      </View>
-                    </View>
-                  )}
-
-                  {/* Single clean header (changes based on error state) */}
-                  {pendingCountry === 'Australia' && !locationsLoading && (
-                    <View style={{ marginBottom: 12 }}>
-                      <LuxeText 
-                        variant="title3" 
-                        style={{ 
-                          color: luxeDark.text, 
-                          textAlign: 'center',
-                          fontSize: 18,
-                          fontFamily: FontFamily.semibold 
-                        }}
-                      >
-                        {locationsError ? 'Choose a state' : 'Your home state'}
-                      </LuxeText>
-                      <LuxeText 
-                        variant="caption" 
-                        style={{ 
-                          color: luxeDark.textSecondary, 
-                          textAlign: 'center', 
-                          marginTop: 4 
-                        }}
-                      >
-                        We&apos;ll prioritize cultural events and communities near you.
-                      </LuxeText>
-                    </View>
-                  )}
-
-                  {/* States — vertical list, top to bottom, one full-width card per line (clean, scannable, long names have room) */}
-                  {pendingCountry === 'Australia' && !locationsLoading && (
-                    <View style={s.stateList}>
-                      {(() => {
-                        const auRegions = (regions || []).filter((r: any) =>
-                          ['NSW', 'VIC', 'QLD', 'WA', 'SA', 'TAS', 'ACT', 'NT'].includes(r.code)
-                        );
-                        const rawStates = auRegions.length > 0 ? auRegions : australianStatesFallback;
-
-                        // Normalize once — NEVER render .cities array (prevents "SydneyParramatta..." concatenation)
-                        const statesToShow = rawStates.map((st: any) => {
-                          const count = Array.isArray(st.cities)
-                            ? st.cities.length
-                            : (typeof st.cities === 'number' ? st.cities : 0);
-                          const safeCount = count > 0 ? count : (australianStatesFallback.find(f => f.code === st.code)?.cities ?? 0);
-                          return {
-                            code: st.code,
-                            name: st.name,
-                            emoji: st.emoji || '🇦🇺',
-                            cityCount: safeCount,
-                          };
-                        });
-
-                        return statesToShow.map((st) => {
-                          const isSelected = st.code === pendingState;
-                          return (
-                            <LuxeCard
-                              key={st.code}
-                              variant={isSelected ? 'tonal' : 'default'}
-                              onPress={() => selectRegion(st.code)}
-                              style={s.stateCard}
-                            >
-                              <View style={{ flexDirection: 'row', alignItems: 'center', padding: 14, gap: 14 }}>
-                                <Text style={{ fontSize: 26 }}>{st.emoji}</Text>
-                                <View style={{ flex: 1, minWidth: 0 }}>
-                                  <LuxeText
-                                    variant="bodyMedium"
-                                    style={{
-                                      color: isSelected ? luxeDark.onPrimaryContainer : luxeDark.text,
-                                      fontFamily: FontFamily.semibold,
-                                    }}
-                                    numberOfLines={1}
-                                  >
-                                    {st.name}
-                                  </LuxeText>
-                                  <LuxeText
-                                    variant="caption"
-                                    style={{
-                                      color: isSelected ? luxeDark.onPrimaryContainer : luxeDark.textSecondary,
-                                      marginTop: 2,
-                                    }}
-                                  >
-                                    {st.cityCount} cities
-                                  </LuxeText>
-                                </View>
-                                {isSelected && (
-                                  <Ionicons name="checkmark-circle" size={22} color={luxeDark.onPrimaryContainer} />
-                                )}
-                              </View>
-                            </LuxeCard>
-                          );
-                        });
-                      })()}
-                    </View>
-                  )}
-                </View>
-              )}
-
-              {/* ── City Step ── */}
-              {step === 'city' && (
-                <View>
-                  <View
-                    style={[
-                      s.searchBar,
-                      { backgroundColor: luxeDark.surfaceElevated, borderWidth: 1, borderColor: luxeDark.border, height: 56, borderRadius: 28, marginBottom: 16 },
-                    ]}
-                  >
-                    <Ionicons name="search" size={24} color={luxeDark.textSecondary} />
-                    <TextInput
-                      style={[s.searchInput, { color: luxeDark.text, fontSize: 16, marginLeft: 12 }]}
-                      placeholder={`Search ${allCitiesForState.length} cities…`}
-                      placeholderTextColor={luxeDark.textTertiary}
-                      value={citySearch}
-                      onChangeText={setCitySearch}
-                      autoCorrect={false}
-                      autoCapitalize="words"
-                      returnKeyType="search"
-                      clearButtonMode="while-editing"
-                    />
-                    {citySearch.length > 0 && Platform.OS !== 'ios' && (
-                      <Pressable onPress={() => setCitySearch('')} hitSlop={8}>
-                        <Ionicons name="close" size={24} color={luxeDark.textSecondary} />
-                      </Pressable>
-                    )}
-                  </View>
-
-                  {citiesToShow.length === 0 ? (
-                    <LuxeCard variant="default" style={s.noResults}><Ionicons name="search-outline" size={48} color={luxeDark.textTertiary} />
-                      <LuxeText variant="title3" style={{ color: luxeDark.text }}>
-                        No cities match
-                      </LuxeText>
-                      <LuxeButton variant="glass" size="sm" onPress={() => setCitySearch('')}>Clear search</LuxeButton></LuxeCard>
-                  ) : (
-                    <View style={s.cityList}>
-                      {citiesToShow.map((city) => {
-                        const isActive = state.city === city;
-                        return (
-                          <LuxeCard
-                            key={city}
-                            variant={isActive ? 'tonal' : 'default'}
-                            onPress={() => selectCity(city)}
-                            style={s.cityCard}
-                          >
-                            <View style={{ flexDirection: 'row', alignItems: 'center', padding: 14, gap: 14 }}>
-                              <Ionicons
-                                name={isActive ? "checkmark-circle" : "location-outline"}
-                                size={22}
-                                color={isActive ? luxeDark.onPrimaryContainer : luxeDark.primary}
-                              />
-                              <LuxeText
-                                variant="bodyMedium"
-                                style={{ color: isActive ? luxeDark.onPrimaryContainer : luxeDark.text, flex: 1 }}
-                                numberOfLines={1}
-                              >
-                                {city}
-                              </LuxeText>
-                              {isActive && (
-                                <Ionicons name="checkmark-circle" size={20} color={luxeDark.onPrimaryContainer} />
-                              )}
-                            </View>
-                          </LuxeCard>
-                        );
-                      })}
-                    </View>
-                  )}
-                </View>
-              )}
-            </Animated.View>
-
-            {/* Back-within-flow link */}
-            {step !== 'country' && (
-              <View style={s.backLinkRow}>
-                <LuxeButton
-                  variant="glass"
-                  size="sm"
-                  onPress={goBackWithinFlow}
-                  leftIcon="arrow-back"
-                >
-                    Back
-                </LuxeButton>
-              </View>
-            )}
-
-            <View style={s.spacer} />
-
-            {/* TEMP DEBUG: Manual trigger for council / JSI crash reproduction testing (available in all dev builds for easier testing) */}
-            {__DEV__ && (
-              <View style={{ paddingHorizontal: hPad, marginBottom: 12 }}>
-                <LuxeButton
-                  variant="glass"
-                  size="sm"
-                  onPress={() => {
-                    console.log('[DEBUG] Manual detectCouncil triggered from button');
-                    void detectCouncil();
-                  }}
-                >
-                  [DEBUG] Trigger Council Detect (for crash test)
-                </LuxeButton>
-              </View>
-            )}
-
-            {/* Council / LGA Detection — Slice 2 (polished) — AU only */}
-            {!!state.city && (pendingCountry === 'Australia' || state.country === 'Australia') && (
-              <LuxeCard variant="default" style={{ marginBottom: 16, padding: 18 }}><View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
-                  <LuxeText variant="title3" style={{ color: luxeDark.text, flex: 1 }}>
-                    Local Council (LGA)
+              {pathSummary && step !== 'country' ? (
+                <View style={[s.pathChip, { backgroundColor: au.blueContainer, borderColor: au.cardBorder }]}>
+                  <Ionicons name="trail-sign-outline" size={14} color={au.blue} />
+                  <LuxeText variant="caption" style={{ color: au.selectedText, flex: 1 }} numberOfLines={1}>
+                    {pathSummary}
                   </LuxeText>
-                  {!!detectedCouncil && !!confidence && (
-                    <LuxeText variant="badgeCaps" style={{ color: confidence === 'strong' ? luxeDark.primary : luxeDark.textSecondary }}>
-                      {confidence.toUpperCase()}
-                    </LuxeText>
-                  )}
                 </View>
+              ) : null}
 
-                <LuxeText variant="body" style={{ color: luxeDark.textSecondary, marginBottom: 14, fontSize: 14 }}>
-                  Get more tailored events and communities near you.
-                </LuxeText>
+              <Animated.View key={step} entering={stepEntering}>
+                {step === 'country' && renderCountryStep()}
+                {step === 'region' && renderRegionStep()}
+                {step === 'city' && renderCityStep()}
+              </Animated.View>
 
-                {councilStatus === 'requesting' ? (
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    <ActivityIndicator size="small" color={luxeDark.primary} />
-                    <LuxeText variant="body" style={{ color: luxeDark.textSecondary }}>Detecting your council…</LuxeText>
-                  </View>
-                ) : !detectedCouncil ? (
+              {renderCouncilSection()}
+
+              <OnboardingFooterPanel au={au} colors={colors}>
+                {step !== 'country' ? (
                   <LuxeButton
-                    variant="tonal"
-                    onPress={handleDetectCouncil}
-                    leftIcon="navigate-circle"
-                    style={{ height: 52 }}
+                    variant="glass"
+                    size="sm"
+                    onPress={goBackWithinFlow}
+                    leftIcon="arrow-back"
+                    style={{ alignSelf: 'flex-start', borderWidth: 1.5, borderColor: au.cardBorder }}
                   >
-                    Detect my local council
+                    Back
                   </LuxeButton>
-                ) : (
-                  <View style={{ backgroundColor: luxeDark.surfaceElevated, borderRadius: 12, padding: 14 }}>
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <View>
-                        <LuxeText variant="body" style={{ color: luxeDark.text, fontWeight: '600' }}>
-                          {detectedCouncil.name}
-                        </LuxeText>
-                        {distanceKm != null && (
-                          <LuxeText variant="caption" style={{ color: luxeDark.textSecondary, marginTop: 2 }}>
-                            {distanceKm.toFixed(0)} km away • {matchMethod}
-                          </LuxeText>
-                        )}
-                      </View>
-                      <LuxeButton
-                        variant="filled"
-                        size="sm"
-                        onPress={async () => {
-                          setCouncil(detectedCouncil.id, detectedCouncil.lgaCode);
-                          if (user?.id) {
-                            try {
-                              await api.council.select(detectedCouncil.id);
-                            } catch (e) {
-                              if (__DEV__) console.warn('[location] Failed to persist council to profile', e);
-                            }
-                          }
-                          if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                        }}
-                      >
-                        Use
-                      </LuxeButton>
-                    </View>
+                ) : null}
+                <OnboardingPrimaryButton
+                  au={au}
+                  rightIcon="arrow-forward"
+                  disabled={!canContinue}
+                  onPress={handleNext}
+                  style={{ width: '100%' }}
+                >
+                  Continue
+                </OnboardingPrimaryButton>
+                {!canContinue ? (
+                  <LuxeText variant="caption" style={{ color: au.bodyMuted, textAlign: 'center' }}>
+                    {continueHint}
+                  </LuxeText>
+                ) : null}
+              </OnboardingFooterPanel>
 
-                    <LuxeButton
-                      variant="glass"
-                      size="sm"
-                      onPress={resetCouncil}
-                      style={{ marginTop: 10, alignSelf: 'flex-start' }}
-                    >
-                      Detect again
-                    </LuxeButton>
-                  </View>
-                )}</LuxeCard>
-            )}
-
-            <LuxeButton
-              variant="filled"
-              rightIcon="arrow-forward"
-              disabled={!state.country || !state.city}
-              onPress={handleNext}
-              style={{ height: 58 }}
-            >
-              Continue
-            </LuxeButton>
-
-            {(!state.country || !state.city) && (
-              <LuxeText variant="caption" style={{ textAlign: 'center', marginTop: 12, color: luxeDark.textTertiary }}>
-                {step === 'country'
-                  ? 'Select a country to continue'
-                  : step === 'region'
-                    ? 'Select your state to continue'
-                    : 'Choose a city to continue'}
-              </LuxeText>
-            )}
-          </LuxeCard>
-        </Animated.View>
-      </ScrollView>
+              <OnboardingRestartLink redirectTo={redirectTo} au={au} />
+            </LuxeCard>
+          </Animated.View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </View>
   );
 }
 
-// ---------------------------------------------------------------------------
-// Styles
-// ---------------------------------------------------------------------------
-
 const s = StyleSheet.create({
-  container: { flex: 1 },
+  root: { flex: 1 },
+  flex: { flex: 1 },
 
-  scrollView: { flex: 1 },
-  scrollContent: {
-    flexGrow: 1,
-    paddingHorizontal: 20,
-    paddingBottom: 80,
-    justifyContent: 'center',
-  },
-  scrollContentDesktop: { paddingVertical: 80 },
-
-  mobileProgressWrap: {
-    paddingHorizontal: 24,
-    paddingBottom: 16,
-    alignItems: 'flex-end',
-    gap: 8,
-  },
-  stepText: {
-    letterSpacing: 1,
-  },
-  progressTrack: {
-    width: 100,
-    height: 4,
-    borderRadius: 2,
-    overflow: 'hidden',
-  },
-  progressFill: { height: '100%' },
-
-  formContainer: {
-    width: '100%',
-    maxWidth: 460,
-    alignSelf: 'center',
-    borderRadius: 32,
-  },
-  formContainerDesktop: { maxWidth: 520 },
-
-  formContent: { padding: 24 },
-
-  // Breadcrumb
-  breadcrumbRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginBottom: 20,
-    flexWrap: 'wrap',
-  },
-  desktopStepRow: {
+  innerStepper: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 28,
+    marginBottom: 10,
   },
-  desktopStepItem: {
-    alignItems: 'center',
-    gap: 6,
-    minWidth: 76,
-  },
-  desktopStepDot: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-  },
-  desktopDotInner: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  desktopStepLabel: {
-    fontFamily: FontFamily.medium,
-    fontSize: 12,
-  },
-  desktopStepLine: {
-    width: 48,
-    height: 1,
-    marginHorizontal: 4,
-    marginBottom: 20,
-  },
-
-  // Header
-  headerBlock: { alignItems: 'center', marginBottom: 24 },
-  iconWrapper: {
-    width: 64,
-    height: 64,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-  },
-  title: { textAlign: 'center', marginBottom: 6, fontSize: 26 },
-  subtitle: {
-    textAlign: 'center',
-    maxWidth: 320,
-    fontSize: 14,
-    lineHeight: 20,
-  },
-
-  // GPS suggestion card (country detected)
-  gpsSuggestCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
-    padding: 20,
-    borderRadius: 20,
-  },
-  gpsSuggestIconWrap: {
-    width: 48,
-    height: 48,
+  innerStepItem: { alignItems: 'center' },
+  innerStepCircle: {
+    width: 28,
+    height: 28,
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  gpsSuggestTextWrap: { flex: 1, gap: 2 },
-  gpsSuggestEyebrow: {
-    letterSpacing: 0.8,
+  innerStepLine: {
+    width: 40,
+    height: 2,
+    marginBottom: 16,
+    marginHorizontal: 6,
   },
-  gpsSuggestCountry: { letterSpacing: -0.2 },
 
-  // Or divider
-
-
-  errorBanner: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 12,
-    padding: 16,
-    borderRadius: 16,
-    borderWidth: 1,
-    marginBottom: 12,
-  },
-  errorText: { flex: 1, fontFamily: FontFamily.medium, fontSize: 14 },
-
-  // Back link
-  backLinkRow: { marginTop: 16, alignItems: 'flex-start' },
-
-  // Vertical list for Australian States (top-to-bottom, one full-width card per line)
-  stateList: {
-    gap: 12,
-  },
-  stateCard: {
-    width: '100%',
-    borderRadius: 16,
-  },
-  searchBar: {
+  pathChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    marginBottom: 10,
   },
-  searchInput: { flex: 1, height: '100%' },
 
-  // City vertical list (top to bottom, full-width cards, same pattern as States)
-  cityList: {
+  gpsCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 4,
+  },
+  gpsIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  gpsCopy: { flex: 1, gap: 2 },
+
+  emptyState: {
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 20,
+  },
+
+  inlineRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 10,
   },
-  cityCard: {
-    width: '100%',
-    borderRadius: 16,
+
+  councilResult: {
+    borderRadius: 12,
+    borderWidth: 1.5,
+    padding: 12,
+    gap: 10,
   },
-
-  noResults: { alignItems: 'center', paddingVertical: 48, gap: 12 },
-  noResultsText: { textAlign: 'center' },
-
-  spacer: { height: 24 },
-  continueHint: {
-    textAlign: 'center',
-    marginTop: 12,
+  councilResultTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
 });

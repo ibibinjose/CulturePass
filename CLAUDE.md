@@ -26,14 +26,13 @@ import ... from './theme'; // local copy
 // Never hardcode hex values for brand colors, spacing, radius, typography.
 ```
 
-**Brand colors (2026)** live only in `CultureTokens`:
-- `indigo` `#4F46E5` (primary)
-- `violet` `#9333EA`
-- `coral` `#FF5E5B` (CTA)
-- `gold` `#FFC857` (membership chrome only — not for readable text)
-- `teal` `#0D9488`
+**Brand colors (2026)** — see `docs/DESIGN_TOKENS.md`. Wordmark palette in `CultureTokens`:
+- `cultureRed` `#f80020` — "Culture"
+- `passGreen` `#00A651` — "Pass"
+- `appBlue` `#009EDB` — ".App" primary chrome
+- `indigo` `#4F46E5` (M3 primary), `violet`, `coral`, `teal`, `BRAND_CYAN`
 
-`SignatureGradient` (violet → coral) is reserved for hero/onboarding/flagship CTAs — **max one per screen**.
+`SignatureGradient` (culture red → app blue) — max one per screen. **No terracotta** (`#E36A4E`).
 
 ### API Access — One Entry Point Only
 ```ts

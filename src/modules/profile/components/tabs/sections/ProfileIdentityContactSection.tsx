@@ -78,7 +78,7 @@ export const ProfileIdentityContactSection = React.memo(({
 
           <Pressable
             style={({ pressed }) => [styles.idBtn, { backgroundColor: m3.primary, opacity: pressed ? 0.88 : 1 }]}
-            onPress={() => nav('/profile/qr')}
+            onPress={() => nav('/profile/digital-id')}
             accessibilityRole="button"
             accessibilityLabel="Show digital ID"
           >

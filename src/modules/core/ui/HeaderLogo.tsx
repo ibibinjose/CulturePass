@@ -17,7 +17,7 @@ export default function HeaderLogo() {
 
   const handlePress = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    router.push('/(tabs)/my-space' as any);
+    router.push('/(tabs)/myspace' as any);
   };
 
   return (

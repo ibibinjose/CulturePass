@@ -58,6 +58,12 @@ jest.mock('@expo/vector-icons', () => ({
 jest.mock('@/design-system/tokens/theme', () => ({
   Spacing: { xxs: 2, xs: 4, sm: 8, md: 16, lg: 24, xl: 32 },
   Radius: { xs: 6, sm: 10, md: 16, lg: 20, xl: 24, full: 9999 },
+  BorderTokens: {
+    black: '#000000',
+    white: '#FFFFFF',
+    widthBold: 3,
+    widthNormal: 1.5,
+  },
   CultureTokens: {
     indigo: '#4F46E5',
     violet: '#9333EA',

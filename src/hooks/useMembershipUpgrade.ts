@@ -1,10 +1,10 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { Alert } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import * as WebBrowser from 'expo-web-browser';
 import { router, usePathname } from 'expo-router';
 import { queryClient } from '@/lib/query-client';
-import { type MembershipSummary } from '@/lib/api';
+import { type MembershipSummary, api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { routeWithRedirect } from '@/lib/routes';
 import { HapticManager } from '@/lib/haptics';
@@ -17,7 +17,8 @@ import { captureEvent } from '@/lib/analytics';
 
 export function useMembershipUpgrade() {
   const pathname = usePathname();
-  const { userId, isAuthenticated } = useAuth();
+  const { userId, isAuthenticated, user } = useAuth();
+  const billingCountry = user?.country;
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly');
   const [loading, setLoading] = useState(false);
   const [appliedPromoCode, setAppliedPromoCode] = useState<string>('');
@@ -34,7 +35,6 @@ export function useMembershipUpgrade() {
     if (isMountedRef.current) setLoading(value);
   }, []);
 
-  // Queries
   const { data: membership, isLoading: isMembershipLoading } = useQuery<MembershipSummary>({
     queryKey: ['membership', userId],
     queryFn: () => membershipRepository.getMembership(userId!),
@@ -46,12 +46,33 @@ export function useMembershipUpgrade() {
     queryFn: () => membershipRepository.getMemberCount(),
   });
 
+  const { data: pricingData, isLoading: isPricingLoading } = useQuery({
+    queryKey: ['pricing-membership', billingCountry ?? 'default'],
+    queryFn: () => api.pricing.membership(billingCountry),
+    staleTime: 60_000,
+  });
+
+  const monthlyPlan = useMemo(
+    () => pricingData?.plans.find((p) => p.billingPeriod === 'monthly'),
+    [pricingData],
+  );
+  const yearlyPlan = useMemo(
+    () => pricingData?.plans.find((p) => p.billingPeriod === 'yearly'),
+    [pricingData],
+  );
+  const activePlan = billingPeriod === 'yearly' ? yearlyPlan : monthlyPlan;
+
   const isPlus = membership?.tier === 'plus' && membership?.status === 'active';
   const memberCount = memberCountData?.count ?? 0;
-  const price = billingPeriod === 'yearly' ? '$69' : '$7.99';
-  const perMonth = billingPeriod === 'yearly' ? '$5.75' : '$7.99';
+  const price = activePlan?.amountFormatted ?? (billingPeriod === 'yearly' ? '$69' : '$7.99');
+  const perMonth =
+    billingPeriod === 'yearly'
+      ? (yearlyPlan?.perMonthFormatted ?? yearlyPlan?.amountFormatted ?? '$5.75')
+      : (monthlyPlan?.amountFormatted ?? '$7.99');
+  const yearlySavingsFormatted = yearlyPlan?.savingsFormatted;
+  const pricingMarket = pricingData?.market;
+  const pricingCurrency = pricingData?.currency;
 
-  // Use Cases
   const executeSubscribe = useCallback(async () => {
     if (!userId) {
       Alert.alert('Login required', 'Please sign in to activate CulturePass+.', [
@@ -63,10 +84,16 @@ export function useMembershipUpgrade() {
     setLoadingSafe(true);
     captureEvent('membership_upgrade_started', {
       billing_period: billingPeriod,
+      pricing_market: pricingMarket,
+      pricing_currency: pricingCurrency,
     });
     try {
       await HapticManager.medium();
-      const result = await purchaseMembershipUseCase.execute(billingPeriod, appliedPromoCode);
+      const result = await purchaseMembershipUseCase.execute(
+        billingPeriod,
+        appliedPromoCode,
+        billingCountry,
+      );
 
       if (result.status === 'already_active') {
         await queryClient.invalidateQueries({ queryKey: ['membership', userId] });
@@ -117,7 +144,16 @@ export function useMembershipUpgrade() {
     } finally {
       setLoadingSafe(false);
     }
-  }, [userId, billingPeriod, pathname, setLoadingSafe, appliedPromoCode]);
+  }, [
+    userId,
+    billingPeriod,
+    pathname,
+    setLoadingSafe,
+    appliedPromoCode,
+    billingCountry,
+    pricingMarket,
+    pricingCurrency,
+  ]);
 
   const executeCancel = useCallback(async () => {
     if (!userId) return;
@@ -179,6 +215,7 @@ export function useMembershipUpgrade() {
   return {
     isAuthenticated,
     isMembershipLoading,
+    isPricingLoading,
     membership,
     isPlus,
     memberCount,
@@ -186,6 +223,9 @@ export function useMembershipUpgrade() {
     setBillingPeriod: handleBillingPeriodChange,
     price,
     perMonth,
+    yearlySavingsFormatted,
+    pricingMarket,
+    pricingCurrency,
     loading,
     executeSubscribe,
     executeCancel,

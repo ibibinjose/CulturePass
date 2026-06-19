@@ -2,7 +2,7 @@ import { createLabCategoryHref } from '@/constants/navigation/createNav';
 
 export const eventPaths = {
   list: '/events',
-  create: '/event/create',
+  create: '/hostspace/event/create',
   login: '/(onboarding)/login',
   calendar: '/(tabs)/calendar',
   contacts: '/contacts',

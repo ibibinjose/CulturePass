@@ -7,6 +7,11 @@ import { HostEntityTypeSchema, type HostEntityType } from './hostTypes';
 // Polymorphic pages for communities, venues, businesses, creators, etc.
 // ============================================================================
 
+/** Max heritage / discovery tag selections per list on host pages. */
+export const HOST_PAGE_TAG_LIST_MAX = 12;
+
+export const HOST_PAGE_CATEGORY_TAG_MAX = 3;
+
 export const HostPageMembershipModelSchema = z.enum(['free', 'paid', 'invite-only']);
 export type HostPageMembershipModel = z.infer<typeof HostPageMembershipModelSchema>;
 
@@ -76,19 +81,16 @@ export const HostPageAddressDraftSchema = z.object({
   isPrimary: z.boolean().default(true),
 });
 
-/** Wizard form payload — lenient for drafts, strict on publish via HostPagePublishFormDataSchema */
-export const HostPageFormDataSchema = z.object({
-  name: z.string().min(2).max(120).trim(),
-  bio: z.string().min(10).max(300).trim(),
+const hostPageFormDataCoreSchema = z.object({
   /** Registered legal entity name (may differ from public page name) */
   registeredBusinessName: z.string().max(120).trim().optional(),
   tradingName: z.string().max(120).trim().optional(),
-  categoryTags: z.array(z.string().min(1).max(40)).max(3).default([]),
-  culturalTags: z.array(z.string().min(1).max(50)).max(12).default([]),
-  languageTags: z.array(z.string().min(1).max(50)).max(12).default([]),
+  categoryTags: z.array(z.string().min(1).max(40)).max(HOST_PAGE_CATEGORY_TAG_MAX).default([]),
+  culturalTags: z.array(z.string().min(1).max(50)).max(HOST_PAGE_TAG_LIST_MAX).default([]),
+  languageTags: z.array(z.string().min(1).max(50)).max(HOST_PAGE_TAG_LIST_MAX).default([]),
   nationalityId: z.string().max(40).optional(),
-  cultureIds: z.array(z.string().max(40)).max(12).default([]),
-  indigenousTags: z.array(z.string().max(50)).max(12).default([]),
+  cultureIds: z.array(z.string().max(40)).max(HOST_PAGE_TAG_LIST_MAX).default([]),
+  indigenousTags: z.array(z.string().max(50)).max(HOST_PAGE_TAG_LIST_MAX).default([]),
   isIndigenousOwned: z.boolean().default(false),
   abn: z.string().optional(),
   gstRegistered: z.boolean().default(false),
@@ -110,7 +112,51 @@ export const HostPageFormDataSchema = z.object({
   ctaAction: HostPageCtaActionSchema.optional(),
 });
 
-export type HostPageFormData = z.infer<typeof HostPageFormDataSchema>;
+/** Lenient wizard + autosave payload — allows partial name/bio while the user is still typing. */
+export const HostPageDraftFormDataSchema = hostPageFormDataCoreSchema.extend({
+  name: z.string().max(120).trim().default(''),
+  bio: z.string().max(300).trim().default(''),
+});
+
+export type HostPageDraftFormData = z.infer<typeof HostPageDraftFormDataSchema>;
+
+/** Stricter shape for create/update page records (not autosave). */
+export const HostPageFormDataSchema = hostPageFormDataCoreSchema.extend({
+  name: z.string().min(2).max(120).trim(),
+  bio: z.string().min(10).max(300).trim(),
+});
+
+export type HostPageFormData = z.infer<typeof HostPageDraftFormDataSchema>;
+
+/** Trim heritage tag arrays to API limits (draft autosave + legacy drafts). */
+export function clampHostPageHeritageFields<T extends Partial<HostPageFormData>>(formData: T): T {
+  const next = { ...formData };
+  if (next.categoryTags) {
+    next.categoryTags = next.categoryTags.slice(0, HOST_PAGE_CATEGORY_TAG_MAX);
+  }
+  if (next.culturalTags) {
+    next.culturalTags = next.culturalTags.slice(0, HOST_PAGE_TAG_LIST_MAX);
+  }
+  if (next.languageTags) {
+    next.languageTags = next.languageTags.slice(0, HOST_PAGE_TAG_LIST_MAX);
+  }
+  if (next.cultureIds) {
+    next.cultureIds = next.cultureIds.slice(0, HOST_PAGE_TAG_LIST_MAX);
+  }
+  if (next.indigenousTags) {
+    next.indigenousTags = next.indigenousTags.slice(0, HOST_PAGE_TAG_LIST_MAX);
+  }
+  return next;
+}
+
+/** Normalize + validate autosave payload after clamping heritage arrays. */
+export function prepareHostPageDraftFormData(
+  formData: Partial<HostPageFormData>,
+): HostPageDraftFormData | null {
+  const clamped = clampHostPageHeritageFields(formData);
+  const parsed = HostPageDraftFormDataSchema.safeParse(clamped);
+  return parsed.success ? parsed.data : null;
+}
 
 const ABN_DIGITS_REGEX = /^\d{11}$/;
 
@@ -263,7 +309,7 @@ export const HostPageDraftSchema = z.object({
   userId: z.string(),
   pageId: z.string().optional(),
   entityType: HostEntityTypeSchema,
-  formData: HostPageFormDataSchema,
+  formData: HostPageDraftFormDataSchema,
   currentStep: z.number().int().min(1).max(10),
   completedSteps: z.array(z.number().int().min(1).max(10)).default([]),
   templateId: HostPageTemplateIdSchema.optional(),
@@ -289,7 +335,7 @@ export const UpdateHostPageDraftSchema = z.object({
   userId: z.string(),
   pageId: z.string().optional(),
   entityType: HostEntityTypeSchema.optional(),
-  formData: HostPageFormDataSchema.optional(),
+  formData: HostPageDraftFormDataSchema.optional(),
   currentStep: z.number().int().min(1).max(10).optional(),
   completedSteps: z.array(z.number().int().min(1).max(10)).optional(),
   templateId: HostPageTemplateIdSchema.optional(),

@@ -27,7 +27,7 @@ export function UserPublicProfile({ profile, isOwner, insets }: UserPublicProfil
     <View style={[styles.root, { backgroundColor: m3Colors.background }]}>
       <M3TopAppBar
         title="Profile"
-        onBack={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)/my-space'))}
+        onBack={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)/myspace'))}
         titleLeading={
           <Image
             source={require('@/assets/images/culturepass-logo.png')}

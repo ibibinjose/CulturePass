@@ -9,6 +9,10 @@ import * as Haptics from 'expo-haptics';
 
 import { useAuth } from '@/lib/auth';
 import { useOnboarding } from '@/contexts/OnboardingContext';
+import {
+  confirmOnboardingRestart,
+  ONBOARDING_PROFILE_CLEAR_PATCH,
+} from '@/lib/onboardingReset';
 import { useRole } from '@/hooks/useRole';
 import { useColors } from '@/hooks/useColors';
 import { useSafeBack } from '@/lib/navigation';
@@ -103,7 +107,7 @@ function Row({ row, isLast }: { row: SettingsRow; isLast: boolean }) {
         <Text style={[styles.rowLabel, { color: row.destructive ? colors.error : colors.text }]} numberOfLines={1}>
           {row.label}
         </Text>
-        {row.sub ? <Text style={[styles.rowSub, { color: colors.textTertiary }]} numberOfLines={2}>{row.sub}</Text> : null}
+        {row.sub ? <Text style={[styles.rowSub, { color: colors.textSecondary }]} numberOfLines={2}>{row.sub}</Text> : null}
       </View>
       {row.rightText ? <Text style={[styles.rowRight, { color: colors.textTertiary }]}>{row.rightText}</Text> : null}
       {isActionable ? <Ionicons name={row.external ? 'arrow-up-outline' : 'chevron-forward'} size={18} color={colors.textTertiary} /> : null}
@@ -117,7 +121,7 @@ function Section({ title, rows }: { title: string; rows: SettingsRow[] }) {
   if (!rows.length) return null;
   return (
     <View style={styles.section}>
-      <Text style={[styles.sectionTitle, { color: colors.textTertiary }]}>{title}</Text>
+      <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>{title}</Text>
       <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
         {rows.map((row, index) => (
           <Row key={`${title}-${row.label}`} row={row} isLast={index === rows.length - 1} />
@@ -150,10 +154,10 @@ function fromNavItem(item: {
 export default function SettingsScreen() {
   const colors = useColors();
   const layout = useLayout();
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, logout, updateUserProfile } = useAuth();
   const { resetOnboarding } = useOnboarding();
   const { isOrganizer, isAdmin, hasMinRole } = useRole();
-  const goBack = useSafeBack('/(tabs)/my-space');
+  const goBack = useSafeBack('/(tabs)/myspace');
 
   const safeInsets = useSafeAreaInsetsWeb();
   const pageTopPadding = safeInsets.top + ScreenTokens.topOffset;
@@ -191,22 +195,28 @@ export default function SettingsScreen() {
   const canTargetCampaigns = hasMinRole('cityAdmin');
 
   const redoOnboarding = useCallback(async () => {
-    const message = 'Restart onboarding? You will pick your location, cultures, interests, and communities again.';
-    const confirmed =
-      Platform.OS === 'web'
-        ? typeof window !== 'undefined' && typeof window.confirm === 'function'
-          ? window.confirm(message)
-          : true
-        : await new Promise<boolean>((resolve) => {
-            Alert.alert('Redo onboarding', message, [
-              { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
-              { text: 'Restart', style: 'destructive', onPress: () => resolve(true) },
-            ]);
-          });
+    const confirmed = await confirmOnboardingRestart();
     if (!confirmed) return;
+
+    if (user?.id) {
+      try {
+        await updateUserProfile(ONBOARDING_PROFILE_CLEAR_PATCH);
+      } catch {
+        const failMessage = 'Could not reset your profile preferences. Please try again.';
+        if (Platform.OS === 'web') {
+          if (typeof window !== 'undefined' && typeof window.alert === 'function') {
+            window.alert(failMessage);
+          }
+        } else {
+          Alert.alert('Reset failed', failMessage);
+        }
+        return;
+      }
+    }
+
     await resetOnboarding();
     router.replace('/(onboarding)/location' as never);
-  }, [resetOnboarding]);
+  }, [resetOnboarding, updateUserProfile, user?.id]);
 
   const signOut = useCallback(() => {
     Alert.alert('Sign out', 'Sign out of CulturePass?', [

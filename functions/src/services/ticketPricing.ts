@@ -1,4 +1,5 @@
 import type { FirestoreEvent } from './events';
+import { usesExternalTicketing } from '../lib/externalTicketing';
 import { db, isFirestoreConfigured } from '../admin';
 
 export type TicketOrderInput = {
@@ -45,6 +46,9 @@ export function resolveTicketOrderPricing(
   event: FirestoreEvent,
   input: TicketOrderInput,
 ): TicketOrderPricing {
+  if (usesExternalTicketing(event)) {
+    throw new TicketPricingError('Tickets are sold on the event website', 'INVALID_TIER');
+  }
   const quantity = Number(input.quantity ?? 1);
   if (!Number.isInteger(quantity) || quantity <= 0) {
     throw new TicketPricingError('Ticket quantity must be a positive integer', 'INVALID_QUANTITY');
@@ -93,6 +97,7 @@ export function resolveTicketOrderPricing(
 
 /** Direct issuance when nothing is owed: truly free events, or paid events after a validated promo (server-resolved). */
 export function canIssueDirectTicket(event: FirestoreEvent, pricing: TicketOrderPricing): boolean {
+  if (usesExternalTicketing(event)) return false;
   if (pricing.totalPriceCents !== 0) return false;
   if (isFreeEvent(event)) return true;
   return typeof pricing.promoCode === 'string' && pricing.promoCode.length > 0;

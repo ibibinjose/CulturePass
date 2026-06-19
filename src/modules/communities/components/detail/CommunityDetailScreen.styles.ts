@@ -24,21 +24,30 @@ export const communityDetailStyles = StyleSheet.create({
   contentWeb: { paddingTop: 8, gap: 18 },
   desktopGrid: { flexDirection: 'row', gap: 40, alignItems: 'flex-start' },
   desktopLeft: { flex: 2, gap: 20 },
-  desktopRight: { flex: 1, gap: 16 },
+  desktopRight: { flex: 1, gap: 16, minWidth: 300, maxWidth: 380 },
 
   tabBarWrap: {
     borderRadius: 999,
-    borderWidth: 0,
+    borderWidth: StyleSheet.hairlineWidth,
     padding: 4,
     marginVertical: 8,
-    alignSelf: 'flex-start',
+    alignSelf: 'stretch',
   },
-  tabBar: { flexDirection: 'row', gap: 4 },
+  tabBar: { flexDirection: 'row', gap: 6 },
 
-  bodyText: { lineHeight: 22 },
+  bodyText: { lineHeight: 24, letterSpacing: 0.15 },
 
-  missionBox: { marginTop: 12, padding: 16, borderRadius: 12, borderLeftWidth: 4 },
-  missionLabel: { marginBottom: 6 },
+  missionBox: { marginTop: 16, padding: 18, borderRadius: 12, borderLeftWidth: 4, gap: 8 },
+  missionLabel: { marginBottom: 4, letterSpacing: 0.6 },
+
+  seeAllMembersBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 12,
+    paddingVertical: 10,
+  },
 
   linkRow: {
     flexDirection: 'row',

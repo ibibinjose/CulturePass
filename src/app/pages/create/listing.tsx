@@ -1,13 +1,8 @@
-/**
- * /pages/create/listing — CultureMarket listing wizard.
- */
-import { HostspaceAccessGate } from '@/modules/host/components/HostspaceAccessGate';
-import { CultureMarketListingWizard } from '@/modules/host/screens/CultureMarketListingWizard';
+import { Redirect } from 'expo-router';
 
-export default function PagesCreateListingScreen() {
-  return (
-    <HostspaceAccessGate intent="creationLab">
-      <CultureMarketListingWizard />
-    </HostspaceAccessGate>
-  );
+import { CULTURE_MARKET_LISTING_LAB_PATHNAME } from '@/constants/navigation/createNav';
+
+/** Legacy `/pages/create/listing` → `/hostspace/listing`. */
+export default function LegacyPagesCreateListingRedirect() {
+  return <Redirect href={CULTURE_MARKET_LISTING_LAB_PATHNAME as never} />;
 }

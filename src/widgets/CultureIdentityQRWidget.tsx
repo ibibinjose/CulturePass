@@ -20,7 +20,7 @@ export type CultureIdentityQRWidgetProps = {
   membershipTier?: string;
 };
 
-const DEEP_LINK = 'culturepass://profile/qr';
+const DEEP_LINK = 'culturepass://profile/digital-id';
 
 const CultureIdentityQRLayout = (props: CultureIdentityQRWidgetProps) => {
   'widget';

@@ -5,28 +5,27 @@ import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useSafeAreaInsetsWeb } from '@/hooks/useSafeAreaInsetsWeb';
 
-import { M3Button, M3Card, M3FilterChip, M3SectionHeader, M3TopAppBar } from '@/design-system/ui';
+import { M3Card, M3FilterChip, M3SectionHeader, M3TopAppBar } from '@/design-system/ui';
+import { pressableA11yRole } from '@/lib/webPressable';
 import { Skeleton } from '@/design-system/ui/Skeleton';
 import { openExternalUrl } from '@/lib/openExternalUrl';
 import { useSafeBack } from '@/lib/navigation';
 import { useColors } from '@/hooks/useColors';
 import { useM3Colors } from '@/hooks/useM3Colors';
 import { FontFamily, M3Typography } from '@/design-system/tokens/theme';
-import { routeEvent, routeUser } from '@/lib/publicPaths';
+import { routeUser } from '@/lib/publicPaths';
 import {
   communityDetailHaptic,
-  communityEventPriceLabel,
   communityMemberPublicProfileSegment,
-  formatCommunityEventDate,
   showUnavailableMemberProfileNotice,
   type CommunityMemberItem,
 } from '@/modules/communities/components/detail/communityDetailUtils';
 import type { Community, EventData } from '@/shared/schema';
+import { CommunityEventCard } from '@/modules/communities/components/detail/CommunityEventCard';
 import { resolveSocialUrl, type SocialPlatformKey } from '@/shared/utils/socialLinks';
+import { DISPLAY_FALLBACK, displayOrFallback, isFallbackValue } from '@/lib/presentation';
 
 const haptic = communityDetailHaptic;
-const priceLabel = communityEventPriceLabel;
-const formatEventDate = formatCommunityEventDate;
 const memberPublicProfileSegment = communityMemberPublicProfileSegment;
 const showUnavailableProfileNotice = showUnavailableMemberProfileNotice;
 
@@ -60,14 +59,20 @@ export function TabPill({
   label,
   active,
   count,
+  accent,
   onPress,
 }: {
   label: string;
   active: boolean;
   count?: number;
+  accent?: string;
   onPress: () => void;
 }) {
   const m3Colors = useM3Colors();
+  const activeBg = accent ? `${accent}18` : m3Colors.secondaryContainer;
+  const activeText = accent ?? m3Colors.onSecondaryContainer;
+  const activeBorder = accent ? `${accent}40` : 'transparent';
+
   return (
     <Pressable
       onPress={() => {
@@ -77,34 +82,45 @@ export function TabPill({
       style={[
         ts.tabPill,
         {
-          backgroundColor: active ? m3Colors.secondaryContainer : 'transparent',
-          borderColor: active ? 'transparent' : m3Colors.outlineVariant,
-          borderWidth: active ? 0 : StyleSheet.hairlineWidth,
+          backgroundColor: active ? activeBg : 'transparent',
+          borderColor: active ? activeBorder : m3Colors.outlineVariant,
+          borderWidth: StyleSheet.hairlineWidth,
         },
       ]}
-      accessibilityRole="tab"
+      accessibilityRole={pressableA11yRole('tab')}
       accessibilityState={{ selected: active }}
     >
       <Text
         style={[
           ts.tabPillLabel,
           M3Typography.labelLarge,
-          { color: active ? m3Colors.onSecondaryContainer : m3Colors.onSurfaceVariant },
+          {
+            color: active ? activeText : m3Colors.onSurfaceVariant,
+            fontFamily: active ? FontFamily.semibold : FontFamily.medium,
+          },
         ]}
       >
         {label}
       </Text>
-      {count != null && count > 0 ? (
+      {count != null ? (
         <View
           style={[
             ts.tabPillBadge,
-            { backgroundColor: active ? m3Colors.onSecondaryContainer + '20' : m3Colors.primaryContainer },
+            {
+              backgroundColor: active
+                ? (accent ? `${accent}22` : m3Colors.onSecondaryContainer + '20')
+                : m3Colors.primaryContainer,
+            },
           ]}
         >
           <Text
             style={[
               ts.tabPillBadgeText,
-              { color: active ? m3Colors.onSecondaryContainer : m3Colors.onPrimaryContainer },
+              {
+                color: active
+                  ? (accent ?? m3Colors.onSecondaryContainer)
+                  : m3Colors.onPrimaryContainer,
+              },
             ]}
           >
             {count}
@@ -128,56 +144,22 @@ export function SectionCard({
 }) {
   return (
     <M3Card variant="filled" style={sc.card}>
-      <View style={{ padding: 20 }}>
+      <View style={{ padding: 22, gap: 4 }}>
         <M3SectionHeader
           title={title}
           subtitle={subtitle}
           onAction={action?.onPress}
           actionLabel={action?.label}
         />
-        <View style={{ marginTop: 8 }}>{children}</View>
+        <View style={{ marginTop: 10, gap: 2 }}>{children}</View>
       </View>
     </M3Card>
   );
 }
 
-export function EventRow({ event }: { event: EventData; accent?: string }) {
-  const m3Colors = useM3Colors();
-  const price = priceLabel(event.priceCents, event.isFree);
-  return (
-    <M3Card
-      variant="outlined"
-      onPress={() => {
-        haptic();
-        router.push(routeEvent(event) as never);
-      }}
-      style={er.row}
-    >
-      {event.imageUrl ? (
-        <Image source={{ uri: event.imageUrl }} style={er.thumb} contentFit="cover" />
-      ) : (
-        <View style={[er.thumb, er.thumbFallback, { backgroundColor: m3Colors.primaryContainer }]}>
-          <Ionicons name="calendar-outline" size={22} color={m3Colors.onPrimaryContainer} />
-        </View>
-      )}
-      <View style={{ flex: 1, gap: 4 }}>
-        <Text style={[er.title, M3Typography.titleSmall, { color: m3Colors.onSurface }]} numberOfLines={2}>
-          {event.title}
-        </Text>
-        <Text style={[er.meta, M3Typography.bodySmall, { color: m3Colors.onSurfaceVariant }]} numberOfLines={1}>
-          {[formatEventDate(event.date), event.venue, event.city].filter(Boolean).join(' · ')}
-        </Text>
-        {price ? (
-          <View style={[er.pricePill, { backgroundColor: m3Colors.secondaryContainer }]}>
-            <Text style={[er.priceText, M3Typography.labelSmall, { color: m3Colors.onSecondaryContainer }]}>
-              {price}
-            </Text>
-          </View>
-        ) : null}
-      </View>
-      <Ionicons name="chevron-forward" size={16} color={m3Colors.onSurfaceVariant} />
-    </M3Card>
-  );
+/** @deprecated Use CommunityEventCard — kept for legacy imports */
+export function EventRow({ event, accent = '#5B4FCF' }: { event: EventData; accent?: string }) {
+  return <CommunityEventCard event={event} accent={accent} variant="compact" />;
 }
 
 export function MemberRow({ member }: { member: CommunityMemberItem }) {
@@ -205,7 +187,7 @@ export function MemberRow({ member }: { member: CommunityMemberItem }) {
           opacity: pressed ? 0.75 : 1,
         },
       ]}
-      accessibilityRole="button"
+      accessibilityRole={pressableA11yRole('link')}
       accessibilityLabel={
         hrefSegment ? `View ${member.name} profile` : `Profile for ${member.name} is unavailable`
       }
@@ -253,7 +235,7 @@ export function CollapsibleSection({
           setOpen((o) => !o);
         }}
         style={[col.toggle, open && { borderBottomWidth: StyleSheet.hairlineWidth, borderColor: m3Colors.outlineVariant }]}
-        accessibilityRole="button"
+        accessibilityRole={pressableA11yRole('button')}
         accessibilityLabel={`${open ? 'Collapse' : 'Expand'} ${title}`}
       >
         <View style={[col.iconBox, { backgroundColor: m3Colors.primaryContainer }]}>
@@ -274,18 +256,45 @@ export function CollapsibleSection({
   );
 }
 
-export function InfoRow({ label, value }: { label: string; value: string }) {
+export function InfoRow({
+  label,
+  value,
+  fallback = DISPLAY_FALLBACK.notListed,
+}: {
+  label: string;
+  value?: string | null;
+  fallback?: string;
+}) {
   const m3Colors = useM3Colors();
+  const display = displayOrFallback(value, fallback);
+  const muted = isFallbackValue(display, fallback);
   return (
     <View style={[inf.row, { borderColor: m3Colors.outlineVariant }]}>
       <Text style={[inf.label, M3Typography.labelMedium, { color: m3Colors.onSurfaceVariant }]}>{label}</Text>
-      <Text style={[inf.value, M3Typography.bodyMedium, { color: m3Colors.onSurface }]}>{value}</Text>
+      <Text
+        style={[
+          inf.value,
+          M3Typography.bodyMedium,
+          { color: muted ? m3Colors.onSurfaceVariant : m3Colors.onSurface },
+          muted && inf.valueFallback,
+        ]}
+      >
+        {display}
+      </Text>
     </View>
   );
 }
 
-export function ChipRow({ items }: { items: string[] }) {
-  if (!items.length) return null;
+export function ChipRow({ items, emptyLabel }: { items: string[]; emptyLabel?: string }) {
+  const m3Colors = useM3Colors();
+  if (!items.length) {
+    if (!emptyLabel) return null;
+    return (
+      <Text style={[M3Typography.bodyMedium, { color: m3Colors.onSurfaceVariant, lineHeight: 22 }]}>
+        {emptyLabel}
+      </Text>
+    );
+  }
   return (
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 6 }}>
       {items.map((item) => (
@@ -308,24 +317,44 @@ export function SocialLinksRow({ community }: { community: Community }) {
   push('logo-twitter', community.socialLinks?.twitter, 'twitter');
   push('logo-youtube', community.socialLinks?.youtube ?? community.youtube, 'youtube');
   push('logo-tiktok', community.socialLinks?.tiktok ?? community.tiktok, 'tiktok');
-  if (!links.length) return null;
+  if (!links.length) {
+    return (
+      <Text style={[M3Typography.bodySmall, { color: m3Colors.onSurfaceVariant, marginTop: 12, lineHeight: 20 }]}>
+        {DISPLAY_FALLBACK.noSocialLinks}
+      </Text>
+    );
+  }
   return (
     <View style={{ flexDirection: 'row', gap: 12, flexWrap: 'wrap', marginTop: 16 }}>
       {links.map(({ icon, url }) => (
-        <M3Button
+        <Pressable
           key={url}
-          variant="tonal"
           onPress={() => openExternalUrl(url)}
-          style={{ width: 44, height: 44, borderRadius: 12, paddingHorizontal: 0 }}
+          accessibilityRole={pressableA11yRole('link')}
+          accessibilityLabel={`Open ${url}`}
+          style={({ pressed }) => [
+            sc.socialIconBtn,
+            {
+              backgroundColor: m3Colors.secondaryContainer,
+              opacity: pressed ? 0.82 : 1,
+            },
+          ]}
         >
           <Ionicons name={icon} size={20} color={m3Colors.primary} />
-        </M3Button>
+        </Pressable>
       ))}
     </View>
   );
 }
 
 export const sc = StyleSheet.create({
+  socialIconBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   card: {
     marginBottom: 12,
   },
@@ -346,43 +375,29 @@ export const ts = StyleSheet.create({
     gap: 8,
     borderRadius: 999,
     paddingHorizontal: 18,
-    paddingVertical: 10,
+    paddingVertical: 11,
     borderWidth: 1,
     overflow: 'hidden',
+    flex: 1,
+    minWidth: 0,
   },
   tabPillLabel: {},
   tabPillBadge: { borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
   tabPillBadgeText: {},
 });
 
-export const er = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingVertical: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  thumb: { width: 72, height: 72, borderRadius: 12 },
-  thumbFallback: { alignItems: 'center', justifyContent: 'center' },
-  title: { fontSize: 14, fontFamily: FontFamily.semibold, lineHeight: 20 },
-  meta: { fontSize: 12, fontFamily: FontFamily.regular, marginTop: 2 },
-  pricePill: { alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999, marginTop: 4 },
-  priceText: { fontSize: 11, fontFamily: FontFamily.bold },
-});
-
 export const mr = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    paddingVertical: 10,
+    gap: 14,
+    paddingVertical: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   avatar: { width: 46, height: 46, borderRadius: 23, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
   initial: { fontSize: 18, fontFamily: FontFamily.bold },
-  name: { fontSize: 15, fontFamily: FontFamily.semibold },
-  meta: { fontSize: 12, fontFamily: FontFamily.regular, marginTop: 2 },
+  name: { fontSize: 15, fontFamily: FontFamily.semibold, lineHeight: 20 },
+  meta: { fontSize: 12, fontFamily: FontFamily.regular, marginTop: 4, lineHeight: 17 },
 });
 
 export const col = StyleSheet.create({
@@ -413,6 +428,7 @@ export const inf = StyleSheet.create({
   },
   label: { fontSize: 12, fontFamily: FontFamily.semibold, textTransform: 'uppercase', letterSpacing: 0.4, flex: 1 },
   value: { fontSize: 14, fontFamily: FontFamily.medium, flex: 1.5, textAlign: 'right' },
+  valueFallback: { fontStyle: 'italic' },
 });
 
 export const reg = StyleSheet.create({

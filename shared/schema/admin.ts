@@ -23,6 +23,41 @@ export interface AdminStats {
   multiOrganizerBusinesses?: number;
   organizerRoleCounts?: Record<string, number>;
   signupsLast90Days?: number;
+
+  /** CulturePass+ members (membershipTier === plus) */
+  plusMembers?: number;
+  /** Host onboarding queue */
+  pendingHostApplications?: number;
+  pendingVerificationTasks?: number;
+  publishedHostPages?: number;
+  /** Sum of signups in signupTrends window */
+  signupDelta30?: number;
+}
+
+export interface HostspaceAdminOverview {
+  generatedAt: string;
+  counts: {
+    pendingApplications: number;
+    approvedApplications: number;
+    rejectedApplications: number;
+    pendingVerification: number;
+    inReviewVerification: number;
+    publishedHostPages: number;
+    draftHostPages: number;
+    blockedHostPages: number;
+    publishedEvents: number;
+    draftEvents: number;
+    activeOrganizers: number;
+  };
+  recentApplications: Array<{
+    id: string;
+    fullName: string;
+    businessName: string;
+    city: string;
+    hostType: string;
+    status: string;
+    createdAt: string;
+  }>;
 }
 
 export interface AuditLog {

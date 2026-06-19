@@ -87,6 +87,7 @@ export function PageWizardContactStep({
           required
           error={getFieldError('publicEmail')}
           supportDomainVerification={entityType === 'business' || entityType === 'venue'}
+          storage="host-page"
         />
         <PhoneField
           value={formData.phoneNumber ?? ''}
@@ -94,6 +95,7 @@ export function PageWizardContactStep({
           label="Phone number"
           hint="International format, e.g. +61412345678"
           error={getFieldError('phoneNumber')}
+          storage="host-page"
         />
         <PhoneField
           value={formData.whatsappNumber ?? ''}
@@ -101,6 +103,7 @@ export function PageWizardContactStep({
           label="WhatsApp (optional)"
           hint="Same international format"
           error={getFieldError('whatsappNumber')}
+          storage="host-page"
         />
       </WizardFormSection>
 

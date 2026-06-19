@@ -5,8 +5,8 @@ import {
   isLikelyValidRemoteImageUrl,
   resolveFeaturedCityImageUrl,
 } from '@/constants/cityHeroImages';
-import { CultureTokens } from '@/design-system/tokens/theme';
-import { luxeDark, RICH_INDIGO, DEEP_SAFFRON, HERITAGE_GOLD, DEEP_PLUM, EMERALD_HARMONY, TERRACOTTA_GLOW } from '@/design-system/tokens/luxeHeritage';
+import { CultureTokens, BRAND_APP_BLUE } from '@/design-system/tokens/theme';
+import { luxeDark, RICH_INDIGO, DEEP_SAFFRON, HERITAGE_GOLD, DEEP_PLUM, EMERALD_HARMONY } from '@/design-system/tokens/luxeHeritage';
 
 export type { FeaturedCityData };
 
@@ -19,7 +19,7 @@ export const CITY_GRADIENTS: Record<string, [string, string]> = {
   NZ: [EMERALD_HARMONY, '#0A211C'],                        // vibrant emerald → deep forest luxe
   AE: [HERITAGE_GOLD, DEEP_PLUM],                          // prestige gold → deep plum
   GB: [RICH_INDIGO, '#0D1626'],                            // rich indigo → midnight navy luxe
-  CA: [TERRACOTTA_GLOW, '#2A1212'],                        // terracotta energy → dark
+  CA: [BRAND_APP_BLUE, '#2A1212'],
   US: [RICH_INDIGO, '#0A0A14'],                            // strong indigo → deep luxe night
   SG: [DEEP_SAFFRON, '#2A0F2A'],                           // saffron pop → deep plum night
   DEFAULT: [RICH_INDIGO, luxeDark.background],             // premium indigo → true luxe black

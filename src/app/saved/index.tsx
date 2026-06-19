@@ -443,7 +443,7 @@ export default function SavedScreen() {
   const headerActions = [
     {
       icon: 'close-outline' as const,
-      onPress: () => (router.canGoBack() ? router.back() : router.replace('/(tabs)/my-space')),
+      onPress: () => (router.canGoBack() ? router.back() : router.replace('/(tabs)/myspace')),
       label: 'Close',
     },
   ];
@@ -464,7 +464,7 @@ export default function SavedScreen() {
 
         <M3TopAppBar
           title="Favorites & Stamps"
-          onBack={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)/my-space'))}
+          onBack={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)/myspace'))}
           actions={headerActions}
           variant="center-aligned"
         />

@@ -21,7 +21,8 @@ import type { EventData } from '@/shared/schema';
 // Pure filter function — exported for property-based testing
 // ---------------------------------------------------------------------------
 
-const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+/** Upcoming window — 30 days so imported / far-ahead community events still surface. */
+const COMMUNITY_EVENTS_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
 
 /**
  * Filters and sorts a list of events to show only those belonging to joined
@@ -42,7 +43,7 @@ export function getCommunityEventsRail(
   if (joinedCommunityIds.length === 0) return [];
 
   const joinedSet = new Set(joinedCommunityIds);
-  const windowEnd = now.getTime() + SEVEN_DAYS_MS;
+  const windowEnd = now.getTime() + COMMUNITY_EVENTS_WINDOW_MS;
 
   return events
     .filter((event) => {
@@ -75,7 +76,8 @@ export default function CommunityEventsRail({ onSeeAll }: CommunityEventsRailPro
     staleTime: 1000 * 60 * 5,
   });
 
-  const items = data
+  // API already scopes to joined communities + date window; client pass dedupes/sorts/caps.
+  const items = data?.length
     ? getCommunityEventsRail(joinedCommunities, data, new Date())
     : [];
 

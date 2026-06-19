@@ -16,7 +16,7 @@ import {
   signInWithGoogleProvider,
 } from '@/lib/social-auth';
 import { useOnboarding } from '@/contexts/OnboardingContext';
-import { routeWithRedirect } from '@/lib/routes';
+import { routeWithRedirect, sanitizeInternalRedirect } from '@/lib/routes';
 import { deepLinkResolver } from '@/lib/deep-link-resolver';
 import { captureEvent, identifyUser } from '@/lib/analytics';
 import { useBiometricAuth } from '@/hooks/useBiometricAuth';
@@ -81,9 +81,10 @@ export function useLogin(redirectTo: string | null) {
       return;
     }
 
-    // 3. Explicit redirectTo from the invoking screen
-    if (redirectTo) {
-      router.replace(redirectTo);
+    // 3. Explicit redirectTo from the invoking screen (tab shortcuts normalized in sanitize)
+    const safeRedirect = sanitizeInternalRedirect(redirectTo);
+    if (safeRedirect) {
+      router.replace(safeRedirect as never);
       return;
     }
 

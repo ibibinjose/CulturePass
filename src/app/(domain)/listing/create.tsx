@@ -63,6 +63,7 @@ import {
 } from '@/lib/creationAnalytics';
 import { getCategoryDataflow } from '@/modules/host/config/hostspaceCreateCategories.config';
 import { navigateToCreateById, findCategoryForListingEntity } from '@/lib/creationRouting';
+import { findCategory } from '@/modules/host/config/hostspaceCreateCategories.config';
 import {
   ListingStepIdentity,
   ListingStepAbout,
@@ -235,7 +236,7 @@ function CommunityLivePreview({
   );
 }
 
-export default function ListingCreateScreen() {
+export default function ListingCreateScreen({ seedCategoryId }: { seedCategoryId?: string } = {}) {
   const colors = useColors();
   const s = getStyles(colors);
   const safeInsets = useSafeAreaInsetsWeb();
@@ -249,13 +250,19 @@ export default function ListingCreateScreen() {
     listingSubCategory?: string | string[];
     communityCategory?: string | string[];
     publisherProfileId?: string | string[];
+    pageId?: string | string[];
     venueProfileId?: string | string[];
     editId?: string | string[];
   }>();
 
   const eventRedirected = useRef(false);
-  const listingEntityParam = parseEntityType(asParam(params.listingEntityType));
-  const listingSubCategory = asParam(params.listingSubCategory);
+  const seededCategory = seedCategoryId ? findCategory(seedCategoryId) : null;
+  const listingEntityParam =
+    parseEntityType(asParam(params.listingEntityType)) ??
+    (seededCategory?.entityType && seededCategory.entityType !== 'event'
+      ? (seededCategory.entityType as Profile['entityType'])
+      : undefined);
+  const listingSubCategory = asParam(params.listingSubCategory) ?? seededCategory?.subCategory;
   const communityCategoryParam = asParam(params.communityCategory) as CommunityCategory | undefined;
   const editingCommunityId =
     asParam(params.editId) && listingEntityParam === 'community' ? asParam(params.editId)! : null;
@@ -271,13 +278,13 @@ export default function ListingCreateScreen() {
     if (eventRedirected.current) return;
     if (listingEntityParam !== 'event') return;
     eventRedirected.current = true;
-    const publisherProfileId = asParam(params.publisherProfileId);
+    const parentHostPageId = asParam(params.pageId) ?? asParam(params.publisherProfileId);
     navigateToCreateById('event', {
       source: 'listing_wizard_event_redirect',
-      parentProfileId: publisherProfileId,
+      parentHostPageId,
       replace: true,
     });
-  }, [listingEntityParam, params.publisherProfileId]);
+  }, [listingEntityParam, params.pageId, params.publisherProfileId]);
 
   const initialEntity: Profile['entityType'] =
     listingEntityParam && listingEntityParam !== 'event' ? listingEntityParam : 'business';
@@ -351,6 +358,7 @@ export default function ListingCreateScreen() {
       'listingSubCategory',
       'communityCategory',
       'publisherProfileId',
+      'pageId',
       'venueProfileId',
       'editId',
     ] as const;
@@ -385,7 +393,7 @@ export default function ListingCreateScreen() {
       storage: flow.storage,
       manageTab: flow.manageTab,
       source: editingCommunityId || form.draftProfileId ? 'listing_edit' : 'listing_wizard',
-      parentProfileId: asParam(params.publisherProfileId),
+      parentProfileId: asParam(params.pageId) ?? asParam(params.publisherProfileId),
       entityType: form.entityType,
       subCategory: listingSubCategory,
     };
@@ -395,6 +403,7 @@ export default function ListingCreateScreen() {
     form.draftProfileId,
     form.entityType,
     listingSubCategory,
+    params.pageId,
     params.publisherProfileId,
   ]);
 
@@ -492,7 +501,7 @@ export default function ListingCreateScreen() {
       return;
     }
     if (router.canGoBack()) router.back();
-    else router.replace('/(tabs)/host' as never);
+    else router.replace('/hostspace/create' as never);
   }, [stepIndex]);
 
   const handlePrimary = useCallback(async () => {

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Text, StyleSheet } from 'react-native';
-import { FontFamily } from '@/design-system/tokens/theme';
+import { FontFamily, WORDMARK_COLORS } from '@/design-system/tokens/theme';
 
 interface CulturePassWordmarkProps {
   /** Size of the wordmark */
@@ -25,23 +25,19 @@ const SIZE_MAP = {
   xl: 42,
 } as const;
 
-const UN_BLUE = '#009EDB';
-
 /**
- * CulturePassWordmark
- *
- * Official split-color wordmark treatment:
- *   - "Culture" in red
- *   - "Pass" in green
- *   - ".App" in UN Blue
+ * CulturePassWordmark — official split-color treatment (WebSidebar header).
+ *   Culture → cultureRed
+ *   Pass    → passGreen
+ *   .App    → appBlue
  */
 export function CulturePassWordmark({
   size = 'sm',
   showSuffix = true,
   align = 'left',
-  passColor = '#00A651',
-  cultureColor = '#f80020',
-  suffixColor = UN_BLUE,
+  passColor = WORDMARK_COLORS.pass,
+  cultureColor = WORDMARK_COLORS.culture,
+  suffixColor = WORDMARK_COLORS.suffix,
 }: CulturePassWordmarkProps) {
   const fontSize = SIZE_MAP[size];
 
@@ -52,7 +48,7 @@ export function CulturePassWordmark({
         styles.base,
         {
           fontSize,
-          lineHeight: Math.round(fontSize * 1.1), // Slightly improved spacing
+          lineHeight: Math.round(fontSize * 1.1),
           textAlign: align,
         },
       ]}
@@ -72,5 +68,4 @@ const styles = StyleSheet.create({
   },
 });
 
-// Optional: also export as default
 export default CulturePassWordmark;

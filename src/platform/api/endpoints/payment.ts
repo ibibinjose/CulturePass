@@ -19,7 +19,7 @@ export function createMembershipNamespace(request: ApiRequestFn) {
         'GET',
         'api/membership/intro-eligibility',
       ),
-    subscribe: (data: { billingPeriod: 'monthly' | 'yearly'; promoCode?: string }) =>
+    subscribe: (data: { billingPeriod: 'monthly' | 'yearly'; promoCode?: string; country?: string }) =>
       request<{
         checkoutUrl: string | null;
         sessionId?: string;
@@ -28,6 +28,12 @@ export function createMembershipNamespace(request: ApiRequestFn) {
         membership?: MembershipSummary;
         introDiscountApplied?: boolean;
         redeemedDirectly?: boolean;
+        pricing?: {
+          market: string;
+          currency: string;
+          amountCents: number;
+          stripePriceId: string;
+        };
       }>('POST', 'api/membership/subscribe', data),
     billingPortal: () => request<{ url: string }>('POST', 'api/membership/billing-portal'),
     cancel: () => request<{ success: boolean; membership?: MembershipSummary }>('POST', 'api/membership/cancel-subscription'),

@@ -6,10 +6,9 @@ import {
   ScrollView,
   StyleSheet,
   Platform,
-  Alert,
   type DimensionValue,
 } from 'react-native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
@@ -17,14 +16,26 @@ import Animated, { FadeInDown, FadeInUp, Layout as ReanimatedLayout } from 'reac
 
 import { useM3Colors } from '@/hooks/useM3Colors';
 import { useLayout } from '@/hooks/useLayout';
-import { luxeDark } from '@/design-system/tokens/luxeHeritage';
+import { useOnboardingTheme } from '@/hooks/useOnboardingTheme';
+import { FontFamily } from '@/design-system/tokens/theme';
 import { LuxeText } from '@/design-system/ui/LuxeText';
 import { LuxeButton } from '@/design-system/ui/LuxeButton';
-import { LuxeFilterChip } from '@/design-system/ui/LuxeFilterChip';
 import { LuxeCard } from '@/design-system/ui/LuxeCard';
 import { M3TopAppBar } from '@/design-system/ui/M3TopAppBar';
 import { useInterestsSelection } from '@/hooks/useInterestsSelection';
 import { OnboardingProgressHeader } from '@/components/onboarding/OnboardingProgressHeader';
+import { OnboardingDestinationBanner } from '@/components/onboarding/OnboardingDestinationBanner';
+import {
+  OnboardingHero,
+  OnboardingPanel,
+  OnboardingPickerGrid,
+  OnboardingPickerTile,
+  OnboardingPrimaryButton,
+  OnboardingRestartLink,
+  onboardingFormStyles,
+} from '@/components/onboarding/OnboardingFlowPrimitives';
+import { showUserAlert } from '@/lib/showUserAlert';
+import { routeWithRedirect, sanitizeInternalRedirect } from '@/lib/routes';
 import {
   interestCategories,
   popularInterestsSydney,
@@ -33,24 +44,24 @@ import {
 
 const CATEGORY_EMOJI: Record<string, string> = {
   cultural: '🎭',
-  arts:     '🎨',
-  food:     '🍛',
+  arts: '🎨',
+  food: '🍛',
   business: '💼',
-  family:   '👨‍👩‍👧',
-  civic:    '🏙️',
+  family: '👨‍👩‍👧',
+  civic: '🏙️',
   wellness: '🧘',
-  format:   '🎟️',
+  format: '🎟️',
 };
 
-// ---------------------------------------------------------------------------
-// Main screen
-// ---------------------------------------------------------------------------
 export default function InterestsScreen() {
+  const { colors, au } = useOnboardingTheme();
   const m3Colors = useM3Colors();
   const { isDesktop, windowSizeClass } = useLayout();
   const insets = useSafeAreaInsets();
   const bottomInset = Platform.OS === 'web' ? 34 : insets.bottom;
   const isExpanded = windowSizeClass === 'expanded';
+  const searchParams = useLocalSearchParams();
+  const redirectTo = sanitizeInternalRedirect(searchParams.redirectTo ?? searchParams.redirect);
 
   const {
     selected,
@@ -60,31 +71,51 @@ export default function InterestsScreen() {
     isReady,
     remaining,
     MIN_REQUIRED,
+    destinationLabel,
     toggle,
     toggleAll,
     toggleSection,
-    handleFinish: handleFinishHook
+    handleFinish: handleFinishHook,
   } = useInterestsSelection();
 
   const handleFinish = async () => {
     if (!isReady) {
-      Alert.alert('Select more interests', `Please select at least ${MIN_REQUIRED} interests to continue.`);
+      showUserAlert(
+        'Select more interests',
+        `Please select at least ${MIN_REQUIRED} interests to continue.`,
+      );
       return;
     }
     const res = await handleFinishHook();
     if (res?.success === false) {
-      Alert.alert('Could not finish onboarding', 'Please try again.');
+      showUserAlert('Could not finish onboarding', 'Please try again.');
     }
   };
 
   const progressPct = `${Math.min(1, selected.length / MIN_REQUIRED) * 100}%` as DimensionValue;
 
+  const renderInterestTile = (interest: string) => (
+    <OnboardingPickerTile
+      key={interest}
+      label={interest}
+      emoji={interestIcons[interest] ?? '⭐'}
+      selected={selectedSet.has(interest)}
+      onPress={() => toggle(interest)}
+      au={au}
+      colors={colors}
+      columns={1}
+    />
+  );
+
   return (
     <View style={[s.root, { backgroundColor: m3Colors.background }]}>
-
       <M3TopAppBar
         title="Interests"
-        onBack={() => router.canGoBack() ? router.back() : router.replace('/(onboarding)/communities')}
+        onBack={() =>
+          router.canGoBack()
+            ? router.back()
+            : router.replace(routeWithRedirect('/(onboarding)/culture-match', redirectTo) as string)
+        }
         variant={isExpanded ? 'large' : 'medium'}
         titleLeading={
           <Image
@@ -95,294 +126,269 @@ export default function InterestsScreen() {
         }
       />
 
-      <OnboardingProgressHeader currentStep="interests" />
+      <OnboardingProgressHeader currentStep="interests" redirectTo={redirectTo} />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={[
-          s.scrollContent,
-          isDesktop && s.scrollContentDesktop,
-          { paddingBottom: bottomInset + 130 },
+          onboardingFormStyles.scroll,
+          isDesktop && onboardingFormStyles.scrollDesktop,
+          { paddingBottom: bottomInset + 120 },
         ]}
       >
-        <Animated.View
-          entering={FadeInUp.springify().damping(16).delay(100)}
-        >
-          {/* Title */}
-          <View style={s.titleBlock}>
-            <LuxeText variant="display" style={[s.title, { color: luxeDark.text }]}>What interests you?</LuxeText>
-            <LuxeText variant="body" style={[s.subtitle, { color: luxeDark.textSecondary }]}>
-              Pick at least {MIN_REQUIRED} to personalise your feed.
-            </LuxeText>
-          </View>
+        <Animated.View entering={FadeInUp.springify().damping(16).delay(100)}>
+          <LuxeCard
+            variant="glass"
+            style={[
+              onboardingFormStyles.glassCard,
+              isDesktop && onboardingFormStyles.glassCardDesktop,
+            ]}
+          >
+            {redirectTo ? <OnboardingDestinationBanner redirectTo={redirectTo} variant="step" /> : null}
 
-          {/* Progress bar */}
-          <Animated.View entering={FadeInDown.springify().damping(15).delay(150)} style={s.progressBlock}>
-            <View style={[s.progressTrack, { backgroundColor: luxeDark.surfaceElevated }]}>
+            <OnboardingHero
+              icon="heart"
+              title="What interests you?"
+              subtitle={`Pick at least ${MIN_REQUIRED} to personalise your feed.`}
+              au={au}
+            />
+
+            <Animated.View entering={FadeInDown.springify().damping(15).delay(150)} style={s.progressBlock}>
               <View
                 style={[
-                  s.progressFill,
-                  {
-                    width: progressPct,
-                    backgroundColor: isReady ? luxeDark.primary : luxeDark.secondary,
-                  },
+                  s.progressTrack,
+                  { backgroundColor: colors.surfaceElevated, borderColor: au.cardBorder },
                 ]}
-              />
-            </View>
-            <LuxeText variant="badgeCaps" style={{ color: isReady ? luxeDark.primary : luxeDark.textSecondary, minWidth: 90, textAlign: 'right' }}>
-              {isReady ? `${selected.length} SELECTED` : `${selected.length} / ${MIN_REQUIRED}`}
-            </LuxeText>
-          </Animated.View>
+              >
+                <View
+                  style={[
+                    s.progressFill,
+                    {
+                      width: progressPct,
+                      backgroundColor: isReady ? au.blue : au.red,
+                    },
+                  ]}
+                />
+              </View>
+              <LuxeText
+                variant="badgeCaps"
+                style={{
+                  color: isReady ? au.selectedText : au.body,
+                  minWidth: 88,
+                  textAlign: 'right',
+                  fontSize: 11,
+                }}
+              >
+                {isReady ? `${selected.length} SELECTED` : `${selected.length} / ${MIN_REQUIRED}`}
+              </LuxeText>
+            </Animated.View>
 
-          {/* Popular picks */}
-          <Animated.View entering={FadeInDown.springify().damping(15).delay(200)} style={s.section}>
-            <LuxeText variant="badgeCaps" style={{ color: luxeDark.textSecondary, marginBottom: 16 }}>POPULAR NEAR YOU</LuxeText>
-            {/* Popular interests — vertical list top to bottom */}
-            <View style={s.interestList}>
-              {popularInterestsSydney.map(interest => {
-                const isSelected = selectedSet.has(interest);
-                const icon = interestIcons[interest] ?? 'star';
+            <OnboardingPanel
+              title="Popular near you"
+              subtitle="Tap to add — choose more categories below."
+              au={au}
+              colors={colors}
+            >
+              <OnboardingPickerGrid columns={1}>
+                {popularInterestsSydney.map(renderInterestTile)}
+              </OnboardingPickerGrid>
+
+              <View style={[s.sectionDivider, { backgroundColor: au.panelBorder }]} />
+
+              {interestCategories.map((category) => {
+                const isOpen = expanded[category.id] ?? false;
+                const countInCat = category.interests.filter((i) => selectedSet.has(i)).length;
+                const allSelected = category.interests.every((i) => selectedSet.has(i));
+                const emoji = CATEGORY_EMOJI[category.id as keyof typeof CATEGORY_EMOJI] ?? '•';
+
                 return (
-                  <LuxeCard
-                    key={interest}
-                    variant={isSelected ? "tonal" : "default"}
-                    onPress={() => toggle(interest)}
-                    style={s.interestCard}
-                  >
-                    <View style={{ flexDirection: 'row', alignItems: 'center', padding: 14, gap: 14 }}>
-                      <Text style={{ fontSize: 18 }}>{icon}</Text>
-                      <LuxeText 
-                        variant="bodyMedium" 
-                        style={{ color: isSelected ? luxeDark.onPrimaryContainer : luxeDark.text, flex: 1 }}
+                  <View key={category.id} style={s.categoryBlock}>
+                    <View
+                      style={[
+                        s.categoryHeader,
+                        {
+                          borderColor: au.cardBorder,
+                          backgroundColor: isOpen ? au.blueContainer : colors.surfaceElevated,
+                        },
+                      ]}
+                    >
+                      <Pressable
+                        style={({ pressed }) => [s.categoryHeaderPress, pressed && { opacity: 0.75 }]}
+                        onPress={() => toggleSection(category.id)}
+                        accessibilityRole="button"
+                        accessibilityLabel={`${category.title}, ${countInCat} selected`}
+                        accessibilityState={{ expanded: isOpen }}
                       >
-                        {interest}
-                      </LuxeText>
-                      {isSelected && (
-                        <Ionicons name="checkmark-circle" size={20} color={luxeDark.onPrimaryContainer} />
-                      )}
+                        <View
+                          style={[
+                            s.categoryIconWrap,
+                            {
+                              backgroundColor: isOpen ? colors.surface : au.blueContainer,
+                              borderWidth: 1,
+                              borderColor: au.cardBorder,
+                            },
+                          ]}
+                        >
+                          <Text style={s.categoryEmoji}>{emoji}</Text>
+                        </View>
+                        <View style={s.categoryTitleBlock}>
+                          <LuxeText
+                            variant="bodyMedium"
+                            style={{
+                              color: au.heading,
+                              fontFamily: FontFamily.semibold,
+                              fontSize: 15,
+                            }}
+                          >
+                            {category.title}
+                          </LuxeText>
+                          {countInCat > 0 ? (
+                            <LuxeText variant="caption" style={{ color: au.selectedText, fontSize: 12 }}>
+                              {countInCat} selected
+                            </LuxeText>
+                          ) : null}
+                        </View>
+                      </Pressable>
+
+                      {isOpen ? (
+                        <LuxeButton
+                          variant="glass"
+                          size="sm"
+                          onPress={() => toggleAll(category)}
+                          style={{ borderWidth: 1, borderColor: au.cardBorder }}
+                        >
+                          {allSelected ? 'Clear' : 'All'}
+                        </LuxeButton>
+                      ) : null}
+
+                      <Pressable onPress={() => toggleSection(category.id)} hitSlop={10} style={s.chevronBtn}>
+                        <Ionicons name={isOpen ? 'chevron-up' : 'chevron-down'} size={18} color={au.body} />
+                      </Pressable>
                     </View>
-                  </LuxeCard>
+
+                    {isOpen ? (
+                      <Animated.View
+                        entering={FadeInUp.duration(200)}
+                        layout={ReanimatedLayout.springify().damping(16)}
+                        style={s.categoryGridWrap}
+                      >
+                        <OnboardingPickerGrid columns={1}>
+                          {category.interests.map(renderInterestTile)}
+                        </OnboardingPickerGrid>
+                      </Animated.View>
+                    ) : null}
+                  </View>
                 );
               })}
-            </View>
-          </Animated.View>
+            </OnboardingPanel>
 
-          <View style={[s.divider, { backgroundColor: m3Colors.outlineVariant }]} />
-
-          {/* Category accordions */}
-          {interestCategories.map(category => {
-            const isOpen = expanded[category.id] ?? false;
-            const countInCat = category.interests.filter(i => selectedSet.has(i)).length;
-            const allSelected = category.interests.every(i => selectedSet.has(i));
-            const emoji = CATEGORY_EMOJI[category.id as keyof typeof CATEGORY_EMOJI] ?? '•';
-
-            return (
-              <View key={category.id} style={s.categoryBlock}>
-                <View style={s.categoryHeader}>
-                  <Pressable
-                    style={({ pressed }) => [s.categoryHeaderPress, pressed && { opacity: 0.75 }]}
-                    onPress={() => toggleSection(category.id)}
-                    accessibilityRole="button"
-                    accessibilityLabel={`${category.title}, ${countInCat} selected`}
-                    accessibilityState={{ expanded: isOpen }}
-                  >
-                    <View style={[s.categoryIconWrap, { backgroundColor: luxeDark.primaryContainer }]}>
-                      <Text style={s.categoryEmoji}>{emoji}</Text>
-                    </View>
-                    <View style={s.categoryTitleBlock}>
-                      <LuxeText variant="title3" style={{ color: luxeDark.text }}>{category.title}</LuxeText>
-                      {countInCat > 0 && (
-                        <LuxeText variant="caption" style={{ color: luxeDark.primary }}>
-                          {countInCat} selected
-                        </LuxeText>
-                      )}
-                    </View>
-                  </Pressable>
-
-                  {isOpen && (
-                    <LuxeButton
-                        variant="glass"
-                        size="sm"
-                        onPress={() => toggleAll(category)}
-                    >
-                        {allSelected ? 'Clear' : 'All'}
-                    </LuxeButton>
-                  )}
-
-                  <Pressable onPress={() => toggleSection(category.id)} hitSlop={10} style={s.chevronBtn}>
-                    <Ionicons
-                      name={isOpen ? 'chevron-up' : 'chevron-down'}
-                      size={20}
-                      color={luxeDark.textSecondary}
-                    />
-                  </Pressable>
-                </View>
-
-                {isOpen && (
-                  <Animated.View entering={FadeInUp.duration(200)} layout={ReanimatedLayout.springify().damping(16)} style={s.interestList}>
-                    {category.interests.map(interest => {
-                      const isSelected = selectedSet.has(interest);
-                      const icon = interestIcons[interest] ?? 'star';
-                      return (
-                        <LuxeCard
-                          key={interest}
-                          variant={isSelected ? "tonal" : "default"}
-                          onPress={() => toggle(interest)}
-                          style={s.interestCard}
-                        >
-                          <View style={{ flexDirection: 'row', alignItems: 'center', padding: 14, gap: 14 }}>
-                            <Text style={{ fontSize: 16 }}>{icon}</Text>
-                            <LuxeText 
-                              variant="body" 
-                              style={{ color: isSelected ? luxeDark.onPrimaryContainer : luxeDark.text, flex: 1 }}
-                            >
-                              {interest}
-                            </LuxeText>
-                            {isSelected && (
-                              <Ionicons name="checkmark-circle" size={20} color={luxeDark.onPrimaryContainer} />
-                            )}
-                          </View>
-                        </LuxeCard>
-                      );
-                    })}
-                  </Animated.View>
-                )}
-
-                <View style={[s.categoryDivider, { backgroundColor: luxeDark.border }]} />
-              </View>
-            );
-          })}
+            <OnboardingRestartLink redirectTo={redirectTo} au={au} />
+          </LuxeCard>
         </Animated.View>
       </ScrollView>
 
-      {/* Sticky bottom CTA */}
-      <Animated.View entering={FadeInDown.springify().damping(20).delay(250)} style={[s.bottomBar, { paddingBottom: bottomInset + 16, backgroundColor: luxeDark.background }]}>
-        {!isReady && (
-          <LuxeText variant="caption" style={{ textAlign: 'center', color: luxeDark.textSecondary }}>
+      <Animated.View
+        entering={FadeInDown.springify().damping(20).delay(250)}
+        style={[
+          s.bottomBar,
+          {
+            paddingBottom: bottomInset + 12,
+            backgroundColor: colors.surface,
+            borderTopColor: au.panelBorder,
+          },
+        ]}
+      >
+        {!isReady ? (
+          <LuxeText variant="caption" style={{ textAlign: 'center', color: au.body, fontSize: 14 }}>
             {remaining === 1 ? '1 more interest to go' : `${remaining} more interests to go`}
           </LuxeText>
-        )}
-        <LuxeButton
-          variant="filled"
+        ) : null}
+        <OnboardingPrimaryButton
+          au={au}
           fullWidth
           rightIcon={isReady ? 'sparkles' : undefined}
           disabled={!isReady || isSubmitting}
+          loading={isSubmitting}
           onPress={handleFinish}
-          style={{ height: 56 }}
         >
-          {isSubmitting ? 'Starting...' : isReady ? 'Start Exploring' : `Select ${remaining} more`}
-        </LuxeButton>
+          {isSubmitting
+            ? 'Saving...'
+            : isReady
+              ? destinationLabel
+                ? `Go to ${destinationLabel}`
+                : 'Create your page'
+              : `Select ${remaining} more`}
+        </OnboardingPrimaryButton>
       </Animated.View>
     </View>
   );
 }
 
-// ---------------------------------------------------------------------------
-// Styles — static StyleSheet (no per-render recreation)
-// ---------------------------------------------------------------------------
 const s = StyleSheet.create({
   root: { flex: 1 },
-
-  scrollContent: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-  },
-  scrollContentDesktop: {
-    maxWidth: 680,
-    alignSelf: 'center',
-    width: '100%',
-  },
-
-  titleBlock: {
-    marginBottom: 24,
-    gap: 8,
-  },
-  title: {
-    lineHeight: 44,
-  },
-  subtitle: {
-  },
 
   progressBlock: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 14,
-    marginBottom: 32,
+    gap: 10,
+    marginBottom: 12,
   },
   progressTrack: {
     flex: 1,
-    height: 6,
-    borderRadius: 3,
+    height: 8,
+    borderRadius: 4,
     overflow: 'hidden',
+    borderWidth: 1,
   },
   progressFill: {
-    height: 6,
-    borderRadius: 3,
-  },
-  progressLabel: {
-    minWidth: 90,
-    textAlign: 'right',
+    height: 8,
+    borderRadius: 4,
   },
 
-  section: {
-    marginBottom: 24,
-  },
-  sectionLabel: {
-    letterSpacing: 1.6,
-    marginBottom: 16,
-  },
-  divider: {
-    height: 1,
-    marginBottom: 16,
-  },
-
-  chipWrap: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
+  sectionDivider: {
+    height: StyleSheet.hairlineWidth * 2,
+    marginVertical: 4,
   },
 
   categoryBlock: {
-    marginBottom: 8,
+    gap: 8,
   },
   categoryHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
-    paddingVertical: 16,
+    gap: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+    borderWidth: 1.5,
   },
   categoryHeaderPress: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
+    gap: 10,
   },
   categoryIconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
+    width: 36,
+    height: 36,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
   },
   categoryEmoji: {
-    fontSize: 20,
+    fontSize: 18,
   },
   categoryTitleBlock: {
     flex: 1,
     gap: 2,
   },
-  categoryTitle: {
-  },
-  categoryCount: {
-  },
   chevronBtn: {
-    paddingLeft: 16,
+    paddingLeft: 4,
   },
-  categoryDivider: {
-    height: 1,
-    marginTop: 12,
+  categoryGridWrap: {
+    paddingBottom: 4,
   },
 
   bottomBar: {
@@ -390,20 +396,9 @@ const s = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    gap: 12,
-  },
-  remainingText: {
-    textAlign: 'center',
-  },
-
-  // Vertical interest lists (popular + category accordions) — top to bottom, full width, same pattern as States/City
-  interestList: {
-    gap: 10,
-  },
-  interestCard: {
-    width: '100%',
-    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    gap: 8,
+    borderTopWidth: 2,
   },
 });

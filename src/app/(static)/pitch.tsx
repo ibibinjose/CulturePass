@@ -48,7 +48,7 @@ const darkGlassOverride = {
 const PITCH_VECTORS = [
   {
     icon: 'globe-outline',
-    color: CultureTokens.terracottaGlow,
+    color: CultureTokens.appBlue,
     title: '280M+ Global Diaspora',
     body: 'A massive, highly engaged global population searching for cultural connection, community belonging, and links to their roots.',
   },
@@ -69,7 +69,7 @@ const PITCH_VECTORS = [
 const VALUES = [
   {
     icon: 'people-outline',
-    color: CultureTokens.terracottaGlow,
+    color: CultureTokens.appBlue,
     title: 'For Community Members',
     points: [
       'Discover authentic heritage events',
@@ -105,7 +105,7 @@ const VALUES = [
 const ROADMAP = [
   {
     step: '01',
-    color: CultureTokens.terracottaGlow,
+    color: CultureTokens.appBlue,
     title: 'The Flagship App',
     subtitle: 'CulturePass.App Consumer Launch',
     body: 'Building the Google Maps of Culture. Launching discovery, ticketing, and social groups in focus hub cities.',
@@ -193,7 +193,7 @@ export default function PitchScreen() {
             end={{ x: 1, y: 1 }}
             style={StyleSheet.absoluteFill}
           />
-          <FloatingOrb color={CultureTokens.terracottaGlow} size={250} style={{ top: -80, left: -60 }} />
+          <FloatingOrb color={CultureTokens.appBlue} size={250} style={{ top: -80, left: -60 }} />
           <FloatingOrb color={CultureTokens.emeraldHarmony} size={180} style={{ top: 80, right: -50 }} />
           <FloatingOrb color={CultureTokens.deepSaffron} size={140} style={{ bottom: 20, left: '20%' }} />
 
@@ -206,7 +206,7 @@ export default function PitchScreen() {
             </GlassView>
 
             <Text style={[styles.heroTitle, { fontSize: isDesktop ? 46 : 32 }]}>
-              Connecting Humanity{'\n'}Through <Text style={{ color: CultureTokens.terracottaGlow }}>Culture</Text>
+              Connecting Humanity{'\n'}Through <Text style={{ color: CultureTokens.cultureRed }}>Culture</Text>
             </Text>
 
             <Text style={styles.heroSub}>
@@ -215,7 +215,7 @@ export default function PitchScreen() {
 
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'center' }}>
               <Link href="/signup" asChild>
-                <Pressable style={StyleSheet.flatten([styles.ctaBtn, { backgroundColor: CultureTokens.terracottaGlow, borderColor: 'transparent', width: 'auto', minWidth: 160 }])}>
+                <Pressable style={StyleSheet.flatten([styles.ctaBtn, { backgroundColor: CultureTokens.appBlue, borderColor: 'transparent', width: 'auto', minWidth: 160 }])}>
                   <Text style={styles.ctaText}>Join Waitlist</Text>
                   <Ionicons name="arrow-forward" size={18} color="white" />
                 </Pressable>
@@ -233,8 +233,8 @@ export default function PitchScreen() {
         {/* ── THE PROBLEM & OPPORTUNITY ─────────────────────────────────────── */}
         <View style={[styles.section, { backgroundColor: colors.surface }]}>
           <View style={styles.sectionLabel}>
-            <Ionicons name="trending-up" size={14} color={CultureTokens.terracottaGlow} />
-            <Text style={[styles.sectionLabelText, { color: CultureTokens.terracottaGlow }]}>The Opportunity</Text>
+            <Ionicons name="trending-up" size={14} color={CultureTokens.appBlue} />
+            <Text style={[styles.sectionLabelText, { color: CultureTokens.appBlue }]}>The Opportunity</Text>
           </View>
           <Text style={[styles.h2, { color: colors.text }]}>Why Culture? Why Now?</Text>
           <Text style={styles.p}>
@@ -310,8 +310,8 @@ export default function PitchScreen() {
         {/* ── STRATEGIC ROADMAP ──────────────────────────────────────────────── */}
         <View style={styles.section}>
           <View style={styles.sectionLabel}>
-            <Ionicons name="map-outline" size={14} color={CultureTokens.terracottaGlow} />
-            <Text style={[styles.sectionLabelText, { color: CultureTokens.terracottaGlow }]}>Roadmap</Text>
+            <Ionicons name="map-outline" size={14} color={CultureTokens.appBlue} />
+            <Text style={[styles.sectionLabelText, { color: CultureTokens.appBlue }]}>Roadmap</Text>
           </View>
           <Text style={[styles.h2, { color: colors.text }]}>Strategic Path & Scale</Text>
           <Text style={styles.p}>
@@ -338,7 +338,7 @@ export default function PitchScreen() {
         {/* ── CLOSING / PITCH CALL CTA ────────────────────────────────────────── */}
         <View style={styles.closeWrap}>
           <LinearGradient
-            colors={[CultureTokens.terracottaGlow, CultureTokens.deepSaffron, CultureTokens.emeraldHarmony]}
+            colors={[CultureTokens.appBlue, CultureTokens.deepSaffron, CultureTokens.emeraldHarmony]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={StyleSheet.absoluteFill}

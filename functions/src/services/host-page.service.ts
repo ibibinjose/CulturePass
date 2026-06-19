@@ -18,6 +18,11 @@ import {
 } from '../../../shared/schema/hostPage';
 import type { HostEntityType } from '../../../shared/schema/hostTypes';
 import { verificationService } from './verificationService';
+import {
+  restoreCommunityProfileForHostPage,
+  suspendCommunityProfileForHostPage,
+  syncCommunityProfileFromHostPage,
+} from './communityDirectory';
 
 const pagesCol = () => db.collection('hostPages');
 const pageDraftsCol = () => db.collection('hostPageDrafts');
@@ -84,7 +89,16 @@ export const hostPageService = {
     };
     await ref.update(updates as FirebaseFirestore.UpdateData<HostPage>);
     const updated = await ref.get();
-    return { ...(updated.data() as HostPage), id: updated.id };
+    const page = { ...(updated.data() as HostPage), id: updated.id };
+
+    if (
+      page.entityType === 'community' &&
+      (page.status === 'published' || page.status === 'pending_verification')
+    ) {
+      await syncCommunityProfileFromHostPage(page);
+    }
+
+    return page;
   },
 
   async delete(pageId: string): Promise<void> {
@@ -242,6 +256,10 @@ export const hostPageService = {
       });
     }
 
+    if (updated.entityType === 'community' && updated.status === 'published') {
+      await syncCommunityProfileFromHostPage(updated);
+    }
+
     return {
       page: updated,
       verificationRequired: requiresVerification,
@@ -251,13 +269,17 @@ export const hostPageService = {
 
   async blockPage(pageId: string, adminId: string, reason: string): Promise<HostPage | null> {
     const now = new Date().toISOString();
-    return this.update(pageId, {
+    const blocked = await this.update(pageId, {
       status: 'blocked',
       blockedAt: now,
       blockedBy: adminId,
       blockReason: reason,
       lastModifiedBy: adminId,
     });
+    if (blocked?.entityType === 'community') {
+      await suspendCommunityProfileForHostPage(blocked);
+    }
+    return blocked;
   },
 
   async unblockPage(pageId: string, adminId: string): Promise<HostPage | null> {
@@ -267,12 +289,16 @@ export const hostPageService = {
     const restoredStatus =
       page.verificationStatus === 'pending' ? 'pending_verification' : 'published';
 
-    return this.update(pageId, {
+    const restored = await this.update(pageId, {
       status: restoredStatus,
       blockedAt: undefined,
       blockedBy: undefined,
       blockReason: undefined,
       lastModifiedBy: adminId,
     });
+    if (restored?.entityType === 'community') {
+      await restoreCommunityProfileForHostPage(restored);
+    }
+    return restored;
   },
 };

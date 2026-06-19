@@ -6,18 +6,19 @@ import { Ionicons } from '@expo/vector-icons';
 import { CultureTokens } from '@/design-system/tokens/theme';
 
 import {
-  CREATE_LAB_PATHNAME,
-  LISTING_WIZARD_PUBLIC_PATHNAME,
+  buildHostspaceCreateHref,
+  hostspaceCategoryCreatePath,
   createLabCategoryHref,
+  entityTypeToCategoryId,
 } from '@/constants/navigation/createNav';
 
 export type IonIcon = keyof typeof Ionicons.glyphMap;
 
 /** Canonical HostSpace Creation Lab URL (events, communities, listings entry). */
-export const HOSTSPACE_CREATE_ROUTE = CREATE_LAB_PATHNAME;
+export const HOSTSPACE_CREATE_ROUTE = buildHostspaceCreateHref();
 
-/** Unified create entry — opens the HostSpace Creation Lab. */
-export const CREATE_HUB_ROUTE = CREATE_LAB_PATHNAME;
+/** Unified create entry — opens the HostSpace create panel. */
+export const CREATE_HUB_ROUTE = buildHostspaceCreateHref();
 
 /** @deprecated Host tab no longer hosts Create; use `CREATE_HUB_ROUTE` / `HOST_CREATE_PARAMS` only if a deep link still references this shape. */
 export const HOST_CREATE_PARAMS = { space: 'create' } as const;
@@ -25,8 +26,11 @@ export const HOST_CREATE_PARAMS = { space: 'create' } as const;
 /** @deprecated Prefer `CREATE_HUB_ROUTE`; Host tab routes to `/hostspace`. */
 export const HOST_TAB_PATHNAME = '/(tabs)/host' as const;
 
-/** Public URL for the unified listing / directory profile wizard. */
-export const LISTING_CREATE_ROUTE = LISTING_WIZARD_PUBLIC_PATHNAME;
+/**
+ * @deprecated Use `listingCreateNavigateParams()` for canonical paths.
+ * Legacy `/listing/create` still works for bookmarks and auth return URLs.
+ */
+export const LISTING_CREATE_ROUTE = '/listing/create';
 
 /**
  * Host workspace deep link: Listings tab + open unified listing wizard.
@@ -42,7 +46,7 @@ export const HOST_NEW_LISTING_PARAMS = {
 export type HostListingEntityParam = 'business' | 'venue' | 'artist' | 'organizer' | 'restaurant';
 
 /** Entity param values accepted by `listing/create` (directory subset + community + event redirect). */
-export type ListingWizardEntityParam = HostListingEntityParam | 'community' | 'event' | 'brand' | 'creator';
+export type ListingWizardEntityParam = HostListingEntityParam | 'community' | 'event' | 'brand' | 'creator' | 'professional';
 
 export function hostNewListingParams(entityType?: ListingWizardEntityParam) {
   if (!entityType) return { ...HOST_NEW_LISTING_PARAMS };
@@ -58,10 +62,10 @@ export function listingCreateNavigateParams(entityType?: ListingWizardEntityPara
     return { pathname: createLabCategoryHref('community') } as const;
   }
 
-  return {
-    pathname: LISTING_CREATE_ROUTE,
-    ...(entityType ? { params: { listingEntityType: entityType } } : {}),
-  } as const;
+  if (!entityType) {
+    return { pathname: hostspaceCategoryCreatePath('business') } as const;
+  }
+  return { pathname: hostspaceCategoryCreatePath(entityTypeToCategoryId(entityType)) } as const;
 }
 
 /** Profile “tool” rows (title + subtitle + path). */
@@ -108,7 +112,7 @@ export const SIDEBAR_MAIN_NAV: SidebarNavLink[] = [
   { label: 'Calendar', icon: 'calendar-outline', iconActive: 'calendar', route: '/(tabs)/calendar' },
   { label: 'Community', icon: 'people-circle-outline', iconActive: 'people-circle', route: '/(tabs)/community' },
   { label: 'My City', icon: 'location-outline', iconActive: 'location', route: '/(tabs)/city' },
-  { label: 'Profile', icon: 'person-circle-outline', iconActive: 'person-circle', route: '/(tabs)/my-space' },
+  { label: 'Profile', icon: 'person-circle-outline', iconActive: 'person-circle', route: '/(tabs)/myspace' },
   { label: 'Perks', icon: 'pricetag-outline', iconActive: 'pricetag', route: '/perks', matchPrefix: true },
 ];
 
@@ -210,16 +214,31 @@ export type SettingsNavRow = {
  */
 export function settingsMyContentItems(): SettingsNavRow[] {
   const tickets = PROFILE_ATTENDEE_TOOL_ROWS.find((r) => r.id === 'tickets');
-  if (!tickets) {
-    throw new Error('[experienceNav] PROFILE_ATTENDEE_TOOL_ROWS must include tickets');
+  const perks = PROFILE_ATTENDEE_TOOL_ROWS.find((r) => r.id === 'perks');
+  if (!tickets || !perks) {
+    throw new Error('[experienceNav] PROFILE_ATTENDEE_TOOL_ROWS must include tickets and perks');
   }
   return [
     {
       icon: tickets.icon,
       label: 'My Tickets',
       sub: 'Upcoming and past events',
-      color: tickets.accent,
+      color: CultureTokens.indigo,
       route: tickets.path,
+    },
+    {
+      icon: 'heart-outline',
+      label: 'Favorites & Stamps',
+      sub: 'Saved events and check-in stamps',
+      color: CultureTokens.coral,
+      route: '/saved',
+    },
+    {
+      icon: perks.icon,
+      label: 'Member Perks',
+      sub: perks.sub,
+      color: CultureTokens.violet,
+      route: perks.path,
     },
     {
       icon: 'people-outline',
@@ -298,6 +317,7 @@ export function settingsAboutWhatsNewItem(): SettingsNavRow {
 // ── Admin / SuperAdmin sidebar nav (for WebSidebar + admin shell consistency) ─
 export const SIDEBAR_ADMIN_LINKS: SidebarNavLink[] = [
   { label: 'AdminSpace', icon: 'shield-half-outline', iconActive: 'shield-half', route: '/admin', matchPrefix: false },
+  { label: 'HostSpace Ops', icon: 'briefcase-outline', iconActive: 'briefcase', route: '/admin/hostspace', matchPrefix: true },
   { label: 'Discover Curation', icon: 'sparkles-outline', iconActive: 'sparkles', route: '/admin/discover', matchPrefix: true },
   { label: 'Users', icon: 'people-outline', iconActive: 'people', route: '/admin/users', matchPrefix: true },
   { label: 'Audit Logs', icon: 'list-outline', iconActive: 'list', route: '/admin/audit-logs', matchPrefix: true },

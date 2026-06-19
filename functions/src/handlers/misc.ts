@@ -511,33 +511,128 @@ miscRouter.get('/cpid/lookup/:cpid', async (req: Request, res: Response) => {
   }
 });
 
-/** GET /api/admin/stats — aggregate admin dashboard metrics */
-miscRouter.get('/admin/stats', requireAuth, requireRole('admin', 'superAdmin', 'platformAdmin'), async (_req: Request, res: Response) => {
+/** GET /api/admin/stats — aggregate admin dashboard metrics (rich payload via adminService) */
+miscRouter.get('/admin/stats', requireAuth, requireRole('admin', 'superAdmin', 'platformAdmin', 'moderator'), async (_req: Request, res: Response) => {
   try {
-    const [usersSnap, eventsSnap, ticketsSnap] = await Promise.all([
-      db.collection('users').count().get(),
-      db.collection('events').count().get(),
-      db.collection('tickets').count().get(),
+    const stats = await adminService.getStats();
+    const [plusMembers, pendingHostApps, pendingVerification, hostPagesPublished] = await Promise.all([
+      safeCollectionCount('users', { field: 'membershipTier', op: '==', value: 'plus' }),
+      safeCollectionCount('hostApplications', { field: 'status', op: '==', value: 'pending' }),
+      safeCollectionCount('hostVerificationTasks', { field: 'status', op: '==', value: 'pending' }),
+      safeCollectionCount('hostPages', { field: 'status', op: '==', value: 'published' }),
     ]);
 
-    const paidTicketsSnap = await db.collection('tickets').where('paymentStatus', '==', 'paid').get();
-    const revenue = paidTicketsSnap.docs.reduce((sum, doc) => {
-      const d = doc.data() as Record<string, unknown>;
-      const cents = Number(d.totalPriceCents ?? d.priceCents ?? 0);
-      return sum + (Number.isFinite(cents) ? cents : 0);
-    }, 0);
+    const signupDelta30 =
+      stats.signupTrends?.reduce((sum, row) => sum + row.count, 0) ?? stats.newProfiles30d ?? 0;
 
     return res.json({
-      users: usersSnap.data().count ?? 0,
-      events: eventsSnap.data().count ?? 0,
-      tickets: ticketsSnap.data().count ?? 0,
-      revenue,
+      ...stats,
+      plusMembers,
+      pendingHostApplications: pendingHostApps,
+      pendingVerificationTasks: pendingVerification,
+      publishedHostPages: hostPagesPublished,
+      signupDelta30,
     });
   } catch (err: unknown) {
     captureRouteError(err, 'GET /api/admin/stats');
     return res.status(500).json({ error: 'Failed to load admin stats' });
   }
 });
+
+/** GET /api/admin/hostspace/overview — HostSpace operations snapshot */
+miscRouter.get(
+  '/admin/hostspace/overview',
+  requireAuth,
+  requireRole('admin', 'superAdmin', 'platformAdmin', 'moderator'),
+  async (_req: Request, res: Response) => {
+    try {
+      const [
+        pendingApplications,
+        approvedApplications,
+        rejectedApplications,
+        pendingVerification,
+        inReviewVerification,
+        publishedHostPages,
+        draftHostPages,
+        blockedHostPages,
+        publishedEvents,
+        draftEvents,
+        activeOrganizers,
+      ] = await Promise.all([
+        safeCollectionCount('hostApplications', { field: 'status', op: '==', value: 'pending' }),
+        safeCollectionCount('hostApplications', { field: 'status', op: '==', value: 'approved' }),
+        safeCollectionCount('hostApplications', { field: 'status', op: '==', value: 'rejected' }),
+        safeCollectionCount('hostVerificationTasks', { field: 'status', op: '==', value: 'pending' }),
+        safeCollectionCount('hostVerificationTasks', { field: 'status', op: '==', value: 'in_review' }),
+        safeCollectionCount('hostPages', { field: 'status', op: '==', value: 'published' }),
+        safeCollectionCount('hostPages', { field: 'status', op: '==', value: 'draft' }),
+        safeCollectionCount('hostPages', { field: 'isBlocked', op: '==', value: true }),
+        safeCollectionCount('events', { field: 'status', op: '==', value: 'published' }),
+        safeCollectionCount('events', { field: 'status', op: '==', value: 'draft' }),
+        safeCollectionCount('users', { field: 'role', op: '==', value: 'organizer' }),
+      ]);
+
+      let recentApplications: Array<Record<string, unknown>> = [];
+      try {
+        const snap = await db
+          .collection('hostApplications')
+          .orderBy('createdAt', 'desc')
+          .limit(8)
+          .get();
+        recentApplications = snap.docs.map((doc) => {
+          const d = doc.data() as Record<string, unknown>;
+          return {
+            id: doc.id,
+            fullName: d.fullName ?? '',
+            businessName: d.businessName ?? '',
+            city: d.city ?? '',
+            hostType: d.hostType ?? '',
+            status: d.status ?? 'pending',
+            createdAt: d.createdAt ?? '',
+          };
+        });
+      } catch {
+        const snap = await db.collection('hostApplications').limit(20).get();
+        recentApplications = snap.docs
+          .map((doc) => {
+            const d = doc.data() as Record<string, unknown>;
+            return {
+              id: doc.id,
+              fullName: d.fullName ?? '',
+              businessName: d.businessName ?? '',
+              city: d.city ?? '',
+              hostType: d.hostType ?? '',
+              status: d.status ?? 'pending',
+              createdAt: d.createdAt ?? '',
+            };
+          })
+          .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)))
+          .slice(0, 8);
+      }
+
+      return res.json({
+        generatedAt: nowIso(),
+        counts: {
+          pendingApplications,
+          approvedApplications,
+          rejectedApplications,
+          pendingVerification,
+          inReviewVerification,
+          publishedHostPages,
+          draftHostPages,
+          blockedHostPages,
+          publishedEvents,
+          draftEvents,
+          activeOrganizers,
+        },
+        recentApplications,
+      });
+    } catch (err: unknown) {
+      captureRouteError(err, 'GET /api/admin/hostspace/overview');
+      return res.status(500).json({ error: 'Failed to load HostSpace overview' });
+    }
+  },
+);
 
 /** GET /api/admin/audit-logs — latest admin activity */
 miscRouter.get('/admin/audit-logs', requireAuth, requireRole('admin', 'superAdmin', 'platformAdmin'), async (req: Request, res: Response) => {
@@ -708,6 +803,9 @@ const ADMIN_USER_PATCH = z.object({
     .enum(['user', 'organizer', 'business', 'sponsor', 'cityAdmin', 'moderator', 'admin', 'platformAdmin'])
     .optional(),
   status: z.enum(['active', 'suspended']).optional(),
+  handleStatus: z.enum(['pending', 'approved', 'rejected']).optional(),
+  isVerified: z.boolean().optional(),
+  approvedMarketplacePublisher: z.boolean().optional(),
 });
 
 /** PATCH /api/admin/users/:id — role / account status (admin console) */
@@ -724,9 +822,15 @@ miscRouter.patch(
       if (!parsed.success) {
         return res.status(400).json({ error: 'Invalid body', detail: parsed.error.flatten() });
       }
-      const { role, status } = parsed.data;
-      if (!role && status === undefined) {
-        return res.status(400).json({ error: 'role and/or status required' });
+      const { role, status, handleStatus, isVerified, approvedMarketplacePublisher } = parsed.data;
+      if (
+        !role &&
+        status === undefined &&
+        handleStatus === undefined &&
+        isVerified === undefined &&
+        approvedMarketplacePublisher === undefined
+      ) {
+        return res.status(400).json({ error: 'At least one patch field is required' });
       }
 
       if (userId === req.user?.id) {
@@ -748,6 +852,11 @@ miscRouter.patch(
       }
       if (role) {
         updates.role = role;
+      }
+      if (handleStatus) updates.handleStatus = handleStatus;
+      if (isVerified !== undefined) updates.isVerified = isVerified;
+      if (approvedMarketplacePublisher !== undefined) {
+        updates.approvedMarketplacePublisher = approvedMarketplacePublisher;
       }
 
       await usersService.update(userId, updates as Parameters<typeof usersService.update>[1]);

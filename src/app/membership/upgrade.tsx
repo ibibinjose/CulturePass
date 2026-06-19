@@ -489,7 +489,7 @@ const pc = StyleSheet.create({
 
 export default function UpgradeScreen() {
   const pathname   = usePathname();
-  const handleBack = useSafeBack('/(tabs)/my-space');
+  const handleBack = useSafeBack('/(tabs)/myspace');
   const { hPad } = useLayout();
   const safeInsets = useSafeAreaInsetsWeb();
   const topInset = safeInsets.top;
@@ -511,7 +511,7 @@ export default function UpgradeScreen() {
   const {
     isAuthenticated, isMembershipLoading, membership,
     isPlus, memberCount, billingPeriod, setBillingPeriod,
-    price, perMonth, loading,
+    price, perMonth, yearlySavingsFormatted, loading,
     executeSubscribe, executeCancel,
     appliedPromoCode, setAppliedPromoCode,
   } = useMembershipUpgrade();
@@ -877,7 +877,11 @@ export default function UpgradeScreen() {
               {billingPeriod === 'yearly' ? (
                 <View style={{ alignItems: 'center', gap: 6 }}>
                   <LuxeText variant="body" style={[pricing.equiv, { color: colors.textSecondary }]}>{"That's"} just {perMonth} per month</LuxeText>
-                  <LuxeText variant="caption" style={{ color: CultureTokens.teal }}>Billed annually. You save $26.88/year!</LuxeText>
+                  {yearlySavingsFormatted ? (
+                    <LuxeText variant="caption" style={{ color: CultureTokens.teal }}>
+                      {`Billed annually. You save ${yearlySavingsFormatted}/year!`}
+                    </LuxeText>
+                  ) : null}
                 </View>
               ) : null}
             </LuxeCard>

@@ -9,6 +9,7 @@ import {
   HostPageCtaActionSchema,
   HostPageTemplateIdSchema,
   HostPageExecutiveMemberSchema,
+  HOST_PAGE_TAG_LIST_MAX,
   hostPageRequiresAbn,
   hostPageRequiresExecutiveMembers,
   hostPageRequiresPhysicalAddress,
@@ -47,11 +48,11 @@ export const pageStepBasicsSchema = z.object({
 });
 
 export const pageStepTagsSchema = z.object({
-  culturalTags: z.array(z.string()).max(12).default([]),
-  languageTags: z.array(z.string()).max(12).default([]),
+  culturalTags: z.array(z.string()).max(HOST_PAGE_TAG_LIST_MAX).default([]),
+  languageTags: z.array(z.string()).max(HOST_PAGE_TAG_LIST_MAX).default([]),
   nationalityId: z.string().max(40).optional(),
-  cultureIds: z.array(z.string()).max(12).default([]),
-  indigenousTags: z.array(z.string()).max(12).default([]),
+  cultureIds: z.array(z.string()).max(HOST_PAGE_TAG_LIST_MAX).default([]),
+  indigenousTags: z.array(z.string()).max(HOST_PAGE_TAG_LIST_MAX).default([]),
   isIndigenousOwned: z.boolean().default(false),
 });
 

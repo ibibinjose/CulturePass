@@ -29,6 +29,8 @@ export function createNotificationsNamespace(request: ApiRequestFn) {
     targeted: (payload: {
       title: string;
       message: string;
+      /** Alias accepted by API — sent as `body` when present */
+      body?: string;
       type?: NotificationType;
       idempotencyKey?: string;
       approvalToken?: string;
@@ -50,6 +52,10 @@ export function createNotificationsNamespace(request: ApiRequestFn) {
         idempotentReplay?: boolean;
         approvalToken?: string;
         approvalExpiresAt?: string;
-      }>('POST', 'api/notifications/targeted', payload),
+      }>('POST', 'api/notifications/targeted', {
+        ...payload,
+        body: payload.body ?? payload.message,
+        message: payload.message,
+      }),
   };
 }

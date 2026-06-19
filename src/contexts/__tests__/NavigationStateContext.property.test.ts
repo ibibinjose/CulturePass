@@ -15,7 +15,7 @@ import * as fc from 'fast-check';
 // Types (mirroring NavigationStateContext)
 // ---------------------------------------------------------------------------
 
-type TabKey = 'discover' | 'calendar' | 'community' | 'city' | 'my-space';
+type TabKey = 'discover' | 'calendar' | 'community' | 'city' | 'myspace';
 
 interface TabState {
   scrollPosition: number;
@@ -33,7 +33,7 @@ type AllTabStates = Record<TabKey, TabState>;
 // ---------------------------------------------------------------------------
 
 const MAX_STACK_DEPTH = 10;
-const ALL_TABS: TabKey[] = ['discover', 'calendar', 'community', 'city', 'my-space'];
+const ALL_TABS: TabKey[] = ['discover', 'calendar', 'community', 'city', 'myspace'];
 
 // ---------------------------------------------------------------------------
 // Pure state transition functions (extracted from NavigationStateContext logic)
@@ -56,7 +56,7 @@ function createDefaultAllTabStates(): AllTabStates {
     calendar: createDefaultTabState(),
     community: createDefaultTabState(),
     city: createDefaultTabState(),
-    'my-space': createDefaultTabState(),
+    myspace: createDefaultTabState(),
   };
 }
 

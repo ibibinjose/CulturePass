@@ -26,6 +26,7 @@ const BANNED_RGBA = [
 
 const ALLOWLIST_FILES = new Set([
   'src/design-system/tokens/brandCyanPalette.ts',
+  'src/design-system/tokens/brandWordmarkPalette.ts',
 ]);
 
 function walk(dir, out = []) {

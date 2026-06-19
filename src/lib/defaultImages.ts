@@ -43,11 +43,11 @@ export function makeDefaultUri(key: DefaultImageKey): string {
 
 export const DEFAULT_IMAGE_CONFIGS: DefaultImageConfig[] = [
   // 5 Stock Images
-  { key: 'stock-art',       label: 'Art & Theater', imageAsset: require('../../assets/images/stock/art_performance.png'), icon: 'easel' },
-  { key: 'stock-kathakali', label: 'Kathakali',     imageAsset: require('../../assets/images/stock/festival_kathakali.png'), icon: 'sparkles' },
-  { key: 'stock-concert',   label: 'Concert',       imageAsset: require('../../assets/images/stock/live_concert.png'), icon: 'musical-notes' },
-  { key: 'stock-dining',    label: 'Food & Wine',   imageAsset: require('../../assets/images/stock/dining_food.png'), icon: 'restaurant' },
-  { key: 'stock-community', label: 'Community',     imageAsset: require('../../assets/images/stock/heritage_gather.png'), icon: 'people' },
+  { key: 'stock-art',       label: 'Art & Theater', imageAsset: require('../../assets/images/stock/art_performance.jpg'), icon: 'easel' },
+  { key: 'stock-kathakali', label: 'Kathakali',     imageAsset: require('../../assets/images/stock/festival_kathakali.jpg'), icon: 'sparkles' },
+  { key: 'stock-concert',   label: 'Concert',       imageAsset: require('../../assets/images/stock/live_concert.jpg'), icon: 'musical-notes' },
+  { key: 'stock-dining',    label: 'Food & Wine',   imageAsset: require('../../assets/images/stock/dining_food.jpg'), icon: 'restaurant' },
+  { key: 'stock-community', label: 'Community',     imageAsset: require('../../assets/images/stock/heritage_gather.jpg'), icon: 'people' },
 
   // Gradient placeholders
   { key: 'indigo-violet', label: 'Royal', gradientColors: DEFAULT_IMAGE_GRADIENTS['indigo-violet'], icon: 'sparkles' },

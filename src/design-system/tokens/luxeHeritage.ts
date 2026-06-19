@@ -9,7 +9,7 @@
  * All new components and refactored surfaces must use these tokens.
  *
  * Philosophy:
- * - Retain cultural soul (terracotta + cyan signature; gold/saffron deprecated).
+ * - Wordmark palette (culture red + pass green + app blue); cyan for digital ID.
  * - Make dark mode truly premium OLED with true black + layered depth.
  * - Add refined luxe secondary accents for sophistication.
  * - Typography pairing: Poppins (UI excellence) + premium display voice for heroes/branding.
@@ -26,13 +26,24 @@ import {
   BRAND_CYAN_LIGHT,
   JET_BLACK,
 } from './brandCyanPalette';
+import {
+  BRAND_APP_BLUE,
+  BRAND_CULTURE_RED,
+  BRAND_PASS_GREEN,
+} from './brandWordmarkPalette';
 
 // ---------------------------------------------------------------------------
-// Core Luxe Color Palette (2026)
+// Core Luxe Color Palette (2026) — wordmark-backed
 // ---------------------------------------------------------------------------
 
-/** Primary cultural action — warm, human, trusted */
-export const TERRACOTTA_GLOW = '#E36A4E';
+/** Primary brand chrome — wordmark ".App" */
+export const BRAND_APP = BRAND_APP_BLUE;
+
+/** Wordmark "Culture" emphasis */
+export const BRAND_CULTURE = BRAND_CULTURE_RED;
+
+/** Wordmark "Pass" / belonging */
+export const BRAND_PASS = BRAND_PASS_GREEN;
 
 /** Secondary accent — festivals, highlights (replaces deprecated saffron) */
 export const DEEP_SAFFRON = BRAND_CYAN_DEEP;
@@ -90,9 +101,9 @@ export const luxeDark = {
   textOnBrandGradient: '#FFFFFF',
 
   // Brand (elevated saturation for dark)
-  primary: TERRACOTTA_GLOW,
-  primaryContainer: '#3D1F1A',
-  onPrimaryContainer: '#FFEDE8',
+  primary: BRAND_APP_BLUE,
+  primaryContainer: '#0A2A3D',
+  onPrimaryContainer: '#E0F4FF',
 
   secondary: DEEP_SAFFRON,
   secondaryContainer: '#0A1A22',
@@ -129,7 +140,7 @@ export const luxeDark = {
   tabBar: 'rgba(0,0,0,0.94)',
   tabBarBorder: 'rgba(39,39,42,0.6)',
   tabIconDefault: '#71717A',
-  tabIconSelected: TERRACOTTA_GLOW,
+  tabIconSelected: BRAND_APP_BLUE,
 } as const;
 
 // ---------------------------------------------------------------------------
@@ -150,9 +161,9 @@ export const luxeLight = {
   textInverse: '#FFFFFF',
   textOnBrandGradient: '#FFFFFF',
 
-  primary: TERRACOTTA_GLOW,
-  primaryContainer: '#FFEDE8',
-  onPrimaryContainer: '#3D1F1A',
+  primary: BRAND_APP_BLUE,
+  primaryContainer: '#E0F4FF',
+  onPrimaryContainer: '#0A2A3D',
 
   secondary: DEEP_SAFFRON,
   secondaryContainer: '#E0F7FF',
@@ -184,7 +195,7 @@ export const luxeLight = {
   tabBar: 'rgba(255,255,255,0.94)',
   tabBarBorder: 'rgba(231,229,228,0.5)',
   tabIconDefault: '#71717A',
-  tabIconSelected: TERRACOTTA_GLOW,
+  tabIconSelected: BRAND_APP_BLUE,
 } as const;
 
 // ---------------------------------------------------------------------------
@@ -193,13 +204,13 @@ export const luxeLight = {
 
 export const luxeGradients = {
   /** Signature — max ONE per screen (hero, onboarding, flagship CTA) */
-  culturepassBrand: [TERRACOTTA_GLOW, DEEP_SAFFRON] as [string, string],
+  culturepassBrand: [BRAND_CULTURE_RED, BRAND_APP_BLUE] as [string, string],
 
   /** Premium plum + ochre — sophisticated hero moments */
   plumOchre: [DEEP_PLUM, ELECTRIC_OCHRE] as [string, string],
 
-  /** Warm heritage depth */
-  terracottaBronze: [TERRACOTTA_GLOW, WARM_BRONZE] as [string, string],
+  /** Heritage depth — app blue + bronze */
+  heritageBronze: [BRAND_APP_BLUE, WARM_BRONZE] as [string, string],
 
   /** Trust & growth */
   emeraldIndigo: [EMERALD_HARMONY, RICH_INDIGO] as [string, string],
@@ -211,7 +222,7 @@ export const luxeGradients = {
   heroOverlay: ['transparent', 'rgba(0,0,0,0.82)'] as [string, string],
 
   /** Subtle cultural blend for cards / sections */
-  culturalBlend: [TERRACOTTA_GLOW, DEEP_SAFFRON, HERITAGE_GOLD] as [string, string, string],
+  culturalBlend: [BRAND_CULTURE_RED, BRAND_PASS_GREEN, BRAND_APP_BLUE] as [string, string, string],
 
   /** Success / positive */
   success: [SUCCESS, '#059669'] as [string, string],
@@ -523,7 +534,9 @@ export const Luxe = {
   colors: {
     dark: luxeDark,
     light: luxeLight,
-    terracotta: TERRACOTTA_GLOW,
+    appBlue: BRAND_APP_BLUE,
+    cultureRed: BRAND_CULTURE_RED,
+    passGreen: BRAND_PASS_GREEN,
     saffron: DEEP_SAFFRON,
     indigo: RICH_INDIGO,
     emerald: EMERALD_HARMONY,

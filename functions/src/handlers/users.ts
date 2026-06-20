@@ -10,6 +10,12 @@ import { sanitizeUserResponse, parseBody,
 import { moderationCheck } from '../middleware/moderation';
 import { allowInlineDemoFallback, resolveDemoUserById } from '../dev/demoFixtures';
 import { notifyWalletPassesUpdated } from '../services/walletPassNotify';
+import {
+  canDownloadBusinessCard,
+  canViewBusinessCardStats,
+  getBusinessCardAnalytics,
+  recordBusinessCardEvent,
+} from '../services/businessCardAnalyticsService';
 
 export const usersRouter = Router();
 
@@ -196,5 +202,50 @@ usersRouter.put('/users/:id', requireAuth, moderationCheck, async (req: Request,
   } catch (err: any) {
     captureRouteError(err, 'PUT /api/users/:id');
     return res.status(500).json({ error: err.message || 'Failed to update user' });
+  }
+});
+
+/** POST /api/users/:id/business-card/view — count a profile card impression */
+usersRouter.post('/users/:id/business-card/view', async (req: Request, res: Response) => {
+  const targetUserId = String(req.params.id ?? '').trim();
+  if (!targetUserId) return res.status(400).json({ error: 'User id required' });
+  try {
+    await recordBusinessCardEvent(targetUserId, 'view', req.user);
+    return res.json({ ok: true });
+  } catch (err) {
+    captureRouteError(err, 'POST /api/users/:id/business-card/view');
+    return res.status(500).json({ error: 'Failed to record card view' });
+  }
+});
+
+/** POST /api/users/:id/business-card/download — owner or event organiser only */
+usersRouter.post('/users/:id/business-card/download', requireAuth, async (req: Request, res: Response) => {
+  const targetUserId = String(req.params.id ?? '').trim();
+  if (!targetUserId) return res.status(400).json({ error: 'User id required' });
+  if (!canDownloadBusinessCard(req.user, targetUserId)) {
+    return res.status(403).json({ error: 'Not authorized to download this card' });
+  }
+  try {
+    await recordBusinessCardEvent(targetUserId, 'download', req.user!);
+    return res.json({ ok: true });
+  } catch (err) {
+    captureRouteError(err, 'POST /api/users/:id/business-card/download');
+    return res.status(500).json({ error: 'Failed to record card download' });
+  }
+});
+
+/** GET /api/users/:id/business-card/stats — owner (or admin) insights */
+usersRouter.get('/users/:id/business-card/stats', requireAuth, async (req: Request, res: Response) => {
+  const targetUserId = String(req.params.id ?? '').trim();
+  if (!targetUserId) return res.status(400).json({ error: 'User id required' });
+  if (!canViewBusinessCardStats(req.user, targetUserId)) {
+    return res.status(403).json({ error: 'Not authorized to view card stats' });
+  }
+  try {
+    const stats = await getBusinessCardAnalytics(targetUserId);
+    return res.json(stats);
+  } catch (err) {
+    captureRouteError(err, 'GET /api/users/:id/business-card/stats');
+    return res.status(500).json({ error: 'Failed to fetch card stats' });
   }
 });
